@@ -16,7 +16,19 @@
         
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
-        <link rel="stylesheet" id="theme" href="../theme/light.css">
+        <link rel="stylesheet" id="theme">
+        
+        <script>
+            (function () {
+                var theme = localStorage.getItem('mdbook-theme');
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                        ? 'light' : 'navy';
+                    localStorage.setItem('mdbook-theme', theme);
+                }
+                document.getElementById('theme').setAttribute('href', '../' + theme + '.css');
+            })();
+        </script>
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
