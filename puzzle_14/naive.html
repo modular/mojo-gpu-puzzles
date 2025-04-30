@@ -1,0 +1,415 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔰 Naive Version with Global Memory - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.talk-to-us')) return;
+                event.preventDefault();
+                window.open('https://www.modular.com/company/talk-to-us', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modularml/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn talk-to-us">Talk to Us</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="naive-matrix-multiplication"><a class="header" href="#naive-matrix-multiplication">Naive Matrix Multiplication</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(\text{transpose}(A)\) and stores the result in \(\text{out}\).
+This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>2D thread organization for matrix operations</li>
+<li>Global memory access patterns</li>
+<li>Matrix indexing in row-major layout</li>
+<li>Thread-to-output element mapping</li>
+</ul>
+<p>The key insight is understanding how to map 2D thread indices to matrix elements and compute dot products in parallel.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
+<li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
+<li>Grid dimensions: \(1 \times 1\)</li>
+</ul>
+<p>Layout configuration:</p>
+<ul>
+<li>Input A: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code> (transpose of A)</li>
+<li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
+</ul>
+<p>Memory layout (LayoutTensor):</p>
+<ul>
+<li>Matrix A: <code>a[i, j]</code> directly indexes position (i,j)</li>
+<li>Matrix B: <code>b[i, j]</code> is the transpose of A</li>
+<li>Output C: <code>out[i, j]</code> stores result at position (i,j)</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from layout import Layout, LayoutTensor
+from layout.tensor_builder import LayoutTensorBuild as tb
+
+
+alias TPB = 3
+alias SIZE = 2
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (TPB, TPB)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE, SIZE)
+
+
+fn naive_matmul[
+    layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_j = block_dim.y * block_idx.y + thread_idx.y
+    # FILL ME IN (roughly 6 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modularml/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Calculate <code>global_i</code> and <code>global_j</code> from thread indices</li>
+<li>Check if indices are within <code>size</code></li>
+<li>Accumulate products in a local variable</li>
+<li>Write final sum to correct output position</li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<pre><code class="language-bash">magic run p14 --naive
+</code></pre>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([1.0, 3.0, 3.0, 13.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn naive_matmul[
+    layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_j = block_dim.y * block_idx.y + thread_idx.y
+
+    if global_i &lt; size and global_j &lt; size:
+        var acc: out.element_type = 0
+
+        @parameter
+        for k in range(size):
+            acc += a[global_i, k] * b[k, global_j]
+
+        out[global_i, global_j] = acc
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The naive matrix multiplication using LayoutTensor demonstrates the basic approach:</p>
+<h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix Layout (2×2 example)</a></h3>
+<pre><code class="language-txt">Matrix A:        Matrix B (transpose of A):    Output C:
+ [a[0,0] a[0,1]]  [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
+ [a[1,0] a[1,1]]  [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
+</code></pre>
+<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details:</a></h3>
+<ol>
+<li>
+<p><strong>Thread Mapping</strong>:</p>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
+global_j = block_dim.y * block_idx.y + thread_idx.y
+</code></pre>
+</li>
+<li>
+<p><strong>Memory Access Pattern</strong>:</p>
+<ul>
+<li>Direct 2D indexing: <code>a[global_i, k]</code></li>
+<li>Transposed access: <code>b[k, global_j]</code></li>
+<li>Output writing: <code>out[global_i, global_j]</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Computation Flow</strong>:</p>
+<pre><code class="language-mojo"># Use var for mutable accumulator with tensor's element type
+var acc: out.element_type = 0
+
+# @parameter for compile-time loop unrolling
+@parameter
+for k in range(size):
+    acc += a[global_i, k] * b[k, global_j]
+</code></pre>
+</li>
+</ol>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key Language Features:</a></h3>
+<ol>
+<li>
+<p><strong>Variable Declaration</strong>:</p>
+<ul>
+<li>The use of <code>var</code> in <code>var acc: out.element_type = 0</code> allows for type inference with <code>out.element_type</code> ensures type compatibility with the output tensor</li>
+<li>Initialized to zero before accumulation</li>
+</ul>
+</li>
+<li>
+<p><strong>Loop Optimization</strong>:</p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a> decorator unrolls the loop at compile time</li>
+<li>Improves performance for small, known matrix sizes</li>
+<li>Enables better instruction scheduling</li>
+</ul>
+</li>
+</ol>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics:</a></h3>
+<ol>
+<li>
+<p><strong>Memory Access</strong>:</p>
+<ul>
+<li>Each thread makes <code>2 x SIZE</code> global memory reads</li>
+<li>One global memory write per thread</li>
+<li>No data reuse between threads</li>
+</ul>
+</li>
+<li>
+<p><strong>Computational Efficiency</strong>:</p>
+<ul>
+<li>Simple implementation but suboptimal performance</li>
+<li>Many redundant global memory accesses</li>
+<li>No use of fast shared memory</li>
+</ul>
+</li>
+<li>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>High global memory bandwidth usage</li>
+<li>Poor data locality</li>
+<li>Limited scalability for large matrices</li>
+</ul>
+</li>
+</ol>
+<p>This naive implementation serves as a baseline for understanding matrix multiplication on GPUs, highlighting the need for optimization in memory access patterns.</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_14/puzzle_14.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_14/shared_memory.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_14/puzzle_14.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_14/shared_memory.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>
