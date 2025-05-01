@@ -57,6 +57,15 @@
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc.js"></script>
+
+        <script src="https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname === 'puzzles.modular.com';
+            if (is_prod) {
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
     </head>
     <body>
     <div id="body-container">
