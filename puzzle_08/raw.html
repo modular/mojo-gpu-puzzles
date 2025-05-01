@@ -17,18 +17,6 @@
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
         <link rel="stylesheet" id="theme">
-        
-        <script>
-            (function () {
-                var theme = localStorage.getItem('mdbook-theme');
-                if (!theme) {
-                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-                        ? 'light' : 'navy';
-                    localStorage.setItem('mdbook-theme', theme);
-                }
-                document.getElementById('theme').setAttribute('href', '../' + theme + '.css');
-            })();
-        </script>
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,7 +53,7 @@
         <script>
             const path_to_root = "../";
             const default_light_theme = "light";
-            const default_dark_theme = "navy";
+            const default_dark_theme = "ayu";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc.js"></script>
@@ -124,6 +112,7 @@
                 const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
                 html.classList.add(newTheme);
                 theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
             }, false);
             document.addEventListener('click', function() {
                 if (!event.target.matches('.talk-to-us')) return;
@@ -354,7 +343,6 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
         <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script src="../theme/custom.js"></script>
         <script src="../theme/mojolang.js"></script>
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
