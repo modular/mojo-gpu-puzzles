@@ -8,15 +8,3 @@
 <link rel="stylesheet" href="{{ path_to_root }}theme/css/custom.css">
 <link rel="stylesheet" href="{{ path_to_root }}theme/css/highlight.css">
 <link rel="stylesheet" id="theme">
-
-<script>
-    (function () {
-        var theme = localStorage.getItem('mdbook-theme');
-        if (!theme) {
-            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-                ? 'light' : 'navy';
-            localStorage.setItem('mdbook-theme', theme);
-        }
-        document.getElementById('theme').setAttribute('href', '{{ path_to_root }}{{ default_theme_path }}' + theme + '.css');
-    })();
-</script>

@@ -5,6 +5,7 @@
   --sidebar-fg: var(--modular-secondary-text);
   --nebulaUltra: #637bff;
   --fg: var(--modular-text);
+  --bg: var(--modular-bg);
   --links: var(--nebulaUltra);
   --inline-code-color: var(--modular-secondary-text);
   --page-padding: 15px;
@@ -780,15 +781,11 @@ mark {
   display: none;
 }
 
-.ayu .modular-logo-container img.light-logo,
-.coal .modular-logo-container img.light-logo,
-.navy .modular-logo-container img.light-logo {
+.ayu .modular-logo-container img.light-logo {
   display: none;
 }
 
-.ayu .modular-logo-container img.dark-logo,
-.coal .modular-logo-container img.dark-logo,
-.navy .modular-logo-container img.dark-logo {
+.ayu .modular-logo-container img.dark-logo {
   display: inline-block;
 }
 
@@ -874,15 +871,11 @@ pre code.hljs {
 }
 
 /* Dark theme logo display */
-.ayu .light-logo,
-.coal .light-logo,
-.navy .light-logo {
+.ayu .light-logo {
   display: none;
 }
 
-.ayu .dark-logo,
-.coal .dark-logo,
-.navy .dark-logo {
+.ayu .dark-logo {
   display: inline-block;
 }
 

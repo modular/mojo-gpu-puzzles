@@ -120,6 +120,7 @@
                 const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
                 html.classList.add(newTheme);
                 theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
             }, false);
             document.addEventListener('click', function() {
                 if (!event.target.matches('.talk-to-us')) return;
