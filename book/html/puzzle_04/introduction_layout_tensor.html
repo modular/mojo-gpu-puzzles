@@ -1,0 +1,458 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 Learn about LayoutTensor - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="../images/puzzle-logo.png">
+        <meta property="og:url" content="https://puzzles.modular.com">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="../images/puzzle-logo.png">
+        <link rel="icon" type="image/png" href="../images/puzzle-logo.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname.includes('modular.com');
+            const script = document.createElement('script');
+            if (is_prod) {
+                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
+                document.head.appendChild(script);
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            } else {
+                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
+                document.head.appendChild(script);
+                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction-to-layouttensor"><a class="header" href="#introduction-to-layouttensor">Introduction to LayoutTensor</a></h1>
+<p>After dealing with manual indexing, bounds checking, and growing complexity in the previous puzzles, it’s time to introduce a powerful abstraction that will make GPU programming more intuitive and safer.</p>
+<h2 id="why-layouttensor"><a class="header" href="#why-layouttensor">Why <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a>?</a></h2>
+<p>Let’s look at the challenges we’ve faced:</p>
+<pre><code class="language-mojo"># Puzzle 1: Simple indexing
+out[local_i] = a[local_i] + 10.0
+
+# Puzzle 2: Multiple array management
+out[local_i] = a[local_i] + b[local_i]
+
+# Puzzle 3: Bounds checking
+if local_i &lt; size:
+    out[local_i] = a[local_i] + 10.0
+</code></pre>
+<p>As dimensions grow, code becomes more complex:</p>
+<pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
+idx = col * WIDTH + row
+if row &lt; height and col &lt; width:
+    out[idx] = a[idx] + 10.0
+</code></pre>
+<h2 id="the-layouttensor-solution"><a class="header" href="#the-layouttensor-solution">The LayoutTensor solution</a></h2>
+<p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> provides:</p>
+<ol>
+<li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset calculations</li>
+<li><strong>Automatic Bounds Checking</strong>: Built-in protection against out-of-bounds access</li>
+<li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled organizations</li>
+<li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
+</ol>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic usage</a></h3>
+<pre><code class="language-mojo">from layout import Layout, LayoutTensor
+
+# Define layout
+alias HEIGHT = 2
+alias WIDTH = 3
+alias layout = Layout.row_major(HEIGHT, WIDTH)
+
+# Create tensor
+tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())
+
+# Access elements naturally
+tensor[0, 0] = 1.0  # First element
+tensor[1, 2] = 2.0  # Last element
+</code></pre>
+<h3 id="memory-layout-control"><a class="header" href="#memory-layout-control">Memory layout control</a></h3>
+<p>LayoutTensor supports different memory organizations:</p>
+<pre><code class="language-mojo"># Row-major (default)
+layout_row = Layout.row_major(HEIGHT, WIDTH)
+
+# Column-major
+layout_col = Layout.col_major(HEIGHT, WIDTH)
+
+# Tiled (for better cache utilization)
+layout_tiled = tensor.tiled[4, 4](HEIGHT, WIDTH)
+</code></pre>
+<h3 id="understanding-memory-layouts"><a class="header" href="#understanding-memory-layouts">Understanding memory layouts</a></h3>
+<p>Memory layout affects performance dramatically. LayoutTensor supports:</p>
+<ul>
+<li>
+<p><strong>Row-major</strong>: Elements in a row are contiguous</p>
+<pre><code class="language-mojo"># [1 2 3]
+# [4 5 6] -&gt; [1 2 3 4 5 6]
+layout_row = Layout.row_major(2, 3)
+</code></pre>
+</li>
+<li>
+<p><strong>Column-major</strong>: Elements in a column are contiguous</p>
+<pre><code class="language-mojo"># [1 2 3]
+# [4 5 6] -&gt; [1 4 2 5 3 6]
+layout_col = Layout.col_major(2, 3)
+</code></pre>
+</li>
+<li>
+<p><strong>Tiled</strong>: Elements grouped in tiles for cache efficiency</p>
+<pre><code class="language-mojo"># [[1 2] [3 4]] in 2x2 tiles
+layout_tiled = Layout.tiled[2, 2](4, 4)
+</code></pre>
+</li>
+</ul>
+<h3 id="benefits-over-traditional-approach"><a class="header" href="#benefits-over-traditional-approach">Benefits over traditional approach</a></h3>
+<ol>
+<li>
+<p><strong>Readability</strong>:</p>
+<pre><code class="language-mojo"># Traditional
+out[col * WIDTH + row] = a[col * WIDTH + row] + 10.0
+
+# LayoutTensor
+out[row, col] = a[row, col] + 10.0
+</code></pre>
+</li>
+<li>
+<p><strong>Flexibility</strong>:</p>
+<ul>
+<li>Easy to change memory layouts without modifying computation code</li>
+<li>Support for complex access patterns</li>
+<li>Built-in optimizations</li>
+</ul>
+</li>
+</ol>
+<h2 id="advanced-features-preview"><a class="header" href="#advanced-features-preview">Advanced features preview</a></h2>
+<p>While we’ll start with basic operations, LayoutTensor’s true power shines in advanced GPU optimizations:</p>
+<h3 id="1-memory-hierarchy-management"><a class="header" href="#1-memory-hierarchy-management">1. Memory hierarchy management</a></h3>
+<pre><code class="language-mojo"># Shared memory allocation
+shared_mem = tb[dtype]().row_major[BM, BK]().shared().alloc()
+
+# Register allocation
+reg_tile = tb[dtype]().row_major[TM, TN]().local().alloc()
+</code></pre>
+<h3 id="2-tiling-strategies"><a class="header" href="#2-tiling-strategies">2. Tiling strategies</a></h3>
+<pre><code class="language-mojo"># Block tiling
+block_tile = tensor.tile[BM, BN](block_idx.y, block_idx.x)
+
+# Register tiling
+reg_tile = block_tile.tile[TM, TN](thread_row, thread_col)
+</code></pre>
+<h3 id="3-memory-access-patterns"><a class="header" href="#3-memory-access-patterns">3. Memory access patterns</a></h3>
+<pre><code class="language-mojo"># Vectorized access
+vec_tensor = tensor.vectorize[1, simd_width]()
+
+# Asynchronous transfers
+copy_dram_to_sram_async[thread_layout=layout](dst, src)
+</code></pre>
+<h3 id="4-hardware-acceleration"><a class="header" href="#4-hardware-acceleration">4. Hardware acceleration</a></h3>
+<pre><code class="language-mojo"># Tensor Core operations (coming in later puzzles)
+mma_op = TensorCore[dtype, out_type, Index(M, N, K)]()
+result = mma_op.mma_op(a_reg, b_reg, c_reg)
+</code></pre>
+<p>💡 <strong>Looking Ahead</strong>: As we progress through the puzzles, you’ll learn how to:</p>
+<ul>
+<li>Use shared memory for faster data access</li>
+<li>Implement efficient tiling strategies</li>
+<li>Leverage vectorized operations</li>
+<li>Utilize hardware accelerators</li>
+<li>Optimize memory access patterns</li>
+</ul>
+<p>Each puzzle will introduce these concepts gradually, building on the fundamentals to create highly optimized GPU code.</p>
+<p>Ready to start your journey from basic operations to advanced GPU programming? Let’s begin with the fundamentals!</p>
+<h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
+<p>Let’s put everything together with a simple example that demonstrates the basics of LayoutTensor:</p>
+<pre><code class="language-mojo">from gpu.host import DeviceContext
+from layout import Layout, LayoutTensor
+
+alias HEIGHT = 2
+alias WIDTH = 3
+alias dtype = DType.float32
+alias layout = Layout.row_major(HEIGHT, WIDTH)
+
+fn kernel[dtype: DType, layout: Layout](tensor: LayoutTensor[mut=True, dtype, layout]):
+    print("Before:")
+    print(tensor)
+    tensor[0, 0] += 1
+    print("After:")
+    print(tensor)
+
+def main():
+    ctx = DeviceContext()
+
+    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH).enqueue_fill(0)
+    tensor = LayoutTensor[mut=True, dtype, layout](a.unsafe_ptr())
+    # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
+    ctx.enqueue_function[kernel[dtype, layout]](tensor, grid_dim=1, block_dim=1)
+
+    ctx.synchronize()
+</code></pre>
+<p>When we run this code with <code>magic run layout_tensor_intro</code>, we see:</p>
+<pre><code class="language-txt">Before:
+0.0 0.0 0.0
+0.0 0.0 0.0
+After:
+1.0 0.0 0.0
+0.0 0.0 0.0
+</code></pre>
+<p>Let’s break down what’s happening:</p>
+<ol>
+<li>We create a <code>2 x 3</code> tensor with row-major layout</li>
+<li>Initially, all elements are zero</li>
+<li>Using natural indexing, we modify a single element</li>
+<li>The change is reflected in our output</li>
+</ol>
+<p>This simple example demonstrates key LayoutTensor benefits:</p>
+<ul>
+<li>Clean syntax for tensor creation and access</li>
+<li>Automatic memory layout handling</li>
+<li>Built-in bounds checking</li>
+<li>Natural multi-dimensional indexing</li>
+</ul>
+<p>While this example is straightforward, the same patterns will scale to complex GPU operations in upcoming puzzles. You’ll see how these basic concepts extend to:</p>
+<ul>
+<li>Multi-threaded GPU operations</li>
+<li>Shared memory optimizations</li>
+<li>Complex tiling strategies</li>
+<li>Hardware-accelerated computations</li>
+</ul>
+<p>Ready to start your GPU programming journey with LayoutTensor? Let’s dive into the puzzles!</p>
+<p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these fundamental concepts to create increasingly sophisticated GPU programs.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_04/raw.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_04/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_04/raw.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_04/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>

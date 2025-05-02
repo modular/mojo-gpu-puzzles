@@ -1,0 +1,478 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔰 Simple Version - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="../images/puzzle-logo.png">
+        <meta property="og:url" content="https://puzzles.modular.com">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="../images/puzzle-logo.png">
+        <link rel="icon" type="image/png" href="../images/puzzle-logo.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname.includes('modular.com');
+            const script = document.createElement('script');
+            if (is_prod) {
+                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
+                document.head.appendChild(script);
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            } else {
+                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
+                document.head.appendChild(script);
+                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="simple-version"><a class="header" href="#simple-version">Simple Version</a></h1>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Array size: <code>SIZE = 8</code> elements</li>
+<li>Threads per block: <code>TPB = 8</code></li>
+<li>Number of blocks: 1</li>
+<li>Shared memory: <code>TPB</code> elements</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li><strong>Data loading</strong>: Each thread loads one element using LayoutTensor access</li>
+<li><strong>Memory pattern</strong>: Shared memory for intermediate results using <code>LayoutTensorBuild</code></li>
+<li><strong>Thread sync</strong>: Coordination between computation phases</li>
+<li><strong>Access pattern</strong>: Stride-based parallel computation</li>
+<li><strong>Type safety</strong>: Leveraging LayoutTensor’s type system</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from layout import Layout, LayoutTensor
+from layout.tensor_builder import LayoutTensorBuild as tb
+from math import log2
+
+
+alias TPB = 8
+alias SIZE = 8
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+
+
+fn prefix_sum_simple[
+    layout: Layout
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    # FILL ME IN (roughly 12 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Load data into <code>shared[local_i]</code></li>
+<li>Use <code>offset = 1</code> and double it each step</li>
+<li>Add elements where <code>local_i &gt;= offset</code></li>
+<li>Call <code>barrier()</code> between steps</li>
+</ol>
+</div>
+</details>
+<h3 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h3>
+<p>To test your solution, run the following command in your terminal:</p>
+<pre><code class="language-bash">magic run p12 --simple
+</code></pre>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn prefix_sum_simple[
+    layout: Layout
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    barrier()
+
+    offset = 1
+    for i in range(Int(log2(Scalar[dtype](TPB)))):
+        if local_i &gt;= offset and local_i &lt; size:
+            shared[local_i] += shared[local_i - offset]
+
+        barrier()
+        offset *= 2
+
+    if global_i &lt; size:
+        out[global_i] = shared[local_i]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The parallel (inclusive) prefix-sum algorithm works as follows:</p>
+<h3 id="setup--configuration"><a class="header" href="#setup--configuration">Setup &amp; Configuration</a></h3>
+<ul>
+<li><code>TPB</code> (Threads Per Block) = 8</li>
+<li><code>SIZE</code> (Array Size) = 8</li>
+</ul>
+<h3 id="thread-mapping"><a class="header" href="#thread-mapping">Thread Mapping</a></h3>
+<ul>
+<li><code>thread_idx.x</code>: \([0, 1, 2, 3, 4, 5, 6, 7]\) (<code>local_i</code>)</li>
+<li><code>block_idx.x</code>: \([0, 0, 0, 0, 0, 0, 0, 0]\)</li>
+<li><code>global_i</code>: \([0, 1, 2, 3, 4, 5, 6, 7]\) (<code>block_idx.x * TPB + thread_idx.x</code>)</li>
+</ul>
+<h3 id="initial-load-to-shared-memory"><a class="header" href="#initial-load-to-shared-memory">Initial Load to Shared Memory</a></h3>
+<pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+Input array:  [0    1    2    3    4    5    6    7]
+shared:       [0    1    2    3    4    5    6    7]
+               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
+              T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+</code></pre>
+<h3 id="offset--1-first-parallel-step"><a class="header" href="#offset--1-first-parallel-step">Offset = 1: First Parallel Step</a></h3>
+<p>Active threads: \(T_1 \ldots T_7\) (where <code>local_i ≥ 1</code>)</p>
+<pre><code class="language-txt">Before:      [0    1    2    3    4    5    6    7]
+Add:              +0   +1   +2   +3   +4   +5   +6
+                   |    |    |    |    |    |    |
+Result:      [0    1    3    6    7    9    11   13]
+                   ↑    ↑    ↑    ↑    ↑    ↑    ↑
+                  T₁   T₂   T₃   T₄   T₅   T₆   T₇
+</code></pre>
+<h3 id="offset--2-second-parallel-step"><a class="header" href="#offset--2-second-parallel-step">Offset = 2: Second Parallel Step</a></h3>
+<p>Active threads: \(T_2 \ldots T_7\) (where <code>local_i ≥ 2</code>)</p>
+<pre><code class="language-txt">Before:      [0    1    3    6    7    9    11   13]
+Add:                   +0   +1   +3   +6   +7   +9
+                        |    |    |    |    |    |
+Result:      [0    1    3    7    10   15   18   22]
+                        ↑    ↑    ↑    ↑    ↑    ↑
+                       T₂   T₃   T₄   T₅   T₆   T₇
+</code></pre>
+<h3 id="offset--4-third-parallel-step"><a class="header" href="#offset--4-third-parallel-step">Offset = 4: Third Parallel Step</a></h3>
+<p>Active threads: \(T_4 \ldots T_7\) (where <code>local_i ≥ 4</code>)</p>
+<pre><code class="language-txt">Before:      [0    1    3    7    10   15   18   22]
+Add:                              +0   +1   +3   +7
+                                  |    |    |    |
+Result:      [0    1    3    7    10   16   21   28]
+                                  ↑    ↑    ↑    ↑
+                                  T₄   T₅   T₆   T₇
+</code></pre>
+<h3 id="final-write-to-output"><a class="header" href="#final-write-to-output">Final Write to Output</a></h3>
+<pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+global_i:     0    1    2    3    4    5    6    7
+out[]:       [0    1    3    7    10   16   21   28]
+              ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
+              T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+</code></pre>
+<h3 id="thread-by-thread-execution"><a class="header" href="#thread-by-thread-execution">Thread-by-Thread Execution</a></h3>
+<p><strong>\(T_0\) (<code>local_i=0</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[0] = 0</code></li>
+<li>Never adds (<code>local_i &lt; offset</code> always)</li>
+<li>Writes <code>out[0] = 0</code></li>
+</ul>
+<p><strong>\(T_1\) (<code>local_i=1</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[1] = 1</code></li>
+<li><code>offset=1</code>: adds <code>shared[0]</code> → 1</li>
+<li><code>offset=2,4</code>: no action (<code>local_i &lt; offset</code>)</li>
+<li>Writes <code>out[1] = 1</code></li>
+</ul>
+<p><strong>\(T_2\) (<code>local_i=2</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[2] = 2</code></li>
+<li><code>offset=1</code>: adds <code>shared[1]</code> → 3</li>
+<li><code>offset=2</code>: adds <code>shared[0]</code> → 3</li>
+<li><code>offset=4</code>: no action</li>
+<li>Writes <code>out[2] = 3</code></li>
+</ul>
+<p><strong>\(T_3\) (<code>local_i=3</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[3] = 3</code></li>
+<li><code>offset=1</code>: adds <code>shared[2]</code> → 6</li>
+<li><code>offset=2</code>: adds <code>shared[1]</code> → 7</li>
+<li><code>offset=4</code>: no action</li>
+<li>Writes <code>out[3] = 7</code></li>
+</ul>
+<p><strong>\(T_4\) (<code>local_i=4</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[4] = 4</code></li>
+<li><code>offset=1</code>: adds <code>shared[3]</code> → 7</li>
+<li><code>offset=2</code>: adds <code>shared[2]</code> → 10</li>
+<li><code>offset=4</code>: adds <code>shared[0]</code> → 10</li>
+<li>Writes <code>out[4] = 10</code></li>
+</ul>
+<p><strong>\(T_5\) (<code>local_i=5</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[5] = 5</code></li>
+<li><code>offset=1</code>: adds <code>shared[4]</code> → 9</li>
+<li><code>offset=2</code>: adds <code>shared[3]</code> → 15</li>
+<li><code>offset=4</code>: adds <code>shared[1]</code> → 16</li>
+<li>Writes <code>out[5] = 16</code></li>
+</ul>
+<p><strong>\(T_6\) (<code>local_i=6</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[6] = 6</code></li>
+<li><code>offset=1</code>: adds <code>shared[5]</code> → 11</li>
+<li><code>offset=2</code>: adds <code>shared[4]</code> → 18</li>
+<li><code>offset=4</code>: adds <code>shared[2]</code> → 21</li>
+<li>Writes <code>out[6] = 21</code></li>
+</ul>
+<p><strong>\(T_7\) (<code>local_i=7</code>):</strong></p>
+<ul>
+<li>Loads <code>shared[7] = 7</code></li>
+<li><code>offset=1</code>: adds <code>shared[6]</code> → 13</li>
+<li><code>offset=2</code>: adds <code>shared[5]</code> → 22</li>
+<li><code>offset=4</code>: adds <code>shared[3]</code> → 28</li>
+<li>Writes <code>out[7] = 28</code></li>
+</ul>
+<p>The solution ensures correct synchronization between phases using <code>barrier()</code> and handles array bounds checking with <code>if global_i &lt; size</code>. The final result produces the inclusive prefix sum where each element \(i\) contains \(\sum_{j=0}^{i} a[j]\).</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_12/puzzle_12.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_12/complete.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_12/puzzle_12.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_12/complete.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>

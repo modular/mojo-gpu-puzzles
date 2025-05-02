@@ -1,0 +1,480 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔰 Raw Memory Approach - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="../images/puzzle-logo.png">
+        <meta property="og:url" content="https://puzzles.modular.com">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="../images/puzzle-logo.png">
+        <link rel="icon" type="image/png" href="../images/puzzle-logo.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname.includes('modular.com');
+            const script = document.createElement('script');
+            if (is_prod) {
+                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
+                document.head.appendChild(script);
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            } else {
+                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
+                document.head.appendChild(script);
+                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Implementing parallel reduction operations</li>
+<li>Using shared memory for intermediate results</li>
+<li>Coordinating threads for collective operations</li>
+</ul>
+<p>The key insight is understanding how to efficiently combine multiple values into a single result using parallel computation and shared memory.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 8</code> elements</li>
+<li>Threads per block: <code>TPB = 8</code></li>
+<li>Number of blocks: 1</li>
+<li>Output size: 1 element</li>
+<li>Shared memory: <code>TPB</code> elements</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li><strong>Element access</strong>: Each thread reads corresponding elements from <code>a</code> and <code>b</code></li>
+<li><strong>Partial results</strong>: Computing and storing intermediate values</li>
+<li><strong>Thread coordination</strong>: Synchronizing before combining results</li>
+<li><strong>Final reduction</strong>: Converting partial results to scalar output</li>
+</ul>
+<p><em>Note: For this problem, you don’t need to worry about number of shared reads. We will
+handle that challenge later.</em></p>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">alias TPB = 8
+alias SIZE = 8
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (SIZE, 1)
+alias dtype = DType.float32
+
+
+fn dot_product(
+    out: UnsafePointer[Scalar[dtype]],
+    a: UnsafePointer[Scalar[dtype]],
+    b: UnsafePointer[Scalar[dtype]],
+    size: Int,
+):
+    # FILL ME IN (roughly 13 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
+<li>Call <code>barrier()</code> to synchronize</li>
+<li>Use thread 0 to sum all products in shared memory</li>
+<li>Write final sum to <code>out[0]</code></li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<pre><code class="language-bash">magic run p10
+</code></pre>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0])
+expected: HostBuffer([140.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn dot_product(
+    out: UnsafePointer[Scalar[dtype]],
+    a: UnsafePointer[Scalar[dtype]],
+    b: UnsafePointer[Scalar[dtype]],
+    size: Int,
+):
+    shared = stack_allocation[
+        TPB * sizeof[dtype](),
+        Scalar[dtype],
+        address_space = AddressSpace.SHARED,
+    ]()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    if global_i &lt; size:
+        shared[local_i] = a[global_i] * b[global_i]
+
+    barrier()
+
+    # The following causes race condition: all threads writing to the same location
+    # out[0] += shared[local_i]
+
+    # Instead can do parallel reduction in shared memory as opposed to
+    # global memory which has no guarantee on synchronization.
+    # Loops using global memory can cause thread divergence because
+    # fundamentally GPUs execute threads in warps (groups of 32 threads typically)
+    # and warps can be scheduled independently.
+    # However, shared memory does not have such issues as long as we use `barrier()`
+    # correctly when we're in the same thread block.
+    stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+
+        barrier()
+        stride //= 2
+
+    # only thread 0 writes the final result
+    if local_i == 0:
+        out[0] = shared[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The solution implements a parallel reduction algorithm for dot product computation using shared memory. Here’s a detailed breakdown:</p>
+<h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: Element-wise Multiplication</a></h3>
+<p>Each thread performs one multiplication:</p>
+<pre><code class="language-txt">Thread i: shared[i] = a[i] * b[i]
+</code></pre>
+<h3 id="phase-2-parallel-reduction"><a class="header" href="#phase-2-parallel-reduction">Phase 2: Parallel Reduction</a></h3>
+<p>The reduction uses a tree-based approach that halves active threads in each step:</p>
+<pre><code class="language-txt">Initial:  [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
+        = [0    1    4    9    16   25   36   49]
+
+Step 1:   [0+16 1+25 4+36 9+49  16   25   36   49]
+        = [16   26   40   58   16   25   36   49]
+
+Step 2:   [16+40 26+58 40   58   16   25   36   49]
+        = [56   84   40   58   16   25   36   49]
+
+Step 3:   [56+84  84   40   58   16   25   36   49]
+        = [140   84   40   58   16   25   36   49]
+</code></pre>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key Implementation Features:</a></h3>
+<ol>
+<li>
+<p><strong>Memory Access Pattern</strong>:</p>
+<ul>
+<li>Each thread loads exactly two values from global memory (<code>a[i]</code>, <code>b[i]</code>)</li>
+<li>Uses shared memory for intermediate results</li>
+<li>Final result written once to global memory</li>
+</ul>
+</li>
+<li>
+<p><strong>Thread Synchronization</strong>:</p>
+<ul>
+<li><code>barrier()</code> after initial multiplication</li>
+<li><code>barrier()</code> after each reduction step</li>
+<li>Prevents race conditions between reduction steps</li>
+</ul>
+</li>
+<li>
+<p><strong>Reduction Logic</strong>:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared[local_i] += shared[local_i + stride]
+    barrier()
+    stride //= 2
+</code></pre>
+<ul>
+<li>Halves stride in each step</li>
+<li>Only active threads perform additions</li>
+<li>Maintains work efficiency</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance Considerations</strong>:</p>
+<ul>
+<li>\(\log_2(n)\) steps for \(n\) elements</li>
+<li>Coalesced memory access pattern</li>
+<li>Minimal thread divergence</li>
+<li>Efficient use of shared memory</li>
+</ul>
+</li>
+</ol>
+<p>This implementation achieves \(O(\log n)\) time complexity compared to \(O(n)\) in sequential execution, demonstrating the power of parallel reduction algorithms.</p>
+<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier Synchronization Importance</a></h3>
+<p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
+<p>Without <code>barrier()</code>, race conditions occur:</p>
+<pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]
+
+Step 1 (stride = 4):
+Thread 0 reads: shared[0] = 0, shared[4] = 16
+Thread 1 reads: shared[1] = 1, shared[5] = 25
+Thread 2 reads: shared[2] = 4, shared[6] = 36
+Thread 3 reads: shared[3] = 9, shared[7] = 49
+
+Without barrier:
+- Thread 0 writes: shared[0] = 0 + 16 = 16
+- Thread 1 starts next step (stride = 2) before Thread 0 finishes
+  and reads old value shared[0] = 0 instead of 16!
+</code></pre>
+<p>With <code>barrier()</code>:</p>
+<pre><code class="language-text">Step 1 (stride = 4):
+All threads write their sums:
+[16 26 40 58 16 25 36 49]
+barrier() ensures ALL threads see these values
+
+Step 2 (stride = 2):
+Now threads safely read the updated values:
+Thread 0: shared[0] = 16 + 40 = 56
+Thread 1: shared[1] = 26 + 58 = 84
+</code></pre>
+<p>The <code>barrier()</code> ensures:</p>
+<ol>
+<li>All writes from current step complete</li>
+<li>All threads see updated values</li>
+<li>No thread starts next iteration early</li>
+<li>Consistent shared memory state</li>
+</ol>
+<p>Without these synchronization points, we could get:</p>
+<ul>
+<li>Memory race conditions</li>
+<li>Threads reading stale values</li>
+<li>Non-deterministic results</li>
+<li>Incorrect final sum</li>
+</ul>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_10/puzzle_10.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_10/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_10/puzzle_10.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_10/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>

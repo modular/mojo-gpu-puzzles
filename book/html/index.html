@@ -1,0 +1,354 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Introduction - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="images/puzzle-logo.png">
+        <meta property="og:url" content="https://puzzles.modular.com">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="images/puzzle-logo.png">
+        <link rel="icon" type="image/png" href="images/puzzle-logo.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname.includes('modular.com');
+            const script = document.createElement('script');
+            if (is_prod) {
+                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
+                document.head.appendChild(script);
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            } else {
+                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
+                document.head.appendChild(script);
+                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <p align="center">
+  <img src="images/puzzle-logo.png" alt="Mojo GPU Puzzles Logo" width="100">
+</p>
+<p align="center">
+  <h1 align="center">Mojo🔥 GPU Puzzles</h1>
+</p>
+<p align="center" style="display: flex; justify-content: center; gap: 8px;">
+  <a href="https://github.com/modular/mojo-gpu-puzzles">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub Repository">
+  </a>
+  <a href="https://docs.modular.com/mojo">
+    <img src="https://img.shields.io/badge/Powered%20by-Mojo-FF5F1F" alt="Powered by Mojo">
+  </a>
+  <a href="https://www.modular.com/company/talk-to-us">
+    <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
+  </a>
+  <a href="https://forum.modular.com/c/">
+    <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular Forum">
+  </a>
+  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
+    <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
+  </a>
+</p>
+<blockquote>
+<p>🚧 This book is a work in progress! Some sections may be incomplete or subject to change. 🚧</p>
+</blockquote>
+<blockquote>
+<p><em>“For the things we have to learn before we can do them, we learn by doing them.”</em>
+Aristotle, (Nicomachean Ethics)</p>
+</blockquote>
+<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to mastering GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥 — the innovative programming language that combines Pythonic syntax with systems-level performance. GPU programming remains one of the most powerful skills in modern computing, driving advances in artificial intelligence, scientific simulation, and high-performance computing.</p>
+<p>This book takes a unique approach to teaching GPU programming: learning by solving increasingly challenging puzzles. Rather than traditional textbook learning, you’ll immediately start writing real GPU code and seeing the results.</p>
+<p>The early chapters of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive CUDA learning project by Sasha Rush. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while expanding on advanced topics with Mojo-specific optimizations.</p>
+<h2 id="why-mojo--for-gpu-programming"><a class="header" href="#why-mojo--for-gpu-programming">Why Mojo 🔥 for GPU Programming?</a></h2>
+<p>The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.</p>
+<p>Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:</p>
+<ul>
+<li><strong>Python-like Syntax</strong> with systems programming capabilities that feels familiar to the largest programming community</li>
+<li><strong>Zero-cost Abstractions</strong> that compile to efficient machine code without sacrificing performance</li>
+<li><strong>Strong Type System</strong> that catches errors at compile time while maintaining expressiveness</li>
+<li><strong>Built-in Tensor Support</strong> with hardware-aware optimizations specifically designed for GPU computation</li>
+<li><strong>Direct Access</strong> to low-level CPU and GPU intrinsics for systems-level programming</li>
+<li><strong>Cross-Hardware Portability</strong> allowing you to write code that can run on both CPUs and GPUs</li>
+<li><strong>Ergonomic and Safety Improvements</strong> over traditional C/C++ GPU programming</li>
+<li><strong>Lower Barrier to Entry</strong> enabling more programmers to harness GPU power effectively</li>
+</ul>
+<blockquote>
+<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong>
+<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
+</blockquote>
+<h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU Programming Mindset</a></h2>
+<p>Effective GPU programming requires a fundamental shift in how we think about computation. Here are some key mental models that will guide your journey:</p>
+<h3 id="from-sequential-to-parallel-eliminating-loops-with-threads"><a class="header" href="#from-sequential-to-parallel-eliminating-loops-with-threads">From Sequential to Parallel: Eliminating Loops with Threads</a></h3>
+<p>In traditional CPU programming, we process data sequentially through loops:</p>
+<pre><code class="language-python"># CPU approach
+for i in range(data_size):
+    result[i] = process(data[i])
+</code></pre>
+<p>With GPUs, we flip this model entirely. Instead of moving sequentially through data, we map thousands of parallel threads directly onto the data:</p>
+<pre><code class="language-mojo"># GPU approach (conceptual)
+thread_id = get_global_id()
+if thread_id &lt; data_size:
+    result[thread_id] = process(data[thread_id])
+</code></pre>
+<p>Each thread becomes responsible for computing a single element, eliminating the need for explicit loops. This mental shift—from “stepping through data” to “blanketing data with compute”—is central to GPU programming.</p>
+<h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a Mesh of Compute Over Data</a></h3>
+<p>Imagine your data as a grid, and GPU threads as another grid that overlays it. Your task is to design this “compute mesh” to efficiently cover your data:</p>
+<ul>
+<li><strong>Threads</strong>: Individual compute units that process single data elements</li>
+<li><strong>Blocks</strong>: Organized groups of threads that share fast memory</li>
+<li><strong>Grid</strong>: The entire collection of blocks that covers your dataset</li>
+</ul>
+<p>The art of GPU programming lies in crafting this mesh to maximize parallelism while respecting memory and synchronization constraints.</p>
+<h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data Movement vs. Computation</a></h3>
+<p>In GPU programming, data movement is often more expensive than computation:</p>
+<ul>
+<li>Moving data between CPU and GPU is slow</li>
+<li>Moving data between global and shared memory is faster</li>
+<li>Operating on data already in registers or shared memory is extremely fast</li>
+</ul>
+<p>This inverts another common assumption in programming: computation is no longer the bottleneck—data movement is.</p>
+<p>Through the puzzles in this book, you’ll develop an intuitive understanding of these principles, transforming how you approach computational problems.</p>
+<h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What You Will Learn</a></h2>
+<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By mastering both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
+<p>Your learning path includes:</p>
+<ul>
+<li><strong>GPU Programming Fundamentals</strong>: Thread organization, memory hierarchies, and kernel execution models</li>
+<li><strong>Dual Implementation Paths</strong>: Beginning with raw memory approaches using pointers, then transitioning to LayoutTensor abstractions</li>
+<li><strong>Memory Management</strong>: Working with global, shared, and thread-local memory for optimal performance</li>
+<li><strong>Low-level to High-level Progression</strong>: Understanding the foundation with UnsafePointer before leveraging LayoutTensor’s elegant abstractions</li>
+<li><strong>Layout Tensors</strong>: Mastering Mojo’s powerful tensor abstractions for simplified, efficient GPU computation</li>
+<li><strong>Parallel Algorithms</strong>: Implementing and optimizing parallel reductions, convolutions, matrix operations, and more</li>
+<li><strong>Performance Optimization</strong>: Advanced techniques for memory coalescing, tiling, bank conflict avoidance, and minimizing thread divergence</li>
+<li><strong>Real-world Applications</strong>: Applying these concepts to machine learning, signal processing, and computational tasks</li>
+</ul>
+<p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This gives you both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="howto.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="howto.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/mojolang.js"></script>
+        <script src="theme/sidebar.js"></script>
+        <script src="theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>

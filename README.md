@@ -102,6 +102,12 @@ We welcome contributions! Whether it's:
 - 🐛 Fixing bugs ([report bug](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=bug_report.yml))
 - 💡 Suggesting improvements ([request feature](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=feature_request.yml))
 
+Before you contribute, make sure to add the githooks to your config like:
+
+```bash
+git config core.hooksPath gitHooks
+```
+
 Please feel free to:
 1. Fork the repository
 2. Create your feature branch

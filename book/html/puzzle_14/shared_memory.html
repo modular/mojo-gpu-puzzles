@@ -1,0 +1,541 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🤝 Shared Memory Version - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="../images/puzzle-logo.png">
+        <meta property="og:url" content="https://puzzles.modular.com">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="../images/puzzle-logo.png">
+        <link rel="icon" type="image/png" href="../images/puzzle-logo.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+
+        <script>
+            const is_prod = window.location.hostname.includes('modular.com');
+            const script = document.createElement('script');
+            if (is_prod) {
+                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
+                document.head.appendChild(script);
+                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
+            } else {
+                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
+                document.head.appendChild(script);
+                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
+            }
+        </script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="logo-link" href="https://modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(\text{transpose}(A)\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Block-local memory management with LayoutTensor</li>
+<li>Thread synchronization patterns</li>
+<li>Memory access optimization using shared memory</li>
+<li>Collaborative data loading with 2D indexing</li>
+<li>Efficient use of LayoutTensor for matrix operations</li>
+</ul>
+<p>The key insight is understanding how to use fast shared memory with LayoutTensor to reduce expensive global memory operations.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
+<li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
+<li>Grid dimensions: \(1 \times 1\)</li>
+</ul>
+<p>Layout configuration:</p>
+<ul>
+<li>Input A: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code> (transpose of A)</li>
+<li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Shared Memory: Two <code>TPB × TPB</code> LayoutTensors</li>
+</ul>
+<p>Memory organization:</p>
+<pre><code class="language-txt">Global Memory (LayoutTensor):          Shared Memory (LayoutTensor):
+A[i,j]: Direct access                  a_shared[local_i, local_j]
+B[i,j]: Transposed access              b_shared[local_i, local_j]
+</code></pre>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">fn single_block_matmul[
+    layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_j = block_dim.y * block_idx.y + thread_idx.y
+    local_i = thread_idx.x
+    local_j = thread_idx.y
+    # FILL ME IN (roughly 12 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Load matrices to shared memory using global and local indices</li>
+<li>Call <code>barrier()</code> after loading</li>
+<li>Compute dot product using shared memory indices</li>
+<li>Check array bounds for all operations</li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<pre><code class="language-bash">magic run p14 --single-block
+</code></pre>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([1.0, 3.0, 3.0, 13.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn single_block_matmul[
+    layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_j = block_dim.y * block_idx.y + thread_idx.y
+    local_i = thread_idx.x
+    local_j = thread_idx.y
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+
+    if global_i &lt; size and global_j &lt; size:
+        a_shared[local_i, local_j] = a[global_i, global_j]
+        b_shared[local_i, local_j] = b[global_i, global_j]
+
+    barrier()
+
+    if global_i &lt; size and global_j &lt; size:
+        var acc: out.element_type = 0
+
+        @parameter
+        for k in range(size):
+            acc += a_shared[local_i, k] * b_shared[k, local_j]
+
+        out[global_i, global_j] = acc
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The shared memory implementation with LayoutTensor improves performance through efficient memory access patterns:</p>
+<h3 id="memory-organization"><a class="header" href="#memory-organization">Memory Organization</a></h3>
+<pre><code class="language-txt">Input Tensors (2×2):                Shared Memory (3×3):
+Matrix A:                           a_shared:
+ [a[0,0] a[0,1]]                    [s[0,0] s[0,1] s[0,2]]
+ [a[1,0] a[1,1]]                    [s[1,0] s[1,1] s[1,2]]
+                                    [s[2,0] s[2,1] s[2,2]]
+Matrix B (transpose):               b_shared: (similar layout)
+ [b[0,0] b[0,1]]                    [t[0,0] t[0,1] t[0,2]]
+ [b[1,0] b[1,1]]                    [t[1,0] t[1,1] t[1,2]]
+                                    [t[2,0] t[2,1] t[2,2]]
+</code></pre>
+<h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation Phases:</a></h3>
+<ol>
+<li>
+<p><strong>Shared Memory Setup</strong>:</p>
+<pre><code class="language-mojo"># Create 2D shared memory tensors using TensorBuilder
+a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+</code></pre>
+</li>
+<li>
+<p><strong>Thread Indexing</strong>:</p>
+<pre><code class="language-mojo"># Global indices for matrix access
+global_i = block_dim.x * block_idx.x + thread_idx.x
+global_j = block_dim.y * block_idx.y + thread_idx.y
+
+# Local indices for shared memory
+local_i = thread_idx.x
+local_j = thread_idx.y
+</code></pre>
+</li>
+<li>
+<p><strong>Data Loading</strong>:</p>
+<pre><code class="language-mojo"># Load data into shared memory using LayoutTensor indexing
+if global_i &lt; size and global_j &lt; size:
+    a_shared[local_i, local_j] = a[global_i, global_j]
+    b_shared[local_i, local_j] = b[global_i, global_j]
+</code></pre>
+</li>
+<li>
+<p><strong>Computation with Shared Memory</strong>:</p>
+<pre><code class="language-mojo"># Guard ensures we only compute for valid matrix elements
+if global_i &lt; size and global_j &lt; size:
+    # Initialize accumulator with output tensor's type
+    var acc: out.element_type = 0
+
+    # Compile-time unrolled loop for matrix multiplication
+    @parameter
+    for k in range(size):
+        acc += a_shared[local_i, k] * b_shared[k, local_j]
+
+    # Write result only for threads within matrix bounds
+    out[global_i, global_j] = acc
+</code></pre>
+<p>Key aspects:</p>
+<ul>
+<li>
+<p><strong>Boundary Check</strong>: <code>if global_i &lt; size and global_j &lt; size</code></p>
+<ul>
+<li>Prevents out-of-bounds computation</li>
+<li>Only valid threads perform work</li>
+<li>Essential because TPB (3×3) &gt; SIZE (2×2)</li>
+</ul>
+</li>
+<li>
+<p><strong>Accumulator Type</strong>: <code>var acc: out.element_type</code></p>
+<ul>
+<li>Uses output tensor’s element type for type safety</li>
+<li>Ensures consistent numeric precision</li>
+<li>Initialized to zero before accumulation</li>
+</ul>
+</li>
+<li>
+<p><strong>Loop Optimization</strong>: <code>@parameter for k in range(size)</code></p>
+<ul>
+<li>Unrolls the loop at compile time</li>
+<li>Enables better instruction scheduling</li>
+<li>Efficient for small, known matrix sizes</li>
+</ul>
+</li>
+<li>
+<p><strong>Result Writing</strong>: <code>out[global_i, global_j] = acc</code></p>
+<ul>
+<li>Protected by the same guard condition</li>
+<li>Only valid threads write results</li>
+<li>Maintains matrix bounds safety</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread Safety and Synchronization:</a></h3>
+<ol>
+<li>
+<p><strong>Guard Conditions</strong>:</p>
+<ul>
+<li>Input Loading: <code>if global_i &lt; size and global_j &lt; size</code></li>
+<li>Computation: Same guard ensures thread safety</li>
+<li>Output Writing: Protected by the same condition</li>
+<li>Prevents invalid memory access and race conditions</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory Access Safety</strong>:</p>
+<ul>
+<li>Shared memory: Accessed only within TPB bounds</li>
+<li>Global memory: Protected by size checks</li>
+<li>Output: Guarded writes prevent corruption</li>
+</ul>
+</li>
+</ol>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key Language Features:</a></h3>
+<ol>
+<li>
+<p><strong>LayoutTensor Benefits</strong>:</p>
+<ul>
+<li>Direct 2D indexing simplifies code</li>
+<li>Type safety through <code>element_type</code></li>
+<li>Efficient memory layout handling</li>
+</ul>
+</li>
+<li>
+<p><strong>Shared Memory Allocation</strong>:</p>
+<ul>
+<li>TensorBuilder for structured allocation</li>
+<li>Row-major layout matching input tensors</li>
+<li>Proper alignment for efficient access</li>
+</ul>
+</li>
+<li>
+<p><strong>Synchronization</strong>:</p>
+<ul>
+<li><code>barrier()</code> ensures shared memory consistency</li>
+<li>Proper synchronization between load and compute</li>
+<li>Thread cooperation within block</li>
+</ul>
+</li>
+</ol>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance Optimizations:</a></h3>
+<ol>
+<li>
+<p><strong>Memory Access Efficiency</strong>:</p>
+<ul>
+<li>Single global memory load per element</li>
+<li>Multiple reuse through shared memory</li>
+<li>Coalesced memory access patterns</li>
+</ul>
+</li>
+<li>
+<p><strong>Thread Cooperation</strong>:</p>
+<ul>
+<li>Collaborative data loading</li>
+<li>Shared data reuse</li>
+<li>Efficient thread synchronization</li>
+</ul>
+</li>
+<li>
+<p><strong>Computational Benefits</strong>:</p>
+<ul>
+<li>Reduced global memory traffic</li>
+<li>Better cache utilization</li>
+<li>Improved instruction throughput</li>
+</ul>
+</li>
+</ol>
+<p>This implementation significantly improves performance over the naive version by:</p>
+<ul>
+<li>Reducing global memory accesses</li>
+<li>Enabling data reuse through shared memory</li>
+<li>Using efficient 2D indexing with LayoutTensor</li>
+<li>Maintaining proper thread synchronization</li>
+</ul>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_14/naive.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_14/tiled.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_14/naive.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_14/tiled.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+
+
+    </div>
+    </body>
+</html>
