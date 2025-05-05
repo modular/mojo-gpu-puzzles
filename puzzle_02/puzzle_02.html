@@ -69,20 +69,6 @@
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc.js"></script>
-
-        <script>
-            const is_prod = window.location.hostname.includes('modular.com');
-            const script = document.createElement('script');
-            if (is_prod) {
-                script.src = 'https://cdn.amplitude.com/script/3878a0571d1575870a7d0a5f7e644d23.js';
-                document.head.appendChild(script);
-                window.amplitude.init('3878a0571d1575870a7d0a5f7e644d23', { fetchRemoteConfig: true, autocapture: true });
-            } else {
-                script.src = 'https://cdn.amplitude.com/script/d8bf208ebdc1b1000d38da8b826a74c4.js';
-                document.head.appendChild(script);
-                window.amplitude.init('d8bf208ebdc1b1000d38da8b826a74c4', { fetchRemoteConfig: true, autocapture: true });
-            }
-        </script>
     </head>
     <body>
     <div id="body-container">
@@ -343,6 +329,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
         <script src="../theme/mojolang.js"></script>
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
 
 
     </div>
