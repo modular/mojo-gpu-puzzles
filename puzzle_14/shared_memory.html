@@ -195,7 +195,7 @@
                     <main>
                         <h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(\text{transpose}(A)\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -258,7 +258,7 @@ B[i,j]: Transposed access              b_shared[local_i, local_j]
 </code></pre>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([1.0, 3.0, 3.0, 13.0])
+expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
