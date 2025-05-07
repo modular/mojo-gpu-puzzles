@@ -215,14 +215,14 @@
 <p>Layout configuration:</p>
 <ul>
 <li>Input A: <code>Layout.row_major(SIZE, SIZE)</code></li>
-<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code> (transpose of A)</li>
+<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code></li>
 <li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
 <li>Shared Memory: Two <code>TPB × TPB</code> LayoutTensors</li>
 </ul>
 <p>Memory organization:</p>
 <pre><code class="language-txt">Global Memory (LayoutTensor):          Shared Memory (LayoutTensor):
-A[i,j]: Direct access                  a_shared[local_i, local_j]
-B[i,j]: Transposed access              b_shared[local_i, local_j]
+A[i,j]: Direct access                  a_shared[local_row, local_col]
+B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">fn single_block_matmul[
@@ -232,10 +232,10 @@ B[i,j]: Transposed access              b_shared[local_i, local_j]
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    local_row = thread_idx.y
+    local_col = thread_idx.x
     # FILL ME IN (roughly 12 lines)
 
 
@@ -270,42 +270,43 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 
-    if global_i &lt; size and global_j &lt; size:
-        a_shared[local_i, local_j] = a[global_i, global_j]
-        b_shared[local_i, local_j] = b[global_i, global_j]
+    if row &lt; size and col &lt; size:
+        a_shared[local_row, local_col] = a[row, col]
+        b_shared[local_row, local_col] = b[row, col]
 
     barrier()
 
-    if global_i &lt; size and global_j &lt; size:
+    if row &lt; size and col &lt; size:
         var acc: out.element_type = 0
 
         @parameter
         for k in range(size):
-            acc += a_shared[local_i, k] * b_shared[k, local_j]
+            acc += a_shared[local_row, k] * b_shared[k, local_col]
 
-        out[global_i, global_j] = acc
+        out[row, col] = acc
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>The shared memory implementation with LayoutTensor improves performance through efficient memory access patterns:</p>
-<h3 id="memory-organization"><a class="header" href="#memory-organization">Memory Organization</a></h3>
+<h3 id="memory-organization"><a class="header" href="#memory-organization">Memory organization</a></h3>
 <pre><code class="language-txt">Input Tensors (2×2):                Shared Memory (3×3):
 Matrix A:                           a_shared:
- [a[0,0] a[0,1]]                    [s[0,0] s[0,1] s[0,2]]
- [a[1,0] a[1,1]]                    [s[1,0] s[1,1] s[1,2]]
-                                    [s[2,0] s[2,1] s[2,2]]
-Matrix B (transpose):               b_shared: (similar layout)
- [b[0,0] b[0,1]]                    [t[0,0] t[0,1] t[0,2]]
- [b[1,0] b[1,1]]                    [t[1,0] t[1,1] t[1,2]]
-                                    [t[2,0] t[2,1] t[2,2]]
+ [a[0,0] a[0,1]]                     [s[0,0] s[0,1] s[0,2]]
+ [a[1,0] a[1,1]]                     [s[1,0] s[1,1] s[1,2]]
+                                     [s[2,0] s[2,1] s[2,2]]
+Matrix B:                           b_shared: (similar layout)
+ [b[0,0] b[0,1]]                     [t[0,0] t[0,1] t[0,2]]
+ [b[1,0] b[1,1]]                     [t[1,0] t[1,1] t[1,2]]
+                                     [t[2,0] t[2,1] t[2,2]]
 </code></pre>
 <h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation Phases:</a></h3>
 <ol>
@@ -319,41 +320,41 @@ b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 <li>
 <p><strong>Thread Indexing</strong>:</p>
 <pre><code class="language-mojo"># Global indices for matrix access
-global_i = block_dim.x * block_idx.x + thread_idx.x
-global_j = block_dim.y * block_idx.y + thread_idx.y
+row = block_dim.y * block_idx.y + thread_idx.y
+col = block_dim.x * block_idx.x + thread_idx.x
 
 # Local indices for shared memory
-local_i = thread_idx.x
-local_j = thread_idx.y
+local_row = thread_idx.y
+local_col = thread_idx.x
 </code></pre>
 </li>
 <li>
 <p><strong>Data Loading</strong>:</p>
 <pre><code class="language-mojo"># Load data into shared memory using LayoutTensor indexing
-if global_i &lt; size and global_j &lt; size:
-    a_shared[local_i, local_j] = a[global_i, global_j]
-    b_shared[local_i, local_j] = b[global_i, global_j]
+if row &lt; size and col &lt; size:
+    a_shared[local_row, local_col] = a[row, col]
+    b_shared[local_row, local_col] = b[row, col]
 </code></pre>
 </li>
 <li>
 <p><strong>Computation with Shared Memory</strong>:</p>
 <pre><code class="language-mojo"># Guard ensures we only compute for valid matrix elements
-if global_i &lt; size and global_j &lt; size:
+if row &lt; size and col &lt; size:
     # Initialize accumulator with output tensor's type
     var acc: out.element_type = 0
 
     # Compile-time unrolled loop for matrix multiplication
     @parameter
     for k in range(size):
-        acc += a_shared[local_i, k] * b_shared[k, local_j]
+        acc += a_shared[local_row, k] * b_shared[k, local_col]
 
     # Write result only for threads within matrix bounds
-    out[global_i, global_j] = acc
+    out[row, col] = acc
 </code></pre>
 <p>Key aspects:</p>
 <ul>
 <li>
-<p><strong>Boundary Check</strong>: <code>if global_i &lt; size and global_j &lt; size</code></p>
+<p><strong>Boundary check</strong>: <code>if row &lt; size and col &lt; size</code></p>
 <ul>
 <li>Prevents out-of-bounds computation</li>
 <li>Only valid threads perform work</li>
@@ -377,7 +378,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Result Writing</strong>: <code>out[global_i, global_j] = acc</code></p>
+<p><strong>Result Writing</strong>: <code>out[row, col] = acc</code></p>
 <ul>
 <li>Protected by the same guard condition</li>
 <li>Only valid threads write results</li>
@@ -387,19 +388,19 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread Safety and Synchronization:</a></h3>
+<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization:</a></h3>
 <ol>
 <li>
-<p><strong>Guard Conditions</strong>:</p>
+<p><strong>Guard conditions</strong>:</p>
 <ul>
-<li>Input Loading: <code>if global_i &lt; size and global_j &lt; size</code></li>
+<li>Input Loading: <code>if row &lt; size and col &lt; size</code></li>
 <li>Computation: Same guard ensures thread safety</li>
 <li>Output Writing: Protected by the same condition</li>
 <li>Prevents invalid memory access and race conditions</li>
 </ul>
 </li>
 <li>
-<p><strong>Memory Access Safety</strong>:</p>
+<p><strong>Memory access safety</strong>:</p>
 <ul>
 <li>Shared memory: Accessed only within TPB bounds</li>
 <li>Global memory: Protected by size checks</li>
@@ -407,10 +408,10 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="key-language-features"><a class="header" href="#key-language-features">Key Language Features:</a></h3>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features:</a></h3>
 <ol>
 <li>
-<p><strong>LayoutTensor Benefits</strong>:</p>
+<p><strong>LayoutTensor benefits</strong>:</p>
 <ul>
 <li>Direct 2D indexing simplifies code</li>
 <li>Type safety through <code>element_type</code></li>
@@ -418,7 +419,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Shared Memory Allocation</strong>:</p>
+<p><strong>Shared memory allocation</strong>:</p>
 <ul>
 <li>TensorBuilder for structured allocation</li>
 <li>Row-major layout matching input tensors</li>
@@ -434,7 +435,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance Optimizations:</a></h3>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance optimizations:</a></h3>
 <ol>
 <li>
 <p><strong>Memory Access Efficiency</strong>:</p>
@@ -445,7 +446,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Thread Cooperation</strong>:</p>
+<p><strong>Thread cooperation</strong>:</p>
 <ul>
 <li>Collaborative data loading</li>
 <li>Shared data reuse</li>
@@ -453,7 +454,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Computational Benefits</strong>:</p>
+<p><strong>Computational benefits</strong>:</p>
 <ul>
 <li>Reduced global memory traffic</li>
 <li>Better cache utilization</li>

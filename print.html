@@ -4105,12 +4105,6 @@ This is the most straightforward implementation where each thread computes one e
 <li>Input B: <code>Layout.row_major(SIZE, SIZE)</code></li>
 <li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
 </ul>
-<p>Memory layout (LayoutTensor):</p>
-<ul>
-<li>Matrix A: <code>a[i, j]</code> directly indexes position (i,j)</li>
-<li>Matrix B: <code>b[i, j]</code> is the transpose of A</li>
-<li>Output C: <code>out[i, j]</code> stores result at position (i,j)</li>
-</ul>
 <h2 id="code-to-complete-21"><a class="header" href="#code-to-complete-21">Code to complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from layout import Layout, LayoutTensor
@@ -4132,8 +4126,8 @@ fn naive_matmul[
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 6 lines)
 
 
@@ -4143,7 +4137,7 @@ fn naive_matmul[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate <code>global_i</code> and <code>global_j</code> from thread indices</li>
+<li>Calculate <code>row</code> and <code>col</code> from thread indices</li>
 <li>Check if indices are within <code>size</code></li>
 <li>Accumulate products in a local variable</li>
 <li>Write final sum to correct output position</li>
@@ -4168,66 +4162,66 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
 
-    if global_i &lt; size and global_j &lt; size:
+    if row &lt; size and col &lt; size:
         var acc: out.element_type = 0
 
         @parameter
         for k in range(size):
-            acc += a[global_i, k] * b[k, global_j]
+            acc += a[row, k] * b[k, col]
 
-        out[global_i, global_j] = acc
+        out[row, col] = acc
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>The naive matrix multiplication using LayoutTensor demonstrates the basic approach:</p>
 <h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix Layout (2×2 example)</a></h3>
-<pre><code class="language-txt">Matrix A:        Matrix B (transpose of A):    Output C:
- [a[0,0] a[0,1]]  [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
- [a[1,0] a[1,1]]  [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
+<pre><code class="language-txt">Matrix A:          Matrix B:                   Output C:
+[a[0,0] a[0,1]]    [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
+[a[1,0] a[1,1]]    [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
 </code></pre>
 <h3 id="implementation-details-2"><a class="header" href="#implementation-details-2">Implementation Details:</a></h3>
 <ol>
 <li>
-<p><strong>Thread Mapping</strong>:</p>
-<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
-global_j = block_dim.y * block_idx.y + thread_idx.y
+<p><strong>Thread mapping</strong>:</p>
+<pre><code class="language-mojo">row = block_dim.y * block_idx.y + thread_idx.y
+col = block_dim.x * block_idx.x + thread_idx.x
 </code></pre>
 </li>
 <li>
-<p><strong>Memory Access Pattern</strong>:</p>
+<p><strong>Memory access pattern</strong>:</p>
 <ul>
-<li>Direct 2D indexing: <code>a[global_i, k]</code></li>
-<li>Transposed access: <code>b[k, global_j]</code></li>
-<li>Output writing: <code>out[global_i, global_j]</code></li>
+<li>Direct 2D indexing: <code>a[row, k]</code></li>
+<li>Transposed access: <code>b[k, col]</code></li>
+<li>Output writing: <code>out[row, col]</code></li>
 </ul>
 </li>
 <li>
-<p><strong>Computation Flow</strong>:</p>
+<p><strong>Computation flow</strong>:</p>
 <pre><code class="language-mojo"># Use var for mutable accumulator with tensor's element type
 var acc: out.element_type = 0
 
 # @parameter for compile-time loop unrolling
 @parameter
 for k in range(size):
-    acc += a[global_i, k] * b[k, global_j]
+    acc += a[row, k] * b[k, col]
 </code></pre>
 </li>
 </ol>
-<h3 id="key-language-features"><a class="header" href="#key-language-features">Key Language Features:</a></h3>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features:</a></h3>
 <ol>
 <li>
-<p><strong>Variable Declaration</strong>:</p>
+<p><strong>Variable declaration</strong>:</p>
 <ul>
 <li>The use of <code>var</code> in <code>var acc: out.element_type = 0</code> allows for type inference with <code>out.element_type</code> ensures type compatibility with the output tensor</li>
 <li>Initialized to zero before accumulation</li>
 </ul>
 </li>
 <li>
-<p><strong>Loop Optimization</strong>:</p>
+<p><strong>Loop pptimization</strong>:</p>
 <ul>
 <li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a> decorator unrolls the loop at compile time</li>
 <li>Improves performance for small, known matrix sizes</li>
@@ -4235,10 +4229,10 @@ for k in range(size):
 </ul>
 </li>
 </ol>
-<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance Characteristics:</a></h3>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics:</a></h3>
 <ol>
 <li>
-<p><strong>Memory Access</strong>:</p>
+<p><strong>Memory access</strong>:</p>
 <ul>
 <li>Each thread makes <code>2 x SIZE</code> global memory reads</li>
 <li>One global memory write per thread</li>
@@ -4246,7 +4240,7 @@ for k in range(size):
 </ul>
 </li>
 <li>
-<p><strong>Computational Efficiency</strong>:</p>
+<p><strong>Computational efficiency</strong>:</p>
 <ul>
 <li>Simple implementation but suboptimal performance</li>
 <li>Many redundant global memory accesses</li>
@@ -4287,14 +4281,14 @@ for k in range(size):
 <p>Layout configuration:</p>
 <ul>
 <li>Input A: <code>Layout.row_major(SIZE, SIZE)</code></li>
-<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code> (transpose of A)</li>
+<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code></li>
 <li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
 <li>Shared Memory: Two <code>TPB × TPB</code> LayoutTensors</li>
 </ul>
 <p>Memory organization:</p>
 <pre><code class="language-txt">Global Memory (LayoutTensor):          Shared Memory (LayoutTensor):
-A[i,j]: Direct access                  a_shared[local_i, local_j]
-B[i,j]: Transposed access              b_shared[local_i, local_j]
+A[i,j]: Direct access                  a_shared[local_row, local_col]
+B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete-22"><a class="header" href="#code-to-complete-22">Code to complete</a></h2>
 <pre><code class="language-mojo">fn single_block_matmul[
@@ -4304,10 +4298,10 @@ B[i,j]: Transposed access              b_shared[local_i, local_j]
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    local_row = thread_idx.y
+    local_col = thread_idx.x
     # FILL ME IN (roughly 12 lines)
 
 
@@ -4342,42 +4336,43 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 
-    if global_i &lt; size and global_j &lt; size:
-        a_shared[local_i, local_j] = a[global_i, global_j]
-        b_shared[local_i, local_j] = b[global_i, global_j]
+    if row &lt; size and col &lt; size:
+        a_shared[local_row, local_col] = a[row, col]
+        b_shared[local_row, local_col] = b[row, col]
 
     barrier()
 
-    if global_i &lt; size and global_j &lt; size:
+    if row &lt; size and col &lt; size:
         var acc: out.element_type = 0
 
         @parameter
         for k in range(size):
-            acc += a_shared[local_i, k] * b_shared[k, local_j]
+            acc += a_shared[local_row, k] * b_shared[k, local_col]
 
-        out[global_i, global_j] = acc
+        out[row, col] = acc
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>The shared memory implementation with LayoutTensor improves performance through efficient memory access patterns:</p>
-<h3 id="memory-organization"><a class="header" href="#memory-organization">Memory Organization</a></h3>
+<h3 id="memory-organization"><a class="header" href="#memory-organization">Memory organization</a></h3>
 <pre><code class="language-txt">Input Tensors (2×2):                Shared Memory (3×3):
 Matrix A:                           a_shared:
- [a[0,0] a[0,1]]                    [s[0,0] s[0,1] s[0,2]]
- [a[1,0] a[1,1]]                    [s[1,0] s[1,1] s[1,2]]
-                                    [s[2,0] s[2,1] s[2,2]]
-Matrix B (transpose):               b_shared: (similar layout)
- [b[0,0] b[0,1]]                    [t[0,0] t[0,1] t[0,2]]
- [b[1,0] b[1,1]]                    [t[1,0] t[1,1] t[1,2]]
-                                    [t[2,0] t[2,1] t[2,2]]
+ [a[0,0] a[0,1]]                     [s[0,0] s[0,1] s[0,2]]
+ [a[1,0] a[1,1]]                     [s[1,0] s[1,1] s[1,2]]
+                                     [s[2,0] s[2,1] s[2,2]]
+Matrix B:                           b_shared: (similar layout)
+ [b[0,0] b[0,1]]                     [t[0,0] t[0,1] t[0,2]]
+ [b[1,0] b[1,1]]                     [t[1,0] t[1,1] t[1,2]]
+                                     [t[2,0] t[2,1] t[2,2]]
 </code></pre>
 <h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation Phases:</a></h3>
 <ol>
@@ -4391,41 +4386,41 @@ b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 <li>
 <p><strong>Thread Indexing</strong>:</p>
 <pre><code class="language-mojo"># Global indices for matrix access
-global_i = block_dim.x * block_idx.x + thread_idx.x
-global_j = block_dim.y * block_idx.y + thread_idx.y
+row = block_dim.y * block_idx.y + thread_idx.y
+col = block_dim.x * block_idx.x + thread_idx.x
 
 # Local indices for shared memory
-local_i = thread_idx.x
-local_j = thread_idx.y
+local_row = thread_idx.y
+local_col = thread_idx.x
 </code></pre>
 </li>
 <li>
 <p><strong>Data Loading</strong>:</p>
 <pre><code class="language-mojo"># Load data into shared memory using LayoutTensor indexing
-if global_i &lt; size and global_j &lt; size:
-    a_shared[local_i, local_j] = a[global_i, global_j]
-    b_shared[local_i, local_j] = b[global_i, global_j]
+if row &lt; size and col &lt; size:
+    a_shared[local_row, local_col] = a[row, col]
+    b_shared[local_row, local_col] = b[row, col]
 </code></pre>
 </li>
 <li>
 <p><strong>Computation with Shared Memory</strong>:</p>
 <pre><code class="language-mojo"># Guard ensures we only compute for valid matrix elements
-if global_i &lt; size and global_j &lt; size:
+if row &lt; size and col &lt; size:
     # Initialize accumulator with output tensor's type
     var acc: out.element_type = 0
 
     # Compile-time unrolled loop for matrix multiplication
     @parameter
     for k in range(size):
-        acc += a_shared[local_i, k] * b_shared[k, local_j]
+        acc += a_shared[local_row, k] * b_shared[k, local_col]
 
     # Write result only for threads within matrix bounds
-    out[global_i, global_j] = acc
+    out[row, col] = acc
 </code></pre>
 <p>Key aspects:</p>
 <ul>
 <li>
-<p><strong>Boundary Check</strong>: <code>if global_i &lt; size and global_j &lt; size</code></p>
+<p><strong>Boundary check</strong>: <code>if row &lt; size and col &lt; size</code></p>
 <ul>
 <li>Prevents out-of-bounds computation</li>
 <li>Only valid threads perform work</li>
@@ -4449,7 +4444,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Result Writing</strong>: <code>out[global_i, global_j] = acc</code></p>
+<p><strong>Result Writing</strong>: <code>out[row, col] = acc</code></p>
 <ul>
 <li>Protected by the same guard condition</li>
 <li>Only valid threads write results</li>
@@ -4459,19 +4454,19 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread Safety and Synchronization:</a></h3>
+<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization:</a></h3>
 <ol>
 <li>
-<p><strong>Guard Conditions</strong>:</p>
+<p><strong>Guard conditions</strong>:</p>
 <ul>
-<li>Input Loading: <code>if global_i &lt; size and global_j &lt; size</code></li>
+<li>Input Loading: <code>if row &lt; size and col &lt; size</code></li>
 <li>Computation: Same guard ensures thread safety</li>
 <li>Output Writing: Protected by the same condition</li>
 <li>Prevents invalid memory access and race conditions</li>
 </ul>
 </li>
 <li>
-<p><strong>Memory Access Safety</strong>:</p>
+<p><strong>Memory access safety</strong>:</p>
 <ul>
 <li>Shared memory: Accessed only within TPB bounds</li>
 <li>Global memory: Protected by size checks</li>
@@ -4479,10 +4474,10 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="key-language-features-1"><a class="header" href="#key-language-features-1">Key Language Features:</a></h3>
+<h3 id="key-language-features-1"><a class="header" href="#key-language-features-1">Key language features:</a></h3>
 <ol>
 <li>
-<p><strong>LayoutTensor Benefits</strong>:</p>
+<p><strong>LayoutTensor benefits</strong>:</p>
 <ul>
 <li>Direct 2D indexing simplifies code</li>
 <li>Type safety through <code>element_type</code></li>
@@ -4490,7 +4485,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Shared Memory Allocation</strong>:</p>
+<p><strong>Shared memory allocation</strong>:</p>
 <ul>
 <li>TensorBuilder for structured allocation</li>
 <li>Row-major layout matching input tensors</li>
@@ -4506,7 +4501,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="performance-optimizations-2"><a class="header" href="#performance-optimizations-2">Performance Optimizations:</a></h3>
+<h3 id="performance-optimizations-2"><a class="header" href="#performance-optimizations-2">Performance optimizations:</a></h3>
 <ol>
 <li>
 <p><strong>Memory Access Efficiency</strong>:</p>
@@ -4517,7 +4512,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Thread Cooperation</strong>:</p>
+<p><strong>Thread cooperation</strong>:</p>
 <ul>
 <li>Collaborative data loading</li>
 <li>Shared data reuse</li>
@@ -4525,7 +4520,7 @@ if global_i &lt; size and global_j &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Computational Benefits</strong>:</p>
+<p><strong>Computational benefits</strong>:</p>
 <ul>
 <li>Reduced global memory traffic</li>
 <li>Better cache utilization</li>
@@ -4590,10 +4585,33 @@ Each block processes a tile using LayoutTensor indexing
 <li>Write final accumulated result</li>
 </ol>
 <h3 id="memory-access-pattern-1"><a class="header" href="#memory-access-pattern-1">Memory access pattern</a></h3>
-<pre><code class="language-txt">For each tile:
-  Input Tiles:                Output Computation:
-    A[global_i, tile*TPB + j] ×    Result accumulator
-    B[tile*TPB + i, global_j] →    C[global_i, global_j]
+<pre><code class="language-txt">Matrix A (8×8)                 Matrix B (8×8)               Matrix C (8×8)
++---+---+---+                  +---+---+---+                +---+---+---+
+|T00|T01|T02| ...              |T00|T01|T02| ...            |T00|T01|T02| ...
++---+---+---+                  +---+---+---+                +---+---+---+
+|T10|T11|T12|                  |T10|T11|T12|                |T10|T11|T12|
++---+---+---+                  +---+---+---+                +---+---+---+
+|T20|T21|T22|                  |T20|T21|T22|                |T20|T21|T22|
++---+---+---+                  +---+---+---+                +---+---+---+
+  ...                            ...                          ...
+
+Tile Processing (for computing C[T11]):
+1. Load tiles from A and B:
+   +---+      +---+
+   |A11| ×    |B11|     For each phase k:
+   +---+      +---+     C[T11] += A[row, k] × B[k, col]
+
+2. Tile movement:
+   Phase 1     Phase 2     Phase 3
+   A: [T10]    A: [T11]    A: [T12]
+   B: [T01]    B: [T11]    B: [T21]
+
+3. Each thread (i,j) in tile computes:
+   C[i,j] = Σ (A[i,k] × B[k,j]) for k in tile width
+
+Synchronization required:
+* After loading tiles to shared memory
+* After computing each phase
 </code></pre>
 <h2 id="code-to-complete-23"><a class="header" href="#code-to-complete-23">Code to complete</a></h2>
 <pre><code class="language-mojo">alias SIZE_TILED = 8
@@ -4647,10 +4665,10 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
-    global_i = block_idx.x * TPB + local_i
-    global_j = block_idx.y * TPB + local_j
+    tiled_col = block_idx.x * TPB + thread_idx.x
+    tiled_row = block_idx.y * TPB + thread_idx.y
+    local_col = thread_idx.x
+    local_row = thread_idx.y
 
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
@@ -4661,129 +4679,104 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
     @parameter
     for tile in range((size + TPB - 1) // TPB):
         # Reset shared memory tiles
-        if local_i &lt; TPB and local_j &lt; TPB:
-            a_shared[local_i, local_j] = 0
-            b_shared[local_i, local_j] = 0
+        if local_row &lt; TPB and local_col &lt; TPB:
+            a_shared[local_row, local_col] = 0
+            b_shared[local_row, local_col] = 0
 
         barrier()
 
         # Load A tile - global row stays the same, col determined by tile
-        if global_i &lt; size and (tile * TPB + local_j) &lt; size:
-            a_shared[local_i, local_j] = a[
-                global_i, tile * TPB + local_j
+        if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
+            a_shared[local_row, local_col] = a[
+                tiled_row, tile * TPB + local_col
             ]
 
         # Load B tile - row determined by tile, global col stays the same
-        if (tile * TPB + local_i) &lt; size and global_j &lt; size:
-            b_shared[local_i, local_j] = b[
-                tile * TPB + local_i, global_j
+        if (tile * TPB + local_row) &lt; size and tiled_col &lt; size:
+            b_shared[local_row, local_col] = b[
+                tile * TPB + local_row, tiled_col
             ]
 
         barrier()
 
         # Matrix multiplication within the tile
-        if global_i &lt; size and global_j &lt; size:
+        if tiled_row &lt; size and tiled_col &lt; size:
 
             @parameter
             for k in range(min(TPB, size - tile * TPB)):
-                acc += a_shared[local_i, k] * b_shared[k, local_j]
+                acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
 
     # Write out final result
-    if global_i &lt; size and global_j &lt; size:
-        out[global_i, global_j] = acc
+    if tiled_row &lt; size and tiled_col &lt; size:
+        out[tiled_row, tiled_col] = acc
 
 </code></pre>
 <div class="solution-explanation">
-<p>The tiled implementation with LayoutTensor handles matrices efficiently by processing them in blocks. Here’s a comprehensive analysis:</p>
-<h3 id="implementation-architecture"><a class="header" href="#implementation-architecture">Implementation Architecture</a></h3>
+<p>The tiled matrix multiplication implementation demonstrates efficient handling of large matrices ((8 \times 8)) using small tiles ((3 \times 3)). Here’s how it works:</p>
 <ol>
 <li>
-<p><strong>Thread and Block Organization</strong>:</p>
-<pre><code class="language-mojo">local_i = thread_idx.x
-local_j = thread_idx.y
-global_i = block_idx.x * TPB + local_i
-global_j = block_idx.y * TPB + local_j
-</code></pre>
+<p><strong>Thread indexing setup</strong></p>
 <ul>
-<li>Defines row-major layout for all tensors</li>
-<li>Ensures consistent memory access patterns</li>
-<li>Enables efficient 2D indexing</li>
+<li>Global position calculation:
+<pre><code class="language-txt">tiled_row = block_idx.y * TPB + thread_idx.y
+tiled_col = block_idx.x * TPB + thread_idx.x
+</code></pre>
+</li>
+<li>Local position in tile:
+<pre><code class="language-txt">local_row = thread_idx.y
+local_col = thread_idx.x
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Shared Memory Setup</strong>:</p>
-<pre><code class="language-mojo">a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-</code></pre>
-<ul>
-<li>Uses TensorBuilder for structured allocation</li>
-<li>Maintains row-major layout for consistency</li>
-<li>Enables efficient tile processing</li>
-</ul>
-</li>
-</ol>
-<h3 id="tile-processing-pipeline"><a class="header" href="#tile-processing-pipeline">Tile Processing Pipeline</a></h3>
-<ol>
-<li>
-<p><strong>Tile Iteration</strong>:</p>
-<pre><code class="language-mojo">@parameter
-for tile in range((size + TPB - 1) // TPB):
-</code></pre>
-<ul>
-<li>Compile-time unrolled loop</li>
-<li>Handles matrix size not divisible by TPB</li>
-<li>Processes matrix in TPB×TPB tiles</li>
-</ul>
-</li>
-<li>
-<p><strong>Shared Memory Reset</strong>:</p>
-<pre><code class="language-mojo">if local_i &lt; TPB and local_j &lt; TPB:
-    a_shared[local_i, local_j] = 0
-    b_shared[local_i, local_j] = 0
-</code></pre>
-<ul>
-<li>Clears previous tile data</li>
-<li>Ensures clean state for new tile</li>
-<li>Prevents data corruption</li>
-</ul>
-</li>
-<li>
-<p><strong>Tile Loading</strong>:</p>
-<pre><code class="language-mojo"># Load A tile - global row stays the same, col determined by tile
-if global_i &lt; size and (tile * TPB + local_j) &lt; size:
-    a_shared[local_i, local_j] = a[global_i, tile * TPB + local_j]
+<p><strong>Shared memory allocation</strong></p>
+<pre><code class="language-txt">Input matrices (8×8):
+A = [0  1  2  3  4  5  6  7 ]    B = [0  2  4  6  8  10 12 14]
+    [8  9  10 11 12 13 14 15]        [16 18 20 22 24 26 28 30]
+    [16 17 18 19 20 21 22 23]        [32 34 36 38 40 42 44 46]
+    [24 25 26 27 28 29 30 31]        [48 50 52 54 56 58 60 62]
+    [32 33 34 35 36 37 38 39]        [64 66 68 70 72 74 76 78]
+    [40 41 42 43 44 45 46 47]        [80 82 84 86 88 90 92 94]
+    [48 49 50 51 52 53 54 55]        [96 98 100 102 104 106 108 110]
+    [56 57 58 59 60 61 62 63]        [112 114 116 118 120 122 124 126]
 
-# Load B tile - row determined by tile, global col stays the same
-if (tile * TPB + local_i) &lt; size and global_j &lt; size:
-    b_shared[local_i, local_j] = b[tile * TPB + local_i, global_j]
+Shared memory per block (3×3):
+a_shared[TPB, TPB]  b_shared[TPB, TPB]
 </code></pre>
+</li>
+<li>
+<p><strong>Tile processing loop</strong></p>
+<pre><code class="language-txt">Number of tiles = (8 + 3 - 1) // 3 = 3 tiles
+
+For each tile:
+1. Reset shared memory
+2. Load tile from A and B
+3. Compute partial products
+4. Accumulate in register
+</code></pre>
+</li>
+<li>
+<p><strong>Memory loading pattern</strong></p>
 <ul>
-<li>Handles boundary conditions</li>
-<li>Uses LayoutTensor indexing</li>
-<li>Maintains memory coalescing</li>
+<li>Loading A tile:
+<pre><code class="language-txt">if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
+    a_shared[local_row, local_col] = a[tiled_row, tile * TPB + local_col]
+</code></pre>
+</li>
+<li>Loading B tile:
+<pre><code class="language-txt">if (tile * TPB + local_row) &lt; size and tiled_col &lt; size:
+    b_shared[local_row, local_col] = b[tile * TPB + local_row, tiled_col]
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Computation</strong>:</p>
-<pre><code class="language-mojo">@parameter
-for k in range(min(TPB, size - tile * TPB)):
-    acc += a_shared[local_i, k] * b_shared[k, local_j]
-</code></pre>
-<ul>
-<li>Processes current tile</li>
-<li>Uses shared memory for efficiency</li>
-<li>Handles partial tiles correctly</li>
-</ul>
-</li>
-</ol>
-<h3 id="memory-access-optimization"><a class="header" href="#memory-access-optimization">Memory Access Optimization</a></h3>
-<ol>
-<li>
-<p><strong>Global Memory Pattern</strong>:</p>
-<pre><code class="language-txt">A[global_i, tile * TPB + local_j] → Row-major access
-B[tile * TPB + local_i, global_j] → Row-major access
+<p><strong>Computation within tile</strong></p>
+<pre><code class="language-txt">For k in range(min(TPB, size - tile * TPB)):
+    acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
 <ul>
 <li>Maximizes memory coalescing:
@@ -4800,35 +4793,26 @@ When threads access scattered locations (right), each access requires a separate
 </ul>
 </li>
 <li>
-<p><strong>Shared Memory Usage</strong>:</p>
-<pre><code class="language-txt">a_shared[local_i, k] → Row-wise access
-b_shared[k, local_j] → Row-wise access
+<p><strong>Synchronization points</strong></p>
+<pre><code class="language-txt">barrier() after:
+1. Shared memory reset
+2. Tile loading
+3. Tile computation
 </code></pre>
-<ul>
-<li>Optimized for matrix multiplication</li>
-<li>Reduces bank conflicts</li>
-<li>Enables data reuse</li>
-</ul>
 </li>
 </ol>
-<h3 id="synchronization-and-safety"><a class="header" href="#synchronization-and-safety">Synchronization and Safety</a></h3>
-<ol>
-<li>
-<p><strong>Barrier Points</strong>:</p>
-<pre><code class="language-mojo">barrier()  # After shared memory reset
-barrier()  # After tile loading
-barrier()  # After computation
-</code></pre>
+<p>Key performance features:</p>
 <ul>
-<li>Ensures shared memory consistency</li>
-<li>Prevents race conditions</li>
-<li>Maintains thread cooperation</li>
+<li>Processes 8×8 matrix using 3×3 tiles</li>
+<li>Uses shared memory for fast tile access</li>
+<li>Minimizes global memory transactions</li>
+<li>Handles matrix boundaries correctly</li>
+<li>Maintains coalesced memory access</li>
 </ul>
-</li>
-<li>
-<p><strong>Boundary Handling</strong>:</p>
-<pre><code class="language-mojo">if global_i &lt; size and global_j &lt; size:
-    out[global_i, global_j] = acc
+<ol start="2">
+<li><strong>Boundary handling</strong>:
+<pre><code class="language-mojo">if row &lt; size and col &lt; size:
+    out[row, col] = acc
 </code></pre>
 <ul>
 <li>Prevents out-of-bounds access</li>
@@ -4837,30 +4821,27 @@ barrier()  # After computation
 </ul>
 </li>
 </ol>
-<h3 id="key-optimizations"><a class="header" href="#key-optimizations">Key Optimizations</a></h3>
+<h3 id="key-optimizations"><a class="header" href="#key-optimizations">Key optimizations</a></h3>
 <ol>
 <li>
-<p><strong>Layout Optimization</strong>:</p>
+<p><strong>Layout optimization</strong>:</p>
 <ul>
 <li>Row-major layout for all tensors</li>
 <li>Efficient 2D indexing</li>
-<li>Proper alignment</li>
 </ul>
 </li>
 <li>
-<p><strong>Memory Access</strong>:</p>
+<p><strong>Memory access</strong>:</p>
 <ul>
 <li>Coalesced global memory loads</li>
 <li>Efficient shared memory usage</li>
-<li>Minimal bank conflicts</li>
 </ul>
 </li>
 <li>
 <p><strong>Computation</strong>:</p>
 <ul>
-<li>Register-based accumulation</li>
-<li>Compile-time loop unrolling</li>
-<li>Efficient tile processing</li>
+<li>Register-based accumulation i.e. <code>var acc: out.element_type = 0</code></li>
+<li>Compile-time loop unrolling via <code>@parameter</code></li>
 </ul>
 </li>
 </ol>
