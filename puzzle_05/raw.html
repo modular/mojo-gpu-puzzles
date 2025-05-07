@@ -220,8 +220,8 @@ fn broadcast_add(
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = thread_idx.y
+    col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -231,9 +231,9 @@ fn broadcast_add(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Get 2D indices: <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Add guard: <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Inside guard: <code>out[local_j * size + local_i] = a[local_i] + b[local_j]</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code></li>
 </ol>
 </div>
 </details>
@@ -254,20 +254,45 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
-    if local_i &lt; size and local_j &lt; size:
-        out[local_j * size + local_i] = a[local_i] + b[local_j]
+    row = thread_idx.y
+    col = thread_idx.x
+    if row &lt; size and col &lt; size:
+        out[row * size + col] = a[col] + b[row]
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates fundamental GPU broadcasting concepts without LayoutTensor abstraction:</p>
+<ol>
+<li>
+<p><strong>Thread to matrix mapping</strong></p>
 <ul>
-<li>Gets 2D thread indices with <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Guards against out-of-bounds with <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Broadcasts by adding <code>a[local_i]</code> and <code>b[local_j]</code> into the output matrix</li>
+<li>Uses <code>thread_idx.y</code> for row access and <code>thread_idx.x</code> for column access</li>
+<li>Direct mapping from 2D thread grid to output matrix elements</li>
+<li>Handles excess threads (3×3 grid) for 2×2 output matrix</li>
 </ul>
+</li>
+<li>
+<p><strong>Broadcasting mechanics</strong></p>
+<ul>
+<li>Vector <code>a</code> broadcasts horizontally: same <code>a[col]</code> used across each row</li>
+<li>Vector <code>b</code> broadcasts vertically: same <code>b[row]</code> used across each column</li>
+<li>Output combines both vectors through addition</li>
+</ul>
+<pre><code class="language-txt">[ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
+              [ b1 ]     [ a0+b1  a1+b1 ]
+</code></pre>
+</li>
+<li>
+<p><strong>Bounds checking</strong></p>
+<ul>
+<li>Single guard condition <code>row &lt; size and col &lt; size</code> handles both dimensions</li>
+<li>Prevents out-of-bounds access for both input vectors and output matrix</li>
+<li>Required due to 3×3 thread grid being larger than 2×2 data</li>
+</ul>
+</li>
+</ol>
+<p>Compare this with the LayoutTensor version to see how the abstraction simplifies broadcasting operations while maintaining the same underlying concepts.</p>
 </div>
 </details>
 

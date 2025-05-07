@@ -204,9 +204,9 @@
 <li>Working with different tensor shapes</li>
 <li>Handling 2D indexing with <code>LayoutTensor</code></li>
 </ul>
-<p>The key insight is that <code>LayoutTensor</code> allows natural broadcasting through different tensor shapes: \((n,1)\) and \((1,n)\) to \((n,n)\), while still requiring bounds checking.</p>
+<p>The key insight is that <code>LayoutTensor</code> allows natural broadcasting through different tensor shapes: \((1, n)\) and \((n, 1)\) to \((n,n)\), while still requiring bounds checking.</p>
 <ul>
-<li><strong>Tensor shapes</strong>: Input vectors have shapes \((n,1)\) and \((1,n)\)</li>
+<li><strong>Tensor shapes</strong>: Input vectors have shapes \((1, n)\) and \((n, 1)\)</li>
 <li><strong>Broadcasting</strong>: Output combines both dimensions to \((n,n)\)</li>
 <li><strong>Guard condition</strong>: Still need bounds checking for output size</li>
 <li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
@@ -217,8 +217,8 @@ alias BLOCKS_PER_GRID = 1
 alias THREADS_PER_BLOCK = (3, 3)
 alias dtype = DType.float32
 alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(SIZE, 1)
-alias b_layout = Layout.row_major(1, SIZE)
+alias a_layout = Layout.row_major(1, SIZE)
+alias b_layout = Layout.row_major(SIZE, 1)
 
 
 fn broadcast_add[
@@ -227,12 +227,12 @@ fn broadcast_add[
     b_layout: Layout,
 ](
     out: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, a_layout],
-    b: LayoutTensor[mut=True, dtype, b_layout],
+    a: LayoutTensor[mut=False, dtype, a_layout],
+    b: LayoutTensor[mut=False, dtype, b_layout],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = thread_idx.y
+    col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -242,9 +242,9 @@ fn broadcast_add[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Get 2D indices: <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Add guard: <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Inside guard: <code>out[local_i, local_j] = a[local_i, 0] + b[0, local_j]</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code> as LayoutTensors</li>
 </ol>
 </div>
 </details>
@@ -265,24 +265,49 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
     b_layout: Layout,
 ](
     out: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, a_layout],
-    b: LayoutTensor[mut=True, dtype, b_layout],
+    a: LayoutTensor[mut=False, dtype, a_layout],
+    b: LayoutTensor[mut=False, dtype, b_layout],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
-    if local_i &lt; size and local_j &lt; size:
-        out[local_i, local_j] = a[local_i, 0] + b[0, local_j]
+    row = thread_idx.y
+    col = thread_idx.x
+    if row &lt; size and col &lt; size:
+        out[row, col] = a[0, col] + b[row, 0]
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates key concepts of LayoutTensor broadcasting and GPU thread mapping:</p>
+<ol>
+<li>
+<p><strong>Thread to matrix mapping</strong></p>
 <ul>
-<li>Gets 2D thread indices with <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Guards against out-of-bounds with <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Uses <code>LayoutTensor</code> broadcasting: <code>a[local_i, 0] + b[0, local_j]</code></li>
+<li>Uses <code>thread_idx.y</code> for row access and <code>thread_idx.x</code> for column access</li>
+<li>Natural 2D indexing matches the output matrix structure</li>
+<li>Excess threads (3×3 grid) are handled by bounds checking</li>
 </ul>
+</li>
+<li>
+<p><strong>Broadcasting mechanics</strong></p>
+<ul>
+<li>Input <code>a</code> has shape <code>(1,n)</code>: <code>a[0,col]</code> broadcasts across rows</li>
+<li>Input <code>b</code> has shape <code>(n,1)</code>: <code>b[row,0]</code> broadcasts across columns</li>
+<li>Output has shape <code>(n,n)</code>: Each element is sum of corresponding broadcasts</li>
+</ul>
+<pre><code class="language-txt">[ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
+              [ b1 ]     [ a0+b1  a1+b1 ]
+</code></pre>
+</li>
+<li>
+<p><strong>Bounds Checking</strong></p>
+<ul>
+<li>Guard condition <code>row &lt; size and col &lt; size</code> prevents out-of-bounds access</li>
+<li>Handles both matrix bounds and excess threads efficiently</li>
+<li>No need for separate checks for <code>a</code> and <code>b</code> due to broadcasting</li>
+</ul>
+</li>
+</ol>
+<p>This pattern forms the foundation for more complex tensor operations we’ll explore in later puzzles.</p>
 </div>
 </details>
 
