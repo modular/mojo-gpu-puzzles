@@ -207,6 +207,23 @@
 </ul>
 <p>For each position \((i,j)\):
 \[\Large out[i,j] = a[i,j] + 10\]</p>
+<blockquote>
+<h2 id="thread-indexing-convention"><a class="header" href="#thread-indexing-convention">Thread indexing convention</a></h2>
+<p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
+<ul>
+<li><code>thread_idx.y</code> corresponds to the row index</li>
+<li><code>thread_idx.x</code> corresponds to the column index</li>
+</ul>
+<p><img src="./media/videos/720p30/thread_indexing_viz.gif" alt="2D thread indexing" /></p>
+<p>This convention aligns with:</p>
+<ol>
+<li>The standard mathematical notation where matrix positions are specified as (row, column)</li>
+<li>The visual representation of matrices where rows go top-to-bottom (y-axis) and columns go left-to-right (x-axis)</li>
+<li>Common GPU programming patterns where thread blocks are organized in a 2D grid matching the matrix structure</li>
+</ol>
+<h3 id="historical-origins"><a class="header" href="#historical-origins">Historical origins</a></h3>
+<p>While graphics and image processing typically use \((x,y)\) coordinates, matrix operations in computing have historically used (row, column) indexing. This comes from how early computers stored and processed 2D data: line by line, top to bottom, with each line read left to right. This row-major memory layout proved efficient for both CPUs and GPUs, as it matches how they access memory sequentially. When GPU programming adopted thread blocks for parallel processing, it was natural to map <code>thread_idx.y</code> to rows and <code>thread_idx.x</code> to columns, maintaining consistency with established matrix indexing conventions.</p>
+</blockquote>
 <h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how 2D indexing works with manual memory management.</p>
