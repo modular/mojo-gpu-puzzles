@@ -2194,8 +2194,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
         out[0] = shared[0]
     elif global_i == 1:
         out[1] = shared[0] + shared[1]
-
-    if 1 &lt; global_i &lt; size:
+    elif 1 &lt; global_i &lt; size:
         out[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -2206,45 +2205,67 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <p>The solution implements a sliding window sum using shared memory with these key steps:</p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>:</p>
+<p><strong>Shared memory setup</strong></p>
 <ul>
-<li>Allocates <code>TPB</code> elements in shared memory</li>
+<li>Allocates <code>TPB</code> elements in shared memory:
+<pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+</code></pre>
+</li>
 <li>Each thread loads one element from global memory</li>
-<li>Uses <code>barrier()</code> to ensure all data is loaded</li>
+<li><code>barrier()</code> ensures all data is loaded</li>
 </ul>
 </li>
 <li>
-<p><strong>Boundary Cases</strong>:</p>
+<p><strong>Boundary cases</strong></p>
 <ul>
-<li>Position 0: <code>out[0] = shared[0]</code> (only first element)</li>
-<li>Position 1: <code>out[1] = shared[0] + shared[1]</code> (sum of first two elements)</li>
+<li>Position 0: Single element
+<pre><code class="language-txt">out[0] = shared[0] = 0.0
+</code></pre>
+</li>
+<li>Position 1: Sum of first two elements
+<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Main Window Operation</strong>:</p>
+<p><strong>Main window operation</strong></p>
 <ul>
-<li>For positions 2 and beyond: <code>out[i] = shared[i-2] + shared[i-1] + shared[i]</code></li>
-<li>Uses local indices for shared memory access</li>
-<li>Maintains coalesced memory access pattern</li>
+<li>For positions 2 and beyond:
+<pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
+Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
+Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
+...
+</code></pre>
+</li>
+<li>Window calculation using local indices:
+<pre><code class="language-txt"># Sliding window of 3 elements
+window_sum = shared[i-2] + shared[i-1] + shared[i]
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Memory Access Pattern</strong>:</p>
+<p><strong>Memory access pattern</strong></p>
 <ul>
 <li>One global read per thread into shared memory</li>
 <li>One global write per thread from shared memory</li>
 <li>Uses shared memory for efficient neighbor access</li>
-<li>Avoids redundant global memory loads</li>
+<li>Maintains coalesced memory access pattern</li>
 </ul>
 </li>
 </ol>
-<p>This approach is efficient because:</p>
+<p>This approach optimizes performance through:</p>
 <ul>
-<li>Minimizes global memory access</li>
-<li>Uses shared memory for fast neighbor lookups</li>
-<li>Handles boundary conditions without branching in the main case</li>
-<li>Maintains good memory coalescing</li>
+<li>Minimal global memory access</li>
+<li>Fast shared memory neighbor lookups</li>
+<li>Clean boundary handling</li>
+<li>Efficient memory coalescing</li>
 </ul>
+<p>The final output shows the cumulative window sums:</p>
+<pre><code class="language-txt">[0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
+</code></pre>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
@@ -2342,11 +2363,10 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     # Handle first two special cases
     if global_i == 0:
         out[0] = shared[0]
-    if global_i == 1:
+    elif global_i == 1:
         out[1] = shared[0] + shared[1]
-
     # Handle general case
-    if 1 &lt; global_i &lt; size:
+    elif 1 &lt; global_i &lt; size:
         out[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -2357,47 +2377,76 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <p>The solution implements a sliding window sum using LayoutTensor with these key steps:</p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>:</p>
+<p><strong>Shared memory setup</strong></p>
 <ul>
-<li>Uses tensor builder for clean shared memory allocation</li>
-<li>Natural indexing for data loading</li>
-<li>Thread synchronization with <code>barrier()</code></li>
+<li>Tensor builder creates block-local storage:
+<pre><code class="language-txt">shared = tb[dtype]().row_major[TPB]().shared().alloc()
+</code></pre>
+</li>
+<li>Each thread loads one element:
+<pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+</code></pre>
+</li>
+<li><code>barrier()</code> ensures all data is loaded</li>
 </ul>
 </li>
 <li>
-<p><strong>Boundary Cases</strong>:</p>
+<p><strong>Boundary cases</strong></p>
 <ul>
-<li>Position 0: Single element output</li>
-<li>Position 1: Sum of first two elements</li>
-<li>Clean indexing with LayoutTensor bounds checking</li>
+<li>Position 0: Single element
+<pre><code class="language-txt">out[0] = shared[0] = 0.0
+</code></pre>
+</li>
+<li>Position 1: Sum of first two elements
+<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+</code></pre>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Main Window Operation</strong>:</p>
+<p><strong>Main window operation</strong></p>
 <ul>
-<li>Natural indexing for 3-element window</li>
-<li>Safe access to neighboring elements</li>
+<li>For positions 2 and beyond:
+<pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
+Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
+Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
+...
+</code></pre>
+</li>
+<li>Natural indexing with LayoutTensor:
+<pre><code class="language-txt"># Sliding window of 3 elements
+window_sum = shared[i-2] + shared[i-1] + shared[i]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access pattern</strong></p>
+<ul>
+<li>One global read per thread into shared tensor</li>
+<li>Efficient neighbor access through shared memory</li>
+<li>LayoutTensor benefits:
+<ul>
 <li>Automatic bounds checking</li>
+<li>Natural window indexing</li>
+<li>Layout-aware memory access</li>
+<li>Type safety throughout</li>
 </ul>
 </li>
-<li>
-<p><strong>Memory Access Pattern</strong>:</p>
-<ul>
-<li>Efficient shared memory usage</li>
-<li>Type-safe operations</li>
-<li>Layout-aware indexing</li>
-<li>Automatic alignment handling</li>
 </ul>
 </li>
 </ol>
-<p>Benefits over raw approach:</p>
+<p>This approach combines the performance of shared memory with LayoutTensor’s safety and ergonomics:</p>
 <ul>
-<li>Cleaner shared memory allocation</li>
-<li>Safer memory access</li>
-<li>Natural indexing syntax</li>
-<li>Built-in bounds checking</li>
-<li>Layout management</li>
+<li>Minimizes global memory access</li>
+<li>Simplifies window operations</li>
+<li>Handles boundaries cleanly</li>
+<li>Maintains coalesced access patterns</li>
 </ul>
+<p>The final output shows the cumulative window sums:</p>
+<pre><code class="language-txt">[0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
+</code></pre>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-10-dot-product"><a class="header" href="#puzzle-10-dot-product">Puzzle 10: Dot Product</a></h1>
