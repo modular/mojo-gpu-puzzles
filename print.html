@@ -1420,6 +1420,31 @@ Block 2:             [6 7 8]
 <li>Multi-block indexing</li>
 <li>Memory access patterns</li>
 </ul>
+<blockquote>
+<p>🔑 <strong>2D thread indexing convention</strong></p>
+<p>We extend the block-based indexing from <a href="puzzle_07/../puzzle_04/puzzle_04.html">puzzle 04</a> to 2D:</p>
+<pre><code class="language-txt">Global position calculation:
+row = block_dim.y * block_idx.y + thread_idx.y
+col = block_dim.x * block_idx.x + thread_idx.x
+</code></pre>
+<p>[TODO: replace with animation]
+For example, with 2×2 blocks in a 4×4 grid:</p>
+<pre><code class="language-txt">Block (0,0):   Block (1,0):
+[0,0  0,1]     [0,2  0,3]
+[1,0  1,1]     [1,2  1,3]
+
+Block (0,1):   Block (1,1):
+[2,0  2,1]     [2,2  2,3]
+[3,0  3,1]     [3,2  3,3]
+</code></pre>
+<p>Each position shows (row, col) for that thread’s global index.
+The block dimensions and indices work together to ensure:</p>
+<ul>
+<li>Continuous coverage of the 2D space</li>
+<li>No overlap between blocks</li>
+<li>Efficient memory access patterns</li>
+</ul>
+</blockquote>
 <h2 id="implementation-approaches-2"><a class="header" href="#implementation-approaches-2">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach-3"><a class="header" href="#-raw-memory-approach-3"><a href="puzzle_07/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to handle multi-block operations with manual indexing.</p>
@@ -1455,8 +1480,8 @@ fn add_10_blocks_2d(
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -1466,9 +1491,9 @@ fn add_10_blocks_2d(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate global indices: <code>global_i = block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Add guard: <code>if global_i &lt; size and global_j &lt; size</code></li>
-<li>Inside guard: <code>out[global_j * size + global_i] = a[global_j * size + global_i] + 10.0</code></li>
+<li>Calculate global indices: <code>row = block_dim.y * block_idx.y + thread_idx.y</code>, <code>col = block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to add 10 in row-major way!</li>
 </ol>
 </div>
 </details>
@@ -1488,20 +1513,75 @@ expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    if global_i &lt; size and global_j &lt; size:
-        out[global_j * size + global_i] = a[global_j * size + global_i] + 10.0
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    if row &lt; size and col &lt; size:
+        out[row * size + col] = a[row * size + col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates key concepts of 2D block-based processing with raw memory:</p>
+<ol>
+<li>
+<p><strong>2D thread indexing</strong></p>
 <ul>
-<li>Computes global indices with <code>block_dim * block_idx + thread_idx</code></li>
-<li>Guards against out-of-bounds with <code>if global_i &lt; size and global_j &lt; size</code></li>
-<li>Uses row-major indexing to access and update matrix elements</li>
+<li>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></li>
+<li>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Maps thread grid to matrix elements:
+<pre><code class="language-txt">5×5 matrix with 3×3 blocks:
+
+Block (0,0)         Block (1,0)
+[(0,0) (0,1) (0,2)] [(0,3) (0,4)    *  ]
+[(1,0) (1,1) (1,2)] [(1,3) (1,4)    *  ]
+[(2,0) (2,1) (2,2)] [(2,3) (2,4)    *  ]
+
+Block (0,1)         Block (1,1)
+[(3,0) (3,1) (3,2)] [(3,3) (3,4)    *  ]
+[(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
+[  *     *     *  ] [  *     *      *  ]
+</code></pre>
+(* = thread exists but outside matrix bounds)</li>
 </ul>
+</li>
+<li>
+<p><strong>Memory layout</strong></p>
+<ul>
+<li>Row-major linear memory: <code>index = row * size + col</code></li>
+<li>Example for 5×5 matrix:
+<pre><code class="language-txt">2D indices:    Linear memory:
+(2,1) -&gt; 11   [00 01 02 03 04]
+              [05 06 07 08 09]
+              [10 11 12 13 14]
+              [15 16 17 18 19]
+              [20 21 22 23 24]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Bounds checking</strong></p>
+<ul>
+<li>Guard <code>row &lt; size and col &lt; size</code> handles:
+<ul>
+<li>Excess threads in partial blocks</li>
+<li>Edge cases at matrix boundaries</li>
+<li>2×2 block grid with 3×3 threads each = 36 threads for 25 elements</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Block coordination</strong></p>
+<ul>
+<li>Each 3×3 block processes part of 5×5 matrix</li>
+<li>2×2 grid of blocks ensures full coverage</li>
+<li>Overlapping threads handled by bounds check</li>
+<li>Efficient parallel processing across blocks</li>
+</ul>
+</li>
+</ol>
+<p>This pattern shows how to handle 2D data larger than block size while maintaining efficient memory access and thread coordination.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version-2"><a class="header" href="#layouttensor-version-2">LayoutTensor Version</a></h1>
@@ -1542,8 +1622,8 @@ fn add_10_blocks_2d[
     a: LayoutTensor[mut=False, dtype, a_layout],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -1553,9 +1633,9 @@ fn add_10_blocks_2d[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate global indices: <code>global_i = block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Add guard: <code>if global_i &lt; size and global_j &lt; size</code></li>
-<li>Inside guard: <code>out[global_i, global_j] = a[global_i, global_j] + 10.0</code></li>
+<li>Calculate global indices: <code>row = block_dim.y * block_idx.y + thread_idx.y</code>, <code>col = block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to add 10 to 2D LayoutTensor</li>
 </ol>
 </div>
 </details>
@@ -1578,20 +1658,79 @@ expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
     a: LayoutTensor[mut=False, dtype, a_layout],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    global_j = block_dim.y * block_idx.y + thread_idx.y
-    if global_i &lt; size and global_j &lt; size:
-        out[global_i, global_j] = a[global_i, global_j] + 10.0
+    row = block_dim.y * block_idx.y + thread_idx.y
+    col = block_dim.x * block_idx.x + thread_idx.x
+    if row &lt; size and col &lt; size:
+        out[row, col] = a[row, col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates how LayoutTensor simplifies 2D block-based processing:</p>
+<ol>
+<li>
+<p><strong>2D thread indexing</strong></p>
 <ul>
-<li>Computes global indices with <code>block_dim * block_idx + thread_idx</code></li>
-<li>Guards against out-of-bounds with <code>if global_i &lt; size and global_j &lt; size</code></li>
-<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>out[global_i, global_j] = a[global_i, global_j] + 10.0</code></li>
+<li>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></li>
+<li>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Maps thread grid to tensor elements:
+<pre><code class="language-txt">5×5 tensor with 3×3 blocks:
+
+Block (0,0)         Block (1,0)
+[(0,0) (0,1) (0,2)] [(0,3) (0,4)    *  ]
+[(1,0) (1,1) (1,2)] [(1,3) (1,4)    *  ]
+[(2,0) (2,1) (2,2)] [(2,3) (2,4)    *  ]
+
+Block (0,1)         Block (1,1)
+[(3,0) (3,1) (3,2)] [(3,3) (3,4)    *  ]
+[(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
+[  *     *     *  ] [  *     *      *  ]
+</code></pre>
+(* = thread exists but outside tensor bounds)</li>
 </ul>
+</li>
+<li>
+<p><strong>LayoutTensor benefits</strong></p>
+<ul>
+<li>Natural 2D indexing: <code>tensor[row, col]</code> instead of manual offset calculation</li>
+<li>Automatic memory layout optimization</li>
+<li>Example access pattern:
+<pre><code class="language-txt">Raw memory:         LayoutTensor:
+row * size + col    tensor[row, col]
+(2,1) -&gt; 11        (2,1) -&gt; same element
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Bounds checking</strong></p>
+<ul>
+<li>Guard <code>row &lt; size and col &lt; size</code> handles:
+<ul>
+<li>Excess threads in partial blocks</li>
+<li>Edge cases at tensor boundaries</li>
+<li>Automatic memory layout handling by LayoutTensor</li>
+<li>36 threads (2×2 blocks of 3×3) for 25 elements</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Block coordination</strong></p>
+<ul>
+<li>Each 3×3 block processes part of 5×5 tensor</li>
+<li>LayoutTensor handles:
+<ul>
+<li>Memory layout optimization</li>
+<li>Efficient access patterns</li>
+<li>Block boundary coordination</li>
+<li>Cache-friendly data access</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>This pattern shows how LayoutTensor simplifies 2D block processing while maintaining optimal memory access patterns and thread coordination.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-8-shared-memory"><a class="header" href="#puzzle-8-shared-memory">Puzzle 8: Shared Memory</a></h1>
