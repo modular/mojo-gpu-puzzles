@@ -224,8 +224,8 @@ fn add_10_2d(
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = thread_idx.y
+    col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -235,9 +235,9 @@ fn add_10_2d(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Get 2D indices: <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Add guard: <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Inside guard: <code>out[local_i, local_j] = a[local_i, local_j] + 10.0</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard add 10 to <code>a[row, col]</code></li>
 </ol>
 </div>
 </details>
@@ -257,19 +257,19 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
-    if local_i &lt; size and local_j &lt; size:
-        out[local_i, local_j] = a[local_i, local_j] + 10.0
+    row = thread_idx.y
+    col = thread_idx.x
+    if col &lt; size and row &lt; size:
+        out[row, col] = a[row, col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>This solution:</p>
 <ul>
-<li>Gets 2D thread indices with <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Guards against out-of-bounds with <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>out[local_i, local_j] = a[local_i, local_j] + 10.0</code></li>
+<li>Gets 2D thread indices with <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Guards against out-of-bounds with <code>if row &lt; size and col &lt; size</code></li>
+<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>out[row, col] = a[row, col] + 10.0</code></li>
 </ul>
 </div>
 </details>

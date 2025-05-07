@@ -207,6 +207,23 @@
 <li><strong>Guard condition</strong>: Need bounds checking in both dimensions</li>
 <li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than matrix elements \((2 \times 2)\)</li>
 </ul>
+<blockquote>
+<h2 id="thread-indexing-convention"><a class="header" href="#thread-indexing-convention">Thread indexing convention</a></h2>
+<p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
+<ul>
+<li><code>thread_idx.y</code> corresponds to the row index</li>
+<li><code>thread_idx.x</code> corresponds to the column index
+<img src="./media/videos/720p30/thread_indexing_viz.gif" alt="2D thread indexing" /></li>
+</ul>
+<p>This convention aligns with:</p>
+<ol>
+<li>The standard mathematical notation where matrix positions are specified as (row, column)</li>
+<li>The visual representation of matrices where rows go top-to-bottom (y-axis) and columns go left-to-right (x-axis)</li>
+<li>Common GPU programming patterns where thread blocks are organized in a 2D grid matching the matrix structure</li>
+</ol>
+<h3 id="historical-origins"><a class="header" href="#historical-origins">Historical origins</a></h3>
+<p>While graphics and image processing typically use \((x,y)\) coordinates, matrix operations in computing have historically used (row, column) indexing. This comes from how early computers stored and processed 2D data: line by line, top to bottom, with each line read left to right. This row-major memory layout proved efficient for both CPUs and GPUs, as it matches how they access memory sequentially. When GPU programming adopted thread blocks for parallel processing, it was natural to map <code>thread_idx.y</code> to rows and <code>thread_idx.x</code> to columns, maintaining consistency with established matrix indexing conventions.</p>
+</blockquote>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">alias SIZE = 2
 alias BLOCKS_PER_GRID = 1
@@ -219,8 +236,8 @@ fn add_10_2d(
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
+    row = thread_idx.y
+    col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -230,9 +247,9 @@ fn add_10_2d(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Get 2D indices: <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Add guard: <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Inside guard: <code>out[local_j * size + local_i] = a[local_j * size + local_i] + 10.0</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard add 10 in row-major way!</li>
 </ol>
 </div>
 </details>
@@ -252,20 +269,20 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
-    local_j = thread_idx.y
-    if local_i &lt; size and local_j &lt; size:
-        out[local_j * size + local_i] = a[local_j * size + local_i] + 10.0
+    row = thread_idx.y
+    col = thread_idx.x
+    if row &lt; size and col &lt; size:
+        out[row * size + col] = a[row * size + col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>This solution:</p>
-<ul>
-<li>Gets 2D thread indices with <code>local_i = thread_idx.x</code>, <code>local_j = thread_idx.y</code></li>
-<li>Guards against out-of-bounds with <code>if local_i &lt; size and local_j &lt; size</code></li>
-<li>Inside guard: adds 10 to input value using row-major indexing</li>
-</ul>
+<ol>
+<li>Get 2D indices:  <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: <code>out[row * size + col] = a[row * size + col] + 10.0</code></li>
+</ol>
 </div>
 </details>
 

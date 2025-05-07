@@ -194,34 +194,40 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction-to-layouttensor"><a class="header" href="#introduction-to-layouttensor">Introduction to LayoutTensor</a></h1>
-<p>After dealing with manual indexing, bounds checking, and growing complexity in the previous puzzles, it’s time to introduce a powerful abstraction that will make GPU programming more intuitive and safer.</p>
-<h2 id="why-layouttensor"><a class="header" href="#why-layouttensor">Why <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a>?</a></h2>
-<p>Let’s look at the challenges we’ve faced:</p>
+<p>Let’s take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
+🥁 … the <strong><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a></strong>.</p>
+<blockquote>
+<p>💡 <em>This is a motivational overview of LayoutTensor’s capabilities. Don’t worry about understanding everything now - we’ll explore each feature in depth as we progress through the puzzles</em>.</p>
+</blockquote>
+<h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
+<p>Let’s look at the challenges we’ve faced so far:</p>
 <pre><code class="language-mojo"># Puzzle 1: Simple indexing
-out[local_i] = a[local_i] + 10.0
+out[i] = a[i] + 10.0
 
 # Puzzle 2: Multiple array management
-out[local_i] = a[local_i] + b[local_i]
+out[i] = a[i] + b[i]
 
 # Puzzle 3: Bounds checking
-if local_i &lt; size:
-    out[local_i] = a[local_i] + 10.0
+if i &lt; size:
+    out[i] = a[i] + 10.0
 </code></pre>
 <p>As dimensions grow, code becomes more complex:</p>
 <pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
-idx = col * WIDTH + row
+idx = row * WIDTH + col
 if row &lt; height and col &lt; width:
     out[idx] = a[idx] + 10.0
 </code></pre>
-<h2 id="the-layouttensor-solution"><a class="header" href="#the-layouttensor-solution">The LayoutTensor solution</a></h2>
-<p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> provides:</p>
+<h2 id="the-solution-a-peek-at-layouttensor"><a class="header" href="#the-solution-a-peek-at-layouttensor">The solution: A peek at LayoutTensor</a></h2>
+<p>LayoutTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>
 <ol>
 <li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset calculations</li>
 <li><strong>Automatic Bounds Checking</strong>: Built-in protection against out-of-bounds access</li>
 <li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled organizations</li>
 <li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
 </ol>
-<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic usage</a></h3>
+<h2 id="a-taste-of-whats-ahead"><a class="header" href="#a-taste-of-whats-ahead">A taste of what’s ahead</a></h2>
+<p>Let’s look at a few examples of what LayoutTensor can do. Don’t worry about understanding all the details now - we’ll cover each feature thoroughly in upcoming puzzles.</p>
+<h3 id="basic-usage-example"><a class="header" href="#basic-usage-example">Basic usage example</a></h3>
 <pre><code class="language-mojo">from layout import Layout, LayoutTensor
 
 # Define layout
@@ -236,19 +242,22 @@ tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())
 tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
-<h3 id="memory-layout-control"><a class="header" href="#memory-layout-control">Memory layout control</a></h3>
-<p>LayoutTensor supports different memory organizations:</p>
-<pre><code class="language-mojo"># Row-major (default)
-layout_row = Layout.row_major(HEIGHT, WIDTH)
-
-# Column-major
+<h3 id="preview-of-advanced-features"><a class="header" href="#preview-of-advanced-features">Preview of advanced features</a></h3>
+<p>As we progress through the puzzles, you’ll learn about:</p>
+<ul>
+<li>Shared memory optimizations</li>
+<li>Efficient tiling strategies</li>
+<li>Vectorized operations</li>
+<li>Hardware acceleration</li>
+<li>Optimized memory access patterns</li>
+</ul>
+<pre><code class="language-mojo"># Column-major layout
 layout_col = Layout.col_major(HEIGHT, WIDTH)
 
-# Tiled (for better cache utilization)
+# Tiled layout (for better cache utilization)
 layout_tiled = tensor.tiled[4, 4](HEIGHT, WIDTH)
 </code></pre>
-<h3 id="understanding-memory-layouts"><a class="header" href="#understanding-memory-layouts">Understanding memory layouts</a></h3>
-<p>Memory layout affects performance dramatically. LayoutTensor supports:</p>
+<p>Each layout has its advantages:</p>
 <ul>
 <li>
 <p><strong>Row-major</strong>: Elements in a row are contiguous</p>
@@ -271,64 +280,51 @@ layout_tiled = Layout.tiled[2, 2](4, 4)
 </code></pre>
 </li>
 </ul>
-<h3 id="benefits-over-traditional-approach"><a class="header" href="#benefits-over-traditional-approach">Benefits over traditional approach</a></h3>
+<h3 id="advanced-gpu-optimizations"><a class="header" href="#advanced-gpu-optimizations">Advanced GPU optimizations</a></h3>
+<p>As you progress, you’ll discover LayoutTensor’s powerful features for GPU programming:</p>
 <ol>
-<li>
-<p><strong>Readability</strong>:</p>
-<pre><code class="language-mojo"># Traditional
-out[col * WIDTH + row] = a[col * WIDTH + row] + 10.0
-
-# LayoutTensor
-out[row, col] = a[row, col] + 10.0
-</code></pre>
-</li>
-<li>
-<p><strong>Flexibility</strong>:</p>
-<ul>
-<li>Easy to change memory layouts without modifying computation code</li>
-<li>Support for complex access patterns</li>
-<li>Built-in optimizations</li>
-</ul>
-</li>
+<li><strong>Memory hierarchy management</strong></li>
 </ol>
-<h2 id="advanced-features-preview"><a class="header" href="#advanced-features-preview">Advanced features preview</a></h2>
-<p>While we’ll start with basic operations, LayoutTensor’s true power shines in advanced GPU optimizations:</p>
-<h3 id="1-memory-hierarchy-management"><a class="header" href="#1-memory-hierarchy-management">1. Memory hierarchy management</a></h3>
 <pre><code class="language-mojo"># Shared memory allocation
 shared_mem = tb[dtype]().row_major[BM, BK]().shared().alloc()
 
 # Register allocation
 reg_tile = tb[dtype]().row_major[TM, TN]().local().alloc()
 </code></pre>
-<h3 id="2-tiling-strategies"><a class="header" href="#2-tiling-strategies">2. Tiling strategies</a></h3>
+<ol start="2">
+<li><strong>Tiling strategies</strong></li>
+</ol>
 <pre><code class="language-mojo"># Block tiling
 block_tile = tensor.tile[BM, BN](block_idx.y, block_idx.x)
 
 # Register tiling
 reg_tile = block_tile.tile[TM, TN](thread_row, thread_col)
 </code></pre>
-<h3 id="3-memory-access-patterns"><a class="header" href="#3-memory-access-patterns">3. Memory access patterns</a></h3>
+<ol start="3">
+<li><strong>Memory access patterns</strong></li>
+</ol>
 <pre><code class="language-mojo"># Vectorized access
 vec_tensor = tensor.vectorize[1, simd_width]()
 
 # Asynchronous transfers
 copy_dram_to_sram_async[thread_layout=layout](dst, src)
 </code></pre>
-<h3 id="4-hardware-acceleration"><a class="header" href="#4-hardware-acceleration">4. Hardware acceleration</a></h3>
+<ol start="4">
+<li><strong>Hardware acceleration</strong></li>
+</ol>
 <pre><code class="language-mojo"># Tensor Core operations (coming in later puzzles)
 mma_op = TensorCore[dtype, out_type, Index(M, N, K)]()
 result = mma_op.mma_op(a_reg, b_reg, c_reg)
 </code></pre>
-<p>💡 <strong>Looking Ahead</strong>: As we progress through the puzzles, you’ll learn how to:</p>
+<p>💡 <strong>Looking ahead</strong>: Through these puzzles, you’ll learn to:</p>
 <ul>
-<li>Use shared memory for faster data access</li>
+<li>Optimize data access with shared memory</li>
 <li>Implement efficient tiling strategies</li>
 <li>Leverage vectorized operations</li>
 <li>Utilize hardware accelerators</li>
-<li>Optimize memory access patterns</li>
+<li>Master memory access patterns</li>
 </ul>
-<p>Each puzzle will introduce these concepts gradually, building on the fundamentals to create highly optimized GPU code.</p>
-<p>Ready to start your journey from basic operations to advanced GPU programming? Let’s begin with the fundamentals!</p>
+<p>Each concept builds on the last, gradually taking you from basic tensor operations to advanced GPU programming. Ready to begin? Let’s start with the fundamentals!</p>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
 <p>Let’s put everything together with a simple example that demonstrates the basics of LayoutTensor:</p>
 <pre><code class="language-mojo">from gpu.host import DeviceContext
