@@ -608,7 +608,7 @@ fn add_10_guard(
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
+    i = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -618,9 +618,9 @@ fn add_10_guard(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Store <code>thread_idx.x</code> in <code>local_i</code></li>
-<li>Add guard: <code>if local_i &lt; size</code></li>
-<li>Inside guard: <code>out[local_i] = a[local_i] + 10.0</code></li>
+<li>Store <code>thread_idx.x</code> in <code>i</code></li>
+<li>Add guard: <code>if i &lt; size</code></li>
+<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -640,17 +640,17 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    local_i = thread_idx.x
-    if local_i &lt; size:
-        out[local_i] = a[local_i] + 10.0
+    i = thread_idx.x
+    if i &lt; size:
+        out[i] = a[i] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>This solution:</p>
 <ul>
-<li>Gets thread index with <code>local_i = thread_idx.x</code></li>
-<li>Guards against out-of-bounds access with <code>if local_i &lt; size</code></li>
+<li>Gets thread index with <code>i = thread_idx.x</code></li>
+<li>Guards against out-of-bounds access with <code>if i &lt; size</code></li>
 <li>Inside guard: adds 10 to input value</li>
 </ul>
 </div>
