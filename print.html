@@ -4655,7 +4655,7 @@ fn matmul_tiled[
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 2632.0, 5824.0, 6008.0, 6192.0, 6376.0, 6560.0, 6744.0, 6928.0, 7112.0, 9408.0, 9720.0, 10032.0, 10344.0, 10656.0, 10968.0, 11280.0, 11592.0, 12992.0, 13432.0, 13872.0, 14312.0, 14752.0, 15192.0, 15632.0, 16072.0, 16576.0, 17144.0, 17712.0, 18280.0, 18848.0, 19416.0, 19984.0, 20552.0, 20160.0, 20856.0, 21552.0, 22248.0, 22944.0, 23640.0, 24336.0, 25032.0, 23744.0, 24568.0, 25392.0, 26216.0, 27040.0, 27864.0, 28688.0, 29512.0, 27328.0, 28280.0, 29232.0, 30184.0, 31136.0, 32088.0, 33040.0, 33992.0])
 </code></pre>
-<h2 id="solution-23"><a class="header" href="#solution-23">Solution</a></h2>
+<h2 id="solution-manual-tiling"><a class="header" href="#solution-manual-tiling">Solution: Manual tiling</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn matmul_tiled[
@@ -4711,6 +4711,7 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
     # Write out final result
     if tiled_row &lt; size and tiled_col &lt; size:
         out[tiled_row, tiled_col] = acc
+
 
 </code></pre>
 <div class="solution-explanation">
@@ -4852,6 +4853,141 @@ When threads access scattered locations (right), each access requires a separate
 <li>Proper thread synchronization</li>
 <li>Careful boundary handling</li>
 </ul>
+</div>
+</details>
+<h2 id="solution-idiomatic-layouttensor-tiling"><a class="header" href="#solution-idiomatic-layouttensor-tiling">Solution: Idiomatic LayoutTensor tiling</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">from gpu.memory import async_copy_wait_all
+from layout.layout_tensor import copy_dram_to_sram_async
+
+
+fn matmul_idiomatic_tiled[
+    layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    # Get the tile of the output matrix `out` that this thread block is responsible for
+    out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+
+    var acc: out.element_type = 0
+
+    alias load_a_layout = Layout.row_major(1, TPB)
+    alias load_b_layout = Layout.row_major(TPB, 1)
+    for idx in range((size + TPB - 1) // TPB):
+        a_tile = a.tile[TPB, TPB](block_idx.y, idx)
+        b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+
+        copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
+        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+
+        async_copy_wait_all()
+
+        barrier()
+
+        @parameter
+        for k in range(TPB):
+            acc += a_shared[local_row, k] * b_shared[k, local_col]
+
+        barrier()
+
+    if (
+        block_idx.y * TPB + local_row &lt; size
+        and block_idx.x * TPB + local_col &lt; size
+    ):
+        out_tile[local_row, local_col] = acc
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The idiomatic tiled matrix multiplication leverages Mojo’s LayoutTensor API and asynchronous memory operations for a cleaner implementation:</p>
+<ol>
+<li>
+<p><strong>LayoutTensor tile API</strong></p>
+<pre><code class="language-mojo">out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+a_tile = a.tile[TPB, TPB](block_idx.y, idx)
+b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+</code></pre>
+<p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)” without manual coordinate calculation. See the <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">documentation</a> for more details.</p>
+</li>
+<li>
+<p><strong>Asynchronous memory operations</strong></p>
+<pre><code class="language-mojo">copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
+copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+async_copy_wait_all()
+</code></pre>
+<p>These operations:</p>
+<ul>
+<li>Launch asynchronous memory transfers that may overlap with computation via <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<li>Use specialized thread layouts for optimal memory access patterns</li>
+<li>Eliminate the need for manual memory initialization</li>
+</ul>
+</li>
+<li>
+<p><strong>Specialized compile-time load layouts</strong></p>
+<pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)
+alias load_b_layout = Layout.row_major(TPB, 1)
+</code></pre>
+<p>These layouts optimize how threads cooperate during memory transfers:</p>
+<ul>
+<li><code>load_a_layout</code>: Each thread loads a slice of a row (coalesced access)</li>
+<li><code>load_b_layout</code>: Each thread loads a slice of a column (transposed access)</li>
+</ul>
+</li>
+<li>
+<p><strong>Efficient thread synchronization</strong></p>
+<pre><code class="language-mojo">// Wait for async operations to complete
+async_copy_wait_all()
+// Ensure all threads can see the shared memory contents
+barrier()
+</code></pre>
+<p>The barriers ensure proper synchronization:</p>
+<ul>
+<li>After memory transfers complete</li>
+<li>After computation for each tile</li>
+</ul>
+</li>
+<li>
+<p><strong>Proper boundary handling</strong></p>
+<pre><code class="language-mojo">if block_idx.y * TPB + local_row &lt; size and block_idx.x * TPB + local_col &lt; size:
+    out_tile[local_row, local_col] = acc
+</code></pre>
+<p>This critical check prevents out-of-bounds writes for blocks at the matrix boundaries.</p>
+</li>
+<li>
+<p><strong>Tile processing loop</strong></p>
+<pre><code class="language-mojo">for idx in range((size + TPB - 1) // TPB):
+   // Process one tile
+</code></pre>
+<p>Uses ceiling division to handle matrices whose dimensions aren’t perfect multiples of the tile size.</p>
+</li>
+</ol>
+<h3 id="performance-considerations"><a class="header" href="#performance-considerations">Performance considerations</a></h3>
+<p>The idiomatic implementation maintains the performance benefits of tiling while providing cleaner abstractions:</p>
+<ol>
+<li><strong>Memory locality</strong>: Exploits spatial and temporal locality through tiling</li>
+<li><strong>Coalesced access</strong>: Specialized load layouts ensure coalesced memory access patterns</li>
+<li><strong>Compute-memory overlap</strong>: Potential overlap through asynchronous memory operations</li>
+<li><strong>Shared memory efficiency</strong>: No redundant initialization of shared memory</li>
+<li><strong>Register pressure</strong>: Uses accumulation registers for optimal compute throughput</li>
+</ol>
+<p>This implementation shows how high-level abstractions can express complex GPU algorithms without sacrificing performance. It’s a prime example of Mojo’s philosophy: combining high-level expressiveness with low-level performance control.</p>
+<h3 id="key-differences-from-manual-tiling"><a class="header" href="#key-differences-from-manual-tiling">Key differences from manual tiling</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Manual Tiling</th><th>Idiomatic Tiling</th></tr></thead><tbody>
+<tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>LayoutTensor tile API</td></tr>
+<tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Asynchronous bulk transfers</td></tr>
+<tr><td>Shared memory</td><td>Manual initialization (zeroing)</td><td>Managed by copy functions</td></tr>
+<tr><td>Code complexity</td><td>More verbose with explicit indexing</td><td>More concise with higher-level APIs</td></tr>
+<tr><td>Bounds checking</td><td>Multiple checks during loading and computing</td><td>Single check at final write</td></tr>
+</tbody></table>
+</div>
+<p>The idiomatic approach is not just cleaner but also potentially more performant due to the use of specialized memory layouts and asynchronous operations.</p>
 </div>
 </details>
 
