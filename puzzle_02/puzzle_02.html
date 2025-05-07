@@ -226,7 +226,7 @@ fn add(
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
-    local_i = thread_idx.x
+    i = thread_idx.x
     # FILL ME IN (roughly 1 line)
 
 
@@ -236,9 +236,9 @@ fn add(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Store <code>thread_idx.x</code> in <code>local_i</code></li>
-<li>Add <code>a[local_i]</code> and <code>b[local_i]</code></li>
-<li>Store result in <code>out[local_i]</code></li>
+<li>Store <code>thread_idx.x</code> in <code>i</code></li>
+<li>Add <code>a[i]</code> and <code>b[i]</code></li>
+<li>Store result in <code>out[i]</code></li>
 </ol>
 </div>
 </details>
@@ -258,16 +258,16 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
-    local_i = thread_idx.x
-    out[local_i] = a[local_i] + b[local_i]
+    i = thread_idx.x
+    out[i] = a[i] + b[i]
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>This solution:</p>
 <ul>
-<li>Gets thread index with <code>local_i = thread_idx.x</code></li>
-<li>Adds values from both arrays: <code>out[local_i] = a[local_i] + b[local_i]</code></li>
+<li>Gets thread index with <code>i = thread_idx.x</code></li>
+<li>Adds values from both arrays: <code>out[i] = a[i] + b[i]</code></li>
 </ul>
 </div>
 </details>
