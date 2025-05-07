@@ -403,7 +403,7 @@ alias dtype = DType.float32
 
 
 fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
-    local_i = thread_idx.x
+    i = thread_idx.x
     # FILL ME IN (roughly 1 line)
 
 
@@ -413,9 +413,9 @@ fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Store <code>thread_idx.x</code> in <code>local_i</code></li>
-<li>Add 10 to <code>a[local_i]</code></li>
-<li>Store result in <code>out[local_i]</code></li>
+<li>Store <code>thread_idx.x</code> in <code>i</code></li>
+<li>Add 10 to <code>a[i]</code></li>
+<li>Store result in <code>out[i]</code></li>
 </ol>
 </div>
 </details>
@@ -431,24 +431,24 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
-    local_i = thread_idx.x
-    out[local_i] = a[local_i] + 10.0
+    i = thread_idx.x
+    out[i] = a[i] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
 <p>This solution:</p>
 <ul>
-<li>Gets thread index with <code>local_i = thread_idx.x</code></li>
-<li>Adds 10 to input value: <code>out[local_i] = a[local_i] + 10.0</code></li>
+<li>Gets thread index with <code>i = thread_idx.x</code></li>
+<li>Adds 10 to input value: <code>out[i] = a[i] + 10.0</code></li>
 </ul>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="why-consider-layouttensor"><a class="header" href="#why-consider-layouttensor">Why Consider LayoutTensor?</a></h2>
 <p>Looking at our traditional implementation above, you might notice some potential issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
-<pre><code class="language-mojo">local_i = thread_idx.x
-out[local_i] = a[local_i] + 10.0
+<pre><code class="language-mojo">i = thread_idx.x
+out[i] = a[i] + 10.0
 </code></pre>
 <p>This works for 1D arrays, but what happens when we need to:</p>
 <ul>
