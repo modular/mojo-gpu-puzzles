@@ -1320,7 +1320,7 @@ fn add_10_blocks(
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -1330,9 +1330,9 @@ fn add_10_blocks(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate global index: <code>global_i = block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Add guard: <code>if global_i &lt; size</code></li>
-<li>Inside guard: <code>out[global_i] = a[global_i] + 10.0</code></li>
+<li>Calculate global index: <code>i = block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Add guard: <code>if i &lt; size</code></li>
+<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -1352,19 +1352,60 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    if global_i &lt; size:
-        out[global_i] = a[global_i] + 10.0
+    i = block_dim.x * block_idx.x + thread_idx.x
+    if i &lt; size:
+        out[i] = a[i] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates key concepts of block-based GPU processing:</p>
+<ol>
+<li>
+<p><strong>Global thread indexing</strong></p>
 <ul>
-<li>Computes global thread index from block and thread indices</li>
-<li>Guards against out-of-bounds with <code>if global_i &lt; size</code></li>
-<li>Inside guard: adds 10 to input value at global index</li>
+<li>Combines block and thread indices: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Maps each thread to a unique global position</li>
+<li>Example for 3 threads per block:
+<pre><code class="language-txt">Block 0: [0 1 2]
+Block 1: [3 4 5]
+Block 2: [6 7 8]
+</code></pre>
+</li>
 </ul>
+</li>
+<li>
+<p><strong>Block coordination</strong></p>
+<ul>
+<li>Each block processes a contiguous chunk of data</li>
+<li>Block size (3) &lt; Data size (9) requires multiple blocks</li>
+<li>Automatic work distribution across blocks:
+<pre><code class="language-txt">Data:    [0 1 2 3 4 5 6 7 8]
+Block 0: [0 1 2]
+Block 1:       [3 4 5]
+Block 2:             [6 7 8]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Bounds checking</strong></p>
+<ul>
+<li>Guard condition <code>i &lt; size</code> handles edge cases</li>
+<li>Prevents out-of-bounds access when size isn’t perfectly divisible by block size</li>
+<li>Essential for handling partial blocks at the end of data</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access pattern</strong></p>
+<ul>
+<li>Coalesced memory access: threads in a block access contiguous memory</li>
+<li>Each thread processes one element: <code>out[i] = a[i] + 10.0</code></li>
+<li>Block-level parallelism enables efficient memory bandwidth utilization</li>
+</ul>
+</li>
+</ol>
+<p>This pattern forms the foundation for processing large datasets that exceed the size of a single thread block.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-7-2d-blocks"><a class="header" href="#puzzle-7-2d-blocks">Puzzle 7: 2D Blocks</a></h1>
