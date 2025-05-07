@@ -1851,13 +1851,61 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
+<p>This solution demonstrates key concepts of shared memory usage in GPU programming:</p>
+<ol>
+<li>
+<p><strong>Memory hierarchy</strong></p>
 <ul>
-<li>Waits for shared memory load with <code>barrier()</code></li>
-<li>Guards against out-of-bounds with <code>if global_i &lt; size</code></li>
-<li>Reads from shared memory using <code>shared[local_i]</code></li>
-<li>Writes result to global memory at <code>out[global_i]</code></li>
+<li>Global memory: <code>a</code> and <code>out</code> arrays (slow, visible to all blocks)</li>
+<li>Shared memory: <code>shared</code> array (fast, thread-block local)</li>
+<li>Example for 8 elements with 4 threads per block:
+<pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
+
+Block (0):      Block (1):
+shared[0..3]    shared[0..3]
+[1 1 1 1]       [1 1 1 1]
+</code></pre>
+</li>
 </ul>
+</li>
+<li>
+<p><strong>Thread coordination</strong></p>
+<ul>
+<li>Load phase:
+<pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
+Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
+barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
+</code></pre>
+</li>
+<li>Process phase: Each thread adds 10 to its shared memory value</li>
+<li>Result: <code>out[i] = shared[local_i] + 10 = 11</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Index mapping</strong></p>
+<ul>
+<li>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code>
+<pre><code class="language-txt">Block 0 output: [11 11 11 11]
+Block 1 output: [11 11 11 11]
+</code></pre>
+</li>
+<li>Local index: <code>thread_idx.x</code> for shared memory access
+<pre><code class="language-txt">Both blocks process: 1 + 10 = 11
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access pattern</strong></p>
+<ul>
+<li>Load: Global → Shared (coalesced reads of 1s)</li>
+<li>Sync: <code>barrier()</code> ensures all loads complete</li>
+<li>Process: Add 10 to shared values</li>
+<li>Store: Write 11s back to global memory</li>
+</ul>
+</li>
+</ol>
+<p>This pattern shows how to use shared memory to optimize data access while maintaining thread coordination within blocks.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-15"><a class="header" href="#key-concepts-15">Key concepts</a></h2>
@@ -1986,22 +2034,63 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution:</p>
-<ul>
-<li>Creates shared memory using tensor builder’s fluent API</li>
-<li>Guards against out-of-bounds with <code>if global_i &lt; size</code></li>
-<li>Uses natural indexing for both shared and global memory</li>
-<li>Ensures thread synchronization with <code>barrier()</code></li>
-<li>Leverages LayoutTensor’s built-in safety features</li>
-</ul>
-<p>Key steps:</p>
+<p>This solution demonstrates how LayoutTensor simplifies shared memory usage while maintaining performance:</p>
 <ol>
-<li>Allocate shared memory with proper layout</li>
-<li>Load global data into shared memory</li>
-<li>Synchronize threads</li>
-<li>Process data using shared memory</li>
-<li>Write results back to global memory</li>
+<li>
+<p><strong>Memory hierarchy with LayoutTensor</strong></p>
+<ul>
+<li>Global tensors: <code>a</code> and <code>out</code> (slow, visible to all blocks)</li>
+<li>Shared tensor: <code>shared</code> (fast, thread-block local)</li>
+<li>Example for 8 elements with 4 threads per block:
+<pre><code class="language-txt">Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
+
+Block (0):         Block (1):
+shared[0..3]       shared[0..3]
+[1 1 1 1]          [1 1 1 1]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Thread coordination</strong></p>
+<ul>
+<li>Load phase with natural indexing:
+<pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
+Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
+barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
+</code></pre>
+</li>
+<li>Process phase: Each thread adds 10 to its shared tensor value</li>
+<li>Result: <code>out[global_i] = shared[local_i] + 10 = 11</code></li>
+</ul>
+</li>
+<li>
+<p><strong>LayoutTensor benefits</strong></p>
+<ul>
+<li>Shared memory allocation:
+<pre><code class="language-txt"># Clean tensor builder API
+shared = tb[dtype]().row_major[TPB]().shared().alloc()
+</code></pre>
+</li>
+<li>Natural indexing for both global and shared:
+<pre><code class="language-txt">Block 0 output: [11 11 11 11]
+Block 1 output: [11 11 11 11]
+</code></pre>
+</li>
+<li>Built-in layout management and type safety</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access pattern</strong></p>
+<ul>
+<li>Load: Global tensor → Shared tensor (optimized)</li>
+<li>Sync: Same <code>barrier()</code> requirement as raw version</li>
+<li>Process: Add 10 to shared values</li>
+<li>Store: Write 11s back to global tensor</li>
+</ul>
+</li>
 </ol>
+<p>This pattern shows how LayoutTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-9-pooling"><a class="header" href="#puzzle-9-pooling">Puzzle 9: Pooling</a></h1>
