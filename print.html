@@ -3851,56 +3851,136 @@ fn prefix_sum_block_sum_phase[layout: Layout](
 
 </code></pre>
 <div class="solution-explanation">
-This solution implements multi-block prefix sum using a two-kernel approach:
-<h3 id="phase-1-local-prefix-sums-and-block-sum-storage"><a class="header" href="#phase-1-local-prefix-sums-and-block-sum-storage">Phase 1: Local Prefix Sums and Block Sum Storage</a></h3>
-<p>In the first kernel, each block computes its local prefix sum:</p>
-<pre><code>Block 0 (elements 0-7):   Initial: [0,1,2,3,4,5,6,7]
-                          Result:  [0,1,3,6,10,15,21,28]
+<p>This solution implements a multi-block prefix sum using a two-kernel approach to handle an array that spans multiple thread blocks. Let’s break down each aspect in detail:</p>
+<h2 id="the-challenge-of-cross-block-communication"><a class="header" href="#the-challenge-of-cross-block-communication">The challenge of cross-block communication</a></h2>
+<p>The fundamental limitation in GPU programming is that threads can only synchronize within a block using <code>barrier()</code>. When data spans multiple blocks, we face the challenge: <strong>How do we ensure blocks can communicate their partial results to other blocks?</strong></p>
+<h3 id="memory-layout-visualization"><a class="header" href="#memory-layout-visualization">Memory layout visualization</a></h3>
+<p>For our test case with <code>SIZE_2 = 15</code> and <code>TPB = 8</code>:</p>
+<pre><code>Input array:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 
-Block 1 (elements 8-14):  Initial: [8,9,10,11,12,13,14]
-                          Result:  [8,17,27,38,50,63,77]
+Block 0 processes: [0, 1, 2, 3, 4, 5, 6, 7]
+Block 1 processes: [8, 9, 10, 11, 12, 13, 14, (padding)]
 </code></pre>
-<p>The computation progresses through log₂(TPB) iterations:</p>
+<p>We extend the output buffer to include space for block sums:</p>
+<pre><code>Extended buffer: [data values (15 elements)] + [block sums (2 elements)]
+                 [0...14] + [block0_sum, block1_sum]
+</code></pre>
+<p>The size of this extended buffer is: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
+<h2 id="phase-1-kernel-local-prefix-sums"><a class="header" href="#phase-1-kernel-local-prefix-sums">Phase 1 kernel: Local prefix sums</a></h2>
+<h3 id="step-by-step-execution-for-block-0"><a class="header" href="#step-by-step-execution-for-block-0">Step-by-step execution for Block 0</a></h3>
 <ol>
-<li>Offset=1: Each element adds previous element</li>
-<li>Offset=2: Each element adds element two positions before</li>
-<li>Offset=4: Each element adds element four positions before</li>
-</ol>
-<p>After computing local sums, the last thread in each block stores its block’s total at designated positions in an extended output buffer:</p>
-<pre><code>// Store block sums after the main array
-if local_i == TPB - 1:
-    out[size + block_idx.x] = shared[local_i]
+<li>
+<p><strong>Load values into shared memory</strong>:</p>
+<pre><code>shared = [0, 1, 2, 3, 4, 5, 6, 7]
 </code></pre>
-<p>This results in:</p>
-<pre><code>Output buffer: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
-                                                           ↑  ↑
+</li>
+<li>
+<p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
+<p><strong>Iteration 1</strong> (offset=1):</p>
+<pre><code>shared[0] = 0              (unchanged)
+shared[1] = 1 + 0 = 1
+shared[2] = 2 + 1 = 3
+shared[3] = 3 + 2 = 5
+shared[4] = 4 + 3 = 7
+shared[5] = 5 + 4 = 9
+shared[6] = 6 + 5 = 11
+shared[7] = 7 + 6 = 13
+</code></pre>
+<p>After barrier: <code>shared = [0, 1, 3, 5, 7, 9, 11, 13]</code></p>
+<p><strong>Iteration 2</strong> (offset=2):</p>
+<pre><code>shared[0] = 0              (unchanged)
+shared[1] = 1              (unchanged)
+shared[2] = 3 + 0 = 3      (unchanged)
+shared[3] = 5 + 1 = 6
+shared[4] = 7 + 3 = 10
+shared[5] = 9 + 5 = 14
+shared[6] = 11 + 7 = 18
+shared[7] = 13 + 9 = 22
+</code></pre>
+<p>After barrier: <code>shared = [0, 1, 3, 6, 10, 14, 18, 22]</code></p>
+<p><strong>Iteration 3</strong> (offset=4):</p>
+<pre><code>shared[0] = 0              (unchanged)
+shared[1] = 1              (unchanged)
+shared[2] = 3              (unchanged)
+shared[3] = 6              (unchanged)
+shared[4] = 10 + 0 = 10    (unchanged)
+shared[5] = 14 + 1 = 15
+shared[6] = 18 + 3 = 21
+shared[7] = 22 + 6 = 28
+</code></pre>
+<p>After barrier: <code>shared = [0, 1, 3, 6, 10, 15, 21, 28]</code></p>
+</li>
+<li>
+<p><strong>Write local results back to global memory</strong>:</p>
+<pre><code>out[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
+</code></pre>
+</li>
+<li>
+<p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
+<pre><code>out[15] = 28  // at position size + block_idx.x = 15 + 0
+</code></pre>
+</li>
+</ol>
+<h3 id="step-by-step-execution-for-block-1"><a class="header" href="#step-by-step-execution-for-block-1">Step-by-step execution for Block 1</a></h3>
+<ol>
+<li>
+<p><strong>Load values into shared memory</strong>:</p>
+<pre><code>shared = [8, 9, 10, 11, 12, 13, 14, 0] // Last value padded with 0
+</code></pre>
+</li>
+<li>
+<p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
+<p>With similar iterations as Block 0, after all three iterations:</p>
+<pre><code>shared = [8, 17, 27, 38, 50, 63, 77, 77]
+</code></pre>
+</li>
+<li>
+<p><strong>Write local results back to global memory</strong>:</p>
+<pre><code>out[8...14] = [8, 17, 27, 38, 50, 63, 77]
+</code></pre>
+</li>
+<li>
+<p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
+<pre><code>out[16] = 77  // at position size + block_idx.x = 15 + 1
+</code></pre>
+</li>
+</ol>
+<p>After Phase 1, the output buffer contains:</p>
+<pre><code>[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, 77]
+                                                        ^   ^
                                                 Block sums stored here
 </code></pre>
-<h3 id="host-level-synchronization"><a class="header" href="#host-level-synchronization">Host-level Synchronization</a></h3>
-<p>The critical insight is that we <strong>cannot synchronize across blocks within a single kernel</strong>. Instead:</p>
-<pre><code class="language-mojo"># Wait for all blocks to complete with host synchronization
-ctx.synchronize()
+<h2 id="host-side-synchronization-the-critical-step"><a class="header" href="#host-side-synchronization-the-critical-step">Host-side synchronization: The critical step</a></h2>
+<p>Between phases 1 and 2, we call:</p>
+<pre><code class="language-mojo">ctx.synchronize()
 </code></pre>
-<p>This ensures all blocks in the first kernel have completed and all block sums are stored before we start the second kernel.</p>
-<h3 id="phase-2-adding-block-sums"><a class="header" href="#phase-2-adding-block-sums">Phase 2: Adding Block Sums</a></h3>
-<p>The second kernel adds each block’s prefix sum to all elements in subsequent blocks:</p>
-<pre><code>Block 0: No changes (already correct)
-Block 1: Each element adds Block 0's sum (28)
-   Before: [8,17,27,38,50,63,77]
-   After:  [36,45,55,66,78,91,105]
-</code></pre>
-<p>The final result combines both blocks:</p>
-<pre><code>[0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
-</code></pre>
-<h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key Implementation Details</a></h3>
+<p>This is the most crucial part of the algorithm! Without this synchronization, the second kernel might start before the first one completes, leading to race conditions and incorrect results. This is a fundamental difference from single-block algorithms where <code>barrier()</code> would be sufficient.</p>
+<h2 id="phase-2-kernel-block-sum-addition"><a class="header" href="#phase-2-kernel-block-sum-addition">Phase 2 kernel: Block sum addition</a></h2>
 <ol>
-<li><strong>Extended buffer</strong>: We allocate extra space to store block sums</li>
-<li><strong>Different layouts</strong>: The input and output tensors have different layouts</li>
-<li><strong>Two-phase approach</strong>: Essential for correct cross-block communication</li>
-<li><strong>Barrier usage</strong>: Used within kernels for thread synchronization</li>
-<li><strong>Host synchronization</strong>: Used between kernels for block synchronization</li>
+<li>
+<p><strong>Block 0</strong>: No changes needed (it’s already correct).</p>
+</li>
+<li>
+<p><strong>Block 1</strong>: Each thread adds Block 0’s sum to its element:</p>
+<pre><code>prev_block_sum = out[size + block_idx.x - 1] = out[15] = 28
+out[global_i] += prev_block_sum
+</code></pre>
+<p>Block 1 values are transformed:</p>
+<pre><code>Before: [8, 17, 27, 38, 50, 63, 77]
+After:  [36, 45, 55, 66, 78, 91, 105]
+</code></pre>
+</li>
 </ol>
-<p>This approach scales efficiently to arbitrary input sizes by properly handling block-to-block dependencies.</p>
+<h2 id="performance-and-optimization-considerations"><a class="header" href="#performance-and-optimization-considerations">Performance and optimization considerations</a></h2>
+<ol>
+<li>
+<p><strong>Work efficiency</strong>: This implementation has \(O(n \log n)\) work complexity, while the sequential algorithm is \(O(n)\). This is a classic space-time tradeoff in parallel algorithms.</p>
+</li>
+<li>
+<p><strong>Memory overhead</strong>: The extra space for block sums is minimal (just one element per block).</p>
+</li>
+</ol>
+<p>This two-kernel approach is a fundamental pattern in GPU programming for algorithms that require cross-block communication. The same strategy can be applied to other parallel algorithms like radix sort, histogram calculation, and reduction operations.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-13-axis-sum"><a class="header" href="#puzzle-13-axis-sum">Puzzle 13: Axis Sum</a></h1>
