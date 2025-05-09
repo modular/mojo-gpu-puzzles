@@ -713,7 +713,10 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <h3 id="-modern-2d-operations"><a class="header" href="#-modern-2d-operations"><a href="puzzle_04/./layout_tensor.html">🚀 Modern 2D operations</a></a></h3>
 <p>Put LayoutTensor into practice with natural 2D indexing and automatic bounds checking.</p>
 <p>💡 <strong>Note</strong>: From this puzzle onward, we’ll primarily use LayoutTensor for cleaner, safer GPU code.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-5"><a class="header" href="#key-concepts-5">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-4"><a class="header" href="#overview-4">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
+<h2 id="key-concepts-5"><a class="header" href="#key-concepts-5">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Working with 2D thread indices (<code>thread_idx.x</code>, <code>thread_idx.y</code>)</li>
@@ -979,7 +982,7 @@ After:
 <p>Ready to start your GPU programming journey with LayoutTensor? Let’s dive into the puzzles!</p>
 <p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these fundamental concepts to create increasingly sophisticated GPU programs.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version"><a class="header" href="#layouttensor-version">LayoutTensor Version</a></h1>
-<h2 id="overview-4"><a class="header" href="#overview-4">Overview</a></h2>
+<h2 id="overview-5"><a class="header" href="#overview-5">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D <em>LayoutTensor</em> <code>a</code> and stores it in 2D <em>LayoutTensor</em> <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts-6"><a class="header" href="#key-concepts-6">Key concepts</a></h2>
@@ -1059,7 +1062,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-5-broadcast"><a class="header" href="#puzzle-5-broadcast">Puzzle 5: Broadcast</a></h1>
-<h2 id="overview-5"><a class="header" href="#overview-5">Overview</a></h2>
+<h2 id="overview-6"><a class="header" href="#overview-6">Overview</a></h2>
 <p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <p><img src="puzzle_05/./media/videos/720p30/puzzle_05_viz.gif" alt="Broadcast visualization" /></p>
@@ -1076,7 +1079,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h3 id="-layouttensor-version"><a class="header" href="#-layouttensor-version"><a href="puzzle_05/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor to handle mixed-dimension operations.</p>
 <p>💡 <strong>Note</strong>: Notice how LayoutTensor simplifies broadcasting compared to manual indexing.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-8"><a class="header" href="#key-concepts-8">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-7"><a class="header" href="#overview-7">Overview</a></h2>
+<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
+<h2 id="key-concepts-8"><a class="header" href="#key-concepts-8">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Broadcasting 1D vectors across different dimensions</li>
@@ -1179,8 +1185,8 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version-1"><a class="header" href="#layouttensor-version-1">LayoutTensor Version</a></h1>
-<h2 id="overview-6"><a class="header" href="#overview-6">Overview</a></h2>
-<p>Implement a kernel that broadcast adds <em>LayoutTensor</em> vector <code>a</code> and <em>LayoutTensor</em> vector <code>b</code> and stores it in <em>LayoutTensor</em> <code>out</code>.</p>
+<h2 id="overview-8"><a class="header" href="#overview-8">Overview</a></h2>
+<p>Implement a kernel that broadcast adds 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 2D LayoutTensor <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <h2 id="key-concepts-9"><a class="header" href="#key-concepts-9">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1296,7 +1302,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-6-blocks"><a class="header" href="#puzzle-6-blocks">Puzzle 6: Blocks</a></h1>
-<h2 id="overview-7"><a class="header" href="#overview-7">Overview</a></h2>
+<h2 id="overview-9"><a class="header" href="#overview-9">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
 <p><img src="puzzle_06/./media/videos/720p30/puzzle_06_viz.gif" alt="Blocks visualization" /></p>
@@ -1409,7 +1415,7 @@ Block 2:             [6 7 8]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-7-2d-blocks"><a class="header" href="#puzzle-7-2d-blocks">Puzzle 7: 2D Blocks</a></h1>
-<h2 id="overview-8"><a class="header" href="#overview-8">Overview</a></h2>
+<h2 id="overview-10"><a class="header" href="#overview-10">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <p><img src="puzzle_07/./media/videos/720p30/puzzle_07_viz.gif" alt="Blocks 2D visualization" /></p>
@@ -1451,7 +1457,10 @@ The block dimensions and indices work together to ensure:</p>
 <h3 id="-layouttensor-version-1"><a class="header" href="#-layouttensor-version-1"><a href="puzzle_07/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor features to elegantly handle block-based processing.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies block coordination and memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-12"><a class="header" href="#key-concepts-12">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-11"><a class="header" href="#overview-11">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
+<h2 id="key-concepts-12"><a class="header" href="#key-concepts-12">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Working with 2D block and thread arrangements</li>
@@ -1585,7 +1594,7 @@ Block (0,1)         Block (1,1)
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version-2"><a class="header" href="#layouttensor-version-2">LayoutTensor Version</a></h1>
-<h2 id="overview-9"><a class="header" href="#overview-9">Overview</a></h2>
+<h2 id="overview-12"><a class="header" href="#overview-12">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D LayoutTensor <code>a</code> and stores it in 2D LayoutTensor <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <h2 id="key-concepts-13"><a class="header" href="#key-concepts-13">Key concepts</a></h2>
@@ -1734,8 +1743,8 @@ row * size + col    tensor[row, col]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-8-shared-memory"><a class="header" href="#puzzle-8-shared-memory">Puzzle 8: Shared Memory</a></h1>
-<h2 id="overview-10"><a class="header" href="#overview-10">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of <code>a</code> and stores it in <code>out</code>.</p>
+<h2 id="overview-13"><a class="header" href="#overview-13">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in vector <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <p><img src="puzzle_08/./media/videos/720p30/puzzle_08_viz.gif" alt="Shared memory visualization" /></p>
 <h2 id="implementation-approaches-3"><a class="header" href="#implementation-approaches-3">Implementation approaches</a></h2>
@@ -1744,7 +1753,10 @@ row * size + col    tensor[row, col]
 <h3 id="-layouttensor-version-2"><a class="header" href="#-layouttensor-version-2"><a href="puzzle_08/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s built-in shared memory management features.</p>
 <p>💡 <strong>Note</strong>: Experience how LayoutTensor simplifies shared memory operations while maintaining performance.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-14"><a class="header" href="#key-concepts-14">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-14"><a class="header" href="#overview-14">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
+<h2 id="key-concepts-14"><a class="header" href="#key-concepts-14">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using shared memory within thread blocks</li>
@@ -1908,7 +1920,10 @@ Block 1 output: [11 11 11 11]
 <p>This pattern shows how to use shared memory to optimize data access while maintaining thread coordination within blocks.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-15"><a class="header" href="#key-concepts-15">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-15"><a class="header" href="#overview-15">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of a 1D ayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
+<h2 id="key-concepts-15"><a class="header" href="#key-concepts-15">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor’s shared memory features</li>
@@ -2094,8 +2109,8 @@ Block 1 output: [11 11 11 11]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-9-pooling"><a class="header" href="#puzzle-9-pooling">Puzzle 9: Pooling</a></h1>
-<h2 id="overview-11"><a class="header" href="#overview-11">Overview</a></h2>
-<p>Implement a kernel that sums together the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <p><img src="puzzle_09/./media/videos/720p30/puzzle_09_viz.gif" alt="Pooling visualization" /></p>
 <h2 id="implementation-approaches-4"><a class="header" href="#implementation-approaches-4">Implementation approaches</a></h2>
@@ -2104,7 +2119,10 @@ Block 1 output: [11 11 11 11]
 <h3 id="-layouttensor-version-3"><a class="header" href="#-layouttensor-version-3"><a href="puzzle_09/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
+<h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using shared memory for sliding window operations</li>
@@ -2268,7 +2286,10 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
+<p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
+<h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor for sliding window operations</li>
@@ -2450,8 +2471,8 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-10-dot-product"><a class="header" href="#puzzle-10-dot-product">Puzzle 10: Dot Product</a></h1>
-<h2 id="overview-12"><a class="header" href="#overview-12">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code>.</p>
+<h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
+<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads and 1 global write per thread.</em></p>
 <p><img src="puzzle_10/./media/videos/720p30/puzzle_10_viz.gif" alt="Dot product visualization" /></p>
 <h2 id="implementation-approaches-5"><a class="header" href="#implementation-approaches-5">Implementation approaches</a></h2>
@@ -2460,7 +2481,10 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <h3 id="-layouttensor-version-4"><a class="header" href="#-layouttensor-version-4"><a href="puzzle_10/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
+<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> (single number).</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads and 1 global write per thread.</em></p>
+<h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing parallel reduction operations</li>
@@ -2676,7 +2700,10 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
+<p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code> (single number).</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads and 1 global write per thread.</em></p>
+<h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Similar to the <a href="puzzle_10/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_10/../puzzle_09/layout_tensor.html">puzzle 9</a>, implementing parallel reduction with LayoutTensor</li>
@@ -2913,7 +2940,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 <p>This transition aligns with best practices in modern GPU programming in Mojo 🔥, where higher-level abstractions help manage complexity without sacrificing performance.</p>
 </blockquote>
-<h2 id="overview-13"><a class="header" href="#overview-13">Overview</a></h2>
+<h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
@@ -3376,7 +3403,7 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-prefix-sum"><a class="header" href="#puzzle-12-prefix-sum">Puzzle 12: Prefix Sum</a></h1>
-<h2 id="overview-14"><a class="header" href="#overview-14">Overview</a></h2>
+<h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over vector <code>a</code> and stores it in <code>out</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
@@ -3813,7 +3840,7 @@ Block 0’s sum</li>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-13-axis-sum"><a class="header" href="#puzzle-13-axis-sum">Puzzle 13: Axis Sum</a></h1>
-<h2 id="overview-15"><a class="header" href="#overview-15">Overview</a></h2>
+<h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>out</code> using LayoutTensor.</p>
 <p><img src="puzzle_13/./media/videos/720p30/puzzle_13_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
@@ -4035,7 +4062,7 @@ while stride &gt; 0:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-14-matrix-multiplication-matmul"><a class="header" href="#puzzle-14-matrix-multiplication-matmul">Puzzle 14: Matrix Multiplication (MatMul)</a></h1>
-<h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
+<h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
 <p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
 <p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
@@ -4065,7 +4092,7 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 </ol>
 <p>Choose a version to begin your matrix multiplication journey!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="naive-matrix-multiplication"><a class="header" href="#naive-matrix-multiplication">Naive Matrix Multiplication</a></h1>
-<h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
+<h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts-23"><a class="header" href="#key-concepts-23">Key concepts</a></h2>
@@ -4244,7 +4271,7 @@ for k in range(size):
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
-<h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
+<h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
 <h2 id="key-concepts-24"><a class="header" href="#key-concepts-24">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -4522,7 +4549,7 @@ if row &lt; size and col &lt; size:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tiled-matrix-multiplication"><a class="header" href="#tiled-matrix-multiplication">Tiled Matrix Multiplication</a></h1>
-<h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
+<h2 id="overview-28"><a class="header" href="#overview-28">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
 <h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
 <ul>
@@ -4986,7 +5013,7 @@ barrier()
 </ul>
 <p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
 </blockquote>
-<h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
+<h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
 <p>In <a href="puzzle_15/../puzzle_11/puzzle_11.html">Puzzle 11</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">alias TPB = 15
