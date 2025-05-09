@@ -194,6 +194,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="simple-version"><a class="header" href="#simple-version">Simple Version</a></h1>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
@@ -210,13 +212,7 @@
 <li><strong>Type safety</strong>: Leveraging LayoutTensor’s type system</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
-from math import log2
-
-
-alias TPB = 8
+<pre><code class="language-mojo">alias TPB = 8
 alias SIZE = 8
 alias BLOCKS_PER_GRID = (1, 1)
 alias THREADS_PER_BLOCK = (TPB, 1)
@@ -234,7 +230,6 @@ fn prefix_sum_simple[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # FILL ME IN (roughly 12 lines)
-
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>

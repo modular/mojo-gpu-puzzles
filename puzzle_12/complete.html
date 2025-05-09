@@ -194,6 +194,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="complete-version"><a class="header" href="#complete-version">Complete Version</a></h1>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to synchronize across multiple blocks to get the correct result.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE_2 = 15</code> elements</li>
@@ -203,41 +205,108 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Block handling</strong>: Multiple blocks process array segments</li>
-<li><strong>Partial blocks</strong>: Last block may not be full</li>
-<li><strong>Block sums</strong>: Store running totals between blocks</li>
-<li><strong>Global result</strong>: Combine local and block sums</li>
-<li><strong>Layout safety</strong>: Consistent layout handling through LayoutTensor</li>
+<li><strong>Multiple blocks</strong>: When the input array is larger than one block, we need a multi-phase approach</li>
+<li><strong>Block-level sync</strong>: Within a block, use <code>barrier()</code> to synchronize threads</li>
+<li><strong>Host-level sync</strong>: Between blocks, use <code>ctx.synchronize()</code> at the host level</li>
+<li><strong>Auxiliary storage</strong>: Use extra space to store block sums for cross-block communication</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<p>You need to complete two separate kernel functions for the multi-block prefix sum:</p>
+<ol>
+<li><strong>First kernel</strong> (<code>prefix_sum_local_phase</code>): Computes local prefix sums within each block and stores block sums</li>
+<li><strong>Second kernel</strong> (<code>prefix_sum_block_sum_phase</code>): Adds previous block sums to elements in subsequent blocks</li>
+</ol>
+<p>The main function will handle the necessary host-side synchronization between these kernels.</p>
 <pre><code class="language-mojo">alias SIZE_2 = 15
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
+alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
-fn prefix_sum[
-    layout: Layout
-](
-    out: LayoutTensor[mut=False, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+# Kernel 1: Compute local prefix sums and store block sums in out
+fn prefix_sum_local_phase[out_layout: Layout, in_layout: Layout](
+    out: LayoutTensor[mut=False, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
+    num_blocks: Int
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # FILL ME IN (roughly 19 lines)
+    # FILL ME IN (roughly 14 lines)
 
+# Kernel 2: Add block sums to their respective blocks
+fn prefix_sum_block_sum_phase[layout: Layout](
+    out: LayoutTensor[mut=False, dtype, layout],
+    size: Int
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    # FILL ME IN (roughly 3 lines)
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
+<pre><code class="language-mojo">            # Phase 1: Local prefix sums
+            ctx.enqueue_function[prefix_sum_local_phase[extended_layout, extended_layout]](
+                out_tensor,
+                a_tensor,
+                size,
+                num_blocks,
+                grid_dim=BLOCKS_PER_GRID_2,
+                block_dim=THREADS_PER_BLOCK_2,
+            )
+
+            # Wait for all `blocks` to complete with using host `ctx.synchronize()`
+            # Note this is in contrast with using `barrier()` in the kernel
+            # which is a synchronization point for all threads in the same block and not across blocks.
+            ctx.synchronize()
+
+            # Phase 2: Add block sums
+            ctx.enqueue_function[prefix_sum_block_sum_phase[extended_layout]](
+                out_tensor,
+                size,
+                grid_dim=BLOCKS_PER_GRID_2,
+                block_dim=THREADS_PER_BLOCK_2,
+            )
+</code></pre>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
+<h3 id="1-build-on-the-simple-prefix-sum"><a class="header" href="#1-build-on-the-simple-prefix-sum">1. Build on the simple prefix sum</a></h3>
+<p>The <a href="./simple.html">Simple Version</a> shows how to implement a single-block prefix sum. You’ll need to extend that approach to work across multiple blocks:</p>
+<pre><code>Simple version (single block): [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
+
+Complete version (two blocks):
+Block 0: [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
+Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
+</code></pre>
+<p>But how do we handle the second block’s values? They need to include sums from the first block!</p>
+<h3 id="2-two-phase-approach"><a class="header" href="#2-two-phase-approach">2. Two-phase approach</a></h3>
+<p>The simple prefix sum can’t synchronize across blocks, so split the work:</p>
 <ol>
-<li>Compute local prefix sums like in <a href="./simple.html">Simple Version</a></li>
-<li>Last thread stores block sum at <code>TPB * (block_idx.x + 1)</code></li>
-<li>Add previous block’s sum to current block</li>
-<li>Handle array bounds for all operations</li>
+<li><strong>First phase</strong>: Each block computes its own local prefix sum (just like the simple version)</li>
+<li><strong>Second phase</strong>: Blocks incorporate the sums from previous blocks</li>
 </ol>
+<p>Remember: <code>barrier()</code> only synchronizes threads within one block. You need host-level synchronization between phases.</p>
+<h3 id="3-extended-memory-strategy"><a class="header" href="#3-extended-memory-strategy">3. Extended memory strategy</a></h3>
+<p>Since blocks can’t directly communicate, you need somewhere to store block sums:</p>
+<ul>
+<li>Allocate extra memory at the end of your output buffer</li>
+<li>Last thread in each block stores its final sum in this extra space</li>
+<li>Subsequent blocks can read these sums and add them to their elements</li>
+</ul>
+<h3 id="4-key-implementation-insights"><a class="header" href="#4-key-implementation-insights">4. Key implementation insights</a></h3>
+<ul>
+<li><strong>Different layouts</strong>: Input and output may have different shapes</li>
+<li><strong>Boundary handling</strong>: Always check <code>global_i &lt; size</code> for array bounds</li>
+<li><strong>Thread role specialization</strong>: Only specific threads (e.g., last thread) should store block sums</li>
+<li><strong>Two kernel synchronization</strong>: Use <code>ctx.synchronize()</code> between kernel launches</li>
+</ul>
+<h3 id="5-debugging-strategy"><a class="header" href="#5-debugging-strategy">5. Debugging Strategy</a></h3>
+<p>If you encounter issues, try visualizing the intermediate state after the first phase:</p>
+<pre><code>After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
+</code></pre>
+<p>Where <code>???</code> should contain your block sums that will be used in the second phase.</p>
 </div>
 </details>
 <h3 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h3>
@@ -245,137 +314,134 @@ fn prefix_sum[
 <pre><code class="language-bash">magic run p12 --complete
 </code></pre>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn prefix_sum[
-    layout: Layout
-](
-    out: LayoutTensor[mut=False, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+<pre><code class="language-mojo">
+# Kernel 1: Compute local prefix sums and store block sums in out
+fn prefix_sum_local_phase[out_layout: Layout, in_layout: Layout](
+    out: LayoutTensor[mut=False, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
+    num_blocks: Int
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     shared = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    # Load data into shared memory
+    # Example with SIZE_2=15, TPB=8, BLOCKS=2:
+    # Block 0 shared mem: [0,1,2,3,4,5,6,7]
+    # Block 1 shared mem: [8,9,10,11,12,13,14,0]  (last value padded with 0)
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
     barrier()
 
-    # Idea: two passes
-    # SIZE=15, TPB=8, BLOCKS=2
-    # buffer: [0,1,2,...,7 | 8,...,14]
-
-    # Step 1: Each block computes local prefix sum
-    # Block 0: [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
-    # Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
-
-    # Step 2: Store block sums
-    # Block 0's sum (28) → position 8
-
-    # Step 3: Add previous block's sum
-    # Block 1: Each element += 28
-    # [8,17,27,38,50,63,77] → [36,45,55,66,78,91,105]
-
-    # Final result combines both blocks:
-    # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
-
-    # local prefix-sum for each block
+    # Compute local prefix sum using parallel reduction
+    # This uses a tree-based algorithm with log(TPB) iterations
+    # Iteration 1 (offset=1):
+    #   Block 0: [0,0+1,2+1,3+2,4+3,5+4,6+5,7+6] = [0,1,3,5,7,9,11,13]
+    # Iteration 2 (offset=2):
+    #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
+    # Iteration 3 (offset=4):
+    #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
+    # Block 1 follows same pattern to get [8,17,27,38,50,63,77,...]
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        if local_i &gt;= offset and local_i &lt; size:
+        if local_i &gt;= offset and local_i &lt; TPB:
             shared[local_i] += shared[local_i - offset]
-
         barrier()
         offset *= 2
 
-    # store block results
+    # Write local results to output
+    # Block 0 writes: [0,1,3,6,10,15,21,28]
+    # Block 1 writes: [8,17,27,38,50,63,77,...]
     if global_i &lt; size:
         out[global_i] = shared[local_i]
 
-    # store block sum in first element of next block:
-    # - Only last thread (local_i == 7) in each block except last block executes
-    # - Block 0: Thread 7 stores 28 (sum of 0-7) at position 8 (start of Block 1)
-    # - Calculation: TPB * (block_idx.x + 1)
-    # Block 0: 8 * (0 + 1) = position 8
-    # Block 1: No action (last block)
-    # Memory state:
-    # [0,1,3,6,10,15,21,28 | 28,45,55,66,78,91,105]
-    #                        ↑
-    #                       Block 0's sum stored here
-    if local_i == TPB - 1 and block_idx.x &lt; size // TPB - 1:
-        out[TPB * (block_idx.x + 1)] = shared[local_i]
+    # Store block sums in auxiliary space
+    # Block 0: Thread 7 stores 28 at position size+0 (position 15)
+    # Block 1: Thread 7 stores 77 at position size+1 (position 16)
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
+    #                                                           ↑  ↑
+    #                                                     Block sums here
+    if local_i == TPB - 1:
+        out[size + block_idx.x] = shared[local_i]
 
-    # wait for all blocks to store their sums
-    barrier()
+# Kernel 2: Add block sums to their respective blocks
+fn prefix_sum_block_sum_phase[layout: Layout](
+    out: LayoutTensor[mut=False, dtype, layout],
+    size: Int
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
 
-    # second pass: add previous block's sum which becomes:
-    # Before: [8,9,10,11,12,13,14]
-    # Add 28: [36,37,38,39,40,41,42]
+    # Second pass: add previous block's sum to each element
+    # Block 0: No change needed - already correct
+    # Block 1: Add Block 0's sum (28) to each element
+    #   Before: [8,17,27,38,50,63,77]
+    #   After: [36,45,55,66,78,91,105]
+    # Final result combines both blocks:
+    # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
     if block_idx.x &gt; 0 and global_i &lt; size:
-        shared[local_i] += out[block_idx.x * TPB - 1]
-
-    # final result
-    if global_i &lt; size:
-        out[global_i] = shared[local_i]
-
+        prev_block_sum = out[size + block_idx.x - 1]
+        out[global_i] += prev_block_sum
 
 </code></pre>
 <div class="solution-explanation">
-This solution handles multi-block prefix sum in three main phases:
-<ol>
-<li>
-<p>Local prefix sum (per block):</p>
-<pre><code>Block 0 (8 elements):    [0,1,2,3,4,5,6,7]
-After local prefix sum:  [0,1,3,7,10,16,21,28]
+This solution implements multi-block prefix sum using a two-kernel approach:
+<h3 id="phase-1-local-prefix-sums-and-block-sum-storage"><a class="header" href="#phase-1-local-prefix-sums-and-block-sum-storage">Phase 1: Local Prefix Sums and Block Sum Storage</a></h3>
+<p>In the first kernel, each block computes its local prefix sum:</p>
+<pre><code>Block 0 (elements 0-7):   Initial: [0,1,2,3,4,5,6,7]
+                          Result:  [0,1,3,6,10,15,21,28]
 
-Block 1 (7 elements):    [8,9,10,11,12,13,14]
-After local prefix sum:  [8,17,27,38,50,63,77]
+Block 1 (elements 8-14):  Initial: [8,9,10,11,12,13,14]
+                          Result:  [8,17,27,38,50,63,77]
 </code></pre>
-</li>
-<li>
-<p>Block sum communication:</p>
-<ul>
-<li>Last thread (local_i == TPB-1) in each non-final block</li>
-<li>Stores its block’s sum at next block’s start:</li>
-</ul>
-<pre><code class="language-mojo">if local_i == TPB - 1 and block_idx.x &lt; size // TPB - 1:
-    out[TPB * (block_idx.x + 1)] = shared[local_i]
-</code></pre>
-<ul>
-<li>Block 0’s sum (28) stored at position 8</li>
-<li>Memory layout: <code>[0,1,3,7,10,16,21,28 | 28,17,27,38,50,63,77]</code>
-↑
-Block 0’s sum</li>
-</ul>
-</li>
-<li>
-<p>Final adjustment:</p>
-<ul>
-<li>Each block after first adds previous block’s sum</li>
-</ul>
-<pre><code class="language-mojo">if block_idx.x &gt; 0 and global_i &lt; size:
-    shared[local_i] += out[block_idx.x * TPB - 1]
-</code></pre>
-<ul>
-<li>Block 1: Each element += 28</li>
-<li>Final result: <code>[0,1,3,7,10,16,21,28, 36,45,55,66,78,91,105]</code></li>
-</ul>
-</li>
+<p>The computation progresses through log₂(TPB) iterations:</p>
+<ol>
+<li>Offset=1: Each element adds previous element</li>
+<li>Offset=2: Each element adds element two positions before</li>
+<li>Offset=4: Each element adds element four positions before</li>
 </ol>
-<p>Key implementation details:</p>
-<ul>
-<li>Uses <code>barrier()</code> after shared memory operations</li>
-<li>Handles partial blocks (last block size &lt; TPB)</li>
-<li>Guards all operations with proper bounds checking</li>
-<li>Maintains correct thread and block synchronization</li>
-<li>Achieves \(O(\log n)\) complexity per block</li>
-</ul>
-<p>The solution scales to arbitrary-sized inputs by combining local prefix sums with efficient block-to-block communication.</p>
+<p>After computing local sums, the last thread in each block stores its block’s total at designated positions in an extended output buffer:</p>
+<pre><code>// Store block sums after the main array
+if local_i == TPB - 1:
+    out[size + block_idx.x] = shared[local_i]
+</code></pre>
+<p>This results in:</p>
+<pre><code>Output buffer: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
+                                                           ↑  ↑
+                                                Block sums stored here
+</code></pre>
+<h3 id="host-level-synchronization"><a class="header" href="#host-level-synchronization">Host-level Synchronization</a></h3>
+<p>The critical insight is that we <strong>cannot synchronize across blocks within a single kernel</strong>. Instead:</p>
+<pre><code class="language-mojo"># Wait for all blocks to complete with host synchronization
+ctx.synchronize()
+</code></pre>
+<p>This ensures all blocks in the first kernel have completed and all block sums are stored before we start the second kernel.</p>
+<h3 id="phase-2-adding-block-sums"><a class="header" href="#phase-2-adding-block-sums">Phase 2: Adding Block Sums</a></h3>
+<p>The second kernel adds each block’s prefix sum to all elements in subsequent blocks:</p>
+<pre><code>Block 0: No changes (already correct)
+Block 1: Each element adds Block 0's sum (28)
+   Before: [8,17,27,38,50,63,77]
+   After:  [36,45,55,66,78,91,105]
+</code></pre>
+<p>The final result combines both blocks:</p>
+<pre><code>[0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
+</code></pre>
+<h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key Implementation Details</a></h3>
+<ol>
+<li><strong>Extended buffer</strong>: We allocate extra space to store block sums</li>
+<li><strong>Different layouts</strong>: The input and output tensors have different layouts</li>
+<li><strong>Two-phase approach</strong>: Essential for correct cross-block communication</li>
+<li><strong>Barrier usage</strong>: Used within kernels for thread synchronization</li>
+<li><strong>Host synchronization</strong>: Used between kernels for block synchronization</li>
+</ol>
+<p>This approach scales efficiently to arbitrary input sizes by properly handling block-to-block dependencies.</p>
 </div>
 </details>
 
