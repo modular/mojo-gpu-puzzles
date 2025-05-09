@@ -193,7 +193,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="simple-version-single-block"><a class="header" href="#simple-version-single-block">Simple Version: Single Block</a></h1>
+                        <h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -217,13 +217,7 @@
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
-
-
-alias MAX_CONV = 4
-alias TPB = 8
+<pre><code class="language-mojo">alias TPB = 8
 alias SIZE = 6
 alias CONV = 3
 alias BLOCKS_PER_GRID = (1, 1)
@@ -240,13 +234,10 @@ fn conv_1d_simple[
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
-    a_size: Int,
-    b_size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # FILL ME IN (roughly 13 lines)
-
+    # FILL ME IN (roughly 14 lines)
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
@@ -279,17 +270,15 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
-    a_size: Int,
-    b_size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     shared_a = tb[dtype]().row_major[SIZE]().shared().alloc()
     shared_b = tb[dtype]().row_major[CONV]().shared().alloc()
-    if global_i &lt; a_size:
+    if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
 
-    if global_i &lt; b_size:
+    if global_i &lt; CONV:
         shared_b[local_i] = b[global_i]
 
     barrier()
@@ -300,11 +289,11 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     #     if local_i + j &lt; SIZE:
     #         local_sum += shared_a[local_i + j] * shared_b[j]
 
-    # if global_i &lt; a_size:
+    # if global_i &lt; SIZE:
     #     out[global_i] = local_sum
 
     # Safe and correct:
-    if global_i &lt; a_size:
+    if global_i &lt; SIZE:
         # Note: using `var` allows us to include the type in the type inference
         # `out.element_type` is available in LayoutTensor
         var local_sum: out.element_type = 0
