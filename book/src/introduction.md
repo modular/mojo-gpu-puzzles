@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150">
+  <img src="images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
 </p>
 
 <p align="center">
   <h1 align="center">Mojo🔥 GPU Puzzles</h1>
 </p>
 
-<p align="center" style="display: flex; justify-content: center; gap: 8px;">
+<p align="center" class="social-buttons" style="display: flex; justify-content: center; gap: 8px;">
   <a href="https://github.com/modular/mojo-gpu-puzzles">
     <img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub Repository">
   </a>

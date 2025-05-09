@@ -29,6 +29,7 @@
   --modular-text-inactive: #9a9eaa;
   --modular-menu-border: var(--links);
   --Elements-Twilight-60-50: #676d71;
+  --Elements-Twilight-40-60: #b3b8c2;
   --mono-font: "Roboto Mono";
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23020c13" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23262c30" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
@@ -37,7 +38,7 @@
   --m-logo: url("/images/m-dark.svg");
   --modular-logo: url("/images/modular-dark.svg");
   --color-mode-icon: url("/images/sun.svg");
-  --arrow-left-icon: url("/images/arrow-left-dark.svg");
+  --close-icon: url("/images/close-dark.svg");
   --icons: var(--modular-text);
 }
 
@@ -59,13 +60,14 @@
   --modular-sidebar-active: #262c30;
   --modular-menu-border: #9199c7;
   --Elements-Twilight-60-50: #9a9eaa;
+  --Elements-Twilight-40-60: #676d71;
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23ffffff" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23d4dae4" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
   --eye-icon: url("/images/eye-dark.svg");
   --m-logo: url("/images/m-light.svg");
   --modular-logo: url("/images/modular-light.svg");
   --color-mode-icon: url("/images/moon.svg");
-  --arrow-left-icon: url("/images/arrow-left-light.svg");
+  --close-icon: url("/images/close-light.svg");
 }
 
 /* Adjust content for header */
@@ -105,6 +107,10 @@ html {
   margin: 0 !important;
 }
 
+#menu-bar {
+  flex-wrap: nowrap;
+}
+
 #menu-bar i,
 #menu-bar .icon-button {
   padding: 0;
@@ -118,24 +124,19 @@ html {
   width: 300px;
 }
 
-.logo-link {
+.desktop-logo-link {
   margin-top: 4px;
-
   &::after {
     content: var(--modular-logo);
-
-    @media (max-width: 996px) {
-      content: var(--m-logo);
-    }
   }
+}
+
+.mobile-logo-link {
+  display: none;
 }
 
 .slash {
   font-size: 16px;
-
-  @media (max-width: 996px) {
-    display: none;
-  }
 }
 
 a.internal-link {
@@ -232,6 +233,36 @@ a.internal-link {
       border: 1px solid var(--modular-secondary-text);
     }
   }
+
+  .print {
+    text-wrap: nowrap;
+  }
+}
+
+@media (max-width: 996px) {
+  .right-buttons > .secondary-btn {
+    border-color: var(--Elements-Twilight-40-60);
+    font-size: 12px;
+    line-height: 1.33rem;
+    color: var(--Elements-Twilight-60-50);
+    padding: 7px 14px;
+  }
+  .print,
+  a.internal-link,
+  .slash {
+    display: none;
+  }
+  .desktop-logo-link {
+    display: none;
+  }
+  .mobile-logo-link {
+    display: block;
+    margin-left: 36px;
+    margin-top: 8px;
+    &::after {
+      content: var(--m-logo);
+    }
+  }
 }
 
 .theme-toggle-btn {
@@ -254,20 +285,20 @@ body.sidebar-hidden #sidebar-toggle {
   height: 28px;
   width: 24px;
   position: absolute;
-  top: 84px;
+  top: 80px;
   left: 24px;
+  border-radius: 2px;
   transition: all 0.1s ease-in-out;
+  cursor: pointer;
   i {
     margin: 6px 5px;
-  }
-  &:hover {
-    border: 1px solid var(--Elements-Twilight-60-50);
   }
 }
 
 .sidebar-visible #sidebar-toggle {
   opacity: 0;
 }
+
 
 /* Adjust sidebar position */
 .sidebar {
@@ -295,7 +326,7 @@ body.sidebar-hidden #sidebar-toggle {
     cursor: pointer;
     margin: 20px 12px 0 0;
     &::after {
-      content: var(--arrow-left-icon);
+      content: var(--close-icon);
     }
   }
 
@@ -712,7 +743,7 @@ mark {
   }
 
   h1 {
-    font-size: 2.5em;
+    font-size: 2em;
   }
 
   h2 {
@@ -733,6 +764,39 @@ mark {
 
   .modular-nav {
     gap: 10px;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .puzzle-image {
+    width: 60px;
+  }
+
+  .social-buttons {
+    flex-wrap: wrap;
+    img {
+      margin: 0;
+    }
+  }
+  #sidebar-toggle {
+    top: 22px;
+    left: 18px;
+    border: none;
+  }
+
+  .sidebar-visible #sidebar-toggle {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-header {
+    border-bottom: none;
+  }
+  .sidebar {
+    width: 100%;
   }
 }
 
