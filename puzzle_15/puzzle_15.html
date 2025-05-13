@@ -212,6 +212,7 @@
 <pre><code class="language-mojo">alias TPB = 15
 alias BLOCKS_PER_GRID = (2, 1)
 
+
 fn conv1d_kernel[
     in_layout: Layout,
     out_layout: Layout,
@@ -253,6 +254,7 @@ fn conv1d_kernel[
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
         out[global_i] = local_sum
+
 
 </code></pre>
 <p>The key aspects of this puzzle include:</p>
@@ -324,6 +326,7 @@ struct Conv1DCustomOp:
         else:
             raise Error("Unsupported target: " + target)
 
+
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
@@ -345,7 +348,9 @@ Verification passed: Custom kernel results match NumPy calculation
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
 <pre><code class="language-mojo">            gpu_ctx.enqueue_function[
-                conv1d_kernel[in_layout, out_layout, conv_layout, input_size, conv_size]
+                conv1d_kernel[
+                    in_layout, out_layout, conv_layout, input_size, conv_size
+                ]
             ](
                 out_tensor,
                 input_tensor,

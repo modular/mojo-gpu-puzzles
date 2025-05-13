@@ -217,7 +217,7 @@
 <li>
 <p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild">LayoutTensorBuild</a> instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
-shared = stack_allocation[TPB * sizeof[dtype](), ...]()
+shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
 shared = LayoutTensorBuild[dtype]().row_major[TPB]().shared().alloc()

@@ -1795,7 +1795,7 @@ fn add_10_shared(
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -1842,7 +1842,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -1943,7 +1943,7 @@ Block 1 output: [11 11 11 11]
 <li>
 <p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild">LayoutTensorBuild</a> instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
-shared = stack_allocation[TPB * sizeof[dtype](), ...]()
+shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
 shared = LayoutTensorBuild[dtype]().row_major[TPB]().shared().alloc()
@@ -2158,7 +2158,7 @@ fn pooling(
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -2197,7 +2197,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -2558,7 +2558,7 @@ expected: HostBuffer([140.0])
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -3013,6 +3013,7 @@ fn conv_1d_simple[
     local_i = thread_idx.x
     # FILL ME IN (roughly 14 lines)
 
+
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
 <details>
@@ -3207,6 +3208,7 @@ fn conv_1d_block_boundary[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
+
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
@@ -3482,6 +3484,7 @@ fn prefix_sum_simple[
     local_i = thread_idx.x
     # FILL ME IN (roughly 12 lines)
 
+
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
 <details>
@@ -3685,29 +3688,34 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-fn prefix_sum_local_phase[out_layout: Layout, in_layout: Layout](
+fn prefix_sum_local_phase[
+    out_layout: Layout, in_layout: Layout
+](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
-    num_blocks: Int
+    num_blocks: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # FILL ME IN (roughly 14 lines)
 
+
 # Kernel 2: Add block sums to their respective blocks
-fn prefix_sum_block_sum_phase[layout: Layout](
-    out: LayoutTensor[mut=False, dtype, layout],
-    size: Int
-):
+fn prefix_sum_block_sum_phase[
+    layout: Layout
+](out: LayoutTensor[mut=False, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
+
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            ctx.enqueue_function[prefix_sum_local_phase[extended_layout, extended_layout]](
+            ctx.enqueue_function[
+                prefix_sum_local_phase[extended_layout, extended_layout]
+            ](
                 out_tensor,
                 a_tensor,
                 size,
@@ -3781,12 +3789,15 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
+
 # Kernel 1: Compute local prefix sums and store block sums in out
-fn prefix_sum_local_phase[out_layout: Layout, in_layout: Layout](
+fn prefix_sum_local_phase[
+    out_layout: Layout, in_layout: Layout
+](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
-    num_blocks: Int
+    num_blocks: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -3832,11 +3843,11 @@ fn prefix_sum_local_phase[out_layout: Layout, in_layout: Layout](
     if local_i == TPB - 1:
         out[size + block_idx.x] = shared[local_i]
 
+
 # Kernel 2: Add block sums to their respective blocks
-fn prefix_sum_block_sum_phase[layout: Layout](
-    out: LayoutTensor[mut=False, dtype, layout],
-    size: Int
-):
+fn prefix_sum_block_sum_phase[
+    layout: Layout
+](out: LayoutTensor[mut=False, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -3849,6 +3860,7 @@ fn prefix_sum_block_sum_phase[layout: Layout](
     if block_idx.x &gt; 0 and global_i &lt; size:
         prev_block_sum = out[size + block_idx.x - 1]
         out[global_i] += prev_block_sum
+
 
 </code></pre>
 <div class="solution-explanation">
@@ -5164,6 +5176,7 @@ barrier()
 <pre><code class="language-mojo">alias TPB = 15
 alias BLOCKS_PER_GRID = (2, 1)
 
+
 fn conv1d_kernel[
     in_layout: Layout,
     out_layout: Layout,
@@ -5205,6 +5218,7 @@ fn conv1d_kernel[
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
         out[global_i] = local_sum
+
 
 </code></pre>
 <p>The key aspects of this puzzle include:</p>
@@ -5276,6 +5290,7 @@ struct Conv1DCustomOp:
         else:
             raise Error("Unsupported target: " + target)
 
+
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
@@ -5297,7 +5312,9 @@ Verification passed: Custom kernel results match NumPy calculation
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
 <pre><code class="language-mojo">            gpu_ctx.enqueue_function[
-                conv1d_kernel[in_layout, out_layout, conv_layout, input_size, conv_size]
+                conv1d_kernel[
+                    in_layout, out_layout, conv_layout, input_size, conv_size
+                ]
             ](
                 out_tensor,
                 input_tensor,

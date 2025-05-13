@@ -233,7 +233,7 @@ fn pooling(
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
@@ -272,7 +272,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     size: Int,
 ):
     shared = stack_allocation[
-        TPB * sizeof[dtype](),
+        TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
