@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -353,7 +354,21 @@ def main():
 
     ctx.synchronize()
 </code></pre>
-<p>When we run this code with <code>magic run layout_tensor_intro</code>, we see:</p>
+<p>When we run this code with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe layout_tensor_intro
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run layout_tensor_intro
+</code></pre>
+  </div>
+</div>
 <pre><code class="language-txt">Before:
 0.0 0.0 0.0
 0.0 0.0 0.0
@@ -435,6 +450,7 @@ After:
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
 
 
     </div>

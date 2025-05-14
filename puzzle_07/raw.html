@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -245,8 +246,20 @@ fn add_10_blocks_2d(
 </details>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p07
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
@@ -381,6 +394,7 @@ Block (0,1)         Block (1,1)
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
 
 
     </div>

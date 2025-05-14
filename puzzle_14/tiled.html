@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -306,8 +307,20 @@ fn matmul_tiled[
 </details>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p14 --tiled
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --tiled
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --tiled
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 2632.0, 5824.0, 6008.0, 6192.0, 6376.0, 6560.0, 6744.0, 6928.0, 7112.0, 9408.0, 9720.0, 10032.0, 10344.0, 10656.0, 10968.0, 11280.0, 11592.0, 12992.0, 13432.0, 13872.0, 14312.0, 14752.0, 15192.0, 15632.0, 16072.0, 16576.0, 17144.0, 17712.0, 18280.0, 18848.0, 19416.0, 19984.0, 20552.0, 20160.0, 20856.0, 21552.0, 22248.0, 22944.0, 23640.0, 24336.0, 25032.0, 23744.0, 24568.0, 25392.0, 26216.0, 27040.0, 27864.0, 28688.0, 29512.0, 27328.0, 28280.0, 29232.0, 30184.0, 31136.0, 32088.0, 33040.0, 33992.0])
@@ -698,6 +711,7 @@ barrier()
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
 
 
     </div>

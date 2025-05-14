@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🧩 Puzzles Usage Guide - Mojo 🔥 GPU Puzzles</title>
+        <title>🧭 Puzzles Usage Guide - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" href="theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -210,17 +211,57 @@
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the examples.</p>
 <h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and make sure you have the <code>magic</code> CLI installed to be able to run the Mojo programs:</p>
+<ol>
+<li><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</li>
+</ol>
 <pre><code class="language-bash"># Clone the repository
 git clone https://github.com/modular/mojo-gpu-puzzles
 cd mojo-gpu-puzzles
-
-# Install magic CLI (if not already installed)
-curl -ssL https://magic.modular.com/ | bash
-
-# Or update if already installed
-magic self-update
 </code></pre>
+<ol start="2">
+<li>
+<p>Install a package manager to run the Mojo🔥 programs:</p>
+<h4 id="option-1-uv-recommended-for-users"><a class="header" href="#option-1-uv-recommended-for-users">Option 1: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a> (recommended for users)</a></h4>
+<p><strong>Install:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
+</code></pre>
+<p><strong>Update:</strong></p>
+<pre><code class="language-bash">uv self update
+</code></pre>
+<p><strong>Create a virtual environment:</strong></p>
+<pre><code class="language-bash">uv venv &amp;&amp; source .venv/bin/activate
+</code></pre>
+<h4 id="option-2-pixi-recommended-for-contributors"><a class="header" href="#option-2-pixi-recommended-for-contributors">Option 2: <a href="https://pixi.sh/latest/#installation">pixi</a> (recommended for contributors)</a></h4>
+<p><strong>Install:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
+</code></pre>
+<p><strong>Update:</strong></p>
+<pre><code class="language-bash">pixi self-update
+</code></pre>
+</li>
+<li>
+<p>Run the puzzles via <code>uv</code> or <code>pixi</code> as follows:</p>
+</li>
+</ol>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
+</code></pre>
+  </div>
+</div>
+<p>For example, to run puzzle 01:</p>
+<ul>
+<li><code>uv run poe p01</code> or</li>
+<li><code>pixi run p01</code></li>
+</ul>
 <h3 id="knowledge-prerequisites"><a class="header" href="#knowledge-prerequisites">Knowledge prerequisites</a></h3>
 <p>Basic knowledge of:</p>
 <ul>
@@ -295,6 +336,7 @@ magic self-update
         <script src="theme/sidebar.js"></script>
         <script src="theme/solution.js"></script>
         <script src="theme/init-amplitude.js"></script>
+        <script src="theme/tabs.js"></script>
 
 
     </div>

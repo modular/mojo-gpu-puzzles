@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -248,8 +249,20 @@ fn prefix_sum_simple[
 </details>
 <h3 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p12 --simple
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12 --simple
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12 --simple
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
@@ -455,6 +468,7 @@ out[]:       [0    1    3    7    10   16   21   28]
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
 
 
     </div>

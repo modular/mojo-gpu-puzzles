@@ -57,6 +57,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="../theme/css/custom.css">
         <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -330,8 +331,20 @@ struct Conv1DCustomOp:
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
-<pre><code class="language-bash">magic run p15
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p15
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15
+</code></pre>
+  </div>
+</div>
 <p>When successful, you should see output similar to:</p>
 <pre><code>Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
 Convolution kernel: [0. 1. 2. 3.]
@@ -496,9 +509,6 @@ struct Conv1DCustomOp:
 <li>Produces a binary artifact (<code>op.mojopkg</code>) that can be loaded by Python</li>
 </ol>
 <p>The package must be placed in a location where MAX Graph can find it, typically in a directory accessible to the Python code.</p>
-<blockquote>
-<p>In the puzzles repository, this is done via a <code>magic</code> task to automate the step. See <a href="../../../mojoproject.toml">mojoproject.toml</a> for more details.</p>
-</blockquote>
 <h3 id="python-integration"><a class="header" href="#python-integration">Python integration</a></h3>
 <p>On the Python side, here’s how the custom operation is used:</p>
 <pre><code class="language-python"># Path to the directory containing our Mojo operations
@@ -576,6 +586,7 @@ with Graph(
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
         <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
 
 
     </div>

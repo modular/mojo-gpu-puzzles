@@ -58,6 +58,7 @@
         <!-- Custom theme stylesheets -->
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" href="theme/css/tabs.css">
 
         <!-- MathJax -->
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -316,17 +317,57 @@ if thread_id &lt; data_size:
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the examples.</p>
 <h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and make sure you have the <code>magic</code> CLI installed to be able to run the Mojo programs:</p>
+<ol>
+<li><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</li>
+</ol>
 <pre><code class="language-bash"># Clone the repository
 git clone https://github.com/modular/mojo-gpu-puzzles
 cd mojo-gpu-puzzles
-
-# Install magic CLI (if not already installed)
-curl -ssL https://magic.modular.com/ | bash
-
-# Or update if already installed
-magic self-update
 </code></pre>
+<ol start="2">
+<li>
+<p>Install a package manager to run the Mojo🔥 programs:</p>
+<h4 id="option-1-uv-recommended-for-users"><a class="header" href="#option-1-uv-recommended-for-users">Option 1: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a> (recommended for users)</a></h4>
+<p><strong>Install:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
+</code></pre>
+<p><strong>Update:</strong></p>
+<pre><code class="language-bash">uv self update
+</code></pre>
+<p><strong>Create a virtual environment:</strong></p>
+<pre><code class="language-bash">uv venv &amp;&amp; source .venv/bin/activate
+</code></pre>
+<h4 id="option-2-pixi-recommended-for-contributors"><a class="header" href="#option-2-pixi-recommended-for-contributors">Option 2: <a href="https://pixi.sh/latest/#installation">pixi</a> (recommended for contributors)</a></h4>
+<p><strong>Install:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
+</code></pre>
+<p><strong>Update:</strong></p>
+<pre><code class="language-bash">pixi self-update
+</code></pre>
+</li>
+<li>
+<p>Run the puzzles via <code>uv</code> or <code>pixi</code> as follows:</p>
+</li>
+</ol>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
+</code></pre>
+  </div>
+</div>
+<p>For example, to run puzzle 01:</p>
+<ul>
+<li><code>uv run poe p01</code> or</li>
+<li><code>pixi run p01</code></li>
+</ul>
 <h3 id="knowledge-prerequisites"><a class="header" href="#knowledge-prerequisites">Knowledge prerequisites</a></h3>
 <p>Basic knowledge of:</p>
 <ul>
@@ -422,8 +463,20 @@ fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
 </details>
 <h2 id="running-the-code-1"><a class="header" href="#running-the-code-1">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p01
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p01
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p01
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -532,8 +585,20 @@ fn add(
 </details>
 <h2 id="running-the-code-2"><a class="header" href="#running-the-code-2">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p02
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p02
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p02
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
@@ -627,8 +692,20 @@ fn add_10_guard(
 </details>
 <h2 id="running-the-code-3"><a class="header" href="#running-the-code-3">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p03
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p03
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p03
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -762,8 +839,20 @@ fn add_10_2d(
 </details>
 <h2 id="running-the-code-4"><a class="header" href="#running-the-code-4">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p04
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p04
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -951,7 +1040,21 @@ def main():
 
     ctx.synchronize()
 </code></pre>
-<p>When we run this code with <code>magic run layout_tensor_intro</code>, we see:</p>
+<p>When we run this code with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe layout_tensor_intro
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run layout_tensor_intro
+</code></pre>
+  </div>
+</div>
 <pre><code class="language-txt">Before:
 0.0 0.0 0.0
 0.0 0.0 0.0
@@ -1032,8 +1135,20 @@ fn add_10_2d(
 </details>
 <h2 id="running-the-code-5"><a class="header" href="#running-the-code-5">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p04_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p04_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -1129,8 +1244,20 @@ fn broadcast_add(
 </details>
 <h2 id="running-the-code-6"><a class="header" href="#running-the-code-6">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p05
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p05
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
@@ -1242,8 +1369,20 @@ fn broadcast_add[
 </details>
 <h2 id="running-the-code-7"><a class="header" href="#running-the-code-7">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p05_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p05_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
@@ -1345,8 +1484,20 @@ fn add_10_blocks(
 </details>
 <h2 id="running-the-code-8"><a class="header" href="#running-the-code-8">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p06
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p06
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p06
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
@@ -1508,8 +1659,20 @@ fn add_10_blocks_2d(
 </details>
 <h2 id="running-the-code-9"><a class="header" href="#running-the-code-9">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p07
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
@@ -1650,8 +1813,20 @@ fn add_10_blocks_2d[
 </details>
 <h2 id="running-the-code-10"><a class="header" href="#running-the-code-10">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p07_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
@@ -1827,8 +2002,20 @@ fn add_10_shared(
 </details>
 <h2 id="running-the-code-11"><a class="header" href="#running-the-code-11">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p08
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
@@ -2016,8 +2203,20 @@ fn add_10_shared_layout_tensor[
 </details>
 <h2 id="running-the-code-12"><a class="header" href="#running-the-code-12">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p08_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
@@ -2182,8 +2381,20 @@ fn pooling(
 </details>
 <h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p09
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p09
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p09
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
@@ -2352,8 +2563,20 @@ fn pooling[
 </details>
 <h2 id="running-the-code-14"><a class="header" href="#running-the-code-14">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p09_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p09_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p09_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
@@ -2542,8 +2765,20 @@ fn dot_product(
 </details>
 <h2 id="running-the-code-15"><a class="header" href="#running-the-code-15">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p10
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p10
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p10
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
@@ -2769,8 +3004,20 @@ fn dot_product[
 </details>
 <h2 id="running-the-code-16"><a class="header" href="#running-the-code-16">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p10_layout_tensor
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p10_layout_tensor
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p10_layout_tensor
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
@@ -3030,8 +3277,20 @@ fn conv_1d_simple[
 </details>
 <h3 id="running-the-code-17"><a class="header" href="#running-the-code-17">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p11 --simple
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11 --simple
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11 --simple
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
@@ -3226,8 +3485,20 @@ fn conv_1d_block_boundary[
 </details>
 <h3 id="running-the-code-18"><a class="header" href="#running-the-code-18">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p11 --block-boundary
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11 --block-boundary
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11 --block-boundary
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0, 74.0, 80.0, 41.0, 14.0, 0.0])
@@ -3500,8 +3771,20 @@ fn prefix_sum_simple[
 </details>
 <h3 id="running-the-code-19"><a class="header" href="#running-the-code-19">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p12 --simple
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12 --simple
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12 --simple
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
@@ -3779,8 +4062,20 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 </details>
 <h3 id="running-the-code-20"><a class="header" href="#running-the-code-20">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p12 --complete
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12 --complete
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12 --complete
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
@@ -4068,8 +4363,20 @@ fn axis_sum[
 </details>
 <h2 id="running-the-code-21"><a class="header" href="#running-the-code-21">Running the Code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p13
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p13
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
@@ -4314,8 +4621,20 @@ fn naive_matmul[
 </details>
 <h2 id="running-the-code-22"><a class="header" href="#running-the-code-22">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p14 --naive
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --naive
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --naive
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
@@ -4488,8 +4807,20 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </details>
 <h2 id="running-the-code-23"><a class="header" href="#running-the-code-23">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p14 --single-block
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --single-block
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --single-block
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
@@ -4817,8 +5148,20 @@ fn matmul_tiled[
 </details>
 <h2 id="running-the-code-24"><a class="header" href="#running-the-code-24">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
-<pre><code class="language-bash">magic run p14 --tiled
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --tiled
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --tiled
+</code></pre>
+  </div>
+</div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 2632.0, 5824.0, 6008.0, 6192.0, 6376.0, 6560.0, 6744.0, 6928.0, 7112.0, 9408.0, 9720.0, 10032.0, 10344.0, 10656.0, 10968.0, 11280.0, 11592.0, 12992.0, 13432.0, 13872.0, 14312.0, 14752.0, 15192.0, 15632.0, 16072.0, 16576.0, 17144.0, 17712.0, 18280.0, 18848.0, 19416.0, 19984.0, 20552.0, 20160.0, 20856.0, 21552.0, 22248.0, 22944.0, 23640.0, 24336.0, 25032.0, 23744.0, 24568.0, 25392.0, 26216.0, 27040.0, 27864.0, 28688.0, 29512.0, 27328.0, 28280.0, 29232.0, 30184.0, 31136.0, 32088.0, 33040.0, 33992.0])
@@ -5294,8 +5637,20 @@ struct Conv1DCustomOp:
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
-<pre><code class="language-bash">magic run p15
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p15
 </code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15
+</code></pre>
+  </div>
+</div>
 <p>When successful, you should see output similar to:</p>
 <pre><code>Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
 Convolution kernel: [0. 1. 2. 3.]
@@ -5460,9 +5815,6 @@ struct Conv1DCustomOp:
 <li>Produces a binary artifact (<code>op.mojopkg</code>) that can be loaded by Python</li>
 </ol>
 <p>The package must be placed in a location where MAX Graph can find it, typically in a directory accessible to the Python code.</p>
-<blockquote>
-<p>In the puzzles repository, this is done via a <code>magic</code> task to automate the step. See <a href="puzzle_15/../../../mojoproject.toml">mojoproject.toml</a> for more details.</p>
-</blockquote>
 <h3 id="python-integration"><a class="header" href="#python-integration">Python integration</a></h3>
 <p>On the Python side, here’s how the custom operation is used:</p>
 <pre><code class="language-python"># Path to the directory containing our Mojo operations
@@ -5534,6 +5886,7 @@ with Graph(
         <script src="theme/sidebar.js"></script>
         <script src="theme/solution.js"></script>
         <script src="theme/init-amplitude.js"></script>
+        <script src="theme/tabs.js"></script>
 
         <script>
         window.addEventListener('load', function() {
