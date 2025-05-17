@@ -47,7 +47,7 @@ This puzzle is split into two parts to help you build understanding progressivel
 - [Simple Version with Single Block](./simple.md)
   Start here to learn the basics of implementing convolution with shared memory in a single block using LayoutTensor.
 
-- [Block Boundary Version](./complete.md)
+- [Block Boundary Version](./block_boundary.md)
   Then tackle the more challenging case where data needs to be shared across block boundaries, leveraging LayoutTensor's capabilities.
 
 Each version presents unique challenges in terms of memory access patterns and thread coordination. The simple version helps you understand the basic convolution operation, while the complete version tests your ability to handle more complex scenarios that arise in real-world GPU programming.
