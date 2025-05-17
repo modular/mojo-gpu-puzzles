@@ -104,7 +104,7 @@ Active threads: \\(T_1 \ldots T_7\\) (where `local_i ≥ 1`)
 Before:      [0    1    2    3    4    5    6    7]
 Add:              +0   +1   +2   +3   +4   +5   +6
                    |    |    |    |    |    |    |
-Result:      [0    1    3    6    7    9    11   13]
+Result:      [0    1    3    5    7    9    11   13]
                    ↑    ↑    ↑    ↑    ↑    ↑    ↑
                   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 ```
@@ -112,10 +112,10 @@ Result:      [0    1    3    6    7    9    11   13]
 ### Offset = 2: Second Parallel Step
 Active threads: \\(T_2 \ldots T_7\\) (where `local_i ≥ 2`)
 ```txt
-Before:      [0    1    3    6    7    9    11   13]
-Add:                   +0   +1   +3   +6   +7   +9
+Before:      [0    1    3    5    7    9    11   13]
+Add:                   +0   +1   +3   +5   +7   +9
                         |    |    |    |    |    |
-Result:      [0    1    3    7    10   15   18   22]
+Result:      [0    1    3    6    10   14   18   22]
                         ↑    ↑    ↑    ↑    ↑    ↑
                        T₂   T₃   T₄   T₅   T₆   T₇
 ```
@@ -123,10 +123,10 @@ Result:      [0    1    3    7    10   15   18   22]
 ### Offset = 4: Third Parallel Step
 Active threads: \\(T_4 \ldots T_7\\) (where `local_i ≥ 4`)
 ```txt
-Before:      [0    1    3    7    10   15   18   22]
+Before:      [0    1    3    6    10   14   18   22]
 Add:                              +0   +1   +3   +7
                                   |    |    |    |
-Result:      [0    1    3    7    10   16   21   28]
+Result:      [0    1    3    6    10   15   21   28]
                                   ↑    ↑    ↑    ↑
                                   T₄   T₅   T₆   T₇
 ```
@@ -135,7 +135,7 @@ Result:      [0    1    3    7    10   16   21   28]
 ```txt
 Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 global_i:     0    1    2    3    4    5    6    7
-out[]:       [0    1    3    7    10   16   21   28]
+out[]:       [0    1    3    6    10   15   21   28]
               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 ```
@@ -162,8 +162,8 @@ out[]:       [0    1    3    7    10   16   21   28]
 
 **\\(T_3\\) (`local_i=3`):**
 - Loads `shared[3] = 3`
-- `offset=1`: adds `shared[2]` → 6
-- `offset=2`: adds `shared[1]` → 7
+- `offset=1`: adds `shared[2]` → 5
+- `offset=2`: adds `shared[1]` → 6
 - `offset=4`: no action
 - Writes `out[3] = 7`
 
@@ -177,8 +177,8 @@ out[]:       [0    1    3    7    10   16   21   28]
 **\\(T_5\\) (`local_i=5`):**
 - Loads `shared[5] = 5`
 - `offset=1`: adds `shared[4]` → 9
-- `offset=2`: adds `shared[3]` → 15
-- `offset=4`: adds `shared[1]` → 16
+- `offset=2`: adds `shared[3]` → 14
+- `offset=4`: adds `shared[1]` → 15
 - Writes `out[5] = 16`
 
 **\\(T_6\\) (`local_i=6`):**
