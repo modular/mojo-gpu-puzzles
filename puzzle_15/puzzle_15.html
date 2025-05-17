@@ -374,7 +374,8 @@ Verification passed: Custom kernel results match NumPy calculation
                 block_dim=(TPB, 1),
             )
 </code></pre>
-<p>This single line does several important things:</p>
+<div class="solution-explanation">
+This single line does several important things:
 <ol>
 <li>Calls <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a> on the GPU context (<code>gpu_ctx</code> is of type <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/">DeviceContext</a>) to schedule our kernel execution</li>
 <li>Passes the necessary layout and size information as <strong>compile-time</strong> parameters</li>
@@ -550,6 +551,9 @@ with Graph(
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="../puzzle_16/puzzle_16.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -561,6 +565,9 @@ with Graph(
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="../puzzle_16/puzzle_16.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>

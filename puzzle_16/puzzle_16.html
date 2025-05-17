@@ -1,0 +1,836 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 16: Softmax Op - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="..//images/puzzle-mark.svg">
+        <meta property="og:url" content="https://builds.modular.com/puzzles">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="..//images/puzzle-mark.svg">
+        <link rel="icon" type="image/png" href="..//images/puzzle-mark.svg">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="puzzle-16-softmax-op"><a class="header" href="#puzzle-16-softmax-op">Puzzle 16: Softmax Op</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
+<p>Mathematically, the softmax function is defined as:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
+<p>Where:</p>
+<ul>
+<li>\(x_i\) is the \(i\)-th element of the input vector</li>
+<li>\(n\) is the length of the input vector</li>
+</ul>
+<p>However, this direct implementation can lead to numerical overflow issues when values are large. To address this, we use a more numerically stable version:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+<p>Our GPU implementation uses parallel reduction for both finding the maximum value and computing the sum of exponentials, making it highly efficient for large vectors.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<ul>
+<li>Parallel reduction for efficient maximum and sum calculations</li>
+<li>Numerical stability through max-subtraction technique</li>
+<li>Shared memory usage for thread communication</li>
+<li>Custom MAX Graph operation integration with Python</li>
+<li>Thread synchronization with barriers</li>
+</ul>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: \(\text{SIZE} = 128\)</li>
+<li>Threads per block: \(\text{TPB} = 128\)</li>
+<li>Grid dimensions: \(1 \times 1\) block</li>
+<li>Shared memory: Two shared variables for max and sum</li>
+</ul>
+<p>Layout configuration:</p>
+<ul>
+<li>Input tensor: <code>Layout.row_major(SIZE)</code></li>
+<li>Output tensor: <code>Layout.row_major(SIZE)</code></li>
+<li>Custom op parameters: <code>{"input_size": input_tensor.shape[0]}</code></li>
+</ul>
+<p>Key aspects of this puzzle include:</p>
+<ol>
+<li><strong>Numerical stability</strong>: Understanding how to handle potential numerical issues</li>
+<li><strong>Parallel reductions</strong>: Using shared memory for efficient max and sum calculations</li>
+<li><strong>Custom op integration</strong>: Completing the Python interface for our Mojo GPU kernel</li>
+<li><strong>Testing and verification</strong>: Ensuring our implementation matches the expected results</li>
+</ol>
+<p>Our softmax custom operation will:</p>
+<ul>
+<li>Accept NumPy arrays from Python</li>
+<li>Process them efficiently on the GPU</li>
+<li>Return normalized probability distributions</li>
+<li>Match the results of SciPy’s softmax implementation</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<p>To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.</p>
+<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel:</a></h3>
+<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from layout import Layout, LayoutTensor
+from layout.tensor_builder import LayoutTensorBuild as tb
+from math import exp
+from utils.numerics import max_finite, min_finite
+
+
+alias SIZE = 128
+alias TPB = 128
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias layout = Layout.row_major(SIZE)
+alias dtype = DType.float32
+
+
+fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    out: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    # FILL IN (roughly 31 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/op/softmax.mojo" class="filename">View full file: problems/p16/op/softmax.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Use shared memory for both the maximum value and sum to ensure all threads can access these values</li>
+<li>Remember to call <code>barrier()</code> at appropriate points to synchronize threads</li>
+<li>Implement parallel reduction by having each thread process a portion of the input array</li>
+<li>Use a tree-based reduction pattern to minimize thread divergence</li>
+<li>Handle out-of-bounds access carefully, especially for large inputs</li>
+<li>For numerical stability, calculate \(e^{x_i - max}\) instead of \(e^{x_i}\)</li>
+</ol>
+</div>
+</details>
+<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel:</a></h3>
+<pre><code class="language-mojo">fn softmax_cpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    out: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+):
+    # FILL IN (roughly 10 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/op/softmax.mojo" class="filename">View full file: problems/p16/op/softmax.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Create a sequential implementation that follows the same mathematical steps as the GPU version</li>
+<li>First find the maximum value across all inputs</li>
+<li>Then compute \(e^{x_i - max}\) for each element and accumulate the sum</li>
+<li>Finally, normalize by dividing each element by the sum</li>
+<li>Use scalar operations since we don’t have parallel threads in the CPU implementation</li>
+</ol>
+</div>
+</details>
+<h3 id="test-the-cpu-and-gpu-kernels"><a class="header" href="#test-the-cpu-and-gpu-kernels">Test the CPU and GPU kernels</a></h3>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16-test-kernels
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16-test-kernels
+</code></pre>
+  </div>
+</div>
+<p>when done correctly you’ll see</p>
+<pre><code class="language-txt">Total Discovered Tests: 1
+
+Passed : 1 (100.00%)
+Failed : 0 (0.00%)
+Skipped: 0 (0.00%)
+</code></pre>
+<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition:</a></h3>
+<pre><code class="language-python">from pathlib import Path
+import numpy as np
+from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
+from max.dtype import DType
+from max.engine import InferenceSession
+from max.graph import DeviceRef, Graph, TensorType, ops
+from numpy.typing import NDArray
+from scipy.special import softmax as scipy_softmax
+
+
+def softmax(
+    input: NDArray[np.float32],
+    session: InferenceSession,
+    device: Device,
+) -&gt; Tensor:
+    dtype = DType.float32
+    input_tensor = Tensor.from_numpy(input).to(device)
+    mojo_kernels = Path(__file__).parent / "op"
+
+    with Graph(
+        "softmax_graph",
+        input_types=[
+            TensorType(
+                dtype,
+                shape=input_tensor.shape,
+                device=DeviceRef.from_device(device),
+            ),
+        ],
+        custom_extensions=[mojo_kernels],
+    ) as graph:
+        # FILL IN (roughly 4 unformatted lines)
+        pass
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.py" class="filename">View full file: problems/p16/p16.py</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Use <code>graph.inputs[0]</code> to access the input tensor passed to the graph</li>
+<li>Call <code>ops.custom()</code> with the name matching your registered custom op (“softmax”)</li>
+<li>Pass the input tensor as a value to the custom operation</li>
+<li>Specify the output type to match the input shape</li>
+<li>Include the “input_size” parameter which is required by the kernel</li>
+<li>Set <code>graph.outputs</code> to a list containing your operation’s output tensor</li>
+</ol>
+</div>
+</details>
+<p>You can run the puzzle with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16
+</code></pre>
+  </div>
+</div>
+<p>When successful, you should see output similar to on CPU and GPU:</p>
+<pre><code>Input shape: (128,)
+First few random input values: [ 1.1810775   0.60472375  0.5718309   0.6644599  -0.08899796]
+Compiling softmax graph on Device(type=cpu,id=0)
+Executing softmax on Device(type=cpu,id=0)
+====================================================================================================
+Compiling softmax graph on Device(type=gpu,id=0)
+Executing softmax on Device(type=gpu,id=0)
+====================================================================================================
+First few softmax results on CPU (custom Mojo kernel): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+First few softmax results on GPU (custom Mojo kernel): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+First few expected results (SciPy calculation): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+Verification passed: Custom kernel results match SciPy calculation
+Sum of all probabilities on CPU: 1.0
+Sum of all probabilities on GPU: 1.0
+</code></pre>
+<p>This indicates that your custom MAX Graph operation correctly implements the softmax algorithm and produces a valid probability distribution.</p>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<p>To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in <a href="../puzzle_15/puzzle_15.html">Puzzle 15</a>, we’re creating a bridge between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities.</p>
+<p>The softmax operation we’re implementing is mathematically defined as:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
+<p>However, to prevent numerical overflow, we use the more stable form:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation:</a></h3>
+<pre><code class="language-mojo">fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    out: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    var thread_max: Scalar[dtype] = min_finite[dtype]()
+    if global_i &lt; input_size:
+        thread_max = rebind[Scalar[dtype]](input[global_i])
+
+    shared_max[local_i] = thread_max
+    barrier()
+
+    # Parallel reduction to find max
+    stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared_max[local_i] = max(
+                shared_max[local_i], shared_max[local_i + stride]
+            )
+        barrier()
+        stride = stride // 2
+
+    block_max = shared_max[0]
+
+    var exp_val: Scalar[dtype] = 0.0
+    if global_i &lt; input_size:
+        exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+        out[global_i] = exp_val
+
+    shared_sum[local_i] = exp_val
+    barrier()
+
+    # Parallel reduction for sum
+    stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared_sum[local_i] += shared_sum[local_i + stride]
+        barrier()
+        stride = stride // 2
+
+    block_sum = shared_sum[0]
+
+    # Normalize by sum
+    if global_i &lt; input_size:
+        out[global_i] = out[global_i] / block_sum
+
+
+</code></pre>
+<div class="solution-explanation">
+Our GPU implementation implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
+<h4 id="kernel-signature-and-memory-management"><a class="header" href="#kernel-signature-and-memory-management">Kernel signature and memory management</a></h4>
+<pre><code class="language-mojo">fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    out: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+)
+</code></pre>
+<p>The kernel is parameterized with:</p>
+<ul>
+<li>Common layout parameter for both input and output tensors</li>
+<li>Vector size as an Integer parameter</li>
+<li>Configurable data type with float32 as default</li>
+<li>Mutable output tensor for in-place computation</li>
+<li>Non-mutable input tensor (mut=False)</li>
+</ul>
+<h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
+<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
+shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
+</code></pre>
+<p>The kernel allocates two shared memory buffers:</p>
+<ul>
+<li><code>shared_max</code>: For parallel maximum finding reduction</li>
+<li><code>shared_sum</code>: For parallel sum computation</li>
+<li>Both use <code>TPB</code> (Threads Per Block = 128) as their size</li>
+<li>Shared memory provides fast access for all threads within a block</li>
+</ul>
+<h4 id="thread-indexing"><a class="header" href="#thread-indexing">Thread indexing</a></h4>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
+local_i = thread_idx.x
+</code></pre>
+<p>Each thread computes:</p>
+<ul>
+<li><code>global_i</code>: Its global index in the entire computation space</li>
+<li><code>local_i</code>: Its local index within the current thread block
+This mapping ensures each thread processes exactly one input element.</li>
+</ul>
+<h4 id="maximum-finding-phase"><a class="header" href="#maximum-finding-phase">Maximum-finding phase</a></h4>
+<pre><code class="language-mojo">var thread_max: Scalar[dtype] = min_finite[dtype]()
+if global_i &lt; input_size:
+    thread_max = rebind[Scalar[dtype]](input[global_i])
+
+shared_max[local_i] = thread_max
+barrier()
+</code></pre>
+<p>This initializes each thread with:</p>
+<ul>
+<li>The minimum finite value for elements outside the valid range</li>
+<li>The actual input value for threads that map to valid elements</li>
+<li>Storage in shared memory for the reduction process</li>
+<li>A barrier synchronization to ensure all threads complete memory writes</li>
+</ul>
+<h4 id="parallel-max-reduction"><a class="header" href="#parallel-max-reduction">Parallel max reduction</a></h4>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
+    barrier()
+    stride = stride // 2
+</code></pre>
+<p>This implements a parallel tree-reduction pattern:</p>
+<ol>
+<li>Start with <code>stride = 64</code> (half of <code>TPB</code>)</li>
+<li>Each active thread compares two values separated by the stride</li>
+<li>Store the maximum in the lower index</li>
+<li>Synchronize all threads with a barrier</li>
+<li>Halve the stride and repeat</li>
+<li>After \(\log_2(TPB)\) steps, shared_max[0] contains the global maximum</li>
+</ol>
+<p>This logarithmic reduction is significantly faster than a linear scan on large inputs.</p>
+<h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
+<pre><code class="language-mojo">block_max = shared_max[0]
+
+var exp_val: Scalar[dtype] = 0.0
+if global_i &lt; input_size:
+    exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+    out[global_i] = exp_val
+</code></pre>
+<p>Each thread:</p>
+<ol>
+<li>Reads the global maximum from shared memory</li>
+<li>Subtracts it from its input value before taking the exponential</li>
+<li>This subtraction is crucial for numerical stability - it prevents overflow</li>
+<li>The largest exponent becomes \(e^0 = 1\), and all others are \(e^{negative} &lt; 1\)</li>
+<li>Stores the intermediate result in the output buffer</li>
+</ol>
+<h4 id="parallel-sum-reduction"><a class="header" href="#parallel-sum-reduction">Parallel sum reduction</a></h4>
+<pre><code class="language-mojo">shared_sum[local_i] = exp_val
+barrier()
+
+stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared_sum[local_i] += shared_sum[local_i + stride]
+    barrier()
+    stride = stride // 2
+</code></pre>
+<p>The second reduction phase:</p>
+<ol>
+<li>Stores all exponential values in shared memory</li>
+<li>Uses the same tree-based reduction pattern as for max</li>
+<li>But performs addition instead of maximum comparison</li>
+<li>After \(\log_2(TPB)\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
+</ol>
+<h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
+<pre><code class="language-mojo">block_sum = shared_sum[0]
+
+if global_i &lt; input_size:
+    out[global_i] = out[global_i] / block_sum
+</code></pre>
+<p>Each thread:</p>
+<ol>
+<li>Reads the total sum from shared memory</li>
+<li>Divides its exponential value by this sum</li>
+<li>Writes the normalized probability to the output buffer</li>
+<li>This produces a valid probability distribution that sums to 1</li>
+</ol>
+<h4 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h4>
+<p>The implementation has excellent performance characteristics:</p>
+<ul>
+<li><strong>Complexity</strong>: \(O(\log n)\) for both max and sum calculations vs \(O(n)\) in a sequential approach</li>
+<li><strong>Memory efficiency</strong>: Uses only \(2 \times TPB\) elements of shared memory</li>
+<li><strong>Work efficiency</strong>: Each thread performs approximately \(2 \times \log_2(n)\) operations</li>
+<li><strong>Load balancing</strong>: Each thread handles the same amount of work</li>
+<li><strong>Synchronization</strong>: Uses minimal barriers, only where necessary</li>
+<li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal bandwidth</li>
+</ul>
+<p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
+</div>
+<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
+<pre><code class="language-mojo">fn softmax_cpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    out: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+):
+    var max_val: Scalar[dtype] = min_finite[dtype]()
+    for i in range(input_size):
+        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+
+    var sum_exp: Scalar[dtype] = 0.0
+    for i in range(input_size):
+        var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+        out[i] = exp_val
+        sum_exp += exp_val
+
+    for i in range(input_size):
+        out[i] = out[i] / sum_exp
+
+
+</code></pre>
+<div class="solution-explanation">
+Our CPU implementation provides a sequential fallback that follows the same mathematical approach but is optimized for single-threaded execution. Let's analyze each phase:
+<ol>
+<li>
+<p><strong>Maximum Finding</strong>:</p>
+<pre><code class="language-mojo">var max_val: Scalar[dtype] = min_finite[dtype]()
+for i in range(input_size):
+    max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+</code></pre>
+<p>We initialize with the minimum finite value and perform a linear scan through the array, keeping track of the maximum value encountered. This has \(O(n)\) complexity but works efficiently on CPU where we don’t have many cores to parallelize across.</p>
+</li>
+<li>
+<p><strong>Exponential Computation and Summation</strong>:</p>
+<pre><code class="language-mojo">var sum_exp: Scalar[dtype] = 0.0
+for i in range(input_size):
+    var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+    out[i] = exp_val
+    sum_exp += exp_val
+</code></pre>
+<p>We compute \(e^{x_i - max}\) for each element, store the result in the output buffer, and accumulate the sum \(\sum_{j=1}^{n} e^{x_j - max}\) in a single pass. This approach minimizes memory operations compared to using separate loops.</p>
+</li>
+<li>
+<p><strong>Normalization</strong>:</p>
+<pre><code class="language-mojo">for i in range(input_size):
+    out[i] = out[i] / sum_exp
+</code></pre>
+<p>Finally, we normalize each element by dividing by the sum, producing a proper probability distribution according to the softmax formula:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+</li>
+</ol>
+<p>The CPU implementation uses the same numerical stability technique (subtracting the maximum) but with sequential operations rather than parallel ones. It’s simpler than the GPU version since it doesn’t need to handle shared memory or thread synchronization, but it’s also less efficient for large inputs.</p>
+<p>Both implementations are registered with MAX Graph’s custom operation system through the <code>@compiler.register("softmax")</code> decorator, allowing seamless execution on either device type based on availability.</p>
+</div>
+<h3 id="python-integration"><a class="header" href="#python-integration">Python integration:</a></h3>
+<pre><code class="language-python">    with Graph(
+        "softmax_graph",
+        input_types=[
+            TensorType(
+                dtype,
+                shape=input_tensor.shape,
+                device=DeviceRef.from_device(device),
+            ),
+        ],
+        custom_extensions=[mojo_kernels],
+    ) as graph:
+        input_value = graph.inputs[0]
+
+        # The output shape is the same as the input for softmax
+        # Note: the name must match the name used in `@compiler.register("softmax")` in op/softmax.mojo
+        output = ops.custom(
+            name="softmax",
+            values=[input_value],
+            out_types=[
+                TensorType(
+                    dtype=input_value.tensor.dtype,
+                    shape=input_value.tensor.shape,
+                    device=DeviceRef.from_device(device),
+                )
+            ],
+            parameters={
+                "input_size": input_tensor.shape[0],
+                "dtype": dtype,
+            },
+        )[0].tensor
+        graph.output(output)
+
+</code></pre>
+<div class="solution-explanation">
+The Python integration creates a seamless bridge between NumPy arrays and our optimized Mojo GPU kernel. The implementation consists of several key components:
+<ol>
+<li>
+<p><strong>Graph Setup and Configuration</strong>:</p>
+<pre><code class="language-python">with Graph(
+    "softmax_graph",
+    input_types=[
+        TensorType(
+            dtype,
+            shape=input_tensor.shape,
+            device=DeviceRef.from_device(device),
+        ),
+    ],
+    custom_extensions=[mojo_kernels],
+) as graph:
+</code></pre>
+<p>This creates a computation graph named “softmax_graph” that:</p>
+<ul>
+<li>Defines the input tensor type with proper dtype and shape</li>
+<li>Maps the tensor to the target device (CPU or GPU)</li>
+<li>Loads our custom Mojo operations from the specified directory</li>
+<li>The <code>custom_extensions</code> parameter is crucial for linking to our Mojo implementation</li>
+</ul>
+</li>
+<li>
+<p><strong>Custom Operation Configuration</strong>:</p>
+<pre><code class="language-python">output = ops.custom(
+    name="softmax",
+    values=[input_value],
+    out_types=[
+        TensorType(
+            dtype=input_value.tensor.dtype,
+            shape=input_value.tensor.shape,
+            device=DeviceRef.from_device(device),
+        )
+    ],
+    parameters={
+        "input_size": input_tensor.shape[0],
+        "dtype": dtype,
+    },
+)[0].tensor
+</code></pre>
+<p>This sets up our custom operation with:</p>
+<ul>
+<li>Name matching the <code>@compiler.register("softmax")</code> in our Mojo code</li>
+<li>Input values passed as a list</li>
+<li>Output type definition matching the input shape and type</li>
+<li>Parameters required by our kernel, including the vector size and data type</li>
+<li>We extract the tensor from the first returned element with <code>[0].tensor</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Graph Output Definition</strong>:</p>
+<pre><code class="language-python">graph.output(output)
+</code></pre>
+<p>This registers our operation’s result as the graph’s output.</p>
+</li>
+</ol>
+<p>The main script includes comprehensive testing that:</p>
+<ul>
+<li>Generates random input data: <code>np.random.randn(INPUT_SIZE).astype(np.float32)</code></li>
+<li>Calculates expected results with SciPy: <code>scipy_softmax(input_array)</code></li>
+<li>Verifies numerical accuracy: <code>np.testing.assert_allclose(..., rtol=1e-5)</code></li>
+<li>Confirms the output is a valid probability distribution: <code>np.sum(result.to_numpy())</code></li>
+</ul>
+<p>This implementation showcases the power of MAX Graph for integrating high-performance Mojo kernels with Python’s scientific computing ecosystem, providing both efficiency and ease of use.</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_15/puzzle_15.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../bonuses/part3.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_15/puzzle_15.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../bonuses/part3.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
