@@ -3845,32 +3845,32 @@ shared:       [0    1    2    3    4    5    6    7]
 <pre><code class="language-txt">Before:      [0    1    2    3    4    5    6    7]
 Add:              +0   +1   +2   +3   +4   +5   +6
                    |    |    |    |    |    |    |
-Result:      [0    1    3    6    7    9    11   13]
+Result:      [0    1    3    5    7    9    11   13]
                    ↑    ↑    ↑    ↑    ↑    ↑    ↑
                   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
 <h3 id="offset--2-second-parallel-step"><a class="header" href="#offset--2-second-parallel-step">Offset = 2: Second Parallel Step</a></h3>
 <p>Active threads: \(T_2 \ldots T_7\) (where <code>local_i ≥ 2</code>)</p>
-<pre><code class="language-txt">Before:      [0    1    3    6    7    9    11   13]
-Add:                   +0   +1   +3   +6   +7   +9
+<pre><code class="language-txt">Before:      [0    1    3    5    7    9    11   13]
+Add:                   +0   +1   +3   +5   +7   +9
                         |    |    |    |    |    |
-Result:      [0    1    3    7    10   15   18   22]
+Result:      [0    1    3    6    10   14   18   22]
                         ↑    ↑    ↑    ↑    ↑    ↑
                        T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
 <h3 id="offset--4-third-parallel-step"><a class="header" href="#offset--4-third-parallel-step">Offset = 4: Third Parallel Step</a></h3>
 <p>Active threads: \(T_4 \ldots T_7\) (where <code>local_i ≥ 4</code>)</p>
-<pre><code class="language-txt">Before:      [0    1    3    7    10   15   18   22]
+<pre><code class="language-txt">Before:      [0    1    3    6    10   14   18   22]
 Add:                              +0   +1   +3   +7
                                   |    |    |    |
-Result:      [0    1    3    7    10   16   21   28]
+Result:      [0    1    3    6    10   15   21   28]
                                   ↑    ↑    ↑    ↑
                                   T₄   T₅   T₆   T₇
 </code></pre>
 <h3 id="final-write-to-output"><a class="header" href="#final-write-to-output">Final Write to Output</a></h3>
 <pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 global_i:     0    1    2    3    4    5    6    7
-out[]:       [0    1    3    7    10   16   21   28]
+out[]:       [0    1    3    6    10   15   21   28]
               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
@@ -3899,8 +3899,8 @@ out[]:       [0    1    3    7    10   16   21   28]
 <p><strong>\(T_3\) (<code>local_i=3</code>):</strong></p>
 <ul>
 <li>Loads <code>shared[3] = 3</code></li>
-<li><code>offset=1</code>: adds <code>shared[2]</code> → 6</li>
-<li><code>offset=2</code>: adds <code>shared[1]</code> → 7</li>
+<li><code>offset=1</code>: adds <code>shared[2]</code> → 5</li>
+<li><code>offset=2</code>: adds <code>shared[1]</code> → 6</li>
 <li><code>offset=4</code>: no action</li>
 <li>Writes <code>out[3] = 7</code></li>
 </ul>
@@ -3916,8 +3916,8 @@ out[]:       [0    1    3    7    10   16   21   28]
 <ul>
 <li>Loads <code>shared[5] = 5</code></li>
 <li><code>offset=1</code>: adds <code>shared[4]</code> → 9</li>
-<li><code>offset=2</code>: adds <code>shared[3]</code> → 15</li>
-<li><code>offset=4</code>: adds <code>shared[1]</code> → 16</li>
+<li><code>offset=2</code>: adds <code>shared[3]</code> → 14</li>
+<li><code>offset=4</code>: adds <code>shared[1]</code> → 15</li>
 <li>Writes <code>out[5] = 16</code></li>
 </ul>
 <p><strong>\(T_6\) (<code>local_i=6</code>):</strong></p>
