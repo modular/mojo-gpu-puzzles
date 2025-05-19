@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="book/src/images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150">
+  <img src="book/src/puzzles_images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150">
 </p>
 
 <p align="center">

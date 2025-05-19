@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
+  <img src="puzzles_images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
 </p>
 
 <p align="center">
@@ -50,8 +50,7 @@ Mojo represents a fresh approach to GPU programming, making this massive paralle
 - **Ergonomic and Safety Improvements** over traditional C/C++ GPU programming
 - **Lower Barrier to Entry** enabling more programmers to harness GPU power effectively
 
->**Mojo 🔥 aims to fuel innovation by democratizing GPU programming.**
->**By expanding on Python's familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.**
+> **Mojo 🔥 aims to fuel innovation by democratizing GPU programming.** >**By expanding on Python's familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.**
 
 ## The GPU Programming Mindset
 
@@ -91,6 +90,7 @@ The art of GPU programming lies in crafting this mesh to maximize parallelism wh
 ### Data Movement vs. Computation
 
 In GPU programming, data movement is often more expensive than computation:
+
 - Moving data between CPU and GPU is slow
 - Moving data between global and shared memory is faster
 - Operating on data already in registers or shared memory is extremely fast

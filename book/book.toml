@@ -28,7 +28,7 @@ mathjax-support = true
 theme-switcher = true
 no-theme-selection = false
 draft = true
-favicon = "images/puzzle-mark.svg"
+favicon = "puzzles_images/puzzle-mark.svg"
 
 [output.html.highlight]
 enable = true
@@ -56,7 +56,7 @@ mode = "katex"
 [build]
 build-dir = "html"
 create-missing = true
-extra-files = ["logo", "images"]
+extra-files = ["logo", "puzzles_images"]
 
 [preprocessor.index]
 index = false

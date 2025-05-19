@@ -8,7 +8,7 @@ if (solutionDetails.length > 0) {
 
     let lottie = document.createElement("lottie-player");
     lottie.classList.add("solution-lottie");
-    lottie.setAttribute("src", "/animations/solution.json");
+    lottie.setAttribute("src", "/puzzles_animations/solution.json");
     lottie.setAttribute("background", "transparent");
     lottie.setAttribute("speed", "1");
     lottie.setAttribute("loop", true);
@@ -28,7 +28,10 @@ if (solutionDetails.length > 0) {
         const solutionExplanation = this.querySelector(".solution-explanation");
         if (solutionExplanation) {
           solutionExplanation.classList.add("scroll-margin");
-          solutionExplanation.scrollIntoView({ behavior: "smooth", block: "start" });
+          solutionExplanation.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
         }
 
         lottie.classList.add("solution-lottie-hidden");
