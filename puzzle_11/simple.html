@@ -21,14 +21,14 @@
         <!-- Additional meta tags -->
         <meta property="og:title" content="Mojo🔥 GPU Puzzles">
         <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
-        <meta property="og:image" content="..//images/puzzle-mark.svg">
+        <meta property="og:image" content="..//puzzles_images/puzzle-mark.svg">
         <meta property="og:url" content="https://builds.modular.com/puzzles">
         <meta name="twitter:card" content="summary">
         <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
-        <meta name="twitter:image" content="..//images/puzzle-mark.svg">
-        <link rel="icon" type="image/png" href="..//images/puzzle-mark.svg">
+        <meta name="twitter:image" content="..//puzzles_images/puzzle-mark.svg">
+        <link rel="icon" type="image/png" href="..//puzzles_images/puzzle-mark.svg">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -237,7 +237,7 @@ fn conv_1d_simple[
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -286,7 +286,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

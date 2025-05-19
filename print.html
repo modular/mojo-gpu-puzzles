@@ -22,14 +22,14 @@
         <!-- Additional meta tags -->
         <meta property="og:title" content="Mojo🔥 GPU Puzzles">
         <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
-        <meta property="og:image" content="/images/puzzle-mark.svg">
+        <meta property="og:image" content="/puzzles_images/puzzle-mark.svg">
         <meta property="og:url" content="https://builds.modular.com/puzzles">
         <meta name="twitter:card" content="summary">
         <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
         <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
         <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
-        <meta name="twitter:image" content="/images/puzzle-mark.svg">
-        <link rel="icon" type="image/png" href="/images/puzzle-mark.svg">
+        <meta name="twitter:image" content="/puzzles_images/puzzle-mark.svg">
+        <link rel="icon" type="image/png" href="/puzzles_images/puzzle-mark.svg">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -197,7 +197,7 @@
                 <div id="content" class="content">
                     <main>
                         <p align="center">
-  <img src="images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
+  <img src="puzzles_images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
 </p>
 <p align="center">
   <h1 align="center">Mojo🔥 GPU Puzzles</h1>
@@ -243,8 +243,7 @@ Aristotle, (Nicomachean Ethics)</p>
 <li><strong>Lower Barrier to Entry</strong> enabling more programmers to harness GPU power effectively</li>
 </ul>
 <blockquote>
-<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong>
-<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
+<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong> &gt;<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
 </blockquote>
 <h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU Programming Mindset</a></h2>
 <p>Effective GPU programming requires a fundamental shift in how we think about computation. Here are some key mental models that will guide your journey:</p>
@@ -3254,7 +3253,7 @@ fn conv_1d_simple[
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -3303,7 +3302,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -3455,6 +3454,9 @@ for j in range(CONV):
 alias CONV_2 = 4
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
+alias in_2_layout = Layout.row_major(SIZE_2)
+alias out_2_layout = Layout.row_major(SIZE_2)
+alias conv_2_layout = Layout.row_major(CONV_2)
 
 
 fn conv_1d_block_boundary[
@@ -3462,7 +3464,7 @@ fn conv_1d_block_boundary[
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -3511,7 +3513,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 ](
     out: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
