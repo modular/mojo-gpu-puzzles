@@ -47,23 +47,6 @@ jobs:
           cd book
           pixi run build-book
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # Cache global npm packages
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-global-packages
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Trigger Vercel Redeploy
-        run: vercel redeploy ${{ secrets.VERCEL_DEPLOYMENT_URL }} --scope=${{ secrets.VERCEL_SCOPE }} --token=${{ secrets.VERCEL_TOKEN }}
-
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
