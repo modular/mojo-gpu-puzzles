@@ -3529,6 +3529,10 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
         next_idx = global_i + TPB
         if next_idx &lt; SIZE_2:
             shared_a[TPB + local_i] = a[next_idx]
+        else:
+            # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
+            # which is an undefined behavior
+            shared_a[TPB + local_i] = 0
 
     if local_i &lt; CONV_2:
         shared_b[local_i] = b[local_i]
@@ -3584,11 +3588,16 @@ if local_i &lt; CONV_2 - 1:
     next_idx = global_i + TPB
     if next_idx &lt; a_size:
         shared_a[TPB + local_i] = a[next_idx]
+    else:
+        # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
+        # which is an undefined behavior
+        shared_a[TPB + local_i] = 0
 </code></pre>
 <ul>
 <li>Only threads with <code>local_i &lt; CONV_2 - 1</code> load boundary data</li>
 <li>Prevents unnecessary thread divergence</li>
 <li>Maintains memory coalescing for main data load</li>
+<li>Explicitly zeroes out-of-bounds elements to avoid undefined behavior</li>
 </ul>
 </li>
 <li>
@@ -3666,8 +3675,7 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <li>
 <p><strong>Boundary Handling</strong>:</p>
 <ul>
-<li>Implicit zero padding at array end</li>
-<li>Seamless block transition</li>
+<li>Explicit zero initialization for out-of-bounds elements which prevents reading from uninitialized shared memory</li>
 <li>Proper handling of edge cases</li>
 </ul>
 </li>
