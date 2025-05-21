@@ -104,8 +104,6 @@ struct Conv1DCustomOp:
                 out_tensor,
                 input_tensor,
                 kernel_tensor,
-                input_size,
-                conv_size,
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=(TPB, 1),
             )
