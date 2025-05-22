@@ -18,9 +18,6 @@ def test_softmax():
         out = ctx.enqueue_create_buffer[DType.float32](SIZE).enqueue_fill(0)
         inp = ctx.enqueue_create_buffer[DType.float32](SIZE).enqueue_fill(0)
         # for CPU testing
-        inp_host = ctx.enqueue_create_host_buffer[DType.float32](
-            SIZE
-        ).enqueue_fill(0)
         expected = ctx.enqueue_create_host_buffer[DType.float32](
             SIZE
         ).enqueue_fill(0)
