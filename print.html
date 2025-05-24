@@ -314,16 +314,16 @@ if thread_id &lt; data_size:
 <p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the examples.</p>
+<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
 <h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
 <ol>
-<li><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</li>
-</ol>
+<li>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</p>
 <pre><code class="language-bash"># Clone the repository
 git clone https://github.com/modular/mojo-gpu-puzzles
 cd mojo-gpu-puzzles
 </code></pre>
-<ol start="2">
+</li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
 <h4 id="option-1-uv-recommended-for-users"><a class="header" href="#option-1-uv-recommended-for-users">Option 1: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a> (recommended for users)</a></h4>
@@ -346,22 +346,22 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Run the puzzles via <code>uv</code> or <code>pixi</code> as follows:</p>
-</li>
-</ol>
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
+ <div class="code-tabs" data-tab-group="package-manager">
+   <div class="tab-buttons">
+     <button class="tab-button">uv</button>
+     <button class="tab-button">pixi</button>
+   </div>
+   <div class="tab-content">
 <pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
 </code></pre>
-  </div>
-  <div class="tab-content">
+   </div>
+   <div class="tab-content">
 <pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
 </code></pre>
-  </div>
-</div>
+   </div>
+ </div>
+</li>
+</ol>
 <p>For example, to run puzzle 01:</p>
 <ul>
 <li><code>uv run poe p01</code> or</li>
@@ -4565,7 +4565,7 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 <li>Use high-level abstractions while maintaining performance</li>
 </ol>
 <p>Choose a version to begin your matrix multiplication journey!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="naive-matrix-multiplication"><a class="header" href="#naive-matrix-multiplication">Naive Matrix Multiplication</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
 <h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
@@ -4756,6 +4756,105 @@ for k in range(size):
 <p>This naive implementation serves as a baseline for understanding matrix multiplication on GPUs, highlighting the need for optimization in memory access patterns.</p>
 </div>
 </details>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="understanding-gpu-performance-the-roofline-model"><a class="header" href="#understanding-gpu-performance-the-roofline-model">Understanding GPU Performance: The Roofline Model</a></h1>
+<p>Having implemented the naive matrix multiplication, you might be wondering: <em>How well is our kernel actually performing?</em> Is it limited by the GPU’s computational power, or is something else holding it back?</p>
+<p>The <strong>roofline model</strong> is your compass for GPU optimization—it reveals which hardware bottleneck limits your kernel’s performance and guides you toward the most impactful optimizations. Rather than guessing at improvements, the roofline model shows you exactly where to focus your efforts.</p>
+<h2 id="1-two-ceilings-for-every-gpu-kernel"><a class="header" href="#1-two-ceilings-for-every-gpu-kernel">1. Two ceilings for every GPU kernel</a></h2>
+<p>Every GPU kernel operates under two fundamental constraints:</p>
+<ul>
+<li><strong>Compute ceiling</strong> – how quickly the cores can execute floating-point operations (peak FLOPs/s)</li>
+<li><strong>Memory ceiling</strong> – how quickly the memory system can feed those cores with data (peak bytes/s)</li>
+</ul>
+<p>Understanding which ceiling constrains your kernel is crucial for optimization strategy. The roofline model visualizes this relationship by plotting two key metrics:</p>
+<p><strong>X-axis: Arithmetic Intensity</strong> – How much computation you extract per byte of data</p>
+<p>\[\Large I = \frac{\text{Total FLOPs}}{\text{Total Bytes from Memory}} \quad [\text{FLOP/B}]\]</p>
+<p><strong>Y-axis: Sustained Performance</strong> – How fast your kernel actually runs</p>
+<p>\[\Large P_{\text{sustained}} = \frac{\text{Total FLOPs}}{\text{Elapsed Time}} \quad [\text{GFLOP/s}]\]</p>
+<p>Two “roofs” bound all achievable performance:</p>
+<div class="table-wrapper"><table><thead><tr><th>Roof</th><th>Equation</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><strong>Memory roof</strong></td><td>\(P = B_{\text{peak}} \cdot I\)</td><td>Sloped line; performance limited by memory bandwidth</td></tr>
+<tr><td><strong>Compute roof</strong></td><td>\(P = P_{\text{peak}}\)</td><td>Horizontal line; performance limited by compute throughput</td></tr>
+</tbody></table>
+</div>
+<p>The <strong>critical intensity</strong> \(\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\) marks where a kernel transitions from memory-bound (\(I &lt; I^<em>\)) to compute-bound (\(I &gt; I^</em>\)).</p>
+<h2 id="2-hardware-example-nvidia-a100-specifications"><a class="header" href="#2-hardware-example-nvidia-a100-specifications">2. Hardware example: NVIDIA A100 specifications</a></h2>
+<p>Let’s ground this theory in concrete numbers using the NVIDIA A100:</p>
+<p><strong>Peak FP32 throughput</strong>
+\[\Large P_{\text{peak}} = 19.5 \text{ TFLOP/s} = 19{,}500 \text{ GFLOP/s}\]</p>
+<p><strong>Peak HBM2 bandwidth</strong>
+\[\Large B_{\text{peak}} = 1{,}555 \text{ GB/s}\]</p>
+<p><strong>Critical intensity</strong>
+\[\Large I^* = \frac{19{,}500}{1{,}555} \approx 12.5 \text{ FLOP/B}\]</p>
+<p><em>Source: <a href="https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf">NVIDIA A100 Tensor Core GPU Architecture</a></em></p>
+<p>This means kernels with arithmetic intensity below 12.5 FLOP/B are memory-bound, while those above are compute-bound.</p>
+<h2 id="3-visualizing-our-matrix-multiplication-implementations"><a class="header" href="#3-visualizing-our-matrix-multiplication-implementations">3. Visualizing our matrix multiplication implementations</a></h2>
+<p>The animation below shows how our puzzle implementations map onto the A100’s roofline model:</p>
+<p><img src="puzzle_14/media/videos/720p30/roofline_model_viz.gif" alt="Roofline Model Visualization" /></p>
+<p>The visualization demonstrates the optimization journey we’ll take in this puzzle:</p>
+<ol>
+<li><strong>Hardware constraints</strong> – The red memory roof and blue compute roof define performance limits</li>
+<li><strong>Our starting point</strong> – The naive implementation (left purple dot) sitting firmly on the memory roof</li>
+<li><strong>Optimization target</strong> – The shared memory version (right purple dot) with improved arithmetic intensity</li>
+<li><strong>Ultimate goal</strong> – The golden arrow pointing toward the critical intensity where kernels become compute-bound</li>
+</ol>
+<h2 id="4-analyzing-our-naive-implementation"><a class="header" href="#4-analyzing-our-naive-implementation">4. Analyzing our naive implementation</a></h2>
+<p>Let’s examine why our naive kernel from the previous section performs as it does. For our \(2 \times 2\) matrix multiplication:</p>
+<p><strong>Computation per output element</strong>: \(\text{SIZE} + (\text{SIZE}-1) = 3 \text{ FLOPs }\)</p>
+<blockquote>
+<p>Each element requires \(\text{SIZE}\) multiplications and \(\text{SIZE} - 1\) additions:
+\[C_{00} = A_{00} \cdot B_{00} + A_{01} \cdot B_{10}\]
+For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
+</blockquote>
+<p><strong>Memory accesses per output element</strong>:</p>
+<ul>
+<li>Row from matrix A: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>Column from matrix B: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>Total: \(16\) bytes per output element</li>
+</ul>
+<p><strong>Arithmetic intensity</strong>:
+\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\]</p>
+<p>Since \(I_{\text{naive}} = 0.1875 \ll I^* = 12.5\), our naive kernel is <strong>severely memory-bound</strong>.</p>
+<p><strong>Expected performance</strong>:
+\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\]</p>
+<p>This represents only \(\frac{292}{19{,}500} \approx 1.5%\) of the GPU’s computational potential! The visualization clearly shows this as the leftmost purple dot sitting squarely on the memory roof—we’re nowhere near the compute ceiling.</p>
+<h2 id="5-the-path-forward-shared-memory-optimization"><a class="header" href="#5-the-path-forward-shared-memory-optimization">5. The path forward: shared memory optimization</a></h2>
+<p>The roofline model reveals our optimization strategy: <strong>increase arithmetic intensity</strong> by reducing redundant memory accesses. This is exactly what the shared memory approach accomplishes:</p>
+<p><strong>Shared memory benefits</strong>:</p>
+<ul>
+<li><strong>Cooperative loading</strong>: Threads work together to load matrix blocks into fast shared memory</li>
+<li><strong>Data reuse</strong>: Each loaded element serves multiple computations</li>
+<li><strong>Reduced global memory traffic</strong>: Fewer accesses to slow global memory</li>
+</ul>
+<p><strong>Expected arithmetic intensity improvement</strong>:
+\[\Large I_{\text{shared}} = \frac{12 \text{ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\]</p>
+<p>While still memory-bound for our small \(2 \times 2\) case, this 2× improvement in arithmetic intensity scales dramatically for larger matrices where shared memory tiles can be reused many more times.</p>
+<h2 id="6-optimization-strategies-revealed-by-the-roofline"><a class="header" href="#6-optimization-strategies-revealed-by-the-roofline">6. Optimization strategies revealed by the roofline</a></h2>
+<p>The roofline model not only diagnoses current performance but also illuminates optimization paths. Here are the key techniques we’ll explore in later puzzles:</p>
+<div class="table-wrapper"><table><thead><tr><th>Technique</th><th>Roofline effect</th><th>Implementation approach</th></tr></thead><tbody>
+<tr><td><strong>Shared memory tiling</strong></td><td>↑ Arithmetic intensity through data reuse</td><td>Cooperative loading, block-wise computation</td></tr>
+<tr><td><strong>Register blocking</strong></td><td>Reduce memory traffic with register accumulation</td><td>Loop unrolling with register variables</td></tr>
+<tr><td><strong>Kernel fusion</strong></td><td>More FLOPs per byte by combining operations</td><td>Single kernel handling multiple computation stages</td></tr>
+<tr><td><strong>Memory coalescing</strong></td><td>Maximize effective bandwidth utilization</td><td>Structured access patterns, proper thread organization</td></tr>
+<tr><td><strong>Mixed precision</strong></td><td>Smaller data types reduce memory pressure</td><td>FP16/BF16 input with FP32 accumulation</td></tr>
+</tbody></table>
+</div>
+<p>Each technique moves kernels along the roofline—either up the memory roof (better bandwidth utilization) or rightward toward the compute roof (higher arithmetic intensity).</p>
+<h2 id="7-beyond-simple-rooflines"><a class="header" href="#7-beyond-simple-rooflines">7. Beyond simple rooflines</a></h2>
+<p><strong>Multi-level memory</strong>: Advanced rooflines include separate ceilings for L2 cache, shared memory, and register bandwidth to identify which memory hierarchy level constrains performance.</p>
+<p><strong>Communication rooflines</strong>: For multi-GPU applications, replace memory bandwidth with interconnect bandwidth (NVLink, InfiniBand) to analyze scaling efficiency.</p>
+<p><strong>Specialized units</strong>: Modern GPUs include tensor cores with their own performance characteristics, requiring specialized roofline analysis.</p>
+<h2 id="8-using-the-roofline-in-practice"><a class="header" href="#8-using-the-roofline-in-practice">8. Using the roofline in practice</a></h2>
+<ol>
+<li><strong>Profile your kernel</strong>: Use tools like Nsight Compute to measure actual FLOPs and memory traffic</li>
+<li><strong>Plot the data point</strong>: Calculate arithmetic intensity and sustained performance</li>
+<li><strong>Identify the bottleneck</strong>: Memory-bound kernels sit on the memory roof; compute-bound kernels approach the compute roof</li>
+<li><strong>Choose optimizations</strong>: Focus on bandwidth improvements for memory-bound kernels, algorithmic changes for compute-bound ones</li>
+<li><strong>Measure and iterate</strong>: Verify that optimizations move kernels in the expected direction</li>
+</ol>
+<h2 id="connection-to-our-shared-memory-puzzle"><a class="header" href="#connection-to-our-shared-memory-puzzle">Connection to our shared memory puzzle</a></h2>
+<p>In the next section, we’ll implement the <strong>shared memory optimization</strong> that begins moving our kernel up the roofline. As the visualization shows, this takes us from the left purple dot (naive) to the right purple dot (shared memory)—a clear performance improvement through better data reuse.</p>
+<p>While our \(2 \times 2\) example won’t reach the compute roof, you’ll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding <strong>why</strong> shared memory helps and <strong>how much</strong> improvement to expect.</p>
+<p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>

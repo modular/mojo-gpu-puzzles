@@ -209,16 +209,16 @@
 <p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the examples.</p>
+<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
 <h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
 <ol>
-<li><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</li>
-</ol>
+<li>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</p>
 <pre><code class="language-bash"># Clone the repository
 git clone https://github.com/modular/mojo-gpu-puzzles
 cd mojo-gpu-puzzles
 </code></pre>
-<ol start="2">
+</li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
 <h4 id="option-1-uv-recommended-for-users"><a class="header" href="#option-1-uv-recommended-for-users">Option 1: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a> (recommended for users)</a></h4>
@@ -241,22 +241,22 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Run the puzzles via <code>uv</code> or <code>pixi</code> as follows:</p>
-</li>
-</ol>
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
+ <div class="code-tabs" data-tab-group="package-manager">
+   <div class="tab-buttons">
+     <button class="tab-button">uv</button>
+     <button class="tab-button">pixi</button>
+   </div>
+   <div class="tab-content">
 <pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
 </code></pre>
-  </div>
-  <div class="tab-content">
+   </div>
+   <div class="tab-content">
 <pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
 </code></pre>
-  </div>
-</div>
+   </div>
+ </div>
+</li>
+</ol>
 <p>For example, to run puzzle 01:</p>
 <ul>
 <li><code>uv run poe p01</code> or</li>
