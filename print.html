@@ -7080,6 +7080,38 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Column-wise softmax: Apply softmax independently to each column</li>
 <li>Compare performance differences between these implementations</li>
 </ul>
+<h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: Advanced attention mechanisms</a></h2>
+<p><em>This challenge extends <a href="bonuses/../puzzle_17/puzzle_17.html">Puzzle 17: Attention Op</a></em></p>
+<p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
+<h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
+<p>Extend the attention mechanism to handle longer sequences using the existing kernels:</p>
+<h4 id="11-sequence-length-scaling"><a class="header" href="#11-sequence-length-scaling">1.1 Sequence length scaling</a></h4>
+<ul>
+<li>Modify the attention implementation to handle <code>SEQ_LEN = 32</code> and <code>SEQ_LEN = 64</code></li>
+<li>Update the <code>TPB</code> (threads per block) parameter accordingly</li>
+<li>Ensure the transpose kernel handles the larger matrix sizes correctly</li>
+</ul>
+<h4 id="12-dynamic-sequence-lengths"><a class="header" href="#12-dynamic-sequence-lengths">1.2 Dynamic sequence lengths</a></h4>
+<ul>
+<li>Implement attention that can handle variable sequence lengths at runtime</li>
+<li>Add bounds checking in the kernels to handle sequences shorter than <code>SEQ_LEN</code></li>
+<li>Compare performance with fixed vs. dynamic sequence length handling</li>
+</ul>
+<h3 id="2-batched-vector-attention"><a class="header" href="#2-batched-vector-attention">2. Batched vector attention</a></h3>
+<p>Extend to process multiple attention computations simultaneously:</p>
+<h4 id="21-batch-processing"><a class="header" href="#21-batch-processing">2.1 Batch processing</a></h4>
+<ul>
+<li>Modify the attention operation to handle multiple query vectors at once</li>
+<li>Input shapes: Q(batch_size, d), K(seq_len, d), V(seq_len, d)</li>
+<li>Output shape: (batch_size, d)</li>
+<li>Reuse the existing kernels with proper indexing</li>
+</ul>
+<h4 id="22-memory-optimization-for-batches"><a class="header" href="#22-memory-optimization-for-batches">2.2 Memory optimization for batches</a></h4>
+<ul>
+<li>Minimize memory allocations by reusing buffers across batch elements</li>
+<li>Compare performance with different batch sizes (2, 4, 8)</li>
+<li>Analyze memory usage patterns</li>
+</ul>
 
                     </main>
 
