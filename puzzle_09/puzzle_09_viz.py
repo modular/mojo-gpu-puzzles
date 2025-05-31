@@ -271,7 +271,7 @@ class Puzzle09Visualization(Scene):
             output_highlights.add(output_highlight)
             self.wait(0.5)
 
-        self.wait(2)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({

@@ -131,7 +131,7 @@ class Puzzle04Visualization(Scene):
                     arrows.add(warning)
 
         self.play(FadeIn(arrows), run_time=0.3)
-        self.wait(4)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({

@@ -282,7 +282,7 @@ class Puzzle13Visualization(Scene):
         continue_text = Text("Remaining rows are processed similarly ...", font_size=18, color=YELLOW)
         continue_text.next_to(block, DOWN, buff=0.3)
         self.play(Write(continue_text))
-        self.wait(2)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({

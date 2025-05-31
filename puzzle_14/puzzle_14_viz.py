@@ -269,7 +269,7 @@ class MatmulVisualization(Scene):
         final_text = Text("Repeat for all elements of C", font_size=18, color=YELLOW)
         final_text.next_to(matrix_b, DOWN, buff=1)
         self.play(Write(final_text))
-        self.wait(2)
+        self.wait(60)
 
         # At the end, fade out title and subtitle with everything else
         self.play(

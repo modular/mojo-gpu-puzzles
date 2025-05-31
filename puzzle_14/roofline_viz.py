@@ -314,7 +314,7 @@ class RooflineModelVisualization(Scene):
             Write(goal_text)
         )
 
-        self.wait(5)
+        self.wait(60)
         self.play(
             *[FadeOut(mob) for mob in self.mobjects]
         )

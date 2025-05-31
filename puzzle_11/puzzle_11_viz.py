@@ -278,7 +278,7 @@ class Puzzle11Visualization(Scene):
             self.wait(0.3)
             self.play(FadeOut(arrows))
 
-        self.wait(2)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({

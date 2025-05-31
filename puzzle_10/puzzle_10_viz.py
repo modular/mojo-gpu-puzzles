@@ -265,7 +265,7 @@ class Puzzle10Visualization(Scene):
             FadeIn(final_arrow),
             FadeIn(output_highlight)
         )
-        self.wait(2)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({
