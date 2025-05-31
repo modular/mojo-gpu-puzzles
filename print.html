@@ -4844,7 +4844,9 @@ for k in range(size):
 <tr><td><strong>Compute roof</strong></td><td>\(P = P_{\text{peak}}\)</td><td>Horizontal line; performance limited by compute throughput</td></tr>
 </tbody></table>
 </div>
-<p>The <strong>critical intensity</strong> \(\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\) marks where a kernel transitions from memory-bound (\(I &lt; I^<em>\)) to compute-bound (\(I &gt; I^</em>\)).</p>
+<p>The <strong>critical intensity</strong></p>
+<p>\[\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\]</p>
+<p>marks where a kernel transitions from memory-bound (\(I &lt; I^* \)) to compute-bound (\(I &gt; I^* \)).</p>
 <h2 id="2-hardware-example-nvidia-a100-specifications"><a class="header" href="#2-hardware-example-nvidia-a100-specifications">2. Hardware example: NVIDIA A100 specifications</a></h2>
 <p>Let’s ground this theory in concrete numbers using the NVIDIA A100:</p>
 <p><strong>Peak FP32 throughput</strong>
