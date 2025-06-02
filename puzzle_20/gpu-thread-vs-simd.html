@@ -198,8 +198,9 @@
                         <h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
-<p>Understanding this relationship is crucial for making informed decisions about which patterns to use for different workloads.</p>
+<blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
+</blockquote>
 <h2 id="core-concepts"><a class="header" href="#core-concepts">Core concepts</a></h2>
 <h3 id="gpu-threading-hierarchy"><a class="header" href="#gpu-threading-hierarchy">GPU threading hierarchy</a></h3>
 <p>GPU execution follows a well-defined hierarchy that abstracts hardware complexity:</p>
@@ -207,12 +208,13 @@
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
 │   │   ├── Warp 1 (32 threads, lockstep execution)
-│   │   │   ├── Thread 1 → Your Mojo function
-│   │   │   ├── Thread 2 → Your Mojo function
+│   │   │   ├── Thread 1 → SIMD operations
+│   │   │   ├── Thread 2 → SIMD operations
 │   │   │   └── ... (32 threads total)
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI (TODO)</strong>.</p>
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
@@ -228,199 +230,106 @@ b_simd = b.load[simd_width](idx, 0)    // Load 4 floats simultaneously
 result = a_simd + b_simd               // Add 4 pairs simultaneously
 out.store[simd_width](idx, 0, result)  // Store 4 results simultaneously
 </code></pre>
-<p><strong>SIMD characteristics:</strong></p>
-<ul>
-<li><strong>Width</strong>: Determined by GPU architecture and data type (typically 4, 8, or 16)</li>
-<li><strong>Efficiency</strong>: Single instruction operates on multiple data elements</li>
-<li><strong>Memory</strong>: Vectorized loads/stores improve bandwidth utilization</li>
-<li><strong>Hardware</strong>: Maps directly to GPU vector processing units</li>
-</ul>
 <h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
-<p>Let’s analyze how each pattern maps threads to work using our <code>SIZE = 1024</code> example:</p>
-<h3 id="1-elementwise-pattern"><a class="header" href="#1-elementwise-pattern">1. Elementwise pattern</a></h3>
-<pre><code class="language-mojo">elementwise[add_function, simd_width, target="gpu"](size, ctx)
+<blockquote>
+<p><strong>Critical insight:</strong> All patterns perform the <strong>same total work</strong> - 256 SIMD operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this work is distributed across GPU threads.</p>
+</blockquote>
+<h3 id="thread-organization-comparison-size1024-simd_width4"><a class="header" href="#thread-organization-comparison-size1024-simd_width4">Thread organization comparison (<code>SIZE=1024</code>, <code>SIMD_WIDTH=4</code>)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td><strong>Elementwise</strong></td><td>256</td><td>1</td><td>Distributed access</td><td>Max parallelism, poor locality</td></tr>
+<tr><td><strong>Tiled</strong></td><td>32</td><td>8</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
+<tr><td><strong>Manual vectorized</strong></td><td>8</td><td>32</td><td>Large chunks</td><td>High bandwidth, fewer threads</td></tr>
+<tr><td><strong>Mojo vectorize</strong></td><td>32</td><td>8</td><td>Smart blocks</td><td>Automatic optimization</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-execution-patterns"><a class="header" href="#detailed-execution-patterns">Detailed execution patterns</a></h3>
+<p><strong>Elementwise pattern:</strong></p>
+<pre><code>Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1022,1023]
+256 threads × 1 SIMD op = 256 total SIMD operations
 </code></pre>
-<p><strong>Thread organization:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 4 = 256</code> threads (for SIMD_WIDTH=4)</li>
-<li><strong>Work per thread</strong>: Exactly <code>simd_width</code> elements (4 elements)</li>
-<li><strong>Memory pattern</strong>: Each thread accesses 4 consecutive elements</li>
-<li><strong>SIMD usage</strong>: One SIMD operation per thread</li>
-</ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0, 1, 2, 3]     → 1 SIMD operation
-Thread 1: processes elements [4, 5, 6, 7]     → 1 SIMD operation
-Thread 2: processes elements [8, 9, 10, 11]   → 1 SIMD operation
-...
-Thread 255: processes elements [1020, 1021, 1022, 1023] → 1 SIMD operation
-Total: 256 threads × 1 SIMD op = 256 SIMD operations
+<p><strong>Tiled pattern:</strong></p>
+<pre><code>Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
+32 threads × 8 SIMD ops = 256 total SIMD operations
 </code></pre>
-<h3 id="2-tiled-pattern"><a class="header" href="#2-tiled-pattern">2. Tiled pattern</a></h3>
-<pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+<p><strong>Manual vectorized pattern:</strong></p>
+<pre><code>Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)
+8 threads × 32 SIMD ops = 256 total SIMD operations
 </code></pre>
-<p><strong>Thread organization:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 32 = 32</code> threads (for TILE_SIZE=32)</li>
-<li><strong>Work per thread</strong>: 32 elements processed sequentially</li>
-<li><strong>Memory pattern</strong>: Each thread accesses a contiguous 32-element block</li>
-<li><strong>SIMD usage</strong>: <code>32 ÷ 4 = 8</code> SIMD operations per thread</li>
-</ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0:32]      → 8 SIMD operations (sequential)
-Thread 1: processes elements [32:64]     → 8 SIMD operations (sequential)
-Thread 2: processes elements [64:96]     → 8 SIMD operations (sequential)
-...
-Thread 31: processes elements [992:1024] → 8 SIMD operations (sequential)
-Total: 32 threads × 8 SIMD ops = 256 SIMD operations
+<p><strong>Mojo vectorize pattern:</strong></p>
+<pre><code>Thread 0: [0:32] auto-vectorized → Thread 1: [32:64] auto-vectorized → ... → Thread 31: [992:1024] auto-vectorized
+32 threads × 8 SIMD ops = 256 total SIMD operations
 </code></pre>
-<h3 id="3-manual-vectorization-pattern"><a class="header" href="#3-manual-vectorization-pattern">3. Manual vectorization pattern</a></h3>
-<pre><code class="language-mojo">elementwise[manual_vectorized, 1, target="gpu"](num_chunks, ctx)
-</code></pre>
-<p><strong>Thread organization:</strong></p>
+<h2 id="performance-characteristics-and-trade-offs"><a class="header" href="#performance-characteristics-and-trade-offs">Performance characteristics and trade-offs</a></h2>
+<h3 id="core-trade-offs-summary"><a class="header" href="#core-trade-offs-summary">Core trade-offs summary</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>High thread count (Elementwise)</th><th>Moderate threads (Tiled/Vectorize)</th><th>Low threads (Manual)</th></tr></thead><tbody>
+<tr><td><strong>Parallelism</strong></td><td>Maximum latency hiding</td><td>Balanced approach</td><td>Minimal parallelism</td></tr>
+<tr><td><strong>Cache locality</strong></td><td>Poor between threads</td><td>Good within tiles</td><td>Excellent sequential</td></tr>
+<tr><td><strong>Memory bandwidth</strong></td><td>Good coalescing</td><td>Good + cache reuse</td><td>Maximum theoretical</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Simplest</td><td>Moderate</td><td>Most complex</td></tr>
+</tbody></table>
+</div>
+<h3 id="when-to-choose-each-pattern"><a class="header" href="#when-to-choose-each-pattern">When to choose each pattern</a></h3>
+<p><strong>Use elementwise when:</strong></p>
 <ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 128 = 8</code> threads (for chunk_size=128)</li>
-<li><strong>Work per thread</strong>: 128 elements in 32 SIMD groups</li>
-<li><strong>Memory pattern</strong>: Large chunks with stride-4 access within chunks</li>
-<li><strong>SIMD usage</strong>: <code>128 ÷ 4 = 32</code> SIMD operations per thread</li>
+<li>Simple operations with minimal arithmetic per element</li>
+<li>Maximum parallelism needed for latency hiding</li>
+<li>Scalability across different problem sizes is important</li>
 </ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0:128]     → 32 SIMD operations
-Thread 1: processes elements [128:256]   → 32 SIMD operations
-Thread 2: processes elements [256:384]   → 32 SIMD operations
-...
-Thread 7: processes elements [896:1024]  → 32 SIMD operations
-Total: 8 threads × 32 SIMD ops = 256 SIMD operations
-</code></pre>
-<h3 id="4-mojo-vectorize-pattern"><a class="header" href="#4-mojo-vectorize-pattern">4. Mojo vectorize pattern</a></h3>
-<pre><code class="language-mojo">elementwise[vectorize_tiles, 1, target="gpu"](num_tiles, ctx)
-vectorize[nested_function, simd_width](tile_size)
-</code></pre>
-<p><strong>Thread organization:</strong></p>
+<p><strong>Use tiled/vectorize when:</strong></p>
 <ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 32 = 32</code> threads (for <code>TILE_SIZE=32</code>)</li>
-<li><strong>Work per thread</strong>: 32 elements with automatic vectorization</li>
-<li><strong>Memory pattern</strong>: Contiguous tiles with automatic SIMD chunking</li>
-<li><strong>SIMD usage</strong>: <code>32 ÷ 4 = 8</code> SIMD operations per thread (automatic)</li>
+<li>Cache-sensitive operations that benefit from data reuse</li>
+<li>Balanced performance and maintainability desired</li>
+<li>Automatic optimization (vectorize) is preferred</li>
 </ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes tile [0:32]    → 8 automatic SIMD operations
-Thread 1: processes tile [32:64]   → 8 automatic SIMD operations
-Thread 2: processes tile [64:96]   → 8 automatic SIMD operations
-...
-Thread 31: processes tile [992:1024] → 8 automatic SIMD operations
-Total: 32 threads × 8 SIMD ops = 256 SIMD operations
-</code></pre>
-<h2 id="key-insights-and-trade-offs"><a class="header" href="#key-insights-and-trade-offs">Key insights and trade-offs</a></h2>
-<h3 id="1-total-work-remains-constant"><a class="header" href="#1-total-work-remains-constant">1. <strong>Total work remains constant</strong></a></h3>
-<p>All patterns achieve the same total computational work:</p>
+<p><strong>Use manual vectorization when:</strong></p>
 <ul>
-<li><strong>256 SIMD operations</strong> across all approaches</li>
-<li><strong>1024 elements processed</strong> in all cases</li>
-<li><strong>Same arithmetic intensity</strong> for this simple operation</li>
+<li>Expert-level control over memory patterns is needed</li>
+<li>Maximum memory bandwidth utilization is critical</li>
+<li>Development complexity is acceptable</li>
 </ul>
-<h3 id="2-thread-count-vs-work-per-thread-trade-off"><a class="header" href="#2-thread-count-vs-work-per-thread-trade-off">2. <strong>Thread count vs work per thread trade-off</strong></a></h3>
-<pre><code>Elementwise:  256 threads  × 1 SIMD op   = High parallelism, minimal work
-Tiled:        32 threads   × 8 SIMD ops  = Moderate parallelism, moderate work
-Manual:       8 threads    × 32 SIMD ops = Low parallelism, substantial work
-Mojo vectorize: 32 threads × 8 SIMD ops  = Moderate parallelism, automatic work
-</code></pre>
-<h3 id="3-memory-access-pattern-implications"><a class="header" href="#3-memory-access-pattern-implications">3. <strong>Memory access pattern implications</strong></a></h3>
-<p><strong>Elementwise</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Distributed across entire array</li>
-<li><strong>Cache behavior</strong>: Poor spatial locality between threads</li>
-<li><strong>Bandwidth</strong>: Excellent coalescing within SIMD operations</li>
-</ul>
-<p><strong>Tiled/Vectorize</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Localized to small contiguous blocks</li>
-<li><strong>Cache behavior</strong>: Excellent spatial locality within threads</li>
-<li><strong>Bandwidth</strong>: Good coalescing + excellent cache reuse</li>
-</ul>
-<p><strong>Manual vectorization</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Large contiguous blocks</li>
-<li><strong>Cache behavior</strong>: May exceed cache capacity, but perfect sequentiality</li>
-<li><strong>Bandwidth</strong>: Maximum theoretical bandwidth utilization</li>
-</ul>
-<h3 id="4-hardware-utilization-considerations"><a class="header" href="#4-hardware-utilization-considerations">4. <strong>Hardware utilization considerations</strong></a></h3>
-<p><strong>GPU occupancy factors:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: More threads = better latency hiding capability</li>
-<li><strong>Memory per thread</strong>: More work per thread = better cache utilization</li>
-<li><strong>Register pressure</strong>: Complex operations may limit threads per SM</li>
-<li><strong>Shared memory usage</strong>: Advanced patterns may require shared memory</li>
-</ul>
-<p><strong>Warp efficiency:</strong></p>
-<ul>
-<li>All patterns launch threads in warp-aligned groups (multiples of 32)</li>
-<li>GPU scheduler handles warp-level execution automatically</li>
-<li>Memory stalls in one warp allow other warps to execute</li>
-</ul>
-<h2 id="choosing-the-right-pattern"><a class="header" href="#choosing-the-right-pattern">Choosing the right pattern</a></h2>
-<h3 id="use-elementwise-when"><a class="header" href="#use-elementwise-when"><strong>Use elementwise when:</strong></a></h3>
-<ul>
-<li><strong>Simple operations</strong> with minimal arithmetic per element</li>
-<li><strong>Maximum parallelism</strong> is needed for latency hiding</li>
-<li><strong>Regular data access</strong> patterns with good coalescing</li>
-<li><strong>Scalability</strong> across different problem sizes is important</li>
-</ul>
-<h3 id="use-tiled-when"><a class="header" href="#use-tiled-when"><strong>Use tiled when:</strong></a></h3>
-<ul>
-<li><strong>Cache-sensitive</strong> operations that benefit from data reuse</li>
-<li><strong>Moderate complexity</strong> operations within each element</li>
-<li><strong>Memory bandwidth</strong> is not the primary bottleneck</li>
-<li><strong>Sequential access</strong> patterns provide better performance</li>
-</ul>
-<h3 id="use-manual-vectorization-when"><a class="header" href="#use-manual-vectorization-when"><strong>Use manual vectorization when:</strong></a></h3>
-<ul>
-<li><strong>Expert-level control</strong> over memory access patterns is needed</li>
-<li><strong>Complex indexing</strong> or non-standard access patterns are required</li>
-<li><strong>Maximum memory bandwidth</strong> utilization is critical</li>
-<li><strong>Hardware-specific optimization</strong> is worth the complexity</li>
-</ul>
-<h3 id="use-mojo-vectorize-when"><a class="header" href="#use-mojo-vectorize-when"><strong>Use Mojo vectorize when:</strong></a></h3>
-<ul>
-<li><strong>Development productivity</strong> and safety are priorities</li>
-<li><strong>Automatic optimization</strong> is preferred over manual tuning</li>
-<li><strong>Bounds checking</strong> and edge case handling add value</li>
-<li><strong>Portability</strong> across different hardware is important</li>
-</ul>
-<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
-<p><strong>Think of it this way:</strong></p>
-<ul>
-<li><strong>GPU threads</strong> provide the <strong>parallel structure</strong> - how many independent execution units</li>
-<li><strong>SIMD operations</strong> provide the <strong>vectorization</strong> - how efficiently each unit processes data</li>
-<li><strong>Memory patterns</strong> determine the <strong>bandwidth utilization</strong> - how effectively you use the memory subsystem</li>
-</ul>
-<p><strong>Optimal performance requires:</strong></p>
-<ol>
-<li><strong>Sufficient parallelism</strong>: Enough threads to hide memory latency</li>
-<li><strong>Efficient vectorization</strong>: Maximize SIMD utilization within threads</li>
-<li><strong>Optimal memory patterns</strong>: Achieve high bandwidth with good cache behavior</li>
-</ol>
-<h2 id="advanced-considerations"><a class="header" href="#advanced-considerations">Advanced considerations</a></h2>
-<h3 id="hardware-mapping-reality"><a class="header" href="#hardware-mapping-reality"><strong>Hardware mapping reality</strong></a></h3>
-<p>While we think in terms of “GPU threads,” the hardware reality is more complex:</p>
+<h2 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h2>
+<p>Modern GPU architectures include several levels that Mojo abstracts:</p>
+<p><strong>Hardware reality:</strong></p>
 <ul>
 <li><strong>Warps</strong>: 32 threads execute in lockstep</li>
 <li><strong>Streaming Multiprocessors (SMs)</strong>: Multiple warps execute concurrently</li>
 <li><strong>SIMD units</strong>: Vector processing units within each SM</li>
 <li><strong>Memory hierarchy</strong>: L1/L2 caches, shared memory, global memory</li>
 </ul>
-<p><strong>Mojo abstracts this complexity</strong> while still allowing you to reason about performance through the thread/SIMD mental model.</p>
-<h3 id="scaling-considerations"><a class="header" href="#scaling-considerations"><strong>Scaling considerations</strong></a></h3>
-<pre><code>Small problems (&lt; 1K elements):  Elementwise often optimal
-Medium problems (1K - 1M):       Tiled patterns often best
-Large problems (&gt; 1M):           Manual vectorization may excel
-</code></pre>
-<p>The optimal choice depends on:</p>
+<p><strong>Mojo’s abstraction benefits:</strong></p>
 <ul>
-<li><strong>Problem size</strong> relative to GPU capabilities</li>
-<li><strong>Arithmetic complexity</strong> of your operations</li>
-<li><strong>Memory access patterns</strong> of your algorithm</li>
-<li><strong>Development time</strong> vs performance requirements</li>
+<li>Automatically handles warp alignment and scheduling</li>
+<li>Optimizes memory access patterns transparently</li>
+<li>Manages resource allocation across SMs</li>
+<li>Provides portable performance across GPU vendors</li>
 </ul>
+<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
+<p>Think of GPU programming as managing two complementary types of parallelism:</p>
+<p><strong>Thread-level parallelism:</strong></p>
+<ul>
+<li>Provides the parallel structure (how many execution units)</li>
+<li>Enables latency hiding through concurrent execution</li>
+<li>Managed by GPU scheduler automatically</li>
+</ul>
+<p><strong>SIMD-level parallelism:</strong></p>
+<ul>
+<li>Provides vectorization within each thread</li>
+<li>Maximizes arithmetic throughput per thread</li>
+<li>Utilizes vector processing units efficiently</li>
+</ul>
+<p><strong>Optimal performance formula:</strong></p>
+<pre><code>Performance = (Sufficient threads for latency hiding) ×
+              (Efficient SIMD utilization) ×
+              (Optimal memory access patterns)
+</code></pre>
+<h2 id="scaling-considerations"><a class="header" href="#scaling-considerations">Scaling considerations</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Problem size</th><th>Optimal pattern</th><th>Reasoning</th></tr></thead><tbody>
+<tr><td>Small (&lt; 1K)</td><td>Tiled/Vectorize</td><td>Lower launch overhead</td></tr>
+<tr><td>Medium (1K-1M)</td><td>Any pattern</td><td>Similar performance</td></tr>
+<tr><td>Large (&gt; 1M)</td><td>Usually Elementwise</td><td>Parallelism dominates</td></tr>
+</tbody></table>
+</div>
+<p>The optimal choice depends on your specific hardware, workload complexity, and development constraints.</p>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>With a solid understanding of GPU threading vs SIMD concepts:</p>
 <ul>

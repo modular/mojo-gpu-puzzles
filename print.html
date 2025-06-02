@@ -7194,8 +7194,8 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
 │   │   ├── Warp 1 (32 threads, lockstep execution) --&gt; We'll learn in Part VI
-│   │   │   ├── Thread 1 → Your Mojo function
-│   │   │   ├── Thread 2 → Your Mojo function
+│   │   │   ├── Thread 1 → SIMD
+│   │   │   ├── Thread 2 → SIMD
 │   │   │   └── ... (32 threads total)
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
@@ -7207,7 +7207,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Thread scheduling optimized automatically</li>
 <li>Memory hierarchy optimization built-in</li>
 </ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI</strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI (TODO)</strong>.</p>
 <h3 id="-four-fundamental-patterns"><a class="header" href="#-four-fundamental-patterns">⚡ <strong>Four fundamental patterns</strong></a></h3>
 <p>Master the complete spectrum of GPU functional programming:</p>
 <ol>
@@ -8436,8 +8436,9 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
 <h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
-<p>Understanding this relationship is crucial for making informed decisions about which patterns to use for different workloads.</p>
+<blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
+</blockquote>
 <h2 id="core-concepts"><a class="header" href="#core-concepts">Core concepts</a></h2>
 <h3 id="gpu-threading-hierarchy"><a class="header" href="#gpu-threading-hierarchy">GPU threading hierarchy</a></h3>
 <p>GPU execution follows a well-defined hierarchy that abstracts hardware complexity:</p>
@@ -8445,12 +8446,13 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
 │   │   ├── Warp 1 (32 threads, lockstep execution)
-│   │   │   ├── Thread 1 → Your Mojo function
-│   │   │   ├── Thread 2 → Your Mojo function
+│   │   │   ├── Thread 1 → SIMD operations
+│   │   │   ├── Thread 2 → SIMD operations
 │   │   │   └── ... (32 threads total)
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI (TODO)</strong>.</p>
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
@@ -8466,199 +8468,106 @@ b_simd = b.load[simd_width](idx, 0)    // Load 4 floats simultaneously
 result = a_simd + b_simd               // Add 4 pairs simultaneously
 out.store[simd_width](idx, 0, result)  // Store 4 results simultaneously
 </code></pre>
-<p><strong>SIMD characteristics:</strong></p>
-<ul>
-<li><strong>Width</strong>: Determined by GPU architecture and data type (typically 4, 8, or 16)</li>
-<li><strong>Efficiency</strong>: Single instruction operates on multiple data elements</li>
-<li><strong>Memory</strong>: Vectorized loads/stores improve bandwidth utilization</li>
-<li><strong>Hardware</strong>: Maps directly to GPU vector processing units</li>
-</ul>
 <h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
-<p>Let’s analyze how each pattern maps threads to work using our <code>SIZE = 1024</code> example:</p>
-<h3 id="1-elementwise-pattern"><a class="header" href="#1-elementwise-pattern">1. Elementwise pattern</a></h3>
-<pre><code class="language-mojo">elementwise[add_function, simd_width, target="gpu"](size, ctx)
+<blockquote>
+<p><strong>Critical insight:</strong> All patterns perform the <strong>same total work</strong> - 256 SIMD operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this work is distributed across GPU threads.</p>
+</blockquote>
+<h3 id="thread-organization-comparison-size1024-simd_width4"><a class="header" href="#thread-organization-comparison-size1024-simd_width4">Thread organization comparison (<code>SIZE=1024</code>, <code>SIMD_WIDTH=4</code>)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td><strong>Elementwise</strong></td><td>256</td><td>1</td><td>Distributed access</td><td>Max parallelism, poor locality</td></tr>
+<tr><td><strong>Tiled</strong></td><td>32</td><td>8</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
+<tr><td><strong>Manual vectorized</strong></td><td>8</td><td>32</td><td>Large chunks</td><td>High bandwidth, fewer threads</td></tr>
+<tr><td><strong>Mojo vectorize</strong></td><td>32</td><td>8</td><td>Smart blocks</td><td>Automatic optimization</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-execution-patterns"><a class="header" href="#detailed-execution-patterns">Detailed execution patterns</a></h3>
+<p><strong>Elementwise pattern:</strong></p>
+<pre><code>Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1022,1023]
+256 threads × 1 SIMD op = 256 total SIMD operations
 </code></pre>
-<p><strong>Thread organization:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 4 = 256</code> threads (for SIMD_WIDTH=4)</li>
-<li><strong>Work per thread</strong>: Exactly <code>simd_width</code> elements (4 elements)</li>
-<li><strong>Memory pattern</strong>: Each thread accesses 4 consecutive elements</li>
-<li><strong>SIMD usage</strong>: One SIMD operation per thread</li>
-</ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0, 1, 2, 3]     → 1 SIMD operation
-Thread 1: processes elements [4, 5, 6, 7]     → 1 SIMD operation
-Thread 2: processes elements [8, 9, 10, 11]   → 1 SIMD operation
-...
-Thread 255: processes elements [1020, 1021, 1022, 1023] → 1 SIMD operation
-Total: 256 threads × 1 SIMD op = 256 SIMD operations
+<p><strong>Tiled pattern:</strong></p>
+<pre><code>Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
+32 threads × 8 SIMD ops = 256 total SIMD operations
 </code></pre>
-<h3 id="2-tiled-pattern"><a class="header" href="#2-tiled-pattern">2. Tiled pattern</a></h3>
-<pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
+<p><strong>Manual vectorized pattern:</strong></p>
+<pre><code>Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)
+8 threads × 32 SIMD ops = 256 total SIMD operations
 </code></pre>
-<p><strong>Thread organization:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 32 = 32</code> threads (for TILE_SIZE=32)</li>
-<li><strong>Work per thread</strong>: 32 elements processed sequentially</li>
-<li><strong>Memory pattern</strong>: Each thread accesses a contiguous 32-element block</li>
-<li><strong>SIMD usage</strong>: <code>32 ÷ 4 = 8</code> SIMD operations per thread</li>
-</ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0:32]      → 8 SIMD operations (sequential)
-Thread 1: processes elements [32:64]     → 8 SIMD operations (sequential)
-Thread 2: processes elements [64:96]     → 8 SIMD operations (sequential)
-...
-Thread 31: processes elements [992:1024] → 8 SIMD operations (sequential)
-Total: 32 threads × 8 SIMD ops = 256 SIMD operations
+<p><strong>Mojo vectorize pattern:</strong></p>
+<pre><code>Thread 0: [0:32] auto-vectorized → Thread 1: [32:64] auto-vectorized → ... → Thread 31: [992:1024] auto-vectorized
+32 threads × 8 SIMD ops = 256 total SIMD operations
 </code></pre>
-<h3 id="3-manual-vectorization-pattern"><a class="header" href="#3-manual-vectorization-pattern">3. Manual vectorization pattern</a></h3>
-<pre><code class="language-mojo">elementwise[manual_vectorized, 1, target="gpu"](num_chunks, ctx)
-</code></pre>
-<p><strong>Thread organization:</strong></p>
+<h2 id="performance-characteristics-and-trade-offs"><a class="header" href="#performance-characteristics-and-trade-offs">Performance characteristics and trade-offs</a></h2>
+<h3 id="core-trade-offs-summary"><a class="header" href="#core-trade-offs-summary">Core trade-offs summary</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>High thread count (Elementwise)</th><th>Moderate threads (Tiled/Vectorize)</th><th>Low threads (Manual)</th></tr></thead><tbody>
+<tr><td><strong>Parallelism</strong></td><td>Maximum latency hiding</td><td>Balanced approach</td><td>Minimal parallelism</td></tr>
+<tr><td><strong>Cache locality</strong></td><td>Poor between threads</td><td>Good within tiles</td><td>Excellent sequential</td></tr>
+<tr><td><strong>Memory bandwidth</strong></td><td>Good coalescing</td><td>Good + cache reuse</td><td>Maximum theoretical</td></tr>
+<tr><td><strong>Complexity</strong></td><td>Simplest</td><td>Moderate</td><td>Most complex</td></tr>
+</tbody></table>
+</div>
+<h3 id="when-to-choose-each-pattern"><a class="header" href="#when-to-choose-each-pattern">When to choose each pattern</a></h3>
+<p><strong>Use elementwise when:</strong></p>
 <ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 128 = 8</code> threads (for chunk_size=128)</li>
-<li><strong>Work per thread</strong>: 128 elements in 32 SIMD groups</li>
-<li><strong>Memory pattern</strong>: Large chunks with stride-4 access within chunks</li>
-<li><strong>SIMD usage</strong>: <code>128 ÷ 4 = 32</code> SIMD operations per thread</li>
+<li>Simple operations with minimal arithmetic per element</li>
+<li>Maximum parallelism needed for latency hiding</li>
+<li>Scalability across different problem sizes is important</li>
 </ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes elements [0:128]     → 32 SIMD operations
-Thread 1: processes elements [128:256]   → 32 SIMD operations
-Thread 2: processes elements [256:384]   → 32 SIMD operations
-...
-Thread 7: processes elements [896:1024]  → 32 SIMD operations
-Total: 8 threads × 32 SIMD ops = 256 SIMD operations
-</code></pre>
-<h3 id="4-mojo-vectorize-pattern"><a class="header" href="#4-mojo-vectorize-pattern">4. Mojo vectorize pattern</a></h3>
-<pre><code class="language-mojo">elementwise[vectorize_tiles, 1, target="gpu"](num_tiles, ctx)
-vectorize[nested_function, simd_width](tile_size)
-</code></pre>
-<p><strong>Thread organization:</strong></p>
+<p><strong>Use tiled/vectorize when:</strong></p>
 <ul>
-<li><strong>Thread count</strong>: <code>1024 ÷ 32 = 32</code> threads (for <code>TILE_SIZE=32</code>)</li>
-<li><strong>Work per thread</strong>: 32 elements with automatic vectorization</li>
-<li><strong>Memory pattern</strong>: Contiguous tiles with automatic SIMD chunking</li>
-<li><strong>SIMD usage</strong>: <code>32 ÷ 4 = 8</code> SIMD operations per thread (automatic)</li>
+<li>Cache-sensitive operations that benefit from data reuse</li>
+<li>Balanced performance and maintainability desired</li>
+<li>Automatic optimization (vectorize) is preferred</li>
 </ul>
-<p><strong>Execution visualization:</strong></p>
-<pre><code>Thread 0: processes tile [0:32]    → 8 automatic SIMD operations
-Thread 1: processes tile [32:64]   → 8 automatic SIMD operations
-Thread 2: processes tile [64:96]   → 8 automatic SIMD operations
-...
-Thread 31: processes tile [992:1024] → 8 automatic SIMD operations
-Total: 32 threads × 8 SIMD ops = 256 SIMD operations
-</code></pre>
-<h2 id="key-insights-and-trade-offs"><a class="header" href="#key-insights-and-trade-offs">Key insights and trade-offs</a></h2>
-<h3 id="1-total-work-remains-constant"><a class="header" href="#1-total-work-remains-constant">1. <strong>Total work remains constant</strong></a></h3>
-<p>All patterns achieve the same total computational work:</p>
+<p><strong>Use manual vectorization when:</strong></p>
 <ul>
-<li><strong>256 SIMD operations</strong> across all approaches</li>
-<li><strong>1024 elements processed</strong> in all cases</li>
-<li><strong>Same arithmetic intensity</strong> for this simple operation</li>
+<li>Expert-level control over memory patterns is needed</li>
+<li>Maximum memory bandwidth utilization is critical</li>
+<li>Development complexity is acceptable</li>
 </ul>
-<h3 id="2-thread-count-vs-work-per-thread-trade-off"><a class="header" href="#2-thread-count-vs-work-per-thread-trade-off">2. <strong>Thread count vs work per thread trade-off</strong></a></h3>
-<pre><code>Elementwise:  256 threads  × 1 SIMD op   = High parallelism, minimal work
-Tiled:        32 threads   × 8 SIMD ops  = Moderate parallelism, moderate work
-Manual:       8 threads    × 32 SIMD ops = Low parallelism, substantial work
-Mojo vectorize: 32 threads × 8 SIMD ops  = Moderate parallelism, automatic work
-</code></pre>
-<h3 id="3-memory-access-pattern-implications"><a class="header" href="#3-memory-access-pattern-implications">3. <strong>Memory access pattern implications</strong></a></h3>
-<p><strong>Elementwise</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Distributed across entire array</li>
-<li><strong>Cache behavior</strong>: Poor spatial locality between threads</li>
-<li><strong>Bandwidth</strong>: Excellent coalescing within SIMD operations</li>
-</ul>
-<p><strong>Tiled/Vectorize</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Localized to small contiguous blocks</li>
-<li><strong>Cache behavior</strong>: Excellent spatial locality within threads</li>
-<li><strong>Bandwidth</strong>: Good coalescing + excellent cache reuse</li>
-</ul>
-<p><strong>Manual vectorization</strong>:</p>
-<ul>
-<li><strong>Access pattern</strong>: Large contiguous blocks</li>
-<li><strong>Cache behavior</strong>: May exceed cache capacity, but perfect sequentiality</li>
-<li><strong>Bandwidth</strong>: Maximum theoretical bandwidth utilization</li>
-</ul>
-<h3 id="4-hardware-utilization-considerations"><a class="header" href="#4-hardware-utilization-considerations">4. <strong>Hardware utilization considerations</strong></a></h3>
-<p><strong>GPU occupancy factors:</strong></p>
-<ul>
-<li><strong>Thread count</strong>: More threads = better latency hiding capability</li>
-<li><strong>Memory per thread</strong>: More work per thread = better cache utilization</li>
-<li><strong>Register pressure</strong>: Complex operations may limit threads per SM</li>
-<li><strong>Shared memory usage</strong>: Advanced patterns may require shared memory</li>
-</ul>
-<p><strong>Warp efficiency:</strong></p>
-<ul>
-<li>All patterns launch threads in warp-aligned groups (multiples of 32)</li>
-<li>GPU scheduler handles warp-level execution automatically</li>
-<li>Memory stalls in one warp allow other warps to execute</li>
-</ul>
-<h2 id="choosing-the-right-pattern"><a class="header" href="#choosing-the-right-pattern">Choosing the right pattern</a></h2>
-<h3 id="use-elementwise-when"><a class="header" href="#use-elementwise-when"><strong>Use elementwise when:</strong></a></h3>
-<ul>
-<li><strong>Simple operations</strong> with minimal arithmetic per element</li>
-<li><strong>Maximum parallelism</strong> is needed for latency hiding</li>
-<li><strong>Regular data access</strong> patterns with good coalescing</li>
-<li><strong>Scalability</strong> across different problem sizes is important</li>
-</ul>
-<h3 id="use-tiled-when"><a class="header" href="#use-tiled-when"><strong>Use tiled when:</strong></a></h3>
-<ul>
-<li><strong>Cache-sensitive</strong> operations that benefit from data reuse</li>
-<li><strong>Moderate complexity</strong> operations within each element</li>
-<li><strong>Memory bandwidth</strong> is not the primary bottleneck</li>
-<li><strong>Sequential access</strong> patterns provide better performance</li>
-</ul>
-<h3 id="use-manual-vectorization-when"><a class="header" href="#use-manual-vectorization-when"><strong>Use manual vectorization when:</strong></a></h3>
-<ul>
-<li><strong>Expert-level control</strong> over memory access patterns is needed</li>
-<li><strong>Complex indexing</strong> or non-standard access patterns are required</li>
-<li><strong>Maximum memory bandwidth</strong> utilization is critical</li>
-<li><strong>Hardware-specific optimization</strong> is worth the complexity</li>
-</ul>
-<h3 id="use-mojo-vectorize-when"><a class="header" href="#use-mojo-vectorize-when"><strong>Use Mojo vectorize when:</strong></a></h3>
-<ul>
-<li><strong>Development productivity</strong> and safety are priorities</li>
-<li><strong>Automatic optimization</strong> is preferred over manual tuning</li>
-<li><strong>Bounds checking</strong> and edge case handling add value</li>
-<li><strong>Portability</strong> across different hardware is important</li>
-</ul>
-<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
-<p><strong>Think of it this way:</strong></p>
-<ul>
-<li><strong>GPU threads</strong> provide the <strong>parallel structure</strong> - how many independent execution units</li>
-<li><strong>SIMD operations</strong> provide the <strong>vectorization</strong> - how efficiently each unit processes data</li>
-<li><strong>Memory patterns</strong> determine the <strong>bandwidth utilization</strong> - how effectively you use the memory subsystem</li>
-</ul>
-<p><strong>Optimal performance requires:</strong></p>
-<ol>
-<li><strong>Sufficient parallelism</strong>: Enough threads to hide memory latency</li>
-<li><strong>Efficient vectorization</strong>: Maximize SIMD utilization within threads</li>
-<li><strong>Optimal memory patterns</strong>: Achieve high bandwidth with good cache behavior</li>
-</ol>
-<h2 id="advanced-considerations"><a class="header" href="#advanced-considerations">Advanced considerations</a></h2>
-<h3 id="hardware-mapping-reality"><a class="header" href="#hardware-mapping-reality"><strong>Hardware mapping reality</strong></a></h3>
-<p>While we think in terms of “GPU threads,” the hardware reality is more complex:</p>
+<h2 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h2>
+<p>Modern GPU architectures include several levels that Mojo abstracts:</p>
+<p><strong>Hardware reality:</strong></p>
 <ul>
 <li><strong>Warps</strong>: 32 threads execute in lockstep</li>
 <li><strong>Streaming Multiprocessors (SMs)</strong>: Multiple warps execute concurrently</li>
 <li><strong>SIMD units</strong>: Vector processing units within each SM</li>
 <li><strong>Memory hierarchy</strong>: L1/L2 caches, shared memory, global memory</li>
 </ul>
-<p><strong>Mojo abstracts this complexity</strong> while still allowing you to reason about performance through the thread/SIMD mental model.</p>
-<h3 id="scaling-considerations"><a class="header" href="#scaling-considerations"><strong>Scaling considerations</strong></a></h3>
-<pre><code>Small problems (&lt; 1K elements):  Elementwise often optimal
-Medium problems (1K - 1M):       Tiled patterns often best
-Large problems (&gt; 1M):           Manual vectorization may excel
-</code></pre>
-<p>The optimal choice depends on:</p>
+<p><strong>Mojo’s abstraction benefits:</strong></p>
 <ul>
-<li><strong>Problem size</strong> relative to GPU capabilities</li>
-<li><strong>Arithmetic complexity</strong> of your operations</li>
-<li><strong>Memory access patterns</strong> of your algorithm</li>
-<li><strong>Development time</strong> vs performance requirements</li>
+<li>Automatically handles warp alignment and scheduling</li>
+<li>Optimizes memory access patterns transparently</li>
+<li>Manages resource allocation across SMs</li>
+<li>Provides portable performance across GPU vendors</li>
 </ul>
+<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
+<p>Think of GPU programming as managing two complementary types of parallelism:</p>
+<p><strong>Thread-level parallelism:</strong></p>
+<ul>
+<li>Provides the parallel structure (how many execution units)</li>
+<li>Enables latency hiding through concurrent execution</li>
+<li>Managed by GPU scheduler automatically</li>
+</ul>
+<p><strong>SIMD-level parallelism:</strong></p>
+<ul>
+<li>Provides vectorization within each thread</li>
+<li>Maximizes arithmetic throughput per thread</li>
+<li>Utilizes vector processing units efficiently</li>
+</ul>
+<p><strong>Optimal performance formula:</strong></p>
+<pre><code>Performance = (Sufficient threads for latency hiding) ×
+              (Efficient SIMD utilization) ×
+              (Optimal memory access patterns)
+</code></pre>
+<h2 id="scaling-considerations"><a class="header" href="#scaling-considerations">Scaling considerations</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Problem size</th><th>Optimal pattern</th><th>Reasoning</th></tr></thead><tbody>
+<tr><td>Small (&lt; 1K)</td><td>Tiled/Vectorize</td><td>Lower launch overhead</td></tr>
+<tr><td>Medium (1K-1M)</td><td>Any pattern</td><td>Similar performance</td></tr>
+<tr><td>Large (&gt; 1M)</td><td>Usually Elementwise</td><td>Parallelism dominates</td></tr>
+</tbody></table>
+</div>
+<p>The optimal choice depends on your specific hardware, workload complexity, and development constraints.</p>
 <h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next steps</a></h2>
 <p>With a solid understanding of GPU threading vs SIMD concepts:</p>
 <ul>
@@ -8668,7 +8577,9 @@ Large problems (&gt; 1M):           Manual vectorization may excel
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
 <h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
 <p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p20.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
+<blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
+</blockquote>
 <h2 id="running-benchmarks"><a class="header" href="#running-benchmarks">Running benchmarks</a></h2>
 <p>To execute the comprehensive benchmark suite:</p>
 <div class="code-tabs" data-tab-group="package-manager">
@@ -8729,473 +8640,180 @@ Running vectorized_1M_1024
 Benchmarks completed!
 </code></pre>
 <h2 id="benchmark-configuration"><a class="header" href="#benchmark-configuration">Benchmark configuration</a></h2>
-<p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module with carefully chosen parameters:</p>
-<pre><code class="language-mojo">bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
+<p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module:</p>
+<pre><code class="language-mojo">from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
 </code></pre>
-<p><strong>Configuration explanation:</strong></p>
 <ul>
-<li><strong><code>max_iters=10</code></strong>: Runs each benchmark up to 10 times for statistical reliability</li>
-<li><strong><code>min_warmuptime_secs=0.2</code></strong>: Ensures GPU is warmed up before measurement begins</li>
-<li><strong>Automatic calibration</strong>: Framework automatically determines optimal iteration count</li>
+<li><strong><code>max_iters=10</code></strong>: Up to 10 iterations for statistical reliability</li>
+<li><strong><code>min_warmuptime_secs=0.2</code></strong>: GPU warmup before measurement</li>
+<li>Check out the <a href="https://docs.modular.com/mojo/stdlib/benchmark/">benchmark documentation</a></li>
 </ul>
-<h2 id="benchmarking-implementation-deep-dive"><a class="header" href="#benchmarking-implementation-deep-dive">Benchmarking implementation deep dive</a></h2>
-<h3 id="1-mojo-benchmark-module-architecture"><a class="header" href="#1-mojo-benchmark-module-architecture">1. <strong>Mojo benchmark module architecture</strong></a></h3>
-<p>The benchmarking system relies on Mojo’s built-in <code>benchmark</code> module:</p>
-<pre><code class="language-mojo">from benchmark import (
-    Bench,
-    BenchConfig,
-    Bencher,
-    BenchId,
-    keep
-)
-</code></pre>
-<p><strong>Key components:</strong></p>
-<ul>
-<li><strong><code>Bench</code></strong>: The main benchmarking orchestrator that manages multiple benchmark runs</li>
-<li><strong><code>BenchConfig</code></strong>: Specifies parameters like iteration counts and warmup time</li>
-<li><strong><code>Bencher</code></strong>: Executes individual benchmark iterations and collects timing data</li>
-<li><strong><code>BenchId</code></strong>: Provides unique names for benchmark identification and reporting</li>
-<li><strong><code>keep</code></strong>: Hints the compiler to not optimize a variable away. This is important for correct benchmarking.</li>
-</ul>
-<h3 id="2-parameterized-benchmark-functions"><a class="header" href="#2-parameterized-benchmark-functions">2. <strong>Parameterized benchmark functions</strong></a></h3>
-<p>Each pattern has a dedicated benchmark function using compile-time parameterization:</p>
+<h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
+<h3 id="core-workflow-pattern"><a class="header" href="#core-workflow-pattern">Core workflow pattern</a></h3>
+<p>Each benchmark follows a streamlined pattern:</p>
 <pre><code class="language-mojo">@parameter
-@always_inline
-fn benchmark_elementwise_parameterized[
-    test_size: Int, tile_size: Int
-](mut b: Bencher) raises:
-    # Implementation follows...
-</code></pre>
-<p><strong>Why parameterized functions?</strong></p>
-<ul>
-<li><strong>Compile-time specialization</strong>: Each <code>test_size</code> and <code>tile_size</code> combination generates optimized code</li>
-<li><strong>Zero abstraction cost</strong>: No runtime parameter overhead</li>
-<li><strong>Type safety</strong>: Ensures consistent parameter usage across benchmarks</li>
-<li><strong>Performance isolation</strong>: Each combination is independently optimized</li>
-</ul>
-<h3 id="3-workflow-pattern-implementation"><a class="header" href="#3-workflow-pattern-implementation">3. <strong>Workflow pattern implementation</strong></a></h3>
-<p>Each benchmark follows a consistent nested function pattern:</p>
-<pre><code class="language-mojo">@parameter
-@always_inline
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     @parameter
-    @always_inline
     fn pattern_workflow(ctx: DeviceContext) raises:
-        # 1. Setup phase: Create buffers and tensors
-        alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        # Setup: Create buffers and initialize data
+        # Compute: Execute the algorithm being measured
+        # Prevent optimization: keep(out.unsafe_ptr())
+        # Synchronize: ctx.synchronize()
 
-        # 2. Data initialization phase
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = 2 * i
-                b_host[i] = 2 * i + 1
-
-        # 3. Tensor creation phase
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-
-        # 4. Actual computation being benchmarked
-        pattern_function[layout, dtype, SIMD_WIDTH, rank, test_size](
-            out_tensor, a_tensor, b_tensor, ctx
-        )
-
-        # 5. Prevent compiler optimization - Critical for accurate benchmarking!
-        keep(out.unsafe_ptr())
-
-        # 6. Synchronization to ensure completion
-        ctx.synchronize()
-
-    # 7. Benchmark execution
     bench_ctx = DeviceContext()
     b.iter_custom[pattern_workflow](bench_ctx)
 </code></pre>
-<p><strong>Workflow phases explained:</strong></p>
-<h4 id="setup-phase-steps-1-3"><a class="header" href="#setup-phase-steps-1-3"><strong>Setup phase (steps 1-3):</strong></a></h4>
-<ul>
-<li><strong>Buffer allocation</strong>: <code>ctx.enqueue_create_buffer[dtype](test_size)</code> allocates GPU memory</li>
-<li><strong>Initialization</strong>: <code>enqueue_fill(0)</code> zeros out the memory</li>
-<li><strong>Data preparation</strong>: Maps to host memory for data initialization</li>
-<li><strong>Tensor wrapping</strong>: Creates <code>LayoutTensor</code> views for the algorithms</li>
-</ul>
-<h4 id="computation-phase-step-4"><a class="header" href="#computation-phase-step-4"><strong>Computation phase (step 4):</strong></a></h4>
-<ul>
-<li><strong>Isolated execution</strong>: Only the algorithm computation is timed</li>
-<li><strong>Consistent parameters</strong>: Same data layout and size across all patterns</li>
-<li><strong>GPU targeting</strong>: All algorithms use <code>target="gpu"</code> for fair comparison</li>
-</ul>
-<h4 id="compiler-optimization-prevention-step-5"><a class="header" href="#compiler-optimization-prevention-step-5"><strong>Compiler optimization prevention (step 5):</strong></a></h4>
-<ul>
-<li><strong><code>keep(out.unsafe_ptr())</code></strong>: Critical function that prevents dead code elimination</li>
-<li><strong>Why it’s needed</strong>: Without <code>keep</code>, the compiler might optimize away the entire computation since the result isn’t “used”</li>
-<li><strong>GPU-specific concern</strong>: GPU kernels are asynchronous, making optimization detection more complex</li>
-<li><strong>Placement importance</strong>: Must be after computation but before synchronization</li>
-</ul>
-<h4 id="synchronization-phase-step-6"><a class="header" href="#synchronization-phase-step-6"><strong>Synchronization phase (step 6):</strong></a></h4>
-<ul>
-<li><strong>Completion guarantee</strong>: <code>ctx.synchronize()</code> ensures GPU work completes</li>
-<li><strong>Accurate timing</strong>: Prevents timing of incomplete GPU operations</li>
-</ul>
-<h3 id="4-custom-iteration-measurement"><a class="header" href="#4-custom-iteration-measurement">4. <strong>Custom iteration measurement</strong></a></h3>
-<p>The key to accurate GPU benchmarking is the <code>iter_custom</code> approach:</p>
-<pre><code class="language-mojo">b.iter_custom[pattern_workflow](bench_ctx)
-</code></pre>
-<p><strong>Why <code>iter_custom</code>?</strong></p>
-<ul>
-<li><strong>GPU context management</strong>: Handles DeviceContext lifecycle properly</li>
-<li><strong>Memory management</strong>: Ensures proper buffer cleanup between iterations</li>
-<li><strong>Synchronization</strong>: Handles GPU-CPU synchronization automatically</li>
-<li><strong>Overhead isolation</strong>: Separates setup cost from computation cost</li>
-</ul>
-<p><strong>Comparison with standard iteration:</strong></p>
-<pre><code class="language-mojo">// Standard (problematic for GPU):
-b.iter[some_function]()  // No GPU context management
-
-// Custom (optimal for GPU):
-b.iter_custom[gpu_workflow](device_context)  // Proper GPU lifecycle
-</code></pre>
-<h3 id="5-benchmark-orchestration"><a class="header" href="#5-benchmark-orchestration">5. <strong>Benchmark orchestration</strong></a></h3>
-<p>The main benchmarking sequence follows a structured approach:</p>
-<pre><code class="language-mojo">bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
-bench = Bench(bench_config)
-
-// Register benchmarks with unique IDs
-bench.bench_function[benchmark_elementwise_parameterized[16, 4]](
-    BenchId("elementwise_16_4")
-)
-bench.bench_function[benchmark_tiled_parameterized[16, 4]](
-    BenchId("tiled_16_4")
-)
-
-// Execute and report
-print(bench)  // Automatic results table generation
-</code></pre>
-<p><strong>Orchestration benefits:</strong></p>
-<ul>
-<li><strong>Centralized configuration</strong>: Single config applies to all benchmarks</li>
-<li><strong>Automatic result collection</strong>: Framework handles timing and statistics</li>
-<li><strong>Consistent reporting</strong>: Uniform output format across all patterns</li>
-<li><strong>Statistical reliability</strong>: Multiple iterations with automatic outlier handling</li>
-</ul>
-<h3 id="6-memory-and-synchronization-considerations"><a class="header" href="#6-memory-and-synchronization-considerations">6. <strong>Memory and synchronization considerations</strong></a></h3>
-<h4 id="critical-role-of-keep-in-gpu-benchmarking"><a class="header" href="#critical-role-of-keep-in-gpu-benchmarking"><strong>Critical role of <code>keep()</code> in GPU benchmarking:</strong></a></h4>
-<pre><code class="language-mojo">keep(out.unsafe_ptr())  // Prevents dead code elimination
-</code></pre>
-<p><strong>The optimization problem:</strong>
-Modern compilers are aggressive about eliminating “unused” computations. In our benchmarks:</p>
-<pre><code class="language-mojo">// Without keep(), compiler might see:
-pattern_function(out_tensor, a_tensor, b_tensor, ctx)
-// Result never read -&gt; entire computation eliminated!
-</code></pre>
-<p><strong>Why <code>keep()</code> is essential:</strong></p>
-<ul>
-<li><strong>Dead code elimination</strong>: Compiler sees output buffer is never read and might skip the computation</li>
-<li><strong>GPU complexity</strong>: Asynchronous kernel launches make optimization detection harder</li>
-<li><strong>Benchmark accuracy</strong>: Without <code>keep</code>, you might be measuring nothing instead of the algorithm</li>
-<li><strong>Strategic placement</strong>: Must be after computation but before synchronization to be effective</li>
-</ul>
-<p><strong>What <code>keep()</code> does:</strong></p>
-<ul>
-<li><strong>Hints to compiler</strong>: “This memory location contains important data, don’t optimize away”</li>
-<li><strong>Zero runtime cost</strong>: Pure compile-time hint, no performance impact</li>
-<li><strong>Prevents false results</strong>: Ensures actual work is measured, not optimized-away code</li>
-</ul>
-<p><strong>Real-world impact:</strong>
-Without <code>keep()</code>, all our benchmark results might show unrealistically fast times (measuring empty kernels) or even CUDA errors from eliminated GPU operations.</p>
-<h4 id="buffer-lifecycle-management"><a class="header" href="#buffer-lifecycle-management"><strong>Buffer lifecycle management:</strong></a></h4>
-<pre><code class="language-mojo">// Each iteration creates fresh buffers
-out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-// Automatic cleanup when out goes out of scope
-</code></pre>
-<p><strong>Why fresh buffers per iteration?</strong></p>
-<ul>
-<li><strong>Cache neutrality</strong>: Prevents cache warming from affecting results</li>
-<li><strong>Memory pressure testing</strong>: Tests allocation overhead realistically</li>
-<li><strong>Consistent starting state</strong>: Each iteration starts with identical conditions</li>
-</ul>
-<h4 id="gpu-synchronization-strategy"><a class="header" href="#gpu-synchronization-strategy"><strong>GPU synchronization strategy:</strong></a></h4>
-<pre><code class="language-mojo">ctx.synchronize()  // Critical for accurate timing
-</code></pre>
-<p><strong>GPU timing challenges:</strong></p>
-<ul>
-<li><strong>Asynchronous execution</strong>: GPU kernels launch asynchronously</li>
-<li><strong>Pipelined operations</strong>: Multiple kernels may overlap</li>
-<li><strong>Memory transfers</strong>: Host-device transfers add complexity</li>
-</ul>
-<p><strong>How <code>synchronize()</code> solves this:</strong></p>
-<ul>
-<li><strong>Completion guarantee</strong>: Ensures all GPU work finishes before timing stops</li>
-<li><strong>Accurate measurement</strong>: Captures actual computation time, not launch time</li>
-<li><strong>Cross-platform consistency</strong>: Works across different GPU vendors/drivers</li>
-</ul>
-<h3 id="7-parameterization-strategy"><a class="header" href="#7-parameterization-strategy">7. <strong>Parameterization strategy</strong></a></h3>
-<p>The benchmark tests specific size combinations:</p>
-<pre><code class="language-mojo">// Small problem: Tests overhead characteristics
-benchmark_pattern_parameterized[16, 4]
-
-// Medium problem: Tests scaling and cache behavior
-benchmark_pattern_parameterized[128, 16]
-</code></pre>
-<p><strong>Size selection rationale:</strong></p>
-<ul>
-<li><strong>SIZE=16, TILE=4</strong>: Minimal GPU utilization, overhead-dominated</li>
-<li><strong>SIZE=128, TILE=16</strong>: Better GPU utilization, cache effects visible</li>
-<li><strong>Power-of-2 sizes</strong>: Aligned with GPU memory architecture</li>
-<li><strong>Tile size relationships</strong>: Tests different thread-to-work ratios</li>
-</ul>
-<h3 id="8-result-aggregation-and-reporting"><a class="header" href="#8-result-aggregation-and-reporting">8. <strong>Result aggregation and reporting</strong></a></h3>
-<p>The framework automatically generates the results table:</p>
-<pre><code class="language-mojo">print(bench)  // Triggers result compilation and display
-</code></pre>
-<p><strong>What happens during result compilation:</strong></p>
-<ul>
-<li><strong>Statistical analysis</strong>: Calculates mean, best, and deviation across iterations</li>
-<li><strong>Outlier filtering</strong>: Removes statistical outliers for more reliable results</li>
-<li><strong>Format standardization</strong>: Converts timing to consistent units (milliseconds)</li>
-<li><strong>Tabular output</strong>: Generates the formatted results table</li>
-</ul>
-<p><strong>Result interpretation framework:</strong></p>
-<ul>
-<li><strong>Total execution time</strong>: <code>met (ms)</code> shows cumulative time for all iterations</li>
-<li><strong>Iteration count</strong>: <code>iters</code> shows how many times each benchmark ran</li>
-<li><strong>Relative comparison</strong>: Framework enables direct pattern-to-pattern comparison</li>
-</ul>
-<p>This implementation demonstrates Mojo’s sophisticated approach to performance measurement, combining compile-time optimization with runtime flexibility for accurate GPU benchmarking.</p>
-<h2 id="test-scenarios"><a class="header" href="#test-scenarios">Test scenarios</a></h2>
-<p>The benchmark suite tests three different scenarios to reveal performance characteristics across various problem sizes:</p>
-<h3 id="1-small-problem-size-size16-tile4"><a class="header" href="#1-small-problem-size-size16-tile4">1. Small problem size (SIZE=16, TILE=4)</a></h3>
-<pre><code class="language-mojo">benchmark_elementwise_parameterized[16, 4]
-benchmark_tiled_parameterized[16, 4]
-benchmark_manual_vectorized_parameterized[16, 4]
-benchmark_vectorized_parameterized[16, 4]
-</code></pre>
-<p><strong>Purpose:</strong></p>
-<ul>
-<li>Tests behavior with minimal GPU utilization</li>
-<li>Reveals overhead costs and launch characteristics of different approaches</li>
-<li>Shows which patterns work best for tiny workloads</li>
-</ul>
-<p><strong>Observed characteristics:</strong></p>
-<ul>
-<li>Launch overhead dominates computation time (~3-4ms baseline)</li>
-<li>Tiled/vectorize patterns show lower overhead (~3.16ms)</li>
-<li>Elementwise/manual show higher overhead (~4.6ms)</li>
-</ul>
-<h3 id="2-medium-problem-size-size128-tile16"><a class="header" href="#2-medium-problem-size-size128-tile16">2. Medium problem size (SIZE=128, TILE=16)</a></h3>
-<pre><code class="language-mojo">benchmark_elementwise_parameterized[128, 16]
-benchmark_tiled_parameterized[128, 16]
-benchmark_manual_vectorized_parameterized[128, 16]
-benchmark_vectorized_parameterized[128, 16]
-</code></pre>
-<p><strong>Purpose:</strong></p>
-<ul>
-<li>Transition zone between overhead-dominated and computation-dominated</li>
-<li>Tests moderate GPU utilization</li>
-<li>All patterns converge to similar performance</li>
-</ul>
-<p><strong>Observed characteristics:</strong></p>
-<ul>
-<li>All patterns perform similarly (~3.16ms)</li>
-<li>Launch overhead still significant relative to computation</li>
-<li>Pattern differences begin to emerge but remain subtle</li>
-</ul>
-<h3 id="3-large-problem-size-size1048576-tile1024"><a class="header" href="#3-large-problem-size-size1048576-tile1024">3. Large problem size (SIZE=1,048,576, TILE=1024)</a></h3>
-<pre><code class="language-mojo">benchmark_elementwise_parameterized[1048576, 1024]
-benchmark_tiled_parameterized[1048576, 1024]
-benchmark_manual_vectorized_parameterized[1048576, 1024]
-benchmark_vectorized_parameterized[1048576, 1024]
-</code></pre>
-<p><strong>Purpose:</strong></p>
-<ul>
-<li>Tests real GPU workloads with significant computation</li>
-<li>Reveals true algorithmic performance differences</li>
-<li>Memory bandwidth becomes the primary factor</li>
-</ul>
-<p><strong>Observed characteristics:</strong></p>
-<ul>
-<li>Meaningful performance scaling (11-15ms, 3× slower than small problems)</li>
-<li>Clear pattern differentiation emerges</li>
-<li>Elementwise fastest (~11.3ms), manual vectorized slowest (~15.7ms)</li>
-<li>Framework adapts iteration counts (70 vs 100) based on execution time</li>
-</ul>
-<h2 id="understanding-benchmark-results"><a class="header" href="#understanding-benchmark-results">Understanding benchmark results</a></h2>
-<h3 id="interpreting-the-output"><a class="header" href="#interpreting-the-output">Interpreting the output</a></h3>
-<p>Each benchmark result shows:</p>
-<pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_16_4         | 3.15463684         | 100   |
-</code></pre>
-<p><strong>Metrics explained:</strong></p>
-<ul>
-<li><strong><code>name</code></strong>: The benchmark identifier (pattern_size_tile format)</li>
-<li><strong><code>met (ms)</code></strong>: Total execution time in milliseconds for all iterations</li>
-<li><strong><code>iters</code></strong>: Number of iterations performed (typically 100)</li>
-</ul>
-<p><strong>What to look for:</strong></p>
-<ul>
-<li><strong>Lower total time</strong>: Better overall performance for the workload</li>
-<li><strong>Consistent timing</strong>: Similar execution times indicate stable performance</li>
-<li><strong>Relative comparison</strong>: Compare times between patterns for the same problem size</li>
-</ul>
-<h3 id="performance-analysis-framework"><a class="header" href="#performance-analysis-framework">Performance analysis framework</a></h3>
-<p>When analyzing results, consider these factors:</p>
-<h4 id="1-thread-utilization-efficiency"><a class="header" href="#1-thread-utilization-efficiency">1. <strong>Thread utilization efficiency</strong></a></h4>
-<pre><code>Small problem (SIZE=16):
-Elementwise: 16 ÷ 4 = 4 threads
-Tiled:       16 ÷ 4 = 4 threads
-Manual:      16 ÷ (4×4) = 1 thread
-Vectorize:   16 ÷ 4 = 4 threads
-
-Medium problem (SIZE=128):
-Elementwise: 128 ÷ 4 = 32 threads
-Tiled:       128 ÷ 16 = 8 threads
-Manual:      128 ÷ (16×4) = 2 threads
-Vectorize:   128 ÷ 16 = 8 threads
-
-Large problem (SIZE=1,048,576):
-Elementwise: 1,048,576 ÷ 4 = 262,144 threads
-Tiled:       1,048,576 ÷ 1024 = 1,024 threads
-Manual:      1,048,576 ÷ (1024×4) = 256 threads
-Vectorize:   1,048,576 ÷ 1024 = 1,024 threads
-</code></pre>
-<p><strong>Real-world observations:</strong></p>
-<ul>
-<li><strong>Small problems</strong>: Thread count differences don’t matter, overhead dominates</li>
-<li><strong>Medium problems</strong>: Still overhead-dominated, patterns converge</li>
-<li><strong>Large problems</strong>: Thread utilization becomes meaningful, clear performance differentiation</li>
-</ul>
-<h4 id="2-memory-access-pattern-impact"><a class="header" href="#2-memory-access-pattern-impact">2. <strong>Memory access pattern impact</strong></a></h4>
-<pre><code>Elementwise: Distributed access across entire array
-Tiled:       Localized access within small blocks
-Manual:      Large sequential chunks
-Vectorize:   Automatic optimization within tiles
-</code></pre>
-<p><strong>Performance indicators:</strong></p>
-<ul>
-<li><strong>Cache hit rates</strong>: Tiled patterns should show better cache behavior</li>
-<li><strong>Memory bandwidth</strong>: Sequential patterns should achieve higher bandwidth</li>
-<li><strong>Latency hiding</strong>: More threads should hide memory access latency better</li>
-</ul>
-<h4 id="3-simd-utilization-analysis"><a class="header" href="#3-simd-utilization-analysis">3. <strong>SIMD utilization analysis</strong></a></h4>
-<p>All patterns achieve the same total SIMD operations, but with different organization:</p>
-<p><strong>For SIZE=16 (SIMD_WIDTH=4):</strong></p>
-<pre><code>Total SIMD ops = 16 ÷ 4 = 4 SIMD operations
-
-Distribution:
-- Elementwise: 4 threads × 1 SIMD op each
-- Tiled:       4 threads × 1 SIMD op each
-- Manual:      1 thread × 4 SIMD ops
-- Vectorize:   4 threads × 1 SIMD op each (automatic)
-</code></pre>
-<p><strong>For SIZE=128 (SIMD_WIDTH=4):</strong></p>
-<pre><code>Total SIMD ops = 128 ÷ 4 = 32 SIMD operations
-
-Distribution:
-- Elementwise: 32 threads × 1 SIMD op each
-- Tiled:       8 threads × 4 SIMD ops each
-- Manual:      2 threads × 16 SIMD ops each
-- Vectorize:   8 threads × 4 SIMD ops each (automatic)
-</code></pre>
-<p><strong>For SIZE=1,048,576 (SIMD_WIDTH=4):</strong></p>
-<pre><code>Total SIMD ops = 1,048,576 ÷ 4 = 262,144 SIMD operations
-
-Distribution:
-- Elementwise: 262,144 threads × 1 SIMD op each
-- Tiled:       1,024 threads × 256 SIMD ops each
-- Manual:      256 threads × 1,024 SIMD ops each
-- Vectorize:   1,024 threads × 256 SIMD ops each (automatic)
-</code></pre>
-<p><strong>Performance correlation:</strong>
-At large scale, the pattern with the highest thread count (elementwise) performs best, suggesting that GPU parallelization outweighs complex memory access optimizations for simple memory-bound operations.</p>
-<h2 id="practical-performance-insights"><a class="header" href="#practical-performance-insights">Practical performance insights</a></h2>
-<h3 id="observed-performance-patterns"><a class="header" href="#observed-performance-patterns">Observed performance patterns</a></h3>
-<p>Based on the empirical benchmark results, here’s what we actually observe:</p>
-<h4 id="small-problems-size16"><a class="header" href="#small-problems-size16"><strong>Small problems (SIZE=16)</strong></a></h4>
-<ul>
-<li><strong>Tiled/Vectorize</strong>: Fastest (~3.16ms) due to lower launch overhead</li>
-<li><strong>Elementwise/Manual</strong>: Slower (~4.6ms) due to higher launch overhead</li>
-<li><strong>Launch overhead dominates</strong>: Computation time is negligible compared to GPU kernel launch costs</li>
-</ul>
-<h4 id="medium-problems-size128"><a class="header" href="#medium-problems-size128"><strong>Medium problems (SIZE=128)</strong></a></h4>
-<ul>
-<li><strong>All patterns converge</strong>: Performance differences nearly disappear (~3.16ms)</li>
-<li><strong>Transitional behavior</strong>: Still overhead-dominated but patterns begin to differentiate</li>
-<li><strong>Framework optimization</strong>: Iteration counts automatically adjust (80-100 iterations)</li>
-</ul>
-<h4 id="large-problems-size1048576---where-real-differences-emerge"><a class="header" href="#large-problems-size1048576---where-real-differences-emerge"><strong>Large problems (SIZE=1,048,576) - Where real differences emerge</strong></a></h4>
-<ul>
-<li><strong>Elementwise wins</strong>: 11.34ms - High parallelism excels for memory-bound operations</li>
-<li><strong>Tiled second</strong>: 12.04ms - Good balance of parallelism and locality</li>
-<li><strong>Vectorize third</strong>: 13.38ms - Automatic optimization overhead becomes visible</li>
-<li><strong>Manual vectorized slowest</strong>: 15.75ms - Complex indexing hurts simple operations</li>
-</ul>
-<p><strong>Key insight:</strong> For simple memory-bound operations like vector addition, <strong>maximum parallelism (elementwise) outperforms complex memory optimizations</strong> at scale.</p>
-<h3 id="hardware-specific-considerations"><a class="header" href="#hardware-specific-considerations">Hardware-specific considerations</a></h3>
-<p>Your results will vary based on:</p>
-<h4 id="gpu-architecture-factors"><a class="header" href="#gpu-architecture-factors"><strong>GPU architecture factors:</strong></a></h4>
-<ul>
-<li><strong>SIMD width</strong>: Affects optimal vectorization strategy</li>
-<li><strong>Cache size</strong>: Influences optimal tile size</li>
-<li><strong>Core count</strong>: Determines benefit of higher thread counts</li>
-<li><strong>Memory bandwidth</strong>: Sets theoretical performance ceiling</li>
-</ul>
-<h4 id="system-factors"><a class="header" href="#system-factors"><strong>System factors:</strong></a></h4>
-<ul>
-<li><strong>Memory hierarchy</strong>: L1/L2 cache sizes affect tiling benefits</li>
-<li><strong>Thermal throttling</strong>: May affect sustained performance</li>
-<li><strong>Concurrent workloads</strong>: Other GPU usage impacts results</li>
-</ul>
-<h2 id="advanced-benchmarking-techniques"><a class="header" href="#advanced-benchmarking-techniques">Advanced benchmarking techniques</a></h2>
-<h3 id="custom-benchmark-scenarios"><a class="header" href="#custom-benchmark-scenarios">Custom benchmark scenarios</a></h3>
-<p>You can modify the benchmark parameters to test different scenarios:</p>
-<pre><code class="language-mojo">// Test different problem sizes
-benchmark_elementwise_parameterized[1024, 32]  // Large problem
-benchmark_elementwise_parameterized[64, 8]     // Small problem
-
-// Test different tile sizes
-benchmark_tiled_parameterized[256, 8]   // Small tiles
-benchmark_tiled_parameterized[256, 64]  // Large tiles
-</code></pre>
-<h3 id="performance-profiling-integration"><a class="header" href="#performance-profiling-integration">Performance profiling integration</a></h3>
-<p>For deeper analysis, combine benchmarking with:</p>
-<ul>
-<li><strong>GPU profilers</strong>: NVIDIA Nsight, AMD ROCProfiler</li>
-<li><strong>Memory bandwidth tools</strong>: Check actual vs theoretical bandwidth</li>
-<li><strong>Cache analysis</strong>: Measure hit rates and access patterns</li>
-</ul>
-<p>💡 <strong>Note</strong>: Advanced GPU profiling techniques and tools will be covered in detail in later parts of this book series.</p>
-<h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
-<h3 id="performance-ranking-methodology"><a class="header" href="#performance-ranking-methodology">Performance ranking methodology</a></h3>
-<p>When comparing results:</p>
+<p><strong>Key phases:</strong></p>
 <ol>
-<li><strong>Normalize by problem size</strong>: Calculate throughput (elements/second)</li>
-<li><strong>Consider consistency</strong>: Prefer patterns with low deviation</li>
-<li><strong>Account for complexity</strong>: Factor in development and maintenance costs</li>
-<li><strong>Test scaling</strong>: Verify performance across different problem sizes</li>
+<li><strong>Setup</strong>: Buffer allocation and data initialization</li>
+<li><strong>Computation</strong>: The actual algorithm being benchmarked</li>
+<li><strong>Prevent optimization</strong>: Critical for accurate measurement</li>
+<li><strong>Synchronization</strong>: Ensure GPU work completes</li>
 </ol>
+<blockquote>
+<p><strong>Critical: The <code>keep()</code> function</strong>
+<code>keep(out.unsafe_ptr())</code> prevents the compiler from optimizing away your computation as “unused code.” Without this, you might measure nothing instead of your algorithm! This is essential for accurate GPU benchmarking because kernels are launched asynchronously.</p>
+</blockquote>
+<h3 id="why-custom-iteration-works-for-gpu"><a class="header" href="#why-custom-iteration-works-for-gpu">Why custom iteration works for GPU</a></h3>
+<p>Standard benchmarking assumes CPU-style synchronous execution. GPU kernels launch asynchronously, so we need:</p>
+<ul>
+<li><strong>GPU context management</strong>: Proper DeviceContext lifecycle</li>
+<li><strong>Memory management</strong>: Buffer cleanup between iterations</li>
+<li><strong>Synchronization handling</strong>: Accurate timing of async operations</li>
+<li><strong>Overhead isolation</strong>: Separate setup cost from computation cost</li>
+</ul>
+<h2 id="test-scenarios-and-thread-analysis"><a class="header" href="#test-scenarios-and-thread-analysis">Test scenarios and thread analysis</a></h2>
+<p>The benchmark suite tests three scenarios to reveal performance characteristics:</p>
+<h3 id="thread-utilization-summary"><a class="header" href="#thread-utilization-summary">Thread utilization summary</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Problem Size</th><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Total SIMD ops</th></tr></thead><tbody>
+<tr><td><strong>SIZE=16</strong></td><td>Elementwise</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td></td><td>Tiled</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td></td><td>Manual</td><td>1</td><td>4</td><td>4</td></tr>
+<tr><td></td><td>Vectorize</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td><strong>SIZE=128</strong></td><td>Elementwise</td><td>32</td><td>1</td><td>32</td></tr>
+<tr><td></td><td>Tiled</td><td>8</td><td>4</td><td>32</td></tr>
+<tr><td></td><td>Manual</td><td>2</td><td>16</td><td>32</td></tr>
+<tr><td></td><td>Vectorize</td><td>8</td><td>4</td><td>32</td></tr>
+<tr><td><strong>SIZE=1M</strong></td><td>Elementwise</td><td>262,144</td><td>1</td><td>262,144</td></tr>
+<tr><td></td><td>Tiled</td><td>1,024</td><td>256</td><td>262,144</td></tr>
+<tr><td></td><td>Manual</td><td>256</td><td>1,024</td><td>262,144</td></tr>
+<tr><td></td><td>Vectorize</td><td>1,024</td><td>256</td><td>262,144</td></tr>
+</tbody></table>
+</div>
+<h3 id="performance-characteristics-by-problem-size"><a class="header" href="#performance-characteristics-by-problem-size">Performance characteristics by problem size</a></h3>
+<p><strong>Small problems (SIZE=16):</strong></p>
+<ul>
+<li>Launch overhead dominates (~3-4ms baseline)</li>
+<li>Thread count differences don’t matter</li>
+<li>Tiled/vectorize show lower overhead</li>
+</ul>
+<p><strong>Medium problems (SIZE=128):</strong></p>
+<ul>
+<li>Still overhead-dominated (~3.16ms for all)</li>
+<li>Performance differences nearly disappear</li>
+<li>Transitional behavior between overhead and computation</li>
+</ul>
+<p><strong>Large problems (SIZE=1M):</strong></p>
+<ul>
+<li>Real algorithmic differences emerge</li>
+<li>Memory bandwidth becomes primary factor</li>
+<li>Clear performance ranking appears</li>
+</ul>
+<h2 id="what-the-data-shows"><a class="header" href="#what-the-data-shows">What the data shows</a></h2>
+<p>Based on empirical benchmark results across different hardware:</p>
+<h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
+<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~11.3ms</td><td>Max parallelism wins for memory-bound ops</td></tr>
+<tr><td>🥈</td><td><strong>Tiled</strong></td><td>~12.0ms</td><td>Good balance of parallelism + locality</td></tr>
+<tr><td>🥉</td><td><strong>Mojo vectorize</strong></td><td>~13.4ms</td><td>Automatic optimization has overhead</td></tr>
+<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~15.7ms</td><td>Complex indexing hurts simple operations</td></tr>
+</tbody></table>
+</div>
+<h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
+<blockquote>
+<p><strong>For simple memory-bound operations:</strong> Maximum parallelism (elementwise) outperforms complex memory optimizations at scale.</p>
+</blockquote>
+<p><strong>Why elementwise wins:</strong></p>
+<ul>
+<li><strong>262,144 threads</strong> provide excellent latency hiding</li>
+<li><strong>Simple memory patterns</strong> achieve good coalescing</li>
+<li><strong>Minimal overhead</strong> per thread</li>
+<li><strong>Scales naturally</strong> with GPU core count</li>
+</ul>
+<p><strong>Why manual vectorization struggles:</strong></p>
+<ul>
+<li><strong>Only 256 threads</strong> limit parallelism</li>
+<li><strong>Complex indexing</strong> adds computational overhead</li>
+<li><strong>Cache pressure</strong> from large chunks per thread</li>
+<li><strong>Diminishing returns</strong> for simple arithmetic</li>
+</ul>
+<p><strong>Framework intelligence:</strong></p>
+<ul>
+<li>Automatic iteration count adjustment (70-100 iterations)</li>
+<li>Statistical reliability across different execution times</li>
+<li>Handles thermal throttling and system variation</li>
+</ul>
+<h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
+<h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
+<pre><code class="language-txt">| name                     | met (ms)           | iters |
+| elementwise_1M_1024      | 11.338706742857143 | 70    |
+</code></pre>
+<ul>
+<li><strong><code>met (ms)</code></strong>: Total execution time for all iterations</li>
+<li><strong><code>iters</code></strong>: Number of iterations performed</li>
+<li><strong>Compare within problem size</strong>: Same-size comparisons are most meaningful</li>
+</ul>
 <h3 id="making-optimization-decisions"><a class="header" href="#making-optimization-decisions">Making optimization decisions</a></h3>
-<p>Use benchmark results to:</p>
-<h4 id="choose-optimal-patterns-based-on-empirical-results"><a class="header" href="#choose-optimal-patterns-based-on-empirical-results"><strong>Choose optimal patterns based on empirical results:</strong></a></h4>
+<p><strong>Choose patterns based on empirical evidence:</strong></p>
+<p><strong>For production workloads:</strong></p>
 <ul>
-<li><strong>For simple memory-bound operations</strong>: Elementwise pattern consistently wins at scale</li>
-<li><strong>For small/startup workloads</strong>: Tiled or vectorize patterns have lower launch overhead</li>
-<li><strong>For development productivity</strong>: Mojo vectorize provides good performance with automatic optimization</li>
-<li><strong>Avoid manual vectorization</strong>: For simple operations, the complexity doesn’t pay off</li>
+<li><strong>Large datasets (&gt;100K elements)</strong>: Elementwise typically optimal</li>
+<li><strong>Small/startup datasets (&lt;1K elements)</strong>: Tiled or vectorize for lower overhead</li>
+<li><strong>Development speed priority</strong>: Mojo vectorize for automatic optimization</li>
+<li><strong>Avoid manual vectorization</strong>: Complexity rarely pays off for simple operations</li>
 </ul>
-<h4 id="problem-size-considerations"><a class="header" href="#problem-size-considerations"><strong>Problem size considerations:</strong></a></h4>
+<p><strong>Performance optimization workflow:</strong></p>
+<ol>
+<li><strong>Profile first</strong>: Measure before optimizing</li>
+<li><strong>Test at scale</strong>: Small problems mislead about real performance</li>
+<li><strong>Consider total cost</strong>: Include development and maintenance effort</li>
+<li><strong>Validate improvements</strong>: Confirm with benchmarks on target hardware</li>
+</ol>
+<h2 id="advanced-benchmarking-techniques"><a class="header" href="#advanced-benchmarking-techniques">Advanced benchmarking techniques</a></h2>
+<h3 id="custom-test-scenarios"><a class="header" href="#custom-test-scenarios">Custom test scenarios</a></h3>
+<p>Modify parameters to test different conditions:</p>
+<pre><code class="language-mojo"># Different problem sizes
+benchmark_elementwise_parameterized[1024, 32]  # Large problem
+benchmark_elementwise_parameterized[64, 8]     # Small problem
+
+# Different tile sizes
+benchmark_tiled_parameterized[256, 8]   # Small tiles
+benchmark_tiled_parameterized[256, 64]  # Large tiles
+</code></pre>
+<h3 id="hardware-considerations-1"><a class="header" href="#hardware-considerations-1">Hardware considerations</a></h3>
+<p>Your results will vary based on:</p>
 <ul>
-<li><strong>Tiny problems (&lt; 1K elements)</strong>: Launch overhead dominates, choose patterns with lower overhead</li>
-<li><strong>Medium problems (1K-100K)</strong>: Performance differences are minimal, choose for maintainability</li>
-<li><strong>Large problems (&gt; 100K elements)</strong>: Real algorithmic differences emerge, elementwise typically wins</li>
+<li><strong>GPU architecture</strong>: SIMD width, core count, memory bandwidth</li>
+<li><strong>System configuration</strong>: PCIe bandwidth, CPU performance</li>
+<li><strong>Thermal state</strong>: GPU boost clocks vs sustained performance</li>
+<li><strong>Concurrent workloads</strong>: Other processes affecting GPU utilization</li>
 </ul>
-<h4 id="performance-insights-from-real-data"><a class="header" href="#performance-insights-from-real-data"><strong>Performance insights from real data:</strong></a></h4>
+<h2 id="best-practices-summary-1"><a class="header" href="#best-practices-summary-1">Best practices summary</a></h2>
+<p><strong>Benchmarking workflow:</strong></p>
+<ol>
+<li><strong>Warm up GPU</strong> before critical measurements</li>
+<li><strong>Run multiple iterations</strong> for statistical significance</li>
+<li><strong>Test multiple problem sizes</strong> to understand scaling</li>
+<li><strong>Use <code>keep()</code> consistently</strong> to prevent optimization artifacts</li>
+<li><strong>Compare like with like</strong> (same problem size, same hardware)</li>
+</ol>
+<p><strong>Performance decision framework:</strong></p>
 <ul>
-<li><strong>Parallelism beats optimization</strong>: For memory-bound workloads, more threads &gt; complex memory patterns</li>
-<li><strong>Launch overhead is significant</strong>: Small problems don’t reveal true algorithmic performance</li>
-<li><strong>Framework intelligence</strong>: Mojo’s benchmark framework adapts iteration counts automatically (70-100)</li>
-<li><strong>Memory bandwidth ceiling</strong>: All patterns hit similar performance walls at large scales</li>
+<li><strong>Start simple</strong>: Begin with elementwise for memory-bound operations</li>
+<li><strong>Measure don’t guess</strong>: Theoretical analysis guides, empirical data decides</li>
+<li><strong>Scale matters</strong>: Small problem performance doesn’t predict large problem behavior</li>
+<li><strong>Total cost optimization</strong>: Balance development time vs runtime performance</li>
 </ul>
 <h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next steps</a></h2>
 <p>With benchmarking mastery:</p>
@@ -9206,23 +8824,6 @@ benchmark_tiled_parameterized[256, 64]  // Large tiles
 <li><strong>Memory optimization</strong>: Dive deeper into shared memory and advanced caching</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.</p>
-<h2 id="best-practices-summary-1"><a class="header" href="#best-practices-summary-1">Best practices summary</a></h2>
-<p><strong>Benchmarking best practices:</strong></p>
-<ul>
-<li>Always warm up GPU before measuring</li>
-<li>Run multiple iterations for statistical significance</li>
-<li>Test across different problem sizes</li>
-<li>Consider both peak and average performance</li>
-<li>Account for real-world usage patterns</li>
-</ul>
-<p><strong>Performance optimization workflow:</strong></p>
-<ol>
-<li><strong>Profile first</strong>: Measure before optimizing</li>
-<li><strong>Identify bottlenecks</strong>: Memory vs compute bound analysis</li>
-<li><strong>Choose patterns</strong>: Based on workload characteristics</li>
-<li><strong>Tune parameters</strong>: Optimize tile sizes and thread counts</li>
-<li><strong>Validate</strong>: Confirm improvements with benchmarks</li>
-</ol>
 
                     </main>
 
