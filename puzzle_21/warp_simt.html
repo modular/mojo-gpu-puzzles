@@ -1,0 +1,555 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Warp lanes &amp; SIMT execution - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="..//puzzles_images/puzzle-mark.svg">
+        <meta property="og:url" content="https://builds.modular.com/puzzles">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="..//puzzles_images/puzzle-mark.svg">
+        <link rel="icon" type="image/png" href="..//puzzles_images/puzzle-mark.svg">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="menu-links">
+                    <li><a href="https://docs.modular.com/max/get-started/" target="_blank"><div>Product</div></a></li>
+                    <li><a href="https://www.modular.com/max/solutions/agent" target="_blank">Solutions</a></li>
+                    <li><a href="https://builds.modular.com/?category=featured" target="_blank">Resources</a></li>
+                    <li><a href="https://www.modular.com/company/about" target="_blank">Company</a></li>
+                    <li><a href="https://www.modular.com/pricing" target="_blank">Pricing</a></li>
+                    <li><a href="https://docs.modular.com" target="_blank">Docs</a></li>
+                    <li><a href="https://www.modular.com/blog" target="_blank">Blog</a></li>
+                </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp Lanes &amp; SIMT Execution</a></h1>
+<h2 id="mental-model-for-warp-programming-vs-simd"><a class="header" href="#mental-model-for-warp-programming-vs-simd">Mental model for warp programming vs SIMD</a></h2>
+<h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
+<p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
+<p><strong>Simple example:</strong></p>
+<pre><code class="language-mojo">from gpu.warp import sum
+# All 32 threads in the warp execute this simultaneously:
+var my_value = input[my_thread_id]     # Each gets different data
+var warp_total = sum(my_value)    # All contribute to one sum
+</code></pre>
+<p>What just happened? Instead of 32 separate threads doing complex coordination, the <strong>warp</strong> automatically synchronized them to produce a single result. This is <strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
+<h3 id="simt-vs-simd-comparison"><a class="header" href="#simt-vs-simd-comparison">SIMT vs SIMD comparison</a></h3>
+<p>If you’re familiar with CPU vector programming (SIMD), GPU warps are similar but with key differences:</p>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU SIMD (e.g., AVX)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>Programming model</strong></td><td>Explicit vector operations</td><td>Thread-based programming</td></tr>
+<tr><td><strong>Data width</strong></td><td>Fixed (256/512 bits)</td><td>Flexible (32/64 threads)</td></tr>
+<tr><td><strong>Synchronization</strong></td><td>Implicit within instruction</td><td>Implicit within warp</td></tr>
+<tr><td><strong>Communication</strong></td><td>Via memory/registers</td><td>Via shuffle operations</td></tr>
+<tr><td><strong>Divergence handling</strong></td><td>Not applicable</td><td>Hardware masking</td></tr>
+<tr><td><strong>Example</strong></td><td><code>a + b</code></td><td><code>sum(thread_value)</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>CPU SIMD approach (C++ intrinsics):</strong></p>
+<pre><code class="language-cpp">// Explicit vector operations - say 8 floats in parallel
+__m256 result = _mm256_add_ps(a, b);   // Add 8 pairs simultaneously
+</code></pre>
+<p><strong>CPU SIMD approach (Mojo):</strong></p>
+<pre><code class="language-mojo"># SIMD in Mojo is first class citizen type so if a, b are of type SIMD then
+# addition 8 floats in parallel
+var result = a + b # Add 8 pairs simultaneously
+</code></pre>
+<p><strong>GPU SIMT approach (Mojo):</strong></p>
+<pre><code class="language-mojo"># Thread-based code that becomes vector operations
+from gpu.warp import sum
+
+var my_data = input[thread_id]         # Each thread gets its element
+var partial = my_data * coefficient    # All threads compute simultaneously
+var total = sum(partial)               # Hardware coordinates the sum
+</code></pre>
+<h3 id="core-concepts-that-make-warps-powerful"><a class="header" href="#core-concepts-that-make-warps-powerful">Core concepts that make warps powerful</a></h3>
+<p><strong>1. Lane identity:</strong> Each thread has a “lane ID” (0 to 31) that’s essentially free to access</p>
+<pre><code class="language-mojo">var my_lane = lane_id()  # Just reading a hardware register
+</code></pre>
+<p><strong>2. Implicit synchronization:</strong> No barriers needed within a warp</p>
+<pre><code class="language-mojo"># This just works - all threads automatically synchronized
+var sum = sum(my_contribution)
+</code></pre>
+<p><strong>3. Efficient communication:</strong> Threads can share data without memory</p>
+<pre><code class="language-mojo"># Get value from lane 0 to all other lanes
+var broadcasted = shuffle_idx(my_value, 0)
+</code></pre>
+<p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.</p>
+<h3 id="where-warps-fit-in-gpu-execution-hierarchy"><a class="header" href="#where-warps-fit-in-gpu-execution-hierarchy">Where warps fit in GPU execution hierarchy</a></h3>
+<p>For complete context on how warps relate to the overall GPU execution model, see <a href="../puzzle_20/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
+<pre><code>GPU Device
+├── Grid (your entire problem)
+│   ├── Block 1 (group of threads, shared memory)
+│   │   ├── Warp 1 (32 threads, lockstep execution) ← This level
+│   │   │   ├── Thread 1 → SIMD operations
+│   │   │   ├── Thread 2 → SIMD operations
+│   │   │   └── ... (32 threads total)
+│   │   └── Warp 2 (32 threads)
+│   └── Block 2 (independent group)
+</code></pre>
+<p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like <code>sum()</code> that would otherwise require complex shared memory coordination.</p>
+<p>This mental model helps you recognize when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
+<h2 id="the-hardware-foundation-of-warp-programming"><a class="header" href="#the-hardware-foundation-of-warp-programming">The hardware foundation of warp programming</a></h2>
+<p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is crucial for effective warp programming. This isn’t just a software abstraction - it’s how GPU hardware actually works at the silicon level.</p>
+<h2 id="what-is-simt-execution"><a class="header" href="#what-is-simt-execution">What is SIMT execution?</a></h2>
+<p><strong>SIMT</strong> means that within a warp, all threads execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>. This is fundamentally different from CPU threads, which can execute completely different instructions independently.</p>
+<h3 id="cpu-vs-gpu-execution-models"><a class="header" href="#cpu-vs-gpu-execution-models">CPU vs GPU Execution Models</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU (MIMD)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>Instruction Model</strong></td><td>Multiple Instructions, Multiple Data</td><td>Single Instruction, Multiple Thread</td></tr>
+<tr><td><strong>Core 1</strong></td><td><code>add r1, r2</code></td><td><code>add r1, r2</code></td></tr>
+<tr><td><strong>Core 2</strong></td><td><code>load r3, [mem]</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>Core 3</strong></td><td><code>branch loop</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>… Core 32</strong></td><td><code>different instruction</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>Execution</strong></td><td>Independent, asynchronous</td><td>Synchronized, lockstep</td></tr>
+<tr><td><strong>Scheduling</strong></td><td>Complex, OS-managed</td><td>Simple, hardware-managed</td></tr>
+<tr><td><strong>Data</strong></td><td>Independent data sets</td><td>Different data, same operation</td></tr>
+</tbody></table>
+</div>
+<p><strong>GPU Warp Execution Pattern:</strong></p>
+<ul>
+<li><strong>Instruction</strong>: Same for all 32 lanes: <code>add r1, r2</code></li>
+<li><strong>Lane 0</strong>: Operates on <code>Data0</code> → <code>Result0</code></li>
+<li><strong>Lane 1</strong>: Operates on <code>Data1</code> → <code>Result1</code></li>
+<li><strong>Lane 2</strong>: Operates on <code>Data2</code> → <code>Result2</code></li>
+<li><strong>… (all lanes execute simultaneously)</strong></li>
+<li><strong>Lane 31</strong>: Operates on <code>Data31</code> → <code>Result31</code></li>
+</ul>
+<p><strong>Key insight:</strong> All lanes execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>.</p>
+<h3 id="why-simt-works-for-gpus"><a class="header" href="#why-simt-works-for-gpus">Why SIMT works for GPUs</a></h3>
+<p>GPUs are optimized for <strong>throughput</strong>, not latency. SIMT enables:</p>
+<ul>
+<li><strong>Hardware simplification</strong>: One instruction decoder serves 32 or 64 threads</li>
+<li><strong>Execution efficiency</strong>: No complex scheduling between warp threads</li>
+<li><strong>Memory bandwidth</strong>: Coalesced memory access patterns</li>
+<li><strong>Power efficiency</strong>: Shared control logic across lanes</li>
+</ul>
+<h2 id="warp-execution-mechanics"><a class="header" href="#warp-execution-mechanics">Warp execution mechanics</a></h2>
+<h3 id="lane-numbering-and-identity"><a class="header" href="#lane-numbering-and-identity">Lane numbering and identity</a></h3>
+<p>Each thread within a warp has a <strong>lane ID</strong> from 0 to <code>WARP_SIZE-1</code>:</p>
+<pre><code class="language-mojo">from gpu import lane_id
+from gpu.warp import WARP_SIZE
+
+# Within a kernel function:
+my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
+</code></pre>
+<p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware register, not computing a value.</p>
+<h3 id="synchronization-within-warps"><a class="header" href="#synchronization-within-warps">Synchronization within warps</a></h3>
+<p>The most powerful aspect of SIMT: <strong>implicit synchronization</strong>.</p>
+<pre><code class="language-mojo"># Traditional shared memory approach:
+shared[local_i] = partial_result
+barrier()  # Explicit synchronization required
+var sum = shared[0] + shared[1] + ...  # Complex reduction
+
+# Warp approach:
+from gpu.warp import sum
+
+var total = sum(partial_result)  # Implicit synchronization!
+</code></pre>
+<p><strong>Why no barriers needed?</strong> All lanes execute each instruction at exactly the same time. When <code>sum()</code> starts, all lanes have already computed their <code>partial_result</code>.</p>
+<h2 id="warp-divergence-and-convergence"><a class="header" href="#warp-divergence-and-convergence">Warp divergence and convergence</a></h2>
+<h3 id="what-happens-with-conditional-code"><a class="header" href="#what-happens-with-conditional-code">What happens with conditional code?</a></h3>
+<pre><code class="language-mojo">if lane_id() % 2 == 0:
+    # Even lanes execute this path
+    result = compute_even()
+else:
+    # Odd lanes execute this path
+    result = compute_odd()
+# All lanes converge here
+</code></pre>
+<p><strong>Hardware behavior steps:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Step</th><th>Phase</th><th>Active Lanes</th><th>Waiting Lanes</th><th>Efficiency</th><th>Performance Cost</th></tr></thead><tbody>
+<tr><td><strong>1</strong></td><td>Condition evaluation</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed</td></tr>
+<tr><td><strong>2</strong></td><td>Even lanes branch</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
+<tr><td><strong>3</strong></td><td>Odd lanes branch</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
+<tr><td><strong>4</strong></td><td>Convergence</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed resumed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Example breakdown:</strong></p>
+<ul>
+<li><strong>Step 2</strong>: Only even lanes execute <code>compute_even()</code> while odd lanes wait</li>
+<li><strong>Step 3</strong>: Only odd lanes execute <code>compute_odd()</code> while even lanes wait</li>
+<li><strong>Total time</strong>: <code>time(compute_even) + time(compute_odd)</code> (sequential execution)</li>
+<li><strong>Without divergence</strong>: <code>max(time(compute_even), time(compute_odd))</code> (parallel execution)</li>
+</ul>
+<p><strong>Performance impact:</strong></p>
+<ol>
+<li><strong>Divergence</strong>: Warp splits execution - some lanes active, others wait</li>
+<li><strong>Serial execution</strong>: Different paths run sequentially, not in parallel</li>
+<li><strong>Convergence</strong>: All lanes reunite and continue together</li>
+<li><strong>Cost</strong>: Divergent warps take 2× time (or more) vs unified execution</li>
+</ol>
+<h3 id="best-practices-for-warp-efficiency"><a class="header" href="#best-practices-for-warp-efficiency">Best practices for warp efficiency</a></h3>
+<h3 id="warp-efficiency-patterns"><a class="header" href="#warp-efficiency-patterns">Warp efficiency patterns</a></h3>
+<p><strong>✅ EXCELLENT: Uniform execution (100% efficiency)</strong></p>
+<pre><code class="language-mojo"># All lanes do the same work - no divergence
+var partial = a[global_i] * b[global_i]
+var total = sum(partial)
+</code></pre>
+<p><em>Performance: All 32 lanes active simultaneously</em></p>
+<p><strong>⚠️ ACCEPTABLE: Predictable divergence (~95% efficiency)</strong></p>
+<pre><code class="language-mojo"># Divergence based on lane_id() - hardware optimized
+if lane_id() == 0:
+    output[block_idx] = sum(partial)
+</code></pre>
+<p><em>Performance: Brief single-lane operation, predictable pattern</em></p>
+<p><strong>🔶 CAUTION: Structured divergence (~50-75% efficiency)</strong></p>
+<pre><code class="language-mojo"># Regular patterns can be optimized by compiler
+if (global_i / 4) % 2 == 0:
+    result = method_a()
+else:
+    result = method_b()
+</code></pre>
+<p><em>Performance: Predictable groups, some optimization possible</em></p>
+<p><strong>❌ AVOID: Data-dependent divergence (~25-50% efficiency)</strong></p>
+<pre><code class="language-mojo"># Different lanes may take different paths based on data
+if input[global_i] &gt; threshold:  # Unpredictable branching
+    result = expensive_computation()
+else:
+    result = simple_computation()
+</code></pre>
+<p><em>Performance: Random divergence kills warp efficiency</em></p>
+<p><strong>💀 TERRIBLE: Nested data-dependent divergence (~10-25% efficiency)</strong></p>
+<pre><code class="language-mojo"># Multiple levels of unpredictable branching
+if input[global_i] &gt; threshold1:
+    if input[global_i] &gt; threshold2:
+        result = very_expensive()
+    else:
+        result = expensive()
+else:
+    result = simple()
+</code></pre>
+<p><em>Performance: Warp efficiency destroyed</em></p>
+<h2 id="cross-architecture-compatibility"><a class="header" href="#cross-architecture-compatibility">Cross-architecture compatibility</a></h2>
+<h3 id="nvidia-vs-amd-warp-sizes"><a class="header" href="#nvidia-vs-amd-warp-sizes">NVIDIA vs AMD warp sizes</a></h3>
+<pre><code class="language-mojo">from gpu.warp import WARP_SIZE
+
+# NVIDIA GPUs:     WARP_SIZE = 32
+# AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)
+# AMD CDNA GPUs:   WARP_SIZE = 64 (traditional wavefront64)
+</code></pre>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li><strong>Memory patterns</strong>: Coalesced access depends on warp size</li>
+<li><strong>Algorithm design</strong>: Reduction trees must account for warp size</li>
+<li><strong>Performance scaling</strong>: Twice as many lanes per warp on AMD</li>
+</ul>
+<h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
+<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture Adaptation Strategies</a></h3>
+<p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
+<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
+alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
+</code></pre>
+<p><em>Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)</em></p>
+<p><strong>❌ BROKEN: Never hardcode warp size</strong></p>
+<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
+alias REDUCTION_SIZE = 32           # Wrong on AMD!
+</code></pre>
+<p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
+<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real Hardware Impact</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>GPU Architecture</th><th>WARP_SIZE</th><th>Memory per Warp</th><th>Reduction Steps</th><th>Lane Pattern</th></tr></thead><tbody>
+<tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
+<tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6 steps: 64→32→16→8→4→2→1</td><td>Lanes 0-63</td></tr>
+</tbody></table>
+</div>
+<p><strong>Performance implications of 64 vs 32:</strong></p>
+<ul>
+<li><strong>CDNA advantage</strong>: 2× memory bandwidth per warp</li>
+<li><strong>CDNA advantage</strong>: 2× computation per warp</li>
+<li><strong>NVIDIA/RDNA advantage</strong>: More warps per block (better occupancy)</li>
+<li><strong>Code portability</strong>: Same source, optimal performance on both</li>
+</ul>
+<h2 id="memory-access-patterns-with-warps"><a class="header" href="#memory-access-patterns-with-warps">Memory access patterns with warps</a></h2>
+<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced Memory Access Patterns</a></h3>
+<p><strong>✅ PERFECT: Coalesced access (100% bandwidth utilization)</strong></p>
+<pre><code class="language-mojo"># Adjacent lanes → adjacent memory addresses
+var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
+</code></pre>
+<p><strong>Memory access patterns:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>NVIDIA/RDNA (32 lanes)</th><th>CDNA (64 lanes)</th><th>Bandwidth Utilization</th><th>Performance</th></tr></thead><tbody>
+<tr><td><strong>✅ Coalesced</strong></td><td>Lane N → Address 4×N</td><td>Lane N → Address 4×N</td><td>100%</td><td>Optimal</td></tr>
+<tr><td></td><td>1 transaction: 128 bytes</td><td>1 transaction: 256 bytes</td><td>Full bus width</td><td>Fast</td></tr>
+<tr><td><strong>❌ Scattered</strong></td><td>Lane N → Random address</td><td>Lane N → Random address</td><td>~6%</td><td>Terrible</td></tr>
+<tr><td></td><td>32 separate transactions</td><td>64 separate transactions</td><td>Mostly idle bus</td><td><strong>32× slower</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Example addresses:</strong></p>
+<ul>
+<li><strong>Coalesced</strong>: Lane 0→0, Lane 1→4, Lane 2→8, Lane 3→12, …</li>
+<li><strong>Scattered</strong>: Lane 0→1000, Lane 1→52, Lane 2→997, Lane 3→8, …</li>
+</ul>
+<h3 id="shared-memory-bank-conflicts"><a class="header" href="#shared-memory-bank-conflicts">Shared memory bank conflicts</a></h3>
+<p><strong>What is a bank conflict?</strong></p>
+<p>Assume that a GPU shared memory is divided into 32 independent <strong>banks</strong> that can be accessed simultaneously. A <strong>bank conflict</strong> occurs when multiple threads in a warp try to access different addresses within the same bank at the same time. When this happens, the hardware must <strong>serialize</strong> these accesses, turning what should be a single-cycle operation into multiple cycles.</p>
+<p><strong>Key concepts:</strong></p>
+<ul>
+<li><strong>No conflict</strong>: Each thread accesses a different bank → All accesses happen simultaneously (1 cycle)</li>
+<li><strong>Bank conflict</strong>: Multiple threads access the same bank → Accesses happen sequentially (N cycles for N threads)</li>
+<li><strong>Broadcast</strong>: All threads access the same address → Hardware optimizes this to 1 cycle</li>
+</ul>
+<p><strong>Shared memory bank organization:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Bank</th><th>Addresses (byte offsets)</th><th>Example Data (float32)</th></tr></thead><tbody>
+<tr><td>Bank 0</td><td>0, 128, 256, 384, …</td><td><code>shared[0]</code>, <code>shared[32]</code>, <code>shared[64]</code>, …</td></tr>
+<tr><td>Bank 1</td><td>4, 132, 260, 388, …</td><td><code>shared[1]</code>, <code>shared[33]</code>, <code>shared[65]</code>, …</td></tr>
+<tr><td>Bank 2</td><td>8, 136, 264, 392, …</td><td><code>shared[2]</code>, <code>shared[34]</code>, <code>shared[66]</code>, …</td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+<tr><td>Bank 31</td><td>124, 252, 380, 508, …</td><td><code>shared[31]</code>, <code>shared[63]</code>, <code>shared[95]</code>, …</td></tr>
+</tbody></table>
+</div>
+<p><strong>Bank conflict examples:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>Bank Usage</th><th>Cycles</th><th>Performance</th><th>Explanation</th></tr></thead><tbody>
+<tr><td><strong>✅ Sequential</strong></td><td><code>shared[thread_idx.x]</code></td><td>1 cycle</td><td>100%</td><td>Each lane hits different bank</td></tr>
+<tr><td></td><td>Lane 0→Bank 0, Lane 1→Bank 1, …</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
+<tr><td><strong>❌ Stride 2</strong></td><td><code>shared[thread_idx.x * 2]</code></td><td>2 cycles</td><td>50%</td><td>2 lanes per bank</td></tr>
+<tr><td></td><td>Lane 0,16→Bank 0; Lane 1,17→Bank 1</td><td></td><td><strong>2× slower</strong></td><td>Serialized access</td></tr>
+<tr><td><strong>💀 Same index</strong></td><td><code>shared[0]</code> (all lanes)</td><td>32 cycles</td><td>3%</td><td>All lanes hit Bank 0</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
+</tbody></table>
+</div>
+<h2 id="practical-implications-for-warp-programming"><a class="header" href="#practical-implications-for-warp-programming">Practical implications for warp programming</a></h2>
+<h3 id="when-warp-operations-are-most-effective"><a class="header" href="#when-warp-operations-are-most-effective">When warp operations are most effective</a></h3>
+<ol>
+<li><strong>Reduction operations</strong>: <code>sum()</code>, <code>max()</code>, etc.</li>
+<li><strong>Broadcast operations</strong>: <code>shuffle_idx()</code> to share values</li>
+<li><strong>Neighbor communication</strong>: <code>shuffle_down()</code> for sliding windows</li>
+<li><strong>Prefix computations</strong>: <code>prefix_sum()</code> for scan algorithms</li>
+</ol>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
+<tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
+<tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
+<tr><td><strong>Synchronization cost</strong></td><td>Expensive</td><td>Free</td></tr>
+<tr><td><strong>Code complexity</strong></td><td>High</td><td>Low</td></tr>
+</tbody></table>
+</div>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<p>Now that you understand the SIMT foundation, you’re ready to see how these concepts enable powerful warp operations. The next section will show you how <code>sum()</code> transforms complex reduction patterns into simple, efficient function calls.</p>
+<p><strong>→ Continue to <a href="./warp_sum.html">warp.sum() Essentials</a></strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_21/puzzle_21.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_21/warp_sum.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_21/puzzle_21.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_21/warp_sum.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

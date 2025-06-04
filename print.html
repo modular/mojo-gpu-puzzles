@@ -228,7 +228,7 @@ Aristotle, (Nicomachean Ethics)</p>
 </blockquote>
 <p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to mastering GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥 — the innovative programming language that combines Pythonic syntax with systems-level performance. GPU programming remains one of the most powerful skills in modern computing, driving advances in artificial intelligence, scientific simulation, and high-performance computing.</p>
 <p>This book takes a unique approach to teaching GPU programming: learning by solving increasingly challenging puzzles. Rather than traditional textbook learning, you’ll immediately start writing real GPU code and seeing the results.</p>
-<p>The early chapters of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive CUDA learning project by Sasha Rush. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while expanding on advanced topics with Mojo-specific optimizations.</p>
+<p>The first two chapters of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive CUDA learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while expanding on advanced topics with Mojo-specific optimizations.</p>
 <h2 id="why-mojo--for-gpu-programming"><a class="header" href="#why-mojo--for-gpu-programming">Why Mojo 🔥 for GPU Programming?</a></h2>
 <p>The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.</p>
 <p>Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:</p>
@@ -7207,7 +7207,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Thread scheduling optimized automatically</li>
 <li>Memory hierarchy optimization built-in</li>
 </ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI (TODO)</strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
 <h3 id="-four-fundamental-patterns"><a class="header" href="#-four-fundamental-patterns">⚡ <strong>Four fundamental patterns</strong></a></h3>
 <p>Master the complete spectrum of GPU functional programming:</p>
 <ol>
@@ -8452,7 +8452,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong>Part VI (TODO)</strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
@@ -8824,6 +8824,1054 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Memory optimization</strong>: Dive deeper into shared memory and advanced caching</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.</p>
+<h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking Ahead: When you need more control</a></h2>
+<p>The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require <strong>direct thread communication</strong>:</p>
+<h3 id="algorithms-that-benefit-from-warp-programming"><a class="header" href="#algorithms-that-benefit-from-warp-programming"><strong>Algorithms that benefit from warp programming:</strong></a></h3>
+<ul>
+<li><strong>Reductions</strong>: Sum, max, min operations across thread groups</li>
+<li><strong>Prefix operations</strong>: Cumulative sums, running maximums</li>
+<li><strong>Data shuffling</strong>: Reorganizing data between threads</li>
+<li><strong>Cooperative algorithms</strong>: Where threads must coordinate closely</li>
+</ul>
+<h3 id="performance-preview"><a class="header" href="#performance-preview"><strong>Performance preview:</strong></a></h3>
+<p>In Part VI, we’ll revisit several algorithms from Part II and show how warp operations can:</p>
+<ul>
+<li><strong>Simplify code</strong>: Replace complex shared memory patterns with single function calls</li>
+<li><strong>Improve performance</strong>: Eliminate barriers and reduce memory traffic</li>
+<li><strong>Enable new algorithms</strong>: Unlock patterns impossible with pure functional approaches</li>
+</ul>
+<p><strong>Coming up next</strong>: <a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#-part-vi-gpu-warp-programming---synchronized-execution-primitives">⚡ Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
+<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
+<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
+<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
+<h2 id="what-youll-learn-1"><a class="header" href="#what-youll-learn-1">What you’ll learn</a></h2>
+<h3 id="-gpu-warp-execution-model"><a class="header" href="#-gpu-warp-execution-model">🧠 <strong>GPU warp execution model</strong></a></h3>
+<p>Understand the fundamental hardware unit of GPU parallelism:</p>
+<pre><code>GPU Block (e.g., 256 threads)
+├── Warp 0 (32 threads, SIMT lockstep execution)
+│   ├── Lane 0  ─┐
+│   ├── Lane 1   │ All execute same instruction
+│   ├── Lane 2   │ at same time (SIMT)
+│   │   ...      │
+│   └── Lane 31 ─┘
+├── Warp 1 (32 threads, independent)
+├── Warp 2 (32 threads, independent)
+└── ...
+</code></pre>
+<p><strong>Hardware reality:</strong></p>
+<ul>
+<li><strong>32 threads per warp</strong> on NVIDIA GPUs (<code>WARP_SIZE=32</code>)</li>
+<li><strong>32 or 64 threads per warp</strong> on AMD GPUs (<code>WARP_SIZE=32 or 64</code>)</li>
+<li><strong>Lockstep execution</strong>: All threads in a warp execute the same instruction simultaneously</li>
+<li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
+</ul>
+<h3 id="-warp-operations-available-in-mojo"><a class="header" href="#-warp-operations-available-in-mojo">⚡ <strong>Warp operations available in Mojo</strong></a></h3>
+<p>Master the core warp primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
+<li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
+<li><strong><code>shuffle_down(value, delta)</code></strong>: Get value from lane+delta</li>
+<li><strong><code>prefix_sum(value)</code></strong>: Compute prefix sum across lanes</li>
+<li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
+</ol>
+<h3 id="-performance-transformation-example"><a class="header" href="#-performance-transformation-example">🎯 <strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p10.mojo):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = partial_product
+barrier()
+# Tree reduction with barriers...
+stride = SIZE // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared[local_i] += shared[local_i + stride]
+    barrier()
+    stride //= 2
+
+# Can be replaced with the simple warp approach:
+total = sum(partial_product)
+</code></pre>
+<h3 id="-when-warp-operations-excel"><a class="header" href="#-when-warp-operations-excel">📊 <strong>When warp operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<pre><code>Problem Scale         Traditional    Warp Operations
+Single warp (32)      Fast          Fastest (no barriers)
+Few warps (128)       Good          Excellent (minimal overhead)
+Many warps (1024+)    Good          Outstanding (scales linearly)
+Massive (16K+)        Bottlenecked  Memory-bandwidth limited
+</code></pre>
+<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<p>Before diving into warp programming, ensure you’re comfortable with:</p>
+<ul>
+<li><strong>Part V functional patterns</strong>: Elementwise, tiled, and vectorized approaches</li>
+<li><strong>GPU thread hierarchy</strong>: Understanding blocks, warps, and threads</li>
+<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
+</ul>
+<h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
+<h3 id="-1-simt-execution-model"><a class="header" href="#-1-simt-execution-model">🔰 <strong>1. SIMT execution model</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
+<p>Understand the hardware foundation that makes warp operations possible.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Single Instruction, Multiple Thread (SIMT) execution model</li>
+<li>Warp divergence and convergence patterns</li>
+<li>Lane synchronization within warps</li>
+<li>Hardware vs software thread management</li>
+</ul>
+<p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
+<h3 id="-2-warp-sum-fundamentals"><a class="header" href="#-2-warp-sum-fundamentals">⚡ <strong>2. Warp sum fundamentals</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<p>Master the most important warp operation through dot product implementation.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Replacing shared memory + barriers with <code>sum()</code></li>
+<li>Cross-GPU architecture compatibility (<code>WARP_SIZE</code>)</li>
+<li>Kernel vs functional programming patterns with warps</li>
+<li>Performance comparison with traditional approaches</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">partial_result = compute_per_lane_value()
+total = sum(partial_result)  # Magic happens here!
+if lane_id() == 0:
+    output[0] = total
+</code></pre>
+<h3 id="-3-when-to-use-warp-programming"><a class="header" href="#-3-when-to-use-warp-programming">📊 <strong>3. When to use warp programming</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./warp_extra.html">When to Use Warp Programming</a></strong></p>
+<p>Learn the decision framework for choosing warp operations over alternatives.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Problem characteristics that favor warp operations</li>
+<li>Performance scaling patterns with warp count</li>
+<li>Memory bandwidth vs computation trade-offs</li>
+<li>Warp operation selection guidelines</li>
+</ul>
+<p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
+<h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
+<h3 id="-hardware-software-alignment"><a class="header" href="#-hardware-software-alignment">🎯 <strong>Hardware-software alignment</strong></a></h3>
+<p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
+<ul>
+<li><strong>SIMT execution</strong>: All lanes execute same instruction simultaneously</li>
+<li><strong>Built-in synchronization</strong>: No explicit barriers needed within warps</li>
+<li><strong>Cross-architecture support</strong>: <code>WARP_SIZE</code> handles NVIDIA vs AMD differences</li>
+</ul>
+<h3 id="-pattern-transformation"><a class="header" href="#-pattern-transformation">⚡ <strong>Pattern transformation</strong></a></h3>
+<p>Converting complex parallel patterns to warp primitives:</p>
+<ul>
+<li><strong>Tree reduction</strong> → <code>sum()</code></li>
+<li><strong>Prefix computation</strong> → <code>prefix_sum()</code></li>
+<li><strong>Data shuffling</strong> → <code>shuffle_idx()</code>, <code>shuffle_down()</code></li>
+</ul>
+<h3 id="-performance-characteristics"><a class="header" href="#-performance-characteristics">📈 <strong>Performance characteristics</strong></a></h3>
+<p>Recognizing when warp operations provide advantages:</p>
+<ul>
+<li><strong>Small to medium problems</strong>: Eliminates barrier overhead</li>
+<li><strong>Large problems</strong>: Reduces memory traffic and improves cache utilization</li>
+<li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
+</ul>
+<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
+<p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
+<p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
+<p>🎯 <strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_21/./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp Lanes &amp; SIMT Execution</a></h1>
+<h2 id="mental-model-for-warp-programming-vs-simd"><a class="header" href="#mental-model-for-warp-programming-vs-simd">Mental model for warp programming vs SIMD</a></h2>
+<h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
+<p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
+<p><strong>Simple example:</strong></p>
+<pre><code class="language-mojo">from gpu.warp import sum
+# All 32 threads in the warp execute this simultaneously:
+var my_value = input[my_thread_id]     # Each gets different data
+var warp_total = sum(my_value)    # All contribute to one sum
+</code></pre>
+<p>What just happened? Instead of 32 separate threads doing complex coordination, the <strong>warp</strong> automatically synchronized them to produce a single result. This is <strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
+<h3 id="simt-vs-simd-comparison"><a class="header" href="#simt-vs-simd-comparison">SIMT vs SIMD comparison</a></h3>
+<p>If you’re familiar with CPU vector programming (SIMD), GPU warps are similar but with key differences:</p>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU SIMD (e.g., AVX)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>Programming model</strong></td><td>Explicit vector operations</td><td>Thread-based programming</td></tr>
+<tr><td><strong>Data width</strong></td><td>Fixed (256/512 bits)</td><td>Flexible (32/64 threads)</td></tr>
+<tr><td><strong>Synchronization</strong></td><td>Implicit within instruction</td><td>Implicit within warp</td></tr>
+<tr><td><strong>Communication</strong></td><td>Via memory/registers</td><td>Via shuffle operations</td></tr>
+<tr><td><strong>Divergence handling</strong></td><td>Not applicable</td><td>Hardware masking</td></tr>
+<tr><td><strong>Example</strong></td><td><code>a + b</code></td><td><code>sum(thread_value)</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>CPU SIMD approach (C++ intrinsics):</strong></p>
+<pre><code class="language-cpp">// Explicit vector operations - say 8 floats in parallel
+__m256 result = _mm256_add_ps(a, b);   // Add 8 pairs simultaneously
+</code></pre>
+<p><strong>CPU SIMD approach (Mojo):</strong></p>
+<pre><code class="language-mojo"># SIMD in Mojo is first class citizen type so if a, b are of type SIMD then
+# addition 8 floats in parallel
+var result = a + b # Add 8 pairs simultaneously
+</code></pre>
+<p><strong>GPU SIMT approach (Mojo):</strong></p>
+<pre><code class="language-mojo"># Thread-based code that becomes vector operations
+from gpu.warp import sum
+
+var my_data = input[thread_id]         # Each thread gets its element
+var partial = my_data * coefficient    # All threads compute simultaneously
+var total = sum(partial)               # Hardware coordinates the sum
+</code></pre>
+<h3 id="core-concepts-that-make-warps-powerful"><a class="header" href="#core-concepts-that-make-warps-powerful">Core concepts that make warps powerful</a></h3>
+<p><strong>1. Lane identity:</strong> Each thread has a “lane ID” (0 to 31) that’s essentially free to access</p>
+<pre><code class="language-mojo">var my_lane = lane_id()  # Just reading a hardware register
+</code></pre>
+<p><strong>2. Implicit synchronization:</strong> No barriers needed within a warp</p>
+<pre><code class="language-mojo"># This just works - all threads automatically synchronized
+var sum = sum(my_contribution)
+</code></pre>
+<p><strong>3. Efficient communication:</strong> Threads can share data without memory</p>
+<pre><code class="language-mojo"># Get value from lane 0 to all other lanes
+var broadcasted = shuffle_idx(my_value, 0)
+</code></pre>
+<p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.</p>
+<h3 id="where-warps-fit-in-gpu-execution-hierarchy"><a class="header" href="#where-warps-fit-in-gpu-execution-hierarchy">Where warps fit in GPU execution hierarchy</a></h3>
+<p>For complete context on how warps relate to the overall GPU execution model, see <a href="puzzle_21/../puzzle_20/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
+<pre><code>GPU Device
+├── Grid (your entire problem)
+│   ├── Block 1 (group of threads, shared memory)
+│   │   ├── Warp 1 (32 threads, lockstep execution) ← This level
+│   │   │   ├── Thread 1 → SIMD operations
+│   │   │   ├── Thread 2 → SIMD operations
+│   │   │   └── ... (32 threads total)
+│   │   └── Warp 2 (32 threads)
+│   └── Block 2 (independent group)
+</code></pre>
+<p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like <code>sum()</code> that would otherwise require complex shared memory coordination.</p>
+<p>This mental model helps you recognize when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
+<h2 id="the-hardware-foundation-of-warp-programming"><a class="header" href="#the-hardware-foundation-of-warp-programming">The hardware foundation of warp programming</a></h2>
+<p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is crucial for effective warp programming. This isn’t just a software abstraction - it’s how GPU hardware actually works at the silicon level.</p>
+<h2 id="what-is-simt-execution"><a class="header" href="#what-is-simt-execution">What is SIMT execution?</a></h2>
+<p><strong>SIMT</strong> means that within a warp, all threads execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>. This is fundamentally different from CPU threads, which can execute completely different instructions independently.</p>
+<h3 id="cpu-vs-gpu-execution-models"><a class="header" href="#cpu-vs-gpu-execution-models">CPU vs GPU Execution Models</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU (MIMD)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>Instruction Model</strong></td><td>Multiple Instructions, Multiple Data</td><td>Single Instruction, Multiple Thread</td></tr>
+<tr><td><strong>Core 1</strong></td><td><code>add r1, r2</code></td><td><code>add r1, r2</code></td></tr>
+<tr><td><strong>Core 2</strong></td><td><code>load r3, [mem]</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>Core 3</strong></td><td><code>branch loop</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>… Core 32</strong></td><td><code>different instruction</code></td><td><code>add r1, r2</code> (same instruction)</td></tr>
+<tr><td><strong>Execution</strong></td><td>Independent, asynchronous</td><td>Synchronized, lockstep</td></tr>
+<tr><td><strong>Scheduling</strong></td><td>Complex, OS-managed</td><td>Simple, hardware-managed</td></tr>
+<tr><td><strong>Data</strong></td><td>Independent data sets</td><td>Different data, same operation</td></tr>
+</tbody></table>
+</div>
+<p><strong>GPU Warp Execution Pattern:</strong></p>
+<ul>
+<li><strong>Instruction</strong>: Same for all 32 lanes: <code>add r1, r2</code></li>
+<li><strong>Lane 0</strong>: Operates on <code>Data0</code> → <code>Result0</code></li>
+<li><strong>Lane 1</strong>: Operates on <code>Data1</code> → <code>Result1</code></li>
+<li><strong>Lane 2</strong>: Operates on <code>Data2</code> → <code>Result2</code></li>
+<li><strong>… (all lanes execute simultaneously)</strong></li>
+<li><strong>Lane 31</strong>: Operates on <code>Data31</code> → <code>Result31</code></li>
+</ul>
+<p><strong>Key insight:</strong> All lanes execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>.</p>
+<h3 id="why-simt-works-for-gpus"><a class="header" href="#why-simt-works-for-gpus">Why SIMT works for GPUs</a></h3>
+<p>GPUs are optimized for <strong>throughput</strong>, not latency. SIMT enables:</p>
+<ul>
+<li><strong>Hardware simplification</strong>: One instruction decoder serves 32 or 64 threads</li>
+<li><strong>Execution efficiency</strong>: No complex scheduling between warp threads</li>
+<li><strong>Memory bandwidth</strong>: Coalesced memory access patterns</li>
+<li><strong>Power efficiency</strong>: Shared control logic across lanes</li>
+</ul>
+<h2 id="warp-execution-mechanics"><a class="header" href="#warp-execution-mechanics">Warp execution mechanics</a></h2>
+<h3 id="lane-numbering-and-identity"><a class="header" href="#lane-numbering-and-identity">Lane numbering and identity</a></h3>
+<p>Each thread within a warp has a <strong>lane ID</strong> from 0 to <code>WARP_SIZE-1</code>:</p>
+<pre><code class="language-mojo">from gpu import lane_id
+from gpu.warp import WARP_SIZE
+
+# Within a kernel function:
+my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
+</code></pre>
+<p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware register, not computing a value.</p>
+<h3 id="synchronization-within-warps"><a class="header" href="#synchronization-within-warps">Synchronization within warps</a></h3>
+<p>The most powerful aspect of SIMT: <strong>implicit synchronization</strong>.</p>
+<pre><code class="language-mojo"># Traditional shared memory approach:
+shared[local_i] = partial_result
+barrier()  # Explicit synchronization required
+var sum = shared[0] + shared[1] + ...  # Complex reduction
+
+# Warp approach:
+from gpu.warp import sum
+
+var total = sum(partial_result)  # Implicit synchronization!
+</code></pre>
+<p><strong>Why no barriers needed?</strong> All lanes execute each instruction at exactly the same time. When <code>sum()</code> starts, all lanes have already computed their <code>partial_result</code>.</p>
+<h2 id="warp-divergence-and-convergence"><a class="header" href="#warp-divergence-and-convergence">Warp divergence and convergence</a></h2>
+<h3 id="what-happens-with-conditional-code"><a class="header" href="#what-happens-with-conditional-code">What happens with conditional code?</a></h3>
+<pre><code class="language-mojo">if lane_id() % 2 == 0:
+    # Even lanes execute this path
+    result = compute_even()
+else:
+    # Odd lanes execute this path
+    result = compute_odd()
+# All lanes converge here
+</code></pre>
+<p><strong>Hardware behavior steps:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Step</th><th>Phase</th><th>Active Lanes</th><th>Waiting Lanes</th><th>Efficiency</th><th>Performance Cost</th></tr></thead><tbody>
+<tr><td><strong>1</strong></td><td>Condition evaluation</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed</td></tr>
+<tr><td><strong>2</strong></td><td>Even lanes branch</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
+<tr><td><strong>3</strong></td><td>Odd lanes branch</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
+<tr><td><strong>4</strong></td><td>Convergence</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed resumed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Example breakdown:</strong></p>
+<ul>
+<li><strong>Step 2</strong>: Only even lanes execute <code>compute_even()</code> while odd lanes wait</li>
+<li><strong>Step 3</strong>: Only odd lanes execute <code>compute_odd()</code> while even lanes wait</li>
+<li><strong>Total time</strong>: <code>time(compute_even) + time(compute_odd)</code> (sequential execution)</li>
+<li><strong>Without divergence</strong>: <code>max(time(compute_even), time(compute_odd))</code> (parallel execution)</li>
+</ul>
+<p><strong>Performance impact:</strong></p>
+<ol>
+<li><strong>Divergence</strong>: Warp splits execution - some lanes active, others wait</li>
+<li><strong>Serial execution</strong>: Different paths run sequentially, not in parallel</li>
+<li><strong>Convergence</strong>: All lanes reunite and continue together</li>
+<li><strong>Cost</strong>: Divergent warps take 2× time (or more) vs unified execution</li>
+</ol>
+<h3 id="best-practices-for-warp-efficiency"><a class="header" href="#best-practices-for-warp-efficiency">Best practices for warp efficiency</a></h3>
+<h3 id="warp-efficiency-patterns"><a class="header" href="#warp-efficiency-patterns">Warp efficiency patterns</a></h3>
+<p><strong>✅ EXCELLENT: Uniform execution (100% efficiency)</strong></p>
+<pre><code class="language-mojo"># All lanes do the same work - no divergence
+var partial = a[global_i] * b[global_i]
+var total = sum(partial)
+</code></pre>
+<p><em>Performance: All 32 lanes active simultaneously</em></p>
+<p><strong>⚠️ ACCEPTABLE: Predictable divergence (~95% efficiency)</strong></p>
+<pre><code class="language-mojo"># Divergence based on lane_id() - hardware optimized
+if lane_id() == 0:
+    output[block_idx] = sum(partial)
+</code></pre>
+<p><em>Performance: Brief single-lane operation, predictable pattern</em></p>
+<p><strong>🔶 CAUTION: Structured divergence (~50-75% efficiency)</strong></p>
+<pre><code class="language-mojo"># Regular patterns can be optimized by compiler
+if (global_i / 4) % 2 == 0:
+    result = method_a()
+else:
+    result = method_b()
+</code></pre>
+<p><em>Performance: Predictable groups, some optimization possible</em></p>
+<p><strong>❌ AVOID: Data-dependent divergence (~25-50% efficiency)</strong></p>
+<pre><code class="language-mojo"># Different lanes may take different paths based on data
+if input[global_i] &gt; threshold:  # Unpredictable branching
+    result = expensive_computation()
+else:
+    result = simple_computation()
+</code></pre>
+<p><em>Performance: Random divergence kills warp efficiency</em></p>
+<p><strong>💀 TERRIBLE: Nested data-dependent divergence (~10-25% efficiency)</strong></p>
+<pre><code class="language-mojo"># Multiple levels of unpredictable branching
+if input[global_i] &gt; threshold1:
+    if input[global_i] &gt; threshold2:
+        result = very_expensive()
+    else:
+        result = expensive()
+else:
+    result = simple()
+</code></pre>
+<p><em>Performance: Warp efficiency destroyed</em></p>
+<h2 id="cross-architecture-compatibility"><a class="header" href="#cross-architecture-compatibility">Cross-architecture compatibility</a></h2>
+<h3 id="nvidia-vs-amd-warp-sizes"><a class="header" href="#nvidia-vs-amd-warp-sizes">NVIDIA vs AMD warp sizes</a></h3>
+<pre><code class="language-mojo">from gpu.warp import WARP_SIZE
+
+# NVIDIA GPUs:     WARP_SIZE = 32
+# AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)
+# AMD CDNA GPUs:   WARP_SIZE = 64 (traditional wavefront64)
+</code></pre>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li><strong>Memory patterns</strong>: Coalesced access depends on warp size</li>
+<li><strong>Algorithm design</strong>: Reduction trees must account for warp size</li>
+<li><strong>Performance scaling</strong>: Twice as many lanes per warp on AMD</li>
+</ul>
+<h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
+<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture Adaptation Strategies</a></h3>
+<p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
+<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
+alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
+</code></pre>
+<p><em>Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)</em></p>
+<p><strong>❌ BROKEN: Never hardcode warp size</strong></p>
+<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
+alias REDUCTION_SIZE = 32           # Wrong on AMD!
+</code></pre>
+<p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
+<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real Hardware Impact</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>GPU Architecture</th><th>WARP_SIZE</th><th>Memory per Warp</th><th>Reduction Steps</th><th>Lane Pattern</th></tr></thead><tbody>
+<tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
+<tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6 steps: 64→32→16→8→4→2→1</td><td>Lanes 0-63</td></tr>
+</tbody></table>
+</div>
+<p><strong>Performance implications of 64 vs 32:</strong></p>
+<ul>
+<li><strong>CDNA advantage</strong>: 2× memory bandwidth per warp</li>
+<li><strong>CDNA advantage</strong>: 2× computation per warp</li>
+<li><strong>NVIDIA/RDNA advantage</strong>: More warps per block (better occupancy)</li>
+<li><strong>Code portability</strong>: Same source, optimal performance on both</li>
+</ul>
+<h2 id="memory-access-patterns-with-warps"><a class="header" href="#memory-access-patterns-with-warps">Memory access patterns with warps</a></h2>
+<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced Memory Access Patterns</a></h3>
+<p><strong>✅ PERFECT: Coalesced access (100% bandwidth utilization)</strong></p>
+<pre><code class="language-mojo"># Adjacent lanes → adjacent memory addresses
+var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
+</code></pre>
+<p><strong>Memory access patterns:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>NVIDIA/RDNA (32 lanes)</th><th>CDNA (64 lanes)</th><th>Bandwidth Utilization</th><th>Performance</th></tr></thead><tbody>
+<tr><td><strong>✅ Coalesced</strong></td><td>Lane N → Address 4×N</td><td>Lane N → Address 4×N</td><td>100%</td><td>Optimal</td></tr>
+<tr><td></td><td>1 transaction: 128 bytes</td><td>1 transaction: 256 bytes</td><td>Full bus width</td><td>Fast</td></tr>
+<tr><td><strong>❌ Scattered</strong></td><td>Lane N → Random address</td><td>Lane N → Random address</td><td>~6%</td><td>Terrible</td></tr>
+<tr><td></td><td>32 separate transactions</td><td>64 separate transactions</td><td>Mostly idle bus</td><td><strong>32× slower</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Example addresses:</strong></p>
+<ul>
+<li><strong>Coalesced</strong>: Lane 0→0, Lane 1→4, Lane 2→8, Lane 3→12, …</li>
+<li><strong>Scattered</strong>: Lane 0→1000, Lane 1→52, Lane 2→997, Lane 3→8, …</li>
+</ul>
+<h3 id="shared-memory-bank-conflicts"><a class="header" href="#shared-memory-bank-conflicts">Shared memory bank conflicts</a></h3>
+<p><strong>What is a bank conflict?</strong></p>
+<p>Assume that a GPU shared memory is divided into 32 independent <strong>banks</strong> that can be accessed simultaneously. A <strong>bank conflict</strong> occurs when multiple threads in a warp try to access different addresses within the same bank at the same time. When this happens, the hardware must <strong>serialize</strong> these accesses, turning what should be a single-cycle operation into multiple cycles.</p>
+<p><strong>Key concepts:</strong></p>
+<ul>
+<li><strong>No conflict</strong>: Each thread accesses a different bank → All accesses happen simultaneously (1 cycle)</li>
+<li><strong>Bank conflict</strong>: Multiple threads access the same bank → Accesses happen sequentially (N cycles for N threads)</li>
+<li><strong>Broadcast</strong>: All threads access the same address → Hardware optimizes this to 1 cycle</li>
+</ul>
+<p><strong>Shared memory bank organization:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Bank</th><th>Addresses (byte offsets)</th><th>Example Data (float32)</th></tr></thead><tbody>
+<tr><td>Bank 0</td><td>0, 128, 256, 384, …</td><td><code>shared[0]</code>, <code>shared[32]</code>, <code>shared[64]</code>, …</td></tr>
+<tr><td>Bank 1</td><td>4, 132, 260, 388, …</td><td><code>shared[1]</code>, <code>shared[33]</code>, <code>shared[65]</code>, …</td></tr>
+<tr><td>Bank 2</td><td>8, 136, 264, 392, …</td><td><code>shared[2]</code>, <code>shared[34]</code>, <code>shared[66]</code>, …</td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+<tr><td>Bank 31</td><td>124, 252, 380, 508, …</td><td><code>shared[31]</code>, <code>shared[63]</code>, <code>shared[95]</code>, …</td></tr>
+</tbody></table>
+</div>
+<p><strong>Bank conflict examples:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>Bank Usage</th><th>Cycles</th><th>Performance</th><th>Explanation</th></tr></thead><tbody>
+<tr><td><strong>✅ Sequential</strong></td><td><code>shared[thread_idx.x]</code></td><td>1 cycle</td><td>100%</td><td>Each lane hits different bank</td></tr>
+<tr><td></td><td>Lane 0→Bank 0, Lane 1→Bank 1, …</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
+<tr><td><strong>❌ Stride 2</strong></td><td><code>shared[thread_idx.x * 2]</code></td><td>2 cycles</td><td>50%</td><td>2 lanes per bank</td></tr>
+<tr><td></td><td>Lane 0,16→Bank 0; Lane 1,17→Bank 1</td><td></td><td><strong>2× slower</strong></td><td>Serialized access</td></tr>
+<tr><td><strong>💀 Same index</strong></td><td><code>shared[0]</code> (all lanes)</td><td>32 cycles</td><td>3%</td><td>All lanes hit Bank 0</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
+</tbody></table>
+</div>
+<h2 id="practical-implications-for-warp-programming"><a class="header" href="#practical-implications-for-warp-programming">Practical implications for warp programming</a></h2>
+<h3 id="when-warp-operations-are-most-effective"><a class="header" href="#when-warp-operations-are-most-effective">When warp operations are most effective</a></h3>
+<ol>
+<li><strong>Reduction operations</strong>: <code>sum()</code>, <code>max()</code>, etc.</li>
+<li><strong>Broadcast operations</strong>: <code>shuffle_idx()</code> to share values</li>
+<li><strong>Neighbor communication</strong>: <code>shuffle_down()</code> for sliding windows</li>
+<li><strong>Prefix computations</strong>: <code>prefix_sum()</code> for scan algorithms</li>
+</ol>
+<h3 id="performance-characteristics-2"><a class="header" href="#performance-characteristics-2">Performance characteristics</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
+<tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
+<tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
+<tr><td><strong>Synchronization cost</strong></td><td>Expensive</td><td>Free</td></tr>
+<tr><td><strong>Code complexity</strong></td><td>High</td><td>Low</td></tr>
+</tbody></table>
+</div>
+<h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next steps</a></h2>
+<p>Now that you understand the SIMT foundation, you’re ready to see how these concepts enable powerful warp operations. The next section will show you how <code>sum()</code> transforms complex reduction patterns into simple, efficient function calls.</p>
+<p><strong>→ Continue to <a href="puzzle_21/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-warpsum-essentials---warp-level-dot-product"><a class="header" href="#-warpsum-essentials---warp-level-dot-product">⚡ warp.sum() Essentials - Warp-Level Dot Product</a></h1>
+<p>Implement the dot product we saw in <a href="puzzle_21/../puzzle_10/puzzle_10.html">puzzle 10</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
+<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
+<p>In this puzzle, you’ll master:</p>
+<ul>
+<li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
+<li><strong>SIMT execution model</strong> and lane synchronization</li>
+<li><strong>Cross-architecture compatibility</strong> with <code>WARP_SIZE</code></li>
+<li><strong>Performance transformation</strong> from complex to simple patterns</li>
+<li><strong>Lane ID management</strong> and conditional writes</li>
+</ul>
+<p>The mathematical operation is a dot product (inner product):
+\[\Large \text{out}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+<p>But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.</p>
+<h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU architecture)</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h2 id="the-traditional-complexity-from-puzzle-10"><a class="header" href="#the-traditional-complexity-from-puzzle-10">The traditional complexity (from Puzzle 10)</a></h2>
+<p>Recall the complex approach from <code>p10.mojo</code> that required shared memory, barriers, and tree reduction:</p>
+<pre><code class="language-mojo">alias SIZE = WARP_SIZE
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
+alias dtype = DType.float32
+alias SIMD_WIDTH = simdwidthof[dtype]()
+alias in_layout = Layout.row_major(SIZE)
+alias out_layout = Layout.row_major(1)
+
+
+fn traditional_dot_product_p10_style[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+):
+    """
+    This is the complex approach from p10_layout_tensor.mojo - kept for comparison.
+    """
+    shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    if global_i &lt; size:
+        shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
+    else:
+        shared[local_i] = 0.0
+
+    barrier()
+
+    stride = SIZE // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+
+    if local_i == 0:
+        out[0] = shared[0]
+
+
+</code></pre>
+<p><strong>What makes this complex:</strong></p>
+<ul>
+<li><strong>Shared memory allocation</strong>: Manual memory management within blocks</li>
+<li><strong>Explicit barriers</strong>: <code>barrier()</code> calls to synchronize threads</li>
+<li><strong>Tree reduction</strong>: Complex loop with stride-based indexing</li>
+<li><strong>Conditional writes</strong>: Only thread 0 writes the final result</li>
+</ul>
+<p>This works, but it’s verbose, error-prone, and requires deep understanding of GPU synchronization.</p>
+<p><strong>Test the traditional approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21 --traditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 --traditional
+</code></pre>
+  </div>
+</div>
+<h2 id="code-to-complete-31"><a class="header" href="#code-to-complete-31">Code to complete</a></h2>
+<h3 id="1-simple-warp-kernel-approach"><a class="header" href="#1-simple-warp-kernel-approach">1. Simple warp kernel approach</a></h3>
+<p>Transform the complex traditional approach into a simple warp kernel using <code>warp_sum()</code>:</p>
+<pre><code class="language-mojo">from gpu.warp import sum as warp_sum
+
+
+fn simple_warp_dot_product[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    # FILL IN (6 lines at most)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-the-simple-warp-kernel-structure"><a class="header" href="#1-understanding-the-simple-warp-kernel-structure">1. <strong>Understanding the simple warp kernel structure</strong></a></h3>
+<p>You need to complete the <code>simple_warp_dot_product</code> function with <strong>6 lines or fewer</strong>:</p>
+<pre><code class="language-mojo">fn simple_warp_dot_product[...](out, a, b):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    # FILL IN (6 lines at most)
+</code></pre>
+<p><strong>Pattern to follow:</strong></p>
+<ol>
+<li>Compute partial product for this thread’s element</li>
+<li>Use <code>warp_sum()</code> to combine across all warp lanes</li>
+<li>Lane 0 writes the final result</li>
+</ol>
+<h3 id="2-computing-partial-products"><a class="header" href="#2-computing-partial-products">2. <strong>Computing partial products</strong></a></h3>
+<pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0
+if global_i &lt; size:
+    partial_product = (a[global_i] * b[global_i]).reduce_add()
+</code></pre>
+<p><strong>Why <code>.reduce_add()</code>?</strong> Values in Mojo are SIMD-based, so <code>a[global_i] * b[global_i]</code> returns a SIMD vector. Use <code>.reduce_add()</code> to sum the vector into a scalar.</p>
+<p><strong>Bounds checking:</strong> Essential because not all threads may have valid data to process.</p>
+<h3 id="3-warp-reduction-magic"><a class="header" href="#3-warp-reduction-magic">3. <strong>Warp reduction magic</strong></a></h3>
+<pre><code class="language-mojo">total = warp_sum(partial_product)
+</code></pre>
+<p><strong>What <code>warp_sum()</code> does:</strong></p>
+<ul>
+<li>Takes each lane’s <code>partial_product</code> value</li>
+<li>Sums them across all lanes in the warp (hardware-accelerated)</li>
+<li>Returns the same total to <strong>all lanes</strong> (not just lane 0)</li>
+<li>Requires <strong>zero explicit synchronization</strong> (SIMT handles it)</li>
+</ul>
+<h3 id="4-writing-the-result"><a class="header" href="#4-writing-the-result">4. <strong>Writing the result</strong></a></h3>
+<pre><code class="language-mojo">if lane_id() == 0:
+    out[0] = total
+</code></pre>
+<p><strong>Why only lane 0?</strong> All lanes have the same <code>total</code> value after <code>warp_sum()</code>, but we only want to write once to avoid race conditions.</p>
+<p><strong><code>lane_id()</code>:</strong> Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane within the warp.</p>
+</div>
+</details>
+<p><strong>Test the simple warp kernel:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21 --kernel
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 --kernel
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 32
+WARP_SIZE: 32
+SIMD_WIDTH: 8
+=== RESULT ===
+out: 10416.0
+expected: 10416.0
+🚀 Notice how simple the warp version is compared to p10.mojo!
+   Same kernel structure, but warp_sum() replaces all the complexity!
+</code></pre>
+<h3 id="solution-28"><a class="header" href="#solution-28">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn simple_warp_dot_product[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    out: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
+    var partial_product: Scalar[dtype] = 0
+    if global_i &lt; size:
+        partial_product = (a[global_i] * b[global_i]).reduce_add()
+
+    # warp_sum() replaces all the shared memory + barriers + tree reduction
+    total = warp_sum(partial_product)
+
+    # Only lane 0 writes the result (all lanes have the same total)
+    if lane_id() == 0:
+        out[0] = total
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The simple warp kernel demonstrates the fundamental transformation from complex synchronization to hardware-accelerated primitives:</p>
+<p><strong>What disappeared from the traditional approach:</strong></p>
+<ul>
+<li><strong>15+ lines → 6 lines</strong>: Dramatic code reduction</li>
+<li><strong>Shared memory allocation</strong>: Zero memory management required</li>
+<li><strong>3+ barrier() calls</strong>: Zero explicit synchronization</li>
+<li><strong>Complex tree reduction</strong>: Single function call</li>
+<li><strong>Stride-based indexing</strong>: Eliminated entirely</li>
+</ul>
+<p><strong>SIMT execution model:</strong></p>
+<pre><code>Warp lanes (SIMT execution):
+Lane 0: partial_product = a[0] * b[0]    = 0.0
+Lane 1: partial_product = a[1] * b[1]    = 4.0
+Lane 2: partial_product = a[2] * b[2]    = 16.0
+...
+Lane 31: partial_product = a[31] * b[31] = 3844.0
+
+warp_sum() hardware operation:
+All lanes → 0.0 + 4.0 + 16.0 + ... + 3844.0 = 10416.0
+All lanes receive → total = 10416.0 (broadcast result)
+</code></pre>
+<p><strong>Why this works without barriers:</strong></p>
+<ol>
+<li><strong>SIMT execution</strong>: All lanes execute each instruction simultaneously</li>
+<li><strong>Hardware synchronization</strong>: When <code>warp_sum()</code> begins, all lanes have computed their <code>partial_product</code></li>
+<li><strong>Built-in communication</strong>: GPU hardware handles the reduction operation</li>
+<li><strong>Broadcast result</strong>: All lanes receive the same <code>total</code> value</li>
+</ol>
+</div>
+</details>
+<h3 id="2-functional-approach"><a class="header" href="#2-functional-approach">2. Functional approach</a></h3>
+<p>Now implement the same warp dot product using Mojo’s functional programming patterns:</p>
+<pre><code class="language-mojo">fn functional_warp_dot_product[
+    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+](
+    out: LayoutTensor[mut=True, dtype, Layout.row_major(1), MutableAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    ctx: DeviceContext,
+) raises:
+    @parameter
+    @always_inline
+    fn compute_dot_product[
+        simd_width: Int, rank: Int
+    ](indices: IndexList[rank]) capturing -&gt; None:
+        idx = indices[0]
+        print("idx:", idx)
+        # FILL IN (10 lines at most)
+
+    # Launch exactly WARP_SIZE threads (one warp) to process all elements
+    elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-the-functional-approach-structure"><a class="header" href="#1-understanding-the-functional-approach-structure">1. <strong>Understanding the functional approach structure</strong></a></h3>
+<p>You need to complete the <code>compute_dot_product</code> function with <strong>10 lines or fewer</strong>:</p>
+<pre><code class="language-mojo">@parameter
+@always_inline
+fn compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+    idx = indices[0]
+    # FILL IN (10 lines at most)
+</code></pre>
+<p><strong>Functional pattern differences:</strong></p>
+<ul>
+<li>Uses <code>elementwise</code> to launch exactly <code>WARP_SIZE</code> threads</li>
+<li>Each thread processes one element based on <code>idx</code></li>
+<li>Same warp operations, different launch mechanism</li>
+</ul>
+<h3 id="2-computing-partial-products-1"><a class="header" href="#2-computing-partial-products-1">2. <strong>Computing partial products</strong></a></h3>
+<pre><code class="language-mojo">var partial_product: Scalar[dtype] = 0.0
+if idx &lt; size:
+    a_val = a.load[1](idx, 0)
+    b_val = b.load[1](idx, 0)
+    partial_product = (a_val * b_val).reduce_add()
+else:
+    partial_product = 0.0
+</code></pre>
+<p><strong>Loading pattern:</strong> <code>a.load[1](idx, 0)</code> loads exactly 1 element at position <code>idx</code> (not SIMD vectorized).</p>
+<p><strong>Bounds handling:</strong> Set <code>partial_product = 0.0</code> for out-of-bounds threads so they don’t contribute to the sum.</p>
+<h3 id="3-warp-operations-and-storing"><a class="header" href="#3-warp-operations-and-storing">3. <strong>Warp operations and storing</strong></a></h3>
+<pre><code class="language-mojo">total = warp_sum(partial_product)
+
+if lane_id() == 0:
+    out.store[1](0, 0, total)
+</code></pre>
+<p><strong>Storage pattern:</strong> <code>out.store[1](0, 0, total)</code> stores 1 element at position (0, 0) in the output tensor.</p>
+<p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in functional approach.</p>
+<h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
+<pre><code class="language-mojo">from gpu import lane_id
+from gpu.warp import sum as warp_sum, WARP_SIZE
+
+# Inside your function:
+my_lane = lane_id()           # 0 to WARP_SIZE-1
+total = warp_sum(my_value)    # Hardware-accelerated reduction
+warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
+</code></pre>
+</div>
+</details>
+<p><strong>Test the functional approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21 --functional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 --functional
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 32
+WARP_SIZE: 32
+SIMD_WIDTH: 8
+=== RESULT ===
+out: 10416.0
+expected: 10416.0
+🔧 Functional approach shows modern Mojo style with warp operations!
+   Clean, composable, and still leverages warp hardware primitives!
+</code></pre>
+<h3 id="solution-29"><a class="header" href="#solution-29">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn functional_warp_dot_product[
+    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+](
+    out: LayoutTensor[mut=True, dtype, Layout.row_major(1), MutableAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    ctx: DeviceContext,
+) raises:
+    @parameter
+    @always_inline
+    fn compute_dot_product[
+        simd_width: Int, rank: Int
+    ](indices: IndexList[rank]) capturing -&gt; None:
+        idx = indices[0]
+
+        # Each thread computes one partial product
+        var partial_product: Scalar[dtype] = 0.0
+        if idx &lt; size:
+            a_val = a.load[1](idx, 0)
+            b_val = b.load[1](idx, 0)
+            partial_product = (a_val * b_val).reduce_add()
+        else:
+            partial_product = 0.0
+
+        # Warp magic - combines all WARP_SIZE partial products!
+        total = warp_sum(partial_product)
+
+        # Only lane 0 writes the result (all lanes have the same total)
+        if lane_id() == 0:
+            out.store[1](0, 0, total)
+
+    # Launch exactly WARP_SIZE threads (one warp) to process all elements
+    elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The functional warp approach showcases modern Mojo programming patterns with warp operations:</p>
+<p><strong>Functional approach characteristics:</strong></p>
+<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><strong>Type safety</strong>: Compile-time tensor layout checking</li>
+<li><strong>Composability</strong>: Easy integration with other functional operations</li>
+<li><strong>Modern patterns</strong>: Leverages Mojo’s functional programming features</li>
+<li><strong>Automatic optimization</strong>: Compiler can apply high-level optimizations</li>
+</ul>
+<p><strong>Key differences from kernel approach:</strong></p>
+<ul>
+<li><strong>Launch mechanism</strong>: Uses <code>elementwise</code> instead of <code>enqueue_function</code></li>
+<li><strong>Memory access</strong>: Uses <code>.load[1]()</code> and <code>.store[1]()</code> patterns</li>
+<li><strong>Integration</strong>: Seamlessly works with other functional operations</li>
+</ul>
+<p><strong>Same warp benefits:</strong></p>
+<ul>
+<li><strong>Zero synchronization</strong>: <code>warp_sum()</code> works identically</li>
+<li><strong>Hardware acceleration</strong>: Same performance as kernel approach</li>
+<li><strong>Cross-architecture</strong>: <code>WARP_SIZE</code> adapts automatically</li>
+</ul>
+</div>
+</details>
+<h2 id="performance-comparison-with-benchmarks"><a class="header" href="#performance-comparison-with-benchmarks">Performance comparison with benchmarks</a></h2>
+<p>Run comprehensive benchmarks to see how warp operations scale:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21 --benchmark
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 --benchmark
+</code></pre>
+  </div>
+</div>
+<p>Here’s example output from a complete benchmark run:</p>
+<pre><code>SIZE: 32
+WARP_SIZE: 32
+SIMD_WIDTH: 8
+--------------------------------------------------------------------------------
+Testing SIZE=1 x WARP_SIZE, BLOCKS=1
+Running traditional_1x
+Running simple_warp_1x
+Running functional_warp_1x
+--------------------------------------------------------------------------------
+Testing SIZE=4 x WARP_SIZE, BLOCKS=4
+Running traditional_4x
+Running simple_warp_4x
+Running functional_warp_4x
+--------------------------------------------------------------------------------
+Testing SIZE=32 x WARP_SIZE, BLOCKS=32
+Running traditional_32x
+Running simple_warp_32x
+Running functional_warp_32x
+--------------------------------------------------------------------------------
+Testing SIZE=256 x WARP_SIZE, BLOCKS=256
+Running traditional_256x
+Running simple_warp_256x
+Running functional_warp_256x
+--------------------------------------------------------------------------------
+Testing SIZE=2048 x WARP_SIZE, BLOCKS=2048
+Running traditional_2048x
+Running simple_warp_2048x
+Running functional_warp_2048x
+--------------------------------------------------------------------------------
+Testing SIZE=16384 x WARP_SIZE, BLOCKS=16384 (Large Scale)
+Running traditional_16384x
+Running simple_warp_16384x
+Running functional_warp_16384x
+--------------------------------------------------------------------------------
+Testing SIZE=65536 x WARP_SIZE, BLOCKS=65536 (Massive Scale)
+Running traditional_65536x
+Running simple_warp_65536x
+Running functional_warp_65536x
+-------------------------------------------------------
+| name                   | met (ms)           | iters |
+-------------------------------------------------------
+| traditional_1x         | 3.5565388994708993 | 378   |
+| simple_warp_1x         | 3.1609036200000005 | 100   |
+| functional_warp_1x     | 3.22122741         | 100   |
+| traditional_4x         | 3.1741644200000003 | 100   |
+| simple_warp_4x         | 4.6268518          | 100   |
+| functional_warp_4x     | 3.18364685         | 100   |
+| traditional_32x        | 3.19311859         | 100   |
+| simple_warp_32x        | 3.18385162         | 100   |
+| functional_warp_32x    | 3.18260223         | 100   |
+| traditional_256x       | 4.704542839999999  | 100   |
+| simple_warp_256x       | 3.599057930294906  | 373   |
+| functional_warp_256x   | 3.21388549         | 100   |
+| traditional_2048x      | 3.31929595         | 100   |
+| simple_warp_2048x      | 4.80178161         | 100   |
+| functional_warp_2048x  | 3.734744261111111  | 360   |
+| traditional_16384x     | 6.39709167         | 100   |
+| simple_warp_16384x     | 7.8748059          | 100   |
+| functional_warp_16384x | 7.848806150000001  | 100   |
+| traditional_65536x     | 25.155625274509806 | 51    |
+| simple_warp_65536x     | 25.10668252830189  | 53    |
+| functional_warp_65536x | 25.053512849056602 | 53    |
+-------------------------------------------------------
+
+Benchmarks completed!
+
+🚀 WARP OPERATIONS PERFORMANCE ANALYSIS:
+   GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
+   - 1 x WARP_SIZE: Single warp baseline
+   - 4 x WARP_SIZE: Few warps, warp overhead visible
+   - 32 x WARP_SIZE: Medium scale, warp benefits emerge
+   - 256 x WARP_SIZE: Large scale, dramatic warp advantages
+   - 2048 x WARP_SIZE: Massive scale, warp operations dominate
+   - 16384 x WARP_SIZE: Large scale (512K-1M elements)
+   - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
+   - Note: AMD GPUs process 2 x elements per warp vs NVIDIA!
+
+   Expected Results at Large Scales:
+   • Traditional: Slower due to more barrier overhead
+   • Warp operations: Faster, scale better with problem size
+   • Memory bandwidth becomes the limiting factor
+</code></pre>
+<p><strong>Performance insights from this example:</strong></p>
+<ul>
+<li><strong>Small scales (1x-4x)</strong>: Warp operations show modest improvements (~10-15% faster)</li>
+<li><strong>Medium scale (32x-256x)</strong>: Functional approach often performs best</li>
+<li><strong>Large scales (16K-65K)</strong>: All approaches converge as memory bandwidth dominates</li>
+<li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and memory subsystem</li>
+</ul>
+<p><strong>Note:</strong> Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, <code>WARP_SIZE</code>). The key insight is observing the relative performance trends rather than absolute timings.</p>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<p>Once you’ve mastered warp sum operations, you’re ready for:</p>
+<ul>
+<li><strong><a href="puzzle_21/./warp_extra.html">📊 When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
+<li><strong>Advanced warp operations</strong>: <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code> for complex communication patterns</li>
+<li><strong>Multi-warp algorithms</strong>: Combining warp operations with block-level synchronization</li>
+<li><strong>Part VII: Memory Coalescing</strong>: Optimizing memory access patterns for maximum bandwidth</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: Warp operations transform GPU programming by replacing complex synchronization patterns with hardware-accelerated primitives, demonstrating how understanding the execution model enables dramatic simplification without sacrificing performance.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-when-to-use-warp-programming"><a class="header" href="#-when-to-use-warp-programming">📊 When to Use Warp Programming</a></h1>
+<h2 id="quick-decision-guide"><a class="header" href="#quick-decision-guide">Quick decision guide</a></h2>
+<p><strong>✅ Use warp operations when:</strong></p>
+<ul>
+<li>Reduction operations (<code>sum</code>, <code>max</code>, <code>min</code>) with 32+ elements</li>
+<li>Regular memory access patterns (adjacent lanes → adjacent addresses)</li>
+<li>Need cross-architecture portability (NVIDIA/RDNA 32 vs CDNA 64 threads)</li>
+<li>Want simpler, more maintainable code</li>
+</ul>
+<p><strong>❌ Use traditional approaches when:</strong></p>
+<ul>
+<li>Complex cross-warp synchronization required</li>
+<li>Irregular/scattered memory access patterns</li>
+<li>Variable work per thread (causes warp divergence)</li>
+<li>Problem <code>size &lt; WARP_SIZE</code></li>
+</ul>
+<h2 id="performance-characteristics-3"><a class="header" href="#performance-characteristics-3">Performance characteristics</a></h2>
+<h3 id="problem-size-scaling"><a class="header" href="#problem-size-scaling">Problem size scaling</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Elements</th><th>Warp Advantage</th><th>Notes</th></tr></thead><tbody>
+<tr><td>&lt; 32</td><td>None</td><td>Traditional better</td></tr>
+<tr><td>32-1K</td><td>1.2-1.5×</td><td>Sweet spot begins</td></tr>
+<tr><td>1K-32K</td><td>1.5-2.5×</td><td><strong>Warp operations excel</strong></td></tr>
+<tr><td>&gt; 32K</td><td>Memory-bound</td><td>Both approaches limited by bandwidth</td></tr>
+</tbody></table>
+</div>
+<h3 id="key-warp-advantages"><a class="header" href="#key-warp-advantages">Key warp advantages</a></h3>
+<ul>
+<li><strong>No synchronization overhead</strong>: Eliminates barrier costs</li>
+<li><strong>Minimal memory usage</strong>: No shared memory allocation needed</li>
+<li><strong>Better scaling</strong>: Performance improves with more warps</li>
+<li><strong>Simpler code</strong>: Fewer lines, less error-prone</li>
+</ul>
+<h2 id="algorithm-specific-guidance"><a class="header" href="#algorithm-specific-guidance">Algorithm-specific guidance</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Algorithm</th><th>Recommendation</th><th>Reason</th></tr></thead><tbody>
+<tr><td><strong>Dot product</strong></td><td>Warp ops (1K+ elements)</td><td>Single reduction, regular access</td></tr>
+<tr><td><strong>Matrix row/col sum</strong></td><td>Warp ops</td><td>Natural reduction pattern</td></tr>
+<tr><td><strong>Prefix sum</strong></td><td>Always warp <code>prefix_sum()</code></td><td>Hardware-optimized primitive</td></tr>
+<tr><td><strong>Pooling (max/min)</strong></td><td>Warp ops (regular windows)</td><td>Efficient window reductions</td></tr>
+<tr><td><strong>Histogram</strong></td><td>Traditional</td><td>Irregular writes, atomic updates</td></tr>
+</tbody></table>
+</div>
+<h2 id="code-examples"><a class="header" href="#code-examples">Code examples</a></h2>
+<h3 id="-perfect-for-warps"><a class="header" href="#-perfect-for-warps">✅ Perfect for warps</a></h3>
+<pre><code class="language-mojo"># Reduction operations
+from gpu.warp import sum, max
+var total = sum(partial_values)
+var maximum = max(partial_values)
+
+# Communication patterns
+from gpu.warp import shuffle_idx, prefix_sum
+var broadcast = shuffle_idx(my_value, 0)
+var running_sum = prefix_sum(my_value)
+</code></pre>
+<h3 id="-better-with-traditional-approaches"><a class="header" href="#-better-with-traditional-approaches">❌ Better with traditional approaches</a></h3>
+<pre><code class="language-mojo"># Complex multi-stage synchronization
+stage1_compute()
+barrier()  # Need ALL threads to finish
+stage2_depends_on_stage1()
+
+# Irregular memory access
+var value = input[random_indices[global_i]]  # Scattered reads
+
+# Data-dependent work
+if input[global_i] &gt; threshold:
+    result = expensive_computation()  # Causes warp divergence
+</code></pre>
+<h2 id="performance-measurement"><a class="header" href="#performance-measurement">Performance measurement</a></h2>
+<pre><code class="language-bash"># Always benchmark both approaches
+mojo p21.mojo --benchmark
+
+# Look for scaling patterns:
+# traditional_1x:  X.XX ms
+# warp_1x:         Y.YY ms  # Should be faster
+# warp_32x:        Z.ZZ ms  # Advantage should increase
+</code></pre>
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p><strong>Start with warp operations for:</strong></p>
+<ul>
+<li>Reductions with regular access patterns</li>
+<li>Problems ≥ 1 warp in size</li>
+<li>Cross-platform compatibility needs</li>
+</ul>
+<p><strong>Use traditional approaches for:</strong></p>
+<ul>
+<li>Complex synchronization requirements</li>
+<li>Irregular memory patterns</li>
+<li>Small problems or heavy divergence</li>
+</ul>
+<p><strong>When in doubt:</strong> Implement both and benchmark. The performance difference will guide your decision.</p>
 
                     </main>
 

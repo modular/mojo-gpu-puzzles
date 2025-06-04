@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🧠 GPU Threading vs SIMD Concepts - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 21: Warp Fundamentals - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -195,157 +195,149 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
+                        <h1 id="-part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#-part-vi-gpu-warp-programming---synchronized-execution-primitives">⚡ Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
-<blockquote>
-<p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
-</blockquote>
-<h2 id="core-concepts"><a class="header" href="#core-concepts">Core concepts</a></h2>
-<h3 id="gpu-threading-hierarchy"><a class="header" href="#gpu-threading-hierarchy">GPU threading hierarchy</a></h3>
-<p>GPU execution follows a well-defined hierarchy that abstracts hardware complexity:</p>
-<pre><code>GPU Device
-├── Grid (your entire problem)
-│   ├── Block 1 (group of threads, shared memory)
-│   │   ├── Warp 1 (32 threads, lockstep execution)
-│   │   │   ├── Thread 1 → SIMD operations
-│   │   │   ├── Thread 2 → SIMD operations
-│   │   │   └── ... (32 threads total)
-│   │   └── Warp 2 (32 threads)
-│   └── Block 2 (independent group)
+<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
+<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
+<h3 id="-gpu-warp-execution-model"><a class="header" href="#-gpu-warp-execution-model">🧠 <strong>GPU warp execution model</strong></a></h3>
+<p>Understand the fundamental hardware unit of GPU parallelism:</p>
+<pre><code>GPU Block (e.g., 256 threads)
+├── Warp 0 (32 threads, SIMT lockstep execution)
+│   ├── Lane 0  ─┐
+│   ├── Lane 1   │ All execute same instruction
+│   ├── Lane 2   │ at same time (SIMT)
+│   │   ...      │
+│   └── Lane 31 ─┘
+├── Warp 1 (32 threads, independent)
+├── Warp 2 (32 threads, independent)
+└── ...
 </code></pre>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
-<p><strong>What Mojo abstracts for you:</strong></p>
-<ul>
-<li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
-<li><strong>Warp management</strong>: Hardware handles 32-thread groups transparently</li>
-<li><strong>Thread scheduling</strong>: GPU scheduler manages execution automatically</li>
-<li><strong>Memory hierarchy</strong>: Optimal access patterns built into functional operations</li>
-</ul>
-<h3 id="simd-within-gpu-threads"><a class="header" href="#simd-within-gpu-threads">SIMD within GPU threads</a></h3>
-<p>Each GPU thread can process multiple data elements simultaneously using <strong>SIMD (Single Instruction, Multiple Data)</strong> operations:</p>
-<pre><code class="language-mojo">// Within one GPU thread:
-a_simd = a.load[simd_width](idx, 0)    // Load 4 floats simultaneously
-b_simd = b.load[simd_width](idx, 0)    // Load 4 floats simultaneously
-result = a_simd + b_simd               // Add 4 pairs simultaneously
-out.store[simd_width](idx, 0, result)  // Store 4 results simultaneously
-</code></pre>
-<h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
-<blockquote>
-<p><strong>Critical insight:</strong> All patterns perform the <strong>same total work</strong> - 256 SIMD operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this work is distributed across GPU threads.</p>
-</blockquote>
-<h3 id="thread-organization-comparison-size1024-simd_width4"><a class="header" href="#thread-organization-comparison-size1024-simd_width4">Thread organization comparison (<code>SIZE=1024</code>, <code>SIMD_WIDTH=4</code>)</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
-<tr><td><strong>Elementwise</strong></td><td>256</td><td>1</td><td>Distributed access</td><td>Max parallelism, poor locality</td></tr>
-<tr><td><strong>Tiled</strong></td><td>32</td><td>8</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
-<tr><td><strong>Manual vectorized</strong></td><td>8</td><td>32</td><td>Large chunks</td><td>High bandwidth, fewer threads</td></tr>
-<tr><td><strong>Mojo vectorize</strong></td><td>32</td><td>8</td><td>Smart blocks</td><td>Automatic optimization</td></tr>
-</tbody></table>
-</div>
-<h3 id="detailed-execution-patterns"><a class="header" href="#detailed-execution-patterns">Detailed execution patterns</a></h3>
-<p><strong>Elementwise pattern:</strong></p>
-<pre><code>Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1022,1023]
-256 threads × 1 SIMD op = 256 total SIMD operations
-</code></pre>
-<p><strong>Tiled pattern:</strong></p>
-<pre><code>Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
-32 threads × 8 SIMD ops = 256 total SIMD operations
-</code></pre>
-<p><strong>Manual vectorized pattern:</strong></p>
-<pre><code>Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)
-8 threads × 32 SIMD ops = 256 total SIMD operations
-</code></pre>
-<p><strong>Mojo vectorize pattern:</strong></p>
-<pre><code>Thread 0: [0:32] auto-vectorized → Thread 1: [32:64] auto-vectorized → ... → Thread 31: [992:1024] auto-vectorized
-32 threads × 8 SIMD ops = 256 total SIMD operations
-</code></pre>
-<h2 id="performance-characteristics-and-trade-offs"><a class="header" href="#performance-characteristics-and-trade-offs">Performance characteristics and trade-offs</a></h2>
-<h3 id="core-trade-offs-summary"><a class="header" href="#core-trade-offs-summary">Core trade-offs summary</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>High thread count (Elementwise)</th><th>Moderate threads (Tiled/Vectorize)</th><th>Low threads (Manual)</th></tr></thead><tbody>
-<tr><td><strong>Parallelism</strong></td><td>Maximum latency hiding</td><td>Balanced approach</td><td>Minimal parallelism</td></tr>
-<tr><td><strong>Cache locality</strong></td><td>Poor between threads</td><td>Good within tiles</td><td>Excellent sequential</td></tr>
-<tr><td><strong>Memory bandwidth</strong></td><td>Good coalescing</td><td>Good + cache reuse</td><td>Maximum theoretical</td></tr>
-<tr><td><strong>Complexity</strong></td><td>Simplest</td><td>Moderate</td><td>Most complex</td></tr>
-</tbody></table>
-</div>
-<h3 id="when-to-choose-each-pattern"><a class="header" href="#when-to-choose-each-pattern">When to choose each pattern</a></h3>
-<p><strong>Use elementwise when:</strong></p>
-<ul>
-<li>Simple operations with minimal arithmetic per element</li>
-<li>Maximum parallelism needed for latency hiding</li>
-<li>Scalability across different problem sizes is important</li>
-</ul>
-<p><strong>Use tiled/vectorize when:</strong></p>
-<ul>
-<li>Cache-sensitive operations that benefit from data reuse</li>
-<li>Balanced performance and maintainability desired</li>
-<li>Automatic optimization (vectorize) is preferred</li>
-</ul>
-<p><strong>Use manual vectorization when:</strong></p>
-<ul>
-<li>Expert-level control over memory patterns is needed</li>
-<li>Maximum memory bandwidth utilization is critical</li>
-<li>Development complexity is acceptable</li>
-</ul>
-<h2 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h2>
-<p>Modern GPU architectures include several levels that Mojo abstracts:</p>
 <p><strong>Hardware reality:</strong></p>
 <ul>
-<li><strong>Warps</strong>: 32 threads execute in lockstep</li>
-<li><strong>Streaming Multiprocessors (SMs)</strong>: Multiple warps execute concurrently</li>
-<li><strong>SIMD units</strong>: Vector processing units within each SM</li>
-<li><strong>Memory hierarchy</strong>: L1/L2 caches, shared memory, global memory</li>
+<li><strong>32 threads per warp</strong> on NVIDIA GPUs (<code>WARP_SIZE=32</code>)</li>
+<li><strong>32 or 64 threads per warp</strong> on AMD GPUs (<code>WARP_SIZE=32 or 64</code>)</li>
+<li><strong>Lockstep execution</strong>: All threads in a warp execute the same instruction simultaneously</li>
+<li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
-<p><strong>Mojo’s abstraction benefits:</strong></p>
-<ul>
-<li>Automatically handles warp alignment and scheduling</li>
-<li>Optimizes memory access patterns transparently</li>
-<li>Manages resource allocation across SMs</li>
-<li>Provides portable performance across GPU vendors</li>
-</ul>
-<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
-<p>Think of GPU programming as managing two complementary types of parallelism:</p>
-<p><strong>Thread-level parallelism:</strong></p>
-<ul>
-<li>Provides the parallel structure (how many execution units)</li>
-<li>Enables latency hiding through concurrent execution</li>
-<li>Managed by GPU scheduler automatically</li>
-</ul>
-<p><strong>SIMD-level parallelism:</strong></p>
-<ul>
-<li>Provides vectorization within each thread</li>
-<li>Maximizes arithmetic throughput per thread</li>
-<li>Utilizes vector processing units efficiently</li>
-</ul>
-<p><strong>Optimal performance formula:</strong></p>
-<pre><code>Performance = (Sufficient threads for latency hiding) ×
-              (Efficient SIMD utilization) ×
-              (Optimal memory access patterns)
+<h3 id="-warp-operations-available-in-mojo"><a class="header" href="#-warp-operations-available-in-mojo">⚡ <strong>Warp operations available in Mojo</strong></a></h3>
+<p>Master the core warp primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
+<li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
+<li><strong><code>shuffle_down(value, delta)</code></strong>: Get value from lane+delta</li>
+<li><strong><code>prefix_sum(value)</code></strong>: Compute prefix sum across lanes</li>
+<li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
+</ol>
+<h3 id="-performance-transformation-example"><a class="header" href="#-performance-transformation-example">🎯 <strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p10.mojo):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = partial_product
+barrier()
+# Tree reduction with barriers...
+stride = SIZE // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared[local_i] += shared[local_i + stride]
+    barrier()
+    stride //= 2
+
+# Can be replaced with the simple warp approach:
+total = sum(partial_product)
 </code></pre>
-<h2 id="scaling-considerations"><a class="header" href="#scaling-considerations">Scaling considerations</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>Problem size</th><th>Optimal pattern</th><th>Reasoning</th></tr></thead><tbody>
-<tr><td>Small (&lt; 1K)</td><td>Tiled/Vectorize</td><td>Lower launch overhead</td></tr>
-<tr><td>Medium (1K-1M)</td><td>Any pattern</td><td>Similar performance</td></tr>
-<tr><td>Large (&gt; 1M)</td><td>Usually Elementwise</td><td>Parallelism dominates</td></tr>
-</tbody></table>
-</div>
-<p>The optimal choice depends on your specific hardware, workload complexity, and development constraints.</p>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
-<p>With a solid understanding of GPU threading vs SIMD concepts:</p>
+<h3 id="-when-warp-operations-excel"><a class="header" href="#-when-warp-operations-excel">📊 <strong>When warp operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<pre><code>Problem Scale         Traditional    Warp Operations
+Single warp (32)      Fast          Fastest (no barriers)
+Few warps (128)       Good          Excellent (minimal overhead)
+Many warps (1024+)    Good          Outstanding (scales linearly)
+Massive (16K+)        Bottlenecked  Memory-bandwidth limited
+</code></pre>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before diving into warp programming, ensure you’re comfortable with:</p>
 <ul>
-<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
+<li><strong>Part V functional patterns</strong>: Elementwise, tiled, and vectorized approaches</li>
+<li><strong>GPU thread hierarchy</strong>: Understanding blocks, warps, and threads</li>
+<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
 </ul>
-<p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
+<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
+<h3 id="-1-simt-execution-model"><a class="header" href="#-1-simt-execution-model">🔰 <strong>1. SIMT execution model</strong></a></h3>
+<p><strong>→ <a href="./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
+<p>Understand the hardware foundation that makes warp operations possible.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Single Instruction, Multiple Thread (SIMT) execution model</li>
+<li>Warp divergence and convergence patterns</li>
+<li>Lane synchronization within warps</li>
+<li>Hardware vs software thread management</li>
+</ul>
+<p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
+<h3 id="-2-warp-sum-fundamentals"><a class="header" href="#-2-warp-sum-fundamentals">⚡ <strong>2. Warp sum fundamentals</strong></a></h3>
+<p><strong>→ <a href="./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<p>Master the most important warp operation through dot product implementation.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Replacing shared memory + barriers with <code>sum()</code></li>
+<li>Cross-GPU architecture compatibility (<code>WARP_SIZE</code>)</li>
+<li>Kernel vs functional programming patterns with warps</li>
+<li>Performance comparison with traditional approaches</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">partial_result = compute_per_lane_value()
+total = sum(partial_result)  # Magic happens here!
+if lane_id() == 0:
+    output[0] = total
+</code></pre>
+<h3 id="-3-when-to-use-warp-programming"><a class="header" href="#-3-when-to-use-warp-programming">📊 <strong>3. When to use warp programming</strong></a></h3>
+<p><strong>→ <a href="./warp_extra.html">When to Use Warp Programming</a></strong></p>
+<p>Learn the decision framework for choosing warp operations over alternatives.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Problem characteristics that favor warp operations</li>
+<li>Performance scaling patterns with warp count</li>
+<li>Memory bandwidth vs computation trade-offs</li>
+<li>Warp operation selection guidelines</li>
+</ul>
+<p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
+<h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
+<h3 id="-hardware-software-alignment"><a class="header" href="#-hardware-software-alignment">🎯 <strong>Hardware-software alignment</strong></a></h3>
+<p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
+<ul>
+<li><strong>SIMT execution</strong>: All lanes execute same instruction simultaneously</li>
+<li><strong>Built-in synchronization</strong>: No explicit barriers needed within warps</li>
+<li><strong>Cross-architecture support</strong>: <code>WARP_SIZE</code> handles NVIDIA vs AMD differences</li>
+</ul>
+<h3 id="-pattern-transformation"><a class="header" href="#-pattern-transformation">⚡ <strong>Pattern transformation</strong></a></h3>
+<p>Converting complex parallel patterns to warp primitives:</p>
+<ul>
+<li><strong>Tree reduction</strong> → <code>sum()</code></li>
+<li><strong>Prefix computation</strong> → <code>prefix_sum()</code></li>
+<li><strong>Data shuffling</strong> → <code>shuffle_idx()</code>, <code>shuffle_down()</code></li>
+</ul>
+<h3 id="-performance-characteristics"><a class="header" href="#-performance-characteristics">📈 <strong>Performance characteristics</strong></a></h3>
+<p>Recognizing when warp operations provide advantages:</p>
+<ul>
+<li><strong>Small to medium problems</strong>: Eliminates barrier overhead</li>
+<li><strong>Large problems</strong>: Reduces memory traffic and improves cache utilization</li>
+<li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
+</ul>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
+<p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
+<p>🎯 <strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_20/vectorize.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_20/benchmarking.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/benchmarking.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_21/warp_simt.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -355,11 +347,11 @@ out.store[simd_width](idx, 0, result)  // Store 4 results simultaneously
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_20/vectorize.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_20/benchmarking.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/benchmarking.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_21/warp_simt.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

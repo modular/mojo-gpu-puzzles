@@ -445,6 +445,23 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Memory optimization</strong>: Dive deeper into shared memory and advanced caching</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.</p>
+<h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking Ahead: When you need more control</a></h2>
+<p>The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require <strong>direct thread communication</strong>:</p>
+<h3 id="algorithms-that-benefit-from-warp-programming"><a class="header" href="#algorithms-that-benefit-from-warp-programming"><strong>Algorithms that benefit from warp programming:</strong></a></h3>
+<ul>
+<li><strong>Reductions</strong>: Sum, max, min operations across thread groups</li>
+<li><strong>Prefix operations</strong>: Cumulative sums, running maximums</li>
+<li><strong>Data shuffling</strong>: Reorganizing data between threads</li>
+<li><strong>Cooperative algorithms</strong>: Where threads must coordinate closely</li>
+</ul>
+<h3 id="performance-preview"><a class="header" href="#performance-preview"><strong>Performance preview:</strong></a></h3>
+<p>In Part VI, we’ll revisit several algorithms from Part II and show how warp operations can:</p>
+<ul>
+<li><strong>Simplify code</strong>: Replace complex shared memory patterns with single function calls</li>
+<li><strong>Improve performance</strong>: Eliminate barriers and reduce memory traffic</li>
+<li><strong>Enable new algorithms</strong>: Unlock patterns impossible with pure functional approaches</li>
+</ul>
+<p><strong>Coming up next</strong>: <a href="../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
 
                     </main>
 
@@ -454,6 +471,9 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="../puzzle_21/puzzle_21.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -465,6 +485,9 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="../puzzle_21/puzzle_21.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
