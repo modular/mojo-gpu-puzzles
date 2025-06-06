@@ -3572,7 +3572,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <pre><code class="language-mojo">fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -3601,14 +3601,14 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     barrier()
 
     if global_i &lt; SIZE_2:
-        var local_sum: out.element_type = 0
+        var local_sum: output.element_type = 0
 
         @parameter
         for j in range(CONV_2):
             if local_i + j &lt; TPB + CONV_2 - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
-        out[global_i] = local_sum
+        output[global_i] = local_sum
 
 
 </code></pre>
@@ -5548,18 +5548,18 @@ from layout.layout_tensor import copy_dram_to_sram_async
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
     # Get the tile of the output matrix `out` that this thread block is responsible for
-    out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    var acc: out.element_type = 0
+    var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(1, TPB)
     alias load_b_layout = Layout.row_major(TPB, 1)

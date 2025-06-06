@@ -526,18 +526,18 @@ from layout.layout_tensor import copy_dram_to_sram_async
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
     # Get the tile of the output matrix `out` that this thread block is responsible for
-    out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    var acc: out.element_type = 0
+    var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(1, TPB)
     alias load_b_layout = Layout.row_major(TPB, 1)
