@@ -269,7 +269,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
     a_layout: Layout,
     b_layout: Layout,
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
     b: LayoutTensor[mut=False, dtype, b_layout],
     size: Int,
@@ -277,7 +277,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
     row = thread_idx.y
     col = thread_idx.x
     if row &lt; size and col &lt; size:
-        out[row, col] = a[0, col] + b[row, 0]
+        output[row, col] = a[0, col] + b[row, 0]
 
 
 </code></pre>

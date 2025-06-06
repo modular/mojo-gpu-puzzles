@@ -306,7 +306,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -322,7 +322,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     barrier()
 
     if global_i &lt; size:
-        out[global_i] = shared[local_i] + 10
+        output[global_i] = shared[local_i] + 10
 
 
 </code></pre>

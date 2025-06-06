@@ -275,7 +275,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <pre><code class="language-mojo">fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -304,7 +304,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     if global_i &lt; SIZE:
         # Note: using `var` allows us to include the type in the type inference
         # `out.element_type` is available in LayoutTensor
-        var local_sum: out.element_type = 0
+        var local_sum: output.element_type = 0
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
@@ -314,7 +314,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
             if local_i + j &lt; SIZE:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
-        out[global_i] = local_sum
+        output[global_i] = local_sum
 
 
 </code></pre>

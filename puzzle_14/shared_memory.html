@@ -271,7 +271,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -290,13 +290,13 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     barrier()
 
     if row &lt; size and col &lt; size:
-        var acc: out.element_type = 0
+        var acc: output.element_type = 0
 
         @parameter
         for k in range(size):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
-        out[row, col] = acc
+        output[row, col] = acc
 
 
 </code></pre>

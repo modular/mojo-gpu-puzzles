@@ -424,7 +424,7 @@ Sum of all probabilities on GPU: 1.0
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
@@ -454,7 +454,7 @@ Sum of all probabilities on GPU: 1.0
     var exp_val: Scalar[dtype] = 0.0
     if global_i &lt; input_size:
         exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-        out[global_i] = exp_val
+        output[global_i] = exp_val
 
     shared_sum[local_i] = exp_val
     barrier()
@@ -471,7 +471,7 @@ Sum of all probabilities on GPU: 1.0
 
     # Normalize by sum
     if global_i &lt; input_size:
-        out[global_i] = out[global_i] / block_sum
+        output[global_i] = output[global_i] / block_sum
 
 
 </code></pre>
@@ -614,7 +614,7 @@ if global_i &lt; input_size:
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
     input: LayoutTensor[dtype, layout, MutableAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
@@ -624,11 +624,11 @@ if global_i &lt; input_size:
     var sum_exp: Scalar[dtype] = 0.0
     for i in range(input_size):
         var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
-        out[i] = exp_val
+        output[i] = exp_val
         sum_exp += exp_val
 
     for i in range(input_size):
-        out[i] = out[i] / sum_exp
+        output[i] = output[i] / sum_exp
 
 
 </code></pre>

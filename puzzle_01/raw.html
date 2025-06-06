@@ -258,9 +258,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
+<pre><code class="language-mojo">fn add_10(
+    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+):
     i = thread_idx.x
-    out[i] = a[i] + 10.0
+    output[i] = a[i] + 10.0
 
 
 </code></pre>

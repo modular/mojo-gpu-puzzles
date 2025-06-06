@@ -258,14 +258,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_2d(
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
     row = thread_idx.y
     col = thread_idx.x
     if col &lt; size and row &lt; size:
-        out[row, col] = a[row, col] + 10.0
+        output[row, col] = a[row, col] + 10.0
 
 
 </code></pre>

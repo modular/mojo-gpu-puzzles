@@ -322,7 +322,7 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
 <pre><code class="language-mojo">fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -334,7 +334,7 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 
-    var acc: out.element_type = 0
+    var acc: output.element_type = 0
 
     # Iterate over tiles to compute matrix product
     @parameter
@@ -371,7 +371,7 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
 
     # Write out final result
     if tiled_row &lt; size and tiled_col &lt; size:
-        out[tiled_row, tiled_col] = acc
+        output[tiled_row, tiled_col] = acc
 
 
 </code></pre>

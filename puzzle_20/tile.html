@@ -336,7 +336,7 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -348,7 +348,7 @@ fn tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
 
-        out_tile = out.tile[tile_size](tile_id)
+        output_tile = output.tile[tile_size](tile_id)
         a_tile = a.tile[tile_size](tile_id)
         b_tile = b.tile[tile_size](tile_id)
 
@@ -357,7 +357,7 @@ fn tiled_elementwise_add[
             a_vec = a_tile.load[simd_width](i, 0)
             b_vec = b_tile.load[simd_width](i, 0)
             ret = a_vec + b_vec
-            out_tile.store[simd_width](i, 0, ret)
+            output_tile.store[simd_width](i, 0, ret)
 
     num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)

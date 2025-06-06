@@ -259,12 +259,12 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
     i = thread_idx.x
-    out[i] = a[i] + b[i]
+    output[i] = a[i] + b[i]
 
 
 </code></pre>

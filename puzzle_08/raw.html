@@ -282,7 +282,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_shared(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -303,7 +303,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
     # process using shared memory
     if global_i &lt; size:
-        out[global_i] = shared[local_i] + 10
+        output[global_i] = shared[local_i] + 10
 
 
 </code></pre>

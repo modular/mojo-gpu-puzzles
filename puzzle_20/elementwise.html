@@ -327,7 +327,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -347,7 +347,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
-        out.store[simd_width](idx, 0, ret)
+        output.store[simd_width](idx, 0, ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
 

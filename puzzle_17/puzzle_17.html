@@ -538,7 +538,7 @@ Output vector norms:
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
@@ -563,7 +563,7 @@ Output vector norms:
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
     if out_row &lt; cols and out_col &lt; rows:
-        out[out_row, out_col] = shared_tile[local_col, local_row]
+        output[out_row, out_col] = shared_tile[local_col, local_row]
 
 
 </code></pre>
@@ -627,7 +627,7 @@ out[out_row, out_col] = shared_tile[local_col, local_row]
 
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
-            result_2d = out_tensor.reshape[layout_result_2d]()
+            result_2d = output_tensor.reshape[layout_result_2d]()
             gpu_ctx.enqueue_function[
                 matmul_idiomatic_tiled[layout_weights_2d, 1, d, seq_len, dtype]
             ](

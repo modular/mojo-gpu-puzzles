@@ -269,7 +269,7 @@ expected: HostBuffer([140.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn dot_product(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
@@ -306,7 +306,7 @@ expected: HostBuffer([140.0])
 
     # only thread 0 writes the final result
     if local_i == 0:
-        out[0] = shared[0]
+        output[0] = shared[0]
 
 
 </code></pre>

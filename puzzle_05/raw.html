@@ -257,7 +257,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn broadcast_add(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
@@ -265,7 +265,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
     row = thread_idx.y
     col = thread_idx.x
     if row &lt; size and col &lt; size:
-        out[row * size + col] = a[col] + b[row]
+        output[row * size + col] = a[col] + b[row]
 
 
 </code></pre>
