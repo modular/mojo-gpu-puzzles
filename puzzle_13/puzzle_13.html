@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-13-axis-sum"><a class="header" href="#puzzle-13-axis-sum">Puzzle 13: Axis Sum</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>out</code> using LayoutTensor.</p>
+<p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="./media/videos/720p30/puzzle_13_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -233,7 +233,7 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -252,7 +252,7 @@ fn axis_sum[
 <li>Use <code>batch = block_idx.y</code> to select row</li>
 <li>Load elements: <code>cache[local_i] = a[batch * size + local_i]</code></li>
 <li>Perform parallel reduction with halving stride</li>
-<li>Thread 0 writes final sum to <code>out[batch]</code></li>
+<li>Thread 0 writes final sum to <code>output[batch]</code></li>
 </ol>
 </div>
 </details>
@@ -365,7 +365,7 @@ Stride 1: [15 12 6  7  4  5  *  *]
 <ul>
 <li>LayoutTensor 2D indexing for input: <code>a[batch, local_i]</code></li>
 <li>Shared memory for efficient reduction</li>
-<li>LayoutTensor 2D indexing for output: <code>out[batch, 0]</code></li>
+<li>LayoutTensor 2D indexing for output: <code>output[batch, 0]</code></li>
 </ul>
 </li>
 <li>
@@ -381,7 +381,7 @@ while stride &gt; 0:
 <li>
 <p><strong>Output Writing</strong>:</p>
 <pre><code class="language-mojo">if local_i == 0:
-    out[batch, 0] = cache[0]  --&gt; One result per batch
+    output[batch, 0] = cache[0]  --&gt; One result per batch
 </code></pre>
 </li>
 </ol>

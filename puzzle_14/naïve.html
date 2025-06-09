@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\).
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -228,7 +228,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn naive_matmul[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -314,13 +314,13 @@ col = block_dim.x * block_idx.x + thread_idx.x
 <ul>
 <li>Direct 2D indexing: <code>a[row, k]</code></li>
 <li>Transposed access: <code>b[k, col]</code></li>
-<li>Output writing: <code>out[row, col]</code></li>
+<li>Output writing: <code>output[row, col]</code></li>
 </ul>
 </li>
 <li>
 <p><strong>Computation flow</strong>:</p>
 <pre><code class="language-mojo"># Use var for mutable accumulator with tensor's element type
-var acc: out.element_type = 0
+var acc: output.element_type = 0
 
 # @parameter for compile-time loop unrolling
 @parameter
@@ -334,7 +334,7 @@ for k in range(size):
 <li>
 <p><strong>Variable declaration</strong>:</p>
 <ul>
-<li>The use of <code>var</code> in <code>var acc: out.element_type = 0</code> allows for type inference with <code>out.element_type</code> ensures type compatibility with the output tensor</li>
+<li>The use of <code>var</code> in <code>var acc: output.element_type = 0</code> allows for type inference with <code>output.element_type</code> ensures type compatibility with the output tensor</li>
 <li>Initialized to zero before accumulation</li>
 </ul>
 </li>

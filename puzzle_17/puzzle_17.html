@@ -300,7 +300,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
@@ -574,7 +574,7 @@ Output vector norms:
 shared_tile[local_row, local_col] = inp[global_row, global_col]
 barrier()
 # Store with swapped indexing for transpose
-out[out_row, out_col] = shared_tile[local_col, local_row]
+output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
 <p>The transpose happens through <strong>swapped indexing</strong> in shared memory access (<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and <strong>swapped block coordinates</strong> for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.</p>
 </div>

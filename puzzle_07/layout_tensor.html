@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="layouttensor-version"><a class="header" href="#layouttensor-version">LayoutTensor Version</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D LayoutTensor <code>a</code> and stores it in 2D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D LayoutTensor <code>a</code> and stores it in 2D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -220,7 +220,7 @@ fn add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
     size: Int,
 ):

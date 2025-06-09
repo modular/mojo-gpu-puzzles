@@ -452,7 +452,7 @@ cd mojo-gpu-puzzles
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-1-map"><a class="header" href="#puzzle-1-map">Puzzle 1: Map</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>GPU programming is all about parallelism. In this puzzle, each thread will process a single element of the input array independently.
-Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
 <p><img src="puzzle_01/./media/videos/720p30/puzzle_01_viz.gif" alt="Map" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -463,7 +463,7 @@ Implement a kernel that adds 10 to each position of vector <code>a</code> and st
 <li>Array operations on GPU</li>
 </ul>
 <p>For each position \(i\):
-\[\Large out[i] = a[i] + 10\]</p>
+\[\Large output[i] = a[i] + 10\]</p>
 <h2 id="what-we-cover"><a class="header" href="#what-we-cover">What we cover</a></h2>
 <h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="puzzle_01/./raw.html">🔰 Raw Memory Approach</a></a></h3>
 <p>Start with direct memory manipulation to understand GPU fundamentals.</p>
@@ -489,7 +489,7 @@ Implement a kernel that adds 10 to each position of vector <code>a</code> and st
 <p><strong>Thread indexing</strong>: Access element at position <code>i = thread_idx.x</code></p>
 </li>
 <li>
-<p><strong>Memory access</strong>: Read from <code>a[i]</code> and write to <code>out[i]</code></p>
+<p><strong>Memory access</strong>: Read from <code>a[i]</code> and write to <code>output[i]</code></p>
 </li>
 <li>
 <p><strong>Data independence</strong>: Each output depends only on its corresponding input</p>
@@ -502,7 +502,9 @@ alias THREADS_PER_BLOCK = SIZE
 alias dtype = DType.float32
 
 
-fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
+fn add_10(
+    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+):
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)
 
@@ -515,7 +517,7 @@ fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add 10 to <code>a[i]</code></li>
-<li>Store result in <code>out[i]</code></li>
+<li>Store result in <code>output[i]</code></li>
 </ol>
 </div>
 </details>
@@ -554,7 +556,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p>This solution:</p>
 <ul>
 <li>Gets thread index with <code>i = thread_idx.x</code></li>
-<li>Adds 10 to input value: <code>out[i] = a[i] + 10.0</code></li>
+<li>Adds 10 to input value: <code>output[i] = a[i] + 10.0</code></li>
 </ul>
 </div>
 </details>
@@ -562,7 +564,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p>Looking at our traditional implementation above, you might notice some potential issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
 <pre><code class="language-mojo">i = thread_idx.x
-out[i] = a[i] + 10.0
+output[i] = a[i] + 10.0
 </code></pre>
 <p>This works for 1D arrays, but what happens when we need to:</p>
 <ul>
@@ -584,8 +586,8 @@ idx = (batch * padded_height + row) * padded_width + col
 <h3 id="layouttensor-preview"><a class="header" href="#layouttensor-preview">LayoutTensor preview</a></h3>
 <p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
-out[i, j] = a[i, j] + 10.0  # 2D indexing
-out[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
+output[i, j] = a[i, j] + 10.0  # 2D indexing
+output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 </code></pre>
 <p>We’ll learn about LayoutTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:</p>
 <ul>
@@ -596,7 +598,7 @@ out[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 <p>💡 <strong>Key Takeaway</strong>: While direct indexing works for simple cases, we’ll soon need more sophisticated tools for complex GPU programming patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-2-zip"><a class="header" href="#puzzle-2-zip">Puzzle 2: Zip</a></h1>
 <h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
-<p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
 <p><img src="puzzle_02/./media/videos/720p30/puzzle_02_viz.gif" alt="Zip" /></p>
 <h2 id="key-concepts-2"><a class="header" href="#key-concepts-2">Key concepts</a></h2>
@@ -607,14 +609,14 @@ out[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 <li>Thread-to-data mapping across arrays</li>
 <li>Memory access patterns with multiple arrays</li>
 </ul>
-<p>For each thread \(i\): \[\Large out[i] = a[i] + b[i]\]</p>
+<p>For each thread \(i\): \[\Large output[i] = a[i] + b[i]\]</p>
 <h3 id="memory-access-pattern"><a class="header" href="#memory-access-pattern">Memory access pattern</a></h3>
-<pre><code class="language-txt">Thread 0:  a[0] + b[0] → out[0]
-Thread 1:  a[1] + b[1] → out[1]
-Thread 2:  a[2] + b[2] → out[2]
+<pre><code class="language-txt">Thread 0:  a[0] + b[0] → output[0]
+Thread 1:  a[1] + b[1] → output[1]
+Thread 2:  a[2] + b[2] → output[2]
 ...
 </code></pre>
-<p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>out</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
+<p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>output</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
 <h2 id="code-to-complete-1"><a class="header" href="#code-to-complete-1">Code to complete</a></h2>
 <pre><code class="language-mojo">alias SIZE = 4
 alias BLOCKS_PER_GRID = 1
@@ -623,7 +625,7 @@ alias dtype = DType.float32
 
 
 fn add(
-    out: UnsafePointer[Scalar[dtype]],
+    outout: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
@@ -639,7 +641,7 @@ fn add(
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add <code>a[i]</code> and <code>b[i]</code></li>
-<li>Store result in <code>out[i]</code></li>
+<li>Store result in <code>output[i]</code></li>
 </ol>
 </div>
 </details>
@@ -680,7 +682,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <p>This solution:</p>
 <ul>
 <li>Gets thread index with <code>i = thread_idx.x</code></li>
-<li>Adds values from both arrays: <code>out[i] = a[i] + b[i]</code></li>
+<li>Adds values from both arrays: <code>output[i] = a[i] + b[i]</code></li>
 </ul>
 </div>
 </details>
@@ -694,7 +696,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <p>These questions will be addressed when we <a href="puzzle_02/../puzzle_04/">introduce LayoutTensor in Puzzle 4</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-3-guards"><a class="header" href="#puzzle-3-guards">Puzzle 3: Guards</a></h1>
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
 <p><img src="puzzle_03/./media/videos/720p30/puzzle_03_viz.gif" alt="Guard" /></p>
 <h2 id="key-concepts-3"><a class="header" href="#key-concepts-3">Key concepts</a></h2>
@@ -707,12 +709,12 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 </ul>
 <h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical Description</a></h3>
 <p>For each thread \(i\):
-\[\Large \text{if}\ i &lt; \text{size}: out[i] = a[i] + 10\]</p>
+\[\Large \text{if}\ i &lt; \text{size}: output[i] = a[i] + 10\]</p>
 <h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory Safety Pattern</a></h3>
-<pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  out[0] = a[0] + 10  ✓ Valid
-Thread 1 (i=1):  if 1 &lt; size:  out[1] = a[1] + 10  ✓ Valid
-Thread 2 (i=2):  if 2 &lt; size:  out[2] = a[2] + 10  ✓ Valid
-Thread 3 (i=3):  if 3 &lt; size:  out[3] = a[3] + 10  ✓ Valid
+<pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  output[0] = a[0] + 10  ✓ Valid
+Thread 1 (i=1):  if 1 &lt; size:  output[1] = a[1] + 10  ✓ Valid
+Thread 2 (i=2):  if 2 &lt; size:  output[2] = a[2] + 10  ✓ Valid
+Thread 3 (i=3):  if 3 &lt; size:  output[3] = a[3] + 10  ✓ Valid
 Thread 4 (i=4):  if 4 &lt; size:  ❌ Skip (out of bounds)
 Thread 5 (i=5):  if 5 &lt; size:  ❌ Skip (out of bounds)
 </code></pre>
@@ -730,7 +732,7 @@ alias dtype = DType.float32
 
 
 fn add_10_guard(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -746,7 +748,7 @@ fn add_10_guard(
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add guard: <code>if i &lt; size</code></li>
-<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
+<li>Inside guard: <code>output[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -814,7 +816,7 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <p>These boundary handling patterns will become more elegant when we <a href="puzzle_03/../puzzle_04/">learn about LayoutTensor in Puzzle 4</a>, which provides built-in boundary checking and shape management.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <p><img src="puzzle_04/./media/videos/720p30/puzzle_04_viz.gif" alt="2D Matrix Mapping" /></p>
 <h2 id="key-concepts-4"><a class="header" href="#key-concepts-4">Key concepts</a></h2>
@@ -825,7 +827,7 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <li>Memory layout patterns</li>
 </ul>
 <p>For each position \((i,j)\):
-\[\Large out[i,j] = a[i,j] + 10\]</p>
+\[\Large output[i,j] = a[i,j] + 10\]</p>
 <blockquote>
 <h2 id="thread-indexing-convention"><a class="header" href="#thread-indexing-convention">Thread indexing convention</a></h2>
 <p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
@@ -852,7 +854,7 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <p>Put LayoutTensor into practice with natural 2D indexing and automatic bounds checking.</p>
 <p>💡 <strong>Note</strong>: From this puzzle onward, we’ll primarily use LayoutTensor for cleaner, safer GPU code.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-4"><a class="header" href="#overview-4">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts-5"><a class="header" href="#key-concepts-5">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -876,7 +878,7 @@ alias dtype = DType.float32
 
 
 fn add_10_2d(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -937,7 +939,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <ol>
 <li>Get 2D indices:  <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
 <li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
-<li>Inside guard: <code>out[row * size + col] = a[row * size + col] + 10.0</code></li>
+<li>Inside guard: <code>output[row * size + col] = a[row * size + col] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -950,20 +952,20 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
 <p>Let’s look at the challenges we’ve faced so far:</p>
 <pre><code class="language-mojo"># Puzzle 1: Simple indexing
-out[i] = a[i] + 10.0
+output[i] = a[i] + 10.0
 
 # Puzzle 2: Multiple array management
-out[i] = a[i] + b[i]
+output[i] = a[i] + b[i]
 
 # Puzzle 3: Bounds checking
 if i &lt; size:
-    out[i] = a[i] + 10.0
+    output[i] = a[i] + 10.0
 </code></pre>
 <p>As dimensions grow, code becomes more complex:</p>
 <pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
 idx = row * WIDTH + col
 if row &lt; height and col &lt; width:
-    out[idx] = a[idx] + 10.0
+    output[idx] = a[idx] + 10.0
 </code></pre>
 <h2 id="the-solution-a-peek-at-layouttensor"><a class="header" href="#the-solution-a-peek-at-layouttensor">The solution: A peek at LayoutTensor</a></h2>
 <p>LayoutTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>
@@ -1147,7 +1149,7 @@ After:
 <p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these fundamental concepts to create increasingly sophisticated GPU programs.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version"><a class="header" href="#layouttensor-version">LayoutTensor Version</a></h1>
 <h2 id="overview-5"><a class="header" href="#overview-5">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D <em>LayoutTensor</em> <code>a</code> and stores it in 2D <em>LayoutTensor</em> <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D <em>LayoutTensor</em> <code>a</code> and stores it in 2D <em>LayoutTensor</em> <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts-6"><a class="header" href="#key-concepts-6">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1172,7 +1174,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_2d(
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -1233,13 +1235,13 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <ul>
 <li>Gets 2D thread indices with <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
 <li>Guards against out-of-bounds with <code>if row &lt; size and col &lt; size</code></li>
-<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>out[row, col] = a[row, col] + 10.0</code></li>
+<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>output[row, col] = a[row, col] + 10.0</code></li>
 </ul>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-5-broadcast"><a class="header" href="#puzzle-5-broadcast">Puzzle 5: Broadcast</a></h1>
 <h2 id="overview-6"><a class="header" href="#overview-6">Overview</a></h2>
-<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>out</code>.</p>
+<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <p><img src="puzzle_05/./media/videos/720p30/puzzle_05_viz.gif" alt="Broadcast visualization" /></p>
 <h2 id="key-concepts-7"><a class="header" href="#key-concepts-7">Key concepts</a></h2>
@@ -1256,7 +1258,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p>Use LayoutTensor to handle mixed-dimension operations.</p>
 <p>💡 <strong>Note</strong>: Notice how LayoutTensor simplifies broadcasting compared to manual indexing.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-7"><a class="header" href="#overview-7">Overview</a></h2>
-<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>out</code>.</p>
+<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <h2 id="key-concepts-8"><a class="header" href="#key-concepts-8">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1280,7 +1282,7 @@ alias dtype = DType.float32
 
 
 fn broadcast_add(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
@@ -1374,7 +1376,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version-1"><a class="header" href="#layouttensor-version-1">LayoutTensor Version</a></h1>
 <h2 id="overview-8"><a class="header" href="#overview-8">Overview</a></h2>
-<p>Implement a kernel that broadcast adds 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 2D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that broadcast adds 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 2D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <h2 id="key-concepts-9"><a class="header" href="#key-concepts-9">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1405,7 +1407,7 @@ fn broadcast_add[
     a_layout: Layout,
     b_layout: Layout,
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
     b: LayoutTensor[mut=False, dtype, b_layout],
     size: Int,
@@ -1503,7 +1505,7 @@ expected: HostBuffer([0.0, 1.0, 1.0, 2.0])
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-6-blocks"><a class="header" href="#puzzle-6-blocks">Puzzle 6: Blocks</a></h1>
 <h2 id="overview-9"><a class="header" href="#overview-9">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
 <p><img src="puzzle_06/./media/videos/720p30/puzzle_06_viz.gif" alt="Blocks visualization" /></p>
 <h2 id="key-concepts-10"><a class="header" href="#key-concepts-10">Key concepts</a></h2>
@@ -1522,7 +1524,7 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -1538,7 +1540,7 @@ fn add_10_blocks(
 <ol>
 <li>Calculate global index: <code>i = block_dim.x * block_idx.x + thread_idx.x</code></li>
 <li>Add guard: <code>if i &lt; size</code></li>
-<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
+<li>Inside guard: <code>output[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -1618,7 +1620,7 @@ Block 2:             [6 7 8]
 <p><strong>Memory access pattern</strong></p>
 <ul>
 <li>Coalesced memory access: threads in a block access contiguous memory</li>
-<li>Each thread processes one element: <code>out[i] = a[i] + 10.0</code></li>
+<li>Each thread processes one element: <code>output[i] = a[i] + 10.0</code></li>
 <li>Block-level parallelism enables efficient memory bandwidth utilization</li>
 </ul>
 </li>
@@ -1628,7 +1630,7 @@ Block 2:             [6 7 8]
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-7-2d-blocks"><a class="header" href="#puzzle-7-2d-blocks">Puzzle 7: 2D Blocks</a></h1>
 <h2 id="overview-10"><a class="header" href="#overview-10">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <p><img src="puzzle_07/./media/videos/720p30/puzzle_07_viz.gif" alt="Blocks 2D visualization" /></p>
 <h2 id="key-concepts-11"><a class="header" href="#key-concepts-11">Key concepts</a></h2>
@@ -1669,7 +1671,7 @@ The block dimensions and indices work together to ensure:</p>
 <p>Use LayoutTensor features to elegantly handle block-based processing.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies block coordination and memory access patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-11"><a class="header" href="#overview-11">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <h2 id="key-concepts-12"><a class="header" href="#key-concepts-12">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1696,7 +1698,7 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks_2d(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -1818,7 +1820,7 @@ Block (0,1)         Block (1,1)
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="layouttensor-version-2"><a class="header" href="#layouttensor-version-2">LayoutTensor Version</a></h1>
 <h2 id="overview-12"><a class="header" href="#overview-12">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D LayoutTensor <code>a</code> and stores it in 2D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D LayoutTensor <code>a</code> and stores it in 2D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <h2 id="key-concepts-13"><a class="header" href="#key-concepts-13">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -1850,7 +1852,7 @@ fn add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
     size: Int,
 ):
@@ -1979,7 +1981,7 @@ row * size + col    tensor[row, col]
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-8-shared-memory"><a class="header" href="#puzzle-8-shared-memory">Puzzle 8: Shared Memory</a></h1>
 <h2 id="overview-13"><a class="header" href="#overview-13">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <p><img src="puzzle_08/./media/videos/720p30/puzzle_08_viz.gif" alt="Shared memory visualization" /></p>
 <h2 id="implementation-approaches-3"><a class="header" href="#implementation-approaches-3">Implementation approaches</a></h2>
@@ -1989,7 +1991,7 @@ row * size + col    tensor[row, col]
 <p>Use LayoutTensor’s built-in shared memory management features.</p>
 <p>💡 <strong>Note</strong>: Experience how LayoutTensor simplifies shared memory operations while maintaining performance.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-14"><a class="header" href="#overview-14">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <h2 id="key-concepts-14"><a class="header" href="#key-concepts-14">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -2025,7 +2027,7 @@ alias dtype = DType.float32
 
 
 fn add_10_shared(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -2055,7 +2057,7 @@ fn add_10_shared(
 <ol>
 <li>Wait for shared memory load with <code>barrier()</code></li>
 <li>Use <code>local_i</code> to access shared memory: <code>shared[local_i]</code></li>
-<li>Use <code>global_i</code> for output: <code>out[global_i]</code></li>
+<li>Use <code>global_i</code> for output: <code>output[global_i]</code></li>
 <li>Add guard: <code>if global_i &lt; size</code></li>
 </ol>
 </div>
@@ -2115,7 +2117,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy</strong></p>
 <ul>
-<li>Global memory: <code>a</code> and <code>out</code> arrays (slow, visible to all blocks)</li>
+<li>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</li>
 <li>Shared memory: <code>shared</code> array (fast, thread-block local)</li>
 <li>Example for 8 elements with 4 threads per block:
 <pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
@@ -2137,7 +2139,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
 <li>Process phase: Each thread adds 10 to its shared memory value</li>
-<li>Result: <code>out[i] = shared[local_i] + 10 = 11</code></li>
+<li>Result: <code>output[i] = shared[local_i] + 10 = 11</code></li>
 </ul>
 </li>
 <li>
@@ -2168,7 +2170,7 @@ Block 1 output: [11 11 11 11]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-15"><a class="header" href="#overview-15">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a 1D ayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of a 1D ayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <h2 id="key-concepts-15"><a class="header" href="#key-concepts-15">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -2229,7 +2231,7 @@ alias layout = Layout.row_major(SIZE)
 fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -2313,7 +2315,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy with LayoutTensor</strong></p>
 <ul>
-<li>Global tensors: <code>a</code> and <code>out</code> (slow, visible to all blocks)</li>
+<li>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</li>
 <li>Shared tensor: <code>shared</code> (fast, thread-block local)</li>
 <li>Example for 8 elements with 4 threads per block:
 <pre><code class="language-txt">Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
@@ -2335,7 +2337,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
 <li>Process phase: Each thread adds 10 to its shared tensor value</li>
-<li>Result: <code>out[global_i] = shared[local_i] + 10 = 11</code></li>
+<li>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></li>
 </ul>
 </li>
 <li>
@@ -2369,7 +2371,7 @@ Block 1 output: [11 11 11 11]
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-9-pooling"><a class="header" href="#puzzle-9-pooling">Puzzle 9: Pooling</a></h1>
 <h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <p><img src="puzzle_09/./media/videos/720p30/puzzle_09_viz.gif" alt="Pooling visualization" /></p>
 <h2 id="implementation-approaches-4"><a class="header" href="#implementation-approaches-4">Implementation approaches</a></h2>
@@ -2379,7 +2381,7 @@ Block 1 output: [11 11 11 11]
 <p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -2412,7 +2414,7 @@ alias dtype = DType.float32
 
 
 fn pooling(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -2433,7 +2435,7 @@ fn pooling(
 <div class="solution-tips">
 <ol>
 <li>Load data and call <code>barrier()</code></li>
-<li>Special cases: <code>out[0] = shared[0]</code>, <code>out[1] = shared[0] + shared[1]</code></li>
+<li>Special cases: <code>output[0] = shared[0]</code>, <code>output[1] = shared[0] + shared[1]</code></li>
 <li>General case: <code>if 1 &lt; global_i &lt; size</code></li>
 <li>Sum three elements: <code>shared[local_i - 2] + shared[local_i - 1] + shared[local_i]</code></li>
 </ol>
@@ -2509,11 +2511,11 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <p><strong>Boundary cases</strong></p>
 <ul>
 <li>Position 0: Single element
-<pre><code class="language-txt">out[0] = shared[0] = 0.0
+<pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
 <li>Position 1: Sum of first two elements
-<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
 </ul>
@@ -2558,7 +2560,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -2595,7 +2597,7 @@ alias layout = Layout.row_major(SIZE)
 fn pooling[
     layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -2699,11 +2701,11 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <p><strong>Boundary cases</strong></p>
 <ul>
 <li>Position 0: Single element
-<pre><code class="language-txt">out[0] = shared[0] = 0.0
+<pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
 <li>Position 1: Sum of first two elements
-<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
 </ul>
@@ -2755,7 +2757,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-10-dot-product"><a class="header" href="#puzzle-10-dot-product">Puzzle 10: Dot Product</a></h1>
 <h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> (single number).</p>
+<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <p><img src="puzzle_10/./media/videos/720p30/puzzle_10_viz.gif" alt="Dot product visualization" /></p>
 <h2 id="implementation-approaches-5"><a class="header" href="#implementation-approaches-5">Implementation approaches</a></h2>
@@ -2765,7 +2767,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> (single number).</p>
+<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -2801,7 +2803,7 @@ alias dtype = DType.float32
 
 
 fn dot_product(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
     size: Int,
@@ -2819,7 +2821,7 @@ fn dot_product(
 <li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
 <li>Call <code>barrier()</code> to synchronize</li>
 <li>Use thread 0 to sum all products in shared memory</li>
-<li>Write final sum to <code>out[0]</code></li>
+<li>Write final sum to <code>output[0]</code></li>
 </ol>
 </div>
 </details>
@@ -2996,7 +2998,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code> (single number).</p>
+<p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -3040,7 +3042,7 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=True, dtype, in_layout],
     b: LayoutTensor[mut=True, dtype, in_layout],
     size: Int,
@@ -3058,7 +3060,7 @@ fn dot_product[
 <li>Create shared memory with tensor builder</li>
 <li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
-<li>Let thread 0 write final result to <code>out[0]</code></li>
+<li>Let thread 0 write final result to <code>output[0]</code></li>
 </ol>
 </div>
 </details>
@@ -3249,11 +3251,11 @@ Thread 1: shared[1] = 26 + 58 = 84
 </blockquote>
 <h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
-<p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code> using the <code>LayoutTensor</code> abstraction.</p>
+<p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="1D Convolution" /></p>
 <p>For those new to convolution, think of it as a weighted sliding window operation. At each position, we multiply the kernel values with the corresponding input values and sum the results. In mathematical notation, this is often written as:</p>
-<p>\[\Large out[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
+<p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>In pseudocode, 1D convolution is:</p>
 <pre><code class="language-python">for i in range(SIZE):
     for j in range(CONV):
@@ -3273,7 +3275,7 @@ Then tackle the more challenging case where data needs to be shared across block
 </ul>
 <p>Each version presents unique challenges in terms of memory access patterns and thread coordination. The simple version helps you understand the basic convolution operation, while the complete version tests your ability to handle more complex scenarios that arise in real-world GPU programming.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor `output.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="key-concepts-20"><a class="header" href="#key-concepts-20">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -3312,7 +3314,7 @@ alias conv_layout = Layout.row_major(CONV)
 fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -3420,12 +3422,12 @@ shared_b: [0  1  2]           // Convolution kernel
 </li>
 <li>
 <p><strong>Convolution Process</strong> for each position i:</p>
-<pre><code class="language-txt">out[0] = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] = 0*0 + 1*1 + 2*2 = 5
-out[1] = a[1]*b[0] + a[2]*b[1] + a[3]*b[2] = 1*0 + 2*1 + 3*2 = 8
-out[2] = a[2]*b[0] + a[3]*b[1] + a[4]*b[2] = 2*0 + 3*1 + 4*2 = 11
-out[3] = a[3]*b[0] + a[4]*b[1] + a[5]*b[2] = 3*0 + 4*1 + 5*2 = 14
-out[4] = a[4]*b[0] + a[5]*b[1] + 0*b[2]    = 4*0 + 5*1 + 0*2 = 5
-out[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
+<pre><code class="language-txt">output[0] = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] = 0*0 + 1*1 + 2*2 = 5
+output[1] = a[1]*b[0] + a[2]*b[1] + a[3]*b[2] = 1*0 + 2*1 + 3*2 = 8
+output[2] = a[2]*b[0] + a[3]*b[1] + a[4]*b[2] = 2*0 + 3*1 + 4*2 = 11
+output[3] = a[3]*b[0] + a[4]*b[1] + a[5]*b[2] = 3*0 + 4*1 + 5*2 = 14
+output[4] = a[4]*b[0] + a[5]*b[1] + 0*b[2]    = 4*0 + 5*1 + 0*2 = 5
+output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 </code></pre>
 </li>
 </ol>
@@ -3446,7 +3448,7 @@ for j in range(CONV):
 <li>
 <p>The safe and correct implementation:</p>
 <pre><code class="language-mojo">if global_i &lt; a_size:
-    var local_sum: out.element_type = 0  # Using var allows type inference
+    var local_sum: output.element_type = 0  # Using var allows type inference
     @parameter  # Unrolls loop at compile time since CONV is constant
     for j in range(CONV):
         if local_i + j &lt; SIZE:
@@ -3458,7 +3460,7 @@ for j in range(CONV):
 <li>
 <p><strong>Key Implementation Features</strong>:</p>
 <ul>
-<li>Uses <code>var</code> for proper type inference with <code>out.element_type</code></li>
+<li>Uses <code>var</code> for proper type inference with <code>output.element_type</code></li>
 <li>Employs <code>@parameter</code> decorator to unroll the convolution loop at compile time</li>
 <li>Maintains strict bounds checking for memory safety</li>
 <li>Leverages LayoutTensor’s type system for better code safety</li>
@@ -3493,7 +3495,7 @@ for j in range(CONV):
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="block-boundary-version"><a class="header" href="#block-boundary-version">Block Boundary Version</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="configuration-9"><a class="header" href="#configuration-9">Configuration</a></h2>
 <ul>
@@ -3523,7 +3525,7 @@ alias conv_2_layout = Layout.row_major(CONV_2)
 fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -3674,7 +3676,7 @@ if local_i &lt; CONV_2 - 1:
 <li>
 <p><strong>Convolution Computation</strong>:</p>
 <pre><code class="language-mojo">if global_i &lt; a_size:
-    var local_sum: out.element_type = 0
+    var local_sum: output.element_type = 0
     @parameter
     for j in range(CONV_2):
         if local_i + j &lt; TPB + CONV_2 - 1:
@@ -3682,7 +3684,7 @@ if local_i &lt; CONV_2 - 1:
 </code></pre>
 <ul>
 <li>Uses <code>@parameter</code> for compile-time loop unrolling</li>
-<li>Proper type inference with <code>out.element_type</code></li>
+<li>Proper type inference with <code>output.element_type</code></li>
 <li>Extended bounds check for overlap region</li>
 </ul>
 </li>
@@ -3753,7 +3755,7 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-prefix-sum"><a class="header" href="#puzzle-12-prefix-sum">Puzzle 12: Prefix Sum</a></h1>
 <h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
-<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
 <p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Prefix sum" /></p>
 <h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
@@ -3789,7 +3791,7 @@ Then tackle the more challenging case of handling larger arrays that span multip
 </ul>
 <p>Each version builds on the previous one, helping you develop a deep understanding of parallel prefix sum computation. The simple version establishes the fundamental algorithm, while the complete version shows how to scale it to larger datasets - a common requirement in real-world GPU applications.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simple-version"><a class="header" href="#simple-version">Simple Version</a></h1>
-<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
 <h2 id="configuration-10"><a class="header" href="#configuration-10">Configuration</a></h2>
 <ul>
@@ -3818,7 +3820,7 @@ alias layout = Layout.row_major(SIZE)
 fn prefix_sum_simple[
     layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):
@@ -3941,7 +3943,7 @@ Result:      [0    1    3    6    10   15   21   28]
 <h3 id="final-write-to-output"><a class="header" href="#final-write-to-output">Final Write to Output</a></h3>
 <pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 global_i:     0    1    2    3    4    5    6    7
-out[]:       [0    1    3    6    10   15   21   28]
+output:       [0    1    3    6    10   15   21   28]
               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
@@ -3950,14 +3952,14 @@ out[]:       [0    1    3    6    10   15   21   28]
 <ul>
 <li>Loads <code>shared[0] = 0</code></li>
 <li>Never adds (<code>local_i &lt; offset</code> always)</li>
-<li>Writes <code>out[0] = 0</code></li>
+<li>Writes <code>output[0] = 0</code></li>
 </ul>
 <p><strong>\(T_1\) (<code>local_i=1</code>):</strong></p>
 <ul>
 <li>Loads <code>shared[1] = 1</code></li>
 <li><code>offset=1</code>: adds <code>shared[0]</code> → 1</li>
 <li><code>offset=2,4</code>: no action (<code>local_i &lt; offset</code>)</li>
-<li>Writes <code>out[1] = 1</code></li>
+<li>Writes <code>output[1] = 1</code></li>
 </ul>
 <p><strong>\(T_2\) (<code>local_i=2</code>):</strong></p>
 <ul>
@@ -3965,7 +3967,7 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[1]</code> → 3</li>
 <li><code>offset=2</code>: adds <code>shared[0]</code> → 3</li>
 <li><code>offset=4</code>: no action</li>
-<li>Writes <code>out[2] = 3</code></li>
+<li>Writes <code>output[2] = 3</code></li>
 </ul>
 <p><strong>\(T_3\) (<code>local_i=3</code>):</strong></p>
 <ul>
@@ -3973,7 +3975,7 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[2]</code> → 5</li>
 <li><code>offset=2</code>: adds <code>shared[1]</code> → 6</li>
 <li><code>offset=4</code>: no action</li>
-<li>Writes <code>out[3] = 7</code></li>
+<li>Writes <code>output[3] = 7</code></li>
 </ul>
 <p><strong>\(T_4\) (<code>local_i=4</code>):</strong></p>
 <ul>
@@ -3981,7 +3983,7 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[3]</code> → 7</li>
 <li><code>offset=2</code>: adds <code>shared[2]</code> → 10</li>
 <li><code>offset=4</code>: adds <code>shared[0]</code> → 10</li>
-<li>Writes <code>out[4] = 10</code></li>
+<li>Writes <code>output[4] = 10</code></li>
 </ul>
 <p><strong>\(T_5\) (<code>local_i=5</code>):</strong></p>
 <ul>
@@ -3989,7 +3991,7 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[4]</code> → 9</li>
 <li><code>offset=2</code>: adds <code>shared[3]</code> → 14</li>
 <li><code>offset=4</code>: adds <code>shared[1]</code> → 15</li>
-<li>Writes <code>out[5] = 16</code></li>
+<li>Writes <code>output[5] = 16</code></li>
 </ul>
 <p><strong>\(T_6\) (<code>local_i=6</code>):</strong></p>
 <ul>
@@ -3997,7 +3999,7 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[5]</code> → 11</li>
 <li><code>offset=2</code>: adds <code>shared[4]</code> → 18</li>
 <li><code>offset=4</code>: adds <code>shared[2]</code> → 21</li>
-<li>Writes <code>out[6] = 21</code></li>
+<li>Writes <code>output[6] = 21</code></li>
 </ul>
 <p><strong>\(T_7\) (<code>local_i=7</code>):</strong></p>
 <ul>
@@ -4005,13 +4007,13 @@ out[]:       [0    1    3    6    10   15   21   28]
 <li><code>offset=1</code>: adds <code>shared[6]</code> → 13</li>
 <li><code>offset=2</code>: adds <code>shared[5]</code> → 22</li>
 <li><code>offset=4</code>: adds <code>shared[3]</code> → 28</li>
-<li>Writes <code>out[7] = 28</code></li>
+<li>Writes <code>output[7] = 28</code></li>
 </ul>
 <p>The solution ensures correct synchronization between phases using <code>barrier()</code> and handles array bounds checking with <code>if global_i &lt; size</code>. The final result produces the inclusive prefix sum where each element \(i\) contains \(\sum_{j=0}^{i} a[j]\).</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="complete-version"><a class="header" href="#complete-version">Complete Version</a></h1>
-<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to synchronize across multiple blocks to get the correct result.</em></p>
 <h2 id="configuration-11"><a class="header" href="#configuration-11">Configuration</a></h2>
 <ul>
@@ -4045,7 +4047,7 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
     num_blocks: Int,
@@ -4058,7 +4060,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](out: LayoutTensor[mut=False, dtype, layout], size: Int):
+](output: LayoutTensor[mut=False, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -4291,12 +4293,12 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>out[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
+<pre><code>output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
-<pre><code>out[15] = 28  // at position size + block_idx.x = 15 + 0
+<pre><code>output[15] = 28  // at position size + block_idx.x = 15 + 0
 </code></pre>
 </li>
 </ol>
@@ -4315,12 +4317,12 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>out[8...14] = [8, 17, 27, 38, 50, 63, 77]
+<pre><code>output[8...14] = [8, 17, 27, 38, 50, 63, 77]
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
-<pre><code>out[16] = 77  // at position size + block_idx.x = 15 + 1
+<pre><code>output[16] = 77  // at position size + block_idx.x = 15 + 1
 </code></pre>
 </li>
 </ol>
@@ -4341,8 +4343,8 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Block 1</strong>: Each thread adds Block 0’s sum to its element:</p>
-<pre><code>prev_block_sum = out[size + block_idx.x - 1] = out[15] = 28
-out[global_i] += prev_block_sum
+<pre><code>prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
+output[global_i] += prev_block_sum
 </code></pre>
 <p>Block 1 values are transformed:</p>
 <pre><code>Before: [8, 17, 27, 38, 50, 63, 77]
@@ -4364,7 +4366,7 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-13-axis-sum"><a class="header" href="#puzzle-13-axis-sum">Puzzle 13: Axis Sum</a></h1>
 <h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
-<p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>out</code> using LayoutTensor.</p>
+<p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="puzzle_13/./media/videos/720p30/puzzle_13_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -4409,7 +4411,7 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -4428,7 +4430,7 @@ fn axis_sum[
 <li>Use <code>batch = block_idx.y</code> to select row</li>
 <li>Load elements: <code>cache[local_i] = a[batch * size + local_i]</code></li>
 <li>Perform parallel reduction with halving stride</li>
-<li>Thread 0 writes final sum to <code>out[batch]</code></li>
+<li>Thread 0 writes final sum to <code>output[batch]</code></li>
 </ol>
 </div>
 </details>
@@ -4541,7 +4543,7 @@ Stride 1: [15 12 6  7  4  5  *  *]
 <ul>
 <li>LayoutTensor 2D indexing for input: <code>a[batch, local_i]</code></li>
 <li>Shared memory for efficient reduction</li>
-<li>LayoutTensor 2D indexing for output: <code>out[batch, 0]</code></li>
+<li>LayoutTensor 2D indexing for output: <code>output[batch, 0]</code></li>
 </ul>
 </li>
 <li>
@@ -4557,7 +4559,7 @@ while stride &gt; 0:
 <li>
 <p><strong>Output Writing</strong>:</p>
 <pre><code class="language-mojo">if local_i == 0:
-    out[batch, 0] = cache[0]  --&gt; One result per batch
+    output[batch, 0] = cache[0]  --&gt; One result per batch
 </code></pre>
 </li>
 </ol>
@@ -4628,7 +4630,7 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 <p>Choose a version to begin your matrix multiplication journey!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
 <h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\).
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts-23"><a class="header" href="#key-concepts-23">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -4668,7 +4670,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn naive_matmul[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -4754,13 +4756,13 @@ col = block_dim.x * block_idx.x + thread_idx.x
 <ul>
 <li>Direct 2D indexing: <code>a[row, k]</code></li>
 <li>Transposed access: <code>b[k, col]</code></li>
-<li>Output writing: <code>out[row, col]</code></li>
+<li>Output writing: <code>output[row, col]</code></li>
 </ul>
 </li>
 <li>
 <p><strong>Computation flow</strong>:</p>
 <pre><code class="language-mojo"># Use var for mutable accumulator with tensor's element type
-var acc: out.element_type = 0
+var acc: output.element_type = 0
 
 # @parameter for compile-time loop unrolling
 @parameter
@@ -4774,7 +4776,7 @@ for k in range(size):
 <li>
 <p><strong>Variable declaration</strong>:</p>
 <ul>
-<li>The use of <code>var</code> in <code>var acc: out.element_type = 0</code> allows for type inference with <code>out.element_type</code> ensures type compatibility with the output tensor</li>
+<li>The use of <code>var</code> in <code>var acc: output.element_type = 0</code> allows for type inference with <code>output.element_type</code> ensures type compatibility with the output tensor</li>
 <li>Initialized to zero before accumulation</li>
 </ul>
 </li>
@@ -4920,7 +4922,7 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
 <h2 id="key-concepts-24"><a class="header" href="#key-concepts-24">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -4953,7 +4955,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -5078,7 +5080,7 @@ if row &lt; size and col &lt; size:
 <pre><code class="language-mojo"># Guard ensures we only compute for valid matrix elements
 if row &lt; size and col &lt; size:
     # Initialize accumulator with output tensor's type
-    var acc: out.element_type = 0
+    var acc: output.element_type = 0
 
     # Compile-time unrolled loop for matrix multiplication
     @parameter
@@ -5086,7 +5088,7 @@ if row &lt; size and col &lt; size:
         acc += a_shared[local_row, k] * b_shared[k, local_col]
 
     # Write result only for threads within matrix bounds
-    out[row, col] = acc
+    output[row, col] = acc
 </code></pre>
 <p>Key aspects:</p>
 <ul>
@@ -5099,7 +5101,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Accumulator Type</strong>: <code>var acc: out.element_type</code></p>
+<p><strong>Accumulator Type</strong>: <code>var acc: output.element_type</code></p>
 <ul>
 <li>Uses output tensor’s element type for type safety</li>
 <li>Ensures consistent numeric precision</li>
@@ -5115,7 +5117,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Result Writing</strong>: <code>out[row, col] = acc</code></p>
+<p><strong>Result Writing</strong>: <code>output[row, col] = acc</code></p>
 <ul>
 <li>Protected by the same guard condition</li>
 <li>Only valid threads write results</li>
@@ -5294,7 +5296,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -5496,7 +5498,7 @@ When threads access scattered locations (right), each access requires a separate
 <ol start="2">
 <li><strong>Boundary handling</strong>:
 <pre><code class="language-mojo">if row &lt; size and col &lt; size:
-    out[row, col] = acc
+    output[row, col] = acc
 </code></pre>
 <ul>
 <li>Prevents out-of-bounds access</li>
@@ -5524,7 +5526,7 @@ When threads access scattered locations (right), each access requires a separate
 <li>
 <p><strong>Computation</strong>:</p>
 <ul>
-<li>Register-based accumulation i.e. <code>var acc: out.element_type = 0</code></li>
+<li>Register-based accumulation i.e. <code>var acc: output.element_type = 0</code></li>
 <li>Compile-time loop unrolling via <code>@parameter</code></li>
 </ul>
 </li>
@@ -5593,7 +5595,7 @@ fn matmul_idiomatic_tiled[
 <ol>
 <li>
 <p><strong>LayoutTensor tile API</strong></p>
-<pre><code class="language-mojo">out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+<pre><code class="language-mojo">out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
@@ -5700,7 +5702,7 @@ fn conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     input: LayoutTensor[mut=True, dtype, in_layout],
     kernel: LayoutTensor[mut=True, dtype, conv_layout],
 ):
@@ -5725,14 +5727,14 @@ fn conv1d_kernel[
     barrier()
 
     if global_i &lt; input_size:
-        var local_sum: out.element_type = 0
+        var local_sum: output.element_type = 0
 
         @parameter
         for j in range(conv_size):
             if local_i + j &lt; TPB + conv_size - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
-        out[global_i] = local_sum
+        output[global_i] = local_sum
 
 
 </code></pre>
@@ -5770,17 +5772,17 @@ struct Conv1DCustomOp:
         conv_size: Int,
         dtype: DType = DType.float32,
     ](
-        out: OutputTensor[rank=1],
-        input: InputTensor[type = out.type, rank = out.rank],
-        kernel: InputTensor[type = out.type, rank = out.rank],
+        output: OutputTensor[rank=1],
+        input: InputTensor[dtype = output.dtype, rank = output.rank],
+        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:
-        out_tensor = out.to_layout_tensor()
+        output_tensor = output.to_layout_tensor()
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
         alias in_layout = input_tensor.layout
-        alias out_layout = out_tensor.layout
+        alias output_layout = output_tensor.layout
         alias conv_layout = kernel_tensor.layout
 
         @parameter
@@ -5788,9 +5790,11 @@ struct Conv1DCustomOp:
             gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
-                DeviceBuffer[out.type](
+                DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[out.type]]](out_tensor.ptr),
+                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                        output_tensor.ptr
+                    ),
                     input_size,
                     owning=False,
                 ),
@@ -5906,9 +5910,9 @@ This single line does several important things:
 struct Conv1DCustomOp:
     @staticmethod
     fn execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
-        out: OutputTensor[rank=1],
-        input: InputTensor[type = out.type, rank = out.rank],
-        kernel: InputTensor[type = out.type, rank = out.rank],
+        output: OutputTensor[rank=1],
+        input: InputTensor[dtype = output.dtype, rank = output.rank],
+        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
         ctx: DeviceContextPtr,
     ) raises:
         # Implementation
@@ -5922,7 +5926,7 @@ struct Conv1DCustomOp:
 </li>
 <li>
 <p><strong>Tensor Conversion</strong>:</p>
-<pre><code class="language-mojo">out_tensor = out.to_layout_tensor()
+<pre><code class="language-mojo">output_tensor = output.to_layout_tensor()
 input_tensor = input.to_layout_tensor()
 kernel_tensor = kernel.to_layout_tensor()
 </code></pre>
@@ -5961,9 +5965,9 @@ gpu_ctx.enqueue_function[...](...) # Schedule kernel
 struct Conv1DCustomOp:
     @staticmethod
     fn execute[...](
-        out: OutputTensor[rank=1],
-        input: InputTensor[type = out.type, rank = out.rank],
-        kernel: InputTensor[type = out.type, rank = out.rank],
+        output: OutputTensor[rank=1],
+        input: InputTensor[dtype = output.dtype, rank = output.rank],
+        kernel: InputTensor[type = output.dtype, rank = output.rank],
         ctx: DeviceContextPtr,
     ) raises:
         # Implementation here
@@ -6090,7 +6094,7 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     # FILL IN (roughly 31 lines)
@@ -6118,7 +6122,7 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
     input: LayoutTensor[dtype, layout, MutableAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
@@ -6315,7 +6319,7 @@ Our GPU implementation implements the numerically stable softmax algorithm with 
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 )
 </code></pre>
@@ -6387,7 +6391,7 @@ while stride &gt; 0:
 var exp_val: Scalar[dtype] = 0.0
 if global_i &lt; input_size:
     exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    out[global_i] = exp_val
+    output[global_i] = exp_val
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -6419,7 +6423,7 @@ while stride &gt; 0:
 <pre><code class="language-mojo">block_sum = shared_sum[0]
 
 if global_i &lt; input_size:
-    out[global_i] = out[global_i] / block_sum
+    output[global_i] = output[global_i] / block_sum
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -6480,7 +6484,7 @@ for i in range(input_size):
 <pre><code class="language-mojo">var sum_exp: Scalar[dtype] = 0.0
 for i in range(input_size):
     var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
-    out[i] = exp_val
+    output[i] = exp_val
     sum_exp += exp_val
 </code></pre>
 <p>We compute \(e^{x_i - max}\) for each element, store the result in the output buffer, and accumulate the sum \(\sum_{j=1}^{n} e^{x_j - max}\) in a single pass. This approach minimizes memory operations compared to using separate loops.</p>
@@ -6488,7 +6492,7 @@ for i in range(input_size):
 <li>
 <p><strong>Normalization</strong>:</p>
 <pre><code class="language-mojo">for i in range(input_size):
-    out[i] = out[i] / sum_exp
+    output[i] = output[i] / sum_exp
 </code></pre>
 <p>Finally, we normalize each element by dividing by the sum, producing a proper probability distribution according to the softmax formula:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
@@ -6516,6 +6520,7 @@ for i in range(input_size):
         output = ops.custom(
             name="softmax",
             values=[input_value],
+            device=DeviceRef.from_device(device),
             out_types=[
                 TensorType(
                     dtype=input_value.tensor.dtype,
@@ -6714,7 +6719,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
@@ -6988,7 +6993,7 @@ Output vector norms:
 shared_tile[local_row, local_col] = inp[global_row, global_col]
 barrier()
 # Store with swapped indexing for transpose
-out[out_row, out_col] = shared_tile[local_col, local_row]
+output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
 <p>The transpose happens through <strong>swapped indexing</strong> in shared memory access (<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and <strong>swapped block coordinates</strong> for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.</p>
 </div>
@@ -7313,7 +7318,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>Capturing semantics</strong> in nested functions</li>
 </ul>
 <p>The mathematical operation is simple element-wise addition:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
 <h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
 <ul>
@@ -7333,7 +7338,7 @@ alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
 fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -7389,7 +7394,7 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
 <p>This performs element-wise addition across the entire SIMD vector in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">out.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
@@ -7472,13 +7477,13 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h3 id="1-functional-abstraction-philosophy"><a class="header" href="#1-functional-abstraction-philosophy">1. <strong>Functional abstraction philosophy</strong></a></h3>
 <p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
-<pre><code class="language-mojo">// Manual thread management
+<pre><code class="language-mojo"># Manual thread management
 idx = thread_idx.x + block_idx.x * block_dim.x
 if idx &lt; size:
-    out[idx] = a[idx] + b[idx];  // Scalar operation
+    output[idx] = a[idx] + b[idx];  // Scalar operation
 </code></pre>
 <p><strong>Mojo functional approach:</strong></p>
-<pre><code class="language-mojo">// Automatic management + SIMD vectorization
+<pre><code class="language-mojo"># Automatic management + SIMD vectorization
 elementwise[add_function, simd_width, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>What <code>elementwise</code> abstracts away:</strong></p>
@@ -7502,11 +7507,11 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">idx = indices[0]                          // Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.load[simd_width](idx, 0)      // Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.load[simd_width](idx, 0)      // Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                    // SIMD: 4 additions in parallel (GPU-dependent)
-out.store[simd_width](idx, 0, ret)       // Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">idx = indices[0]                          # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+a_simd = a.load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+b_simd = b.load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+ret = a_simd + b_simd                     # SIMD: 4 additions in parallel (GPU-dependent)
+output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -7587,10 +7592,10 @@ This elementwise pattern is the building block for:</p>
 </ul>
 <p><strong>Compared to Traditional Approaches:</strong></p>
 <pre><code class="language-mojo">// Traditional: Error-prone, verbose, hardware-specific
-__global__ void add_kernel(float* out, float* a, float* b, int size) {
+__global__ void add_kernel(float* output, float* a, float* b, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx &lt; size) {
-        out[idx] = a[idx] + b[idx];  // No vectorization
+        output[idx] = a[idx] + b[idx];  // No vectorization
     }
 }
 
@@ -7633,7 +7638,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li><strong>Performance trade-offs</strong> between parallelism and memory efficiency</li>
 </ul>
 <p>The same mathematical operation as elementwise:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with a completely different execution strategy optimized for memory hierarchy.</p>
 <h2 id="configuration-19"><a class="header" href="#configuration-19">Configuration</a></h2>
 <ul>
@@ -7655,7 +7660,7 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -7667,7 +7672,7 @@ fn tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = out.tile[tile_size](tile_id)
+        out_tile = output.tile[tile_size](tile_id)
         a_tile = a.tile[tile_size](tile_id)
         b_tile = b.tile[tile_size](tile_id)
 
@@ -7690,7 +7695,7 @@ fn tiled_elementwise_add[
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
 <p>Check out the <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">LayoutTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # Each thread gets one tile to process
-out_tile = out.tile[tile_size](tile_id)
+out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>
@@ -7813,7 +7818,7 @@ fn tiled_elementwise_add[
 </ul>
 <h3 id="2-tile-organization-and-indexing"><a class="header" href="#2-tile-organization-and-indexing">2. <strong>Tile organization and indexing</strong></a></h3>
 <pre><code class="language-mojo">tile_id = indices[0]
-out_tile = out.tile[tile_size](tile_id)
+out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>
@@ -7965,7 +7970,7 @@ Tiled:       Moderate parallelism, localized memory access
 <li><strong>Performance trade-offs</strong> between manual control and safety</li>
 </ul>
 <p>The same mathematical operation as before:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with sophisticated vectorization strategies for maximum performance.</p>
 <h2 id="configuration-20"><a class="header" href="#configuration-20">Configuration</a></h2>
 <ul>
@@ -7986,7 +7991,7 @@ Tiled:       Moderate parallelism, localized memory access
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -8001,7 +8006,7 @@ Tiled:       Moderate parallelism, localized memory access
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = out.tile[chunk_size](tile_id)
+        out_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
 
@@ -8028,8 +8033,8 @@ Tiled:       Moderate parallelism, localized memory access
 </code></pre>
 <p>This calculates the exact global position for each SIMD vector within the chunk.</p>
 <h3 id="3-direct-tensor-access"><a class="header" href="#3-direct-tensor-access">3. <strong>Direct tensor access</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)  # Load from global tensor
-out.store[simd_width](global_start, 0, ret)  # Store to global tensor
+<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
+output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 </code></pre>
 <p>Note: Access the original tensors, not the tile views.</p>
 <h3 id="4-key-characteristics"><a class="header" href="#4-key-characteristics">4. <strong>Key characteristics</strong></a></h3>
@@ -8181,7 +8186,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -8456,10 +8461,10 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <h3 id="simd-within-gpu-threads"><a class="header" href="#simd-within-gpu-threads">SIMD within GPU threads</a></h3>
 <p>Each GPU thread can process multiple data elements simultaneously using <strong>SIMD (Single Instruction, Multiple Data)</strong> operations:</p>
 <pre><code class="language-mojo">// Within one GPU thread:
-a_simd = a.load[simd_width](idx, 0)    // Load 4 floats simultaneously
-b_simd = b.load[simd_width](idx, 0)    // Load 4 floats simultaneously
-result = a_simd + b_simd               // Add 4 pairs simultaneously
-out.store[simd_width](idx, 0, result)  // Store 4 results simultaneously
+a_simd = a.load[simd_width](idx, 0)      # Load 4 floats simultaneously
+b_simd = b.load[simd_width](idx, 0)      # Load 4 floats simultaneously
+result = a_simd + b_simd                 # Add 4 pairs simultaneously
+output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 </code></pre>
 <h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
 <blockquote>
@@ -8975,7 +8980,7 @@ if lane_id() == 0:
 <pre><code class="language-mojo">from gpu.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
-var warp_total = sum(my_value)    # All contribute to one sum
+var warp_total = sum(my_value)         # All contribute to one sum
 </code></pre>
 <p>What just happened? Instead of 32 separate threads doing complex coordination, the <strong>warp</strong> automatically synchronized them to produce a single result. This is <strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
 <h3 id="simt-vs-simd-comparison"><a class="header" href="#simt-vs-simd-comparison">SIMT vs SIMD comparison</a></h3>
@@ -9281,7 +9286,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <li><strong>Lane ID management</strong> and conditional writes</li>
 </ul>
 <p>The mathematical operation is a dot product (inner product):
-\[\Large \text{out}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.</p>
 <h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
 <ul>
@@ -9305,7 +9310,7 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p10_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
 ):
@@ -9331,7 +9336,7 @@ fn traditional_dot_product_p10_style[
         stride //= 2
 
     if local_i == 0:
-        out[0] = shared[0]
+        output[0] = shared[0]
 
 
 </code></pre>
@@ -9367,7 +9372,7 @@ fn traditional_dot_product_p10_style[
 fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
 ):
@@ -9382,7 +9387,7 @@ fn simple_warp_dot_product[
 <div class="solution-tips">
 <h3 id="1-understanding-the-simple-warp-kernel-structure"><a class="header" href="#1-understanding-the-simple-warp-kernel-structure">1. <strong>Understanding the simple warp kernel structure</strong></a></h3>
 <p>You need to complete the <code>simple_warp_dot_product</code> function with <strong>6 lines or fewer</strong>:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[...](out, a, b):
+<pre><code class="language-mojo">fn simple_warp_dot_product[...](output, a, b):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 </code></pre>
@@ -9411,7 +9416,7 @@ if global_i &lt; size:
 </ul>
 <h3 id="4-writing-the-result"><a class="header" href="#4-writing-the-result">4. <strong>Writing the result</strong></a></h3>
 <pre><code class="language-mojo">if lane_id() == 0:
-    out[0] = total
+    output[0] = total
 </code></pre>
 <p><strong>Why only lane 0?</strong> All lanes have the same <code>total</code> value after <code>warp_sum()</code>, but we only want to write once to avoid race conditions.</p>
 <p><strong><code>lane_id()</code>:</strong> Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane within the warp.</p>
@@ -9504,7 +9509,9 @@ All lanes receive → total = 10416.0 (broadcast result)
 <pre><code class="language-mojo">fn functional_warp_dot_product[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, Layout.row_major(1), MutableAnyOrigin],
+    output: LayoutTensor[
+        mut=True, dtype, Layout.row_major(1), MutableAnyOrigin
+    ],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -9555,9 +9562,9 @@ else:
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    out.store[1](0, 0, total)
+    output.store[1](0, 0, total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>out.store[1](0, 0, total)</code> stores 1 element at position (0, 0) in the output tensor.</p>
+<p><strong>Storage pattern:</strong> <code>output.store[1](0, 0, total)</code> stores 1 element at position (0, 0) in the output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
 <pre><code class="language-mojo">from gpu import lane_id

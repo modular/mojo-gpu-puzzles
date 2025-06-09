@@ -194,7 +194,7 @@
 <pre><code class="language-mojo">from gpu.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
-var warp_total = sum(my_value)    # All contribute to one sum
+var warp_total = sum(my_value)         # All contribute to one sum
 </code></pre>
 <p>What just happened? Instead of 32 separate threads doing complex coordination, the <strong>warp</strong> automatically synchronized them to produce a single result. This is <strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
 <h3 id="simt-vs-simd-comparison"><a class="header" href="#simt-vs-simd-comparison">SIMT vs SIMD comparison</a></h3>

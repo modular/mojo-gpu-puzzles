@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-3-guards"><a class="header" href="#puzzle-3-guards">Puzzle 3: Guards</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
 <p><img src="./media/videos/720p30/puzzle_03_viz.gif" alt="Guard" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -201,12 +201,12 @@
 </ul>
 <h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical Description</a></h3>
 <p>For each thread \(i\):
-\[\Large \text{if}\ i &lt; \text{size}: out[i] = a[i] + 10\]</p>
+\[\Large \text{if}\ i &lt; \text{size}: output[i] = a[i] + 10\]</p>
 <h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory Safety Pattern</a></h3>
-<pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  out[0] = a[0] + 10  ✓ Valid
-Thread 1 (i=1):  if 1 &lt; size:  out[1] = a[1] + 10  ✓ Valid
-Thread 2 (i=2):  if 2 &lt; size:  out[2] = a[2] + 10  ✓ Valid
-Thread 3 (i=3):  if 3 &lt; size:  out[3] = a[3] + 10  ✓ Valid
+<pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  output[0] = a[0] + 10  ✓ Valid
+Thread 1 (i=1):  if 1 &lt; size:  output[1] = a[1] + 10  ✓ Valid
+Thread 2 (i=2):  if 2 &lt; size:  output[2] = a[2] + 10  ✓ Valid
+Thread 3 (i=3):  if 3 &lt; size:  output[3] = a[3] + 10  ✓ Valid
 Thread 4 (i=4):  if 4 &lt; size:  ❌ Skip (out of bounds)
 Thread 5 (i=5):  if 5 &lt; size:  ❌ Skip (out of bounds)
 </code></pre>
@@ -224,7 +224,7 @@ alias dtype = DType.float32
 
 
 fn add_10_guard(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -240,7 +240,7 @@ fn add_10_guard(
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add guard: <code>if i &lt; size</code></li>
-<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
+<li>Inside guard: <code>output[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>

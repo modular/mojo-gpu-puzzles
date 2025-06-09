@@ -272,7 +272,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -474,7 +474,7 @@ When threads access scattered locations (right), each access requires a separate
 <ol start="2">
 <li><strong>Boundary handling</strong>:
 <pre><code class="language-mojo">if row &lt; size and col &lt; size:
-    out[row, col] = acc
+    output[row, col] = acc
 </code></pre>
 <ul>
 <li>Prevents out-of-bounds access</li>
@@ -502,7 +502,7 @@ When threads access scattered locations (right), each access requires a separate
 <li>
 <p><strong>Computation</strong>:</p>
 <ul>
-<li>Register-based accumulation i.e. <code>var acc: out.element_type = 0</code></li>
+<li>Register-based accumulation i.e. <code>var acc: output.element_type = 0</code></li>
 <li>Compile-time loop unrolling via <code>@parameter</code></li>
 </ul>
 </li>
@@ -571,7 +571,7 @@ fn matmul_idiomatic_tiled[
 <ol>
 <li>
 <p><strong>LayoutTensor tile API</strong></p>
-<pre><code class="language-mojo">out_tile = out.tile[TPB, TPB](block_idx.y, block_idx.x)
+<pre><code class="language-mojo">out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>

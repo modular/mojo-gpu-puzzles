@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -223,7 +223,7 @@ alias dtype = DType.float32
 
 
 fn add_10_shared(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -253,7 +253,7 @@ fn add_10_shared(
 <ol>
 <li>Wait for shared memory load with <code>barrier()</code></li>
 <li>Use <code>local_i</code> to access shared memory: <code>shared[local_i]</code></li>
-<li>Use <code>global_i</code> for output: <code>out[global_i]</code></li>
+<li>Use <code>global_i</code> for output: <code>output[global_i]</code></li>
 <li>Add guard: <code>if global_i &lt; size</code></li>
 </ol>
 </div>
@@ -313,7 +313,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy</strong></p>
 <ul>
-<li>Global memory: <code>a</code> and <code>out</code> arrays (slow, visible to all blocks)</li>
+<li>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</li>
 <li>Shared memory: <code>shared</code> array (fast, thread-block local)</li>
 <li>Example for 8 elements with 4 threads per block:
 <pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
@@ -335,7 +335,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
 <li>Process phase: Each thread adds 10 to its shared memory value</li>
-<li>Result: <code>out[i] = shared[local_i] + 10 = 11</code></li>
+<li>Result: <code>output[i] = shared[local_i] + 10 = 11</code></li>
 </ul>
 </li>
 <li>

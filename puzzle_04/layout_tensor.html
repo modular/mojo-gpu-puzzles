@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="layouttensor-version"><a class="header" href="#layouttensor-version">LayoutTensor Version</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D <em>LayoutTensor</em> <code>a</code> and stores it in 2D <em>LayoutTensor</em> <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D <em>LayoutTensor</em> <code>a</code> and stores it in 2D <em>LayoutTensor</em> <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -213,7 +213,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_2d(
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -274,7 +274,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <ul>
 <li>Gets 2D thread indices with <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
 <li>Guards against out-of-bounds with <code>if row &lt; size and col &lt; size</code></li>
-<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>out[row, col] = a[row, col] + 10.0</code></li>
+<li>Uses <code>LayoutTensor</code>’s 2D indexing: <code>output[row, col] = a[row, col] + 10.0</code></li>
 </ul>
 </div>
 </details>

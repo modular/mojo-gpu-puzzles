@@ -190,7 +190,7 @@
 <p>Looking at our traditional implementation above, you might notice some potential issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
 <pre><code class="language-mojo">i = thread_idx.x
-out[i] = a[i] + 10.0
+output[i] = a[i] + 10.0
 </code></pre>
 <p>This works for 1D arrays, but what happens when we need to:</p>
 <ul>
@@ -212,8 +212,8 @@ idx = (batch * padded_height + row) * padded_width + col
 <h3 id="layouttensor-preview"><a class="header" href="#layouttensor-preview">LayoutTensor preview</a></h3>
 <p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
-out[i, j] = a[i, j] + 10.0  # 2D indexing
-out[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
+output[i, j] = a[i, j] + 10.0  # 2D indexing
+output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 </code></pre>
 <p>We’ll learn about LayoutTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:</p>
 <ul>

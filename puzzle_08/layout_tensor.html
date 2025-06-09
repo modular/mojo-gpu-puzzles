@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a 1D ayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of a 1D ayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -248,7 +248,7 @@ alias layout = Layout.row_major(SIZE)
 fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -332,7 +332,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy with LayoutTensor</strong></p>
 <ul>
-<li>Global tensors: <code>a</code> and <code>out</code> (slow, visible to all blocks)</li>
+<li>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</li>
 <li>Shared tensor: <code>shared</code> (fast, thread-block local)</li>
 <li>Example for 8 elements with 4 threads per block:
 <pre><code class="language-txt">Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
@@ -354,7 +354,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
 <li>Process phase: Each thread adds 10 to its shared tensor value</li>
-<li>Result: <code>out[global_i] = shared[local_i] + 10 = 11</code></li>
+<li>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></li>
 </ul>
 </li>
 <li>

@@ -199,7 +199,7 @@
 <li><strong>Lane ID management</strong> and conditional writes</li>
 </ul>
 <p>The mathematical operation is a dot product (inner product):
-\[\Large \text{out}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -223,7 +223,7 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p10_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
 ):
@@ -249,7 +249,7 @@ fn traditional_dot_product_p10_style[
         stride //= 2
 
     if local_i == 0:
-        out[0] = shared[0]
+        output[0] = shared[0]
 
 
 </code></pre>
@@ -285,7 +285,7 @@ fn traditional_dot_product_p10_style[
 fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
 ):
@@ -300,7 +300,7 @@ fn simple_warp_dot_product[
 <div class="solution-tips">
 <h3 id="1-understanding-the-simple-warp-kernel-structure"><a class="header" href="#1-understanding-the-simple-warp-kernel-structure">1. <strong>Understanding the simple warp kernel structure</strong></a></h3>
 <p>You need to complete the <code>simple_warp_dot_product</code> function with <strong>6 lines or fewer</strong>:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[...](out, a, b):
+<pre><code class="language-mojo">fn simple_warp_dot_product[...](output, a, b):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 </code></pre>
@@ -329,7 +329,7 @@ if global_i &lt; size:
 </ul>
 <h3 id="4-writing-the-result"><a class="header" href="#4-writing-the-result">4. <strong>Writing the result</strong></a></h3>
 <pre><code class="language-mojo">if lane_id() == 0:
-    out[0] = total
+    output[0] = total
 </code></pre>
 <p><strong>Why only lane 0?</strong> All lanes have the same <code>total</code> value after <code>warp_sum()</code>, but we only want to write once to avoid race conditions.</p>
 <p><strong><code>lane_id()</code>:</strong> Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane within the warp.</p>
@@ -422,7 +422,9 @@ All lanes receive → total = 10416.0 (broadcast result)
 <pre><code class="language-mojo">fn functional_warp_dot_product[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, Layout.row_major(1), MutableAnyOrigin],
+    output: LayoutTensor[
+        mut=True, dtype, Layout.row_major(1), MutableAnyOrigin
+    ],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -473,9 +475,9 @@ else:
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    out.store[1](0, 0, total)
+    output.store[1](0, 0, total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>out.store[1](0, 0, total)</code> stores 1 element at position (0, 0) in the output tensor.</p>
+<p><strong>Storage pattern:</strong> <code>output.store[1](0, 0, total)</code> stores 1 element at position (0, 0) in the output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
 <pre><code class="language-mojo">from gpu import lane_id

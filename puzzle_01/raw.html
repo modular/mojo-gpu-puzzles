@@ -205,7 +205,7 @@
 <p><strong>Thread indexing</strong>: Access element at position <code>i = thread_idx.x</code></p>
 </li>
 <li>
-<p><strong>Memory access</strong>: Read from <code>a[i]</code> and write to <code>out[i]</code></p>
+<p><strong>Memory access</strong>: Read from <code>a[i]</code> and write to <code>output[i]</code></p>
 </li>
 <li>
 <p><strong>Data independence</strong>: Each output depends only on its corresponding input</p>
@@ -218,7 +218,9 @@ alias THREADS_PER_BLOCK = SIZE
 alias dtype = DType.float32
 
 
-fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
+fn add_10(
+    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+):
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)
 
@@ -231,7 +233,7 @@ fn add_10(out: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]):
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add 10 to <code>a[i]</code></li>
-<li>Store result in <code>out[i]</code></li>
+<li>Store result in <code>output[i]</code></li>
 </ol>
 </div>
 </details>
@@ -270,7 +272,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p>This solution:</p>
 <ul>
 <li>Gets thread index with <code>i = thread_idx.x</code></li>
-<li>Adds 10 to input value: <code>out[i] = a[i] + 10.0</code></li>
+<li>Adds 10 to input value: <code>output[i] = a[i] + 10.0</code></li>
 </ul>
 </div>
 </details>

@@ -195,20 +195,20 @@
 <h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
 <p>Let’s look at the challenges we’ve faced so far:</p>
 <pre><code class="language-mojo"># Puzzle 1: Simple indexing
-out[i] = a[i] + 10.0
+output[i] = a[i] + 10.0
 
 # Puzzle 2: Multiple array management
-out[i] = a[i] + b[i]
+output[i] = a[i] + b[i]
 
 # Puzzle 3: Bounds checking
 if i &lt; size:
-    out[i] = a[i] + 10.0
+    output[i] = a[i] + 10.0
 </code></pre>
 <p>As dimensions grow, code becomes more complex:</p>
 <pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
 idx = row * WIDTH + col
 if row &lt; height and col &lt; width:
-    out[idx] = a[idx] + 10.0
+    output[idx] = a[idx] + 10.0
 </code></pre>
 <h2 id="the-solution-a-peek-at-layouttensor"><a class="header" href="#the-solution-a-peek-at-layouttensor">The solution: A peek at LayoutTensor</a></h2>
 <p>LayoutTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>

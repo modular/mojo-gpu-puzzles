@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code> (single number).</p>
+<p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -231,7 +231,7 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=True, dtype, in_layout],
     b: LayoutTensor[mut=True, dtype, in_layout],
     size: Int,
@@ -249,7 +249,7 @@ fn dot_product[
 <li>Create shared memory with tensor builder</li>
 <li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
-<li>Let thread 0 write final result to <code>out[0]</code></li>
+<li>Let thread 0 write final result to <code>output[0]</code></li>
 </ol>
 </div>
 </details>

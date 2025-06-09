@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -224,7 +224,7 @@ alias layout = Layout.row_major(SIZE)
 fn pooling[
     layout: Layout
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
@@ -328,11 +328,11 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <p><strong>Boundary cases</strong></p>
 <ul>
 <li>Position 0: Single element
-<pre><code class="language-txt">out[0] = shared[0] = 0.0
+<pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
 <li>Position 1: Sum of first two elements
-<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
 </ul>

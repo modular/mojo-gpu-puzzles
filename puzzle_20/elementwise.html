@@ -199,7 +199,7 @@
 <li><strong>Capturing semantics</strong> in nested functions</li>
 </ul>
 <p>The mathematical operation is simple element-wise addition:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -219,7 +219,7 @@ alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
 fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -275,7 +275,7 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
 <p>This performs element-wise addition across the entire SIMD vector in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">out.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
@@ -358,13 +358,13 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h3 id="1-functional-abstraction-philosophy"><a class="header" href="#1-functional-abstraction-philosophy">1. <strong>Functional abstraction philosophy</strong></a></h3>
 <p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
-<pre><code class="language-mojo">// Manual thread management
+<pre><code class="language-mojo"># Manual thread management
 idx = thread_idx.x + block_idx.x * block_dim.x
 if idx &lt; size:
-    out[idx] = a[idx] + b[idx];  // Scalar operation
+    output[idx] = a[idx] + b[idx];  // Scalar operation
 </code></pre>
 <p><strong>Mojo functional approach:</strong></p>
-<pre><code class="language-mojo">// Automatic management + SIMD vectorization
+<pre><code class="language-mojo"># Automatic management + SIMD vectorization
 elementwise[add_function, simd_width, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>What <code>elementwise</code> abstracts away:</strong></p>
@@ -388,11 +388,11 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">idx = indices[0]                          // Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.load[simd_width](idx, 0)      // Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.load[simd_width](idx, 0)      // Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                    // SIMD: 4 additions in parallel (GPU-dependent)
-out.store[simd_width](idx, 0, ret)       // Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">idx = indices[0]                          # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+a_simd = a.load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+b_simd = b.load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+ret = a_simd + b_simd                     # SIMD: 4 additions in parallel (GPU-dependent)
+output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -473,10 +473,10 @@ This elementwise pattern is the building block for:</p>
 </ul>
 <p><strong>Compared to Traditional Approaches:</strong></p>
 <pre><code class="language-mojo">// Traditional: Error-prone, verbose, hardware-specific
-__global__ void add_kernel(float* out, float* a, float* b, int size) {
+__global__ void add_kernel(float* output, float* a, float* b, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx &lt; size) {
-        out[idx] = a[idx] + b[idx];  // No vectorization
+        output[idx] = a[idx] + b[idx];  // No vectorization
     }
 }
 

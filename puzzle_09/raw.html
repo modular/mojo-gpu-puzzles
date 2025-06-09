@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>out</code>.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -220,7 +220,7 @@ alias dtype = DType.float32
 
 
 fn pooling(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -241,7 +241,7 @@ fn pooling(
 <div class="solution-tips">
 <ol>
 <li>Load data and call <code>barrier()</code></li>
-<li>Special cases: <code>out[0] = shared[0]</code>, <code>out[1] = shared[0] + shared[1]</code></li>
+<li>Special cases: <code>output[0] = shared[0]</code>, <code>output[1] = shared[0] + shared[1]</code></li>
 <li>General case: <code>if 1 &lt; global_i &lt; size</code></li>
 <li>Sum three elements: <code>shared[local_i - 2] + shared[local_i - 1] + shared[local_i]</code></li>
 </ol>
@@ -317,11 +317,11 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <p><strong>Boundary cases</strong></p>
 <ul>
 <li>Position 0: Single element
-<pre><code class="language-txt">out[0] = shared[0] = 0.0
+<pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
 <li>Position 1: Sum of first two elements
-<pre><code class="language-txt">out[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
 </ul>

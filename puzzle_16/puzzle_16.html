@@ -258,7 +258,7 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     # FILL IN (roughly 31 lines)
@@ -286,7 +286,7 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
     input: LayoutTensor[dtype, layout, MutableAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
@@ -483,7 +483,7 @@ Our GPU implementation implements the numerically stable softmax algorithm with 
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    out: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 )
 </code></pre>
@@ -555,7 +555,7 @@ while stride &gt; 0:
 var exp_val: Scalar[dtype] = 0.0
 if global_i &lt; input_size:
     exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    out[global_i] = exp_val
+    output[global_i] = exp_val
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -587,7 +587,7 @@ while stride &gt; 0:
 <pre><code class="language-mojo">block_sum = shared_sum[0]
 
 if global_i &lt; input_size:
-    out[global_i] = out[global_i] / block_sum
+    output[global_i] = output[global_i] / block_sum
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -648,7 +648,7 @@ for i in range(input_size):
 <pre><code class="language-mojo">var sum_exp: Scalar[dtype] = 0.0
 for i in range(input_size):
     var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
-    out[i] = exp_val
+    output[i] = exp_val
     sum_exp += exp_val
 </code></pre>
 <p>We compute \(e^{x_i - max}\) for each element, store the result in the output buffer, and accumulate the sum \(\sum_{j=1}^{n} e^{x_j - max}\) in a single pass. This approach minimizes memory operations compared to using separate loops.</p>
@@ -656,7 +656,7 @@ for i in range(input_size):
 <li>
 <p><strong>Normalization</strong>:</p>
 <pre><code class="language-mojo">for i in range(input_size):
-    out[i] = out[i] / sum_exp
+    output[i] = output[i] / sum_exp
 </code></pre>
 <p>Finally, we normalize each element by dividing by the sum, producing a proper probability distribution according to the softmax formula:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
@@ -684,6 +684,7 @@ for i in range(input_size):
         output = ops.custom(
             name="softmax",
             values=[input_value],
+            device=DeviceRef.from_device(device),
             out_types=[
                 TensorType(
                     dtype=input_value.tensor.dtype,

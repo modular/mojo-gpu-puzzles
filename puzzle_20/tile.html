@@ -202,7 +202,7 @@
 <li><strong>Performance trade-offs</strong> between parallelism and memory efficiency</li>
 </ul>
 <p>The same mathematical operation as elementwise:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with a completely different execution strategy optimized for memory hierarchy.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -224,7 +224,7 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -236,7 +236,7 @@ fn tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = out.tile[tile_size](tile_id)
+        out_tile = output.tile[tile_size](tile_id)
         a_tile = a.tile[tile_size](tile_id)
         b_tile = b.tile[tile_size](tile_id)
 
@@ -259,7 +259,7 @@ fn tiled_elementwise_add[
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
 <p>Check out the <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">LayoutTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # Each thread gets one tile to process
-out_tile = out.tile[tile_size](tile_id)
+out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>
@@ -382,7 +382,7 @@ fn tiled_elementwise_add[
 </ul>
 <h3 id="2-tile-organization-and-indexing"><a class="header" href="#2-tile-organization-and-indexing">2. <strong>Tile organization and indexing</strong></a></h3>
 <pre><code class="language-mojo">tile_id = indices[0]
-out_tile = out.tile[tile_size](tile_id)
+out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>

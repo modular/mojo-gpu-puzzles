@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="complete-version"><a class="header" href="#complete-version">Complete Version</a></h1>
-<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to synchronize across multiple blocks to get the correct result.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -221,7 +221,7 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
     num_blocks: Int,
@@ -234,7 +234,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](out: LayoutTensor[mut=False, dtype, layout], size: Int):
+](output: LayoutTensor[mut=False, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -467,12 +467,12 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>out[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
+<pre><code>output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
-<pre><code>out[15] = 28  // at position size + block_idx.x = 15 + 0
+<pre><code>output[15] = 28  // at position size + block_idx.x = 15 + 0
 </code></pre>
 </li>
 </ol>
@@ -491,12 +491,12 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>out[8...14] = [8, 17, 27, 38, 50, 63, 77]
+<pre><code>output[8...14] = [8, 17, 27, 38, 50, 63, 77]
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
-<pre><code>out[16] = 77  // at position size + block_idx.x = 15 + 1
+<pre><code>output[16] = 77  // at position size + block_idx.x = 15 + 1
 </code></pre>
 </li>
 </ol>
@@ -517,8 +517,8 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Block 1</strong>: Each thread adds Block 0’s sum to its element:</p>
-<pre><code>prev_block_sum = out[size + block_idx.x - 1] = out[15] = 28
-out[global_i] += prev_block_sum
+<pre><code>prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
+output[global_i] += prev_block_sum
 </code></pre>
 <p>Block 1 values are transformed:</p>
 <pre><code>Before: [8, 17, 27, 38, 50, 63, 77]

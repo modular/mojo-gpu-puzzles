@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-6-blocks"><a class="header" href="#puzzle-6-blocks">Puzzle 6: Blocks</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
 <p><img src="./media/videos/720p30/puzzle_06_viz.gif" alt="Blocks visualization" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -207,7 +207,7 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks(
-    out: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
@@ -223,7 +223,7 @@ fn add_10_blocks(
 <ol>
 <li>Calculate global index: <code>i = block_dim.x * block_idx.x + thread_idx.x</code></li>
 <li>Add guard: <code>if i &lt; size</code></li>
-<li>Inside guard: <code>out[i] = a[i] + 10.0</code></li>
+<li>Inside guard: <code>output[i] = a[i] + 10.0</code></li>
 </ol>
 </div>
 </details>
@@ -303,7 +303,7 @@ Block 2:             [6 7 8]
 <p><strong>Memory access pattern</strong></p>
 <ul>
 <li>Coalesced memory access: threads in a block access contiguous memory</li>
-<li>Each thread processes one element: <code>out[i] = a[i] + 10.0</code></li>
+<li>Each thread processes one element: <code>output[i] = a[i] + 10.0</code></li>
 <li>Block-level parallelism enables efficient memory bandwidth utilization</li>
 </ul>
 </li>

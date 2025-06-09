@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{out}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -221,7 +221,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    out: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=False, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -346,7 +346,7 @@ if row &lt; size and col &lt; size:
 <pre><code class="language-mojo"># Guard ensures we only compute for valid matrix elements
 if row &lt; size and col &lt; size:
     # Initialize accumulator with output tensor's type
-    var acc: out.element_type = 0
+    var acc: output.element_type = 0
 
     # Compile-time unrolled loop for matrix multiplication
     @parameter
@@ -354,7 +354,7 @@ if row &lt; size and col &lt; size:
         acc += a_shared[local_row, k] * b_shared[k, local_col]
 
     # Write result only for threads within matrix bounds
-    out[row, col] = acc
+    output[row, col] = acc
 </code></pre>
 <p>Key aspects:</p>
 <ul>
@@ -367,7 +367,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Accumulator Type</strong>: <code>var acc: out.element_type</code></p>
+<p><strong>Accumulator Type</strong>: <code>var acc: output.element_type</code></p>
 <ul>
 <li>Uses output tensor’s element type for type safety</li>
 <li>Ensures consistent numeric precision</li>
@@ -383,7 +383,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 <li>
-<p><strong>Result Writing</strong>: <code>out[row, col] = acc</code></p>
+<p><strong>Result Writing</strong>: <code>output[row, col] = acc</code></p>
 <ul>
 <li>Protected by the same guard condition</li>
 <li>Only valid threads write results</li>

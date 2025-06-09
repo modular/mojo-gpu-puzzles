@@ -205,7 +205,7 @@
 <li><strong>Performance trade-offs</strong> between manual control and safety</li>
 </ul>
 <p>The same mathematical operation as before:
-\[\Large \text{out}[i] = a[i] + b[i]\]</p>
+\[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with sophisticated vectorization strategies for maximum performance.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -226,7 +226,7 @@
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,
@@ -241,7 +241,7 @@
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = out.tile[chunk_size](tile_id)
+        out_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
 
@@ -268,8 +268,8 @@
 </code></pre>
 <p>This calculates the exact global position for each SIMD vector within the chunk.</p>
 <h3 id="3-direct-tensor-access"><a class="header" href="#3-direct-tensor-access">3. <strong>Direct tensor access</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)  # Load from global tensor
-out.store[simd_width](global_start, 0, ret)  # Store to global tensor
+<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
+output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 </code></pre>
 <p>Note: Access the original tensors, not the tile views.</p>
 <h3 id="4-key-characteristics"><a class="header" href="#4-key-characteristics">4. <strong>Key characteristics</strong></a></h3>
@@ -421,7 +421,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     size: Int,
     tile_size: Int,
 ](
-    out: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
     ctx: DeviceContext,

@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>out</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <p><img src="./media/videos/720p30/puzzle_04_viz.gif" alt="2D Matrix Mapping" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -199,7 +199,7 @@
 <li>Memory layout patterns</li>
 </ul>
 <p>For each position \((i,j)\):
-\[\Large out[i,j] = a[i,j] + 10\]</p>
+\[\Large output[i,j] = a[i,j] + 10\]</p>
 <blockquote>
 <h2 id="thread-indexing-convention"><a class="header" href="#thread-indexing-convention">Thread indexing convention</a></h2>
 <p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>

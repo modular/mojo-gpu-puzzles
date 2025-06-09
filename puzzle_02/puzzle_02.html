@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-2-zip"><a class="header" href="#puzzle-2-zip">Puzzle 2: Zip</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>out</code>.</p>
+<p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
 <p><img src="./media/videos/720p30/puzzle_02_viz.gif" alt="Zip" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -199,14 +199,14 @@
 <li>Thread-to-data mapping across arrays</li>
 <li>Memory access patterns with multiple arrays</li>
 </ul>
-<p>For each thread \(i\): \[\Large out[i] = a[i] + b[i]\]</p>
+<p>For each thread \(i\): \[\Large output[i] = a[i] + b[i]\]</p>
 <h3 id="memory-access-pattern"><a class="header" href="#memory-access-pattern">Memory access pattern</a></h3>
-<pre><code class="language-txt">Thread 0:  a[0] + b[0] → out[0]
-Thread 1:  a[1] + b[1] → out[1]
-Thread 2:  a[2] + b[2] → out[2]
+<pre><code class="language-txt">Thread 0:  a[0] + b[0] → output[0]
+Thread 1:  a[1] + b[1] → output[1]
+Thread 2:  a[2] + b[2] → output[2]
 ...
 </code></pre>
-<p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>out</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
+<p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>output</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">alias SIZE = 4
 alias BLOCKS_PER_GRID = 1
@@ -215,7 +215,7 @@ alias dtype = DType.float32
 
 
 fn add(
-    out: UnsafePointer[Scalar[dtype]],
+    outout: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
@@ -231,7 +231,7 @@ fn add(
 <ol>
 <li>Store <code>thread_idx.x</code> in <code>i</code></li>
 <li>Add <code>a[i]</code> and <code>b[i]</code></li>
-<li>Store result in <code>out[i]</code></li>
+<li>Store result in <code>output[i]</code></li>
 </ol>
 </div>
 </details>
@@ -272,7 +272,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <p>This solution:</p>
 <ul>
 <li>Gets thread index with <code>i = thread_idx.x</code></li>
-<li>Adds values from both arrays: <code>out[i] = a[i] + b[i]</code></li>
+<li>Adds values from both arrays: <code>output[i] = a[i] + b[i]</code></li>
 </ul>
 </div>
 </details>

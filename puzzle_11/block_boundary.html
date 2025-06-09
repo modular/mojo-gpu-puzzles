@@ -187,7 +187,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="block-boundary-version"><a class="header" href="#block-boundary-version">Block Boundary Version</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>out</code>.</p>
+<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -217,7 +217,7 @@ alias conv_2_layout = Layout.row_major(CONV_2)
 fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    out: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -368,7 +368,7 @@ if local_i &lt; CONV_2 - 1:
 <li>
 <p><strong>Convolution Computation</strong>:</p>
 <pre><code class="language-mojo">if global_i &lt; a_size:
-    var local_sum: out.element_type = 0
+    var local_sum: output.element_type = 0
     @parameter
     for j in range(CONV_2):
         if local_i + j &lt; TPB + CONV_2 - 1:
@@ -376,7 +376,7 @@ if local_i &lt; CONV_2 - 1:
 </code></pre>
 <ul>
 <li>Uses <code>@parameter</code> for compile-time loop unrolling</li>
-<li>Proper type inference with <code>out.element_type</code></li>
+<li>Proper type inference with <code>output.element_type</code></li>
 <li>Extended bounds check for overlap region</li>
 </ul>
 </li>
