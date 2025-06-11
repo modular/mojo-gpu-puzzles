@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🎯 Bonus Challenges - Mojo 🔥 GPU Puzzles</title>
+        <title>Forward Pass Implementation - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,75 +186,17 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
-<h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: Advanced softmax implementations</a></h2>
-<p><em>This challenge extends <a href="../puzzle_16/puzzle_16.html">Puzzle 16: Softmax Op</a></em></p>
-<p>Here are some advanced challenges to extend your softmax implementation:</p>
-<h3 id="1-large-scale-softmax-handling-tpb--size"><a class="header" href="#1-large-scale-softmax-handling-tpb--size">1. Large-scale softmax: Handling <code>TPB &lt; SIZE</code></a></h3>
-<p>When the input size exceeds the number of threads per block (<code>TPB &lt; SIZE</code>), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:</p>
-<h4 id="11-buffer-reduction"><a class="header" href="#11-buffer-reduction">1.1 Buffer reduction</a></h4>
-<ul>
-<li>Store block-level results (max and sum) in device memory</li>
-<li>Use a second kernel to perform reduction across these intermediate results</li>
-<li>Implement a final normalization pass that uses the global max and sum</li>
-</ul>
-<h4 id="12-two-pass-softmax"><a class="header" href="#12-two-pass-softmax">1.2 Two-pass softmax</a></h4>
-<ul>
-<li>First pass: Each block calculates its local max value</li>
-<li>Synchronize and compute global max</li>
-<li>Second pass: Calculate \(e^{x-max}\) and local sum</li>
-<li>Synchronize and compute global sum</li>
-<li>Final pass: Normalize using global sum</li>
-</ul>
-<h3 id="2-batched-softmax"><a class="header" href="#2-batched-softmax">2. Batched softmax</a></h3>
-<p>Implement softmax for a batch of vectors (2D input tensor) with these variants:</p>
-<ul>
-<li>Row-wise softmax: Apply softmax independently to each row</li>
-<li>Column-wise softmax: Apply softmax independently to each column</li>
-<li>Compare performance differences between these implementations</li>
-</ul>
-<h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: Advanced attention mechanisms</a></h2>
-<p><em>This challenge extends <a href="../puzzle_17/puzzle_17.html">Puzzle 17: Attention Op</a></em></p>
-<p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
-<h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
-<p>Extend the attention mechanism to handle longer sequences using the existing kernels:</p>
-<h4 id="11-sequence-length-scaling"><a class="header" href="#11-sequence-length-scaling">1.1 Sequence length scaling</a></h4>
-<ul>
-<li>Modify the attention implementation to handle <code>SEQ_LEN = 32</code> and <code>SEQ_LEN = 64</code></li>
-<li>Update the <code>TPB</code> (threads per block) parameter accordingly</li>
-<li>Ensure the transpose kernel handles the larger matrix sizes correctly</li>
-</ul>
-<h4 id="12-dynamic-sequence-lengths"><a class="header" href="#12-dynamic-sequence-lengths">1.2 Dynamic sequence lengths</a></h4>
-<ul>
-<li>Implement attention that can handle variable sequence lengths at runtime</li>
-<li>Add bounds checking in the kernels to handle sequences shorter than <code>SEQ_LEN</code></li>
-<li>Compare performance with fixed vs. dynamic sequence length handling</li>
-</ul>
-<h3 id="2-batched-vector-attention"><a class="header" href="#2-batched-vector-attention">2. Batched vector attention</a></h3>
-<p>Extend to process multiple attention computations simultaneously:</p>
-<h4 id="21-batch-processing"><a class="header" href="#21-batch-processing">2.1 Batch processing</a></h4>
-<ul>
-<li>Modify the attention operation to handle multiple query vectors at once</li>
-<li>Input shapes: Q(batch_size, d), K(seq_len, d), V(seq_len, d)</li>
-<li>Output shape: (batch_size, d)</li>
-<li>Reuse the existing kernels with proper indexing</li>
-</ul>
-<h4 id="22-memory-optimization-for-batches"><a class="header" href="#22-memory-optimization-for-batches">2.2 Memory optimization for batches</a></h4>
-<ul>
-<li>Minimize memory allocations by reusing buffers across batch elements</li>
-<li>Compare performance with different batch sizes (2, 4, 8)</li>
-<li>Analyze memory usage patterns</li>
-</ul>
+                        <h1 id="-forward-pass-implementation"><a class="header" href="#-forward-pass-implementation">🔄 Forward Pass Implementation</a></h1>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_17/puzzle_17.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_20/puzzle_20.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_18/puzzle_18.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_20/backward_pass.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -264,11 +206,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_17/puzzle_17.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_20/puzzle_20.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_18/puzzle_18.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_20/backward_pass.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

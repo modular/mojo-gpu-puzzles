@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 20: GPU Functional Programming Patterns - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 20: Autograd Integration - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,141 +186,17 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="-part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#-part-v-mojo-functional-patterns---high-level-gpu-programming">🚀 Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
-<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
-<p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
-<p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
-<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
-<h3 id="-gpu-execution-hierarchy"><a class="header" href="#-gpu-execution-hierarchy">🧠 <strong>GPU execution hierarchy</strong></a></h3>
-<p>Understand the fundamental relationship between GPU threads and SIMD operations:</p>
-<pre><code>GPU Device
-├── Grid (your entire problem)
-│   ├── Block 1 (group of threads, shared memory)
-│   │   ├── Warp 1 (32 threads, lockstep execution) --&gt; We'll learn in Part VI
-│   │   │   ├── Thread 1 → SIMD
-│   │   │   ├── Thread 2 → SIMD
-│   │   │   └── ... (32 threads total)
-│   │   └── Warp 2 (32 threads)
-│   └── Block 2 (independent group)
-</code></pre>
-<p><strong>What Mojo abstracts for you:</strong></p>
-<ul>
-<li>Grid/Block configuration automatically calculated</li>
-<li>Warp management handled transparently</li>
-<li>Thread scheduling optimized automatically</li>
-<li>Memory hierarchy optimization built-in</li>
-</ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
-<h3 id="-four-fundamental-patterns"><a class="header" href="#-four-fundamental-patterns">⚡ <strong>Four fundamental patterns</strong></a></h3>
-<p>Master the complete spectrum of GPU functional programming:</p>
-<ol>
-<li><strong>Elementwise</strong>: Maximum parallelism with automatic SIMD vectorization</li>
-<li><strong>Tiled</strong>: Memory-efficient processing with cache optimization</li>
-<li><strong>Manual vectorization</strong>: Expert-level control over SIMD operations</li>
-<li><strong>Mojo vectorize</strong>: Safe, automatic vectorization with bounds checking</li>
-</ol>
-<h3 id="-performance-patterns-youll-recognize"><a class="header" href="#-performance-patterns-youll-recognize">🎯 <strong>Performance patterns you’ll recognize</strong></a></h3>
-<pre><code>Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
-
-Elementwise:     256 threads × 1 SIMD op   = High parallelism
-Tiled:           32 threads  × 8 SIMD ops  = Cache optimization
-Manual:          8 threads   × 32 SIMD ops = Maximum control
-Mojo vectorize:  32 threads  × 8 SIMD ops  = Automatic safety
-</code></pre>
-<h3 id="-real-performance-insights"><a class="header" href="#-real-performance-insights">📊 <strong>Real performance insights</strong></a></h3>
-<p>Learn to interpret empirical benchmark results:</p>
-<pre><code>Benchmark Results (SIZE=1,048,576):
-elementwise:        11.34ms  ← Maximum parallelism wins at scale
-tiled:              12.04ms  ← Good balance of locality and parallelism
-manual_vectorized:  15.75ms  ← Complex indexing hurts simple operations
-vectorized:         13.38ms  ← Automatic optimization overhead
-</code></pre>
-<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
-<p>Before diving into functional patterns, ensure you’re comfortable with:</p>
-<ul>
-<li><strong>Basic GPU concepts</strong>: Memory hierarchy, thread execution, SIMD operations</li>
-<li><strong>Mojo fundamentals</strong>: Parameter functions, compile-time specialization, capturing semantics</li>
-<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
-<li><strong>GPU memory management</strong>: Buffer allocation, host-device synchronization</li>
-</ul>
-<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
-<h3 id="-1-elementwise-operations"><a class="header" href="#-1-elementwise-operations">🔰 <strong>1. Elementwise operations</strong></a></h3>
-<p><strong>→ <a href="./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
-<p>Start with the foundation: automatic thread management and SIMD vectorization.</p>
-<p><strong>What you’ll master:</strong></p>
-<ul>
-<li>Functional GPU programming with <code>elementwise</code></li>
-<li>Automatic SIMD vectorization within GPU threads</li>
-<li>LayoutTensor operations for safe memory access</li>
-<li>Capturing semantics in nested functions</li>
-</ul>
-<p><strong>Key pattern:</strong></p>
-<pre><code class="language-mojo">elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
-</code></pre>
-<h3 id="-2-tiled-processing"><a class="header" href="#-2-tiled-processing">⚡ <strong>2. Tiled processing</strong></a></h3>
-<p><strong>→ <a href="./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
-<p>Build on elementwise with memory-optimized tiling patterns.</p>
-<p><strong>What you’ll master:</strong></p>
-<ul>
-<li>Tile-based memory organization for cache optimization</li>
-<li>Sequential SIMD processing within tiles</li>
-<li>Memory locality principles and cache-friendly access patterns</li>
-<li>Thread-to-tile mapping vs thread-to-element mapping</li>
-</ul>
-<p><strong>Key insight:</strong> Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</p>
-<h3 id="-3-advanced-vectorization"><a class="header" href="#-3-advanced-vectorization">🔧 <strong>3. Advanced vectorization</strong></a></h3>
-<p><strong>→ <a href="./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
-<p>Explore manual control and automatic vectorization strategies.</p>
-<p><strong>What you’ll master:</strong></p>
-<ul>
-<li>Manual SIMD operations with explicit index management</li>
-<li>Mojo’s vectorize function for safe, automatic vectorization</li>
-<li>Chunk-based memory organization for optimal SIMD alignment</li>
-<li>Performance trade-offs between manual control and safety</li>
-</ul>
-<p><strong>Two approaches:</strong></p>
-<ul>
-<li><strong>Manual</strong>: Direct control, maximum performance, complex indexing</li>
-<li><strong>Mojo vectorize</strong>: Automatic optimization, built-in safety, clean code</li>
-</ul>
-<h3 id="-4-threading-vs-simd-concepts"><a class="header" href="#-4-threading-vs-simd-concepts">🧠 <strong>4. Threading vs SIMD concepts</strong></a></h3>
-<p><strong>→ <a href="./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
-<p>Understand the fundamental relationship between parallelism levels.</p>
-<p><strong>What you’ll master:</strong></p>
-<ul>
-<li>GPU threading hierarchy and hardware mapping</li>
-<li>SIMD operations within GPU threads</li>
-<li>Pattern comparison and thread-to-work mapping</li>
-<li>Choosing the right pattern for different workloads</li>
-</ul>
-<p><strong>Key insight:</strong> GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</p>
-<h3 id="-5-performance-benchmarking-in-mojo"><a class="header" href="#-5-performance-benchmarking-in-mojo">📊 <strong>5. Performance benchmarking in Mojo</strong></a></h3>
-<p><strong>→ <a href="./benchmarking.html">Benchmarking in Mojo</a></strong></p>
-<p>Learn to measure, analyze, and optimize GPU performance scientifically.</p>
-<p><strong>What you’ll master:</strong></p>
-<ul>
-<li>Mojo’s built-in benchmarking framework</li>
-<li>GPU-specific timing and synchronization challenges</li>
-<li>Parameterized benchmark functions with compile-time specialization</li>
-<li>Empirical performance analysis and pattern selection</li>
-</ul>
-<p><strong>Critical technique:</strong> Using <code>keep()</code> to prevent compiler optimization of benchmarked code.</p>
-<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to transform your GPU programming skills? Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.</p>
-<p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not just the <strong>how</strong>. The conceptual framework you develop here will serve you throughout your GPU programming career.</p>
-<p>🎯 <strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
+                        <h1 id="puzzle-20-autograd-integration"><a class="header" href="#puzzle-20-autograd-integration">Puzzle 20: Autograd Integration</a></h1>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../bonuses/part3.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_19/performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/elementwise.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_20/forward_pass.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -330,11 +206,11 @@ vectorized:         13.38ms  ← Automatic optimization overhead
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../bonuses/part3.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_19/performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/elementwise.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_20/forward_pass.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

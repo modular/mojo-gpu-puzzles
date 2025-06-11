@@ -7180,13 +7180,932 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Compare performance with different batch sizes (2, 4, 8)</li>
 <li>Analyze memory usage patterns</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#-part-v-mojo-functional-patterns---high-level-gpu-programming">🚀 Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-18-1d-convolution-op"><a class="header" href="#puzzle-18-1d-convolution-op">Puzzle 18: 1D Convolution Op</a></h1>
+<blockquote>
+<h2 id="from-max-graph-to-pytorch-custom-ops"><a class="header" href="#from-max-graph-to-pytorch-custom-ops">From MAX Graph to PyTorch custom ops</a></h2>
+<p>We’re now entering Part IV of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
+<p>In <a href="puzzle_18/../puzzle_15/puzzle_15.html">Puzzle 15</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
+<ul>
+<li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
+<li>Integrate with PyTorch’s tensor system and autograd</li>
+<li>Compare MAX Graph vs PyTorch approaches for custom operations</li>
+<li>Understand the critical pattern of explicit output tensor allocation</li>
+</ul>
+<p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
+</blockquote>
 <h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
+<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="puzzle_18/../puzzle_15/puzzle_15.html">Puzzle 15</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
+<p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
+<h2 id="code-to-complete-27"><a class="header" href="#code-to-complete-27">Code to complete</a></h2>
+<p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
+<pre><code class="language-python">import torch
+from max.torch import CustomOpLibrary
+
+
+def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
+    """
+    1D convolution using our custom PyTorch operation.
+
+    This demonstrates the transition from MAX Graph (p15) to PyTorch CustomOpLibrary.
+    Uses the EXACT same Mojo kernel, but different Python integration!
+    """
+    # Load our custom operations
+    mojo_kernels = Path(__file__).parent / "op"
+    ops = CustomOpLibrary(mojo_kernels)
+
+    # Create output tensor with same shape as input
+    output_tensor = torch.empty_like(input_tensor)
+
+    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+
+    # FILL IN with 1 line of code
+
+    return output_tensor
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
+<p>You can run the puzzle with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p18
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p18
+</code></pre>
+  </div>
+</div>
+<p>When successful, you should see output similar to:</p>
+<pre><code>Puzzle 18: From MAX Graph to PyTorch Custom Ops
+============================================================
+Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
+Convolution kernel: [0. 1. 2. 3.]
+
+NumPy reference result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+
+Testing PyTorch Custom Op (device: cuda)
+----------------------------------------
+PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ PyTorch custom op verification PASSED
+
+Comparing with MAX Graph approach (like p15)
+--------------------------------------------
+MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ MAX Graph verification PASSED
+✅ PyTorch and MAX Graph results MATCH
+</code></pre>
+<h2 id="solution-26"><a class="header" href="#solution-26">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<p>The solution requires calling the compiled custom operation with the proper arguments:</p>
+<pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates several critical concepts:</p>
+<h3 id="1-torchcompile-integration"><a class="header" href="#1-torchcompile-integration">1. <strong>torch.compile() integration</strong></a></h3>
+<p>The solution shows <code>torch.compile</code> integration</p>
+<pre><code class="language-python">torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<h3 id="2-explicit-output-tensor-allocation"><a class="header" href="#2-explicit-output-tensor-allocation">2. <strong>Explicit Output Tensor Allocation</strong></a></h3>
+<pre><code class="language-python">output_tensor = torch.empty_like(input_tensor)
+</code></pre>
+<ul>
+<li>Unlike MAX Graph which handles output allocation automatically</li>
+<li>PyTorch CustomOpLibrary requires <strong>pre-allocated output tensors</strong></li>
+<li>The Mojo operation signature expects <code>(out, input, kernel)</code> order</li>
+</ul>
+<h3 id="3-parameter-dictionary"><a class="header" href="#3-parameter-dictionary">3. <strong>Parameter Dictionary</strong></a></h3>
+<pre><code class="language-python">ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+</code></pre>
+<ul>
+<li>Parameters are passed as a dictionary to the operation</li>
+<li>These become compile-time parameters in the Mojo kernel</li>
+<li>Must match the parameter names in the Mojo <code>@staticmethod fn execute</code> signature</li>
+</ul>
+<h3 id="4-same-kernel-different-integration"><a class="header" href="#4-same-kernel-different-integration">4. <strong>Same Kernel, Different Integration</strong></a></h3>
+<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 15:</p>
+<ul>
+<li>Same GPU kernel code</li>
+<li>Same memory access patterns</li>
+<li>Same computational logic</li>
+<li>Only the Python wrapper layer changes</li>
+</ul>
+</div>
+</details>
+<h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
+<p>This puzzle illustrates several important patterns for PyTorch custom operations:</p>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
+<tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
+<tr><td><strong>Operation Call</strong></td><td><code>ops.custom(...)</code></td><td><code>torch.compile(op)(...)</code></td></tr>
+<tr><td><strong>Parameter Passing</strong></td><td><code>parameters={...}</code></td><td><code>op[{...}]</code></td></tr>
+<tr><td><strong>Device Management</strong></td><td>Explicit device context</td><td>PyTorch tensor device</td></tr>
+<tr><td><strong>Memory Management</strong></td><td>MAX Graph tensors</td><td>PyTorch tensors</td></tr>
+</tbody></table>
+</div>
+<h3 id="critical-pattern-explicit-output-tensor-allocation"><a class="header" href="#critical-pattern-explicit-output-tensor-allocation">Critical pattern: Explicit output tensor allocation</a></h3>
+<p>The most important difference is that PyTorch CustomOpLibrary requires <strong>explicit output tensor allocation</strong>:</p>
+<pre><code class="language-python"># ❌ This won't work - no output tensor
+result = torch.compile(conv1d)(input_tensor, kernel_tensor)
+
+# ✅ This works - pre-allocated output tensor
+output_tensor = torch.empty_like(input_tensor)
+torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<p>This pattern ensures:</p>
+<ul>
+<li>Memory is allocated on the correct device</li>
+<li>Output tensor has the right shape and dtype</li>
+<li>The Mojo kernel can write directly to the output buffer</li>
+</ul>
+<h3 id="torchcompile-integration"><a class="header" href="#torchcompile-integration">torch.compile() integration</a></h3>
+<p><code>torch.compile()</code> is essential because it:</p>
+<ul>
+<li>Handles memory layout conversion between PyTorch and Mojo</li>
+<li>Manages device synchronization (CPU ↔ GPU)</li>
+<li>Optimizes tensor format conversion</li>
+<li>Provides proper error handling for memory operations</li>
+</ul>
+<p><em>Note: Without <code>torch.compile()</code>, you might encounter <code>std::bad_alloc</code> errors because the raw operation can’t handle PyTorch’s tensor memory management.</em></p>
+<h2 id="debugging-custom-operations"><a class="header" href="#debugging-custom-operations">Debugging custom operations</a></h2>
+<p>Common issues and solutions:</p>
+<ol>
+<li><strong>Memory Allocation Errors</strong>: Always use <code>torch.compile()</code></li>
+<li><strong>Wrong Output Shape</strong>: Ensure output tensor matches expected dimensions</li>
+<li><strong>Device Mismatch</strong>: All tensors must be on the same device</li>
+<li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>
+</ol>
+<p>The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-embedding-op"><a class="header" href="#puzzle-19-embedding-op">Puzzle 19: Embedding Op</a></h1>
+<blockquote>
+<h2 id="memory-access-patterns-and-performance"><a class="header" href="#memory-access-patterns-and-performance">Memory access patterns and performance</a></h2>
+<p>We’re continuing Part IV with a focus on <strong>memory-bound operations</strong> and <strong>GPU memory access optimization</strong>.</p>
+<p>Building on <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a>, you’ll now explore how different kernel implementations of the same operation can have dramatically different performance characteristics. You’ll learn:</p>
+<ul>
+<li>How GPU memory coalescing affects performance</li>
+<li>Why grid configuration matters for memory-bound operations</li>
+<li>How to design kernels with optimal memory access patterns</li>
+<li>The performance implications of different threading strategies</li>
+</ul>
+<p>This puzzle demonstrates that <strong>how you access memory</strong> can be more important than <strong>what computation you perform</strong>.</p>
+</blockquote>
+<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
+<p>In this puzzle, you’ll implement two different GPU kernels for embedding operations - a fundamental component in neural networks. While both kernels produce identical results, they use different memory access patterns that lead to significant performance differences.</p>
+<p>You’ll compare:</p>
+<ul>
+<li><strong>1D coalesced kernel</strong>: Optimized for memory bandwidth with consecutive memory accesses</li>
+<li><strong>2D non-coalesced kernel</strong>: Suboptimal memory access pattern for comparison</li>
+</ul>
+<p>This comparison teaches the critical importance of memory coalescing in GPU kernel performance.</p>
+<h2 id="background-embedding-operations"><a class="header" href="#background-embedding-operations">Background: Embedding operations</a></h2>
+<p>An embedding operation converts discrete token indices into dense vector representations:</p>
+<pre><code class="language-python"># Input: token indices
+indices = [[1, 5, 2], [7, 1, 9]]           # Shape: [batch_size, seq_len]
+
+# Embedding table (learned parameters)
+embedding_table = [                        # Shape: [vocab_size, embed_dim]
+    [0.1, 0.2, 0.3, 0.4],  # Token 0
+    [0.5, 0.6, 0.7, 0.8],  # Token 1
+    [0.9, 1.0, 1.1, 1.2],  # Token 2
+    # ... more tokens
+]
+
+# Output: embedded vectors
+output[0,0] = embedding_table[1]  # [0.5, 0.6, 0.7, 0.8]
+output[0,1] = embedding_table[5]  # lookup token 5's embedding
+output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
+# ... and so on
+</code></pre>
+<p>This operation is <strong>memory-bound</strong> - performance depends on how efficiently you can read from the embedding table and write to the output tensor.</p>
+<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
+<p>This puzzle is structured in two parts to build your understanding systematically:</p>
+<h3 id="simple-embedding-kernel"><a class="header" href="#simple-embedding-kernel"><strong><a href="puzzle_19/./simple_embedding_kernel.html">Simple embedding kernel</a></strong></a></h3>
+<p>Start here to implement the actual puzzle code and understand the kernel implementations.</p>
+<p><strong>What you’ll do:</strong></p>
+<ul>
+<li>Complete two different GPU embedding kernels (1D coalesced vs 2D non-coalesced)</li>
+<li>Learn fundamental memory access patterns for GPU programming</li>
+<li>See the same algorithm implemented with different threading strategies</li>
+<li>Understand custom operation registration in Mojo</li>
+</ul>
+<h3 id="performance-comparison"><a class="header" href="#performance-comparison"><strong><a href="puzzle_19/./performance.html">Performance comparison</a></strong></a></h3>
+<p>Deep dive into why the kernels perform differently and the theory behind memory coalescing.</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+<li>Why memory coalescing matters for GPU performance</li>
+<li>How thread organization affects memory bandwidth utilization</li>
+<li>Real-world implications for neural network optimization</li>
+<li>Optimization strategies for memory-bound operations</li>
+</ul>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p>Ready to explore GPU memory optimization? Start with the <strong><a href="puzzle_19/./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the code, then move to <strong><a href="puzzle_19/./performance.html">Performance comparison</a></strong> to understand the performance implications.</p>
+<p>💡 <strong>Success tip:</strong> Pay attention to how the different grid configurations (1D vs 2D) affect memory access patterns - this insight applies to many GPU programming scenarios beyond embeddings.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="simple-embedding-kernel-1"><a class="header" href="#simple-embedding-kernel-1">Simple embedding kernel</a></h1>
+<p>In this puzzle, you’ll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.</p>
+<h2 id="1d-coalesced-kernel-optimized-approach"><a class="header" href="#1d-coalesced-kernel-optimized-approach">1D coalesced kernel (optimized approach)</a></h2>
+<p>This kernel uses a simple 1D grid where each thread processes exactly one output element. The key insight is that consecutive threads will access consecutive memory locations, leading to optimal memory coalescing.</p>
+<p><strong>Thread organization:</strong></p>
+<ul>
+<li><strong>Grid configuration</strong>: <code>[total_elements // 256]</code> blocks, <code>256</code> threads per block</li>
+<li><strong>Thread mapping</strong>: Each thread handles one <code>(batch, seq, embed)</code> position</li>
+<li><strong>Memory pattern</strong>: Consecutive threads access consecutive embedding dimensions</li>
+</ul>
+<p><strong>What you need to implement:</strong></p>
+<ol>
+<li>Calculate the global thread index from block and thread indices</li>
+<li>Convert the flat index to 3D coordinates <code>(batch_idx, seq_idx, embed_idx)</code></li>
+<li>Look up the token index from the indices tensor</li>
+<li>Copy the appropriate embedding vector element to the output</li>
+</ol>
+<h3 id="code-to-complete-28"><a class="header" href="#code-to-complete-28">Code to complete</a></h3>
+<p>You need to complete the missing parts in both embedding kernels:</p>
+<pre><code class="language-mojo">alias THREADS_PER_BLOCK = 256
+
+
+fn embedding_kernel_coalesced[
+    indices_layout: Layout,
+    weights_layout: Layout,
+    out_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    vocab_size: Int,
+    embed_dim: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
+    weights: LayoutTensor[mut=True, dtype, weights_layout],
+):
+    """
+    Memory-coalescing focused embedding kernel.
+
+    Key insight: The bottleneck is memory access patterns, not computation.
+    - Each thread handles one (batch, seq, embed) position
+    - Simple 1D grid for maximum simplicity and correctness
+    - Focus on getting memory access right first
+    """
+
+    # Simple 1D indexing - each thread = one output element
+    global_idx = block_idx.x * block_dim.x + thread_idx.x
+    total_elements = batch_size * seq_len * embed_dim
+
+    if global_idx &gt;= total_elements:
+        return
+
+    # Convert to (batch, seq, embed) coordinates
+    # FILL IN roughly 4 lines
+
+    # Get token index
+    # FILL IN 1 line
+
+    # Simple, correct assignment
+    # FILL IN 4 lines
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/embedding.mojo" class="filename">View full file: problems/p19/op/embedding.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ul>
+<li>Start with <code>global_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
+<li>Convert to 3D coordinates using division and modulo: <code>batch_idx = global_idx // (seq_len * embed_dim)</code></li>
+<li>Use <code>remaining = global_idx % (seq_len * embed_dim)</code> to simplify further calculations</li>
+<li>Always check bounds: <code>if global_idx &gt;= total_elements: return</code></li>
+<li>Handle invalid token indices by setting output to 0</li>
+<li>The embedding lookup is: <code>output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]</code></li>
+</ul>
+</div>
+</details>
+<h2 id="2d-non-coalesced-kernel-comparison-approach"><a class="header" href="#2d-non-coalesced-kernel-comparison-approach">2D non-coalesced kernel (comparison approach)</a></h2>
+<p>This kernel uses a 2D grid where the X dimension spans <code>(batch × seq)</code> positions and the Y dimension spans embedding dimensions. This can lead to non-coalesced memory access patterns.</p>
+<p><strong>Thread organization:</strong></p>
+<ul>
+<li><strong>Grid configuration</strong>: <code>[batch x seq // 16, embed_dim // 16]</code> blocks, <code>16 x 16</code> threads per block</li>
+<li><strong>Thread mapping</strong>: <code>thread_idx.x</code> maps to batch/sequence, <code>thread_idx.y</code> maps to embedding dimension</li>
+<li><strong>Memory pattern</strong>: Threads in a warp may access scattered memory locations</li>
+</ul>
+<p><strong>What you need to implement:</strong></p>
+<ol>
+<li>Calculate both X and Y coordinates from the 2D grid</li>
+<li>Convert the X coordinate to separate batch and sequence indices</li>
+<li>Use the Y coordinate directly as the embedding dimension</li>
+<li>Perform the same embedding lookup with bounds checking</li>
+</ol>
+<h3 id="code-to-complete-29"><a class="header" href="#code-to-complete-29">Code to complete</a></h3>
+<p>You need to complete the missing parts in both embedding kernels:</p>
+<pre><code class="language-mojo">fn embedding_kernel_2d[
+    indices_layout: Layout,
+    weights_layout: Layout,
+    out_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    vocab_size: Int,
+    embed_dim: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
+    weights: LayoutTensor[mut=True, dtype, weights_layout],
+):
+    """
+    2D grid non-coalesced embedding kernel.
+
+    Non-optimal approach for comparison:
+    - 2D grid: (batch*seq, embed_dim)
+    - More complex indexing
+    - Potentially worse memory access patterns
+    """
+
+    # 2D grid indexing
+    batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
+    embed_idx = block_idx.y * block_dim.y + thread_idx.y
+    total_positions = batch_size * seq_len
+
+    if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
+        return
+
+    # Convert to (batch, seq) coordinates
+    # FILL IN 2 lines
+
+    # Get token index
+    # FILL IN 1 line
+
+    # Assignment with 2D grid pattern
+    # FILL IN 4 lines
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/embedding.mojo" class="filename">View full file: problems/p19/op/embedding.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ul>
+<li>Use both X and Y thread coordinates: <code>batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
+<li>And: <code>embed_idx = block_idx.y * block_dim.y + thread_idx.y</code></li>
+<li>Convert <code>batch_seq_idx</code> to separate batch and sequence indices: <code>batch_idx = batch_seq_idx // seq_len</code></li>
+<li>Remember to check bounds for both dimensions: <code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
+<li>The token lookup is the same as 1D, but you’re only handling one embedding dimension per thread</li>
+<li>This kernel processes one embedding dimension per thread instead of entire vectors</li>
+</ul>
+</div>
+</details>
+<h2 id="custom-ops-registration"><a class="header" href="#custom-ops-registration">Custom ops registration</a></h2>
+<p>The kernels are wrapped in PyTorch custom operations for easy integration. The registration pattern is the same as MAX custom ops explained in <a href="puzzle_19/../puzzle_15/puzzle_15.html#understanding-max-graph-custom-ops">Understanding MAX Graph custom ops</a>:</p>
+<h3 id="1d-coalesced-operation"><a class="header" href="#1d-coalesced-operation">1D coalesced operation</a></h3>
+<p>This operation registers the optimized 1D embedding kernel as <code>"embedding"</code>:</p>
+<pre><code class="language-mojo">import compiler
+from runtime.asyncrt import DeviceContextPtr
+from tensor import InputTensor, OutputTensor
+from memory import UnsafePointer
+from gpu.host import DeviceBuffer
+
+
+@compiler.register("embedding")
+struct EmbeddingCustomOp:
+    @staticmethod
+    fn execute[
+        target: StaticString,
+        batch_size: Int,
+        seq_len: Int,
+        vocab_size: Int,
+        embed_dim: Int,
+    ](
+        output: OutputTensor[
+            dtype = DType.float32, rank=3
+        ],  # [batch_size, seq_len, embed_dim]
+        indices: InputTensor[
+            dtype = DType.int32, rank=2
+        ],  # [batch_size, seq_len]
+        weights: InputTensor[
+            dtype = output.dtype, rank=2
+        ],  # [vocab_size, embed_dim]
+        ctx: DeviceContextPtr,
+    ) raises:
+        output_tensor = output.to_layout_tensor()
+        indices_tensor = indices.to_layout_tensor()
+        weights_tensor = weights.to_layout_tensor()
+
+        alias indices_layout = indices_tensor.layout
+        alias weights_layout = weights_tensor.layout
+        alias out_layout = output_tensor.layout
+
+        @parameter
+        if target == "gpu":
+            gpu_ctx = ctx.get_device_context()
+
+            # Zero out output tensor
+            gpu_ctx.enqueue_memset(
+                DeviceBuffer[output.dtype](
+                    gpu_ctx,
+                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                        output_tensor.ptr
+                    ),
+                    batch_size * seq_len * embed_dim,
+                    owning=False,
+                ),
+                0,
+            )
+
+            # Calculate 1D grid dimensions (matching kernel's flat indexing)
+            total_elements = batch_size * seq_len * embed_dim
+            blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
+
+            # Compile and launch optimized kernel
+            compiled_kernel = gpu_ctx.compile_function[
+                embedding_kernel_coalesced[
+                    indices_layout,
+                    weights_layout,
+                    out_layout,
+                    batch_size,
+                    seq_len,
+                    vocab_size,
+                    embed_dim,
+                    output.dtype,
+                ]
+            ]()
+
+            gpu_ctx.enqueue_function(
+                compiled_kernel,
+                output_tensor,
+                indices_tensor,
+                weights_tensor,
+                grid_dim=(blocks,),
+                block_dim=(THREADS_PER_BLOCK,),
+            )
+
+        elif target == "cpu":
+            for batch in range(batch_size):
+                for seq in range(seq_len):
+                    token_idx_val = Int(indices_tensor[batch, seq])
+                    if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
+                        for emb in range(embed_dim):
+                            output_tensor[batch, seq, emb] = weights_tensor[
+                                token_idx_val, emb
+                            ]
+        else:
+            raise Error("Unsupported target: " + target)
+
+
+</code></pre>
+<p><strong>Key aspects of this registration:</strong></p>
+<ul>
+<li><strong>Simple grid configuration</strong>: Uses a straightforward 1D grid with <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> blocks</li>
+<li><strong>Memory optimization</strong>: Single <code>enqueue_memset</code> call to zero the output buffer efficiently</li>
+<li><strong>Compile-time parameters</strong>: All tensor dimensions passed as compile-time parameters for optimal performance</li>
+<li><strong>Device abstraction</strong>: Handles both GPU execution and CPU fallback seamlessly</li>
+</ul>
+<h3 id="2d-non-coalesced-operation"><a class="header" href="#2d-non-coalesced-operation">2D non-coalesced operation</a></h3>
+<p>This operation registers the comparison 2D embedding kernel as <code>"embedding_2d"</code>:</p>
+<pre><code class="language-mojo">@compiler.register("embedding_2d")
+struct Embedding2DCustomOp:
+    @staticmethod
+    fn execute[
+        target: StaticString,
+        batch_size: Int,
+        seq_len: Int,
+        vocab_size: Int,
+        embed_dim: Int,
+    ](
+        output: OutputTensor[
+            dtype = DType.float32, rank=3
+        ],  # [batch_size, seq_len, embed_dim]
+        indices: InputTensor[
+            dtype = DType.int32, rank=2
+        ],  # [batch_size, seq_len]
+        weights: InputTensor[
+            dtype = output.dtype, rank=2
+        ],  # [vocab_size, embed_dim]
+        ctx: DeviceContextPtr,
+    ) raises:
+        output_tensor = output.to_layout_tensor()
+        indices_tensor = indices.to_layout_tensor()
+        weights_tensor = weights.to_layout_tensor()
+
+        alias indices_layout = indices_tensor.layout
+        alias weights_layout = weights_tensor.layout
+        alias out_layout = output_tensor.layout
+
+        @parameter
+        if target == "gpu":
+            gpu_ctx = ctx.get_device_context()
+
+            # Zero out output tensor
+            gpu_ctx.enqueue_memset(
+                DeviceBuffer[output.dtype](
+                    gpu_ctx,
+                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                        output_tensor.ptr
+                    ),
+                    batch_size * seq_len * embed_dim,
+                    owning=False,
+                ),
+                0,
+            )
+
+            # Calculate 2D grid dimensions for non-coalesced access
+            total_positions = batch_size * seq_len
+            alias BLOCK_X = 16  # batch*seq dimension
+            alias BLOCK_Y = 16  # embed dimension
+            blocks_x = max(1, ceildiv(total_positions, BLOCK_X))
+            blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
+
+            # Compile and launch 2D kernel
+            compiled_kernel = gpu_ctx.compile_function[
+                embedding_kernel_2d[
+                    indices_layout,
+                    weights_layout,
+                    out_layout,
+                    batch_size,
+                    seq_len,
+                    vocab_size,
+                    embed_dim,
+                    output.dtype,
+                ]
+            ]()
+
+            gpu_ctx.enqueue_function(
+                compiled_kernel,
+                output_tensor,
+                indices_tensor,
+                weights_tensor,
+                grid_dim=(blocks_x, blocks_y),
+                block_dim=(BLOCK_X, BLOCK_Y),
+            )
+
+        elif target == "cpu":
+            # Same CPU fallback as 1D version
+            for batch in range(batch_size):
+                for seq in range(seq_len):
+                    token_idx_val = Int(indices_tensor[batch, seq])
+                    if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
+                        for emb in range(embed_dim):
+                            output_tensor[batch, seq, emb] = weights_tensor[
+                                token_idx_val, emb
+                            ]
+        else:
+            raise Error("Unsupported target: " + target)
+
+
+</code></pre>
+<p><strong>Key differences from the 1D operation:</strong></p>
+<ul>
+<li><strong>Complex grid configuration</strong>: Uses a 2D grid with separate calculations for <code>blocks_x</code> and <code>blocks_y</code></li>
+<li><strong>Fixed block dimensions</strong>: Hard-coded <code>BLOCK_X = 16</code> and <code>BLOCK_Y = 16</code> for 2D thread organization</li>
+<li><strong>Same memory management</strong>: Identical memory initialization and CPU fallback logic</li>
+<li><strong>Different kernel call</strong>: Passes 2D grid dimensions <code>(blocks_x, blocks_y)</code> and block dimensions <code>(BLOCK_X, BLOCK_Y)</code></li>
+</ul>
+<h3 id="common-wrapper-functionality"><a class="header" href="#common-wrapper-functionality">Common wrapper functionality</a></h3>
+<p>Both custom operations provide essential infrastructure:</p>
+<ol>
+<li>
+<p><strong>Memory management</strong>:</p>
+<ul>
+<li>Zero-initialization of output tensors with <code>enqueue_memset</code></li>
+<li>Proper buffer creation and memory layout handling</li>
+<li>Automatic cleanup and resource management</li>
+</ul>
+</li>
+<li>
+<p><strong>Device abstraction</strong>:</p>
+<ul>
+<li>GPU execution with optimized kernels</li>
+<li>CPU fallback for compatibility and debugging</li>
+<li>Consistent interface regardless of execution target</li>
+</ul>
+</li>
+<li>
+<p><strong>Parameter passing</strong>:</p>
+<ul>
+<li>Compile-time tensor dimensions for kernel optimization</li>
+<li>Runtime tensor data through layout tensor conversion</li>
+<li>Type-safe parameter validation</li>
+</ul>
+</li>
+<li>
+<p><strong>Grid configuration</strong>:</p>
+<ul>
+<li>Automatic calculation of optimal grid dimensions</li>
+<li>Different strategies optimized for each kernel’s access pattern</li>
+<li>Proper block dimension management</li>
+</ul>
+</li>
+</ol>
+<h3 id="integration-with-pytorch"><a class="header" href="#integration-with-pytorch">Integration with PyTorch</a></h3>
+<p>These registered operations can be called from Python using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a>:</p>
+<pre><code class="language-python"># Load the custom operations
+ops = CustomOpLibrary(mojo_kernels)
+
+# Call the 1D coalesced version
+result_1d = ops.embedding[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
+    indices, weights
+)
+
+# Call the 2D non-coalesced version
+result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "embed_dim": E}](
+    indices, weights
+)
+</code></pre>
+<p>The power of this approach is that the same kernel implementations can be used across different Python frameworks while maintaining optimal performance characteristics.</p>
+<h2 id="run-the-code"><a class="header" href="#run-the-code">Run the code</a></h2>
+<p>You can run the puzzle with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p19
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p19
+</code></pre>
+  </div>
+</div>
+<p>When successful, you should see output similar to:</p>
+<pre><code>Puzzle 19: Mojo Embedding Kernel Comparison
+======================================================================
+Configuration: B=8, L=512, V=10000, E=512
+------------------------------------------------------------
+
+Testing Correctness...
+   1D Coalesced - Max difference: 1.19e-07
+   2D Non-coalesced - Max difference: 1.19e-07
+   ✅ Both implementations CORRECT
+
+Benchmarking Mojo Kernels...
+
+Performance Results:
+   1D Coalesced:     2.145 ms
+   2D Non-coalesced: 3.867 ms
+   1D is 1.80x faster than 2D
+
+Key Learning Points:
+• Compare different GPU kernel implementations
+• 1D vs 2D grid patterns have different memory access
+• Coalesced memory access should be faster
+• Grid configuration affects GPU utilization
+</code></pre>
+<h2 id="solution-27"><a class="header" href="#solution-27">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<p>The solution involves implementing the coordinate transformations and memory operations for both kernels:</p>
+<h2 id="1d-coalesced-kernel"><a class="header" href="#1d-coalesced-kernel">1D Coalesced Kernel</a></h2>
+<pre><code class="language-mojo">fn embedding_kernel_coalesced[
+    indices_layout: Layout,
+    weights_layout: Layout,
+    out_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    vocab_size: Int,
+    embed_dim: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
+    weights: LayoutTensor[mut=True, dtype, weights_layout],
+):
+    """
+    Memory-coalescing focused embedding kernel.
+
+    Key insight: The bottleneck is memory access patterns, not computation.
+    - Each thread handles one (batch, seq, embed) position
+    - Simple 1D grid for maximum simplicity and correctness
+    - Focus on getting memory access right first
+    """
+
+    # Simple 1D indexing - each thread = one output element
+    global_idx = block_idx.x * block_dim.x + thread_idx.x
+    total_elements = batch_size * seq_len * embed_dim
+
+    if global_idx &gt;= total_elements:
+        return
+
+    # Convert to (batch, seq, embed) coordinates
+    batch_idx = global_idx // (seq_len * embed_dim)
+    remaining = global_idx % (seq_len * embed_dim)
+    seq_idx = remaining // embed_dim
+    embed_idx = remaining % embed_dim
+
+    # Get token index
+    token_idx_val = Int(indices[batch_idx, seq_idx])
+
+    # Simple, correct assignment
+    if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
+        output[batch_idx, seq_idx, embed_idx] = weights[
+            token_idx_val, embed_idx
+        ]
+    else:
+        output[batch_idx, seq_idx, embed_idx] = 0
+
+
+</code></pre>
+<h2 id="2d-non-coalesced-kernel"><a class="header" href="#2d-non-coalesced-kernel">2D Non-Coalesced Kernel</a></h2>
+<pre><code class="language-mojo">fn embedding_kernel_2d[
+    indices_layout: Layout,
+    weights_layout: Layout,
+    out_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    vocab_size: Int,
+    embed_dim: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
+    weights: LayoutTensor[mut=True, dtype, weights_layout],
+):
+    """
+    2D grid non-coalesced embedding kernel.
+
+    Non-optimal approach for comparison:
+    - 2D grid: (batch*seq, embed_dim)
+    - More complex indexing
+    - Potentially worse memory access patterns
+    """
+
+    # 2D grid indexing
+    batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
+    embed_idx = block_idx.y * block_dim.y + thread_idx.y
+
+    total_positions = batch_size * seq_len
+
+    # Bounds check
+    if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
+        return
+
+    # Convert to (batch, seq) coordinates
+    batch_idx = batch_seq_idx // seq_len
+    seq_idx = batch_seq_idx % seq_len
+
+    # Get token index
+    token_idx_val = Int(indices[batch_idx, seq_idx])
+
+    # Assignment with 2D grid pattern
+    if token_idx_val &gt;= 0 and token_idx_val &lt; vocab_size:
+        output[batch_idx, seq_idx, embed_idx] = weights[
+            token_idx_val, embed_idx
+        ]
+    else:
+        output[batch_idx, seq_idx, embed_idx] = 0
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>Both solutions implement the same embedding lookup logic but with different thread organizations:</p>
+<h3 id="key-differences"><a class="header" href="#key-differences">Key differences</a></h3>
+<ol>
+<li>
+<p><strong>Thread mapping</strong>:</p>
+<ul>
+<li><strong>1D kernel</strong>: One thread per output element, simple flat indexing</li>
+<li><strong>2D kernel</strong>: 2D grid mapping to (batch×seq, embed_dim) coordinates</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access patterns</strong>:</p>
+<ul>
+<li><strong>1D kernel</strong>: Consecutive threads access consecutive embedding dimensions → coalesced</li>
+<li><strong>2D kernel</strong>: Thread access pattern depends on block configuration → potentially non-coalesced</li>
+</ul>
+</li>
+<li>
+<p><strong>Indexing complexity</strong>:</p>
+<ul>
+<li><strong>1D kernel</strong>: Single division/modulo chain to get 3D coordinates</li>
+<li><strong>2D kernel</strong>: Separate X/Y coordinate calculations</li>
+</ul>
+</li>
+</ol>
+<h3 id="performance-implications"><a class="header" href="#performance-implications">Performance implications</a></h3>
+<p>The 1D kernel typically performs better because:</p>
+<ul>
+<li><strong>Memory coalescing</strong>: Consecutive threads access consecutive memory addresses</li>
+<li><strong>Simple indexing</strong>: Lower computational overhead for coordinate calculations</li>
+<li><strong>Better cache utilization</strong>: Predictable memory access patterns</li>
+</ul>
+<p>The 2D kernel may perform worse due to:</p>
+<ul>
+<li><strong>Scattered memory accesses</strong>: Threads within a warp may access different embedding vectors</li>
+<li><strong>Complex grid configuration</strong>: 16×16 blocks may not align optimally with memory layout</li>
+<li><strong>Warp divergence</strong>: Different threads may follow different execution paths</li>
+</ul>
+</div>
+</details>
+<h2 id="key-concepts-29"><a class="header" href="#key-concepts-29">Key concepts</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>1D Coalesced</th><th>2D Non-coalesced</th></tr></thead><tbody>
+<tr><td><strong>Thread organization</strong></td><td>1D flat indexing</td><td>2D grid (batch×seq, embed)</td></tr>
+<tr><td><strong>Memory access</strong></td><td>Consecutive addresses</td><td>Potentially scattered</td></tr>
+<tr><td><strong>Grid configuration</strong></td><td>Simple: <code>[total_elements // 256]</code></td><td>Complex: <code>[batch×seq // 16, embed // 16]</code></td></tr>
+<tr><td><strong>Performance</strong></td><td>Optimized for memory bandwidth</td><td>Suboptimal memory pattern</td></tr>
+<tr><td><strong>Use case</strong></td><td>Production kernels</td><td>Educational comparison</td></tr>
+</tbody></table>
+</div>
+<p>The core lesson: <strong>memory coalescing</strong> can lead to 2-3x performance differences for memory-bound operations like embeddings.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="performance-coalesced-vs-non-coalesced-memory-access"><a class="header" href="#performance-coalesced-vs-non-coalesced-memory-access">Performance: Coalesced vs non-coalesced memory access</a></h1>
+<p>Understanding memory access patterns is crucial for GPU performance optimization. This section explains why coalesced memory access patterns typically outperform non-coalesced patterns, particularly for memory-bound operations like embedding lookups.</p>
+<h2 id="memory-coalescing-basics"><a class="header" href="#memory-coalescing-basics">Memory coalescing basics</a></h2>
+<p><strong>Memory coalescing</strong> occurs when consecutive threads in a warp access consecutive memory addresses. GPUs can combine these individual memory requests into fewer, larger memory transactions, dramatically improving bandwidth utilization.</p>
+<h3 id="coalesced-vs-non-coalesced-access"><a class="header" href="#coalesced-vs-non-coalesced-access">Coalesced vs non-coalesced access</a></h3>
+<p><strong>Coalesced (efficient):</strong></p>
+<pre><code>- Thread 0 → Address 0x1000
+- Thread 1 → Address 0x1004
+- Thread 2 → Address 0x1008
+- Thread 3 → Address 0x100C
+- ...
+</code></pre>
+<p><strong>Result</strong>: 1 memory transaction for entire warp (32 threads)</p>
+<p><strong>Non-coalesced (inefficient):</strong></p>
+<pre><code>- Thread 0 → Address 0x1000
+- Thread 1 → Address 0x2000
+- Thread 2 → Address 0x3000
+- Thread 3 → Address 0x4000
+- ...
+</code></pre>
+<p><strong>Result</strong>: Up to 32 separate memory transactions</p>
+<h2 id="why-embedding-operations-are-memory-bound"><a class="header" href="#why-embedding-operations-are-memory-bound">Why embedding operations are memory-bound</a></h2>
+<p>Embedding lookups are <strong>memory-bound</strong> because they involve:</p>
+<ul>
+<li><strong>Minimal computation</strong>: Just copying data from input to output</li>
+<li><strong>Large memory footprint</strong>: Embedding tables can be gigabytes in size</li>
+<li><strong>High memory bandwidth requirements</strong>: Need to transfer large amounts of data</li>
+</ul>
+<p>For such operations, <strong>memory access efficiency</strong> determines performance more than computational complexity.</p>
+<h2 id="kernel-comparison"><a class="header" href="#kernel-comparison">Kernel comparison</a></h2>
+<h3 id="1d-coalesced-kernel-1"><a class="header" href="#1d-coalesced-kernel-1">1D coalesced kernel</a></h3>
+<ul>
+<li><strong>Thread organization</strong>: <code>[total_elements // 256]</code> blocks, one thread per output element</li>
+<li><strong>Memory pattern</strong>: Consecutive threads access consecutive embedding dimensions</li>
+<li><strong>Why it’s coalesced</strong>: <code>Thread 0: output[0,0,0]</code>, <code>Thread 1: output[0,0,1]</code> → consecutive addresses</li>
+</ul>
+<h3 id="2d-non-coalesced-kernel-1"><a class="header" href="#2d-non-coalesced-kernel-1">2D non-coalesced kernel</a></h3>
+<ul>
+<li><strong>Thread organization</strong>: <code>[batch*seq // 16, embed_dim // 16]</code> blocks with 16×16 threads</li>
+<li><strong>Memory pattern</strong>: Threads may access different embedding vectors</li>
+<li><strong>Why it’s non-coalesced</strong>: Thread access pattern can be scattered across memory</li>
+</ul>
+<h2 id="performance-results"><a class="header" href="#performance-results">Performance results</a></h2>
+<p>Typical benchmark results:</p>
+<pre><code>Performance Results:
+   1D Coalesced:     2.145 ms
+   2D Non-coalesced: 3.867 ms
+   1D is 1.80x faster than 2D
+</code></pre>
+<h2 id="memory-access-visualization"><a class="header" href="#memory-access-visualization">Memory access visualization</a></h2>
+<h3 id="coalesced-pattern-1d-kernel"><a class="header" href="#coalesced-pattern-1d-kernel">Coalesced pattern (1D kernel)</a></h3>
+<p><strong>Warp execution for output[0,0,0:32]:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Element</th><th>Thread ID</th><th>Memory Access</th><th>Address Pattern</th></tr></thead><tbody>
+<tr><td><code>output[0,0,0]</code></td><td>0</td><td><code>[0,0]</code></td><td>Base + 0</td></tr>
+<tr><td><code>output[0,0,1]</code></td><td>1</td><td><code>[0,1]</code></td><td>Base + 4</td></tr>
+<tr><td><code>output[0,0,2]</code></td><td>2</td><td><code>[0,2]</code></td><td>Base + 8</td></tr>
+<tr><td><code>output[0,0,3]</code></td><td>3</td><td><code>[0,3]</code></td><td>Base + 12</td></tr>
+<tr><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+<tr><td><code>output[0,0,31]</code></td><td>31</td><td><code>[0,31]</code></td><td>Base + 124</td></tr>
+</tbody></table>
+</div>
+<p><strong>Result</strong>: Consecutive addresses → <strong>1 memory transaction</strong> for entire warp</p>
+<h3 id="non-coalesced-pattern-2d-kernel"><a class="header" href="#non-coalesced-pattern-2d-kernel">Non-coalesced pattern (2D kernel)</a></h3>
+<p><strong>Warp execution with 16×16 blocks:</strong></p>
+<pre><code>Block organization (16×16):
+    X-dim: batch*seq positions (0-15)
+    Y-dim: embed dimensions (0-15)
+
+Warp threads might access:
+    Thread 0:  batch=0, seq=0, embed=0  → Address A
+    Thread 1:  batch=0, seq=1, embed=0  → Address B (different row)
+    Thread 2:  batch=0, seq=2, embed=0  → Address C (different row)
+    ...
+    Thread 31: batch=1, seq=15, embed=0 → Address Z (scattered)
+</code></pre>
+<p><strong>Result</strong>: Potentially scattered addresses → <strong>Multiple memory transactions</strong></p>
+<h2 id="key-optimization-strategies"><a class="header" href="#key-optimization-strategies">Key optimization strategies</a></h2>
+<ol>
+<li><strong>Prefer 1D indexing</strong> for memory-bound operations when possible</li>
+<li><strong>Align data structures</strong> to coalescing-friendly layouts</li>
+<li><strong>Consider memory access patterns</strong> during kernel design</li>
+<li><strong>Profile memory bandwidth</strong> to identify bottlenecks</li>
+<li><strong>Use memory-bound benchmarks</strong> to validate optimizations</li>
+</ol>
+<p>The core insight: <strong>memory access patterns</strong> often determine GPU performance more than computational complexity, especially for memory-bound operations like embeddings.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-20-autograd-integration"><a class="header" href="#puzzle-20-autograd-integration">Puzzle 20: Autograd Integration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-forward-pass-implementation"><a class="header" href="#-forward-pass-implementation">🔄 Forward Pass Implementation</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-backward-pass-implementation"><a class="header" href="#-backward-pass-implementation">📐 Backward Pass Implementation</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#part-v-mojo-functional-patterns---high-level-gpu-programming">Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
+<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
 <p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
 <p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
-<h3 id="-gpu-execution-hierarchy"><a class="header" href="#-gpu-execution-hierarchy">🧠 <strong>GPU execution hierarchy</strong></a></h3>
+<h3 id="gpu-execution-hierarchy"><a class="header" href="#gpu-execution-hierarchy"><strong>GPU execution hierarchy</strong></a></h3>
 <p>Understand the fundamental relationship between GPU threads and SIMD operations:</p>
 <pre><code>GPU Device
 ├── Grid (your entire problem)
@@ -7205,8 +8124,8 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Thread scheduling optimized automatically</li>
 <li>Memory hierarchy optimization built-in</li>
 </ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
-<h3 id="-four-fundamental-patterns"><a class="header" href="#-four-fundamental-patterns">⚡ <strong>Four fundamental patterns</strong></a></h3>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_21/../puzzle_22/puzzle_22.html">Part VI</a></strong>.</p>
+<h3 id="four-fundamental-patterns"><a class="header" href="#four-fundamental-patterns"><strong>Four fundamental patterns</strong></a></h3>
 <p>Master the complete spectrum of GPU functional programming:</p>
 <ol>
 <li><strong>Elementwise</strong>: Maximum parallelism with automatic SIMD vectorization</li>
@@ -7214,7 +8133,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li><strong>Manual vectorization</strong>: Expert-level control over SIMD operations</li>
 <li><strong>Mojo vectorize</strong>: Safe, automatic vectorization with bounds checking</li>
 </ol>
-<h3 id="-performance-patterns-youll-recognize"><a class="header" href="#-performance-patterns-youll-recognize">🎯 <strong>Performance patterns you’ll recognize</strong></a></h3>
+<h3 id="performance-patterns-youll-recognize"><a class="header" href="#performance-patterns-youll-recognize"><strong>Performance patterns you’ll recognize</strong></a></h3>
 <pre><code>Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
 
 Elementwise:     256 threads × 1 SIMD op   = High parallelism
@@ -7238,9 +8157,9 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>GPU memory management</strong>: Buffer allocation, host-device synchronization</li>
 </ul>
-<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
-<h3 id="-1-elementwise-operations"><a class="header" href="#-1-elementwise-operations">🔰 <strong>1. Elementwise operations</strong></a></h3>
-<p><strong>→ <a href="puzzle_20/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
+<h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
+<h3 id="1-elementwise-operations"><a class="header" href="#1-elementwise-operations"><strong>1. Elementwise operations</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
 <p>Start with the foundation: automatic thread management and SIMD vectorization.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -7252,8 +8171,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p><strong>Key pattern:</strong></p>
 <pre><code class="language-mojo">elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 </code></pre>
-<h3 id="-2-tiled-processing"><a class="header" href="#-2-tiled-processing">⚡ <strong>2. Tiled processing</strong></a></h3>
-<p><strong>→ <a href="puzzle_20/./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
+<h3 id="2-tiled-processing"><a class="header" href="#2-tiled-processing"><strong>2. Tiled processing</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
 <p>Build on elementwise with memory-optimized tiling patterns.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -7263,8 +8182,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Thread-to-tile mapping vs thread-to-element mapping</li>
 </ul>
 <p><strong>Key insight:</strong> Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</p>
-<h3 id="-3-advanced-vectorization"><a class="header" href="#-3-advanced-vectorization">🔧 <strong>3. Advanced vectorization</strong></a></h3>
-<p><strong>→ <a href="puzzle_20/./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
+<h3 id="3-advanced-vectorization"><a class="header" href="#3-advanced-vectorization"><strong>3. Advanced vectorization</strong></a></h3>
+<p><strong>→ <a href="puzzle_21/./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
 <p>Explore manual control and automatic vectorization strategies.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -7279,7 +8198,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>Mojo vectorize</strong>: Automatic optimization, built-in safety, clean code</li>
 </ul>
 <h3 id="-4-threading-vs-simd-concepts"><a class="header" href="#-4-threading-vs-simd-concepts">🧠 <strong>4. Threading vs SIMD concepts</strong></a></h3>
-<p><strong>→ <a href="puzzle_20/./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
+<p><strong>→ <a href="puzzle_21/./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
 <p>Understand the fundamental relationship between parallelism levels.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -7290,7 +8209,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 </ul>
 <p><strong>Key insight:</strong> GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</p>
 <h3 id="-5-performance-benchmarking-in-mojo"><a class="header" href="#-5-performance-benchmarking-in-mojo">📊 <strong>5. Performance benchmarking in Mojo</strong></a></h3>
-<p><strong>→ <a href="puzzle_20/./benchmarking.html">Benchmarking in Mojo</a></strong></p>
+<p><strong>→ <a href="puzzle_21/./benchmarking.html">Benchmarking in Mojo</a></strong></p>
 <p>Learn to measure, analyze, and optimize GPU performance scientifically.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -7300,15 +8219,15 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Empirical performance analysis and pattern selection</li>
 </ul>
 <p><strong>Critical technique:</strong> Using <code>keep()</code> to prevent compiler optimization of benchmarked code.</p>
-<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
 <p>Ready to transform your GPU programming skills? Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.</p>
 <p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not just the <strong>how</strong>. The conceptual framework you develop here will serve you throughout your GPU programming career.</p>
-<p>🎯 <strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_20/./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-elementwise---basic-gpu-functional-operations"><a class="header" href="#-elementwise---basic-gpu-functional-operations">🔰 Elementwise - Basic GPU Functional Operations</a></h1>
+<p><strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_21/./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
 <p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
-<h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
+<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
@@ -7327,7 +8246,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>SIMD width: Target-dependent (determined by GPU architecture and data type)</li>
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
-<h2 id="code-to-complete-27"><a class="header" href="#code-to-complete-27">Code to complete</a></h2>
+<h2 id="code-to-complete-30"><a class="header" href="#code-to-complete-30">Code to complete</a></h2>
 <pre><code class="language-mojo">alias SIZE = 1024
 alias rank = 1
 alias layout = Layout.row_major(SIZE)
@@ -7356,7 +8275,7 @@ fn elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -7419,11 +8338,11 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --elementwise
+<pre><code class="language-bash">uv run poe p21 --elementwise
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --elementwise
+<pre><code class="language-bash">pixi run p21 --elementwise
 </code></pre>
   </div>
 </div>
@@ -7440,7 +8359,7 @@ idx: 416
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-26"><a class="header" href="#solution-26">Solution</a></h2>
+<h2 id="solution-28"><a class="header" href="#solution-28">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn elementwise_add[
@@ -7616,19 +8535,19 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
 <p>Once you’ve mastered elementwise operations, you’re ready for:</p>
 <ul>
-<li><strong><a href="puzzle_20/./tile.html">⚡ Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
-<li><strong><a href="puzzle_20/./vectorize.html">🔧 Vectorization</a></strong>: Fine-grained SIMD control</li>
-<li><strong><a href="puzzle_20/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_20/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_21/./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
+<li><strong><a href="puzzle_21/./vectorize.html">Vectorization</a></strong>: Fine-grained SIMD control</li>
+<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-tile---memory-efficient-tiled-processing"><a class="header" href="#-tile---memory-efficient-tiled-processing">⚡ Tile - Memory-Efficient Tiled Processing</a></h1>
-<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
+<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
-<p>You’ve already seen tiling in action with <strong><a href="puzzle_20/../puzzle_14/tiled.html">Puzzle 14’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
+<p>You’ve already seen tiling in action with <strong><a href="puzzle_21/../puzzle_14/tiled.html">Puzzle 14’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
 <p><strong>Key insight:</strong> <em>Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</em></p>
-<h2 id="key-concepts-29"><a class="header" href="#key-concepts-29">Key concepts</a></h2>
+<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Tile-based memory organization</strong> for cache optimization</li>
@@ -7648,7 +8567,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li>SIMD width: GPU-dependent (for operations within tiles)</li>
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
-<h2 id="code-to-complete-28"><a class="header" href="#code-to-complete-28">Code to complete</a></h2>
+<h2 id="code-to-complete-31"><a class="header" href="#code-to-complete-31">Code to complete</a></h2>
 <pre><code class="language-mojo">alias TILE_SIZE = 32
 
 
@@ -7683,7 +8602,7 @@ fn tiled_elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -7735,11 +8654,11 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --tiled
+<pre><code class="language-bash">uv run poe p21 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --tiled
+<pre><code class="language-bash">pixi run p21 --tiled
 </code></pre>
   </div>
 </div>
@@ -7758,7 +8677,7 @@ tile_id: 31
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-27"><a class="header" href="#solution-27">Solution</a></h2>
+<h2 id="solution-29"><a class="header" href="#solution-29">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">alias TILE_SIZE = 32
@@ -7946,13 +8865,13 @@ Tiled:       Moderate parallelism, localized memory access
 <h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next steps</a></h2>
 <p>Now that you understand both elementwise and tiled patterns:</p>
 <ul>
-<li><strong><a href="puzzle_20/./vectorize.html">🔧 Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
-<li><strong><a href="puzzle_20/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_20/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_21/./vectorize.html">Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
+<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-vectorization---fine-grained-simd-control"><a class="header" href="#-vectorization---fine-grained-simd-control">🔧 Vectorization - Fine-Grained SIMD Control</a></h1>
-<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
+<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
 <ol>
 <li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index calculations</li>
@@ -7960,7 +8879,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ol>
 <p>Both approaches build on tiling concepts but with different trade-offs between control, safety, and performance optimization.</p>
 <p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance requirements and complexity levels.</em></p>
-<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
+<h2 id="key-concepts-32"><a class="header" href="#key-concepts-32">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Manual SIMD operations</strong> with explicit index management</li>
@@ -7981,7 +8900,7 @@ Tiled:       Moderate parallelism, localized memory access
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h2 id="1-manual-vectorization-approach"><a class="header" href="#1-manual-vectorization-approach">1. Manual vectorization approach</a></h2>
-<h3 id="code-to-complete-29"><a class="header" href="#code-to-complete-29">Code to complete</a></h3>
+<h3 id="code-to-complete-32"><a class="header" href="#code-to-complete-32">Code to complete</a></h3>
 <pre><code class="language-mojo">fn manual_vectorized_tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
@@ -8020,7 +8939,7 @@ Tiled:       Moderate parallelism, localized memory access
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -8052,11 +8971,11 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --manual-vectorized
+<pre><code class="language-bash">uv run poe p21 --manual-vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --manual-vectorized
+<pre><code class="language-bash">pixi run p21 --manual-vectorized
 </code></pre>
   </div>
 </div>
@@ -8176,7 +9095,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 </div>
 </details>
 <h2 id="2-mojo-vectorize-approach"><a class="header" href="#2-mojo-vectorize-approach">2. Mojo vectorize approach</a></h2>
-<h3 id="code-to-complete-30"><a class="header" href="#code-to-complete-30">Code to complete</a></h3>
+<h3 id="code-to-complete-33"><a class="header" href="#code-to-complete-33">Code to complete</a></h3>
 <pre><code class="language-mojo">fn vectorize_within_tiles_elementwise_add[
     layout: Layout,
     dtype: DType,
@@ -8221,7 +9140,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -8258,11 +9177,11 @@ fn vectorized_add[width: Int](i: Int):
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --vectorized
+<pre><code class="language-bash">uv run poe p21 --vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --vectorized
+<pre><code class="language-bash">pixi run p21 --vectorized
 </code></pre>
   </div>
 </div>
@@ -8427,12 +9346,12 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next steps</a></h2>
 <p>Now that you understand all three fundamental patterns:</p>
 <ul>
-<li><strong><a href="puzzle_20/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_20/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
-<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
+<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
@@ -8450,7 +9369,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_21/../puzzle_22/puzzle_22.html">Part VI</a></strong>.</p>
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
@@ -8569,12 +9488,12 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 <h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next steps</a></h2>
 <p>With a solid understanding of GPU threading vs SIMD concepts:</p>
 <ul>
-<li><strong><a href="puzzle_20/./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
+<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
-<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
-<p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p20.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
+<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
+<p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
 </blockquote>
@@ -8586,18 +9505,18 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --benchmark
+<pre><code class="language-bash">uv run poe p21 --benchmark
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --benchmark
+<pre><code class="language-bash">pixi run p21 --benchmark
 </code></pre>
   </div>
 </div>
 <p>Your output will show performance measurements for each pattern:</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
-Running P20 GPU Benchmarks...
+Running p21 GPU Benchmarks...
 SIMD width: 4
 --------------------------------------------------------------------------------
 Testing SIZE=16, TILE=4
@@ -8838,14 +9757,14 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Improve performance</strong>: Eliminate barriers and reduce memory traffic</li>
 <li><strong>Enable new algorithms</strong>: Unlock patterns impossible with pure functional approaches</li>
 </ul>
-<p><strong>Coming up next</strong>: <a href="puzzle_20/../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#-part-vi-gpu-warp-programming---synchronized-execution-primitives">⚡ Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
-<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
+<p><strong>Coming up next</strong>: <a href="puzzle_21/../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#part-vi-gpu-warp-programming---synchronized-execution-primitives">Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
+<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
 <p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn-1"><a class="header" href="#what-youll-learn-1">What you’ll learn</a></h2>
-<h3 id="-gpu-warp-execution-model"><a class="header" href="#-gpu-warp-execution-model">🧠 <strong>GPU warp execution model</strong></a></h3>
+<h3 id="gpu-warp-execution-model"><a class="header" href="#gpu-warp-execution-model"><strong>GPU warp execution model</strong></a></h3>
 <p>Understand the fundamental hardware unit of GPU parallelism:</p>
 <pre><code>GPU Block (e.g., 256 threads)
 ├── Warp 0 (32 threads, SIMT lockstep execution)
@@ -8865,7 +9784,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Lockstep execution</strong>: All threads in a warp execute the same instruction simultaneously</li>
 <li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
-<h3 id="-warp-operations-available-in-mojo"><a class="header" href="#-warp-operations-available-in-mojo">⚡ <strong>Warp operations available in Mojo</strong></a></h3>
+<h3 id="warp-operations-available-in-mojo"><a class="header" href="#warp-operations-available-in-mojo"><strong>Warp operations available in Mojo</strong></a></h3>
 <p>Master the core warp primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
@@ -8874,7 +9793,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong><code>prefix_sum(value)</code></strong>: Compute prefix sum across lanes</li>
 <li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
 </ol>
-<h3 id="-performance-transformation-example"><a class="header" href="#-performance-transformation-example">🎯 <strong>Performance transformation example</strong></a></h3>
+<h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex pattern we have seen earlier (from p10.mojo):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
@@ -8890,7 +9809,7 @@ while stride &gt; 0:
 # Can be replaced with the simple warp approach:
 total = sum(partial_product)
 </code></pre>
-<h3 id="-when-warp-operations-excel"><a class="header" href="#-when-warp-operations-excel">📊 <strong>When warp operations excel</strong></a></h3>
+<h3 id="when-warp-operations-excel"><a class="header" href="#when-warp-operations-excel"><strong>When warp operations excel</strong></a></h3>
 <p>Learn the performance characteristics:</p>
 <pre><code>Problem Scale         Traditional    Warp Operations
 Single warp (32)      Fast          Fastest (no barriers)
@@ -8906,9 +9825,9 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
 </ul>
-<h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
-<h3 id="-1-simt-execution-model"><a class="header" href="#-1-simt-execution-model">🔰 <strong>1. SIMT execution model</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
+<h2 id="learning-path-2"><a class="header" href="#learning-path-2">Learning path</a></h2>
+<h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
+<p><strong>→ <a href="puzzle_22/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
 <p>Understand the hardware foundation that makes warp operations possible.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -8918,8 +9837,8 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <li>Hardware vs software thread management</li>
 </ul>
 <p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
-<h3 id="-2-warp-sum-fundamentals"><a class="header" href="#-2-warp-sum-fundamentals">⚡ <strong>2. Warp sum fundamentals</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<h3 id="2-warp-sum-fundamentals"><a class="header" href="#2-warp-sum-fundamentals"><strong>2. Warp sum fundamentals</strong></a></h3>
+<p><strong>→ <a href="puzzle_22/./warp_sum.html">warp.sum() Essentials</a></strong></p>
 <p>Master the most important warp operation through dot product implementation.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -8934,8 +9853,8 @@ total = sum(partial_result)  # Magic happens here!
 if lane_id() == 0:
     output[0] = total
 </code></pre>
-<h3 id="-3-when-to-use-warp-programming"><a class="header" href="#-3-when-to-use-warp-programming">📊 <strong>3. When to use warp programming</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./warp_extra.html">When to Use Warp Programming</a></strong></p>
+<h3 id="3-when-to-use-warp-programming"><a class="header" href="#3-when-to-use-warp-programming"><strong>3. When to use warp programming</strong></a></h3>
+<p><strong>→ <a href="puzzle_22/./warp_extra.html">When to Use Warp Programming</a></strong></p>
 <p>Learn the decision framework for choosing warp operations over alternatives.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -8946,33 +9865,33 @@ if lane_id() == 0:
 </ul>
 <p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
 <h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
-<h3 id="-hardware-software-alignment"><a class="header" href="#-hardware-software-alignment">🎯 <strong>Hardware-software alignment</strong></a></h3>
+<h3 id="hardware-software-alignment"><a class="header" href="#hardware-software-alignment"><strong>Hardware-software alignment</strong></a></h3>
 <p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
 <ul>
 <li><strong>SIMT execution</strong>: All lanes execute same instruction simultaneously</li>
 <li><strong>Built-in synchronization</strong>: No explicit barriers needed within warps</li>
 <li><strong>Cross-architecture support</strong>: <code>WARP_SIZE</code> handles NVIDIA vs AMD differences</li>
 </ul>
-<h3 id="-pattern-transformation"><a class="header" href="#-pattern-transformation">⚡ <strong>Pattern transformation</strong></a></h3>
+<h3 id="pattern-transformation"><a class="header" href="#pattern-transformation"><strong>Pattern transformation</strong></a></h3>
 <p>Converting complex parallel patterns to warp primitives:</p>
 <ul>
 <li><strong>Tree reduction</strong> → <code>sum()</code></li>
 <li><strong>Prefix computation</strong> → <code>prefix_sum()</code></li>
 <li><strong>Data shuffling</strong> → <code>shuffle_idx()</code>, <code>shuffle_down()</code></li>
 </ul>
-<h3 id="-performance-characteristics"><a class="header" href="#-performance-characteristics">📈 <strong>Performance characteristics</strong></a></h3>
+<h3 id="performance-characteristics-2"><a class="header" href="#performance-characteristics-2"><strong>Performance characteristics</strong></a></h3>
 <p>Recognizing when warp operations provide advantages:</p>
 <ul>
 <li><strong>Small to medium problems</strong>: Eliminates barrier overhead</li>
 <li><strong>Large problems</strong>: Reduces memory traffic and improves cache utilization</li>
 <li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
 </ul>
-<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
+<h2 id="getting-started-2"><a class="header" href="#getting-started-2">Getting started</a></h2>
 <p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
 <p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
-<p>🎯 <strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_21/./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp Lanes &amp; SIMT Execution</a></h1>
+<p><strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_22/./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp lanes &amp; SIMT execution</a></h1>
 <h2 id="mental-model-for-warp-programming-vs-simd"><a class="header" href="#mental-model-for-warp-programming-vs-simd">Mental model for warp programming vs SIMD</a></h2>
 <h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
 <p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
@@ -9025,7 +9944,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 </code></pre>
 <p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.</p>
 <h3 id="where-warps-fit-in-gpu-execution-hierarchy"><a class="header" href="#where-warps-fit-in-gpu-execution-hierarchy">Where warps fit in GPU execution hierarchy</a></h3>
-<p>For complete context on how warps relate to the overall GPU execution model, see <a href="puzzle_21/../puzzle_20/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
+<p>For complete context on how warps relate to the overall GPU execution model, see <a href="puzzle_22/../puzzle_20/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
 <pre><code>GPU Device
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
@@ -9262,7 +10181,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <li><strong>Neighbor communication</strong>: <code>shuffle_down()</code> for sliding windows</li>
 <li><strong>Prefix computations</strong>: <code>prefix_sum()</code> for scan algorithms</li>
 </ol>
-<h3 id="performance-characteristics-2"><a class="header" href="#performance-characteristics-2">Performance characteristics</a></h3>
+<h3 id="performance-characteristics-3"><a class="header" href="#performance-characteristics-3">Performance characteristics</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
 <tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
 <tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
@@ -9272,11 +10191,11 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </div>
 <h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next steps</a></h2>
 <p>Now that you understand the SIMT foundation, you’re ready to see how these concepts enable powerful warp operations. The next section will show you how <code>sum()</code> transforms complex reduction patterns into simple, efficient function calls.</p>
-<p><strong>→ Continue to <a href="puzzle_21/./warp_sum.html">warp.sum() Essentials</a></strong></p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-warpsum-essentials---warp-level-dot-product"><a class="header" href="#-warpsum-essentials---warp-level-dot-product">⚡ warp.sum() Essentials - Warp-Level Dot Product</a></h1>
-<p>Implement the dot product we saw in <a href="puzzle_21/../puzzle_10/puzzle_10.html">puzzle 10</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
+<p><strong>→ Continue to <a href="puzzle_22/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="warpsum-essentials---warp-level-dot-product"><a class="header" href="#warpsum-essentials---warp-level-dot-product">warp.sum() Essentials - Warp-Level Dot Product</a></h1>
+<p>Implement the dot product we saw in <a href="puzzle_22/../puzzle_10/puzzle_10.html">puzzle 10</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
-<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
+<h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
@@ -9355,15 +10274,15 @@ fn traditional_dot_product_p10_style[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --traditional
+<pre><code class="language-bash">uv run poe p22 --traditional
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --traditional
+<pre><code class="language-bash">pixi run p22 --traditional
 </code></pre>
   </div>
 </div>
-<h2 id="code-to-complete-31"><a class="header" href="#code-to-complete-31">Code to complete</a></h2>
+<h2 id="code-to-complete-34"><a class="header" href="#code-to-complete-34">Code to complete</a></h2>
 <h3 id="1-simple-warp-kernel-approach"><a class="header" href="#1-simple-warp-kernel-approach">1. Simple warp kernel approach</a></h3>
 <p>Transform the complex traditional approach into a simple warp kernel using <code>warp_sum()</code>:</p>
 <pre><code class="language-mojo">from gpu.warp import sum as warp_sum
@@ -9381,7 +10300,7 @@ fn simple_warp_dot_product[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p22/p22.mojo" class="filename">View full file: problems/p22/p22.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -9429,11 +10348,11 @@ if global_i &lt; size:
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --kernel
+<pre><code class="language-bash">uv run poe p22 --kernel
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --kernel
+<pre><code class="language-bash">pixi run p22 --kernel
 </code></pre>
   </div>
 </div>
@@ -9447,7 +10366,7 @@ expected: 10416.0
 🚀 Notice how simple the warp version is compared to p10.mojo!
    Same kernel structure, but warp_sum() replaces all the complexity!
 </code></pre>
-<h3 id="solution-28"><a class="header" href="#solution-28">Solution</a></h3>
+<h3 id="solution-30"><a class="header" href="#solution-30">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn simple_warp_dot_product[
@@ -9584,11 +10503,11 @@ warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --functional
+<pre><code class="language-bash">uv run poe p22 --functional
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --functional
+<pre><code class="language-bash">pixi run p22 --functional
 </code></pre>
   </div>
 </div>
@@ -9602,7 +10521,7 @@ expected: 10416.0
 🔧 Functional approach shows modern Mojo style with warp operations!
    Clean, composable, and still leverages warp hardware primitives!
 </code></pre>
-<h3 id="solution-29"><a class="header" href="#solution-29">Solution</a></h3>
+<h3 id="solution-31"><a class="header" href="#solution-31">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn functional_warp_dot_product[
@@ -9677,11 +10596,11 @@ expected: 10416.0
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --benchmark
+<pre><code class="language-bash">uv run poe p22 --benchmark
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --benchmark
+<pre><code class="language-bash">pixi run p22 --benchmark
 </code></pre>
   </div>
 </div>
@@ -9779,13 +10698,13 @@ Benchmarks completed!
 <h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
 <p>Once you’ve mastered warp sum operations, you’re ready for:</p>
 <ul>
-<li><strong><a href="puzzle_21/./warp_extra.html">📊 When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
+<li><strong><a href="puzzle_22/./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
 <li><strong>Advanced warp operations</strong>: <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code> for complex communication patterns</li>
 <li><strong>Multi-warp algorithms</strong>: Combining warp operations with block-level synchronization</li>
 <li><strong>Part VII: Memory Coalescing</strong>: Optimizing memory access patterns for maximum bandwidth</li>
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: Warp operations transform GPU programming by replacing complex synchronization patterns with hardware-accelerated primitives, demonstrating how understanding the execution model enables dramatic simplification without sacrificing performance.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-when-to-use-warp-programming"><a class="header" href="#-when-to-use-warp-programming">📊 When to Use Warp Programming</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="when-to-use-warp-programming"><a class="header" href="#when-to-use-warp-programming">When to Use Warp Programming</a></h1>
 <h2 id="quick-decision-guide"><a class="header" href="#quick-decision-guide">Quick decision guide</a></h2>
 <p><strong>✅ Use warp operations when:</strong></p>
 <ul>
@@ -9801,7 +10720,7 @@ Benchmarks completed!
 <li>Variable work per thread (causes warp divergence)</li>
 <li>Problem <code>size &lt; WARP_SIZE</code></li>
 </ul>
-<h2 id="performance-characteristics-3"><a class="header" href="#performance-characteristics-3">Performance characteristics</a></h2>
+<h2 id="performance-characteristics-4"><a class="header" href="#performance-characteristics-4">Performance characteristics</a></h2>
 <h3 id="problem-size-scaling"><a class="header" href="#problem-size-scaling">Problem size scaling</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Elements</th><th>Warp Advantage</th><th>Notes</th></tr></thead><tbody>
 <tr><td>&lt; 32</td><td>None</td><td>Traditional better</td></tr>
@@ -9853,7 +10772,7 @@ if input[global_i] &gt; threshold:
 </code></pre>
 <h2 id="performance-measurement"><a class="header" href="#performance-measurement">Performance measurement</a></h2>
 <pre><code class="language-bash"># Always benchmark both approaches
-mojo p21.mojo --benchmark
+mojo p22.mojo --benchmark
 
 # Look for scaling patterns:
 # traditional_1x:  X.XX ms

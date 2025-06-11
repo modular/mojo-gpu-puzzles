@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🧠 GPU Threading vs SIMD Concepts - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 18: 1D Convolution Op - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,157 +186,180 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
+                        <h1 id="puzzle-18-1d-convolution-op"><a class="header" href="#puzzle-18-1d-convolution-op">Puzzle 18: 1D Convolution Op</a></h1>
+<blockquote>
+<h2 id="from-max-graph-to-pytorch-custom-ops"><a class="header" href="#from-max-graph-to-pytorch-custom-ops">From MAX Graph to PyTorch custom ops</a></h2>
+<p>We’re now entering Part IV of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
+<p>In <a href="../puzzle_15/puzzle_15.html">Puzzle 15</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
+<ul>
+<li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
+<li>Integrate with PyTorch’s tensor system and autograd</li>
+<li>Compare MAX Graph vs PyTorch approaches for custom operations</li>
+<li>Understand the critical pattern of explicit output tensor allocation</li>
+</ul>
+<p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
+</blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
-<blockquote>
-<p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
-</blockquote>
-<h2 id="core-concepts"><a class="header" href="#core-concepts">Core concepts</a></h2>
-<h3 id="gpu-threading-hierarchy"><a class="header" href="#gpu-threading-hierarchy">GPU threading hierarchy</a></h3>
-<p>GPU execution follows a well-defined hierarchy that abstracts hardware complexity:</p>
-<pre><code>GPU Device
-├── Grid (your entire problem)
-│   ├── Block 1 (group of threads, shared memory)
-│   │   ├── Warp 1 (32 threads, lockstep execution)
-│   │   │   ├── Thread 1 → SIMD operations
-│   │   │   ├── Thread 2 → SIMD operations
-│   │   │   └── ... (32 threads total)
-│   │   └── Warp 2 (32 threads)
-│   └── Block 2 (independent group)
+<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="../puzzle_15/puzzle_15.html">Puzzle 15</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
+<p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
+<pre><code class="language-python">import torch
+from max.torch import CustomOpLibrary
+
+
+def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
+    """
+    1D convolution using our custom PyTorch operation.
+
+    This demonstrates the transition from MAX Graph (p15) to PyTorch CustomOpLibrary.
+    Uses the EXACT same Mojo kernel, but different Python integration!
+    """
+    # Load our custom operations
+    mojo_kernels = Path(__file__).parent / "op"
+    ops = CustomOpLibrary(mojo_kernels)
+
+    # Create output tensor with same shape as input
+    output_tensor = torch.empty_like(input_tensor)
+
+    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+
+    # FILL IN with 1 line of code
+
+    return output_tensor
+
 </code></pre>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="../puzzle_21/puzzle_21.html">Part VI</a></strong>.</p>
-<p><strong>What Mojo abstracts for you:</strong></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
+<p>You can run the puzzle with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p18
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p18
+</code></pre>
+  </div>
+</div>
+<p>When successful, you should see output similar to:</p>
+<pre><code>Puzzle 18: From MAX Graph to PyTorch Custom Ops
+============================================================
+Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
+Convolution kernel: [0. 1. 2. 3.]
+
+NumPy reference result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+
+Testing PyTorch Custom Op (device: cuda)
+----------------------------------------
+PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ PyTorch custom op verification PASSED
+
+Comparing with MAX Graph approach (like p15)
+--------------------------------------------
+MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ MAX Graph verification PASSED
+✅ PyTorch and MAX Graph results MATCH
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<p>The solution requires calling the compiled custom operation with the proper arguments:</p>
+<pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates several critical concepts:</p>
+<h3 id="1-torchcompile-integration"><a class="header" href="#1-torchcompile-integration">1. <strong>torch.compile() integration</strong></a></h3>
+<p>The solution shows <code>torch.compile</code> integration</p>
+<pre><code class="language-python">torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<h3 id="2-explicit-output-tensor-allocation"><a class="header" href="#2-explicit-output-tensor-allocation">2. <strong>Explicit Output Tensor Allocation</strong></a></h3>
+<pre><code class="language-python">output_tensor = torch.empty_like(input_tensor)
+</code></pre>
 <ul>
-<li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
-<li><strong>Warp management</strong>: Hardware handles 32-thread groups transparently</li>
-<li><strong>Thread scheduling</strong>: GPU scheduler manages execution automatically</li>
-<li><strong>Memory hierarchy</strong>: Optimal access patterns built into functional operations</li>
+<li>Unlike MAX Graph which handles output allocation automatically</li>
+<li>PyTorch CustomOpLibrary requires <strong>pre-allocated output tensors</strong></li>
+<li>The Mojo operation signature expects <code>(out, input, kernel)</code> order</li>
 </ul>
-<h3 id="simd-within-gpu-threads"><a class="header" href="#simd-within-gpu-threads">SIMD within GPU threads</a></h3>
-<p>Each GPU thread can process multiple data elements simultaneously using <strong>SIMD (Single Instruction, Multiple Data)</strong> operations:</p>
-<pre><code class="language-mojo">// Within one GPU thread:
-a_simd = a.load[simd_width](idx, 0)      # Load 4 floats simultaneously
-b_simd = b.load[simd_width](idx, 0)      # Load 4 floats simultaneously
-result = a_simd + b_simd                 # Add 4 pairs simultaneously
-output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
+<h3 id="3-parameter-dictionary"><a class="header" href="#3-parameter-dictionary">3. <strong>Parameter Dictionary</strong></a></h3>
+<pre><code class="language-python">ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
 </code></pre>
-<h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
-<blockquote>
-<p><strong>Critical insight:</strong> All patterns perform the <strong>same total work</strong> - 256 SIMD operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this work is distributed across GPU threads.</p>
-</blockquote>
-<h3 id="thread-organization-comparison-size1024-simd_width4"><a class="header" href="#thread-organization-comparison-size1024-simd_width4">Thread organization comparison (<code>SIZE=1024</code>, <code>SIMD_WIDTH=4</code>)</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Memory pattern</th><th>Trade-off</th></tr></thead><tbody>
-<tr><td><strong>Elementwise</strong></td><td>256</td><td>1</td><td>Distributed access</td><td>Max parallelism, poor locality</td></tr>
-<tr><td><strong>Tiled</strong></td><td>32</td><td>8</td><td>Small blocks</td><td>Balanced parallelism + locality</td></tr>
-<tr><td><strong>Manual vectorized</strong></td><td>8</td><td>32</td><td>Large chunks</td><td>High bandwidth, fewer threads</td></tr>
-<tr><td><strong>Mojo vectorize</strong></td><td>32</td><td>8</td><td>Smart blocks</td><td>Automatic optimization</td></tr>
+<ul>
+<li>Parameters are passed as a dictionary to the operation</li>
+<li>These become compile-time parameters in the Mojo kernel</li>
+<li>Must match the parameter names in the Mojo <code>@staticmethod fn execute</code> signature</li>
+</ul>
+<h3 id="4-same-kernel-different-integration"><a class="header" href="#4-same-kernel-different-integration">4. <strong>Same Kernel, Different Integration</strong></a></h3>
+<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 15:</p>
+<ul>
+<li>Same GPU kernel code</li>
+<li>Same memory access patterns</li>
+<li>Same computational logic</li>
+<li>Only the Python wrapper layer changes</li>
+</ul>
+</div>
+</details>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>This puzzle illustrates several important patterns for PyTorch custom operations:</p>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
+<tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
+<tr><td><strong>Operation Call</strong></td><td><code>ops.custom(...)</code></td><td><code>torch.compile(op)(...)</code></td></tr>
+<tr><td><strong>Parameter Passing</strong></td><td><code>parameters={...}</code></td><td><code>op[{...}]</code></td></tr>
+<tr><td><strong>Device Management</strong></td><td>Explicit device context</td><td>PyTorch tensor device</td></tr>
+<tr><td><strong>Memory Management</strong></td><td>MAX Graph tensors</td><td>PyTorch tensors</td></tr>
 </tbody></table>
 </div>
-<h3 id="detailed-execution-patterns"><a class="header" href="#detailed-execution-patterns">Detailed execution patterns</a></h3>
-<p><strong>Elementwise pattern:</strong></p>
-<pre><code>Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1022,1023]
-256 threads × 1 SIMD op = 256 total SIMD operations
+<h3 id="critical-pattern-explicit-output-tensor-allocation"><a class="header" href="#critical-pattern-explicit-output-tensor-allocation">Critical pattern: Explicit output tensor allocation</a></h3>
+<p>The most important difference is that PyTorch CustomOpLibrary requires <strong>explicit output tensor allocation</strong>:</p>
+<pre><code class="language-python"># ❌ This won't work - no output tensor
+result = torch.compile(conv1d)(input_tensor, kernel_tensor)
+
+# ✅ This works - pre-allocated output tensor
+output_tensor = torch.empty_like(input_tensor)
+torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 </code></pre>
-<p><strong>Tiled pattern:</strong></p>
-<pre><code>Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
-32 threads × 8 SIMD ops = 256 total SIMD operations
-</code></pre>
-<p><strong>Manual vectorized pattern:</strong></p>
-<pre><code>Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)
-8 threads × 32 SIMD ops = 256 total SIMD operations
-</code></pre>
-<p><strong>Mojo vectorize pattern:</strong></p>
-<pre><code>Thread 0: [0:32] auto-vectorized → Thread 1: [32:64] auto-vectorized → ... → Thread 31: [992:1024] auto-vectorized
-32 threads × 8 SIMD ops = 256 total SIMD operations
-</code></pre>
-<h2 id="performance-characteristics-and-trade-offs"><a class="header" href="#performance-characteristics-and-trade-offs">Performance characteristics and trade-offs</a></h2>
-<h3 id="core-trade-offs-summary"><a class="header" href="#core-trade-offs-summary">Core trade-offs summary</a></h3>
-<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>High thread count (Elementwise)</th><th>Moderate threads (Tiled/Vectorize)</th><th>Low threads (Manual)</th></tr></thead><tbody>
-<tr><td><strong>Parallelism</strong></td><td>Maximum latency hiding</td><td>Balanced approach</td><td>Minimal parallelism</td></tr>
-<tr><td><strong>Cache locality</strong></td><td>Poor between threads</td><td>Good within tiles</td><td>Excellent sequential</td></tr>
-<tr><td><strong>Memory bandwidth</strong></td><td>Good coalescing</td><td>Good + cache reuse</td><td>Maximum theoretical</td></tr>
-<tr><td><strong>Complexity</strong></td><td>Simplest</td><td>Moderate</td><td>Most complex</td></tr>
-</tbody></table>
-</div>
-<h3 id="when-to-choose-each-pattern"><a class="header" href="#when-to-choose-each-pattern">When to choose each pattern</a></h3>
-<p><strong>Use elementwise when:</strong></p>
+<p>This pattern ensures:</p>
 <ul>
-<li>Simple operations with minimal arithmetic per element</li>
-<li>Maximum parallelism needed for latency hiding</li>
-<li>Scalability across different problem sizes is important</li>
+<li>Memory is allocated on the correct device</li>
+<li>Output tensor has the right shape and dtype</li>
+<li>The Mojo kernel can write directly to the output buffer</li>
 </ul>
-<p><strong>Use tiled/vectorize when:</strong></p>
+<h3 id="torchcompile-integration"><a class="header" href="#torchcompile-integration">torch.compile() integration</a></h3>
+<p><code>torch.compile()</code> is essential because it:</p>
 <ul>
-<li>Cache-sensitive operations that benefit from data reuse</li>
-<li>Balanced performance and maintainability desired</li>
-<li>Automatic optimization (vectorize) is preferred</li>
+<li>Handles memory layout conversion between PyTorch and Mojo</li>
+<li>Manages device synchronization (CPU ↔ GPU)</li>
+<li>Optimizes tensor format conversion</li>
+<li>Provides proper error handling for memory operations</li>
 </ul>
-<p><strong>Use manual vectorization when:</strong></p>
-<ul>
-<li>Expert-level control over memory patterns is needed</li>
-<li>Maximum memory bandwidth utilization is critical</li>
-<li>Development complexity is acceptable</li>
-</ul>
-<h2 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h2>
-<p>Modern GPU architectures include several levels that Mojo abstracts:</p>
-<p><strong>Hardware reality:</strong></p>
-<ul>
-<li><strong>Warps</strong>: 32 threads execute in lockstep</li>
-<li><strong>Streaming Multiprocessors (SMs)</strong>: Multiple warps execute concurrently</li>
-<li><strong>SIMD units</strong>: Vector processing units within each SM</li>
-<li><strong>Memory hierarchy</strong>: L1/L2 caches, shared memory, global memory</li>
-</ul>
-<p><strong>Mojo’s abstraction benefits:</strong></p>
-<ul>
-<li>Automatically handles warp alignment and scheduling</li>
-<li>Optimizes memory access patterns transparently</li>
-<li>Manages resource allocation across SMs</li>
-<li>Provides portable performance across GPU vendors</li>
-</ul>
-<h2 id="performance-mental-model"><a class="header" href="#performance-mental-model">Performance mental model</a></h2>
-<p>Think of GPU programming as managing two complementary types of parallelism:</p>
-<p><strong>Thread-level parallelism:</strong></p>
-<ul>
-<li>Provides the parallel structure (how many execution units)</li>
-<li>Enables latency hiding through concurrent execution</li>
-<li>Managed by GPU scheduler automatically</li>
-</ul>
-<p><strong>SIMD-level parallelism:</strong></p>
-<ul>
-<li>Provides vectorization within each thread</li>
-<li>Maximizes arithmetic throughput per thread</li>
-<li>Utilizes vector processing units efficiently</li>
-</ul>
-<p><strong>Optimal performance formula:</strong></p>
-<pre><code>Performance = (Sufficient threads for latency hiding) ×
-              (Efficient SIMD utilization) ×
-              (Optimal memory access patterns)
-</code></pre>
-<h2 id="scaling-considerations"><a class="header" href="#scaling-considerations">Scaling considerations</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>Problem size</th><th>Optimal pattern</th><th>Reasoning</th></tr></thead><tbody>
-<tr><td>Small (&lt; 1K)</td><td>Tiled/Vectorize</td><td>Lower launch overhead</td></tr>
-<tr><td>Medium (1K-1M)</td><td>Any pattern</td><td>Similar performance</td></tr>
-<tr><td>Large (&gt; 1M)</td><td>Usually Elementwise</td><td>Parallelism dominates</td></tr>
-</tbody></table>
-</div>
-<p>The optimal choice depends on your specific hardware, workload complexity, and development constraints.</p>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
-<p>With a solid understanding of GPU threading vs SIMD concepts:</p>
-<ul>
-<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
-</ul>
-<p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
+<p><em>Note: Without <code>torch.compile()</code>, you might encounter <code>std::bad_alloc</code> errors because the raw operation can’t handle PyTorch’s tensor memory management.</em></p>
+<h2 id="debugging-custom-operations"><a class="header" href="#debugging-custom-operations">Debugging custom operations</a></h2>
+<p>Common issues and solutions:</p>
+<ol>
+<li><strong>Memory Allocation Errors</strong>: Always use <code>torch.compile()</code></li>
+<li><strong>Wrong Output Shape</strong>: Ensure output tensor matches expected dimensions</li>
+<li><strong>Device Mismatch</strong>: All tensors must be on the same device</li>
+<li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>
+</ol>
+<p>The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_20/vectorize.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../bonuses/part3.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/benchmarking.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_19/puzzle_19.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -346,11 +369,11 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_20/vectorize.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../bonuses/part3.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/benchmarking.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_19/puzzle_19.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🎯 Bonus Challenges - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 22: Warp Fundamentals - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,75 +186,149 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
-<h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: Advanced softmax implementations</a></h2>
-<p><em>This challenge extends <a href="../puzzle_16/puzzle_16.html">Puzzle 16: Softmax Op</a></em></p>
-<p>Here are some advanced challenges to extend your softmax implementation:</p>
-<h3 id="1-large-scale-softmax-handling-tpb--size"><a class="header" href="#1-large-scale-softmax-handling-tpb--size">1. Large-scale softmax: Handling <code>TPB &lt; SIZE</code></a></h3>
-<p>When the input size exceeds the number of threads per block (<code>TPB &lt; SIZE</code>), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:</p>
-<h4 id="11-buffer-reduction"><a class="header" href="#11-buffer-reduction">1.1 Buffer reduction</a></h4>
+                        <h1 id="part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#part-vi-gpu-warp-programming---synchronized-execution-primitives">Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
+<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
+<h3 id="gpu-warp-execution-model"><a class="header" href="#gpu-warp-execution-model"><strong>GPU warp execution model</strong></a></h3>
+<p>Understand the fundamental hardware unit of GPU parallelism:</p>
+<pre><code>GPU Block (e.g., 256 threads)
+├── Warp 0 (32 threads, SIMT lockstep execution)
+│   ├── Lane 0  ─┐
+│   ├── Lane 1   │ All execute same instruction
+│   ├── Lane 2   │ at same time (SIMT)
+│   │   ...      │
+│   └── Lane 31 ─┘
+├── Warp 1 (32 threads, independent)
+├── Warp 2 (32 threads, independent)
+└── ...
+</code></pre>
+<p><strong>Hardware reality:</strong></p>
 <ul>
-<li>Store block-level results (max and sum) in device memory</li>
-<li>Use a second kernel to perform reduction across these intermediate results</li>
-<li>Implement a final normalization pass that uses the global max and sum</li>
+<li><strong>32 threads per warp</strong> on NVIDIA GPUs (<code>WARP_SIZE=32</code>)</li>
+<li><strong>32 or 64 threads per warp</strong> on AMD GPUs (<code>WARP_SIZE=32 or 64</code>)</li>
+<li><strong>Lockstep execution</strong>: All threads in a warp execute the same instruction simultaneously</li>
+<li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
-<h4 id="12-two-pass-softmax"><a class="header" href="#12-two-pass-softmax">1.2 Two-pass softmax</a></h4>
+<h3 id="warp-operations-available-in-mojo"><a class="header" href="#warp-operations-available-in-mojo"><strong>Warp operations available in Mojo</strong></a></h3>
+<p>Master the core warp primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
+<li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
+<li><strong><code>shuffle_down(value, delta)</code></strong>: Get value from lane+delta</li>
+<li><strong><code>prefix_sum(value)</code></strong>: Compute prefix sum across lanes</li>
+<li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
+</ol>
+<h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p10.mojo):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = partial_product
+barrier()
+# Tree reduction with barriers...
+stride = SIZE // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared[local_i] += shared[local_i + stride]
+    barrier()
+    stride //= 2
+
+# Can be replaced with the simple warp approach:
+total = sum(partial_product)
+</code></pre>
+<h3 id="when-warp-operations-excel"><a class="header" href="#when-warp-operations-excel"><strong>When warp operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<pre><code>Problem Scale         Traditional    Warp Operations
+Single warp (32)      Fast          Fastest (no barriers)
+Few warps (128)       Good          Excellent (minimal overhead)
+Many warps (1024+)    Good          Outstanding (scales linearly)
+Massive (16K+)        Bottlenecked  Memory-bandwidth limited
+</code></pre>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before diving into warp programming, ensure you’re comfortable with:</p>
 <ul>
-<li>First pass: Each block calculates its local max value</li>
-<li>Synchronize and compute global max</li>
-<li>Second pass: Calculate \(e^{x-max}\) and local sum</li>
-<li>Synchronize and compute global sum</li>
-<li>Final pass: Normalize using global sum</li>
+<li><strong>Part V functional patterns</strong>: Elementwise, tiled, and vectorized approaches</li>
+<li><strong>GPU thread hierarchy</strong>: Understanding blocks, warps, and threads</li>
+<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
 </ul>
-<h3 id="2-batched-softmax"><a class="header" href="#2-batched-softmax">2. Batched softmax</a></h3>
-<p>Implement softmax for a batch of vectors (2D input tensor) with these variants:</p>
+<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
+<h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
+<p><strong>→ <a href="./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
+<p>Understand the hardware foundation that makes warp operations possible.</p>
+<p><strong>What you’ll master:</strong></p>
 <ul>
-<li>Row-wise softmax: Apply softmax independently to each row</li>
-<li>Column-wise softmax: Apply softmax independently to each column</li>
-<li>Compare performance differences between these implementations</li>
+<li>Single Instruction, Multiple Thread (SIMT) execution model</li>
+<li>Warp divergence and convergence patterns</li>
+<li>Lane synchronization within warps</li>
+<li>Hardware vs software thread management</li>
 </ul>
-<h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: Advanced attention mechanisms</a></h2>
-<p><em>This challenge extends <a href="../puzzle_17/puzzle_17.html">Puzzle 17: Attention Op</a></em></p>
-<p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
-<h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
-<p>Extend the attention mechanism to handle longer sequences using the existing kernels:</p>
-<h4 id="11-sequence-length-scaling"><a class="header" href="#11-sequence-length-scaling">1.1 Sequence length scaling</a></h4>
+<p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
+<h3 id="2-warp-sum-fundamentals"><a class="header" href="#2-warp-sum-fundamentals"><strong>2. Warp sum fundamentals</strong></a></h3>
+<p><strong>→ <a href="./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<p>Master the most important warp operation through dot product implementation.</p>
+<p><strong>What you’ll master:</strong></p>
 <ul>
-<li>Modify the attention implementation to handle <code>SEQ_LEN = 32</code> and <code>SEQ_LEN = 64</code></li>
-<li>Update the <code>TPB</code> (threads per block) parameter accordingly</li>
-<li>Ensure the transpose kernel handles the larger matrix sizes correctly</li>
+<li>Replacing shared memory + barriers with <code>sum()</code></li>
+<li>Cross-GPU architecture compatibility (<code>WARP_SIZE</code>)</li>
+<li>Kernel vs functional programming patterns with warps</li>
+<li>Performance comparison with traditional approaches</li>
 </ul>
-<h4 id="12-dynamic-sequence-lengths"><a class="header" href="#12-dynamic-sequence-lengths">1.2 Dynamic sequence lengths</a></h4>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">partial_result = compute_per_lane_value()
+total = sum(partial_result)  # Magic happens here!
+if lane_id() == 0:
+    output[0] = total
+</code></pre>
+<h3 id="3-when-to-use-warp-programming"><a class="header" href="#3-when-to-use-warp-programming"><strong>3. When to use warp programming</strong></a></h3>
+<p><strong>→ <a href="./warp_extra.html">When to Use Warp Programming</a></strong></p>
+<p>Learn the decision framework for choosing warp operations over alternatives.</p>
+<p><strong>What you’ll master:</strong></p>
 <ul>
-<li>Implement attention that can handle variable sequence lengths at runtime</li>
-<li>Add bounds checking in the kernels to handle sequences shorter than <code>SEQ_LEN</code></li>
-<li>Compare performance with fixed vs. dynamic sequence length handling</li>
+<li>Problem characteristics that favor warp operations</li>
+<li>Performance scaling patterns with warp count</li>
+<li>Memory bandwidth vs computation trade-offs</li>
+<li>Warp operation selection guidelines</li>
 </ul>
-<h3 id="2-batched-vector-attention"><a class="header" href="#2-batched-vector-attention">2. Batched vector attention</a></h3>
-<p>Extend to process multiple attention computations simultaneously:</p>
-<h4 id="21-batch-processing"><a class="header" href="#21-batch-processing">2.1 Batch processing</a></h4>
+<p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
+<h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
+<h3 id="hardware-software-alignment"><a class="header" href="#hardware-software-alignment"><strong>Hardware-software alignment</strong></a></h3>
+<p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
 <ul>
-<li>Modify the attention operation to handle multiple query vectors at once</li>
-<li>Input shapes: Q(batch_size, d), K(seq_len, d), V(seq_len, d)</li>
-<li>Output shape: (batch_size, d)</li>
-<li>Reuse the existing kernels with proper indexing</li>
+<li><strong>SIMT execution</strong>: All lanes execute same instruction simultaneously</li>
+<li><strong>Built-in synchronization</strong>: No explicit barriers needed within warps</li>
+<li><strong>Cross-architecture support</strong>: <code>WARP_SIZE</code> handles NVIDIA vs AMD differences</li>
 </ul>
-<h4 id="22-memory-optimization-for-batches"><a class="header" href="#22-memory-optimization-for-batches">2.2 Memory optimization for batches</a></h4>
+<h3 id="pattern-transformation"><a class="header" href="#pattern-transformation"><strong>Pattern transformation</strong></a></h3>
+<p>Converting complex parallel patterns to warp primitives:</p>
 <ul>
-<li>Minimize memory allocations by reusing buffers across batch elements</li>
-<li>Compare performance with different batch sizes (2, 4, 8)</li>
-<li>Analyze memory usage patterns</li>
+<li><strong>Tree reduction</strong> → <code>sum()</code></li>
+<li><strong>Prefix computation</strong> → <code>prefix_sum()</code></li>
+<li><strong>Data shuffling</strong> → <code>shuffle_idx()</code>, <code>shuffle_down()</code></li>
 </ul>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics"><strong>Performance characteristics</strong></a></h3>
+<p>Recognizing when warp operations provide advantages:</p>
+<ul>
+<li><strong>Small to medium problems</strong>: Eliminates barrier overhead</li>
+<li><strong>Large problems</strong>: Reduces memory traffic and improves cache utilization</li>
+<li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
+</ul>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
+<p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
+<p><strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_17/puzzle_17.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_21/benchmarking.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_18/puzzle_18.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_22/warp_simt.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -264,11 +338,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_17/puzzle_17.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_21/benchmarking.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_18/puzzle_18.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_22/warp_simt.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

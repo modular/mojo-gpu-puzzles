@@ -186,7 +186,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="-tile---memory-efficient-tiled-processing"><a class="header" href="#-tile---memory-efficient-tiled-processing">⚡ Tile - Memory-Efficient Tiled Processing</a></h1>
+                        <h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
 <p>You’ve already seen tiling in action with <strong><a href="../puzzle_14/tiled.html">Puzzle 14’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
@@ -247,7 +247,7 @@ fn tiled_elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -299,11 +299,11 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --tiled
+<pre><code class="language-bash">uv run poe p21 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --tiled
+<pre><code class="language-bash">pixi run p21 --tiled
 </code></pre>
   </div>
 </div>
@@ -510,7 +510,7 @@ Tiled:       Moderate parallelism, localized memory access
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Now that you understand both elementwise and tiled patterns:</p>
 <ul>
-<li><strong><a href="./vectorize.html">🔧 Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
+<li><strong><a href="./vectorize.html">Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
 <li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
 <li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
@@ -520,11 +520,11 @@ Tiled:       Moderate parallelism, localized memory access
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_20/elementwise.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_21/elementwise.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/vectorize.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_21/vectorize.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -534,11 +534,11 @@ Tiled:       Moderate parallelism, localized memory access
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_20/elementwise.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_21/elementwise.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/vectorize.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_21/vectorize.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

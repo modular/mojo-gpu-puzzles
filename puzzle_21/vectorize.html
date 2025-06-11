@@ -186,7 +186,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="-vectorization---fine-grained-simd-control"><a class="header" href="#-vectorization---fine-grained-simd-control">🔧 Vectorization - Fine-Grained SIMD Control</a></h1>
+                        <h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
 <ol>
@@ -255,7 +255,7 @@
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -287,11 +287,11 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --manual-vectorized
+<pre><code class="language-bash">uv run poe p21 --manual-vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --manual-vectorized
+<pre><code class="language-bash">pixi run p21 --manual-vectorized
 </code></pre>
   </div>
 </div>
@@ -456,7 +456,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.mojo" class="filename">View full file: problems/p20/p20.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -493,11 +493,11 @@ fn vectorized_add[width: Int](i: Int):
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --vectorized
+<pre><code class="language-bash">uv run poe p21 --vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --vectorized
+<pre><code class="language-bash">pixi run p21 --vectorized
 </code></pre>
   </div>
 </div>
@@ -671,11 +671,11 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_20/tile.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_21/tile.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/gpu-thread-vs-simd.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_21/gpu-thread-vs-simd.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -685,11 +685,11 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_20/tile.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_21/tile.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/gpu-thread-vs-simd.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_21/gpu-thread-vs-simd.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
