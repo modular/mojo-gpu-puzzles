@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🔰 Simple Embedding Kernel - Mojo 🔥 GPU Puzzles</title>
+        <title>🔰 Coaleasced vs non-Coaleasced Kernel - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,7 +186,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="simple-embedding-kernel"><a class="header" href="#simple-embedding-kernel">Simple embedding kernel</a></h1>
+                        <h1 id="embedding-kernels-coaleasced-vs-non-coaleasced"><a class="header" href="#embedding-kernels-coaleasced-vs-non-coaleasced">Embedding Kernels: Coaleasced vs non-Coaleasced</a></h1>
 <p>In this puzzle, you’ll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.</p>
 <h2 id="1d-coalesced-kernel-optimized-approach"><a class="header" href="#1d-coalesced-kernel-optimized-approach">1D coalesced kernel (optimized approach)</a></h2>
 <p>This kernel uses a simple 1D grid where each thread processes exactly one output element. The key insight is that consecutive threads will access consecutive memory locations, leading to optimal memory coalescing.</p>

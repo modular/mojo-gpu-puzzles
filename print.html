@@ -625,7 +625,7 @@ alias dtype = DType.float32
 
 
 fn add(
-    outout: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
 ):
@@ -7408,7 +7408,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <p>Ready to explore GPU memory optimization? Start with the <strong><a href="puzzle_19/./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the code, then move to <strong><a href="puzzle_19/./performance.html">Performance comparison</a></strong> to understand the performance implications.</p>
 <p>💡 <strong>Success tip:</strong> Pay attention to how the different grid configurations (1D vs 2D) affect memory access patterns - this insight applies to many GPU programming scenarios beyond embeddings.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="simple-embedding-kernel-1"><a class="header" href="#simple-embedding-kernel-1">Simple embedding kernel</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="embedding-kernels-coaleasced-vs-non-coaleasced"><a class="header" href="#embedding-kernels-coaleasced-vs-non-coaleasced">Embedding Kernels: Coaleasced vs non-Coaleasced</a></h1>
 <p>In this puzzle, you’ll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.</p>
 <h2 id="1d-coalesced-kernel-optimized-approach"><a class="header" href="#1d-coalesced-kernel-optimized-approach">1D coalesced kernel (optimized approach)</a></h2>
 <p>This kernel uses a simple 1D grid where each thread processes exactly one output element. The key insight is that consecutive threads will access consecutive memory locations, leading to optimal memory coalescing.</p>
