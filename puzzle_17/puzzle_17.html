@@ -614,7 +614,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 
             # Step 5: Apply softmax to get attention weights
             gpu_ctx.enqueue_function[
-                softmax_kernel[layout_scores, seq_len, dtype]
+                softmax_gpu_kernel[layout_scores, seq_len, dtype]
             ](
                 weights,
                 weights,

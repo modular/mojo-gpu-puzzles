@@ -6349,13 +6349,16 @@ Sum of all probabilities on GPU: 1.0
     shared_max[local_i] = thread_max
     barrier()
 
-    # Parallel reduction to find max
+    # Parallel reduction to find max similar to reduction we saw before
+    # Note we need to avoid race conditions by reading the value first and then writing
     stride = TPB // 2
     while stride &gt; 0:
+        var temp_max: Scalar[dtype] = min_finite[dtype]()
         if local_i &lt; stride:
-            shared_max[local_i] = max(
-                shared_max[local_i], shared_max[local_i + stride]
-            )
+            temp_max = rebind[Scalar[dtype]](shared_max[local_i + stride])
+        barrier()
+        if local_i &lt; stride:
+            shared_max[local_i] = max(shared_max[local_i], temp_max)
         barrier()
         stride = stride // 2
 
@@ -6369,11 +6372,16 @@ Sum of all probabilities on GPU: 1.0
     shared_sum[local_i] = exp_val
     barrier()
 
-    # Parallel reduction for sum
+    # Parallel reduction for sum similar to reduction we saw before
+    # Note we need to avoid race conditions by reading the value first and then writing
     stride = TPB // 2
     while stride &gt; 0:
+        var temp_sum: Scalar[dtype] = 0.0
         if local_i &lt; stride:
-            shared_sum[local_i] += shared_sum[local_i + stride]
+            temp_sum = rebind[Scalar[dtype]](shared_sum[local_i + stride])
+        barrier()
+        if local_i &lt; stride:
+            shared_sum[local_i] += temp_sum
         barrier()
         stride = stride // 2
 
@@ -6459,6 +6467,18 @@ while stride &gt; 0:
 <li>After \(\log_2(TPB)\) steps, shared_max[0] contains the global maximum</li>
 </ol>
 <p>This logarithmic reduction is significantly faster than a linear scan on large inputs.</p>
+<p><strong>Note</strong>: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    var temp_max: Scalar[dtype] = min_finite[dtype]()
+    if local_i &lt; stride:
+        temp_max = rebind[Scalar[dtype]](shared_max[local_i + stride])  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        shared_max[local_i] = max(shared_max[local_i], temp_max)  # Write phase
+    barrier()
+    stride = stride // 2
+</code></pre>
 <h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
 <pre><code class="language-mojo">block_max = shared_max[0]
 
@@ -6493,6 +6513,18 @@ while stride &gt; 0:
 <li>But performs addition instead of maximum comparison</li>
 <li>After \(\log_2(TPB)\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
 </ol>
+<p><strong>Note</strong>: This sum reduction also has the same race condition as the max reduction. The safer implementation would be:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    var temp_sum: Scalar[dtype] = 0.0
+    if local_i &lt; stride:
+        temp_sum = shared_sum[local_i + stride]  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        shared_sum[local_i] += temp_sum  # Write phase
+    barrier()
+    stride = stride // 2
+</code></pre>
 <h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
 <pre><code class="language-mojo">block_sum = shared_sum[0]
 
@@ -6517,6 +6549,7 @@ if global_i &lt; input_size:
 <li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal bandwidth</li>
 </ul>
 <p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
+<p><strong>Race condition considerations</strong>: Both parallel reductions in this implementation may have read-write hazards during shared memory access. While the current implementation may work in practice due to GPU memory consistency models, the safer approach would use explicit read-write phase separation as shown in the notes above.</p>
 </div>
 <h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
@@ -7107,7 +7140,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 
             # Step 5: Apply softmax to get attention weights
             gpu_ctx.enqueue_function[
-                softmax_kernel[layout_scores, seq_len, dtype]
+                softmax_gpu_kernel[layout_scores, seq_len, dtype]
             ](
                 weights,
                 weights,
@@ -11556,16 +11589,21 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
 barrier()
-# Tree reduction with barriers...
+
+# Safe tree reduction would require read-write separation:
 stride = SIZE // 2
 while stride &gt; 0:
+    var temp_val: Scalar[dtype] = 0
     if local_i &lt; stride:
-        shared[local_i] += shared[local_i + stride]
+        temp_val = shared[local_i + stride]  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        shared[local_i] += temp_val  # Write phase
     barrier()
     stride //= 2
 
-# Can be replaced with the simple warp approach:
-total = sum(partial_product)
+# But warp operations eliminate all this complexity:
+total = sum(partial_product)  # No barriers, no race conditions!
 </code></pre>
 <h3 id="when-warp-operations-excel"><a class="header" href="#when-warp-operations-excel"><strong>When warp operations excel</strong></a></h3>
 <p>Learn the performance characteristics:</p>

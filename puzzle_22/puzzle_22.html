@@ -226,16 +226,21 @@
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
 barrier()
-# Tree reduction with barriers...
+
+# Safe tree reduction would require read-write separation:
 stride = SIZE // 2
 while stride &gt; 0:
+    var temp_val: Scalar[dtype] = 0
     if local_i &lt; stride:
-        shared[local_i] += shared[local_i + stride]
+        temp_val = shared[local_i + stride]  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        shared[local_i] += temp_val  # Write phase
     barrier()
     stride //= 2
 
-# Can be replaced with the simple warp approach:
-total = sum(partial_product)
+# But warp operations eliminate all this complexity:
+total = sum(partial_product)  # No barriers, no race conditions!
 </code></pre>
 <h3 id="when-warp-operations-excel"><a class="header" href="#when-warp-operations-excel"><strong>When warp operations excel</strong></a></h3>
 <p>Learn the performance characteristics:</p>
