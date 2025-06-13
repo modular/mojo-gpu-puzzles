@@ -3826,7 +3826,7 @@ fn prefix_sum_simple[
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # FILL ME IN (roughly 12 lines)
+    # FILL ME IN (roughly 18 lines)
 
 
 </code></pre>
@@ -3882,8 +3882,13 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
+        var current_val = shared[0]
         if local_i &gt;= offset and local_i &lt; size:
-            shared[local_i] += shared[local_i - offset]
+            current_val = shared[local_i - offset]  # read
+
+        barrier()
+        if local_i &gt;= offset and local_i &lt; size:
+            shared[local_i] += current_val
 
         barrier()
         offset *= 2
@@ -3900,6 +3905,15 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <li><code>TPB</code> (Threads Per Block) = 8</li>
 <li><code>SIZE</code> (Array Size) = 8</li>
 </ul>
+<h3 id="race-condition-prevention"><a class="header" href="#race-condition-prevention">Race Condition Prevention</a></h3>
+<p>The algorithm uses explicit synchronization to prevent read-write hazards:</p>
+<ul>
+<li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>
+<li><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete before any writes begin</li>
+<li><strong>Write Phase</strong>: All threads then safely write their computed values back to shared memory</li>
+</ul>
+<p>This prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations.</p>
+<p><strong>Alternative approach</strong>: Another solution to prevent race conditions is through <em>double buffering</em>, where you allocate twice the shared memory and alternate between reading from one buffer and writing to another. While this approach eliminates race conditions completely, it requires more shared memory and adds complexity. For educational purposes, we use the explicit synchronization approach as it’s more straightforward to understand.</p>
 <h3 id="thread-mapping"><a class="header" href="#thread-mapping">Thread Mapping</a></h3>
 <ul>
 <li><code>thread_idx.x</code>: \([0, 1, 2, 3, 4, 5, 6, 7]\) (<code>local_i</code>)</li>
@@ -3915,6 +3929,14 @@ shared:       [0    1    2    3    4    5    6    7]
 </code></pre>
 <h3 id="offset--1-first-parallel-step"><a class="header" href="#offset--1-first-parallel-step">Offset = 1: First Parallel Step</a></h3>
 <p>Active threads: \(T_1 \ldots T_7\) (where <code>local_i ≥ 1</code>)</p>
+<p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
+<pre><code class="language-txt">T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
+T₂ reads shared[1] = 1    T₆ reads shared[5] = 5
+T₃ reads shared[2] = 2    T₇ reads shared[6] = 6
+T₄ reads shared[3] = 3
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value to its current position:</p>
 <pre><code class="language-txt">Before:      [0    1    2    3    4    5    6    7]
 Add:              +0   +1   +2   +3   +4   +5   +6
                    |    |    |    |    |    |    |
@@ -3924,6 +3946,13 @@ Result:      [0    1    3    5    7    9    11   13]
 </code></pre>
 <h3 id="offset--2-second-parallel-step"><a class="header" href="#offset--2-second-parallel-step">Offset = 2: Second Parallel Step</a></h3>
 <p>Active threads: \(T_2 \ldots T_7\) (where <code>local_i ≥ 2</code>)</p>
+<p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
+<pre><code class="language-txt">T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
+T₃ reads shared[1] = 1    T₆ reads shared[4] = 7
+T₄ reads shared[2] = 3    T₇ reads shared[5] = 9
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value:</p>
 <pre><code class="language-txt">Before:      [0    1    3    5    7    9    11   13]
 Add:                   +0   +1   +3   +5   +7   +9
                         |    |    |    |    |    |
@@ -3933,8 +3962,14 @@ Result:      [0    1    3    6    10   14   18   22]
 </code></pre>
 <h3 id="offset--4-third-parallel-step"><a class="header" href="#offset--4-third-parallel-step">Offset = 4: Third Parallel Step</a></h3>
 <p>Active threads: \(T_4 \ldots T_7\) (where <code>local_i ≥ 4</code>)</p>
+<p><strong>Read Phase</strong>: Each thread reads the value it needs:</p>
+<pre><code class="language-txt">T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
+T₅ reads shared[1] = 1    T₇ reads shared[3] = 6
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value:</p>
 <pre><code class="language-txt">Before:      [0    1    3    6    10   14   18   22]
-Add:                              +0   +1   +3   +7
+Add:                              +0   +1   +3   +6
                                   |    |    |    |
 Result:      [0    1    3    6    10   15   21   28]
                                   ↑    ↑    ↑    ↑
@@ -3947,67 +3982,21 @@ output:       [0    1    3    6    10   15   21   28]
               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="thread-by-thread-execution"><a class="header" href="#thread-by-thread-execution">Thread-by-Thread Execution</a></h3>
-<p><strong>\(T_0\) (<code>local_i=0</code>):</strong></p>
+<h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key Implementation Details</a></h3>
+<p><strong>Synchronization Pattern</strong>: Each iteration follows a strict read → sync → write pattern:</p>
+<ol>
+<li><code>var current_val = shared[0]</code> - Initialize local variable</li>
+<li><code>current_val = shared[local_i - offset]</code> - Read phase (if conditions met)</li>
+<li><code>barrier()</code> - Explicit synchronization to prevent race conditions</li>
+<li><code>shared[local_i] += current_val</code> - Write phase (if conditions met)</li>
+<li><code>barrier()</code> - Standard synchronization before next iteration</li>
+</ol>
+<p><strong>Race Condition Prevention</strong>: Without the explicit read-write separation, multiple threads could simultaneously access the same shared memory location, leading to undefined behavior. The two-phase approach with explicit synchronization ensures correctness.</p>
+<p><strong>Memory Safety</strong>: The algorithm maintains memory safety through:</p>
 <ul>
-<li>Loads <code>shared[0] = 0</code></li>
-<li>Never adds (<code>local_i &lt; offset</code> always)</li>
-<li>Writes <code>output[0] = 0</code></li>
-</ul>
-<p><strong>\(T_1\) (<code>local_i=1</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[1] = 1</code></li>
-<li><code>offset=1</code>: adds <code>shared[0]</code> → 1</li>
-<li><code>offset=2,4</code>: no action (<code>local_i &lt; offset</code>)</li>
-<li>Writes <code>output[1] = 1</code></li>
-</ul>
-<p><strong>\(T_2\) (<code>local_i=2</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[2] = 2</code></li>
-<li><code>offset=1</code>: adds <code>shared[1]</code> → 3</li>
-<li><code>offset=2</code>: adds <code>shared[0]</code> → 3</li>
-<li><code>offset=4</code>: no action</li>
-<li>Writes <code>output[2] = 3</code></li>
-</ul>
-<p><strong>\(T_3\) (<code>local_i=3</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[3] = 3</code></li>
-<li><code>offset=1</code>: adds <code>shared[2]</code> → 5</li>
-<li><code>offset=2</code>: adds <code>shared[1]</code> → 6</li>
-<li><code>offset=4</code>: no action</li>
-<li>Writes <code>output[3] = 7</code></li>
-</ul>
-<p><strong>\(T_4\) (<code>local_i=4</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[4] = 4</code></li>
-<li><code>offset=1</code>: adds <code>shared[3]</code> → 7</li>
-<li><code>offset=2</code>: adds <code>shared[2]</code> → 10</li>
-<li><code>offset=4</code>: adds <code>shared[0]</code> → 10</li>
-<li>Writes <code>output[4] = 10</code></li>
-</ul>
-<p><strong>\(T_5\) (<code>local_i=5</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[5] = 5</code></li>
-<li><code>offset=1</code>: adds <code>shared[4]</code> → 9</li>
-<li><code>offset=2</code>: adds <code>shared[3]</code> → 14</li>
-<li><code>offset=4</code>: adds <code>shared[1]</code> → 15</li>
-<li>Writes <code>output[5] = 16</code></li>
-</ul>
-<p><strong>\(T_6\) (<code>local_i=6</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[6] = 6</code></li>
-<li><code>offset=1</code>: adds <code>shared[5]</code> → 11</li>
-<li><code>offset=2</code>: adds <code>shared[4]</code> → 18</li>
-<li><code>offset=4</code>: adds <code>shared[2]</code> → 21</li>
-<li>Writes <code>output[6] = 21</code></li>
-</ul>
-<p><strong>\(T_7\) (<code>local_i=7</code>):</strong></p>
-<ul>
-<li>Loads <code>shared[7] = 7</code></li>
-<li><code>offset=1</code>: adds <code>shared[6]</code> → 13</li>
-<li><code>offset=2</code>: adds <code>shared[5]</code> → 22</li>
-<li><code>offset=4</code>: adds <code>shared[3]</code> → 28</li>
-<li>Writes <code>output[7] = 28</code></li>
+<li>Bounds checking with <code>if local_i &gt;= offset and local_i &lt; size</code></li>
+<li>Proper initialization of the temporary variable</li>
+<li>Coordinated access patterns that prevent data races</li>
 </ul>
 <p>The solution ensures correct synchronization between phases using <code>barrier()</code> and handles array bounds checking with <code>if global_i &lt; size</code>. The final result produces the inclusive prefix sum where each element \(i\) contains \(\sum_{j=0}^{i} a[j]\).</p>
 </div>
@@ -4054,7 +4043,7 @@ fn prefix_sum_local_phase[
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # FILL ME IN (roughly 14 lines)
+    # FILL ME IN (roughly 20 lines)
 
 
 # Kernel 2: Add block sums to their respective blocks
@@ -4191,8 +4180,14 @@ fn prefix_sum_local_phase[
     # Block 1 follows same pattern to get [8,17,27,38,50,63,77,...]
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
+        var current_val = shared[0]
         if local_i &gt;= offset and local_i &lt; TPB:
-            shared[local_i] += shared[local_i - offset]
+            current_val = shared[local_i - offset]  # read
+
+        barrier()
+        if local_i &gt;= offset and local_i &lt; TPB:
+            shared[local_i] += current_val  # write
+
         barrier()
         offset *= 2
 
@@ -4248,6 +4243,14 @@ Block 1 processes: [8, 9, 10, 11, 12, 13, 14, (padding)]
 </code></pre>
 <p>The size of this extended buffer is: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
 <h2 id="phase-1-kernel-local-prefix-sums"><a class="header" href="#phase-1-kernel-local-prefix-sums">Phase 1 kernel: Local prefix sums</a></h2>
+<h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race Condition Prevention in Local Phase</a></h3>
+<p>The local phase uses the same explicit synchronization pattern as the simple version to prevent read-write hazards:</p>
+<ul>
+<li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>
+<li><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete before any writes begin</li>
+<li><strong>Write Phase</strong>: All threads then safely write their computed values back to shared memory</li>
+</ul>
+<p>This prevents race conditions that could occur when multiple threads simultaneously access the same shared memory locations during the parallel reduction.</p>
 <h3 id="step-by-step-execution-for-block-0"><a class="header" href="#step-by-step-execution-for-block-0">Step-by-step execution for Block 0</a></h3>
 <ol>
 <li>
@@ -4258,6 +4261,14 @@ Block 1 processes: [8, 9, 10, 11, 12, 13, 14, (padding)]
 <li>
 <p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
 <p><strong>Iteration 1</strong> (offset=1):</p>
+<p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
+<pre><code>T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
+T₂ reads shared[1] = 1    T₆ reads shared[5] = 5
+T₃ reads shared[2] = 2    T₇ reads shared[6] = 6
+T₄ reads shared[3] = 3
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value:</p>
 <pre><code>shared[0] = 0              (unchanged)
 shared[1] = 1 + 0 = 1
 shared[2] = 2 + 1 = 3
@@ -4269,6 +4280,13 @@ shared[7] = 7 + 6 = 13
 </code></pre>
 <p>After barrier: <code>shared = [0, 1, 3, 5, 7, 9, 11, 13]</code></p>
 <p><strong>Iteration 2</strong> (offset=2):</p>
+<p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
+<pre><code>T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
+T₃ reads shared[1] = 1    T₆ reads shared[4] = 7
+T₄ reads shared[2] = 3    T₇ reads shared[5] = 9
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value:</p>
 <pre><code>shared[0] = 0              (unchanged)
 shared[1] = 1              (unchanged)
 shared[2] = 3 + 0 = 3      (unchanged)
@@ -4280,6 +4298,12 @@ shared[7] = 13 + 9 = 22
 </code></pre>
 <p>After barrier: <code>shared = [0, 1, 3, 6, 10, 14, 18, 22]</code></p>
 <p><strong>Iteration 3</strong> (offset=4):</p>
+<p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
+<pre><code>T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
+T₅ reads shared[1] = 1    T₇ reads shared[3] = 6
+</code></pre>
+<p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
+<p><strong>Write Phase</strong>: Each thread adds its read value:</p>
 <pre><code>shared[0] = 0              (unchanged)
 shared[1] = 1              (unchanged)
 shared[2] = 3              (unchanged)
@@ -4353,6 +4377,21 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 </li>
 </ol>
 <h2 id="performance-and-optimization-considerations"><a class="header" href="#performance-and-optimization-considerations">Performance and optimization considerations</a></h2>
+<h3 id="key-implementation-details-1"><a class="header" href="#key-implementation-details-1">Key implementation details</a></h3>
+<p><strong>Local phase synchronization pattern</strong>: Each iteration within a block follows a strict read → sync → write pattern:</p>
+<ol>
+<li><code>var current_val = shared[0]</code> - Initialize local variable</li>
+<li><code>current_val = shared[local_i - offset]</code> - Read phase (if conditions met)</li>
+<li><code>barrier()</code> - Explicit synchronization to prevent race conditions</li>
+<li><code>shared[local_i] += current_val</code> - Write phase (if conditions met)</li>
+<li><code>barrier()</code> - Standard synchronization before next iteration</li>
+</ol>
+<p><strong>Cross-block synchronization</strong>: The algorithm uses two levels of synchronization:</p>
+<ul>
+<li><strong>Intra-block</strong>: <code>barrier()</code> synchronizes threads within each block during local prefix sum computation</li>
+<li><strong>Inter-block</strong>: <code>ctx.synchronize()</code> synchronizes between kernel launches to ensure Phase 1 completes before Phase 2 begins</li>
+</ul>
+<p><strong>Race condition prevention</strong>: The explicit read-write separation in the local phase prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations during parallel reduction.</p>
 <ol>
 <li>
 <p><strong>Work efficiency</strong>: This implementation has \(O(n \log n)\) work complexity, while the sequential algorithm is \(O(n)\). This is a classic space-time tradeoff in parallel algorithms.</p>
