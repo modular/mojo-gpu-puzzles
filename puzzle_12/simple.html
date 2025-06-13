@@ -278,7 +278,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val = shared[0]
+        current_val = shared[0]
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
 

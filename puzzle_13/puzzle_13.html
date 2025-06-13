@@ -310,8 +310,16 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     # do reduction sum per each block
     stride = TPB // 2
     while stride &gt; 0:
+        # Read phase: all threads read the values they need first to avoid race conditions
+        var temp_val: output.element_type = 0
         if local_i &lt; stride:
-            cache[local_i] += cache[local_i + stride]
+            temp_val = cache[local_i + stride]
+
+        barrier()
+
+        # Write phase: all threads safely write their computed values
+        if local_i &lt; stride:
+            cache[local_i] += temp_val
 
         barrier()
         stride //= 2
@@ -372,8 +380,20 @@ Stride 1: [15 12 6  7  4  5  *  *]
 <p><strong>Parallel Reduction Logic</strong>:</p>
 <pre><code class="language-mojo">stride = TPB // 2
 while stride &gt; 0:
-    if local_i &lt; size:
+    if local_i &lt; stride:
         cache[local_i] += cache[local_i + stride]
+    barrier()
+    stride //= 2
+</code></pre>
+<p><strong>Note</strong>: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    var temp_val: output.element_type = 0
+    if local_i &lt; stride:
+        temp_val = cache[local_i + stride]  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        cache[local_i] += temp_val  # Write phase
     barrier()
     stride //= 2
 </code></pre>
@@ -409,6 +429,7 @@ while stride &gt; 0:
 <li>Minimal barriers (only during reduction)</li>
 <li>Independent processing between rows</li>
 <li>No inter-block communication needed</li>
+<li><strong>Race condition consideration</strong>: The current implementation may have read-write hazards during parallel reduction that could be resolved with explicit read-write phase separation</li>
 </ul>
 </li>
 </ol>
