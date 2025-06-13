@@ -8096,11 +8096,1695 @@ Warp threads might access:
 <li><strong>Use memory-bound benchmarks</strong> to validate optimizations</li>
 </ol>
 <p>The core insight: <strong>memory access patterns</strong> often determine GPU performance more than computational complexity, especially for memory-bound operations like embeddings.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-20-autograd-integration"><a class="header" href="#puzzle-20-autograd-integration">Puzzle 20: Autograd Integration</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-forward-pass-implementation"><a class="header" href="#-forward-pass-implementation">🔄 Forward Pass Implementation</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-backward-pass-implementation"><a class="header" href="#-backward-pass-implementation">📐 Backward Pass Implementation</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#part-v-mojo-functional-patterns---high-level-gpu-programming">Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-20-kernel-fusion-and-custom-backward-pass"><a class="header" href="#puzzle-20-kernel-fusion-and-custom-backward-pass">Puzzle 20: Kernel Fusion and Custom Backward Pass</a></h1>
+<blockquote>
+<h2 id="kernel-fusion-and-autograd-integration"><a class="header" href="#kernel-fusion-and-autograd-integration">Kernel fusion and autograd integration</a></h2>
+<p>We’re continuing Part IV with a focus on <strong>kernel fusion</strong> and <strong>autograd integration</strong>.</p>
+<p>Building on <a href="puzzle_20/../puzzle_19/puzzle_19.html">Puzzle 19</a>, you’ll now explore how to combine multiple operations into a single efficient kernel and integrate it with PyTorch’s autograd system. You’ll learn:</p>
+<ul>
+<li>How kernel fusion improves performance in both forward and backward passes</li>
+<li>Why custom backward passes are crucial for fused operations</li>
+<li>How to design fused kernels with proper gradient flow</li>
+<li>The performance implications of different fusion strategies</li>
+</ul>
+<p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as important as <strong>how you implement them</strong>.</p>
+</blockquote>
 <h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
+<p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both forward and backward passes. While both fused and unfused implementations produce identical results, they use different strategies that lead to significant performance differences.</p>
+<p>You’ll compare:</p>
+<ul>
+<li><strong>Unfused approach</strong>: Separate kernels for LayerNorm and Linear</li>
+<li><strong>Fused kernel</strong>: Combined operation in a single kernel</li>
+<li><strong>Custom backward pass</strong>: Gradient computation for fused operations</li>
+</ul>
+<p>This comparison teaches the critical importance of kernel fusion and proper gradient computation in deep learning operations.</p>
+<h2 id="background-layernorm--linear-operations"><a class="header" href="#background-layernorm--linear-operations">Background: LayerNorm + Linear operations</a></h2>
+<p>LayerNorm and Linear are fundamental operations in transformer architectures, particularly in attention mechanisms and feed-forward networks. Here’s how they’re typically used:</p>
+<pre><code class="language-python">import torch
+import torch.nn.functional as F
+
+# Input: hidden states
+x = torch.randn(batch_size, seq_len, hidden_dim)
+
+# LayerNorm parameters
+ln_weight = torch.ones(hidden_dim)  # scale parameter (γ)
+ln_bias = torch.zeros(hidden_dim)   # shift parameter (β)
+
+# Linear layer parameters
+linear_weight = torch.randn(output_dim, hidden_dim)
+linear_bias = torch.zeros(output_dim)
+
+# Unfused operations (with autograd)
+ln_output = F.layer_norm(x, [hidden_dim], weight=ln_weight, bias=ln_bias)
+output = F.linear(ln_output, linear_weight, linear_bias)
+
+# Fused operation (custom implementation)
+# This is what you'll implement in this puzzle
+output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, linear_bias)
+</code></pre>
+<p>When fused, these operations are combined into a single efficient kernel that:</p>
+<ul>
+<li>Reduces memory bandwidth usage</li>
+<li>Minimizes kernel launch overhead</li>
+<li>Improves cache utilization</li>
+<li>Eliminates intermediate allocations</li>
+</ul>
+<p>In practice, this fusion can provide up to 1.5-2x speedup in both forward and backward passes, which is crucial for transformer training efficiency.</p>
+<h3 id="why-custom-backward-passes-matter"><a class="header" href="#why-custom-backward-passes-matter">Why custom backward passes matter</a></h3>
+<p>PyTorch’s autograd system automatically computes gradients for individual operations, but fused operations require custom backward passes to:</p>
+<ul>
+<li>Maintain numerical stability</li>
+<li>Ensure proper gradient flow</li>
+<li>Optimize memory access patterns</li>
+<li>Handle atomic operations for gradient accumulation</li>
+</ul>
+<h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
+<p>This puzzle is structured in two parts to build your understanding systematically:</p>
+<h3 id="forward-pass-implementation"><a class="header" href="#forward-pass-implementation"><strong><a href="puzzle_20/./forward_pass.html">Forward pass implementation</a></strong></a></h3>
+<p>Start here to implement the fused forward kernel and understand kernel fusion benefits.</p>
+<p><strong>What you’ll do:</strong></p>
+<ul>
+<li>Implement both unfused and fused forward kernels</li>
+<li>Learn fundamental kernel fusion techniques</li>
+<li>See the same operations implemented with different strategies</li>
+<li>Understand performance implications of fusion</li>
+<li>Master memory access patterns for optimal performance</li>
+</ul>
+<h3 id="backward-pass-implementation"><a class="header" href="#backward-pass-implementation"><strong><a href="puzzle_20/./backward_pass.html">Backward pass implementation</a></strong></a></h3>
+<p>Deep dive into autograd integration and gradient computation.</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+<li>How to implement custom backward passes</li>
+<li>Why proper gradient flow is crucial</li>
+<li>Real-world implications for training efficiency</li>
+<li>Optimization strategies for backward operations</li>
+<li>Mathematical foundations of gradient computation</li>
+<li>Atomic operations for gradient accumulation</li>
+<li>Numerical stability in backward passes</li>
+</ul>
+<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
+<p>Ready to explore kernel fusion and autograd integration? Start with the <strong><a href="puzzle_20/./forward_pass.html">Forward pass implementation</a></strong> to implement the fused kernel, then move to <strong><a href="puzzle_20/./backward_pass.html">Backward pass implementation</a></strong> to understand gradient computation.</p>
+<p>The puzzle includes a comprehensive testing framework that verifies:</p>
+<ul>
+<li>Numerical correctness against PyTorch’s implementation for both forward and backward passes</li>
+<li>Performance comparison between our CPU and GPU implementations</li>
+<li>Gradient computation accuracy for all parameters (input, LayerNorm weights/bias, Linear weights/bias)</li>
+<li>Memory usage optimization through kernel fusion</li>
+</ul>
+<p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs unfused) affect both forward and backward pass performance - this insight applies to many deep learning operations beyond LayerNorm + Linear. The backward pass implementation is particularly important as it directly impacts training efficiency and numerical stability.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-fused-vs-unfused-kernels"><a class="header" href="#-fused-vs-unfused-kernels">⚛️ Fused vs Unfused Kernels</a></h1>
+<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
+<p>In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the <a href="https://arxiv.org/abs/1607.06450">LayerNorm</a> and Linear operation:</p>
+<ol>
+<li><strong>Unfused approach</strong>: Executes LayerNorm and Linear as separate operations</li>
+<li><strong>Fused kernel</strong>: Combines LayerNorm and Linear operations into a single GPU kernel</li>
+</ol>
+<p>This comparison demonstrates how kernel fusion can significantly improve performance by:</p>
+<ul>
+<li>Reducing memory bandwidth usage</li>
+<li>Minimizing kernel launch overhead</li>
+<li>Improving cache utilization</li>
+<li>Eliminating intermediate memory allocations</li>
+</ul>
+<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
+<p>In this puzzle, you’ll master:</p>
+<ul>
+<li><strong>Kernel fusion techniques</strong> for combining multiple operations</li>
+<li><strong>Memory bandwidth optimization</strong> through fused operations</li>
+<li><strong>Performance benchmarking</strong> of different kernel implementations</li>
+<li><strong>Numerical stability</strong> in fused operations</li>
+<li><strong>PyTorch custom operation integration</strong></li>
+</ul>
+<p>The mathematical operations we’re fusing are:</p>
+<ol>
+<li>
+<p>LayerNorm:
+\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</p>
+</li>
+<li>
+<p>Linear:
+\[\Large \text{Linear}(x) = Wx + b \]</p>
+</li>
+</ol>
+<p>When fused, we compute:
+\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \]</p>
+<h2 id="understanding-layernorm"><a class="header" href="#understanding-layernorm">Understanding LayerNorm</a></h2>
+<p>LayerNorm is a normalization technique that helps stabilize and accelerate the training of deep neural networks. Let’s break down its components and parameters:</p>
+<h3 id="what-layernorm-does"><a class="header" href="#what-layernorm-does">What LayerNorm does</a></h3>
+<ol>
+<li>
+<p><strong>Normalization</strong>: LayerNorm normalizes the activations across the features (hidden dimensions) for each sample independently. This means:</p>
+<ul>
+<li>For each sequence position, it computes statistics across the hidden dimension</li>
+<li>Each sample in the batch is normalized independently</li>
+<li>This is different from <a href="https://arxiv.org/abs/1502.03167">BatchNorm</a>, which normalizes across the batch dimension</li>
+</ul>
+</li>
+<li>
+<p><strong>Parameters</strong>:</p>
+<ul>
+<li>\(\gamma\) (scale): A learnable parameter vector that allows the network to learn the optimal scale for each feature</li>
+<li>\(\beta\) (shift): A learnable parameter vector that allows the network to learn the optimal shift for each feature</li>
+<li>\(\epsilon\): A small constant (1e-5) added to the variance to prevent division by zero</li>
+</ul>
+</li>
+</ol>
+<h3 id="what-layernorm-does-in-practice"><a class="header" href="#what-layernorm-does-in-practice">What LayerNorm does in practice</a></h3>
+<p>LayerNorm performs several crucial functions in deep neural networks:</p>
+<ol>
+<li>
+<p><strong>Feature standardization</strong>:</p>
+<ul>
+<li>Transforms each feature to have zero mean and unit variance</li>
+<li>Makes the network’s learning process more stable</li>
+<li>Helps prevent the “internal covariate shift” problem where the distribution of layer inputs changes during training</li>
+</ul>
+</li>
+<li>
+<p><strong>Gradient flow</strong>:</p>
+<ul>
+<li>Improves gradient flow through the network</li>
+<li>Prevents vanishing/exploding gradients</li>
+<li>Makes training more efficient by allowing higher learning rates</li>
+</ul>
+</li>
+<li>
+<p><strong>Regularization effect</strong>:</p>
+<ul>
+<li>Acts as a form of implicit regularization</li>
+<li>Helps prevent overfitting by normalizing the feature distributions</li>
+<li>Makes the network more robust to input variations</li>
+</ul>
+</li>
+<li>
+<p><strong>Sequence modeling</strong>:</p>
+<ul>
+<li>Particularly effective in transformer architectures</li>
+<li>Helps maintain consistent signal magnitude across different sequence lengths</li>
+<li>Enables better handling of variable-length sequences</li>
+</ul>
+</li>
+<li>
+<p><strong>Training dynamics</strong>:</p>
+<ul>
+<li>Accelerates training convergence</li>
+<li>Reduces the need for careful learning rate tuning</li>
+<li>Makes the network less sensitive to weight initialization</li>
+</ul>
+</li>
+</ol>
+<h3 id="mathematical-components"><a class="header" href="#mathematical-components">Mathematical components</a></h3>
+<ol>
+<li>
+<p><strong>Mean Calculation</strong> (\(\mu\)):
+\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</p>
+<ul>
+<li>Computes the mean across the hidden dimension (H)</li>
+<li>Each sequence position has its own mean</li>
+</ul>
+</li>
+<li>
+<p><strong>Variance Calculation</strong> (\(\sigma^2\)):
+\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</p>
+<ul>
+<li>Computes the variance across the hidden dimension</li>
+<li>Used to scale the normalized values</li>
+</ul>
+</li>
+<li>
+<p><strong>Normalization and Scaling</strong>:
+\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</p>
+<ul>
+<li>First normalizes the input to have zero mean and unit variance</li>
+<li>Then applies learnable scale (\(\gamma\)) and shift (\(\beta\)) parameters</li>
+<li>The \(\odot\) symbol represents elementwise multiplication (Hadamard product)</li>
+<li>For example, if \(\gamma = [1.2, 0.8, 1.5]\)  and normalized input is \([0.5, -0.3, 0.7]\), then \(\gamma \odot x = [0.6, -0.24, 1.05]\)</li>
+</ul>
+</li>
+</ol>
+<h3 id="why-layernorm-is-important"><a class="header" href="#why-layernorm-is-important">Why LayerNorm is important</a></h3>
+<ol>
+<li>
+<p><strong>Training Stability</strong>:</p>
+<ul>
+<li>Prevents activations from growing too large or small</li>
+<li>Helps maintain consistent signal magnitude throughout the network</li>
+</ul>
+</li>
+<li>
+<p><strong>Feature Learning</strong>:</p>
+<ul>
+<li>The scale (\(\gamma\)) and shift (\(\beta\)) parameters allow the network to learn which features are important</li>
+<li>Can effectively learn to ignore or emphasize certain features</li>
+</ul>
+</li>
+<li>
+<p><strong>Independence</strong>:</p>
+<ul>
+<li>Unlike BatchNorm, LayerNorm’s statistics are computed independently for each sample</li>
+<li>Makes it more suitable for variable-length sequences and small batch sizes</li>
+</ul>
+</li>
+</ol>
+<h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
+<ul>
+<li>Batch size: <code>BATCH_SIZE = 4</code></li>
+<li>Sequence length: <code>SEQ_LEN = 4</code></li>
+<li>Hidden dimension: <code>HIDDEN_DIM = 8</code></li>
+<li>Output dimension: <code>OUTPUT_DIM = 16</code></li>
+<li>Epsilon: <code>EPS = 1e-5</code></li>
+<li>Data type: <code>DType.float32</code></li>
+</ul>
+<h2 id="implementation-approaches-6"><a class="header" href="#implementation-approaches-6">Implementation approaches</a></h2>
+<h3 id="1-unfused-implementation"><a class="header" href="#1-unfused-implementation">1. Unfused implementation</a></h3>
+<p>The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:</p>
+<h4 id="matrix-multiplication-kernel"><a class="header" href="#matrix-multiplication-kernel">Matrix multiplication kernel</a></h4>
+<p>From <a href="puzzle_20/../puzzle_14/puzzle_14.html">Puzzle 14</a>, we reuse the tiled matrix multiplication kernel for the linear transformation:</p>
+<pre><code class="language-mojo"># Idiomatic tiled matmul from p14.mojo - adapted for [batch*seq, hidden] @ [hidden, output] -&gt; [batch*seq, output]
+fn matmul_idiomatic_tiled[
+    a_layout: Layout,
+    b_layout: Layout,
+    out_layout: Layout,
+    rows: Int,
+    cols: Int,
+    inner_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, a_layout],
+    b: LayoutTensor[mut=False, dtype, b_layout],
+):
+    """Idiomatic tiled matmul following p14.mojo exactly."""
+    # Get the tile of the output matrix that this thread block is responsible for
+    out_tile = output.tile[TPB, TPB](block_idx.x, block_idx.y)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    local_row = thread_idx.x
+    local_col = thread_idx.y
+
+    var acc: output.element_type = 0
+
+    alias load_a_layout = Layout.row_major(1, TPB)
+    alias load_b_layout = Layout.row_major(TPB, 1)
+
+    for idx in range((inner_dim + TPB - 1) // TPB):
+        a_tile = a.tile[TPB, TPB](block_idx.x, idx)
+        b_tile = b.tile[TPB, TPB](idx, block_idx.y)
+
+        copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
+        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+
+        async_copy_wait_all()
+        barrier()
+
+        @parameter
+        for k in range(TPB):
+            acc += a_shared[local_row, k] * b_shared[k, local_col]
+
+        barrier()
+
+    if (
+        block_idx.x * TPB + local_row &lt; rows
+        and block_idx.y * TPB + local_col &lt; cols
+    ):
+        out_tile[local_row, local_col] = acc
+
+
+</code></pre>
+<h4 id="transpose-kernel"><a class="header" href="#transpose-kernel">Transpose kernel</a></h4>
+<p>For efficient memory access patterns, we use a transpose kernel with shared memory tiling:</p>
+<pre><code class="language-mojo">fn transpose_kernel[
+    layout_in: Layout,
+    layout_out: Layout,
+    rows: Int,
+    cols: Int,
+](
+    output: LayoutTensor[mut=True, dtype, layout_out],
+    input: LayoutTensor[mut=False, dtype, layout_in],
+):
+    """Transpose matrix using shared memory tiling for coalesced access.
+    We will learn more about coalesced access in the next part.
+    """
+    shared_tile = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+
+    global_row = block_idx.y * TPB + local_row
+    global_col = block_idx.x * TPB + local_col
+
+    if global_row &lt; rows and global_col &lt; cols:
+        shared_tile[local_row, local_col] = input[global_row, global_col]
+    else:
+        shared_tile[local_row, local_col] = 0.0
+
+    barrier()
+
+    out_row = block_idx.x * TPB + local_row
+    out_col = block_idx.y * TPB + local_col
+
+    # Store data from shared memory to global memory (coalesced write)
+    # Note: we transpose the shared memory access pattern
+    if out_row &lt; cols and out_col &lt; rows:
+        output[out_row, out_col] = shared_tile[local_col, local_row]
+
+
+</code></pre>
+<h4 id="bias-addition-kernel"><a class="header" href="#bias-addition-kernel">Bias addition kernel</a></h4>
+<p>A simple elementwise addition kernel for adding the bias term:</p>
+<pre><code class="language-mojo">fn add_bias_kernel[
+    input_layout: Layout,
+    bias_layout: Layout,
+    output_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    output_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    bias: LayoutTensor[mut=False, dtype, bias_layout],
+):
+    """Simple bias addition."""
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+    out_idx = thread_idx.x
+
+    if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or out_idx &gt;= output_dim:
+        return
+
+    output[batch_idx, seq_idx, out_idx] = input[
+        batch_idx, seq_idx, out_idx
+    ] + rebind[Scalar[dtype]](bias[out_idx])
+
+
+</code></pre>
+<h4 id="layernorm-kernel"><a class="header" href="#layernorm-kernel">LayerNorm kernel</a></h4>
+<p>Now complete this kernel to implement the LayerNorm operation. You’ll need to:</p>
+<ol>
+<li>Compute mean \(\mu\) and variance \(\sigma^2\) for each sequence position</li>
+<li>Normalize the input using these statistics</li>
+<li>Apply the scale \(\gamma\) and shift \(\beta\) parameters</li>
+</ol>
+<pre><code class="language-mojo">fn layernorm_kernel[
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    output_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+):
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+    hidden_idx = thread_idx.x
+
+    if (
+        batch_idx &gt;= batch_size
+        or seq_idx &gt;= seq_len
+        or hidden_idx &gt;= hidden_dim
+    ):
+        return
+
+    # Compute statistics for this sequence position (redundant but simple)
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
+
+    # FILL ME IN (roughly 11 lines)
+
+
+</code></pre>
+<p><strong>Implementation steps:</strong></p>
+<ol>
+<li>First, compute mean and variance using parallel reduction</li>
+<li>Then normalize the input using these statistics</li>
+<li>Finally, apply the scale and shift parameters</li>
+</ol>
+<p><strong>Characteristics of unfused approach:</strong></p>
+<ul>
+<li>Multiple kernel launches (LayerNorm → MatMul → Bias)</li>
+<li>Intermediate tensor allocations between operations</li>
+<li>More memory bandwidth usage due to separate passes</li>
+<li>Simpler implementation with clear separation of concerns</li>
+<li>Easier to debug as each operation is isolated</li>
+</ul>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>
+<p><strong>Thread organization</strong>:</p>
+<ul>
+<li>Use one thread block per sequence position (grid: <code>[batch_size, seq_len]</code>)</li>
+<li>Each thread handles one hidden dimension element</li>
+<li>Avoid redundant computation by computing statistics once per sequence</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access</strong>:</p>
+<ul>
+<li>Access input tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
+<li>Access output tensor with <code>[batch_idx, seq_idx, hidden_idx]</code></li>
+<li>Access LayerNorm parameters with <code>[hidden_idx]</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Numerical stability</strong>:</p>
+<ul>
+<li>Add epsilon (1e-5) before taking square root</li>
+<li>Use <code>rebind[Scalar[dtype]]</code> for proper type casting</li>
+<li>Compute variance as (sq_sum / hidden_dim) - (mean * mean)</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance</strong>:</p>
+<ul>
+<li>Compute mean and variance in a single pass</li>
+<li>Reuse computed statistics for all elements in sequence</li>
+<li>Avoid unnecessary memory barriers</li>
+</ul>
+</li>
+</ol>
+</div>
+</details>
+<h3 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the code</a></h3>
+<p>To test your unfused implementation, run:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p20 --unfused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p20 --unfused
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this:</p>
+<pre><code class="language-txt">Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
+✅ Loaded Mojo operations library
+============================================================
+   Puzzle 20: UNFUSED Algorithm Test &amp; Benchmark
+============================================================
+
+🧪 Correctness Testing for UNFUSED Algorithm
+====================================================
+
+Testing Reference PyTorch Implementation
+-----------------------------------------------
+✅ Reference PyTorch
+   Max difference: 0.00e+00
+   Result: ✅ CORRECT
+
+Testing CPU Implementation
+---------------------------------
+✅ Using Mojo fused kernel (CPU)
+   Max difference: 1.86e-08
+   Result: ✅ CORRECT
+
+Testing GPU Unfused Implementation
+-----------------------------------------
+✅ Using Mojo unfused kernel (GPU)
+   Max difference: 1.86e-08
+   Result: ✅ CORRECT
+
+Correctness Summary:
+   - Reference:   ✅ CORRECT
+   - CPU:         ✅ CORRECT
+   - GPU unfused: ✅ CORRECT
+
+   Overall Correctness: ✅ ALL CORRECT
+
+Benchmarking CPU vs GPU UNFUSED
+------------------------------------------
+   Testing CPU performance...
+   CPU: 3173.70ms (50 iterations)
+   Testing GPU unfused performance...
+   GPU unfused: 3183.57ms (50 iterations)
+
+   GPU unfused vs CPU: 1.00x slower
+   CPU wins (GPU overhead &gt; computation benefit)
+
+UNFUSED Algorithm Test Completed!
+</code></pre>
+<h2 id="solution-28"><a class="header" href="#solution-28">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn layernorm_kernel[
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    output_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+):
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+    hidden_idx = thread_idx.x
+
+    if (
+        batch_idx &gt;= batch_size
+        or seq_idx &gt;= seq_len
+        or hidden_idx &gt;= hidden_dim
+    ):
+        return
+
+    # Compute statistics for this sequence position (redundant but simple)
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
+
+    @parameter
+    for h in range(hidden_dim):
+        val = input[batch_idx, seq_idx, h]
+        sum_val += rebind[Scalar[dtype]](val)
+        sq_sum += rebind[Scalar[dtype]](val * val)
+
+    mean_val = sum_val / hidden_dim
+    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    inv_std = 1.0 / sqrt(var_val + 1e-5)
+
+    # Apply LayerNorm to this element
+    input_val = input[batch_idx, seq_idx, hidden_idx]
+    normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
+        ln_weight[hidden_idx]
+    ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
+    output[batch_idx, seq_idx, hidden_idx] = normalized
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The unfused implementation follows a straightforward approach where each thread handles one element of the output tensor. Let’s break down the key components:</p>
+<ol>
+<li>
+<p><strong>Thread and Block Organization</strong>:</p>
+<pre><code class="language-mojo">batch_idx = block_idx.x
+seq_idx = block_idx.y
+hidden_idx = thread_idx.x
+</code></pre>
+<ul>
+<li>Each thread block handles one sequence position in the batch</li>
+<li>Grid dimensions: <code>[batch_size, seq_len]</code></li>
+<li>Each thread processes one element in the hidden dimension</li>
+<li>Early return if indices are out of bounds:
+<pre><code class="language-mojo">if (batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or hidden_idx &gt;= hidden_dim):
+    return
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Statistics Computation</strong>:</p>
+<pre><code class="language-mojo">var sum_val: Scalar[dtype] = 0
+var sq_sum: Scalar[dtype] = 0
+
+@parameter
+for h in range(hidden_dim):
+    val = input[batch_idx, seq_idx, h]
+    sum_val += rebind[Scalar[dtype]](val)
+    sq_sum += rebind[Scalar[dtype]](val * val)
+</code></pre>
+<ul>
+<li>Compute sum and squared sum in a single pass</li>
+<li>Use <code>@parameter</code> for compile-time loop unrolling</li>
+<li>Proper type casting with <code>rebind[Scalar[dtype]]</code></li>
+<li>Calculate mean and variance:
+<pre><code class="language-mojo">mean_val = sum_val / hidden_dim
+var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+inv_std = 1.0 / sqrt(var_val + 1e-5)
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Normalization and Scaling</strong>:</p>
+<pre><code class="language-mojo">input_val = input[batch_idx, seq_idx, hidden_idx]
+normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
+    ln_weight[hidden_idx]
+) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
+output[batch_idx, seq_idx, hidden_idx] = normalized
+</code></pre>
+<ul>
+<li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
+<li>Scale with learnable parameter <code>γ</code> (ln_weight)</li>
+<li>Add learnable bias <code>β</code> (ln_bias)</li>
+<li>Store result in output tensor</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance Characteristics</strong>:</p>
+<ul>
+<li>Each thread computes statistics independently</li>
+<li>No shared memory usage (simple but less efficient)</li>
+<li>Memory access pattern:
+<ul>
+<li>Input: <code>[batch_idx, seq_idx, h]</code></li>
+<li>Output: <code>[batch_idx, seq_idx, hidden_idx]</code></li>
+<li>Parameters: <code>[hidden_idx]</code></li>
+</ul>
+</li>
+<li>Numerical stability ensured by:
+<ul>
+<li>Adding epsilon (1e-5) before square root</li>
+<li>Using proper type casting</li>
+<li>Computing variance in a numerically stable way</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Implementation Details</strong>:</p>
+<ul>
+<li>
+<p><strong>Type Safety</strong>:</p>
+<ul>
+<li>Use <code>Scalar[dtype]</code> for intermediate calculations</li>
+<li><code>rebind[Scalar[dtype]]</code> for proper type casting</li>
+<li>Ensures consistent floating-point precision</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory Access</strong>:</p>
+<ul>
+<li>Coalesced reads from input tensor</li>
+<li>Coalesced writes to output tensor</li>
+<li>Sequential access to LayerNorm parameters</li>
+</ul>
+</li>
+<li>
+<p><strong>Computation Flow</strong>:</p>
+<ul>
+<li>Statistics computation: \[\Large O(H) \text{ operations per thread} \]</li>
+<li>Normalization: \[\Large O(1) \text{ operations per thread} \]</li>
+<li>Total complexity: \[\Large O(H) \text{ per output element} \]</li>
+</ul>
+</li>
+<li>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Redundant computation of statistics</li>
+<li>No shared memory for intermediate results</li>
+<li>High memory bandwidth usage</li>
+<li>Multiple kernel launches required</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>This implementation is correct but not optimal for performance, as shown in the benchmark results where it’s slightly slower than the CPU version. The fused implementation will address these performance limitations by:</p>
+<ul>
+<li>Computing statistics once per sequence</li>
+<li>Reusing normalized values</li>
+<li>Reducing memory traffic</li>
+<li>Eliminating intermediate tensor allocations</li>
+</ul>
+</div>
+</details>
+<h3 id="2-fused-kernel-implementation"><a class="header" href="#2-fused-kernel-implementation">2. Fused kernel implementation</a></h3>
+<p>The fused kernel combines LayerNorm and Linear operations into a single GPU kernel:</p>
+<pre><code class="language-mojo">fn minimal_fused_kernel[
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    weight_layout: Layout,
+    bias_layout: Layout,
+    output_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+    output_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+):
+    """Minimal fused kernel - one thread per sequence position to avoid redundancy.
+    """
+    # Grid: (batch_size, seq_len) - one thread block per sequence position
+    # Block: (1,) - single thread per sequence position to avoid redundant computation
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+
+    if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
+        return
+
+    # Step 1: Compute LayerNorm statistics once per sequence position
+
+    # FILL IN roughly 10 lines
+
+    # Step 2: Compute all outputs for this sequence position
+
+    # FILL IN roughly 10 lines
+
+
+</code></pre>
+<p><strong>Key optimizations:</strong></p>
+<ul>
+<li>Single kernel launch instead of two</li>
+<li>Shared memory for intermediate results</li>
+<li>Coalesced memory access patterns</li>
+<li>Reduced memory bandwidth usage</li>
+<li>No intermediate tensor allocations</li>
+</ul>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>
+<p><strong>Thread organization</strong>:</p>
+<ul>
+<li>One thread block per sequence position (grid: <code>[batch_size, seq_len]</code>)</li>
+<li>Single thread per sequence position to avoid redundancy</li>
+<li>Compute all outputs for each sequence position in one thread</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access</strong>:</p>
+<ul>
+<li>Access input tensor with <code>[batch_idx, seq_idx, h]</code></li>
+<li>Access output tensor with <code>[batch_idx, seq_idx, out_idx]</code></li>
+<li>Access weights with <code>[out_idx, h]</code> for linear layer</li>
+</ul>
+</li>
+<li>
+<p><strong>Computation flow</strong>:</p>
+<ul>
+<li>Compute LayerNorm statistics once per sequence</li>
+<li>Reuse normalized values for all output dimensions</li>
+<li>Combine normalization and linear transformation</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance</strong>:</p>
+<ul>
+<li>Avoid redundant computation of statistics</li>
+<li>Minimize memory traffic by fusing operations</li>
+<li>Use proper type casting with <code>rebind[Scalar[dtype]]</code></li>
+</ul>
+</li>
+</ol>
+</div>
+</details>
+<h3 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h3>
+<p>To test your fused implementation, run:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p20 --fused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p20 --fused
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this:</p>
+<pre><code class="language-txt">Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
+✅ Loaded Mojo operations library
+============================================================
+   Puzzle 20: FUSED Algorithm Test &amp; Benchmark
+============================================================
+
+🧪 Correctness Testing for FUSED Algorithm
+==================================================
+
+Testing Reference PyTorch Implementation
+-----------------------------------------------
+✅ Reference PyTorch
+   Max difference: 0.00e+00
+   Result: ✅ CORRECT
+
+Testing CPU Implementation
+---------------------------------
+✅ Using Mojo fused kernel (CPU)
+   Max difference: 1.86e-08
+   Result: ✅ CORRECT
+
+Testing GPU Fused Implementation
+---------------------------------------
+✅ Using Mojo fused kernel (GPU)
+   Max difference: 1.86e-08
+   Result: ✅ CORRECT
+
+Correctness Summary:
+   - Reference:   ✅ CORRECT
+   - CPU:         ✅ CORRECT
+   - GPU fused: ✅ CORRECT
+
+   Overall Correctness: ✅ ALL CORRECT
+
+⚡ Benchmarking CPU vs GPU FUSED
+----------------------------------------
+   Testing CPU performance...
+   CPU: 3144.75ms (50 iterations)
+   Testing GPU fused performance...
+   GPU fused: 3116.11ms (50 iterations)
+
+   GPU fused vs CPU: 1.01x faster
+   GPU fused wins!
+
+FUSED Algorithm Test Completed!
+</code></pre>
+<h2 id="solution-29"><a class="header" href="#solution-29">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn minimal_fused_kernel[
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    weight_layout: Layout,
+    bias_layout: Layout,
+    output_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+    output_dim: Int,
+](
+    output: LayoutTensor[mut=True, dtype, output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+):
+    """Minimal fused kernel - one thread per sequence position to avoid redundancy.
+    """
+    # Grid: (batch_size, seq_len) - one thread block per sequence position
+    # Block: (1,) - single thread per sequence position to avoid redundant computation
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+
+    if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
+        return
+
+    # Step 1: Compute LayerNorm statistics once per sequence position
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
+
+    @parameter
+    for h in range(hidden_dim):
+        val = input[batch_idx, seq_idx, h]
+        sum_val += rebind[Scalar[dtype]](val)
+        sq_sum += rebind[Scalar[dtype]](val * val)
+
+    mean_val = sum_val / hidden_dim
+    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    inv_std = 1.0 / sqrt(var_val + 1e-5)
+
+    # Step 2: Compute all outputs for this sequence position
+    @parameter
+    for out_idx in range(output_dim):
+        var acc: Scalar[dtype] = 0
+
+        @parameter
+        for h in range(hidden_dim):
+            input_val = input[batch_idx, seq_idx, h]
+            normalized = (input_val - mean_val) * inv_std * rebind[
+                Scalar[dtype]
+            ](ln_weight[h]) + rebind[Scalar[dtype]](ln_bias[h])
+            acc += rebind[Scalar[dtype]](normalized * linear_weight[out_idx, h])
+
+        output[batch_idx, seq_idx, out_idx] = acc + rebind[Scalar[dtype]](
+            linear_bias[out_idx]
+        )
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The fused implementation combines operations efficiently:</p>
+<ol>
+<li>
+<p><strong>Thread organization</strong>:</p>
+<ul>
+<li>One thread block per sequence position (grid: <code>[batch_size, seq_len]</code>)</li>
+<li>Single thread per sequence position</li>
+<li>Thread indices: <code>batch_idx = block_idx.x</code>, <code>seq_idx = block_idx.y</code></li>
+</ul>
+</li>
+<li>
+<p><strong>LayerNorm phase</strong>:</p>
+<ul>
+<li>Compute sum and squared sum for the sequence position</li>
+<li>Calculate mean: \[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</li>
+<li>Calculate variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</li>
+<li>Compute inverse standard deviation: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+</ul>
+</li>
+<li>
+<p><strong>Linear phase</strong>:</p>
+<ul>
+<li>For each output dimension:
+<ul>
+<li>Compute normalized value: \[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
+<li>Multiply with linear weight and accumulate: \[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}<em>h \cdot W</em>{out,h} \]</li>
+<li>Add linear bias: \[\Large \text{output} = \text{acc} + b_{out} \]</li>
+</ul>
+</li>
+<li>Store result in <code>output[batch_idx, seq_idx, out_idx]</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Performance optimizations</strong>:</p>
+<ul>
+<li>Single kernel launch for both operations</li>
+<li>Reuse computed statistics</li>
+<li>Minimize memory traffic</li>
+<li>No intermediate tensor allocations</li>
+<li>Efficient memory access patterns</li>
+</ul>
+</li>
+</ol>
+<p>This implementation achieves better performance than the unfused version by reducing memory bandwidth usage and kernel launch overhead.</p>
+</div>
+</details>
+<h2 id="advantages-of-kernel-fusion"><a class="header" href="#advantages-of-kernel-fusion">Advantages of kernel fusion</a></h2>
+<p>In this puzzle, we’ve explored two approaches to implementing LayerNorm + Linear operations:</p>
+<ol>
+<li>
+<p><strong>Unfused implementation</strong>:</p>
+<ul>
+<li>Separate kernels for LayerNorm and Linear</li>
+<li>Simpler implementation but less efficient</li>
+<li>Higher memory bandwidth usage</li>
+<li>Multiple kernel launches</li>
+<li>Benchmark results: 3183.57ms (GPU)</li>
+</ul>
+</li>
+<li>
+<p><strong>Fused implementation</strong>:</p>
+<ul>
+<li>Single kernel combining both operations</li>
+<li>More complex but significantly more efficient</li>
+<li>Reduced memory bandwidth usage</li>
+<li>Single kernel launch</li>
+<li>Benchmark results: 3116.11ms (GPU)</li>
+</ul>
+</li>
+</ol>
+<h3 id="memory-bandwidth-optimization"><a class="header" href="#memory-bandwidth-optimization">Memory bandwidth optimization</a></h3>
+<ol>
+<li>
+<p><strong>Eliminated memory traffic</strong>:</p>
+<ul>
+<li>No intermediate tensor allocations between operations</li>
+<li>Reduced global memory reads/writes</li>
+<li>Reuse of normalized values for linear transformation</li>
+<li>Memory bandwidth reduction: \[\Large \text{reduction} = \frac{\text{unfused_bandwidth} - \text{fused_bandwidth}}{\text{unfused_bandwidth}}\]</li>
+</ul>
+</li>
+<li>
+<p><strong>Cache efficiency</strong>:</p>
+<ul>
+<li>Better L1/L2 cache utilization</li>
+<li>Reduced cache misses</li>
+<li>Improved memory access patterns</li>
+<li>Higher arithmetic intensity</li>
+</ul>
+</li>
+</ol>
+<h3 id="reduced-overhead"><a class="header" href="#reduced-overhead">Reduced overhead</a></h3>
+<ol>
+<li>
+<p><strong>Kernel launch optimization</strong>:</p>
+<ul>
+<li>Single kernel launch instead of multiple</li>
+<li>Lower driver overhead</li>
+<li>Reduced synchronization points</li>
+<li>Fewer memory allocations</li>
+</ul>
+</li>
+<li>
+<p><strong>Resource management</strong>:</p>
+<ul>
+<li>Shared memory reuse between operations</li>
+<li>Better register utilization</li>
+<li>Improved thread occupancy</li>
+<li>Higher GPU utilization</li>
+</ul>
+</li>
+</ol>
+<h3 id="performance-characteristics-2"><a class="header" href="#performance-characteristics-2">Performance characteristics</a></h3>
+<ol>
+<li>
+<p><strong>Scalability</strong>:</p>
+<ul>
+<li>Better performance scaling with input size</li>
+<li>Reduced memory bandwidth bottleneck</li>
+<li>More efficient use of GPU resources</li>
+<li>Improved throughput for large models</li>
+</ul>
+</li>
+<li>
+<p><strong>Numerical efficiency</strong>:</p>
+<ul>
+<li>Maintained numerical stability</li>
+<li>Reduced rounding errors</li>
+<li>Better precision in intermediate results</li>
+<li>Optimized computation order</li>
+</ul>
+</li>
+</ol>
+<p>💡 <strong>Key insight</strong>: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-autograd-integration--backward-pass"><a class="header" href="#-autograd-integration--backward-pass">⛓️ Autograd Integration &amp; Backward Pass</a></h1>
+<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
+<p>In this puzzle, we explore the backward pass implementation of the fused LayerNorm + Linear operation. The backward pass computes gradients with respect to:</p>
+<ul>
+<li>Input tensor</li>
+<li>LayerNorm scale (\(\gamma\)) and shift (\(\beta\)) parameters</li>
+<li>Linear layer weight matrix and bias</li>
+</ul>
+<p>The mathematical operations we’re implementing are:</p>
+<ol>
+<li>
+<p>LayerNorm backward (details of derivation in <a href="puzzle_20/backward_pass.html#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a>):
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
+</li>
+<li>
+<p>Linear backward:
+\[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \]
+\[\Large \frac{\partial L}{\partial b} = \frac{\partial L}{\partial y} \]
+\[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \]</p>
+</li>
+<li>
+<p>Chain Rule for Fused Operation:
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}} \frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial x} \]
+where:</p>
+</li>
+</ol>
+<ul>
+<li>\(y_{norm}\) is the LayerNorm output</li>
+<li>\(y_{linear}\) is the Linear layer output</li>
+<li>The chain rule ensures proper gradient flow through both operations</li>
+</ul>
+<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
+<ul>
+<li>
+<p><strong>Thread organization</strong>:</p>
+<ul>
+<li>One thread block per sequence position (grid: <code>[batch_size, seq_len]</code>)</li>
+<li>Single thread per sequence position to avoid redundancy</li>
+<li>Compute all gradients for each sequence position in one thread</li>
+<li>Ensure proper thread synchronization for atomic operations</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access</strong>:</p>
+<ul>
+<li>Access input tensor with <code>[batch_idx, seq_idx, h]</code></li>
+<li>Access output tensor with <code>[batch_idx, seq_idx, out_idx]</code></li>
+<li>Access weights with <code>[out_idx, h]</code> for linear layer</li>
+<li>Ensure memory alignment for atomic operations</li>
+<li>Use shared memory for frequently accessed data</li>
+</ul>
+</li>
+<li>
+<p><strong>Computation flow</strong>:</p>
+<ul>
+<li>Compute LayerNorm statistics in same order as forward pass</li>
+<li>Reuse normalized values for all output dimensions</li>
+<li>Combine normalization and linear transformation</li>
+<li>Maintain numerical stability throughout</li>
+<li>Handle edge cases properly</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance</strong>:</p>
+<ul>
+<li>Avoid redundant computation of statistics</li>
+<li>Minimize memory traffic by fusing operations</li>
+<li>Use proper type casting with <code>rebind[Scalar[dtype]]</code></li>
+<li>Ensure proper memory alignment</li>
+<li>Optimize for autograd integration</li>
+</ul>
+</li>
+</ul>
+<h2 id="configuration-19"><a class="header" href="#configuration-19">Configuration</a></h2>
+<ul>
+<li>Batch size: <code>BATCH_SIZE = 4</code></li>
+<li>Sequence length: <code>SEQ_LEN = 4</code></li>
+<li>Hidden dimension: <code>HIDDEN_DIM = 8</code></li>
+<li>Output dimension: <code>OUTPUT_DIM = 16</code></li>
+<li>Epsilon: <code>EPS = 1e-5</code></li>
+<li>Data type: <code>DType.float32</code></li>
+</ul>
+<h2 id="implementation-challenging"><a class="header" href="#implementation-challenging">Implementation (challenging)</a></h2>
+<p>The fused backward kernel combines LayerNorm and Linear backward operations into a single GPU kernel. This is a challenging implementation that requires careful handling of:</p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/stdlib/os/atomic/Atomic/">Atomic operations</a> for gradient accumulation</li>
+<li>Numerical stability in gradient computations</li>
+<li>Memory access patterns for efficient GPU utilization</li>
+<li>Proper synchronization between operations</li>
+</ul>
+<pre><code class="language-mojo">fn minimal_fused_kernel_backward[
+    grad_output_layout: Layout,
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    weight_layout: Layout,
+    grad_input_layout: Layout,
+    grad_ln_weight_layout: Layout,
+    grad_ln_bias_layout: Layout,
+    grad_weight_layout: Layout,
+    grad_bias_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+    output_dim: Int,
+](
+    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
+    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
+    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
+    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
+    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
+    grad_output: LayoutTensor[mut=False, dtype, grad_output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+):
+    """Fused backward kernel using atomic operations for safe gradient accumulation.
+    """
+    # Grid: (batch_size, seq_len) - one thread per sequence position
+    # Block: (1,) - single thread per sequence position
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+
+    if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
+        return
+
+    # Step 1: Recompute forward pass statistics (needed for gradients)
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
+
+    # FILL IN roughly 8 lines
+
+    # Step 2: Atomically accumulate gradients w.r.t. linear bias
+
+    # FILL IN roughly 4 lines
+
+    # Step 3: Atomically accumulate gradients w.r.t. linear weight
+    # Make sure to use the correct atomic operation to avoid race conditions
+
+    # FILL IN roughly 10 lines
+
+    # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
+
+    # FILL IN roughly 10 lines
+
+    # Step 5: Compute gradients w.r.t. input (LayerNorm backward)
+    # Compute sum terms needed for LayerNorm backward
+    # Make sure to use the correct atomic operation to avoid race conditions
+
+    # FILL IN roughly 12 lines
+
+    # Compute actual input gradients (no race conditions here - each thread writes to different positions)
+
+    # FILL IN roughly 10 lines
+
+
+</code></pre>
+<p><strong>Key optimizations:</strong></p>
+<ul>
+<li>Single kernel launch for all gradient computations</li>
+<li>Atomic operations for safe gradient accumulation</li>
+<li>Coalesced memory access patterns</li>
+<li>Reduced memory bandwidth usage</li>
+<li>No intermediate tensor allocations</li>
+</ul>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>
+<p><strong>Thread organization</strong>:</p>
+<ul>
+<li>One thread block per sequence position</li>
+<li>Single thread per sequence position</li>
+<li>Compute all gradients in one thread</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access</strong>:</p>
+<ul>
+<li>Coalesced access for input/output tensors</li>
+<li>Strided access for weight matrix</li>
+<li>Proper alignment for atomic operations</li>
+</ul>
+</li>
+<li>
+<p><strong>Computation flow</strong>:</p>
+<ul>
+<li>Compute statistics in same order as forward pass</li>
+<li>Reuse normalized values</li>
+<li>Maintain numerical stability</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance</strong>:</p>
+<ul>
+<li>Minimize memory traffic</li>
+<li>Use proper type casting</li>
+<li>Ensure proper alignment</li>
+</ul>
+</li>
+</ol>
+</div>
+</details>
+<h3 id="running-the-code-27"><a class="header" href="#running-the-code-27">Running the code</a></h3>
+<p>To test your fused backward implementation, run:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p20 --backward
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p20 --backward
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this:</p>
+<pre><code class="language-txt">Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
+✅ Loaded Mojo operations library
+============================================================
+           Comprehensive Backward Pass Test
+           Testing Custom LayerNorm + Linear Gradients
+============================================================
+Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
+
+Testing CPU Backward Pass:
+
+Testing CPU Backward Implementation - Backward Pass
+---------------------------------------------------------
+   Computing PyTorch autograd reference...
+   Computing Mojo backward implementation (CPU)...
+✅ CPU Backward Implementation backward completed
+   Forward max difference: 1.49e-08
+   grad_input: 2.98e-08 ✅
+   grad_ln_weight: 5.96e-08 ✅
+   grad_ln_bias: 2.38e-07 ✅
+   grad_linear_weight: 9.54e-07 ✅
+   grad_linear_bias: 0.00e+00 ✅
+
+   Forward pass: ✅ CORRECT
+   Gradients:    ✅ CORRECT
+   Overall:      ✅ CORRECT
+
+Testing GPU Backward Pass:
+
+Testing GPU Backward Implementation - Backward Pass
+---------------------------------------------------------
+   Computing PyTorch autograd reference...
+   Computing Mojo backward implementation (GPU)...
+
+✅ GPU Backward Implementation backward completed
+   Forward max difference: 1.86e-08
+   grad_input: 4.47e-08 ✅
+   grad_ln_weight: 5.96e-08 ✅
+   grad_ln_bias: 3.58e-07 ✅
+   grad_linear_weight: 9.54e-07 ✅
+   grad_linear_bias: 0.00e+00 ✅
+
+   Forward pass: ✅ CORRECT
+   Gradients:    ✅ CORRECT
+   Overall:      ✅ CORRECT
+
+Backward Pass Test Summary:
+   - CPU Backward:  ✅ CORRECT
+   - GPU Backward:  ✅ CORRECT
+
+   Overall Result: ✅ ALL CORRECT
+
+BACKWARD PASS Test Completed!
+</code></pre>
+<h2 id="solution-30"><a class="header" href="#solution-30">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn minimal_fused_kernel_backward[
+    grad_output_layout: Layout,
+    input_layout: Layout,
+    ln_params_layout: Layout,
+    weight_layout: Layout,
+    grad_input_layout: Layout,
+    grad_ln_weight_layout: Layout,
+    grad_ln_bias_layout: Layout,
+    grad_weight_layout: Layout,
+    grad_bias_layout: Layout,
+    batch_size: Int,
+    seq_len: Int,
+    hidden_dim: Int,
+    output_dim: Int,
+](
+    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
+    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
+    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
+    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
+    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
+    grad_output: LayoutTensor[mut=False, dtype, grad_output_layout],
+    input: LayoutTensor[mut=False, dtype, input_layout],
+    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
+    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+):
+    """Fused backward kernel using atomic operations for safe gradient accumulation.
+    """
+    # Grid: (batch_size, seq_len) - one thread per sequence position
+    # Block: (1,) - single thread per sequence position
+    batch_idx = block_idx.x
+    seq_idx = block_idx.y
+
+    if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
+        return
+
+    # Step 1: Recompute forward pass statistics (needed for gradients)
+    var sum_val: Scalar[dtype] = 0
+    var sq_sum: Scalar[dtype] = 0
+
+    @parameter
+    for h in range(hidden_dim):
+        val = input[batch_idx, seq_idx, h]
+        sum_val += rebind[Scalar[dtype]](val)
+        sq_sum += rebind[Scalar[dtype]](val * val)
+
+    mean_val = sum_val / hidden_dim
+    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    inv_std = 1.0 / sqrt(var_val + 1e-5)
+
+    # Step 2: Atomically accumulate gradients w.r.t. linear bias
+    @parameter
+    for out_idx in range(output_dim):
+        grad_bias_ptr = grad_bias.ptr.offset(out_idx)
+        _ = Atomic[dtype].fetch_add(
+            grad_bias_ptr,
+            rebind[Scalar[dtype]](grad_output[batch_idx, seq_idx, out_idx]),
+        )
+
+    # Step 3: Atomically accumulate gradients w.r.t. linear weight
+    @parameter
+    for out_idx in range(output_dim):
+
+        @parameter
+        for h in range(hidden_dim):
+            var input_val = input[batch_idx, seq_idx, h]
+            var normalized = (input_val - mean_val) * inv_std
+            var ln_output_val = normalized * rebind[Scalar[dtype]](
+                ln_weight[h]
+            ) + rebind[Scalar[dtype]](ln_bias[h])
+
+            # Atomic gradient accumulation for linear weight
+            var grad_w = (
+                grad_output[batch_idx, seq_idx, out_idx] * ln_output_val
+            )
+            var grad_weight_ptr = grad_weight.ptr.offset(
+                out_idx * hidden_dim + h
+            )
+            _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
+
+    # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
+    @parameter
+    for h in range(hidden_dim):
+        input_val = input[batch_idx, seq_idx, h]
+        normalized = (input_val - mean_val) * inv_std
+
+        # Compute gradient w.r.t. LayerNorm output for this h
+        var grad_ln_out: Scalar[dtype] = 0
+
+        @parameter
+        for out_idx in range(output_dim):
+            grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
+                grad_output[batch_idx, seq_idx, out_idx]
+                * linear_weight[out_idx, h]
+            )
+
+        # Atomic accumulation of LayerNorm parameter gradients
+        grad_ln_weight_ptr = grad_ln_weight.ptr.offset(h)
+        grad_ln_bias_ptr = grad_ln_bias.ptr.offset(h)
+        _ = Atomic[dtype].fetch_add(
+            grad_ln_weight_ptr, rebind[Scalar[dtype]](grad_ln_out * normalized)
+        )
+        _ = Atomic[dtype].fetch_add(
+            grad_ln_bias_ptr, rebind[Scalar[dtype]](grad_ln_out)
+        )
+
+    # Step 5: Compute gradients w.r.t. input (LayerNorm backward)
+    # Compute sum terms needed for LayerNorm backward
+    var sum_grad_normalized: Scalar[dtype] = 0
+    var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
+
+    @parameter
+    for h in range(hidden_dim):
+        h_input_val = input[batch_idx, seq_idx, h]
+        h_normalized = (h_input_val - mean_val) * inv_std
+
+        var h_grad_ln_out: Scalar[dtype] = 0
+
+        @parameter
+        for out_idx in range(output_dim):
+            h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
+                grad_output[batch_idx, seq_idx, out_idx]
+                * linear_weight[out_idx, h]
+            )
+
+        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight[h])
+        sum_grad_normalized = sum_grad_normalized + rebind[Scalar[dtype]](
+            h_grad_norm
+        )
+        sum_grad_normalized_times_normalized = (
+            sum_grad_normalized_times_normalized
+            + rebind[Scalar[dtype]](h_grad_norm * h_normalized)
+        )
+
+    # Compute actual input gradients (no race conditions here - each thread writes to different positions)
+    @parameter
+    for h in range(hidden_dim):
+        h_input_val = input[batch_idx, seq_idx, h]
+        h_normalized = (h_input_val - mean_val) * inv_std
+
+        var h_grad_ln_out: Scalar[dtype] = 0
+
+        @parameter
+        for out_idx in range(output_dim):
+            h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
+                grad_output[batch_idx, seq_idx, out_idx]
+                * linear_weight[out_idx, h]
+            )
+
+        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight[h])
+        grad_input[batch_idx, seq_idx, h] = inv_std * (
+            h_grad_norm
+            - (sum_grad_normalized / hidden_dim)
+            - (h_normalized * sum_grad_normalized_times_normalized / hidden_dim)
+        )
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The fused backward implementation combines operations efficiently:</p>
+<ol>
+<li>
+<p><strong>Thread organization and memory layout</strong>:</p>
+<ul>
+<li>Grid dimensions: <code>[batch_size, seq_len]</code> for one thread block per sequence position</li>
+<li>Thread indices: <code>batch_idx = block_idx.x</code>, <code>seq_idx = block_idx.y</code></li>
+<li>Memory layout:
+<ul>
+<li>Input tensor: <code>[batch_size, seq_len, hidden_dim]</code></li>
+<li>Output tensor: <code>[batch_size, seq_len, output_dim]</code></li>
+<li>Weight matrix: <code>[output_dim, hidden_dim]</code></li>
+<li>Gradients: <code>[batch_size, seq_len, hidden_dim]</code> for input gradients</li>
+<li>Parameter gradients: <code>[hidden_dim]</code> for LayerNorm, <code>[output_dim, hidden_dim]</code> for Linear</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>LayerNorm backward phase</strong>:</p>
+<ul>
+<li>Recompute forward pass statistics in same order as forward pass:
+<ul>
+<li>Mean: \[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</li>
+<li>Variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</li>
+<li>Inverse standard deviation: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+</ul>
+</li>
+<li>Compute normalized values: \[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>Calculate gradients:
+<ul>
+<li>Input gradient: \[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</li>
+<li>Scale gradient: \[\Large \frac{\partial L}{\partial \gamma} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \]</li>
+<li>Shift gradient: \[\Large \frac{\partial L}{\partial \beta} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \]</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Linear backward phase</strong>:</p>
+<ul>
+<li>For each output dimension:
+<ul>
+<li>Bias gradient: \[\Large \frac{\partial L}{\partial b} = \frac{\partial L}{\partial y} \]</li>
+<li>Weight gradient: \[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \]</li>
+<li>Input gradient: \[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \]</li>
+</ul>
+</li>
+<li>Use atomic operations for gradient accumulation:
+<ul>
+<li><code>atomic_add</code> for bias gradients with proper alignment</li>
+<li><code>atomic_add</code> for weight gradients with proper alignment</li>
+<li><code>atomic_add</code> for LayerNorm parameter gradients with proper alignment</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory access patterns</strong>:</p>
+<ul>
+<li>Coalesced access for input/output tensors</li>
+<li>Strided access for weight matrix</li>
+<li>Atomic operations for gradient accumulation</li>
+<li>Shared memory for intermediate results</li>
+<li>Register usage for frequently accessed values</li>
+<li>Proper memory alignment for all operations</li>
+</ul>
+</li>
+<li>
+<p><strong>Numerical stability</strong>:</p>
+<ul>
+<li>Careful handling of epsilon in denominator</li>
+<li>Proper scaling of gradients</li>
+<li>Stable computation of statistics</li>
+<li>Type casting with <code>rebind[Scalar[dtype]]</code></li>
+<li>Proper handling of edge cases</li>
+<li>Maintain same computation order as forward pass</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance optimizations</strong>:</p>
+<ul>
+<li>Single kernel launch for all operations</li>
+<li>Reuse of computed statistics</li>
+<li>Minimized memory traffic</li>
+<li>No intermediate tensor allocations</li>
+<li>Efficient thread utilization</li>
+<li>Reduced synchronization points</li>
+<li>Optimized memory access patterns</li>
+<li>Proper memory alignment</li>
+</ul>
+</li>
+<li>
+<p><strong>Implementation details</strong>:</p>
+<ul>
+<li>Use of <code>@parameter</code> for compile-time constants</li>
+<li>Proper handling of tensor dimensions</li>
+<li>Efficient type casting and conversions</li>
+<li>Careful management of shared memory</li>
+<li>Proper synchronization between operations</li>
+<li>Error handling and boundary checks</li>
+<li>Integration with PyTorch’s autograd system</li>
+</ul>
+</li>
+</ol>
+<p>This implementation achieves better performance than the unfused version by:</p>
+<ul>
+<li>Reducing memory bandwidth usage through kernel fusion</li>
+<li>Minimizing kernel launch overhead</li>
+<li>Optimizing memory access patterns</li>
+<li>Efficient use of GPU resources</li>
+<li>Maintaining numerical stability</li>
+<li>Proper handling of gradient accumulation</li>
+<li>Ensuring proper memory alignment</li>
+<li>Efficient autograd integration</li>
+</ul>
+<p>The fused backward pass is particularly important in transformer architectures where LayerNorm + Linear operations are frequently used together, making the performance benefits significant for real-world applications.</p>
+</div>
+</details>
+<h2 id="performance-considerations-1"><a class="header" href="#performance-considerations-1">Performance considerations</a></h2>
+<p>The backward pass implementation uses <code>torch.compile</code> with optimizations to minimize overhead:</p>
+<pre><code class="language-python"># Compilation configuration
+torch._dynamo.config.cache_size_limit = 64  # Increase cache
+torch._dynamo.config.suppress_errors = True  # Handle errors gracefully
+torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
+</code></pre>
+<p>These optimizations are particularly important for the backward pass because:</p>
+<ul>
+<li>Small tensor operations benefit from compilation caching</li>
+<li>Dynamic shapes are common in backward passes</li>
+<li>Error handling needs to be robust for gradient computation</li>
+<li>Cache size helps with repeated backward operations</li>
+<li>Proper error handling is crucial for gradient computation</li>
+<li>Compilation overhead can significantly impact training time</li>
+</ul>
+<p>The backward pass is compiled with <code>reduce-overhead</code> mode to minimize the compilation overhead while maintaining correctness. This is especially important because:</p>
+<ul>
+<li>Backward passes are called frequently during training</li>
+<li>Gradient computation needs to be numerically stable</li>
+<li>Memory access patterns need to be optimized</li>
+<li>Atomic operations require proper synchronization</li>
+<li>Autograd integration needs to be efficient</li>
+</ul>
+<h2 id="detailed-derivation-of-layernorm-backward-pass"><a class="header" href="#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a></h2>
+<p>The backward pass gradient for LayerNorm is derived through careful application of the chain rule. Here’s the step-by-step derivation:</p>
+<h3 id="forward-pass-operations"><a class="header" href="#forward-pass-operations">Forward pass operations</a></h3>
+<ul>
+<li>Mean: \(\mu = \frac{1}{H} \sum_{i=1}^{H} x_i\)</li>
+<li>Variance: \(\sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2\)</li>
+<li>Normalized value: \(\hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}}\)</li>
+<li>Final output: \(y = \gamma \odot \hat{x} + \beta\)</li>
+</ul>
+<h3 id="chain-rule-application"><a class="header" href="#chain-rule-application">Chain rule application</a></h3>
+<p>To compute \(\frac{\partial L}{\partial x}\), we apply the chain rule:
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\]</p>
+<h3 id="gradient-components"><a class="header" href="#gradient-components">Gradient components</a></h3>
+<h4 id="output-to-normalized-value"><a class="header" href="#output-to-normalized-value">Output to normalized value</a></h4>
+<ul>
+<li>\(\frac{\partial y}{\partial \hat{x}} = \gamma\) (element-wise multiplication)</li>
+</ul>
+<h4 id="normalized-value-to-input"><a class="header" href="#normalized-value-to-input">Normalized value to input</a></h4>
+<p>The gradient \(\frac{\partial \hat{x}}{\partial x}\) has three components:</p>
+<ul>
+<li>Direct effect through numerator: \(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
+<li>Indirect effect through mean: \(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
+<li>Indirect effect through variance: \(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x - \mu)\)</li>
+</ul>
+<h3 id="combining-terms"><a class="header" href="#combining-terms">Combining terms</a></h3>
+<p>The gradient through the normalization term can be simplified to:
+\[\Large \frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<h3 id="final-gradient-expression"><a class="header" href="#final-gradient-expression">Final gradient expression</a></h3>
+<p>Combining all terms:
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<h3 id="key-insights"><a class="header" href="#key-insights">Key insights</a></h3>
+<ul>
+<li>The chain rule accounts for all paths through which x affects the output</li>
+<li>The normalization term \(\sqrt{\sigma^2 + \epsilon}\) appears in both numerator and denominator</li>
+<li>The mean and variance terms create additional paths for gradient flow</li>
+<li>The final expression combines all effects into a single efficient computation</li>
+</ul>
+<h3 id="implementation-considerations"><a class="header" href="#implementation-considerations">Implementation considerations</a></h3>
+<ul>
+<li>The gradient properly accounts for the scaling effect of \(\gamma\)</li>
+<li>The normalization effect of mean and variance is preserved</li>
+<li>The numerical stability term \(\epsilon\) is maintained</li>
+<li>Gradients are properly scaled across the hidden dimension H</li>
+<li>The computation order matches the forward pass for numerical stability</li>
+</ul>
+<p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#part-v-mojo-functional-patterns---high-level-gpu-programming">Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
+<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
 <p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
 <p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
@@ -8157,7 +9841,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>GPU memory management</strong>: Buffer allocation, host-device synchronization</li>
 </ul>
-<h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
+<h2 id="learning-path-2"><a class="header" href="#learning-path-2">Learning path</a></h2>
 <h3 id="1-elementwise-operations"><a class="header" href="#1-elementwise-operations"><strong>1. Elementwise operations</strong></a></h3>
 <p><strong>→ <a href="puzzle_21/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
 <p>Start with the foundation: automatic thread management and SIMD vectorization.</p>
@@ -8219,7 +9903,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Empirical performance analysis and pattern selection</li>
 </ul>
 <p><strong>Critical technique:</strong> Using <code>keep()</code> to prevent compiler optimization of benchmarked code.</p>
-<h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
+<h2 id="getting-started-2"><a class="header" href="#getting-started-2">Getting started</a></h2>
 <p>Ready to transform your GPU programming skills? Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.</p>
 <p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not just the <strong>how</strong>. The conceptual framework you develop here will serve you throughout your GPU programming career.</p>
 <p><strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
@@ -8227,7 +9911,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <div style="break-before: page; page-break-before: always;"></div><h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
 <p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
-<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
+<h2 id="key-concepts-32"><a class="header" href="#key-concepts-32">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
@@ -8239,7 +9923,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
-<h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
+<h2 id="configuration-20"><a class="header" href="#configuration-20">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Data type: <code>DType.float32</code></li>
@@ -8330,7 +10014,7 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 <p>This shows that each thread handles a different SIMD chunk, automatically spaced by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
 </div>
 </details>
-<h2 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the code</a></h2>
+<h2 id="running-the-code-28"><a class="header" href="#running-the-code-28">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -8359,7 +10043,7 @@ idx: 416
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-28"><a class="header" href="#solution-28">Solution</a></h2>
+<h2 id="solution-31"><a class="header" href="#solution-31">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn elementwise_add[
@@ -8542,12 +10226,12 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
-<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
+<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
 <p>You’ve already seen tiling in action with <strong><a href="puzzle_21/../puzzle_14/tiled.html">Puzzle 14’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
 <p><strong>Key insight:</strong> <em>Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</em></p>
-<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
+<h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Tile-based memory organization</strong> for cache optimization</li>
@@ -8559,7 +10243,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>The same mathematical operation as elementwise:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with a completely different execution strategy optimized for memory hierarchy.</p>
-<h2 id="configuration-19"><a class="header" href="#configuration-19">Configuration</a></h2>
+<h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
@@ -8646,7 +10330,7 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h2>
+<h2 id="running-the-code-29"><a class="header" href="#running-the-code-29">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -8677,7 +10361,7 @@ tile_id: 31
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-29"><a class="header" href="#solution-29">Solution</a></h2>
+<h2 id="solution-32"><a class="header" href="#solution-32">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">alias TILE_SIZE = 32
@@ -8871,7 +10555,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
-<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
+<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
 <ol>
 <li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index calculations</li>
@@ -8879,7 +10563,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ol>
 <p>Both approaches build on tiling concepts but with different trade-offs between control, safety, and performance optimization.</p>
 <p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance requirements and complexity levels.</em></p>
-<h2 id="key-concepts-32"><a class="header" href="#key-concepts-32">Key concepts</a></h2>
+<h2 id="key-concepts-34"><a class="header" href="#key-concepts-34">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Manual SIMD operations</strong> with explicit index management</li>
@@ -8891,7 +10575,7 @@ Tiled:       Moderate parallelism, localized memory access
 <p>The same mathematical operation as before:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with sophisticated vectorization strategies for maximum performance.</p>
-<h2 id="configuration-20"><a class="header" href="#configuration-20">Configuration</a></h2>
+<h2 id="configuration-22"><a class="header" href="#configuration-22">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
@@ -9351,7 +11035,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
-<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
+<h2 id="overview-40"><a class="header" href="#overview-40">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
@@ -9492,7 +11176,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 </ul>
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
-<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
+<h2 id="overview-41"><a class="header" href="#overview-41">Overview</a></h2>
 <p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
@@ -9759,7 +11443,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 </ul>
 <p><strong>Coming up next</strong>: <a href="puzzle_21/../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#part-vi-gpu-warp-programming---synchronized-execution-primitives">Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
-<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
+<h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
 <p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
@@ -9825,7 +11509,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
 </ul>
-<h2 id="learning-path-2"><a class="header" href="#learning-path-2">Learning path</a></h2>
+<h2 id="learning-path-3"><a class="header" href="#learning-path-3">Learning path</a></h2>
 <h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
 <p><strong>→ <a href="puzzle_22/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
 <p>Understand the hardware foundation that makes warp operations possible.</p>
@@ -9879,14 +11563,14 @@ if lane_id() == 0:
 <li><strong>Prefix computation</strong> → <code>prefix_sum()</code></li>
 <li><strong>Data shuffling</strong> → <code>shuffle_idx()</code>, <code>shuffle_down()</code></li>
 </ul>
-<h3 id="performance-characteristics-2"><a class="header" href="#performance-characteristics-2"><strong>Performance characteristics</strong></a></h3>
+<h3 id="performance-characteristics-3"><a class="header" href="#performance-characteristics-3"><strong>Performance characteristics</strong></a></h3>
 <p>Recognizing when warp operations provide advantages:</p>
 <ul>
 <li><strong>Small to medium problems</strong>: Eliminates barrier overhead</li>
 <li><strong>Large problems</strong>: Reduces memory traffic and improves cache utilization</li>
 <li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
 </ul>
-<h2 id="getting-started-2"><a class="header" href="#getting-started-2">Getting started</a></h2>
+<h2 id="getting-started-3"><a class="header" href="#getting-started-3">Getting started</a></h2>
 <p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
 <p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
 <p><strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
@@ -10181,7 +11865,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <li><strong>Neighbor communication</strong>: <code>shuffle_down()</code> for sliding windows</li>
 <li><strong>Prefix computations</strong>: <code>prefix_sum()</code> for scan algorithms</li>
 </ol>
-<h3 id="performance-characteristics-3"><a class="header" href="#performance-characteristics-3">Performance characteristics</a></h3>
+<h3 id="performance-characteristics-4"><a class="header" href="#performance-characteristics-4">Performance characteristics</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
 <tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
 <tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
@@ -10195,7 +11879,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpsum-essentials---warp-level-dot-product"><a class="header" href="#warpsum-essentials---warp-level-dot-product">warp.sum() Essentials - Warp-Level Dot Product</a></h1>
 <p>Implement the dot product we saw in <a href="puzzle_22/../puzzle_10/puzzle_10.html">puzzle 10</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
-<h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
+<h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
@@ -10207,7 +11891,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <p>The mathematical operation is a dot product (inner product):
 \[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.</p>
-<h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
+<h2 id="configuration-23"><a class="header" href="#configuration-23">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU architecture)</li>
 <li>Data type: <code>DType.float32</code></li>
@@ -10366,7 +12050,7 @@ expected: 10416.0
 🚀 Notice how simple the warp version is compared to p10.mojo!
    Same kernel structure, but warp_sum() replaces all the complexity!
 </code></pre>
-<h3 id="solution-30"><a class="header" href="#solution-30">Solution</a></h3>
+<h3 id="solution-33"><a class="header" href="#solution-33">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn simple_warp_dot_product[
@@ -10521,7 +12205,7 @@ expected: 10416.0
 🔧 Functional approach shows modern Mojo style with warp operations!
    Clean, composable, and still leverages warp hardware primitives!
 </code></pre>
-<h3 id="solution-31"><a class="header" href="#solution-31">Solution</a></h3>
+<h3 id="solution-34"><a class="header" href="#solution-34">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn functional_warp_dot_product[
@@ -10720,7 +12404,7 @@ Benchmarks completed!
 <li>Variable work per thread (causes warp divergence)</li>
 <li>Problem <code>size &lt; WARP_SIZE</code></li>
 </ul>
-<h2 id="performance-characteristics-4"><a class="header" href="#performance-characteristics-4">Performance characteristics</a></h2>
+<h2 id="performance-characteristics-5"><a class="header" href="#performance-characteristics-5">Performance characteristics</a></h2>
 <h3 id="problem-size-scaling"><a class="header" href="#problem-size-scaling">Problem size scaling</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Elements</th><th>Warp Advantage</th><th>Notes</th></tr></thead><tbody>
 <tr><td>&lt; 32</td><td>None</td><td>Traditional better</td></tr>
