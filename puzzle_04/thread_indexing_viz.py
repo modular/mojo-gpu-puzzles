@@ -131,7 +131,7 @@ class ThreadIndexingConvention(Scene):
         highlight = matrix_squares[0].copy().set_stroke(color=YELLOW, width=4)
         self.play(FadeIn(highlight), run_time=0.5)
 
-        self.wait(5)
+        self.wait(60)
 
 if __name__ == "__main__":
     with tempconfig({
