@@ -236,7 +236,7 @@ fn conv_1d_block_boundary[
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
-<li>Sum within extended bounds: <code>if local_i + j &lt; TPB + CONV_2 - 1</code></li>
+<li>Sum within input bounds: <code>if global_i + j &lt; SIZE_2</code></li>
 </ol>
 </div>
 </details>
@@ -299,7 +299,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 
         @parameter
         for j in range(CONV_2):
-            if local_i + j &lt; TPB + CONV_2 - 1:
+            if global_i + j &lt; SIZE_2:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
         output[global_i] = local_sum
@@ -371,13 +371,13 @@ if local_i &lt; CONV_2 - 1:
     var local_sum: output.element_type = 0
     @parameter
     for j in range(CONV_2):
-        if local_i + j &lt; TPB + CONV_2 - 1:
+        if global_i + j &lt; SIZE_2:
             local_sum += shared_a[local_i + j] * shared_b[j]
 </code></pre>
 <ul>
 <li>Uses <code>@parameter</code> for compile-time loop unrolling</li>
 <li>Proper type inference with <code>output.element_type</code></li>
-<li>Extended bounds check for overlap region</li>
+<li>Semantically correct bounds check: only compute convolution for valid input positions</li>
 </ul>
 </li>
 </ol>
@@ -431,16 +431,25 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <p><strong>Boundary Handling</strong>:</p>
 <ul>
 <li>Explicit zero initialization for out-of-bounds elements which prevents reading from uninitialized shared memory</li>
-<li>Proper handling of edge cases</li>
+<li>Semantically correct boundary checking using <code>global_i + j &lt; SIZE_2</code> instead of shared memory bounds</li>
+<li>Proper handling of edge cases without over-computation</li>
 </ul>
 </li>
 </ol>
+<h3 id="boundary-condition-improvement"><a class="header" href="#boundary-condition-improvement">Boundary Condition Improvement</a></h3>
+<p>The solution uses <code>if global_i + j &lt; SIZE_2:</code> rather than checking shared memory bounds. This approach is:</p>
+<ul>
+<li><strong>Mathematically correct</strong>: Only computes convolution where input data actually exists</li>
+<li><strong>More efficient</strong>: Avoids unnecessary computations for positions beyond the input array</li>
+<li><strong>Safer</strong>: Prevents reliance on zero-padding behavior in shared memory</li>
+</ul>
 <p>This implementation achieves efficient cross-block convolution while maintaining:</p>
 <ul>
 <li>Memory safety through proper bounds checking</li>
 <li>High performance through optimized memory access</li>
 <li>Clean code structure using LayoutTensor abstractions</li>
 <li>Minimal synchronization overhead</li>
+<li>Mathematically sound boundary handling</li>
 </ul>
 </div>
 </details>
