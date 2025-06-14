@@ -348,7 +348,7 @@ The `ctx.synchronize()` call serves its traditional purpose:
 ### Key implementation details
 
 **Local phase synchronization pattern**: Each iteration within a block follows a strict read → sync → write pattern:
-1. `var current_val = shared[0]` - Initialize local variable
+1. `var current_val: out.element_type = 0` - Initialize local variable
 2. `current_val = shared[local_i - offset]` - Read phase (if conditions met)
 3. `barrier()` - Explicit synchronization to prevent race conditions
 4. `shared[local_i] += current_val` - Write phase (if conditions met)

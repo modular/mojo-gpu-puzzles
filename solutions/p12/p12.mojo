@@ -32,7 +32,7 @@ fn prefix_sum_simple[
 
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        current_val = shared[0]
+        var current_val: output.element_type = 0
         if local_i >= offset and local_i < size:
             current_val = shared[local_i - offset]  # read
 
@@ -65,8 +65,7 @@ fn prefix_sum_local_phase[
 ](
     output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
-    num_blocks: Int,
+    size: Int
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -91,10 +90,10 @@ fn prefix_sum_local_phase[
     #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
-    # Block 1 follows same pattern to get [8,17,27,38,50,63,77,...]
+    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
     offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val = shared[0]
+        var current_val: output.element_type = 0
         if local_i >= offset and local_i < TPB:
             current_val = shared[local_i - offset]  # read
 
@@ -107,14 +106,14 @@ fn prefix_sum_local_phase[
 
     # Write local results to output
     # Block 0 writes: [0,1,3,6,10,15,21,28]
-    # Block 1 writes: [8,17,27,38,50,63,77,...]
+    # Block 1 writes: [8,17,27,38,50,63,77,???]
     if global_i < size:
         output[global_i] = shared[local_i]
 
     # Store block sums in auxiliary space
-    # Block 0: Thread 7 stores 28 at position size+0 (position 15)
-    # Block 1: Thread 7 stores 77 at position size+1 (position 16)
-    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,77]
+    # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
+    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
     #                                                           ↑  ↑
     #                                                     Block sums here
     if local_i == TPB - 1:
