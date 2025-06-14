@@ -13,6 +13,7 @@ For matrices \\(A_{m\\times k}\\) and \\(B_{k\\times n}\\), each element of the 
 This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:
 
 - [Naive Version](./naive.md)
+- [Naive Version](./naïve.md)
   The straightforward implementation where each thread computes one element of the output matrix. While simple to understand, this approach makes many redundant memory accesses.
 
 - [Shared Memory Version](./shared_memory.md)
