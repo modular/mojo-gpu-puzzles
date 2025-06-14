@@ -53,7 +53,7 @@ def main():
 
             for i in range(SIZE):
                 for j in range(SIZE):
-                    expected_tensor[i, j] = a_host[i] + b_host[j]
+                    expected_tensor[i, j] = a_host[j] + b_host[i]
 
         a_tensor = LayoutTensor[dtype, a_layout](a.unsafe_ptr())
         b_tensor = LayoutTensor[dtype, b_layout](b.unsafe_ptr())
