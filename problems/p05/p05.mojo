@@ -37,7 +37,7 @@ def main():
 
             for i in range(SIZE):
                 for j in range(SIZE):
-                    expected[i * SIZE + j] = a_host[i] + b_host[j]
+                    expected[i * SIZE + j] = a_host[j] + b_host[i]
 
         ctx.enqueue_function[broadcast_add](
             out.unsafe_ptr(),
