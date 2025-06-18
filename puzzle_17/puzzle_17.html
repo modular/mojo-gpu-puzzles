@@ -660,6 +660,7 @@ weights = scores_2d.reshape[layout_scores]()
 <ul>
 <li>Step 3: \(Q \times K^T\) → attention scores computation \((1,d) \times (d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
 <li>Step 7: \(\text{weights} \times V\) → final weighted output \((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
+<li>Both operations include bounds checking for robustness with variable matrix dimensions</li>
 </ul>
 </li>
 <li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>

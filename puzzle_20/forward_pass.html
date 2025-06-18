@@ -353,7 +353,7 @@
 <h3 id="1-unfused-implementation"><a class="header" href="#1-unfused-implementation">1. Unfused implementation</a></h3>
 <p>The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:</p>
 <h4 id="matrix-multiplication-kernel"><a class="header" href="#matrix-multiplication-kernel">Matrix multiplication kernel</a></h4>
-<p>From <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>, we reuse the tiled matrix multiplication kernel for the linear transformation:</p>
+<p>From <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>, we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:</p>
 <pre><code class="language-mojo"># Idiomatic tiled matmul from p14.mojo - adapted for [batch*seq, hidden] @ [hidden, output] -&gt; [batch*seq, output]
 fn matmul_idiomatic_tiled[
     a_layout: Layout,
@@ -370,6 +370,8 @@ fn matmul_idiomatic_tiled[
     """Idiomatic tiled matmul following p14.mojo exactly."""
     local_row = thread_idx.x
     local_col = thread_idx.y
+    tiled_row = block_idx.y * TPB + local_row
+    tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.x, block_idx.y)
@@ -402,10 +404,7 @@ fn matmul_idiomatic_tiled[
         barrier()
 
     # Write final result with bounds checking (needed for variable matrix sizes)
-    if (
-        block_idx.x * TPB + local_row &lt; rows
-        and block_idx.y * TPB + local_col &lt; cols
-    ):
+    if tiled_row &lt; rows and tiled_col &lt; cols:
         out_tile[local_row, local_col] = acc
 
 

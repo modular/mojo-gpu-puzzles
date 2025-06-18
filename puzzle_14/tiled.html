@@ -366,7 +366,7 @@ Thread(1,2) in Block(1,0):
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 4176.0, 4248.0, 9504.0, 9738.0, 9972.0, 10206.0, 10440.0, 10674.0, 10908.0, 11142.0, 11376.0, 15336.0, 15732.0, 16128.0, 16524.0, 16920.0, 17316.0, 17712.0, 18108.0, 18504.0, 21168.0, 21726.0, 22284.0, 22842.0, 23400.0, 23958.0, 24516.0, 25074.0, 25632.0, 27000.0, 27720.0, 28440.0, 29160.0, 29880.0, 30600.0, 31320.0, 32040.0, 32760.0, 32832.0, 33714.0, 34596.0, 35478.0, 36360.0, 37242.0, 38124.0, 39006.0, 39888.0, 38664.0, 39708.0, 40752.0, 41796.0, 42840.0, 43884.0, 44928.0, 45972.0, 47016.0, 44496.0, 45702.0, 46908.0, 48114.0, 49320.0, 50526.0, 51732.0, 52938.0, 54144.0, 50328.0, 51696.0, 53064.0, 54432.0, 55800.0, 57168.0, 58536.0, 59904.0, 61272.0])
 </code></pre>
 <h2 id="solution-manual-tiling"><a class="header" href="#solution-manual-tiling">Solution: Manual tiling</a></h2>
@@ -584,6 +584,8 @@ fn matmul_idiomatic_tiled[
 ):
     local_row = thread_idx.y
     local_col = thread_idx.x
+    tiled_row = block_idx.y * TPB + local_row
+    tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
@@ -617,7 +619,8 @@ fn matmul_idiomatic_tiled[
         barrier()
 
     # Write final result to output tile
-    out_tile[local_row, local_col] = acc
+    if tiled_row &lt; size and tiled_col &lt; size:
+        out_tile[local_row, local_col] = acc
 
 
 </code></pre>
@@ -664,11 +667,12 @@ for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
 <p>With 9×9 matrices and 3×3 tiles, every tile is exactly full-sized. No boundary checking needed!</p>
 </li>
 <li>
-<p><strong>Clean tile processing</strong></p>
-<pre><code class="language-mojo"># No bounds checks needed - every tile is perfect!
-out_tile[local_row, local_col] = acc
+<p><strong>Clean tile processing with defensive bounds checking</strong></p>
+<pre><code class="language-mojo"># Defensive bounds checking included even with perfect tiling
+if tiled_row &lt; size and tiled_col &lt; size:
+    out_tile[local_row, local_col] = acc
 </code></pre>
-<p>Direct assignment without any conditional checks.</p>
+<p>With perfect 9×9 tiling, this bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.</p>
 </li>
 </ol>
 <h3 id="performance-considerations"><a class="header" href="#performance-considerations">Performance considerations</a></h3>
@@ -687,7 +691,7 @@ out_tile[local_row, local_col] = acc
 <tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Asynchronous bulk transfers</td></tr>
 <tr><td>Shared memory</td><td>Manual initialization (zeroing)</td><td>Managed by copy functions</td></tr>
 <tr><td>Code complexity</td><td>More verbose with explicit indexing</td><td>More concise with higher-level APIs</td></tr>
-<tr><td>Bounds checking</td><td>Multiple checks during loading and computing</td><td>Single check at final write</td></tr>
+<tr><td>Bounds checking</td><td>Multiple checks during loading and computing</td><td>Single defensive check at final write</td></tr>
 </tbody></table>
 </div>
 <p>The idiomatic approach is not just cleaner but also potentially more performant due to the use of specialized memory layouts and asynchronous operations.</p>
