@@ -13937,6 +13937,1479 @@ result = use_shared_value(shared_value, local_data)
 <li><strong>Composable patterns</strong>: Easily combines with shuffle and other warp operations</li>
 </ul>
 <p><strong>Applications</strong>: Block statistics, collective decisions, parameter sharing, adaptive algorithms.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---advanced-communication-primitives"><a class="header" href="#part-vi-gpu-warp-programming---advanced-communication-primitives">Part VI: GPU Warp Programming - Advanced Communication Primitives</a></h1>
+<h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
+<p>Welcome to <strong>Puzzle 24: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + multi-phase reduction patterns to elegant single-function-call algorithms that leverage hardware-optimized butterfly networks and parallel scan units.</p>
+<p><strong>Key insight:</strong> <em>GPU warps can perform sophisticated tree-based communication and parallel scan operations in hardware - Mojo’s advanced warp primitives harness butterfly networks and dedicated scan units to provide \(O(\log n)\) algorithms with single-instruction simplicity.</em></p>
+<h2 id="what-youll-learn-3"><a class="header" href="#what-youll-learn-3">What you’ll learn</a></h2>
+<h3 id="advanced-warp-communication-model"><a class="header" href="#advanced-warp-communication-model"><strong>Advanced warp communication model</strong></a></h3>
+<p>Understand sophisticated communication patterns within GPU warps:</p>
+<pre><code>GPU Warp Butterfly Network (32 threads, XOR-based communication)
+Offset 16: Lane 0 ↔ Lane 16, Lane 1 ↔ Lane 17, ..., Lane 15 ↔ Lane 31
+Offset 8:  Lane 0 ↔ Lane 8,  Lane 1 ↔ Lane 9,  ..., Lane 23 ↔ Lane 31
+Offset 4:  Lane 0 ↔ Lane 4,  Lane 1 ↔ Lane 5,  ..., Lane 27 ↔ Lane 31
+Offset 2:  Lane 0 ↔ Lane 2,  Lane 1 ↔ Lane 3,  ..., Lane 29 ↔ Lane 31
+Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
+
+Hardware Prefix Sum (parallel scan acceleration)
+Input:  [1, 2, 3, 4, 5, 6, 7, 8, ...]
+Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
+</code></pre>
+<p><strong>Hardware reality:</strong></p>
+<ul>
+<li><strong>Butterfly networks</strong>: XOR-based communication creates optimal tree topologies</li>
+<li><strong>Dedicated scan units</strong>: Hardware-accelerated parallel prefix operations</li>
+<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms replace \(O(n)\) sequential patterns</li>
+<li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
+</ul>
+<h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
+<p>Master the sophisticated communication primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: XOR-based butterfly communication for tree algorithms</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: Hardware-accelerated parallel scan operations</li>
+<li><strong>Advanced coordination patterns</strong>: Combining multiple primitives for complex algorithms</li>
+</ol>
+<blockquote>
+<p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like parallel reductions, stream compaction, quicksort partitioning, and FFT operations that would otherwise require dozens of lines of shared memory coordination code.</p>
+</blockquote>
+<h3 id="performance-transformation-example-2"><a class="header" href="#performance-transformation-example-2"><strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 12):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = input[global_i]
+barrier()
+offset = 1
+for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
+    var current_val: output.element_type = 0
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        current_val = shared[local_i - offset]
+    barrier()
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        shared[local_i] += current_val
+    barrier()
+    offset *= 2
+
+# Advanced warp primitives eliminate all this complexity:
+current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
+output[global_i] = scan_result
+</code></pre>
+<h3 id="when-advanced-warp-operations-excel"><a class="header" href="#when-advanced-warp-operations-excel"><strong>When advanced warp operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<div class="table-wrapper"><table><thead><tr><th>Algorithm Pattern</th><th>Traditional</th><th>Advanced Warp Operations</th></tr></thead><tbody>
+<tr><td>Parallel reductions</td><td>Shared memory + barriers</td><td>Single <code>shuffle_xor</code> tree</td></tr>
+<tr><td>Prefix/scan operations</td><td>Multi-phase algorithms</td><td>Hardware <code>prefix_sum</code></td></tr>
+<tr><td>Stream compaction</td><td>Complex indexing</td><td><code>prefix_sum</code> + coordination</td></tr>
+<tr><td>Quicksort partition</td><td>Manual position calculation</td><td>Combined primitives</td></tr>
+<tr><td>Tree algorithms</td><td>Recursive shared memory</td><td>Butterfly communication</td></tr>
+</tbody></table>
+</div>
+<h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
+<p>Before diving into advanced warp communication, ensure you’re comfortable with:</p>
+<ul>
+<li><strong>Part VI warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="puzzle_24/../puzzle_22/puzzle_22.html">Puzzle 22</a> and <a href="puzzle_24/../puzzle_23/puzzle_23.html">Puzzle 23</a>)</li>
+<li><strong>Parallel algorithm theory</strong>: Tree reductions, parallel scan, and butterfly networks</li>
+<li><strong>GPU memory hierarchy</strong>: Shared memory patterns and synchronization (see <a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a>)</li>
+<li><strong>Mathematical operations</strong>: Understanding XOR operations and logarithmic complexity</li>
+</ul>
+<h2 id="learning-path-5"><a class="header" href="#learning-path-5">Learning path</a></h2>
+<h3 id="1-butterfly-communication-with-shuffle_xor"><a class="header" href="#1-butterfly-communication-with-shuffle_xor"><strong>1. Butterfly communication with shuffle_xor</strong></a></h3>
+<p><strong>→ <a href="puzzle_24/./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
+<p>Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Using <code>shuffle_xor()</code> for creating butterfly network topologies</li>
+<li>Implementing \(O(\log n)\) parallel reductions with tree communication</li>
+<li>Understanding XOR-based lane pairing and communication patterns</li>
+<li>Advanced conditional butterfly operations for multi-value reductions</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">max_val = input[global_i]
+offset = WARP_SIZE // 2
+while offset &gt; 0:
+    max_val = max(max_val, shuffle_xor(max_val, offset))
+    offset //= 2
+# All lanes now have global maximum
+</code></pre>
+<h3 id="2-hardware-accelerated-parallel-scan-with-prefix_sum"><a class="header" href="#2-hardware-accelerated-parallel-scan-with-prefix_sum"><strong>2. Hardware-accelerated parallel scan with prefix_sum</strong></a></h3>
+<p><strong>→ <a href="puzzle_24/./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
+<p>Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Using <code>prefix_sum()</code> for hardware-accelerated cumulative operations</li>
+<li>Implementing stream compaction and parallel partitioning</li>
+<li>Combining <code>prefix_sum</code> with <code>shuffle_xor</code> for advanced coordination</li>
+<li>Understanding inclusive vs exclusive scan patterns</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)
+output[global_i] = scan_result  # Hardware-optimized cumulative sum
+</code></pre>
+<h2 id="key-concepts-39"><a class="header" href="#key-concepts-39">Key concepts</a></h2>
+<h3 id="butterfly-network-communication"><a class="header" href="#butterfly-network-communication"><strong>Butterfly network communication</strong></a></h3>
+<p>Understanding XOR-based communication topologies:</p>
+<ul>
+<li><strong>XOR pairing</strong>: <code>lane_id ⊕ mask</code> creates symmetric communication pairs</li>
+<li><strong>Tree reduction</strong>: Logarithmic complexity through hierarchical data exchange</li>
+<li><strong>Parallel coordination</strong>: All lanes participate simultaneously in reduction</li>
+<li><strong>Dynamic algorithms</strong>: Works for any power-of-2 <code>WARP_SIZE</code> (32, 64, etc.)</li>
+</ul>
+<h3 id="hardware-accelerated-parallel-scan"><a class="header" href="#hardware-accelerated-parallel-scan"><strong>Hardware-accelerated parallel scan</strong></a></h3>
+<p>Recognizing dedicated scan unit capabilities:</p>
+<ul>
+<li><strong>Prefix sum operations</strong>: Cumulative operations with hardware acceleration</li>
+<li><strong>Stream compaction</strong>: Parallel filtering and data reorganization</li>
+<li><strong>Single-function simplicity</strong>: Complex algorithms become single calls</li>
+<li><strong>Zero synchronization</strong>: Hardware handles all coordination internally</li>
+</ul>
+<h3 id="algorithm-complexity-transformation"><a class="header" href="#algorithm-complexity-transformation"><strong>Algorithm complexity transformation</strong></a></h3>
+<p>Converting traditional patterns to advanced warp operations:</p>
+<ul>
+<li><strong>Sequential reductions</strong> (\(O(n)\)) → <strong>Butterfly reductions</strong> (\(O(\log n)\))</li>
+<li><strong>Multi-phase scan algorithms</strong> → <strong>Single hardware prefix_sum</strong></li>
+<li><strong>Complex shared memory patterns</strong> → <strong>Register-only operations</strong></li>
+<li><strong>Explicit synchronization</strong> → <strong>Hardware-managed coordination</strong></li>
+</ul>
+<h3 id="advanced-coordination-patterns"><a class="header" href="#advanced-coordination-patterns"><strong>Advanced coordination patterns</strong></a></h3>
+<p>Combining multiple primitives for sophisticated algorithms:</p>
+<ul>
+<li><strong>Dual reductions</strong>: Simultaneous min/max tracking with butterfly patterns</li>
+<li><strong>Parallel partitioning</strong>: <code>shuffle_xor</code> + <code>prefix_sum</code> for quicksort-style operations</li>
+<li><strong>Conditional operations</strong>: Lane-based output selection with global coordination</li>
+<li><strong>Multi-primitive algorithms</strong>: Complex parallel patterns with optimal performance</li>
+</ul>
+<h2 id="getting-started-5"><a class="header" href="#getting-started-5">Getting started</a></h2>
+<p>Ready to harness advanced GPU warp-level communication? Start with butterfly network operations to understand tree-based communication, then progress to hardware-accelerated parallel scan for optimal algorithm performance.</p>
+<p>💡 <strong>Success tip</strong>: Think of advanced warp operations as <strong>hardware-accelerated parallel algorithm building blocks</strong>. These primitives replace entire categories of complex shared memory algorithms with single, optimized function calls.</p>
+<p><strong>Learning objective</strong>: By the end of Puzzle 24, you’ll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_24/./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="puzzle_24/./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="warpshuffle_xor-butterfly-communication"><a class="header" href="#warpshuffle_xor-butterfly-communication"><code>warp.shuffle_xor()</code> Butterfly Communication</a></h1>
+<p>For warp-level butterfly communication we can use <code>shuffle_xor()</code> to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor()</a> operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \(O(\log n)\) complexity relative to warp size.</em></p>
+<blockquote>
+<p><strong>What are butterfly networks?</strong> <a href="https://en.wikipedia.org/wiki/Butterfly_network">Butterfly networks</a> are communication topologies where threads exchange data based on XOR patterns of their indices. The name comes from the visual pattern when drawn - connections that look like butterfly wings. These networks are fundamental to parallel algorithms like FFT, bitonic sort, and parallel reductions because they enable \(O(\log n)\) communication complexity.</p>
+</blockquote>
+<h2 id="key-concepts-40"><a class="header" href="#key-concepts-40">Key concepts</a></h2>
+<p>In this puzzle, you’ll master:</p>
+<ul>
+<li><strong>XOR-based communication patterns</strong> with <code>shuffle_xor()</code></li>
+<li><strong>Butterfly network topologies</strong> for parallel algorithms</li>
+<li><strong>Tree-based parallel reductions</strong> with \(O(\log n)\) complexity</li>
+<li><strong>Conditional butterfly operations</strong> for advanced coordination</li>
+<li><strong>Hardware-optimized parallel primitives</strong> replacing complex shared memory</li>
+</ul>
+<p>The <code>shuffle_xor</code> operation enables each lane to exchange data with lanes based on <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a> patterns:
+\[\Large \text{shuffle_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
+<p>This transforms complex parallel algorithms into elegant butterfly communication patterns, enabling efficient tree reductions and sorting networks without explicit coordination.</p>
+<h2 id="1-basic-butterfly-pair-swap"><a class="header" href="#1-basic-butterfly-pair-swap">1. Basic butterfly pair swap</a></h2>
+<h3 id="configuration-29"><a class="header" href="#configuration-29">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="the-shuffle_xor-concept"><a class="header" href="#the-shuffle_xor-concept">The <code>shuffle_xor</code> concept</a></h3>
+<p>Traditional pair swapping requires complex indexing and coordination:</p>
+<pre><code class="language-mojo"># Traditional approach - complex and requires synchronization
+shared_memory[lane] = input[global_i]
+barrier()
+if lane % 2 == 0:
+    partner = lane + 1
+else:
+    partner = lane - 1
+if partner &lt; WARP_SIZE:
+    swapped_val = shared_memory[partner]
+</code></pre>
+<p><strong>Problems with traditional approach:</strong></p>
+<ul>
+<li><strong>Memory overhead</strong>: Requires shared memory allocation</li>
+<li><strong>Synchronization</strong>: Needs explicit barriers</li>
+<li><strong>Complex logic</strong>: Manual partner calculation and bounds checking</li>
+<li><strong>Poor scaling</strong>: Doesn’t leverage hardware communication</li>
+</ul>
+<p>With <code>shuffle_xor()</code>, pair swapping becomes elegant:</p>
+<pre><code class="language-mojo"># Butterfly XOR approach - simple and hardware-optimized
+current_val = input[global_i]
+swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
+output[global_i] = swapped_val
+</code></pre>
+<p><strong>Benefits of shuffle_xor:</strong></p>
+<ul>
+<li><strong>Zero memory overhead</strong>: Direct register-to-register communication</li>
+<li><strong>No synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>Hardware optimized</strong>: Single instruction for all lanes</li>
+<li><strong>Butterfly foundation</strong>: Building block for complex parallel algorithms</li>
+</ul>
+<h3 id="code-to-complete-40"><a class="header" href="#code-to-complete-40">Code to complete</a></h3>
+<p>Implement pair swapping using <code>shuffle_xor()</code> to exchange values between adjacent pairs.</p>
+<p><strong>Mathematical operation:</strong> Create adjacent pairs that exchange values using XOR pattern:
+\[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
+<p>This transforms input data <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code> into pairs <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>, where each pair <code>(i, i+1)</code> swaps values through XOR communication.</p>
+<pre><code class="language-mojo">alias SIZE = WARP_SIZE
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+
+
+fn butterfly_pair_swap[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
+    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
+    Uses shuffle_xor(val, 1) to swap values within each pair.
+    This is the foundation of butterfly network communication patterns.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # FILL ME IN (4 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-shuffle_xor"><a class="header" href="#1-understanding-shuffle_xor">1. <strong>Understanding shuffle_xor</strong></a></h3>
+<p>The <code>shuffle_xor(value, mask)</code> operation allows each lane to exchange data with a lane whose ID differs by the XOR mask. Think about what happens when you XOR a lane ID with different mask values.</p>
+<p><strong>Key question to explore:</strong></p>
+<ul>
+<li>What partner does lane 0 get when you XOR with mask 1?</li>
+<li>What partner does lane 1 get when you XOR with mask 1?</li>
+<li>Do you see a pattern forming?</li>
+</ul>
+<p><strong>Hint</strong>: Try working out the XOR operation manually for the first few lane IDs to understand the pairing pattern.</p>
+<h3 id="2-xor-pair-pattern"><a class="header" href="#2-xor-pair-pattern">2. <strong>XOR pair pattern</strong></a></h3>
+<p>Think about the binary representation of lane IDs and what happens when you flip the least significant bit.</p>
+<p><strong>Questions to consider:</strong></p>
+<ul>
+<li>What happens to even-numbered lanes when you XOR with 1?</li>
+<li>What happens to odd-numbered lanes when you XOR with 1?</li>
+<li>Why does this create perfect pairs?</li>
+</ul>
+<h3 id="3-no-boundary-checking-needed"><a class="header" href="#3-no-boundary-checking-needed">3. <strong>No boundary checking needed</strong></a></h3>
+<p>Unlike <code>shuffle_down()</code>, <code>shuffle_xor()</code> operations stay within warp boundaries. Consider why XOR with small masks never creates out-of-bounds lane IDs.</p>
+<p><strong>Think about</strong>: What’s the maximum lane ID you can get when XORing any valid lane ID with 1?</p>
+</div>
+</details>
+<p><strong>Test the butterfly pair swap:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --pair-swap
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
+expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
+✅ Butterfly pair swap test passed!
+</code></pre>
+<h3 id="solution-40"><a class="header" href="#solution-40">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_pair_swap[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
+    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
+    Uses shuffle_xor(val, 1) to swap values within each pair.
+    This is the foundation of butterfly network communication patterns.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # Exchange with XOR-1 neighbor using butterfly pattern
+        # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
+        swapped_val = shuffle_xor(current_val, 1)
+
+        # For demonstration, we'll store the swapped value
+        # In real applications, this might be used for sorting, reduction, etc.
+        output[global_i] = swapped_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates how <code>shuffle_xor()</code> creates perfect pair exchanges through XOR communication patterns.</p>
+<p><strong>Algorithm breakdown:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]              # Each lane reads its element
+    swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
+
+    # For demonstration, store the swapped value
+    output[global_i] = swapped_val
+</code></pre>
+<p><strong>SIMT execution deep dive:</strong></p>
+<pre><code>Cycle 1: All lanes load their values simultaneously
+  Lane 0: current_val = input[0] = 0
+  Lane 1: current_val = input[1] = 1
+  Lane 2: current_val = input[2] = 2
+  Lane 3: current_val = input[3] = 3
+  ...
+  Lane 31: current_val = input[31] = 31
+
+Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
+  Lane 0: receives from Lane 1 (0⊕1=1) → swapped_val = 1
+  Lane 1: receives from Lane 0 (1⊕1=0) → swapped_val = 0
+  Lane 2: receives from Lane 3 (2⊕1=3) → swapped_val = 3
+  Lane 3: receives from Lane 2 (3⊕1=2) → swapped_val = 2
+  ...
+  Lane 30: receives from Lane 31 (30⊕1=31) → swapped_val = 31
+  Lane 31: receives from Lane 30 (31⊕1=30) → swapped_val = 30
+
+Cycle 3: Store results
+  Lane 0: output[0] = 1
+  Lane 1: output[1] = 0
+  Lane 2: output[2] = 3
+  Lane 3: output[3] = 2
+  ...
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements perfect pair exchange using XOR properties:
+\[\Large \text{XOR}(i, 1) = \begin{cases}
+i + 1 &amp; \text{if } i \bmod 2 = 0 \\
+i - 1 &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>Why shuffle_xor is superior:</strong></p>
+<ol>
+<li><strong>Perfect symmetry</strong>: Every lane participates in exactly one pair</li>
+<li><strong>No coordination</strong>: All pairs exchange simultaneously</li>
+<li><strong>Hardware optimized</strong>: Single instruction for entire warp</li>
+<li><strong>Butterfly foundation</strong>: Building block for complex parallel algorithms</li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Latency</strong>: 1 cycle (hardware register exchange)</li>
+<li><strong>Bandwidth</strong>: 0 bytes (no memory traffic)</li>
+<li><strong>Parallelism</strong>: All WARP_SIZE lanes exchange simultaneously</li>
+<li><strong>Scalability</strong>: \(O(1)\) complexity regardless of data size</li>
+</ul>
+</div>
+</details>
+<h2 id="2-butterfly-parallel-maximum"><a class="header" href="#2-butterfly-parallel-maximum">2. Butterfly parallel maximum</a></h2>
+<h3 id="configuration-30"><a class="header" href="#configuration-30">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+</ul>
+<h3 id="code-to-complete-41"><a class="header" href="#code-to-complete-41">Code to complete</a></h3>
+<p>Implement parallel maximum reduction using butterfly <code>shuffle_xor</code> with decreasing offsets.</p>
+<p><strong>Mathematical operation:</strong> Compute the maximum across all warp lanes using tree reduction:
+\[\Large \text{max_result} = \max_{i=0}^{\small\text{WARP_SIZE}-1} \text{input}[i]\]</p>
+<p><strong>Butterfly reduction pattern:</strong> Use XOR offsets starting from <code>WARP_SIZE/2</code> down to <code>1</code> to create a binary tree where each step halves the active communication range:</p>
+<ul>
+<li><strong>Step 1</strong>: Compare with lanes <code>WARP_SIZE/2</code> positions away (covers full warp)</li>
+<li><strong>Step 2</strong>: Compare with lanes <code>WARP_SIZE/4</code> positions away (covers remaining range)</li>
+<li><strong>Step 3</strong>: Compare with lanes <code>WARP_SIZE/8</code> positions away</li>
+<li><strong>Step 4</strong>: Continue halving until <code>offset = 1</code></li>
+</ul>
+<p>After \(\log_2(\text{WARP_SIZE})\) steps, all lanes have the global maximum. This works for any <code>WARP_SIZE</code> (32, 64, etc.).</p>
+<pre><code class="language-mojo">fn butterfly_parallel_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Parallel maximum reduction using butterfly pattern.
+    Uses shuffle_xor with decreasing offsets starting from WARP_SIZE/2 down to 1.
+    Each step reduces the active range by half until all threads have the maximum value.
+    This implements an efficient O(log n) parallel reduction algorithm that works
+    for any WARP_SIZE (32, 64, etc.).
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # FILL ME IN (roughly 7 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-butterfly-reduction"><a class="header" href="#1-understanding-butterfly-reduction">1. <strong>Understanding butterfly reduction</strong></a></h3>
+<p>The butterfly reduction creates a binary tree communication pattern. Think about how you can systematically reduce the problem size at each step.</p>
+<p><strong>Key questions:</strong></p>
+<ul>
+<li>What should be your starting offset to cover the maximum range?</li>
+<li>How should the offset change between steps?</li>
+<li>When should you stop the reduction?</li>
+</ul>
+<p><strong>Hint</strong>: The name “butterfly” comes from the communication pattern - try sketching it out for a small example.</p>
+<h3 id="2-xor-reduction-properties"><a class="header" href="#2-xor-reduction-properties">2. <strong>XOR reduction properties</strong></a></h3>
+<p>XOR creates non-overlapping communication pairs at each step. Consider why this is important for parallel reductions.</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>How does XOR with different offsets create different communication patterns?</li>
+<li>Why don’t lanes interfere with each other at the same step?</li>
+<li>What makes XOR particularly well-suited for tree reductions?</li>
+</ul>
+<h3 id="3-accumulating-maximum-values"><a class="header" href="#3-accumulating-maximum-values">3. <strong>Accumulating maximum values</strong></a></h3>
+<p>Each lane needs to progressively build up knowledge of the maximum value in its “region”.</p>
+<p><strong>Algorithm structure:</strong></p>
+<ul>
+<li>Start with your own value</li>
+<li>At each step, compare with a neighbor’s value</li>
+<li>Keep the maximum and continue</li>
+</ul>
+<p><strong>Key insight</strong>: After each step, your “region of knowledge” doubles in size.</p>
+<ul>
+<li>After final step: Each lane knows global maximum</li>
+</ul>
+<h3 id="4-why-this-pattern-works"><a class="header" href="#4-why-this-pattern-works">4. <strong>Why this pattern works</strong></a></h3>
+<p>The butterfly reduction guarantees that after \(\log_2(\text{WARP\_SIZE})\) steps:</p>
+<ul>
+<li><strong>Every lane</strong> has seen <strong>every other lane’s</strong> value indirectly</li>
+<li><strong>No redundant communication</strong>: Each pair exchanges exactly once per step</li>
+<li><strong>Optimal complexity</strong>: \(O(\log n)\) steps instead of \(O(n)\) sequential comparison</li>
+</ul>
+<p><strong>Trace example</strong> (4 lanes, values [3, 1, 7, 2]):</p>
+<pre><code>Initial: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
+
+Step 1 (offset=2): 0 ↔ 2, 1 ↔ 3
+  Lane 0: max(3, 7) = 7
+  Lane 1: max(1, 2) = 2
+  Lane 2: max(7, 3) = 7
+  Lane 3: max(2, 1) = 2
+
+Step 2 (offset=1): 0 ↔ 1, 2 ↔ 3
+  Lane 0: max(7, 2) = 7
+  Lane 1: max(2, 7) = 7
+  Lane 2: max(7, 2) = 7
+  Lane 3: max(2, 7) = 7
+
+Result: All lanes have global maximum = 7
+</code></pre>
+</div>
+</details>
+<p><strong>Test the butterfly parallel maximum:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --parallel-max
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
+expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
+✅ Butterfly parallel max test passed!
+</code></pre>
+<h3 id="solution-41"><a class="header" href="#solution-41">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_parallel_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Parallel maximum reduction using butterfly pattern.
+    Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
+    Each step reduces the active range by half until all threads have the maximum value.
+    This implements an efficient O(log n) parallel reduction algorithm.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        max_val = input[global_i]
+
+        # Butterfly reduction tree: dynamic for any WARP_SIZE (32, 64, etc.)
+        # Start with half the warp size and reduce by half each step
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            max_val = max(max_val, shuffle_xor(max_val, offset))
+            offset //= 2
+
+        # All threads now have the maximum value across the entire warp
+        output[global_i] = max_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates how <code>shuffle_xor()</code> creates efficient parallel reduction trees with \(O(\log n)\) complexity.</p>
+<p><strong>Complete algorithm analysis:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    max_val = input[global_i]  # Start with local value
+
+    # Butterfly reduction tree: dynamic for any WARP_SIZE
+    offset = WARP_SIZE // 2
+    while offset &gt; 0:
+        max_val = max(max_val, shuffle_xor(max_val, offset))
+        offset //= 2
+
+    output[global_i] = max_val  # All lanes have global maximum
+</code></pre>
+<p><strong>Butterfly execution trace (8-lane example, values [0,2,4,6,8,10,12,1000]):</strong></p>
+<pre><code>Initial state:
+  Lane 0: max_val = 0,    Lane 1: max_val = 2
+  Lane 2: max_val = 4,    Lane 3: max_val = 6
+  Lane 4: max_val = 8,    Lane 5: max_val = 10
+  Lane 6: max_val = 12,   Lane 7: max_val = 1000
+
+Step 1: shuffle_xor(max_val, 4) - Halves exchange
+  Lane 0↔4: max(0,8)=8,     Lane 1↔5: max(2,10)=10
+  Lane 2↔6: max(4,12)=12,   Lane 3↔7: max(6,1000)=1000
+  Lane 4↔0: max(8,0)=8,     Lane 5↔1: max(10,2)=10
+  Lane 6↔2: max(12,4)=12,   Lane 7↔3: max(1000,6)=1000
+
+Step 2: shuffle_xor(max_val, 2) - Quarters exchange
+  Lane 0↔2: max(8,12)=12,   Lane 1↔3: max(10,1000)=1000
+  Lane 2↔0: max(12,8)=12,   Lane 3↔1: max(1000,10)=1000
+  Lane 4↔6: max(8,12)=12,   Lane 5↔7: max(10,1000)=1000
+  Lane 6↔4: max(12,8)=12,   Lane 7↔5: max(1000,10)=1000
+
+Step 3: shuffle_xor(max_val, 1) - Pairs exchange
+  Lane 0↔1: max(12,1000)=1000,  Lane 1↔0: max(1000,12)=1000
+  Lane 2↔3: max(12,1000)=1000,  Lane 3↔2: max(1000,12)=1000
+  Lane 4↔5: max(12,1000)=1000,  Lane 5↔4: max(1000,12)=1000
+  Lane 6↔7: max(12,1000)=1000,  Lane 7↔6: max(1000,12)=1000
+
+Final result: All lanes have max_val = 1000
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements the parallel reduction operator with butterfly communication:
+\[\Large \text{Reduce}(\oplus, [a_0, a_1, \ldots, a_{n-1}]) = a_0 \oplus a_1 \oplus \cdots \oplus a_{n-1}\]</p>
+<p>Where \(\oplus\) is the <code>max</code> operation and the butterfly pattern ensures optimal \(O(\log n)\) complexity.</p>
+<p><strong>Why butterfly reduction is superior:</strong></p>
+<ol>
+<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) vs \(O(n)\) for sequential reduction</li>
+<li><strong>Perfect load balancing</strong>: Every lane participates equally at each step</li>
+<li><strong>No memory bottlenecks</strong>: Pure register-to-register communication</li>
+<li><strong>Hardware optimized</strong>: Maps directly to GPU butterfly networks</li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Steps</strong>: \(\log_2(\text{WARP_SIZE})\) (e.g., 5 for 32-thread, 6 for 64-thread warp)</li>
+<li><strong>Latency per step</strong>: 1 cycle (register exchange + comparison)</li>
+<li><strong>Total latency</strong>: \(\log_2(\text{WARP_SIZE})\) cycles vs \((\text{WARP_SIZE}-1)\) cycles for sequential</li>
+<li><strong>Parallelism</strong>: All lanes active throughout the algorithm</li>
+</ul>
+</div>
+</details>
+<h2 id="3-butterfly-conditional-maximum"><a class="header" href="#3-butterfly-conditional-maximum">3. Butterfly conditional maximum</a></h2>
+<h3 id="configuration-31"><a class="header" href="#configuration-31">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE_2 = 64</code> (multi-block scenario)</li>
+<li>Grid configuration: <code>BLOCKS_PER_GRID_2 = (2, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)</code> threads per block</li>
+</ul>
+<h3 id="code-to-complete-42"><a class="header" href="#code-to-complete-42">Code to complete</a></h3>
+<p>Implement conditional butterfly reduction where even lanes store the maximum and odd lanes store the minimum.</p>
+<p><strong>Mathematical operation:</strong> Perform butterfly reduction for both maximum and minimum, then conditionally output based on lane parity:
+\[\Large \text{output}[i] = \begin{cases}
+\max_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 0 \\
+\min_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>Dual reduction pattern:</strong> Simultaneously track both maximum and minimum values through the butterfly tree, then conditionally output based on lane ID parity. This demonstrates how butterfly patterns can be extended for complex multi-value reductions.</p>
+<pre><code class="language-mojo">alias SIZE_2 = 64
+alias BLOCKS_PER_GRID_2 = (2, 1)
+alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+alias layout_2 = Layout.row_major(SIZE_2)
+
+
+fn butterfly_conditional_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Conditional butterfly maximum: Perform butterfly max reduction, but only store result
+    in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
+    Demonstrates conditional logic combined with butterfly communication patterns.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+        min_val = current_val
+
+        # FILL ME IN (roughly 11 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-dual-track-butterfly-reduction"><a class="header" href="#1-dual-track-butterfly-reduction">1. <strong>Dual-track butterfly reduction</strong></a></h3>
+<p>This puzzle requires tracking TWO different values simultaneously through the butterfly tree. Think about how you can run multiple reductions in parallel.</p>
+<p><strong>Key questions:</strong></p>
+<ul>
+<li>How can you maintain both maximum and minimum values during the reduction?</li>
+<li>Can you use the same butterfly pattern for both operations?</li>
+<li>What variables do you need to track?</li>
+</ul>
+<h3 id="2-conditional-output-logic"><a class="header" href="#2-conditional-output-logic">2. <strong>Conditional output logic</strong></a></h3>
+<p>After completing the butterfly reduction, you need to output different values based on lane parity.</p>
+<p><strong>Consider:</strong></p>
+<ul>
+<li>How do you determine if a lane is even or odd?</li>
+<li>Which lanes should output the maximum vs minimum?</li>
+<li>How do you access the lane ID?</li>
+</ul>
+<h3 id="3-butterfly-reduction-for-both-min-and-max"><a class="header" href="#3-butterfly-reduction-for-both-min-and-max">3. <strong>Butterfly reduction for both min and max</strong></a></h3>
+<p>The challenge is efficiently computing both min and max in parallel using the same butterfly communication pattern.</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>Do you need separate shuffle operations for min and max?</li>
+<li>Can you reuse the same neighbor values for both operations?</li>
+<li>How do you ensure both reductions complete correctly?</li>
+</ul>
+<h3 id="4-multi-block-boundary-considerations"><a class="header" href="#4-multi-block-boundary-considerations">4. <strong>Multi-block boundary considerations</strong></a></h3>
+<p>This puzzle uses multiple blocks. Consider how this affects the reduction scope.</p>
+<p><strong>Important considerations:</strong></p>
+<ul>
+<li>What’s the scope of each butterfly reduction?</li>
+<li>How does the block structure affect lane numbering?</li>
+<li>Are you computing global or per-block min/max values?</li>
+</ul>
+</div>
+</details>
+<p><strong>Test the butterfly conditional maximum:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --conditional-max
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE_2:  64
+output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+✅ Butterfly conditional max test passed!
+</code></pre>
+<h3 id="solution-42"><a class="header" href="#solution-42">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_conditional_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Conditional butterfly maximum: Perform butterfly max reduction, but only store result
+    in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
+    Demonstrates conditional logic combined with butterfly communication patterns.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+        min_val = current_val
+
+        # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            neighbor_val = shuffle_xor(current_val, offset)
+            current_val = max(current_val, neighbor_val)
+
+            min_neighbor_val = shuffle_xor(min_val, offset)
+            min_val = min(min_val, min_neighbor_val)
+
+            offset //= 2
+
+        # Conditional output: max for even lanes, min for odd lanes
+        if lane % 2 == 0:
+            output[global_i] = current_val  # Maximum
+        else:
+            output[global_i] = min_val  # Minimum
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates advanced butterfly reduction with dual tracking and conditional output.</p>
+<p><strong>Complete algorithm analysis:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]
+    min_val = current_val  # Track minimum separately
+
+    # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
+    offset = WARP_SIZE // 2
+    while offset &gt; 0:
+        neighbor_val = shuffle_xor(current_val, offset)
+        current_val = max(current_val, neighbor_val)    # Max reduction
+
+        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_val = min(min_val, min_neighbor_val)        # Min reduction
+
+        offset //= 2
+
+    # Conditional output based on lane parity
+    if lane % 2 == 0:
+        output[global_i] = current_val  # Even lanes: maximum
+    else:
+        output[global_i] = min_val      # Odd lanes: minimum
+</code></pre>
+<p><strong>Dual reduction execution trace (4-lane example, values [3, 1, 7, 2]):</strong></p>
+<pre><code>Initial state:
+  Lane 0: current_val=3, min_val=3
+  Lane 1: current_val=1, min_val=1
+  Lane 2: current_val=7, min_val=7
+  Lane 3: current_val=2, min_val=2
+
+Step 1: shuffle_xor(current_val, 2) and shuffle_xor(min_val, 2) - Halves exchange
+  Lane 0↔2: max_neighbor=7, min_neighbor=7 → current_val=max(3,7)=7, min_val=min(3,7)=3
+  Lane 1↔3: max_neighbor=2, min_neighbor=2 → current_val=max(1,2)=2, min_val=min(1,2)=1
+  Lane 2↔0: max_neighbor=3, min_neighbor=3 → current_val=max(7,3)=7, min_val=min(7,3)=3
+  Lane 3↔1: max_neighbor=1, min_neighbor=1 → current_val=max(2,1)=2, min_val=min(2,1)=1
+
+Step 2: shuffle_xor(current_val, 1) and shuffle_xor(min_val, 1) - Pairs exchange
+  Lane 0↔1: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
+  Lane 1↔0: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
+  Lane 2↔3: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
+  Lane 3↔2: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
+
+Final result: All lanes have current_val=7 (global max) and min_val=1 (global min)
+</code></pre>
+<p><strong>Dynamic algorithm</strong> (works for any WARP_SIZE):</p>
+<pre><code class="language-mojo">offset = WARP_SIZE // 2
+while offset &gt; 0:
+    neighbor_val = shuffle_xor(current_val, offset)
+    current_val = max(current_val, neighbor_val)
+
+    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_val = min(min_val, min_neighbor_val)
+
+    offset //= 2
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements dual parallel reduction with conditional demultiplexing:
+\[\Large \begin{align}
+\text{max_result} &amp;= \max_{i=0}^{n-1} \text{input}[i] \\
+\text{min_result} &amp;= \min_{i=0}^{n-1} \text{input}[i] \\
+\text{output}[i] &amp;= \text{lane_parity}(i) \; \text{?} \; \text{min_result} : \text{max_result}
+\end{align}\]</p>
+<p><strong>Why dual butterfly reduction works:</strong></p>
+<ol>
+<li><strong>Independent reductions</strong>: Max and min reductions are mathematically independent</li>
+<li><strong>Parallel execution</strong>: Both can use the same butterfly communication pattern</li>
+<li><strong>Shared communication</strong>: Same shuffle operations serve both reductions</li>
+<li><strong>Conditional output</strong>: Lane parity determines which result to output</li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Communication steps</strong>: \(\log_2(\text{WARP_SIZE})\) (same as single reduction)</li>
+<li><strong>Computation per step</strong>: 2 operations (max + min) vs 1 for single reduction</li>
+<li><strong>Memory efficiency</strong>: 2 registers per thread vs complex shared memory approaches</li>
+<li><strong>Output flexibility</strong>: Different lanes can output different reduction results</li>
+</ul>
+</div>
+</details>
+<h2 id="summary-3"><a class="header" href="#summary-3">Summary</a></h2>
+<p>The <code>shuffle_xor()</code> primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you’ve mastered:</p>
+<h3 id="core-butterfly-patterns"><a class="header" href="#core-butterfly-patterns"><strong>Core Butterfly Patterns</strong></a></h3>
+<ol>
+<li>
+<p><strong>Pair Exchange</strong> (<code>shuffle_xor(value, 1)</code>):</p>
+<ul>
+<li>Creates perfect adjacent pairs: (0,1), (2,3), (4,5), …</li>
+<li>\(O(1)\) complexity with zero memory overhead</li>
+<li>Foundation for sorting networks and data reorganization</li>
+</ul>
+</li>
+<li>
+<p><strong>Tree Reduction</strong> (dynamic offsets: <code>WARP_SIZE/2</code> → <code>1</code>):</p>
+<ul>
+<li>Logarithmic parallel reduction: \(O(\log n)\) vs \(O(n)\) sequential</li>
+<li>Works for any associative operation (max, min, sum, etc.)</li>
+<li>Optimal load balancing across all warp lanes</li>
+</ul>
+</li>
+<li>
+<p><strong>Conditional Multi-Reduction</strong> (dual tracking + lane parity):</p>
+<ul>
+<li>Simultaneous multiple reductions in parallel</li>
+<li>Conditional output based on thread characteristics</li>
+<li>Advanced coordination without explicit synchronization</li>
+</ul>
+</li>
+</ol>
+<h3 id="key-algorithmic-insights"><a class="header" href="#key-algorithmic-insights"><strong>Key Algorithmic Insights</strong></a></h3>
+<p><strong>XOR Communication Properties:</strong></p>
+<ul>
+<li><code>shuffle_xor(value, mask)</code> creates symmetric, non-overlapping pairs</li>
+<li>Each mask creates a unique communication topology</li>
+<li>Butterfly networks emerge naturally from binary XOR patterns</li>
+</ul>
+<p><strong>Dynamic Algorithm Design:</strong></p>
+<pre><code class="language-mojo">offset = WARP_SIZE // 2
+while offset &gt; 0:
+    neighbor_val = shuffle_xor(current_val, offset)
+    current_val = operation(current_val, neighbor_val)
+    offset //= 2
+</code></pre>
+<p><strong>Performance Advantages:</strong></p>
+<ul>
+<li><strong>Hardware optimization</strong>: Direct register-to-register communication</li>
+<li><strong>No synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>Scalable complexity</strong>: \(O(\log n)\) for any WARP_SIZE (32, 64, etc.)</li>
+<li><strong>Memory efficiency</strong>: Zero shared memory requirements</li>
+</ul>
+<h3 id="practical-applications"><a class="header" href="#practical-applications"><strong>Practical Applications</strong></a></h3>
+<p>These butterfly patterns are fundamental to:</p>
+<ul>
+<li><strong>Parallel reductions</strong>: Sum, max, min, logical operations</li>
+<li><strong>Prefix/scan operations</strong>: Cumulative sums, parallel sorting</li>
+<li><strong>FFT algorithms</strong>: Signal processing and convolution</li>
+<li><strong>Bitonic sorting</strong>: Parallel sorting networks</li>
+<li><strong>Graph algorithms</strong>: Tree traversals and connectivity</li>
+</ul>
+<p>The <code>shuffle_xor()</code> primitive transforms complex parallel coordination into elegant, hardware-optimized communication patterns that scale efficiently across different GPU architectures.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="warpprefix_sum-hardware-optimized-parallel-scan"><a class="header" href="#warpprefix_sum-hardware-optimized-parallel-scan"><code>warp.prefix_sum()</code> Hardware-Optimized Parallel Scan</a></h1>
+<p>For warp-level parallel scan operations we can use <code>prefix_sum()</code> to replace complex shared memory algorithms with hardware-optimized primitives. This powerful operation enables efficient cumulative computations, parallel partitioning, and advanced coordination algorithms that would otherwise require dozens of lines of shared memory and synchronization code.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum()</a> operation leverages hardware-accelerated parallel scan to compute cumulative operations across warp lanes with \(O(\log n)\) complexity, replacing complex multi-phase algorithms with single function calls.</em></p>
+<blockquote>
+<p><strong>What is parallel scan?</strong> <a href="https://en.wikipedia.org/wiki/Prefix_sum">Parallel scan (prefix sum)</a> is a fundamental parallel primitive that computes cumulative operations across data elements. For addition, it transforms <code>[a, b, c, d]</code> into <code>[a, a+b, a+b+c, a+b+c+d]</code>. This operation is essential for parallel algorithms like stream compaction, quicksort partitioning, and parallel sorting.</p>
+</blockquote>
+<h2 id="key-concepts-41"><a class="header" href="#key-concepts-41">Key concepts</a></h2>
+<p>In this puzzle, you’ll master:</p>
+<ul>
+<li><strong>Hardware-optimized parallel scan</strong> with <code>prefix_sum()</code></li>
+<li><strong>Inclusive vs exclusive prefix sum</strong> patterns</li>
+<li><strong>Warp-level stream compaction</strong> for data reorganization</li>
+<li><strong>Advanced parallel partitioning</strong> combining multiple warp primitives</li>
+<li><strong>Single-warp algorithm optimization</strong> replacing complex shared memory</li>
+</ul>
+<p>This transforms multi-phase shared memory algorithms into elegant single-function calls, enabling efficient parallel scan operations without explicit synchronization.</p>
+<h2 id="1-warp-inclusive-prefix-sum"><a class="header" href="#1-warp-inclusive-prefix-sum">1. Warp inclusive prefix sum</a></h2>
+<h3 id="configuration-32"><a class="header" href="#configuration-32">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="the-prefix_sum-advantage"><a class="header" href="#the-prefix_sum-advantage">The <code>prefix_sum</code> advantage</a></h3>
+<p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In <a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a>, we implemented this the hard way with explicit shared memory management:</p>
+<pre><code class="language-mojo">fn prefix_sum_simple[
+    layout: Layout
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    barrier()
+
+    offset = 1
+    for i in range(Int(log2(Scalar[dtype](TPB)))):
+        var current_val: output.element_type = 0
+        if local_i &gt;= offset and local_i &lt; size:
+            current_val = shared[local_i - offset]  # read
+
+        barrier()
+        if local_i &gt;= offset and local_i &lt; size:
+            shared[local_i] += current_val
+
+        barrier()
+        offset *= 2
+
+    if global_i &lt; size:
+        output[global_i] = shared[local_i]
+
+
+</code></pre>
+<p><strong>Problems with traditional approach:</strong></p>
+<ul>
+<li><strong>Memory overhead</strong>: Requires shared memory allocation</li>
+<li><strong>Multiple barriers</strong>: Complex multi-phase synchronization</li>
+<li><strong>Complex indexing</strong>: Manual stride calculation and boundary checking</li>
+<li><strong>Poor scaling</strong>: \(O(\log n)\) phases with barriers between each</li>
+</ul>
+<p>With <code>prefix_sum()</code>, parallel scan becomes trivial:</p>
+<pre><code class="language-mojo"># Hardware-optimized approach - single function call!
+current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)
+output[global_i] = scan_result
+</code></pre>
+<p><strong>Benefits of prefix_sum:</strong></p>
+<ul>
+<li><strong>Zero memory overhead</strong>: Hardware-accelerated computation</li>
+<li><strong>No synchronization</strong>: Single atomic operation</li>
+<li><strong>Hardware optimized</strong>: Leverages specialized scan units</li>
+<li><strong>Perfect scaling</strong>: Works for any <code>WARP_SIZE</code> (32, 64, etc.)</li>
+</ul>
+<h3 id="code-to-complete-43"><a class="header" href="#code-to-complete-43">Code to complete</a></h3>
+<p>Implement inclusive prefix sum using the hardware-optimized <code>prefix_sum()</code> primitive.</p>
+<p><strong>Mathematical operation:</strong> Compute cumulative sum where each lane gets the sum of all elements up to and including its position:
+\[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
+<p>This transforms input data <code>[1, 2, 3, 4, 5, ...]</code> into cumulative sums <code>[1, 3, 6, 10, 15, ...]</code>, where each position contains the sum of all previous elements plus itself.</p>
+<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Compare this to Puzzle 12's complex shared memory + barrier approach.
+
+    Puzzle 12 approach:
+    - Shared memory allocation
+    - Multiple barrier synchronizations
+    - Log(n) iterations with manual tree reduction
+    - Complex multi-phase algorithm
+
+    Warp prefix_sum approach:
+    - Single function call!
+    - Hardware-optimized parallel scan
+    - Automatic synchronization
+    - O(log n) complexity, but implemented in hardware.
+
+    NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
+    For multi-warp scenarios, additional coordination would be needed.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # FILL ME IN (roughly 4 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-prefix_sum-parameters"><a class="header" href="#1-understanding-prefix_sum-parameters">1. <strong>Understanding prefix_sum parameters</strong></a></h3>
+<p>The <code>prefix_sum()</code> function has an important template parameter that controls the scan type.</p>
+<p><strong>Key questions:</strong></p>
+<ul>
+<li>What’s the difference between inclusive and exclusive prefix sum?</li>
+<li>Which parameter controls this behavior?</li>
+<li>For inclusive scan, what should each lane output?</li>
+</ul>
+<p><strong>Hint</strong>: Look at the function signature and consider what “inclusive” means for cumulative operations.</p>
+<h3 id="2-single-warp-limitation"><a class="header" href="#2-single-warp-limitation">2. <strong>Single warp limitation</strong></a></h3>
+<p>This hardware primitive only works within a single warp. Consider the implications.</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>What happens if you have multiple warps?</li>
+<li>Why is this limitation important to understand?</li>
+<li>How would you extend this to multi-warp scenarios?</li>
+</ul>
+<h3 id="3-data-type-considerations"><a class="header" href="#3-data-type-considerations">3. <strong>Data type considerations</strong></a></h3>
+<p>The <code>prefix_sum</code> function may require specific data types for optimal performance.</p>
+<p><strong>Consider:</strong></p>
+<ul>
+<li>What data type does your input use?</li>
+<li>Does <code>prefix_sum</code> expect a specific scalar type?</li>
+<li>How do you handle type conversions if needed?</li>
+</ul>
+</div>
+</details>
+<p><strong>Test the warp inclusive prefix sum:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --prefix-sum
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --prefix-sum
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
+expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
+✅ Warp inclusive prefix sum test passed!
+</code></pre>
+<h3 id="solution-43"><a class="header" href="#solution-43">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Compare this to Puzzle 12's complex shared memory + barrier approach.
+
+    Puzzle 12 approach:
+    - Shared memory allocation
+    - Multiple barrier synchronizations
+    - Log(n) iterations with manual tree reduction
+    - Complex multi-phase algorithm
+
+    Warp prefix_sum approach:
+    - Single function call!
+    - Hardware-optimized parallel scan
+    - Automatic synchronization
+    - O(log n) complexity, but implemented in hardware.
+
+    NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
+    For multi-warp scenarios, additional coordination would be needed.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        # But it only works within the current warp (WARP_SIZE threads)
+        scan_result = prefix_sum[exclusive=False](
+            rebind[Scalar[dtype]](current_val)
+        )
+
+        output[global_i] = scan_result
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates how <code>prefix_sum()</code> replaces complex multi-phase algorithms with a single hardware-optimized function call.</p>
+<p><strong>Algorithm breakdown:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]
+
+    # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+    # But it only works within the current warp (WARP_SIZE threads)
+    scan_result = prefix_sum[exclusive=False](
+        rebind[Scalar[dtype]](current_val)
+    )
+
+    output[global_i] = scan_result
+</code></pre>
+<p><strong>SIMT execution deep dive:</strong></p>
+<pre><code>Input: [1, 2, 3, 4, 5, 6, 7, 8, ...]
+
+Cycle 1: All lanes load their values simultaneously
+  Lane 0: current_val = 1
+  Lane 1: current_val = 2
+  Lane 2: current_val = 3
+  Lane 3: current_val = 4
+  ...
+  Lane 31: current_val = 32
+
+Cycle 2: prefix_sum[exclusive=False] executes (hardware-accelerated)
+  Lane 0: scan_result = 1 (sum of elements 0 to 0)
+  Lane 1: scan_result = 3 (sum of elements 0 to 1: 1+2)
+  Lane 2: scan_result = 6 (sum of elements 0 to 2: 1+2+3)
+  Lane 3: scan_result = 10 (sum of elements 0 to 3: 1+2+3+4)
+  ...
+  Lane 31: scan_result = 528 (sum of elements 0 to 31)
+
+Cycle 3: Store results
+  Lane 0: output[0] = 1
+  Lane 1: output[1] = 3
+  Lane 2: output[2] = 6
+  Lane 3: output[3] = 10
+  ...
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements the inclusive prefix sum operation:
+\[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
+<p><strong>Comparison with Puzzle 12’s approach:</strong></p>
+<ul>
+<li><strong><a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a></strong>: ~30 lines of shared memory + multiple barriers + complex indexing</li>
+<li><strong>Warp primitive</strong>: 1 function call with hardware acceleration</li>
+<li><strong>Performance</strong>: Same \(O(\log n)\) complexity, but implemented in specialized hardware</li>
+<li><strong>Memory</strong>: Zero shared memory usage vs explicit allocation</li>
+</ul>
+<p><strong>Evolution from Puzzle 12:</strong> This demonstrates the power of modern GPU architectures - what required careful manual implementation in Puzzle 12 is now a single hardware-accelerated primitive. The warp-level <code>prefix_sum()</code> gives you the same algorithmic benefits with zero implementation complexity.</p>
+<p><strong>Why prefix_sum is superior:</strong></p>
+<ol>
+<li><strong>Hardware acceleration</strong>: Dedicated scan units on modern GPUs</li>
+<li><strong>Zero memory overhead</strong>: No shared memory allocation required</li>
+<li><strong>Automatic synchronization</strong>: No explicit barriers needed</li>
+<li><strong>Perfect scaling</strong>: Works optimally for any <code>WARP_SIZE</code></li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Latency</strong>: ~1-2 cycles (hardware scan units)</li>
+<li><strong>Bandwidth</strong>: Zero memory traffic (register-only operation)</li>
+<li><strong>Parallelism</strong>: All <code>WARP_SIZE</code> lanes participate simultaneously</li>
+<li><strong>Scalability</strong>: \(O(\log n)\) complexity with hardware optimization</li>
+</ul>
+<p><strong>Important limitation</strong>: This primitive only works within a single warp. For multi-warp scenarios, you would need additional coordination between warps.</p>
+</div>
+</details>
+<h2 id="2-warp-partition"><a class="header" href="#2-warp-partition">2. Warp partition</a></h2>
+<h3 id="configuration-33"><a class="header" href="#configuration-33">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+</ul>
+<h3 id="code-to-complete-44"><a class="header" href="#code-to-complete-44">Code to complete</a></h3>
+<p>Implement single-warp parallel partitioning using BOTH <code>shuffle_xor</code> AND <code>prefix_sum</code> primitives.</p>
+<p><strong>Mathematical operation:</strong> Partition elements around a pivot value, placing elements <code>&lt; pivot</code> on the left and elements <code>&gt;= pivot</code> on the right:
+\[\Large \text{output} = [\text{elements} &lt; \text{pivot}] \,|\, [\text{elements} \geq \text{pivot}]\]</p>
+<p><strong>Advanced algorithm:</strong> This combines two sophisticated warp primitives:</p>
+<ol>
+<li><strong><code>shuffle_xor()</code></strong>: Butterfly pattern for warp-level reduction (count left elements)</li>
+<li><strong><code>prefix_sum()</code></strong>: Exclusive scan for position calculation within partitions</li>
+</ol>
+<p>This demonstrates the power of combining multiple warp primitives for complex parallel algorithms within a single warp.</p>
+<pre><code class="language-mojo">fn warp_partition[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    pivot: Float32,
+):
+    """
+    Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
+    This implements a warp-level quicksort partition step that places elements &lt; pivot
+    on the left and elements &gt;= pivot on the right.
+
+    ALGORITHM COMPLEXITY - combines two advanced warp primitives:
+    1. shuffle_xor(): Butterfly pattern for warp-level reductions
+    2. prefix_sum(): Warp-level exclusive scan for position calculation.
+
+    This demonstrates the power of warp primitives for sophisticated parallel algorithms
+    within a single warp (works for any WARP_SIZE: 32, 64, etc.).
+
+    Example with pivot=5:
+    Input:  [3, 7, 1, 8, 2, 9, 4, 6]
+    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # FILL ME IN (roughly 13 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-multi-phase-algorithm-structure"><a class="header" href="#1-multi-phase-algorithm-structure">1. <strong>Multi-phase algorithm structure</strong></a></h3>
+<p>This algorithm requires several coordinated phases. Think about the logical steps needed for partitioning.</p>
+<p><strong>Key phases to consider:</strong></p>
+<ul>
+<li>How do you identify which elements belong to which partition?</li>
+<li>How do you calculate positions within each partition?</li>
+<li>How do you determine the total size of the left partition?</li>
+<li>How do you write elements to their final positions?</li>
+</ul>
+<h3 id="2-predicate-creation"><a class="header" href="#2-predicate-creation">2. <strong>Predicate creation</strong></a></h3>
+<p>You need to create boolean predicates to identify partition membership.</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>How do you represent “this element belongs to the left partition”?</li>
+<li>How do you represent “this element belongs to the right partition”?</li>
+<li>What data type should you use for predicates that work with <code>prefix_sum</code>?</li>
+</ul>
+<h3 id="3-combining-shuffle_xor-and-prefix_sum"><a class="header" href="#3-combining-shuffle_xor-and-prefix_sum">3. <strong>Combining shuffle_xor and prefix_sum</strong></a></h3>
+<p>This algorithm uses both warp primitives for different purposes.</p>
+<p><strong>Consider:</strong></p>
+<ul>
+<li>What is <code>shuffle_xor</code> used for in this context?</li>
+<li>What is <code>prefix_sum</code> used for in this context?</li>
+<li>How do these two operations work together?</li>
+</ul>
+<h3 id="4-position-calculation"><a class="header" href="#4-position-calculation">4. <strong>Position calculation</strong></a></h3>
+<p>The trickiest part is calculating where each element should be written in the output.</p>
+<p><strong>Key insights:</strong></p>
+<ul>
+<li>Left partition elements: What determines their final position?</li>
+<li>Right partition elements: How do you offset them correctly?</li>
+<li>How do you combine local positions with partition boundaries?</li>
+</ul>
+</div>
+</details>
+<p><strong>Test the warp partition:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --partition
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --partition
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
+expected: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0, 7.0, 8.0, 9.0, 6.0, 10.0, 11.0, 12.0, 13.0])
+pivot: 5.0
+✅ Warp partition test passed!
+</code></pre>
+<h3 id="solution-44"><a class="header" href="#solution-44">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn warp_partition[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    pivot: Float32,
+):
+    """
+    Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
+    This implements a warp-level quicksort partition step that places elements &lt; pivot
+    on the left and elements &gt;= pivot on the right.
+
+    ALGORITHM COMPLEXITY - combines two advanced warp primitives:
+    1. shuffle_xor(): Butterfly pattern for warp-level reductions
+    2. prefix_sum(): Warp-level exclusive scan for position calculation.
+
+    This demonstrates the power of warp primitives for sophisticated parallel algorithms
+    within a single warp (works for any WARP_SIZE: 32, 64, etc.).
+
+    Example with pivot=5:
+    Input:  [3, 7, 1, 8, 2, 9, 4, 6]
+    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # Phase 1: Create warp-level predicates
+        predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
+        predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+
+        # Phase 2: Warp-level prefix sum to get positions within warp
+        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+
+        # Phase 3: Get total left count using shuffle_xor reduction
+        warp_left_total = predicate_left
+
+        # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            warp_left_total += shuffle_xor(warp_left_total, offset)
+            offset //= 2
+
+        # Phase 4: Write to output positions
+        if current_val &lt; pivot:
+            # Left partition: use warp-level position
+            output[Int(warp_left_pos)] = current_val
+        else:
+            # Right partition: offset by total left count + right position
+            output[Int(warp_left_total + warp_right_pos)] = current_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates advanced coordination between multiple warp primitives to implement sophisticated parallel algorithms.</p>
+<p><strong>Complete algorithm analysis:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]
+
+    # Phase 1: Create warp-level predicates
+    predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
+    predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+
+    # Phase 2: Warp-level prefix sum to get positions within warp
+    warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+    warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+
+    # Phase 3: Get total left count using shuffle_xor reduction
+    warp_left_total = predicate_left
+
+    # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
+    offset = WARP_SIZE // 2
+    while offset &gt; 0:
+        warp_left_total += shuffle_xor(warp_left_total, offset)
+        offset //= 2
+
+    # Phase 4: Write to output positions
+    if current_val &lt; pivot:
+        # Left partition: use warp-level position
+        output[Int(warp_left_pos)] = current_val
+    else:
+        # Right partition: offset by total left count + right position
+        output[Int(warp_left_total + warp_right_pos)] = current_val
+</code></pre>
+<p><strong>Multi-phase execution trace (8-lane example, pivot=5, values [3,7,1,8,2,9,4,6]):</strong></p>
+<pre><code>Initial state:
+  Lane 0: current_val=3 (&lt; 5)  Lane 1: current_val=7 (&gt;= 5)
+  Lane 2: current_val=1 (&lt; 5)  Lane 3: current_val=8 (&gt;= 5)
+  Lane 4: current_val=2 (&lt; 5)  Lane 5: current_val=9 (&gt;= 5)
+  Lane 6: current_val=4 (&lt; 5)  Lane 7: current_val=6 (&gt;= 5)
+
+Phase 1: Create predicates
+  Lane 0: predicate_left=1.0, predicate_right=0.0
+  Lane 1: predicate_left=0.0, predicate_right=1.0
+  Lane 2: predicate_left=1.0, predicate_right=0.0
+  Lane 3: predicate_left=0.0, predicate_right=1.0
+  Lane 4: predicate_left=1.0, predicate_right=0.0
+  Lane 5: predicate_left=0.0, predicate_right=1.0
+  Lane 6: predicate_left=1.0, predicate_right=0.0
+  Lane 7: predicate_left=0.0, predicate_right=1.0
+
+Phase 2: Exclusive prefix sum for positions
+  warp_left_pos:  [0, 0, 1, 1, 2, 2, 3, 3]
+  warp_right_pos: [0, 0, 0, 1, 1, 2, 2, 3]
+
+Phase 3: Butterfly reduction for left total
+  Initial: [1, 0, 1, 0, 1, 0, 1, 0]
+  After reduction: all lanes have warp_left_total = 4
+
+Phase 4: Write to output positions
+  Lane 0: current_val=3 &lt; pivot → output[0] = 3
+  Lane 1: current_val=7 &gt;= pivot → output[4+0] = output[4] = 7
+  Lane 2: current_val=1 &lt; pivot → output[1] = 1
+  Lane 3: current_val=8 &gt;= pivot → output[4+1] = output[5] = 8
+  Lane 4: current_val=2 &lt; pivot → output[2] = 2
+  Lane 5: current_val=9 &gt;= pivot → output[4+2] = output[6] = 9
+  Lane 6: current_val=4 &lt; pivot → output[3] = 4
+  Lane 7: current_val=6 &gt;= pivot → output[4+3] = output[7] = 6
+
+Final result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot)
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements parallel partitioning with dual warp primitives:
+\[\Large \begin{align}
+\text{left\_pos}[i] &amp;= \text{prefix\<em>sum}</em>{\text{exclusive}}(\text{predicate\_left}[i]) \\
+\text{right\_pos}[i] &amp;= \text{prefix\<em>sum}</em>{\text{exclusive}}(\text{predicate\_right}[i]) \\
+\text{left\_total} &amp;= \text{butterfly\_reduce}(\text{predicate\_left}) \\
+\text{final\_pos}[i] &amp;= \begin{cases}
+\text{left\_pos}[i] &amp; \text{if } \text{input}[i] &lt; \text{pivot} \\
+\text{left\_total} + \text{right\_pos}[i] &amp; \text{if } \text{input}[i] \geq \text{pivot}
+\end{cases}
+\end{align}\]</p>
+<p><strong>Why this multi-primitive approach works:</strong></p>
+<ol>
+<li><strong>Predicate creation</strong>: Identifies partition membership for each element</li>
+<li><strong>Exclusive prefix sum</strong>: Calculates relative positions within each partition</li>
+<li><strong>Butterfly reduction</strong>: Computes partition boundary (total left count)</li>
+<li><strong>Coordinated write</strong>: Combines local positions with global partition structure</li>
+</ol>
+<p><strong>Algorithm complexity:</strong></p>
+<ul>
+<li><strong>Phase 1</strong>: \(O(1)\) - Predicate creation</li>
+<li><strong>Phase 2</strong>: \(O(\log n)\) - Hardware-accelerated prefix sum</li>
+<li><strong>Phase 3</strong>: \(O(\log n)\) - Butterfly reduction with <code>shuffle_xor</code></li>
+<li><strong>Phase 4</strong>: \(O(1)\) - Coordinated write</li>
+<li><strong>Total</strong>: \(O(\log n)\) with excellent constants</li>
+</ul>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Communication steps</strong>: \(2 \times \log_2(\text{WARP_SIZE})\) (prefix sum + butterfly reduction)</li>
+<li><strong>Memory efficiency</strong>: Zero shared memory, all register-based</li>
+<li><strong>Parallelism</strong>: All lanes active throughout algorithm</li>
+<li><strong>Scalability</strong>: Works for any <code>WARP_SIZE</code> (32, 64, etc.)</li>
+</ul>
+<p><strong>Practical applications:</strong> This pattern is fundamental to:</p>
+<ul>
+<li><strong>Quicksort partitioning</strong>: Core step in parallel sorting algorithms</li>
+<li><strong>Stream compaction</strong>: Removing null/invalid elements from data streams</li>
+<li><strong>Parallel filtering</strong>: Separating data based on complex predicates</li>
+<li><strong>Load balancing</strong>: Redistributing work based on computational requirements</li>
+</ul>
+</div>
+</details>
+<h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
+<p>The <code>prefix_sum()</code> primitive enables hardware-accelerated parallel scan operations that replace complex multi-phase algorithms with single function calls. Through these two problems, you’ve mastered:</p>
+<h3 id="core-prefix-sum-patterns"><a class="header" href="#core-prefix-sum-patterns"><strong>Core Prefix Sum Patterns</strong></a></h3>
+<ol>
+<li>
+<p><strong>Inclusive Prefix Sum</strong> (<code>prefix_sum[exclusive=False]</code>):</p>
+<ul>
+<li>Hardware-accelerated cumulative operations</li>
+<li>Replaces ~30 lines of shared memory code with single function call</li>
+<li>\(O(\log n)\) complexity with specialized hardware optimization</li>
+</ul>
+</li>
+<li>
+<p><strong>Advanced Multi-Primitive Coordination</strong> (combining <code>prefix_sum</code> + <code>shuffle_xor</code>):</p>
+<ul>
+<li>Sophisticated parallel algorithms within single warp</li>
+<li>Exclusive scan for position calculation + butterfly reduction for totals</li>
+<li>Complex partitioning operations with optimal parallel efficiency</li>
+</ul>
+</li>
+</ol>
+<h3 id="key-algorithmic-insights-1"><a class="header" href="#key-algorithmic-insights-1"><strong>Key Algorithmic Insights</strong></a></h3>
+<p><strong>Hardware Acceleration Benefits:</strong></p>
+<ul>
+<li><code>prefix_sum()</code> leverages dedicated scan units on modern GPUs</li>
+<li>Zero shared memory overhead compared to traditional approaches</li>
+<li>Automatic synchronization without explicit barriers</li>
+</ul>
+<p><strong>Multi-Primitive Coordination:</strong></p>
+<pre><code class="language-mojo"># Phase 1: Create predicates for partition membership
+predicate = 1.0 if condition else 0.0
+
+# Phase 2: Use prefix_sum for local positions
+local_pos = prefix_sum[exclusive=True](predicate)
+
+# Phase 3: Use shuffle_xor for global totals
+global_total = butterfly_reduce(predicate)
+
+# Phase 4: Combine for final positioning
+final_pos = local_pos + partition_offset
+</code></pre>
+<p><strong>Performance Advantages:</strong></p>
+<ul>
+<li><strong>Hardware optimization</strong>: Specialized scan units vs software implementation</li>
+<li><strong>Memory efficiency</strong>: Register-only operations vs shared memory allocation</li>
+<li><strong>Scalable complexity</strong>: \(O(\log n)\) with hardware acceleration</li>
+<li><strong>Single-warp optimization</strong>: Perfect for algorithms within <code>WARP_SIZE</code> limits</li>
+</ul>
+<h3 id="practical-applications-1"><a class="header" href="#practical-applications-1"><strong>Practical Applications</strong></a></h3>
+<p>These prefix sum patterns are fundamental to:</p>
+<ul>
+<li><strong>Parallel scan operations</strong>: Cumulative sums, products, min/max scans</li>
+<li><strong>Stream compaction</strong>: Parallel filtering and data reorganization</li>
+<li><strong>Quicksort partitioning</strong>: Core parallel sorting algorithm building block</li>
+<li><strong>Parallel algorithms</strong>: Load balancing, work distribution, data restructuring</li>
+</ul>
+<p>The combination of <code>prefix_sum()</code> and <code>shuffle_xor()</code> demonstrates how modern GPU warp primitives can implement sophisticated parallel algorithms with minimal code complexity and optimal performance characteristics.</p>
 
                     </main>
 
