@@ -198,7 +198,7 @@
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
-<li>Matrix size: \(\text{SIZE_TILED} = 8\)</li>
+<li>Matrix size: \(\text{SIZE_TILED} = 9\)</li>
 <li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
 <li>Grid dimensions: \(3 \times 3\) blocks</li>
 <li>Shared memory: Two \(\text{TPB} \times \text{TPB}\) LayoutTensors per block</li>
@@ -263,7 +263,7 @@ Synchronization required:
 * After computing each phase
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE_TILED = 8
+<pre><code class="language-mojo">alias SIZE_TILED = 9
 alias BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
 alias THREADS_PER_BLOCK_TILED = (TPB, TPB)
 alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
@@ -276,10 +276,10 @@ fn matmul_tiled[
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    local_row = thread_idx.x
-    local_col = thread_idx.y
-    global_row = block_idx.x * TPB + local_row
-    global_col = block_idx.y * TPB + local_col
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+    global_row = block_idx.y * TPB + local_row
+    global_col = block_idx.x * TPB + local_col
     # FILL ME IN (roughly 20 lines)
 
 
@@ -289,10 +289,63 @@ fn matmul_tiled[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Calculate global thread positions from block and thread indices correctly</li>
-<li>Clear shared memory before loading new tiles</li>
-<li>Load tiles with proper bounds checking</li>
-<li>Accumulate results across tiles with proper synchronization</li>
+<li>
+<p>Use the standard indexing convention: <code>local_row = thread_idx.y</code> and <code>local_col = thread_idx.x</code></p>
+</li>
+<li>
+<p>Calculate global positions:</p>
+<pre><code>global_row = block_idx.y * TPB + local_row
+</code></pre>
+<p>and</p>
+<pre><code>global_col = block_idx.x * TPB + local_col
+</code></pre>
+<p><strong>Understanding the global indexing formula:</strong></p>
+<ul>
+<li>
+<p>Each block processes a <code>TPB × TPB</code> tile of the matrix</p>
+</li>
+<li>
+<p><code>block_idx.y</code> tells us which row of blocks we’re in (0, 1, 2…)</p>
+</li>
+<li>
+<p><code>block_idx.y * TPB</code> gives us the starting row of our block’s tile</p>
+</li>
+<li>
+<p><code>local_row</code> (0 to TPB-1) is our thread’s offset within the block</p>
+</li>
+<li>
+<p>Adding them gives our thread’s actual row in the full matrix</p>
+<p><strong>Example with TPB=3:</strong></p>
+</li>
+</ul>
+<pre><code class="language-txt">Block Layout:        Global Matrix (9×9):
+[B00][B01][B02]      [0 1 2 | 3 4 5 | 6 7 8]
+[B10][B11][B12]  →   [9 A B | C D E | F G H]
+[B20][B21][B22]      [I J K | L M N | O P Q]
+                     ——————————————————————
+                     [R S T | U V W | X Y Z]
+                     [a b c | d e f | g h i]
+                     [j k l | m n o | p q r]
+                     ——————————————————————
+                     [s t u | v w x | y z α]
+                     [β γ δ | ε ζ η | θ ι κ]
+                     [λ μ ν | ξ ο π | ρ σ τ]
+
+Thread(1,2) in Block(1,0):
+- block_idx.y = 1, local_row = 1
+- global_row = 1 * 3 + 1 = 4
+- This thread handles row 4 of the matrix
+</code></pre>
+</li>
+<li>
+<p>Allocate shared memory (now pre-initialized with <code>.fill(0)</code>)</p>
+</li>
+<li>
+<p>With 9×9 perfect tiling, no bounds checking needed!</p>
+</li>
+<li>
+<p>Accumulate results across tiles with proper synchronization</p>
+</li>
 </ol>
 </div>
 </details>
@@ -313,8 +366,8 @@ fn matmul_tiled[
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 2632.0, 5824.0, 6008.0, 6192.0, 6376.0, 6560.0, 6744.0, 6928.0, 7112.0, 9408.0, 9720.0, 10032.0, 10344.0, 10656.0, 10968.0, 11280.0, 11592.0, 12992.0, 13432.0, 13872.0, 14312.0, 14752.0, 15192.0, 15632.0, 16072.0, 16576.0, 17144.0, 17712.0, 18280.0, 18848.0, 19416.0, 19984.0, 20552.0, 20160.0, 20856.0, 21552.0, 22248.0, 22944.0, 23640.0, 24336.0, 25032.0, 23744.0, 24568.0, 25392.0, 26216.0, 27040.0, 27864.0, 28688.0, 29512.0, 27328.0, 28280.0, 29232.0, 30184.0, 31136.0, 32088.0, 33040.0, 33992.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 4176.0, 4248.0, 9504.0, 9738.0, 9972.0, 10206.0, 10440.0, 10674.0, 10908.0, 11142.0, 11376.0, 15336.0, 15732.0, 16128.0, 16524.0, 16920.0, 17316.0, 17712.0, 18108.0, 18504.0, 21168.0, 21726.0, 22284.0, 22842.0, 23400.0, 23958.0, 24516.0, 25074.0, 25632.0, 27000.0, 27720.0, 28440.0, 29160.0, 29880.0, 30600.0, 31320.0, 32040.0, 32760.0, 32832.0, 33714.0, 34596.0, 35478.0, 36360.0, 37242.0, 38124.0, 39006.0, 39888.0, 38664.0, 39708.0, 40752.0, 41796.0, 42840.0, 43884.0, 44928.0, 45972.0, 47016.0, 44496.0, 45702.0, 46908.0, 48114.0, 49320.0, 50526.0, 51732.0, 52938.0, 54144.0, 50328.0, 51696.0, 53064.0, 54432.0, 55800.0, 57168.0, 58536.0, 59904.0, 61272.0])
 </code></pre>
 <h2 id="solution-manual-tiling"><a class="header" href="#solution-manual-tiling">Solution: Manual tiling</a></h2>
 <details class="solution-details">
@@ -326,10 +379,10 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    tiled_col = block_idx.x * TPB + thread_idx.x
-    tiled_row = block_idx.y * TPB + thread_idx.y
-    local_col = thread_idx.x
     local_row = thread_idx.y
+    local_col = thread_idx.x
+    tiled_row = block_idx.y * TPB + local_row
+    tiled_col = block_idx.x * TPB + local_col
 
     a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
@@ -376,34 +429,39 @@ expected: HostBuffer([2240.0, 2296.0, 2352.0, 2408.0, 2464.0, 2520.0, 2576.0, 26
 
 </code></pre>
 <div class="solution-explanation">
-<p>The tiled matrix multiplication implementation demonstrates efficient handling of large matrices \((8 \times 8)\) using small tiles \((3 \times 3)\). Here’s how it works:</p>
+<p>The tiled matrix multiplication implementation demonstrates efficient handling of matrices \((9 \times 9)\) using small tiles \((3 \times 3)\). Here’s how it works:</p>
 <ol>
 <li>
 <p><strong>Thread indexing setup</strong></p>
 <ul>
-<li>Global position calculation:
-<pre><code class="language-txt">tiled_row = block_idx.y * TPB + thread_idx.y
-tiled_col = block_idx.x * TPB + thread_idx.x
+<li>The problem template provides the standard indexing convention:
+<pre><code class="language-mojo">local_row = thread_idx.y  # y for row
+local_col = thread_idx.x  # x for col
+global_row = block_idx.y * TPB + local_row
+global_col = block_idx.x * TPB + local_col
 </code></pre>
 </li>
-<li>Local position in tile:
-<pre><code class="language-txt">local_row = thread_idx.y
-local_col = thread_idx.x
+<li>The solution uses the same consistent indexing:
+<pre><code class="language-mojo">tiled_row = block_idx.y * TPB + thread_idx.y  # y for row
+tiled_col = block_idx.x * TPB + thread_idx.x  # x for col
+local_row = thread_idx.y  # y for row
+local_col = thread_idx.x  # x for col
 </code></pre>
 </li>
 </ul>
 </li>
 <li>
 <p><strong>Shared memory allocation</strong></p>
-<pre><code class="language-txt">Input matrices (8×8):
-A = [0  1  2  3  4  5  6  7 ]    B = [0  2  4  6  8  10 12 14]
-    [8  9  10 11 12 13 14 15]        [16 18 20 22 24 26 28 30]
-    [16 17 18 19 20 21 22 23]        [32 34 36 38 40 42 44 46]
-    [24 25 26 27 28 29 30 31]        [48 50 52 54 56 58 60 62]
-    [32 33 34 35 36 37 38 39]        [64 66 68 70 72 74 76 78]
-    [40 41 42 43 44 45 46 47]        [80 82 84 86 88 90 92 94]
-    [48 49 50 51 52 53 54 55]        [96 98 100 102 104 106 108 110]
-    [56 57 58 59 60 61 62 63]        [112 114 116 118 120 122 124 126]
+<pre><code class="language-txt">Input matrices (9×9) - Perfect fit for 3×3 tiling:
+A = [0  1  2  3  4  5  6  7  8 ]    B = [0  2  4  6  8  10 12 14 16]
+    [9  10 11 12 13 14 15 16 17]        [18 20 22 24 26 28 30 32 34]
+    [18 19 20 21 22 23 24 25 26]        [36 38 40 42 44 46 48 50 52]
+    [27 28 29 30 31 32 33 34 35]        [54 56 58 60 62 64 66 68 70]
+    [36 37 38 39 40 41 42 43 44]        [72 74 76 78 80 82 84 86 88]
+    [45 46 47 48 49 50 51 52 53]        [90 92 94 96 98 100 102 104 106]
+    [54 55 56 57 58 59 60 61 62]        [108 110 112 114 116 118 120 122 124]
+    [63 64 65 66 67 68 69 70 71]        [126 128 130 132 134 136 138 140 142]
+    [72 73 74 75 76 77 78 79 80]        [144 146 148 150 152 154 156 158 160]
 
 Shared memory per block (3×3):
 a_shared[TPB, TPB]  b_shared[TPB, TPB]
@@ -411,11 +469,11 @@ a_shared[TPB, TPB]  b_shared[TPB, TPB]
 </li>
 <li>
 <p><strong>Tile processing loop</strong></p>
-<pre><code class="language-txt">Number of tiles = (8 + 3 - 1) // 3 = 3 tiles
+<pre><code class="language-txt">Number of tiles = 9 // 3 = 3 tiles (perfect division!)
 
 For each tile:
-1. Reset shared memory
-2. Load tile from A and B
+1. Shared memory already initialized with .fill(0)
+2. Load tile from A and B (no bounds checking needed!)
 3. Compute partial products
 4. Accumulate in register
 </code></pre>
@@ -423,21 +481,16 @@ For each tile:
 <li>
 <p><strong>Memory loading pattern</strong></p>
 <ul>
-<li>Loading A tile:
-<pre><code class="language-txt">if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
-    a_shared[local_row, local_col] = a[tiled_row, tile * TPB + local_col]
-</code></pre>
-</li>
-<li>Loading B tile:
-<pre><code class="language-txt">if (tile * TPB + local_row) &lt; size and tiled_col &lt; size:
-    b_shared[local_row, local_col] = b[tile * TPB + local_row, tiled_col]
+<li>With perfect 9×9 tiling, no bounds checking needed:
+<pre><code class="language-txt">a_shared[local_row, local_col] = a[tiled_row, tile * TPB + local_col]
+b_shared[local_row, local_col] = b[tile * TPB + local_row, tiled_col]
 </code></pre>
 </li>
 </ul>
 </li>
 <li>
 <p><strong>Computation within tile</strong></p>
-<pre><code class="language-txt">For k in range(min(TPB, size - tile * TPB)):
+<pre><code class="language-txt">For k in range(TPB):  # No need for min() - all tiles are full!
     acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
 <ul>
@@ -465,21 +518,20 @@ When threads access scattered locations (right), each access requires a separate
 </ol>
 <p>Key performance features:</p>
 <ul>
-<li>Processes 8×8 matrix using 3×3 tiles</li>
+<li>Processes 9×9 matrix using 3×3 tiles (perfect fit!)</li>
 <li>Uses shared memory for fast tile access</li>
 <li>Minimizes global memory transactions</li>
-<li>Handles matrix boundaries correctly</li>
+<li>No boundary checking needed - all tiles are full</li>
 <li>Maintains coalesced memory access</li>
 </ul>
-<ol start="2">
-<li><strong>Boundary handling</strong>:
-<pre><code class="language-mojo">if row &lt; size and col &lt; size:
-    output[row, col] = acc
+<ol start="7">
+<li><strong>Result writing</strong>:
+<pre><code class="language-mojo">output[tiled_row, tiled_col] = acc
 </code></pre>
 <ul>
-<li>Prevents out-of-bounds access</li>
-<li>Handles matrix edges</li>
-<li>Safe result writing</li>
+<li>With perfect 9×9 tiling, no bounds checking needed</li>
+<li>Direct assignment to output matrix</li>
+<li>All threads write valid results</li>
 </ul>
 </li>
 </ol>
@@ -530,44 +582,47 @@ fn matmul_idiomatic_tiled[
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
-    # Get the tile of the output matrix `out` that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     local_row = thread_idx.y
     local_col = thread_idx.x
+
+    # Get the tile of the output matrix that this thread block is responsible for
+    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
 
     var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(1, TPB)
     alias load_b_layout = Layout.row_major(TPB, 1)
-    for idx in range((size + TPB - 1) // TPB):
+
+    @parameter
+    for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
+        # Get tiles from A and B matrices
         a_tile = a.tile[TPB, TPB](block_idx.y, idx)
         b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 
+        # Asynchronously copy tiles to shared memory
         copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
         copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
 
+        # Wait for all async copies to complete
         async_copy_wait_all()
-
         barrier()
 
+        # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(TPB):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
 
-    if (
-        block_idx.y * TPB + local_row &lt; size
-        and block_idx.x * TPB + local_col &lt; size
-    ):
-        out_tile[local_row, local_col] = acc
+    # Write final result to output tile
+    out_tile[local_row, local_col] = acc
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>The idiomatic tiled matrix multiplication leverages Mojo’s LayoutTensor API and asynchronous memory operations for a cleaner implementation:</p>
+<p>The idiomatic tiled matrix multiplication leverages Mojo’s LayoutTensor API and asynchronous memory operations for a beautifully clean implementation. With the 9×9 matrix size, we get perfect tiling that eliminates all boundary checks:</p>
 <ol>
 <li>
 <p><strong>LayoutTensor tile API</strong></p>
@@ -602,31 +657,18 @@ alias load_b_layout = Layout.row_major(TPB, 1)
 </ul>
 </li>
 <li>
-<p><strong>Efficient thread synchronization</strong></p>
-<pre><code class="language-mojo">// Wait for async operations to complete
-async_copy_wait_all()
-// Ensure all threads can see the shared memory contents
-barrier()
+<p><strong>Perfect tiling eliminates boundary checks</strong></p>
+<pre><code class="language-mojo">@parameter
+for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
 </code></pre>
-<p>The barriers ensure proper synchronization:</p>
-<ul>
-<li>After memory transfers complete</li>
-<li>After computation for each tile</li>
-</ul>
+<p>With 9×9 matrices and 3×3 tiles, every tile is exactly full-sized. No boundary checking needed!</p>
 </li>
 <li>
-<p><strong>Proper boundary handling</strong></p>
-<pre><code class="language-mojo">if block_idx.y * TPB + local_row &lt; size and block_idx.x * TPB + local_col &lt; size:
-    out_tile[local_row, local_col] = acc
+<p><strong>Clean tile processing</strong></p>
+<pre><code class="language-mojo"># No bounds checks needed - every tile is perfect!
+out_tile[local_row, local_col] = acc
 </code></pre>
-<p>This critical check prevents out-of-bounds writes for blocks at the matrix boundaries.</p>
-</li>
-<li>
-<p><strong>Tile processing loop</strong></p>
-<pre><code class="language-mojo">for idx in range((size + TPB - 1) // TPB):
-   // Process one tile
-</code></pre>
-<p>Uses ceiling division to handle matrices whose dimensions aren’t perfect multiples of the tile size.</p>
+<p>Direct assignment without any conditional checks.</p>
 </li>
 </ol>
 <h3 id="performance-considerations"><a class="header" href="#performance-considerations">Performance considerations</a></h3>

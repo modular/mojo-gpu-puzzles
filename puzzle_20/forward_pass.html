@@ -368,12 +368,13 @@ fn matmul_idiomatic_tiled[
     b: LayoutTensor[mut=False, dtype, b_layout],
 ):
     """Idiomatic tiled matmul following p14.mojo exactly."""
-    # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.x, block_idx.y)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
     local_row = thread_idx.x
     local_col = thread_idx.y
+
+    # Get the tile of the output matrix that this thread block is responsible for
+    out_tile = output.tile[TPB, TPB](block_idx.x, block_idx.y)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
 
     var acc: output.element_type = 0
 
@@ -381,21 +382,26 @@ fn matmul_idiomatic_tiled[
     alias load_b_layout = Layout.row_major(TPB, 1)
 
     for idx in range((inner_dim + TPB - 1) // TPB):
+        # Get tiles from A and B matrices
         a_tile = a.tile[TPB, TPB](block_idx.x, idx)
         b_tile = b.tile[TPB, TPB](idx, block_idx.y)
 
+        # Asynchronously copy tiles to shared memory
         copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
         copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
 
+        # Wait for all async copies to complete
         async_copy_wait_all()
         barrier()
 
+        # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(TPB):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
 
+    # Write final result with bounds checking (needed for variable matrix sizes)
     if (
         block_idx.x * TPB + local_row &lt; rows
         and block_idx.y * TPB + local_col &lt; cols
