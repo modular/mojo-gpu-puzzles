@@ -813,7 +813,7 @@ if i &lt; height and j &lt; width: ...
 if i &lt; height and j &lt; width and k &lt; depth and
    i &gt;= padding and j &gt;= padding: ...
 </code></pre>
-<p>These boundary handling patterns will become more elegant when we <a href="puzzle_03/../puzzle_04/">learn about LayoutTensor in Puzzle 4</a>, which provides built-in boundary checking and shape management.</p>
+<p>These boundary handling patterns will become more elegant when we <a href="puzzle_03/../puzzle_04/">learn about LayoutTensor in Puzzle 4</a>, which provides built-in shape management.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
@@ -971,7 +971,6 @@ if row &lt; height and col &lt; width:
 <p>LayoutTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>
 <ol>
 <li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset calculations</li>
-<li><strong>Automatic Bounds Checking</strong>: Built-in protection against out-of-bounds access</li>
 <li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled organizations</li>
 <li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
 </ol>
@@ -1135,7 +1134,6 @@ After:
 <ul>
 <li>Clean syntax for tensor creation and access</li>
 <li>Automatic memory layout handling</li>
-<li>Built-in bounds checking</li>
 <li>Natural multi-dimensional indexing</li>
 </ul>
 <p>While this example is straightforward, the same patterns will scale to complex GPU operations in upcoming puzzles. You’ll see how these basic concepts extend to:</p>
