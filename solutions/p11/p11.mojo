@@ -190,6 +190,4 @@ def main():
             print("out:", out_host)
             print("expected:", expected)
             for i in range(size):
-                for j in range(conv):
-                    if i + j < size:
-                        assert_equal(out_host[i], expected[i])
+                assert_equal(out_host[i], expected[i])
