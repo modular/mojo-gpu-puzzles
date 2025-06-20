@@ -19,7 +19,12 @@ alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
 
 
 fn elementwise_add[
-    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    layout: Layout,
+    dtype: DType,
+    simd_width: Int,
+    rank: Int,
+    size: Int,
+    debug: Bool = True,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -32,7 +37,8 @@ fn elementwise_add[
         simd_width: Int, rank: Int
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
-        print("idx:", idx)
+        if debug:
+            print("idx:", idx)
         # FILL IN (2 to 4 lines)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
@@ -52,6 +58,7 @@ fn tiled_elementwise_add[
     rank: Int,
     size: Int,
     tile_size: Int,
+    debug: Bool = True,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -64,8 +71,9 @@ fn tiled_elementwise_add[
         simd_width: Int, rank: Int
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
-        print("tile_id:", tile_id)
-        out_tile = output.tile[tile_size](tile_id)
+        if debug:
+            print("tile_id:", tile_id)
+
         a_tile = a.tile[tile_size](tile_id)
         b_tile = b.tile[tile_size](tile_id)
 
@@ -87,6 +95,7 @@ fn manual_vectorized_tiled_elementwise_add[
     rank: Int,
     size: Int,
     tile_size: Int,
+    debug: Bool = True,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -102,7 +111,8 @@ fn manual_vectorized_tiled_elementwise_add[
         num_threads_per_tile: Int, rank: Int
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
-        print("tile_id:", tile_id)
+        if debug:
+            print("tile_id:", tile_id)
         out_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
@@ -128,6 +138,7 @@ fn vectorize_within_tiles_elementwise_add[
     rank: Int,
     size: Int,
     tile_size: Int,
+    debug: Bool = True,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -144,16 +155,17 @@ fn vectorize_within_tiles_elementwise_add[
         tile_start = tile_id * tile_size
         tile_end = min(tile_start + tile_size, size)
         actual_tile_size = tile_end - tile_start
-        print(
-            "tile_id:",
-            tile_id,
-            "tile_start:",
-            tile_start,
-            "tile_end:",
-            tile_end,
-            "actual_tile_size:",
-            actual_tile_size,
-        )
+        if debug:
+            print(
+                "tile_id:",
+                tile_id,
+                "tile_start:",
+                tile_start,
+                "tile_end:",
+                tile_end,
+                "actual_tile_size:",
+                actual_tile_size,
+            )
 
         # FILL IN (9 lines at most)
 
@@ -188,7 +200,7 @@ fn benchmark_elementwise_parameterized[
         b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
-        elementwise_add[layout, dtype, SIMD_WIDTH, rank, test_size](
+        elementwise_add[layout, dtype, SIMD_WIDTH, rank, test_size, False](
             out_tensor, a_tensor, b_tensor, ctx
         )
         keep(out.unsafe_ptr())
@@ -221,7 +233,7 @@ fn benchmark_tiled_parameterized[
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
         tiled_elementwise_add[
-            layout, dtype, SIMD_WIDTH, rank, test_size, tile_size
+            layout, dtype, SIMD_WIDTH, rank, test_size, tile_size, False
         ](out_tensor, a_tensor, b_tensor, ctx)
         keep(out.unsafe_ptr())
         ctx.synchronize()
@@ -253,7 +265,7 @@ fn benchmark_manual_vectorized_parameterized[
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
         manual_vectorized_tiled_elementwise_add[
-            layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
+            layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size, False
         ](out_tensor, a_tensor, b_tensor, ctx)
         keep(out.unsafe_ptr())
         ctx.synchronize()
@@ -285,7 +297,7 @@ fn benchmark_vectorized_parameterized[
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
         vectorize_within_tiles_elementwise_add[
-            layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
+            layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size, False
         ](out_tensor, a_tensor, b_tensor, ctx)
         keep(out.unsafe_ptr())
         ctx.synchronize()
