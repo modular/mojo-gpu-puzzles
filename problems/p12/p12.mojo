@@ -44,7 +44,6 @@ fn prefix_sum_local_phase[
     output: LayoutTensor[mut=False, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
-    num_blocks: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -106,7 +105,6 @@ def main():
                 out_tensor,
                 a_tensor,
                 size,
-                num_blocks,
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )

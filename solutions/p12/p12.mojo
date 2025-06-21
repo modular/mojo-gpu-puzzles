@@ -185,7 +185,6 @@ def main():
                 out_tensor,
                 a_tensor,
                 size,
-                num_blocks,
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
