@@ -73,8 +73,8 @@ struct Conv1DCustomOp:
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+        input: InputTensor[rank = output.rank],
+        kernel: InputTensor[rank = output.rank],
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:
@@ -90,9 +90,9 @@ struct Conv1DCustomOp:
             gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
-                DeviceBuffer[output.dtype](
+                DeviceBuffer[output_tensor.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                    rebind[UnsafePointer[Scalar[output_tensor.dtype]]](
                         output_tensor.ptr
                     ),
                     input_size,

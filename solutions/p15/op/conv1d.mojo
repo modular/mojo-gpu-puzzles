@@ -91,9 +91,9 @@ struct Conv1DCustomOp:
             gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             # gpu_ctx.enqueue_memset(
-            #     DeviceBuffer[output.type](
+            #     DeviceBuffer[output_tensor.type](
             #         gpu_ctx,
-            #         rebind[UnsafePointer[Scalar[output.type]]](output_tensor.ptr),
+            #         rebind[UnsafePointer[Scalar[output_tensor.type]]](output_tensor.ptr),
             #         input_size,
             #         owning=False,
             #     ),
