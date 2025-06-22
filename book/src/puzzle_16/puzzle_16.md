@@ -464,6 +464,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
            )
        ],
        parameters={
+           "target": "gpu" if device == Accelerator() else "cpu",
            "input_size": input_tensor.shape[0],
            "dtype": dtype,
        },
@@ -473,7 +474,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
    - Name matching the `@compiler.register("softmax")` in our Mojo code
    - Input values passed as a list
    - Output type definition matching the input shape and type
-   - Parameters required by our kernel, including the vector size and data type
+   - Parameters required by our kernel, including the target device, vector size and data type
    - We extract the tensor from the first returned element with `[0].tensor`
 
 3. **Graph Output Definition**:
