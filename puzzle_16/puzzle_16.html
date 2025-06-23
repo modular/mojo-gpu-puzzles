@@ -250,7 +250,6 @@ alias TPB = 128
 alias BLOCKS_PER_GRID = (1, 1)
 alias THREADS_PER_BLOCK = (TPB, 1)
 alias layout = Layout.row_major(SIZE)
-alias dtype = DType.float32
 
 
 fn softmax_gpu_kernel[
@@ -726,6 +725,7 @@ for i in range(input_size):
                 )
             ],
             parameters={
+                "target": "gpu" if device == Accelerator() else "cpu",
                 "input_size": input_tensor.shape[0],
                 "dtype": dtype,
             },
@@ -771,6 +771,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
         )
     ],
     parameters={
+        "target": "gpu" if device == Accelerator() else "cpu",
         "input_size": input_tensor.shape[0],
         "dtype": dtype,
     },
@@ -781,7 +782,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
 <li>Name matching the <code>@compiler.register("softmax")</code> in our Mojo code</li>
 <li>Input values passed as a list</li>
 <li>Output type definition matching the input shape and type</li>
-<li>Parameters required by our kernel, including the vector size and data type</li>
+<li>Parameters required by our kernel, including the target device, vector size and data type</li>
 <li>We extract the tensor from the first returned element with <code>[0].tensor</code></li>
 </ul>
 </li>
