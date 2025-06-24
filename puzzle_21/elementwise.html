@@ -213,7 +213,7 @@
 alias rank = 1
 alias layout = Layout.row_major(SIZE)
 alias dtype = DType.float32
-alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
+alias SIMD_WIDTH = simdwidthof[dtype, target = get_gpu_target()]()
 
 
 fn elementwise_add[
