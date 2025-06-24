@@ -137,15 +137,17 @@ struct SoftmaxCustomOp:
         if target == "gpu":
             gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
-            # gpu_ctx.enqueue_memset(
-            #     DeviceBuffer[output_tensor.type](
-            #         gpu_ctx,
-            #         rebind[UnsafePointer[Scalar[output_tensor.type]]](out_tensor.ptr),
-            #         input_size,
-            #         owning=False,
-            #     ),
-            #     0,
-            # )
+            gpu_ctx.enqueue_memset(
+                DeviceBuffer[output_tensor.dtype](
+                    gpu_ctx,
+                    rebind[UnsafePointer[Scalar[output_tensor.dtype]]](
+                        output_tensor.ptr
+                    ),
+                    input_size,
+                    owning=False,
+                ),
+                0,
+            )
 
             gpu_ctx.enqueue_function[
                 softmax_gpu_kernel[layout, input_size, dtype]
