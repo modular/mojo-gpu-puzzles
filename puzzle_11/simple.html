@@ -245,7 +245,7 @@ fn conv_1d_simple[
 <li>Load input to <code>shared_a[local_i]</code> and kernel to <code>shared_b[local_i]</code></li>
 <li>Call <code>barrier()</code> after loading</li>
 <li>Sum products within bounds: <code>if local_i + j &lt; SIZE</code></li>
-<li>Write result if <code>global_i &lt; a_size</code></li>
+<li>Write result if <code>global_i &lt; SIZE</code></li>
 </ol>
 </div>
 </details>
@@ -346,28 +346,39 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 <h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h3>
 <ol>
 <li>
-<p><strong>Memory Safety Considerations</strong>:</p>
+<p><strong>Thread Participation and Efficiency Considerations</strong>:</p>
 <ul>
 <li>
-<p>The naive approach without proper bounds checking could be unsafe:</p>
-<pre><code class="language-mojo"># Unsafe version - could access shared_a beyond its bounds
+<p>The inefficient approach without proper thread guard:</p>
+<pre><code class="language-mojo"># Inefficient version - all threads compute even when results won't be used
 local_sum = Scalar[dtype](0)
 for j in range(CONV):
     if local_i + j &lt; SIZE:
         local_sum += shared_a[local_i + j] * shared_b[j]
+# Only guard the final write
+if global_i &lt; SIZE:
+    output[global_i] = local_sum
 </code></pre>
 </li>
 <li>
-<p>The safe and correct implementation:</p>
-<pre><code class="language-mojo">if global_i &lt; a_size:
+<p>The efficient and correct implementation:</p>
+<pre><code class="language-mojo">if global_i &lt; SIZE:
     var local_sum: output.element_type = 0  # Using var allows type inference
     @parameter  # Unrolls loop at compile time since CONV is constant
     for j in range(CONV):
         if local_i + j &lt; SIZE:
             local_sum += shared_a[local_i + j] * shared_b[j]
+    output[global_i] = local_sum
 </code></pre>
 </li>
 </ul>
+<p>The key difference is that the inefficient version has <strong>all threads perform the convolution computation</strong> (including those where <code>global_i &gt;= SIZE</code>), and only the final write is guarded. This leads to:</p>
+<ul>
+<li><strong>Wasteful computation</strong>: Threads beyond the valid range still perform unnecessary work</li>
+<li><strong>Reduced efficiency</strong>: Extra computations that won’t be used</li>
+<li><strong>Poor resource utilization</strong>: GPU cores working on meaningless calculations</li>
+</ul>
+<p>The efficient version ensures that only threads with valid <code>global_i</code> values perform any computation, making better use of GPU resources.</p>
 </li>
 <li>
 <p><strong>Key Implementation Features</strong>:</p>

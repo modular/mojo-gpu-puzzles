@@ -335,13 +335,13 @@ shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
 <li>
 <p><strong>Data Loading Strategy</strong>:</p>
 <pre><code class="language-mojo"># Main block data
-if global_i &lt; a_size:
+if global_i &lt; SIZE_2:
     shared_a[local_i] = a[global_i]
 
 # Boundary data from next block
 if local_i &lt; CONV_2 - 1:
     next_idx = global_i + TPB
-    if next_idx &lt; a_size:
+    if next_idx &lt; SIZE_2:
         shared_a[TPB + local_i] = a[next_idx]
     else:
         # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
@@ -367,7 +367,7 @@ if local_i &lt; CONV_2 - 1:
 </li>
 <li>
 <p><strong>Convolution Computation</strong>:</p>
-<pre><code class="language-mojo">if global_i &lt; a_size:
+<pre><code class="language-mojo">if global_i &lt; SIZE_2:
     var local_sum: output.element_type = 0
     @parameter
     for j in range(CONV_2):
