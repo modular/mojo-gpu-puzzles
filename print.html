@@ -4995,10 +4995,12 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <tr><td><strong>Register blocking</strong></td><td>Reduce memory traffic with register accumulation</td><td>Loop unrolling with register variables</td></tr>
 <tr><td><strong>Kernel fusion</strong></td><td>More FLOPs per byte by combining operations</td><td>Single kernel handling multiple computation stages</td></tr>
 <tr><td><strong>Memory coalescing</strong></td><td>Maximize effective bandwidth utilization</td><td>Structured access patterns, proper thread organization</td></tr>
+<tr><td><strong>Asynchronous memory copies</strong></td><td>Dedicated copy engine enables compute-memory overlap</td><td><code>copy_dram_to_sram_async</code> with computation overlap</td></tr>
 <tr><td><strong>Mixed precision</strong></td><td>Smaller data types reduce memory pressure</td><td>FP16/BF16 input with FP32 accumulation</td></tr>
 </tbody></table>
 </div>
 <p>Each technique moves kernels along the roofline—either up the memory roof (better bandwidth utilization) or rightward toward the compute roof (higher arithmetic intensity).</p>
+<p><strong>Note on asynchronous operations</strong>: Standard GPU memory loads (<code>ld.global</code>) are already asynchronous - warps continue executing until they need the loaded data. Specialized async copy instructions like <code>cp.async</code> (CUDA) or <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a> (Mojo) provide additional benefits by using dedicated copy engines, bypassing registers, and enabling better resource utilization rather than simply making synchronous operations asynchronous.</p>
 <h2 id="7-beyond-simple-rooflines"><a class="header" href="#7-beyond-simple-rooflines">7. Beyond simple rooflines</a></h2>
 <p><strong>Multi-level memory</strong>: Advanced rooflines include separate ceilings for L2 cache, shared memory, and register bandwidth to identify which memory hierarchy level constrains performance.</p>
 <p><strong>Communication rooflines</strong>: For multi-GPU applications, replace memory bandwidth with interconnect bandwidth (NVLink, InfiniBand) to analyze scaling efficiency.</p>
@@ -5344,7 +5346,6 @@ Each block processes a tile using LayoutTensor indexing
 <li>Allocate shared memory for A and B tiles</li>
 <li>For each tile:
 <ul>
-<li>Reset shared memory</li>
 <li>Load tile from matrix A and B</li>
 <li>Compute partial products</li>
 <li>Accumulate results in registers</li>
@@ -5503,21 +5504,14 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     tiled_row = block_idx.y * TPB + local_row
     tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
 
     var acc: output.element_type = 0
 
     # Iterate over tiles to compute matrix product
     @parameter
     for tile in range((size + TPB - 1) // TPB):
-        # Reset shared memory tiles
-        if local_row &lt; TPB and local_col &lt; TPB:
-            a_shared[local_row, local_col] = 0
-            b_shared[local_row, local_col] = 0
-
-        barrier()
-
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
             a_shared[local_row, local_col] = a[
@@ -5613,25 +5607,23 @@ b_shared[local_row, local_col] = b[tile * TPB + local_row, tiled_col]
     acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
 <ul>
-<li>Maximizes memory coalescing:
-<pre><code class="language-txt">Coalesced Access (Good):          Non-Coalesced Access (Bad):
-Thread0: [M0][M1][M2][M3]         Thread0: [M0][ ][ ][ ]
-Thread1: [M4][M5][M6][M7]    vs   Thread1: [ ][M1][ ][ ]
-Thread2: [M8][M9][MA][MB]         Thread2: [ ][ ][M2][ ]
-Thread3: [MC][MD][ME][MF]         Thread3: [ ][ ][ ][M3]
-↓                                 ↓
-1 memory transaction              4 memory transactions
+<li>Avoids shared memory bank conflicts:
+<pre><code class="language-txt">Bank Conflict Free (Good):        Bank Conflicts (Bad):
+Thread0: a_shared[0,k] b_shared[k,0]  Thread0: a_shared[0,0] b_shared[0,0]
+Thread1: a_shared[1,k] b_shared[k,1]  Thread1: a_shared[0,1] b_shared[0,1]
+Thread2: a_shared[2,k] b_shared[k,2]  Thread2: a_shared[0,2] b_shared[0,2]
+↓                                     ↓
+Parallel access to different banks    Serialized access to same bank
 </code></pre>
-When threads access consecutive memory locations (left), the GPU can combine multiple reads into a single transaction.
-When threads access scattered locations (right), each access requires a separate transaction, reducing performance.</li>
+When threads access different rows/banks of shared memory (left), accesses can proceed in parallel.
+When threads access the same bank simultaneously (right), accesses are serialized, reducing performance.</li>
 </ul>
 </li>
 <li>
 <p><strong>Synchronization points</strong></p>
 <pre><code class="language-txt">barrier() after:
-1. Shared memory reset
-2. Tile loading
-3. Tile computation
+1. Tile loading
+2. Tile computation
 </code></pre>
 </li>
 </ol>
@@ -5762,9 +5754,10 @@ async_copy_wait_all()
 </code></pre>
 <p>These operations:</p>
 <ul>
-<li>Launch asynchronous memory transfers that may overlap with computation via <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<li>Use dedicated copy engines that bypass registers and enable compute-memory overlap via <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
+<li>Note: Standard GPU loads are already asynchronous; these provide better resource utilization</li>
 </ul>
 </li>
 <li>
@@ -5807,7 +5800,7 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <h3 id="key-differences-from-manual-tiling"><a class="header" href="#key-differences-from-manual-tiling">Key differences from manual tiling</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Manual Tiling</th><th>Idiomatic Tiling</th></tr></thead><tbody>
 <tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>LayoutTensor tile API</td></tr>
-<tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Asynchronous bulk transfers</td></tr>
+<tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Dedicated copy engine bulk transfers</td></tr>
 <tr><td>Shared memory</td><td>Manual initialization (zeroing)</td><td>Managed by copy functions</td></tr>
 <tr><td>Code complexity</td><td>More verbose with explicit indexing</td><td>More concise with higher-level APIs</td></tr>
 <tr><td>Bounds checking</td><td>Multiple checks during loading and computing</td><td>Single defensive check at final write</td></tr>

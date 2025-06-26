@@ -267,10 +267,12 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <tr><td><strong>Register blocking</strong></td><td>Reduce memory traffic with register accumulation</td><td>Loop unrolling with register variables</td></tr>
 <tr><td><strong>Kernel fusion</strong></td><td>More FLOPs per byte by combining operations</td><td>Single kernel handling multiple computation stages</td></tr>
 <tr><td><strong>Memory coalescing</strong></td><td>Maximize effective bandwidth utilization</td><td>Structured access patterns, proper thread organization</td></tr>
+<tr><td><strong>Asynchronous memory copies</strong></td><td>Dedicated copy engine enables compute-memory overlap</td><td><code>copy_dram_to_sram_async</code> with computation overlap</td></tr>
 <tr><td><strong>Mixed precision</strong></td><td>Smaller data types reduce memory pressure</td><td>FP16/BF16 input with FP32 accumulation</td></tr>
 </tbody></table>
 </div>
 <p>Each technique moves kernels along the roofline—either up the memory roof (better bandwidth utilization) or rightward toward the compute roof (higher arithmetic intensity).</p>
+<p><strong>Note on asynchronous operations</strong>: Standard GPU memory loads (<code>ld.global</code>) are already asynchronous - warps continue executing until they need the loaded data. Specialized async copy instructions like <code>cp.async</code> (CUDA) or <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a> (Mojo) provide additional benefits by using dedicated copy engines, bypassing registers, and enabling better resource utilization rather than simply making synchronous operations asynchronous.</p>
 <h2 id="7-beyond-simple-rooflines"><a class="header" href="#7-beyond-simple-rooflines">7. Beyond simple rooflines</a></h2>
 <p><strong>Multi-level memory</strong>: Advanced rooflines include separate ceilings for L2 cache, shared memory, and register bandwidth to identify which memory hierarchy level constrains performance.</p>
 <p><strong>Communication rooflines</strong>: For multi-GPU applications, replace memory bandwidth with interconnect bandwidth (NVLink, InfiniBand) to analyze scaling efficiency.</p>
