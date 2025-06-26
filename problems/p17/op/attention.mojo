@@ -88,7 +88,7 @@ fn transpose_kernel[
 
 
 # Apply softmax to attention scores taken from p16
-fn softmax_kernel[
+fn softmax_gpu_kernel[
     layout: Layout,
     seq_len: Int,
     dtype: DType = DType.float32,
@@ -206,10 +206,10 @@ struct AttentionCustomOp:
         d: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=1],  # Output vector (d,)
-        q: InputTensor[dtype=dtype, rank=1],  # Query vector (d,)
-        k: InputTensor[dtype=dtype, rank=2],  # Key matrix (seq_len, d)
-        v: InputTensor[dtype=dtype, rank=2],  # Value matrix (seq_len, d)
+        output: OutputTensor[rank=1],  # Output vector (d,)
+        q: InputTensor[rank=1],  # Query vector (d,)
+        k: InputTensor[rank=2],  # Key matrix (seq_len, d)
+        v: InputTensor[rank=2],  # Value matrix (seq_len, d)
         ctx: DeviceContextPtr,
     ) raises:
         # Define layouts

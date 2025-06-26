@@ -66,6 +66,7 @@ def attention(
         output = ops.custom(
             name="attention",
             values=[q_value, k_value, v_value],
+            device=DeviceRef.from_device(device),
             out_types=[
                 TensorType(
                     dtype=dtype,
