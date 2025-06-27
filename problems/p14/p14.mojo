@@ -64,8 +64,8 @@ fn matmul_tiled[
 ):
     local_row = thread_idx.y
     local_col = thread_idx.x
-    global_row = block_idx.y * TPB + local_row
-    global_col = block_idx.x * TPB + local_col
+    tiled_row = block_idx.y * TPB + thread_idx.y
+    tiled_col = block_idx.x * TPB + thread_idx.x
     # FILL ME IN (roughly 20 lines)
 
 

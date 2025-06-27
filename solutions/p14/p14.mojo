@@ -91,8 +91,8 @@ fn matmul_tiled[
     tiled_row = block_idx.y * TPB + local_row
     tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 
     var acc: output.element_type = 0
 
