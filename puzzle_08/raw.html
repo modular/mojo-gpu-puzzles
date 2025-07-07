@@ -214,6 +214,7 @@
 <blockquote>
 <p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> to ensure that threads do not cross.</p>
 </blockquote>
+<p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">alias TPB = 4
 alias SIZE = 8
@@ -251,7 +252,7 @@ fn add_10_shared(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Wait for shared memory load with <code>barrier()</code></li>
+<li>Wait for shared memory load with <code>barrier()</code> (educational - not strictly needed here)</li>
 <li>Use <code>local_i</code> to access shared memory: <code>shared[local_i]</code></li>
 <li>Use <code>global_i</code> for output: <code>output[global_i]</code></li>
 <li>Add guard: <code>if global_i &lt; size</code></li>
@@ -299,6 +300,10 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
     # wait for all threads to complete
     # works within a thread block
+    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
+    # However, it's included to teach proper shared memory synchronization patterns
+    # for more complex scenarios where threads need to coordinate access to shared data.
+    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
     barrier()
 
     # process using shared memory
@@ -337,6 +342,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <li>Process phase: Each thread adds 10 to its shared memory value</li>
 <li>Result: <code>output[i] = shared[local_i] + 10 = 11</code></li>
 </ul>
+<p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
 <li>
 <p><strong>Index mapping</strong></p>
