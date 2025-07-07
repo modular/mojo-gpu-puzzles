@@ -5609,11 +5609,15 @@ Thread1: a_shared[0,k] b_shared[k,1]  Thread1: a_shared[k,0] b_shared[1,k]
 Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 ↓                                     ↓
 Parallel access to different banks    Serialized access to same bank of b_shared
-(or broadcast for a_shared)           if shared memory was col_major (transposed)
+(or broadcast for a_shared)           if shared memory was column-major
 </code></pre>
-<p>Left: When threads from the same warp access different banks of shared memory during the same memory transaction (<code>b_shared[k,threadIdx.x]</code>), or all threads in a warp access the same shared memory address (<code>a_shared[0,k]</code>), accesses can proceed in parallel.
-Right: When threads from the same warp access the same bank simultaneously (bank <code>k</code> in <code>b_shared</code>), accesses are serialized, reducing performance.
-Note: Shared memory has 32 banks (on modern GPUs). Bank conflicts occur when multiple threads in a warp access different addresses in the same bank simultaneously. Broadcasts (same address) are handled efficiently.</p>
+<p><strong>Shared memory bank conflicts explained:</strong></p>
+<ul>
+<li><strong>Left (Good)</strong>: <code>b_shared[k,threadIdx.x]</code> accesses different banks, <code>a_shared[0,k]</code> broadcasts to all threads</li>
+<li><strong>Right (Bad)</strong>: If b_shared were column-major, threads would access same bank simultaneously</li>
+<li><strong>Key insight</strong>: This is about shared memory access patterns, not global memory coalescing</li>
+<li><strong>Bank structure</strong>: Shared memory has 32 banks; conflicts occur when multiple threads access different addresses in the same bank simultaneously</li>
+</ul>
 </li>
 </ul>
 </li>
@@ -5704,9 +5708,10 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB) # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TPB) # Coalesced loading
-    alias store_b_layout = Layout.row_major(TPB, 1) # Transposed storage
+    alias load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    alias load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    # Note: Both matrices stored in same orientation for correct matrix multiplication
+    # Transposed loading would be useful if B were pre-transposed in global memory
 
     @parameter
     for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
@@ -5714,9 +5719,9 @@ fn matmul_idiomatic_tiled[
         a_tile = a.tile[TPB, TPB](block_idx.y, idx)
         b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 
-        # Asynchronously copy tiles to shared memory
+        # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-        copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
+        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -5749,7 +5754,7 @@ b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 <li>
 <p><strong>Asynchronous memory operations</strong></p>
 <pre><code class="language-mojo">copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
+copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
 async_copy_wait_all()
 </code></pre>
 <p>These operations:</p>
@@ -5757,37 +5762,38 @@ async_copy_wait_all()
 <li>Use dedicated copy engines that bypass registers and enable compute-memory overlap via <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
-<li>Note: Standard GPU loads are already asynchronous; these provide better resource utilization</li>
+<li><strong>Important</strong>: Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass</li>
 </ul>
 </li>
 <li>
 <p><strong>Optimized memory access layouts</strong></p>
 <pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
 alias load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
-alias store_b_layout = Layout.row_major(TPB, 1)   # Transposed storage
+# Note: Both matrices stored in same orientation for correct matrix multiplication
+# Transposed loading would be useful if B were pre-transposed in global memory
 </code></pre>
 <p>These layouts optimize memory access patterns:</p>
 <ul>
 <li><code>load_a_layout</code>: Each thread loads consecutive elements from the same row (<strong>coalesced</strong>)</li>
 <li><code>load_b_layout</code>: Each thread loads consecutive elements from the same row (<strong>coalesced</strong>)</li>
-<li><code>store_b_layout</code>: Elements are rearranged in shared memory for optimal computation access</li>
+<li><strong>Key insight</strong>: Thread layout determines cooperation during copy, not final data layout</li>
 </ul>
 <p><strong>Memory Access Pattern Optimization:</strong></p>
-<pre><code class="language-txt">Without optimization (non-coalesced B access):
-Thread 0: B[0,col], B[1,col], B[2,col]  ← Different cache lines
-Thread 1: B[0,col], B[1,col], B[2,col]  ← Scattered memory access
-Thread 2: B[0,col], B[1,col], B[2,col]  ← Poor bandwidth utilization
+<pre><code class="language-txt">Matrix multiplication access pattern:
+Thread (i,j) computing C[i,j] = Σ(A[i,k] * B[k,j])
 
-With optimization (coalesced B access):
-Thread 0: B[row,0], B[row,1], B[row,2]  ← Same cache line
-Thread 1: B[row,0], B[row,1], B[row,2]  ← Coalesced memory access
-Thread 2: B[row,0], B[row,1], B[row,2]  ← Optimal bandwidth utilization
+For warp threads computing same row i, different columns:
+Thread 0: A[i,k] (broadcast) + B[k,0] (consecutive elements)
+Thread 1: A[i,k] (broadcast) + B[k,1] (consecutive elements)
+Thread 2: A[i,k] (broadcast) + B[k,2] (consecutive elements)
+
+Result: Coalesced access for both A and B with Layout.row_major(1, TPB)
 </code></pre>
-<p>Using separate <code>src_thread_layout</code> and <code>dst_thread_layout</code> parameters allows:</p>
+<p><strong>Why both matrices use the same layout:</strong></p>
 <ul>
-<li><strong>Coalesced loading</strong> from global memory for both matrices</li>
-<li><strong>Optimal shared memory layout</strong> for subsequent computation</li>
-<li><strong>Best performance</strong> by optimizing both loading and computation phases</li>
+<li>Matrix \(A\): Threads access same row, different columns → coalesced</li>
+<li>Matrix \(B\): Threads access same row, different columns → coalesced</li>
+<li><strong>No transpose needed</strong> for standard matrix multiplication \(A \times B\)</li>
 </ul>
 </li>
 <li>
@@ -5820,12 +5826,29 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Manual Tiling</th><th>Idiomatic Tiling</th></tr></thead><tbody>
 <tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>LayoutTensor tile API</td></tr>
 <tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Dedicated copy engine bulk transfers</td></tr>
-<tr><td>Shared memory</td><td>Manual initialization (zeroing)</td><td>Managed by copy functions</td></tr>
+<tr><td>Shared memory</td><td>Manual initialization (defensive)</td><td>Managed by copy functions</td></tr>
 <tr><td>Code complexity</td><td>More verbose with explicit indexing</td><td>More concise with higher-level APIs</td></tr>
 <tr><td>Bounds checking</td><td>Multiple checks during loading and computing</td><td>Single defensive check at final write</td></tr>
+<tr><td>Matrix orientation</td><td>Both A and B in same orientation</td><td>Both A and B in same orientation</td></tr>
+<tr><td>Performance</td><td>Explicit control over memory patterns</td><td>Optimized layouts with register bypass</td></tr>
 </tbody></table>
 </div>
 <p>The idiomatic approach is not just cleaner but also potentially more performant due to the use of specialized memory layouts and asynchronous operations.</p>
+<h3 id="when-would-transposed-loading-be-useful"><a class="header" href="#when-would-transposed-loading-be-useful">When would transposed loading be useful?</a></h3>
+<p>While this puzzle doesn’t require transposed loading, the layout system’s flexibility enables powerful optimizations in other scenarios:</p>
+<pre><code class="language-mojo"># Example: Loading pre-transposed matrix B^T to compute A × B
+alias load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
+alias store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
+</code></pre>
+<p><strong>Use cases for transposed loading:</strong></p>
+<ol>
+<li><strong>Pre-transposed input matrices</strong>: When \(B\) is already stored transposed in global memory</li>
+<li><strong>Different algorithms</strong>: Computing \(A^T \times B\), \(A \times B^T\), or \(A^T \times B^T\)</li>
+<li><strong>Memory layout conversion</strong>: Converting between row-major and column-major layouts</li>
+<li><strong>Avoiding transpose operations</strong>: Loading data directly in the required orientation</li>
+</ol>
+<p>This demonstrates Mojo’s philosophy: providing low-level control when needed while maintaining high-level abstractions for common cases.</p>
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-1d-convolution-op"><a class="header" href="#puzzle-15-1d-convolution-op">Puzzle 15: 1D Convolution Op</a></h1>
