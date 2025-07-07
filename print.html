@@ -5578,7 +5578,8 @@ For each tile:
 <li>
 <p><strong>Memory loading pattern</strong></p>
 <ul>
-<li>With perfect \((9 \times 9)\) tiling, bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.
+<li>
+<p>With perfect \((9 \times 9)\) tiling, bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.</p>
 <pre><code class="language-mojo">   # Load A tile - global row stays the same, col determined by tile
    if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
        a_shared[local_row, local_col] = a[
@@ -5600,7 +5601,8 @@ For each tile:
     acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
 <ul>
-<li>Avoids shared memory bank conflicts:
+<li>
+<p>Avoids shared memory bank conflicts:</p>
 <pre><code class="language-txt">Bank Conflict Free (Good):        Bank Conflicts (Bad):
 Thread0: a_shared[0,k] b_shared[k,0]  Thread0: a_shared[k,0] b_shared[0,k]
 Thread1: a_shared[0,k] b_shared[k,1]  Thread1: a_shared[k,0] b_shared[1,k]
@@ -5609,9 +5611,10 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 Parallel access to different banks    Serialized access to same bank of b_shared
 (or broadcast for a_shared)           if shared memory was col_major (transposed)
 </code></pre>
-Left: When threads from the same warp access different banks of shared memory during the same memory transaction (<code>b_shared[k,threadIdx.x]</code>), or all threads in a warp access the same shared memory address (<code>a_shared[0,k]</code>), accesses can proceed in parallel.
+<p>Left: When threads from the same warp access different banks of shared memory during the same memory transaction (<code>b_shared[k,threadIdx.x]</code>), or all threads in a warp access the same shared memory address (<code>a_shared[0,k]</code>), accesses can proceed in parallel.
 Right: When threads from the same warp access the same bank simultaneously (bank <code>k</code> in <code>b_shared</code>), accesses are serialized, reducing performance.
-Note: Shared memory has 32 banks (on modern GPUs). Bank conflicts occur when multiple threads in a warp access different addresses in the same bank simultaneously. Broadcasts (same address) are handled efficiently.</li>
+Note: Shared memory has 32 banks (on modern GPUs). Bank conflicts occur when multiple threads in a warp access different addresses in the same bank simultaneously. Broadcasts (same address) are handled efficiently.</p>
+</li>
 </ul>
 </li>
 <li>
@@ -5630,7 +5633,8 @@ Note: Shared memory has 32 banks (on modern GPUs). Bank conflicts occur when mul
 <li>Optimized shared memory layout and access pattern to avoid shared memory bank conflicts</li>
 </ul>
 <ol start="6">
-<li><strong>Result writing</strong>:
+<li>
+<p><strong>Result writing</strong>:</p>
 <pre><code class="language-mojo">if tiled_row &lt; size and tiled_col &lt; size:
    output[tiled_row, tiled_col] = acc
 </code></pre>
@@ -5700,8 +5704,9 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)
-    alias load_b_layout = Layout.row_major(TPB, 1)
+    alias load_a_layout = Layout.row_major(1, TPB) # Coalesced loading
+    alias load_b_layout = Layout.row_major(1, TPB) # Coalesced loading
+    alias store_b_layout = Layout.row_major(TPB, 1) # Transposed storage
 
     @parameter
     for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
@@ -5711,7 +5716,7 @@ fn matmul_idiomatic_tiled[
 
         # Asynchronously copy tiles to shared memory
         copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+        copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -5744,7 +5749,7 @@ b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 <li>
 <p><strong>Asynchronous memory operations</strong></p>
 <pre><code class="language-mojo">copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 async_copy_wait_all()
 </code></pre>
 <p>These operations:</p>
@@ -5756,14 +5761,33 @@ async_copy_wait_all()
 </ul>
 </li>
 <li>
-<p><strong>Specialized compile-time load layouts</strong></p>
-<pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)
-alias load_b_layout = Layout.row_major(TPB, 1)
+<p><strong>Optimized memory access layouts</strong></p>
+<pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
+alias load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
+alias store_b_layout = Layout.row_major(TPB, 1)   # Transposed storage
 </code></pre>
-<p>These layouts optimize how threads cooperate during memory transfers:</p>
+<p>These layouts optimize memory access patterns:</p>
 <ul>
-<li><code>load_a_layout</code>: Each thread loads a slice of a row (coalesced access)</li>
-<li><code>load_b_layout</code>: Each thread loads a slice of a column (transposed access)</li>
+<li><code>load_a_layout</code>: Each thread loads consecutive elements from the same row (<strong>coalesced</strong>)</li>
+<li><code>load_b_layout</code>: Each thread loads consecutive elements from the same row (<strong>coalesced</strong>)</li>
+<li><code>store_b_layout</code>: Elements are rearranged in shared memory for optimal computation access</li>
+</ul>
+<p><strong>Memory Access Pattern Optimization:</strong></p>
+<pre><code class="language-txt">Without optimization (non-coalesced B access):
+Thread 0: B[0,col], B[1,col], B[2,col]  ← Different cache lines
+Thread 1: B[0,col], B[1,col], B[2,col]  ← Scattered memory access
+Thread 2: B[0,col], B[1,col], B[2,col]  ← Poor bandwidth utilization
+
+With optimization (coalesced B access):
+Thread 0: B[row,0], B[row,1], B[row,2]  ← Same cache line
+Thread 1: B[row,0], B[row,1], B[row,2]  ← Coalesced memory access
+Thread 2: B[row,0], B[row,1], B[row,2]  ← Optimal bandwidth utilization
+</code></pre>
+<p>Using separate <code>src_thread_layout</code> and <code>dst_thread_layout</code> parameters allows:</p>
+<ul>
+<li><strong>Coalesced loading</strong> from global memory for both matrices</li>
+<li><strong>Optimal shared memory layout</strong> for subsequent computation</li>
+<li><strong>Best performance</strong> by optimizing both loading and computation phases</li>
 </ul>
 </li>
 <li>
