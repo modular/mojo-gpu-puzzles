@@ -291,20 +291,6 @@ This implements a parallel tree-reduction pattern:
 
 This logarithmic reduction is significantly faster than a linear scan on large inputs.
 
-**Note**: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:
-```mojo
-stride = TPB // 2
-while stride > 0:
-    var temp_max: Scalar[dtype] = min_finite[dtype]()
-    if local_i < stride:
-        temp_max = rebind[Scalar[dtype]](shared_max[local_i + stride])  # Read phase
-    barrier()
-    if local_i < stride:
-        shared_max[local_i] = max(shared_max[local_i], temp_max)  # Write phase
-    barrier()
-    stride = stride // 2
-```
-
 #### Exponentiation with numerical stability
 ```mojo
 block_max = shared_max[0]
@@ -312,14 +298,12 @@ block_max = shared_max[0]
 var exp_val: Scalar[dtype] = 0.0
 if global_i < input_size:
     exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    output[global_i] = exp_val
 ```
 Each thread:
 1. Reads the global maximum from shared memory
 2. Subtracts it from its input value before taking the exponential
 3. This subtraction is crucial for numerical stability - it prevents overflow
 4. The largest exponent becomes \\(e^0 = 1\\), and all others are \\(e^{negative} < 1\\)
-5. Stores the intermediate result in the output buffer
 
 #### Parallel sum reduction
 ```mojo
@@ -339,26 +323,12 @@ The second reduction phase:
 3. But performs addition instead of maximum comparison
 4. After \\(\log_2(TPB)\\) steps, `shared_sum[0]` contains the total sum of all exponentials
 
-**Note**: This sum reduction also has the same race condition as the max reduction. The safer implementation would be:
-```mojo
-stride = TPB // 2
-while stride > 0:
-    var temp_sum: Scalar[dtype] = 0.0
-    if local_i < stride:
-        temp_sum = shared_sum[local_i + stride]  # Read phase
-    barrier()
-    if local_i < stride:
-        shared_sum[local_i] += temp_sum  # Write phase
-    barrier()
-    stride = stride // 2
-```
-
 #### Final normalization
 ```mojo
 block_sum = shared_sum[0]
 
 if global_i < input_size:
-    output[global_i] = output[global_i] / block_sum
+    output[global_i] = exp_val / block_sum
 ```
 Each thread:
 1. Reads the total sum from shared memory
@@ -377,8 +347,6 @@ The implementation has excellent performance characteristics:
 - **Memory access**: Coalesced global memory access pattern for optimal bandwidth
 
 The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.
-
-**Race condition considerations**: Both parallel reductions in this implementation may have read-write hazards during shared memory access. While the current implementation may work in practice due to GPU memory consistency models, the safer approach would use explicit read-write phase separation as shown in the notes above.
 </div>
 
 ### CPU fallback implementation:
