@@ -277,6 +277,8 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
     if global_i &lt; SIZE_2:
         shared_a[local_i] = a[global_i]
+    else:
+        shared_a[local_i] = 0
 
     # second: load elements needed for convolution at block boundary
     if local_i &lt; CONV_2 - 1:
