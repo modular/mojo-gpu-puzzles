@@ -6502,46 +6502,40 @@ Sum of all probabilities on GPU: 1.0
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
-    var thread_max: Scalar[dtype] = min_finite[dtype]()
+    # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
+    # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
+    # do not influence the result (max(min_finite, x) == x for any x).
+    var thread_max: Scalar[dtype] = min_finite[dtype]() 
     if global_i &lt; input_size:
         thread_max = rebind[Scalar[dtype]](input[global_i])
-
     shared_max[local_i] = thread_max
+
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    # Note we need to avoid race conditions by reading the value first and then writing
     stride = TPB // 2
     while stride &gt; 0:
-        var temp_max: Scalar[dtype] = min_finite[dtype]()
         if local_i &lt; stride:
-            temp_max = rebind[Scalar[dtype]](shared_max[local_i + stride])
-        barrier()
-        if local_i &lt; stride:
-            shared_max[local_i] = max(shared_max[local_i], temp_max)
+            shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
         barrier()
         stride = stride // 2
 
     block_max = shared_max[0]
 
+    # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to 0.0,
+    # ensuring that if these elements are accessed in the parallel sum reduction below they
+    # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
     if global_i &lt; input_size:
         exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-        output[global_i] = exp_val
-
     shared_sum[local_i] = exp_val
     barrier()
 
     # Parallel reduction for sum similar to reduction we saw before
-    # Note we need to avoid race conditions by reading the value first and then writing
     stride = TPB // 2
     while stride &gt; 0:
-        var temp_sum: Scalar[dtype] = 0.0
         if local_i &lt; stride:
-            temp_sum = rebind[Scalar[dtype]](shared_sum[local_i + stride])
-        barrier()
-        if local_i &lt; stride:
-            shared_sum[local_i] += temp_sum
+            shared_sum[local_i] += shared_sum[local_i + stride]
         barrier()
         stride = stride // 2
 
@@ -6549,7 +6543,7 @@ Sum of all probabilities on GPU: 1.0
 
     # Normalize by sum
     if global_i &lt; input_size:
-        output[global_i] = output[global_i] / block_sum
+        output[global_i] = exp_val / block_sum
 
 
 </code></pre>
@@ -6627,25 +6621,12 @@ while stride &gt; 0:
 <li>After \(\log_2(TPB)\) steps, shared_max[0] contains the global maximum</li>
 </ol>
 <p>This logarithmic reduction is significantly faster than a linear scan on large inputs.</p>
-<p><strong>Note</strong>: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:</p>
-<pre><code class="language-mojo">stride = TPB // 2
-while stride &gt; 0:
-    var temp_max: Scalar[dtype] = min_finite[dtype]()
-    if local_i &lt; stride:
-        temp_max = rebind[Scalar[dtype]](shared_max[local_i + stride])  # Read phase
-    barrier()
-    if local_i &lt; stride:
-        shared_max[local_i] = max(shared_max[local_i], temp_max)  # Write phase
-    barrier()
-    stride = stride // 2
-</code></pre>
 <h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
 <pre><code class="language-mojo">block_max = shared_max[0]
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i &lt; input_size:
     exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    output[global_i] = exp_val
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -6653,7 +6634,6 @@ if global_i &lt; input_size:
 <li>Subtracts it from its input value before taking the exponential</li>
 <li>This subtraction is crucial for numerical stability - it prevents overflow</li>
 <li>The largest exponent becomes \(e^0 = 1\), and all others are \(e^{negative} &lt; 1\)</li>
-<li>Stores the intermediate result in the output buffer</li>
 </ol>
 <h4 id="parallel-sum-reduction"><a class="header" href="#parallel-sum-reduction">Parallel sum reduction</a></h4>
 <pre><code class="language-mojo">shared_sum[local_i] = exp_val
@@ -6673,23 +6653,11 @@ while stride &gt; 0:
 <li>But performs addition instead of maximum comparison</li>
 <li>After \(\log_2(TPB)\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
 </ol>
-<p><strong>Note</strong>: This sum reduction also has the same race condition as the max reduction. The safer implementation would be:</p>
-<pre><code class="language-mojo">stride = TPB // 2
-while stride &gt; 0:
-    var temp_sum: Scalar[dtype] = 0.0
-    if local_i &lt; stride:
-        temp_sum = shared_sum[local_i + stride]  # Read phase
-    barrier()
-    if local_i &lt; stride:
-        shared_sum[local_i] += temp_sum  # Write phase
-    barrier()
-    stride = stride // 2
-</code></pre>
 <h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
 <pre><code class="language-mojo">block_sum = shared_sum[0]
 
 if global_i &lt; input_size:
-    output[global_i] = output[global_i] / block_sum
+    output[global_i] = exp_val / block_sum
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -6709,7 +6677,6 @@ if global_i &lt; input_size:
 <li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal bandwidth</li>
 </ul>
 <p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
-<p><strong>Race condition considerations</strong>: Both parallel reductions in this implementation may have read-write hazards during shared memory access. While the current implementation may work in practice due to GPU memory consistency models, the safer approach would use explicit read-write phase separation as shown in the notes above.</p>
 </div>
 <h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
