@@ -75,12 +75,12 @@ fn matmul_tiled[
 def main():
     with DeviceContext() as ctx:
         if len(argv()) != 2 or argv()[1] not in [
-            "--simple",
+            "--naive",
             "--single-block",
             "--tiled",
         ]:
             raise Error(
-                "Expected one argument: '--simple', '--single-block', or"
+                "Expected one argument: '--naive', '--single-block', or"
                 " '--tiled'"
             )
         size = SIZE_TILED if argv()[1] == "--tiled" else SIZE
