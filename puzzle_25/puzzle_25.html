@@ -1,0 +1,669 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 25: Async Memory Operations &amp; Copy Overlap - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="..//puzzles_images/puzzle-mark.svg">
+        <meta property="og:url" content="https://builds.modular.com/puzzles">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="..//puzzles_images/puzzle-mark.svg">
+        <link rel="icon" type="image/png" href="..//puzzles_images/puzzle-mark.svg">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="puzzle-25-async-memory-operations--copy-overlap"><a class="header" href="#puzzle-25-async-memory-operations--copy-overlap">Puzzle 25: Async Memory Operations &amp; Copy Overlap</a></h1>
+<p><strong>The GPU Memory Bottleneck:</strong> Most real-world GPU algorithms hit a frustrating wall - they’re not limited by compute power, but by <strong>memory bandwidth</strong>. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.</p>
+<p>Consider this common scenario in GPU programming:</p>
+<pre><code class="language-mojo"># The performance killer - sequential memory operations
+load_input_tile()     # ← 500 cycles waiting for DRAM
+load_kernel_data()    # ← Another 100 cycles waiting
+barrier()             # ← All threads wait idle
+compute()             # ← Finally, 50 cycles of actual work
+# Total: 650 cycles, only 7.7% compute utilization!
+</code></pre>
+<p><strong>What if you could do this instead?</strong></p>
+<pre><code class="language-mojo"># The performance win - overlapped operations
+launch_async_load()   # ← Start 500-cycle transfer in background
+load_small_data()     # ← 100 cycles of useful work while waiting
+wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
+# Total: ~550 cycles, 45% better utilization!
+</code></pre>
+<p><strong>This is the power of async memory operations</strong> - the difference between a sluggish algorithm and one that maximizes your GPU’s potential.</p>
+<h2 id="why-this-matters"><a class="header" href="#why-this-matters">Why this matters</a></h2>
+<p>In this puzzle, you’ll transform a memory-bound 1D convolution from <a href="../puzzle_11/puzzle_11.html">Puzzle 11</a> into a high-performance implementation that <strong>hides memory latency behind computation</strong>. This isn’t just an academic exercise - these patterns are fundamental to:</p>
+<ul>
+<li><strong>Deep learning</strong>: Efficiently loading weights and activations</li>
+<li><strong>Scientific computing</strong>: Overlapping data transfers in stencil operations</li>
+<li><strong>Image processing</strong>: Streaming large datasets through memory hierarchies</li>
+<li><strong>Any memory-bound algorithm</strong>: Converting waiting time into productive work</li>
+</ul>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before diving in, ensure you have solid foundation in:</p>
+<p><strong>Essential GPU programming concepts:</strong></p>
+<ul>
+<li><strong>Shared memory programming</strong> (<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>) - You’ll extend matmul patterns</li>
+<li><strong>Memory coalescing</strong> (<a href="../puzzle_19/puzzle_19.html">Puzzle 19</a>) - Critical for optimal async transfers</li>
+<li><strong>Tiled processing</strong> (<a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>) - The foundation for this optimization</li>
+</ul>
+<p><strong>Hardware understanding:</strong></p>
+<ul>
+<li>GPU memory hierarchy (DRAM → Shared Memory → Registers)</li>
+<li>Thread block organization and synchronization</li>
+<li>Basic understanding of memory latency vs. bandwidth</li>
+</ul>
+<p><strong>API familiarity:</strong> <a href="https://docs.modular.com/mojo/stdlib/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<blockquote>
+<p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that may require modern GPU architectures. If you encounter compilation errors related to <code>.async</code> modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.</p>
+<p><strong>Check your GPU compute capability:</strong></p>
+<pre><code class="language-bash">nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
+</code></pre>
+<ul>
+<li><strong>SM_70 and above</strong> (e.g., V100, T4, A10G, RTX 20+ series): Basic async copy supported</li>
+<li><strong>SM_80 and above</strong> (e.g., A100, RTX 30+ series): Full async copy features</li>
+<li><strong>SM_90 and above</strong> (e.g., H100, RTX 40+ series): Advanced TMA operations supported</li>
+</ul>
+</blockquote>
+<h2 id="what-youll-focus"><a class="header" href="#what-youll-focus">What you’ll focus</a></h2>
+<p>By the end of this puzzle, you’ll have hands-on experience with:</p>
+<h3 id="core-techniques"><a class="header" href="#core-techniques"><strong>Core techniques</strong></a></h3>
+<ul>
+<li><strong>Async copy primitives</strong>: Launch background DRAM→SRAM transfers</li>
+<li><strong>Latency hiding</strong>: Overlap expensive memory operations with useful computation</li>
+<li><strong>Thread layout optimization</strong>: Match memory access patterns to hardware</li>
+<li><strong>Pipeline programming</strong>: Structure algorithms for maximum memory utilization</li>
+</ul>
+<h3 id="key-apis-youll-focus"><a class="header" href="#key-apis-youll-focus"><strong>Key APIs you’ll focus</strong></a></h3>
+<p>Building on the async copy operations introduced in <a href="../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14’s idiomatic matmul</a>, you’ll now focus specifically on their memory optimization potential:</p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: Launch background DRAM→SRAM transfers using dedicated copy engines</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all"><code>async_copy_wait_all()</code></a></strong>: Synchronize transfer completion before accessing shared memory</li>
+</ul>
+<p><strong>What’s different from Puzzle 14?</strong> While Puzzle 14 used async copy for clean tile loading in matmul, this puzzle focuses specifically on <strong>latency hiding</strong> - structuring algorithms to overlap expensive memory operations with useful computation work.</p>
+<h3 id="performance-impact"><a class="header" href="#performance-impact"><strong>Performance impact</strong></a></h3>
+<p>These techniques can provide <strong>significant speedups</strong> for memory-bound algorithms by:</p>
+<ul>
+<li><strong>Hiding DRAM latency</strong>: Convert idle waiting into productive computation time</li>
+<li><strong>Maximizing bandwidth</strong>: Optimal memory access patterns prevent cache misses</li>
+<li><strong>Pipeline efficiency</strong>: Keep compute units busy while memory transfers happen in parallel</li>
+</ul>
+<blockquote>
+<p><strong>What are async copy operations?</strong> <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution">Asynchronous copy operations</a> allow GPU blocks to initiate memory transfers that execute in the background while the block continues with other work. This enables overlapping computation with memory movement, a fundamental optimization technique for memory-bound algorithms.</p>
+</blockquote>
+<p>💡 <strong>Success tip</strong>: Think of this as <strong>pipeline programming for GPU memory</strong> - overlap stages, hide latencies, and maximize throughput. The goal is to keep your expensive compute units busy while data moves in the background.</p>
+<h2 id="understanding-halo-regions"><a class="header" href="#understanding-halo-regions">Understanding halo regions</a></h2>
+<p>Before diving into async copy operations, it’s essential to understand <strong>halo regions</strong> (also called ghost cells or guard cells), which are fundamental to tile-based processing with stencil operations like convolution.</p>
+<h3 id="what-is-a-halo-region"><a class="header" href="#what-is-a-halo-region">What is a halo region?</a></h3>
+<p>A <strong>halo region</strong> consists of <strong>extra elements</strong> that extend beyond the boundaries of a processing tile to provide necessary neighboring data for stencil computations. When processing elements near tile edges, the stencil operation requires access to data from adjacent tiles.</p>
+<h3 id="why-halo-regions-are-necessary"><a class="header" href="#why-halo-regions-are-necessary">Why halo regions are necessary</a></h3>
+<p>Consider a 1D convolution with a 5-point kernel on a tile:</p>
+<pre><code>Original data:   [... | a b c d e f g h i j k l m n o | ...]
+Processing tile:       [c d e f g h i j k l m n o]
+                            ^                 ^
+                     Need neighbors    Need neighbors
+                     from left tile    from right tile
+
+With halo:       [a b | c d e f g h i j k l m n o | p q]
+                  ^^^                               ^^^
+                  Left halo                      Right halo
+</code></pre>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li><strong>Halo size</strong>: Typically <code>KERNEL_SIZE // 2</code> elements on each side</li>
+<li><strong>Purpose</strong>: Enable correct stencil computation at tile boundaries</li>
+<li><strong>Content</strong>: Copies of data from neighboring tiles or boundary conditions</li>
+<li><strong>Memory overhead</strong>: Small additional storage for significant computational benefit</li>
+</ul>
+<h3 id="halo-region-in-convolution"><a class="header" href="#halo-region-in-convolution">Halo region in convolution</a></h3>
+<p>For a 5-point convolution kernel \([k_0, k_1, k_2, k_3, k_4]\):</p>
+<ul>
+<li><strong>Center element</strong>: \(k_2\) aligns with the current processing element</li>
+<li><strong>Left neighbors</strong>: \(k_0, k_1\) require 2 elements to the left</li>
+<li><strong>Right neighbors</strong>: \(k_3, k_4\) require 2 elements to the right</li>
+<li><strong>Halo size</strong>: <code>HALO_SIZE = 5 // 2 = 2</code> elements on each side</li>
+</ul>
+<p><strong>Without halo regions:</strong></p>
+<ul>
+<li>Tile boundary elements cannot perform full convolution</li>
+<li>Results in incorrect output or complex boundary handling logic</li>
+<li>Performance suffers from scattered memory access patterns</li>
+</ul>
+<p><strong>With halo regions:</strong></p>
+<ul>
+<li>All tile elements can perform full convolution using local data</li>
+<li>Simplified, efficient computation with predictable memory access</li>
+<li>Better cache utilization and memory coalescing</li>
+</ul>
+<p>This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.</p>
+<h2 id="async-copy-overlap-with-1d-convolution"><a class="header" href="#async-copy-overlap-with-1d-convolution">Async copy overlap with 1D convolution</a></h2>
+<p><strong>Building on <a href="../puzzle_11/puzzle_11.html">Puzzle 11</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 11, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
+<h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>VECTOR_SIZE = 16384</code> (16K elements across multiple blocks)</li>
+<li>Tile size: <code>CONV_TILE_SIZE = 256</code> (processing tile size)</li>
+<li>Block configuration: <code>(256, 1)</code> threads per block</li>
+<li>Grid configuration: <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> blocks per grid (64 blocks)</li>
+<li>Kernel size: <code>KERNEL_SIZE = 5</code> (simple 1D convolution, same as Puzzle 11)</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Layout: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="the-async-copy-opportunity"><a class="header" href="#the-async-copy-opportunity">The async copy opportunity</a></h3>
+<p><strong>Building on Puzzle 14:</strong> You’ve already seen <code>copy_dram_to_sram_async</code> used for clean tile loading in matmul. Now we’ll focus on its <strong>latency hiding capabilities</strong> - the key to high-performance memory-bound algorithms.</p>
+<p>Traditional synchronous memory loading forces compute units to wait idle during transfers. Async copy operations enable overlapping transfers with useful work:</p>
+<pre><code class="language-mojo"># Synchronous approach - INEFFICIENT:
+for i in range(CONV_TILE_SIZE):
+    input_shared[i] = input[base_idx + i]  # Each load waits for DRAM
+for i in range(KERNEL_SIZE):
+    kernel_shared[i] = kernel[i]           # More waiting for DRAM
+barrier()  # All threads wait before computation begins
+# ↑ Total time = input_transfer_time + kernel_transfer_time
+
+# Async copy approach - EFFICIENT:
+copy_dram_to_sram_async[thread_layout](input_shared, input_tile)  # Launch background transfer
+# While input transfers in background, load kernel synchronously
+for i in range(KERNEL_SIZE):
+    kernel_shared[i] = kernel[i]  # Overlaps with async input transfer
+async_copy_wait_all()  # Wait only when both operations complete
+# ↑ Total time = MAX(input_transfer_time, kernel_transfer_time)
+</code></pre>
+<p><strong>Why async copy works so well:</strong></p>
+<ul>
+<li><strong>Dedicated copy engines</strong>: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in <a href="../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14</a>)</li>
+<li><strong>Latency hiding</strong>: Memory transfers happen while GPU threads execute other operations</li>
+<li><strong>Optimal coalescing</strong>: Thread layouts ensure efficient DRAM access patterns</li>
+<li><strong>Resource utilization</strong>: Compute units stay busy instead of waiting idle</li>
+</ul>
+<h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
+<p>Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 14’s matmul implementation.</p>
+<p><strong>Mathematical operation:</strong> Compute 1D convolution across large vector using async copy for efficiency:
+\[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
+<p><strong>Async copy algorithm:</strong></p>
+<ol>
+<li><strong>Async tile loading:</strong> Launch background DRAM→SRAM transfer for input data</li>
+<li><strong>Overlapped operations:</strong> Load small kernel data while input transfers</li>
+<li><strong>Synchronization:</strong> Wait for transfers, then compute using shared memory</li>
+</ol>
+<pre><code class="language-mojo">alias VECTOR_SIZE = 16384
+alias CONV_TILE_SIZE = 256
+alias KERNEL_SIZE = 5
+alias HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
+alias BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
+alias BLOCKS_PER_GRID_ASYNC = (VECTOR_SIZE + CONV_TILE_SIZE - 1) // CONV_TILE_SIZE
+alias THREADS_PER_BLOCK_ASYNC = 256
+alias dtype = DType.float32
+alias layout_async = Layout.row_major(VECTOR_SIZE)
+
+
+fn async_copy_overlap_convolution[
+    dtype: DType, layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+):
+    """Demonstrates async copy operations building on p14 patterns.
+
+    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
+    for efficient memory transfers, extending the patterns from p14 matmul.
+    """
+
+    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
+    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
+    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
+
+    # FILL IN HERE (roughly 19 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-async-copy-mechanics"><a class="header" href="#1-understanding-async-copy-mechanics">1. <strong>Understanding async copy mechanics</strong></a></h3>
+<p>Async copy operations initiate background transfers while your block continues executing other code.</p>
+<p><strong>Key questions to explore:</strong></p>
+<ul>
+<li>What data needs to be transferred from DRAM to shared memory?</li>
+<li>Which operations can execute while the transfer happens in the background?</li>
+<li>How does the hardware coordinate multiple concurrent operations?</li>
+</ul>
+<p><strong>Thread layout considerations:</strong></p>
+<ul>
+<li>Your block has <code>(THREADS_PER_BLOCK_ASYNC, 1) = (256, 1)</code> threads</li>
+<li>The tile has <code>CONV_TILE_SIZE = 256</code> elements</li>
+<li>What layout pattern ensures optimal memory coalescing?</li>
+</ul>
+<h3 id="2-identifying-overlap-opportunities"><a class="header" href="#2-identifying-overlap-opportunities">2. <strong>Identifying overlap opportunities</strong></a></h3>
+<p>The goal is to hide memory latency behind useful computation.</p>
+<p><strong>Analysis approach:</strong></p>
+<ul>
+<li>What operations must happen sequentially vs. in parallel?</li>
+<li>Which data transfers are large (expensive) vs. small (cheap)?</li>
+<li>How can you structure the algorithm to maximize parallel execution?</li>
+</ul>
+<p><strong>Memory hierarchy considerations:</strong></p>
+<ul>
+<li>Large input tile: 256 elements × 4 bytes = 1KB transfer</li>
+<li>Small kernel: 5 elements × 4 bytes = 20 bytes</li>
+<li>Which transfer benefits most from async optimization?</li>
+</ul>
+<h3 id="3-synchronization-strategy"><a class="header" href="#3-synchronization-strategy">3. <strong>Synchronization strategy</strong></a></h3>
+<p>Proper synchronization ensures correctness without sacrificing performance.</p>
+<p><strong>Timing analysis:</strong></p>
+<ul>
+<li>When does each operation actually need its data to be ready?</li>
+<li>What’s the minimum synchronization required for correctness?</li>
+<li>How do you avoid unnecessary stalls while maintaining data dependencies?</li>
+</ul>
+<p><strong>Race condition prevention:</strong></p>
+<ul>
+<li>What happens if computation starts before transfers complete?</li>
+<li>How do memory fences and barriers coordinate different memory operations?</li>
+</ul>
+</div>
+</details>
+<p><strong>Test the async copy overlap:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25
+</code></pre>
+  </div>
+</div>
+<h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
+<details class="solution-details">
+<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
+<pre><code class="language-mojo">fn async_copy_overlap_convolution[
+    dtype: DType, layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+):
+    """Demonstrates async copy operations building on p14 patterns.
+
+    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
+    for efficient memory transfers, extending the patterns from p14 matmul.
+    """
+
+    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
+    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
+    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
+
+    local_i = thread_idx.x
+
+    # Phase 1: Always use async copy - hardware handles bounds automatically
+    # Create tile for all blocks - hardware will zero-pad out-of-bounds access
+    input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+
+    # Use async copy with thread layout matching p14 pattern
+    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+    copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
+
+    # Phase 2: Load kernel synchronously (small data)
+    if local_i &lt; KERNEL_SIZE:
+        kernel_shared[local_i] = kernel[local_i]
+
+    # Phase 3: Wait for async copy to complete
+    async_copy_wait_all()  # Always wait since we always do async copy
+    barrier()  # Sync all threads
+
+    # Phase 4: Compute convolution
+    global_i = block_idx.x * CONV_TILE_SIZE + local_i
+    if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
+        var result: output.element_type = 0
+
+        # Simple convolution avoiding boundary issues
+        if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
+            # Full convolution for center elements
+            for k in range(KERNEL_SIZE):
+                input_idx = local_i + k - HALO_SIZE
+                if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
+                    result += input_shared[input_idx] * kernel_shared[k]
+        else:
+            # For boundary elements, just copy input (no convolution)
+            result = input_shared[local_i]
+
+        output[global_i] = result
+
+
+</code></pre>
+<h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
+<p><strong>Phase 1: Async Copy Launch</strong></p>
+<pre><code class="language-mojo"># Phase 1: Always use async copy - hardware handles bounds automatically
+input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
+</code></pre>
+<ul>
+<li>
+<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. <strong>Note</strong>: The implementation assumes hardware/runtime handles bounds checking and zero-padding for out-of-bounds access, which may not be true in all environments.</p>
+</li>
+<li>
+<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code> creates a 256×1 layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
+</li>
+<li>
+<p><strong>Async Copy Launch</strong>: <code>copy_dram_to_sram_async</code> initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.</p>
+</li>
+</ul>
+<p><strong>Phase 2: Overlapped Operation</strong></p>
+<pre><code class="language-mojo"># Phase 2: Load kernel synchronously (small data)
+if local_i &lt; KERNEL_SIZE:
+    kernel_shared[local_i] = kernel[local_i]
+</code></pre>
+<ul>
+<li>
+<p><strong>Simultaneous Execution</strong>: While the 1KB input tile transfers in the background, threads load the small 20-byte kernel synchronously. This overlap is the key optimization.</p>
+</li>
+<li>
+<p><strong>Size-Based Strategy</strong>: Large transfers (input tile) use async copy; small transfers (kernel) use synchronous loading. This balances complexity with performance benefit.</p>
+</li>
+</ul>
+<p><strong>Phase 3: Synchronization</strong></p>
+<pre><code class="language-mojo"># Phase 3: Wait for async copy to complete
+async_copy_wait_all()  # Always wait since we always do async copy
+barrier()  # Sync all threads
+</code></pre>
+<ul>
+<li>
+<p><strong>Transfer Completion</strong>: <code>async_copy_wait_all()</code> blocks until all async transfers complete. This is essential before accessing <code>input_shared</code>.</p>
+</li>
+<li>
+<p><strong>Thread Synchronization</strong>: <code>barrier()</code> ensures all threads see the completed transfer before proceeding to computation.</p>
+</li>
+</ul>
+<p><strong>Phase 4: Computation</strong></p>
+<pre><code class="language-mojo"># Phase 4: Compute convolution
+global_i = block_idx.x * CONV_TILE_SIZE + local_i
+if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
+    var result: output.element_type = 0
+
+    if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
+        # Full convolution for center elements
+        for k in range(KERNEL_SIZE):
+            input_idx = local_i + k - HALO_SIZE
+            if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
+                result += input_shared[input_idx] * kernel_shared[k]
+    else:
+        # For boundary elements, just copy input (no convolution)
+        result = input_shared[local_i]
+
+    output[global_i] = result
+</code></pre>
+<ul>
+<li>
+<p><strong>Fast Shared Memory Access</strong>: All computation uses pre-loaded shared memory data, avoiding slow DRAM access during the compute-intensive convolution loop.</p>
+</li>
+<li>
+<p><strong>Simplified Boundary Handling</strong>: The implementation uses a pragmatic approach to handle elements near tile boundaries:</p>
+<ul>
+<li><strong>Center elements</strong> (<code>local_i &gt;= HALO_SIZE</code> and <code>local_i &lt; CONV_TILE_SIZE - HALO_SIZE</code>): Apply full 5-point convolution using shared memory data</li>
+<li><strong>Boundary elements</strong> (first 2 and last 2 elements in each tile): Copy input directly without convolution to avoid complex boundary logic</li>
+</ul>
+<p><strong>Educational rationale</strong>: This approach prioritizes demonstrating async copy patterns over complex boundary handling. For a 256-element tile with <code>HALO_SIZE = 2</code>, elements 0-1 and 254-255 use input copying, while elements 2-253 use full convolution. This keeps the focus on memory optimization while providing a working implementation.</p>
+</li>
+</ul>
+<h4 id="performance-analysis"><a class="header" href="#performance-analysis"><strong>Performance analysis</strong></a></h4>
+<p><strong>Without Async Copy (Synchronous):</strong></p>
+<pre><code>Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
+           = Large_DRAM_transfer + Small_DRAM_transfer + convolution
+           = Major_latency + Minor_latency + computation_work
+</code></pre>
+<p><strong>With Async Copy (Overlapped):</strong></p>
+<pre><code>Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
+           = MAX(Major_latency, Minor_latency) + computation_work
+           = Major_latency + computation_work
+</code></pre>
+<p><strong>Speedup</strong>: Performance improvement from hiding the smaller kernel transfer latency behind the larger input transfer. The actual speedup depends on the relative sizes of transfers and available memory bandwidth. In memory-bound scenarios with larger overlaps, speedups can be much more significant.</p>
+<h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
+<ol>
+<li>
+<p><strong>Thread Layout Matching</strong>: The <code>Layout.row_major(256, 1)</code> layout precisely matches the block’s <code>(256, 1)</code> thread organization, enabling optimal memory coalescing.</p>
+</li>
+<li>
+<p><strong>Race Condition Avoidance</strong>: Proper sequencing (async copy → kernel load → wait → barrier → compute) eliminates all race conditions that could corrupt shared memory.</p>
+</li>
+<li>
+<p><strong>Hardware Optimization</strong>: Modern GPUs have dedicated hardware for async copy operations, allowing true parallelism between memory and compute units.</p>
+</li>
+<li>
+<p><strong>Memory Hierarchy Exploitation</strong>: The pattern moves data through the hierarchy efficiently: DRAM → Shared Memory → Registers → Computation.</p>
+</li>
+<li>
+<p><strong>Test-Implementation Consistency</strong>: The test verification logic matches the boundary handling strategy by checking <code>local_i_in_tile = i % CONV_TILE_SIZE</code> to determine whether each element should expect convolution results (center elements) or input copying (boundary elements). This ensures accurate validation of the simplified boundary approach.</p>
+</li>
+</ol>
+<p>This solution transforms a naive memory-bound convolution into an optimized implementation that hides memory latency behind useful work, demonstrating fundamental principles of high-performance GPU programming.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_24/warp_prefix_sum.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_24/warp_prefix_sum.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
