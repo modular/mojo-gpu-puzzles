@@ -362,7 +362,9 @@ alias CONV_TILE_SIZE = 256
 alias KERNEL_SIZE = 5
 alias HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
 alias BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-alias BLOCKS_PER_GRID_ASYNC = (VECTOR_SIZE + CONV_TILE_SIZE - 1) // CONV_TILE_SIZE
+alias BLOCKS_PER_GRID_ASYNC = (
+    VECTOR_SIZE + CONV_TILE_SIZE - 1
+) // CONV_TILE_SIZE
 alias THREADS_PER_BLOCK_ASYNC = 256
 alias dtype = DType.float32
 alias layout_async = Layout.row_major(VECTOR_SIZE)
@@ -389,6 +391,7 @@ fn async_copy_overlap_convolution[
 
 
 </code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -473,8 +476,8 @@ fn async_copy_overlap_convolution[
 
     local_i = thread_idx.x
 
-    # Phase 1: Always use async copy - hardware handles bounds automatically
-    # Create tile for all blocks - hardware will zero-pad out-of-bounds access
+    # Phase 1: Launch async copy for input tile
+    # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
     input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
@@ -511,17 +514,17 @@ fn async_copy_overlap_convolution[
 </code></pre>
 <h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
 <p><strong>Phase 1: Async Copy Launch</strong></p>
-<pre><code class="language-mojo"># Phase 1: Always use async copy - hardware handles bounds automatically
+<pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
 <li>
-<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. <strong>Note</strong>: The implementation assumes hardware/runtime handles bounds checking and zero-padding for out-of-bounds access, which may not be true in all environments.</p>
+<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile"><code>tile</code> method</a> does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.</p>
 </li>
 <li>
-<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code> creates a 256×1 layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
+<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code> creates a <code>256 x 1</code> layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
 </li>
 <li>
 <p><strong>Async Copy Launch</strong>: <code>copy_dram_to_sram_async</code> initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.</p>
