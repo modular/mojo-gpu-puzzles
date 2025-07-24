@@ -270,80 +270,83 @@ if thread_id &lt; data_size:
 <p>Through the puzzles in this book, you’ll develop an intuitive understanding of these principles, transforming how you approach computational problems.</p>
 <h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What You Will Learn</a></h2>
 <p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By mastering both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
-<h3 id="your-complete-learning-path"><a class="header" href="#your-complete-learning-path">Your Complete Learning Path</a></h3>
-<p>The book is structured into ten progressive parts, each building on the previous to create a comprehensive GPU programming education:</p>
-<div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Covered In</th></tr></thead><tbody>
-<tr><td>Thread/Block basics</td><td>Part I (1-8)</td></tr>
-<tr><td>Core algorithms</td><td>Part II (9-14)</td></tr>
-<tr><td>MAX Graph integration</td><td>Part III (15-17)</td></tr>
-<tr><td>PyTorch integration</td><td>Part IV (18-19)</td></tr>
-<tr><td>Functional patterns &amp; benchmarking</td><td>Part V (20-21)</td></tr>
-<tr><td>Warp programming</td><td>Part VI (22-23)</td></tr>
-<tr><td>Memory optimization</td><td>Part VII (24-27)</td></tr>
-<tr><td>Performance analysis</td><td>Part VIII (28-30)</td></tr>
-<tr><td>Modern GPU features</td><td>Part IX (31-33)</td></tr>
-<tr><td>Scaling up</td><td>Part X (34-36)</td></tr>
+<h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your Current Learning Path</a></h3>
+<p><strong>Currently Available:</strong> 25 puzzles covering Parts I-VI and beginning Part VII, providing a comprehensive foundation in GPU programming with Mojo.</p>
+<div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
+<tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
+<tr><td>Core algorithms</td><td>✅ <strong>Available</strong></td><td>Part II (9-14)</td></tr>
+<tr><td>MAX Graph integration</td><td>✅ <strong>Available</strong></td><td>Part III (15-17)</td></tr>
+<tr><td>PyTorch integration</td><td>✅ <strong>Available</strong></td><td>Part IV (18-20)</td></tr>
+<tr><td>Functional patterns &amp; benchmarking</td><td>✅ <strong>Available</strong></td><td>Part V (21)</td></tr>
+<tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VI (22-24)</td></tr>
+<tr><td>Advanced memory operations</td><td>🚧 <strong>In Progress</strong></td><td>Part VII (25+)</td></tr>
+<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part VIII</td></tr>
+<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part IX</td></tr>
+<tr><td>Scaling up</td><td>📋 <strong>Coming Soon</strong></td><td>Part X</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
-<p><strong>Part I: GPU Fundamentals</strong></p>
+<p><strong>Part I: GPU Fundamentals (Puzzles 1-8) ✅</strong></p>
 <ul>
 <li>Master thread indexing and block organization</li>
 <li>Understand memory access patterns and guards</li>
 <li>Work with both raw pointers and LayoutTensor abstractions</li>
 <li>Learn shared memory basics for inter-thread communication</li>
 </ul>
-<p><strong>Part II: GPU Algorithms</strong></p>
+<p><strong>Part II: GPU Algorithms (Puzzles 9-14) ✅</strong></p>
 <ul>
 <li>Implement parallel reductions and pooling operations</li>
 <li>Build efficient convolution kernels</li>
 <li>Master prefix sum (scan) algorithms</li>
 <li>Optimize matrix multiplication with tiling strategies</li>
 </ul>
-<p><strong>Part III: MAX Graph Integration</strong></p>
+<p><strong>Part III: MAX Graph Integration (Puzzles 15-17) ✅</strong></p>
 <ul>
 <li>Create custom MAX Graph operations</li>
 <li>Interface GPU kernels with Python code</li>
 <li>Build production-ready operations like softmax and attention</li>
 </ul>
-<p><strong>Part IV: PyTorch Integration</strong></p>
+<p><strong>Part IV: PyTorch Integration (Puzzles 18-20) ✅</strong></p>
 <ul>
 <li>Bridge Mojo GPU kernels with PyTorch tensors</li>
 <li>Use CustomOpLibrary for seamless tensor marshalling</li>
 <li>Integrate with torch.compile for optimized execution</li>
+<li>Master kernel fusion and custom backward passes</li>
 </ul>
-<p><strong>Part V: Mojo Functional Patterns &amp; Benchmarking</strong></p>
+<p><strong>Part V: Mojo Functional Patterns &amp; Benchmarking (Puzzle 21) ✅</strong></p>
 <ul>
-<li>Master essential functional patterns: elementwise, parallelize, vectorize, tile</li>
-<li>Learn systematic performance optimization with tile_and_unswitch and unswitch</li>
-<li>Develop quantitative benchmarking skills for informed decision-making</li>
+<li>Master functional patterns: elementwise, tiled processing, vectorization</li>
+<li>Learn systematic performance optimization and trade-offs</li>
+<li>Develop quantitative benchmarking skills for performance analysis</li>
+<li>Understand GPU threading vs SIMD execution hierarchies</li>
 </ul>
-<p><strong>Part VI: Warp-Level Programming</strong></p>
+<p><strong>Part VI: Warp-Level Programming (Puzzles 22-24) ✅</strong></p>
 <ul>
-<li>Understand when to use warp programming vs functional patterns</li>
-<li>Master essential warp operations: reduce_add, shuffle_down, vote_all</li>
-<li>Learn to combine warp programming with functional patterns effectively</li>
+<li>Master warp fundamentals and SIMT execution models</li>
+<li>Learn essential warp operations: sum, shuffle_down, broadcast</li>
+<li>Implement advanced patterns with shuffle_xor and prefix_sum</li>
+<li>Combine warp programming with functional patterns effectively</li>
 </ul>
-<p><strong>Part VII: Advanced Memory Operations</strong></p>
+<p><strong>Part VII: Advanced Memory Operations (Puzzle 25+) 🚧</strong></p>
 <ul>
 <li>Achieve optimal memory coalescing patterns</li>
-<li>Use async memory operations for overlapping compute</li>
-<li>Implement memory fences and atomic operations</li>
-<li>Master prefetching and cache optimization</li>
+<li>Use async memory operations for overlapping compute with latency hiding</li>
+<li>Learn memory fences and synchronization primitives</li>
+<li>Master prefetching and cache optimization strategies</li>
 </ul>
-<p><strong>Part VIII: Performance Analysis &amp; Optimization</strong></p>
+<p><strong>Part VIII: Performance Analysis &amp; Optimization 📋</strong></p>
 <ul>
 <li>Profile GPU kernels and identify bottlenecks</li>
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p><strong>Part IX: Advanced GPU Features</strong></p>
+<p><strong>Part IX: Advanced GPU Features 📋</strong></p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Implement GPU-based random number generation</li>
 <li>Master advanced synchronization patterns</li>
 </ul>
-<p><strong>Part X: Multi-GPU &amp; Advanced Applications</strong></p>
+<p><strong>Part X: Multi-GPU &amp; Advanced Applications 📋</strong></p>
 <ul>
 <li>Implement multi-stream concurrent execution</li>
 <li>Scale across multiple GPUs</li>
@@ -436,6 +439,8 @@ cd mojo-gpu-puzzles
 </ul>
 <p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
 <p>Let’s begin our journey into the exciting world of GPU computing with Mojo 🔥!</p>
+<h3 id="development"><a class="header" href="#development">Development</a></h3>
+<p>Please see details in the <a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>.</p>
 <h2 id="join-the-community"><a class="header" href="#join-the-community">Join the community</a></h2>
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
   <a href="https://www.modular.com/company/talk-to-us">
