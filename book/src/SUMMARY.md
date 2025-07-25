@@ -82,10 +82,10 @@
 
 # Part VII: Advanced Memory Systems
 - [Puzzle 25: Async Memory Operations & Copy Overlap](./puzzle_25/puzzle_25.md)
-- [Puzzle 26: GPU Synchronization Primitives]()
-  - [🔄 Block Barriers & Thread Synchronization]()
-  - [🔒 Device-Wide Semaphores]()
-  - [🛡️ Memory Fences & Consistency Models]()
+- [Puzzle 26: GPU Synchronization Primitives](./puzzle_26/puzzle_26.md)
+  - [🔄 Multi-Stage Pipeline Coordination](./puzzle_26/barrier.md)
+  - [🔒 Double-Buffered Memory Barriers](./puzzle_26/memory_barrier.md)
+  - [🛡️ Streaming with Async Copy Coordination](./puzzle_26/stream_async_copy.md)
 - [Puzzle 27: Advanced Memory Optimization]()
   - [💾 Cache Control & Memory Policies]()
   - [🛡️ Advanced Memory Fences & Ordering]()
