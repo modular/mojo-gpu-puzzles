@@ -30,8 +30,6 @@ fn conv_1d_simple[
     shared_b = tb[dtype]().row_major[CONV]().shared().alloc()
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
-    else:
-        shared_a[local_i] = 0
 
     if global_i < CONV:
         shared_b[local_i] = b[global_i]
