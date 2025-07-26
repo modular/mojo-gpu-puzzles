@@ -123,13 +123,13 @@ fn multi_stage_image_blur_pipeline[
 
     # Stage 2: Apply horizontal blur (Second half of threads)
     if local_i >= STAGE1_THREADS:
-        var blur_idx = local_i - STAGE1_THREADS
+        blur_idx = local_i - STAGE1_THREADS
         var blur_sum: Scalar[dtype] = 0.0
-        var blur_count = 0
+        blur_count = 0
 
         # Simple horizontal blur - average with neighbors
         for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
-            var sample_idx = blur_idx + offset
+            sample_idx = blur_idx + offset
             if sample_idx >= 0 and sample_idx < TPB:
                 blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
                 blur_count += 1
@@ -140,7 +140,7 @@ fn multi_stage_image_blur_pipeline[
             blur_shared[blur_idx] = 0.0
 
         # Process second element if within bounds
-        var second_idx = blur_idx + STAGE1_THREADS
+        second_idx = blur_idx + STAGE1_THREADS
         if second_idx < TPB:
             blur_sum = 0.0
             blur_count = 0
@@ -162,7 +162,7 @@ fn multi_stage_image_blur_pipeline[
     if global_i < size:
         # Apply final smoothing and write to output
         # All threads now work together for final stage
-        var final_value = blur_shared[local_i]
+        final_value = blur_shared[local_i]
 
         # Simple final processing - slight smoothing with immediate neighbors
         if local_i > 0:
@@ -273,11 +273,11 @@ fn double_buffered_stencil_computation[
             # Even iteration: Read from A, Write to B
             if local_i < TPB:
                 var stencil_sum: Scalar[dtype] = 0.0
-                var stencil_count = 0
+                stencil_count = 0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    var sample_idx = local_i + offset
+                    sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
                         stencil_sum += rebind[Scalar[dtype]](
                             buffer_A[sample_idx]
@@ -294,11 +294,11 @@ fn double_buffered_stencil_computation[
             # Odd iteration: Read from B, Write to A
             if local_i < TPB:
                 var stencil_sum: Scalar[dtype] = 0.0
-                var stencil_count = 0
+                stencil_count = 0
 
                 # 3-point stencil: [i-1, i, i+1]
                 for offset in range(-1, 2):
-                    var sample_idx = local_i + offset
+                    sample_idx = local_i + offset
                     if sample_idx >= 0 and sample_idx < TPB:
                         stencil_sum += rebind[Scalar[dtype]](
                             buffer_B[sample_idx]
@@ -352,13 +352,13 @@ fn streaming_matrix_multiplication[
     This function implements a tiled matrix multiplication with streaming optimization
     that overlaps tile loading with computation using the required GPU sync primitives.
 
-    **Streaming Architecture with Required APIs:**
+    **Streaming Architecture with Coordination APIs:**
 
-    **async_copy_arrive() Usage:**
-    - Signals completion of individual copy operations within each thread
-    - Tracks when each thread has finished copying its portion of a tile
-    - Enables fine-grained coordination of distributed copy work
-    - Essential for overlapping computation with memory operations
+    **barrier() Usage:**
+    - Simple thread synchronization after tile copying is complete
+    - Ensures all threads finish loading their portions before computation
+    - Provides clean coordination point between memory and compute phases
+    - Essential for correctness in distributed tile loading patterns
 
     **cp_async_bulk_commit_group() Usage:**
     - Groups multiple tile copy operations into bulk transfer units
@@ -413,6 +413,8 @@ fn streaming_matrix_multiplication[
         tb[dtype]().row_major[MATMUL_TPB, MATMUL_TPB]().shared().alloc()
     )
 
+
+
     var acc: output.element_type = 0
     alias num_tiles = (size + MATMUL_TPB - 1) // MATMUL_TPB
 
@@ -423,7 +425,7 @@ fn streaming_matrix_multiplication[
         alias buffer_set = tile % 2
         alias bulk_group = tile % 2  # Use compile-time constant for bulk groups
 
-        # Stage 1: Distributed Async Copy Launch
+        # Stage 1: Distributed Memory Copy with Fine-Grained Coordination
         # Each thread copies its portion of the A and B tiles
         if global_row < size and tile * MATMUL_TPB + local_col < size:
             # Copy A tile element: threads load row-wise portions
@@ -432,18 +434,10 @@ fn streaming_matrix_multiplication[
                 a_shared_0[local_row, local_col] = a[
                     global_row, tile * MATMUL_TPB + local_col
                 ]
-                # Signal this thread's A copy operation has arrived/completed
-                async_copy_arrive(
-                    a_shared_0.ptr + local_row * MATMUL_TPB + local_col
-                )
             else:
                 a_shared_1[local_row, local_col] = a[
                     global_row, tile * MATMUL_TPB + local_col
                 ]
-                # Signal this thread's A copy operation has arrived/completed
-                async_copy_arrive(
-                    a_shared_1.ptr + local_row * MATMUL_TPB + local_col
-                )
 
         if tile * MATMUL_TPB + local_row < size and global_col < size:
             # Copy B tile element: threads load column-wise portions
@@ -452,18 +446,10 @@ fn streaming_matrix_multiplication[
                 b_shared_0[local_row, local_col] = b[
                     tile * MATMUL_TPB + local_row, global_col
                 ]
-                # Signal this thread's B copy operation has arrived/completed
-                async_copy_arrive(
-                    b_shared_0.ptr + local_row * MATMUL_TPB + local_col
-                )
             else:
                 b_shared_1[local_row, local_col] = b[
                     tile * MATMUL_TPB + local_row, global_col
                 ]
-                # Signal this thread's B copy operation has arrived/completed
-                async_copy_arrive(
-                    b_shared_1.ptr + local_row * MATMUL_TPB + local_col
-                )
 
         # Stage 2: Bulk Group Coordination
         # Group the copy operations for this tile into a bulk transfer unit
@@ -479,7 +465,11 @@ fn streaming_matrix_multiplication[
         else:
             cp_async_bulk_wait_group[1]()
 
-        # Stage 4: Overlapped Computation
+        # Stage 4: Thread Synchronization
+        # Ensure all threads complete their tile loading before computation
+        barrier()
+
+        # Stage 5: Overlapped Computation
         # Compute matrix multiplication on the ready tile data
         if global_row < size and global_col < size:
 
@@ -555,7 +545,7 @@ def test_multi_stage_pipeline():
                     out_host[i] < 1000.0, "Output values should be reasonable"
                 )
 
-            print("✓ Multi-stage pipeline coordination test PASSED!")
+            print("✅ Multi-stage pipeline coordination test PASSED!")
 
 
 def test_double_buffered_stencil():
@@ -591,12 +581,12 @@ def test_double_buffered_stencil():
         with inp.map_to_host() as inp_host:
             # CPU simulation matching GPU's multi-block execution (BLOCKS_PER_GRID = (4, 1))
             for block_id in range(4):  # Simulate each GPU block
-                var cpu_buffer_A = List[Float32](capacity=TPB)
-                var cpu_buffer_B = List[Float32](capacity=TPB)
+                cpu_buffer_A = List[Float32](capacity=TPB)
+                cpu_buffer_B = List[Float32](capacity=TPB)
 
                 # Initialize buffer_A per block (matching GPU initialization)
                 for local_i in range(TPB):
-                    var global_i = TPB * block_id + local_i
+                    global_i = TPB * block_id + local_i
                     if local_i < TPB and global_i < SIZE:
                         cpu_buffer_A.append(inp_host[global_i])
                     else:
@@ -609,11 +599,11 @@ def test_double_buffered_stencil():
                         # Even iteration: Read from A, Write to B
                         for local_i in range(TPB):
                             var stencil_sum: Float32 = 0.0
-                            var stencil_count = 0
+                            stencil_count = 0
 
                             # 3-point stencil: [i-1, i, i+1]
                             for offset in range(-1, 2):
-                                var sample_idx = local_i + offset
+                                sample_idx = local_i + offset
                                 if sample_idx >= 0 and sample_idx < TPB:
                                     stencil_sum += cpu_buffer_A[sample_idx]
                                     stencil_count += 1
@@ -628,11 +618,11 @@ def test_double_buffered_stencil():
                         # Odd iteration: Read from B, Write to A
                         for local_i in range(TPB):
                             var stencil_sum: Float32 = 0.0
-                            var stencil_count = 0
+                            stencil_count = 0
 
                             # 3-point stencil: [i-1, i, i+1]
                             for offset in range(-1, 2):
-                                var sample_idx = local_i + offset
+                                sample_idx = local_i + offset
                                 if sample_idx >= 0 and sample_idx < TPB:
                                     stencil_sum += cpu_buffer_B[sample_idx]
                                     stencil_count += 1
@@ -646,8 +636,9 @@ def test_double_buffered_stencil():
 
                 # Copy results from final active buffer to expected (per block)
                 for local_i in range(TPB):
-                    var global_i = TPB * block_id + local_i
+                    global_i = TPB * block_id + local_i
                     if local_i < TPB and global_i < SIZE:
+                        @parameter
                         if STENCIL_ITERATIONS % 2 == 0:
                             # Even iterations end in buffer_A
                             expected[global_i] = cpu_buffer_A[local_i]
@@ -665,7 +656,7 @@ def test_double_buffered_stencil():
             # Compare GPU output with CPU-computed expected values
             var max_error: Float32 = 0.0
             for i in range(SIZE):
-                var error = abs(out_host[i] - expected[i])
+                error = abs(out_host[i] - expected[i])
                 if error > max_error:
                     max_error = error
 
@@ -680,7 +671,7 @@ def test_double_buffered_stencil():
                 )
 
             print("Maximum error between GPU and CPU:", max_error)
-            print("✓ Double-buffered stencil test PASSED!")
+            print("✅ Double-buffered stencil test PASSED!")
 
 
 def test_streaming_matrix_multiplication():
@@ -759,7 +750,7 @@ def test_streaming_matrix_multiplication():
             # Compare GPU output with CPU expected values
             var max_error: Float32 = 0.0
             for i in range(MATMUL_SIZE * MATMUL_SIZE):
-                var error = abs(out_host[i] - expected_c[i])
+                error = abs(out_host[i] - expected_c[i])
                 if error > max_error:
                     max_error = error
 
@@ -772,7 +763,7 @@ def test_streaming_matrix_multiplication():
                 )
 
             print("Maximum error between GPU and CPU:", max_error)
-            print("✓ Streaming matrix multiplication test PASSED!")
+            print("✅ Streaming matrix multiplication test PASSED!")
 
 
 def main():
