@@ -285,8 +285,6 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     shared_b = tb[dtype]().row_major[CONV]().shared().alloc()
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
-    else:
-        shared_a[local_i] = 0
 
     if global_i &lt; CONV:
         shared_b[local_i] = b[global_i]
