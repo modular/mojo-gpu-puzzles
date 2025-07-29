@@ -271,18 +271,18 @@ if thread_id &lt; data_size:
 <h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What You Will Learn</a></h2>
 <p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By mastering both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
 <h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your Current Learning Path</a></h3>
-<p><strong>Currently Available:</strong> 25 puzzles covering Parts I-VI and beginning Part VII, providing a comprehensive foundation in GPU programming with Mojo.</p>
 <div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
 <tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
-<tr><td>Core algorithms</td><td>✅ <strong>Available</strong></td><td>Part II (9-14)</td></tr>
-<tr><td>MAX Graph integration</td><td>✅ <strong>Available</strong></td><td>Part III (15-17)</td></tr>
-<tr><td>PyTorch integration</td><td>✅ <strong>Available</strong></td><td>Part IV (18-20)</td></tr>
-<tr><td>Functional patterns &amp; benchmarking</td><td>✅ <strong>Available</strong></td><td>Part V (21)</td></tr>
-<tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VI (22-24)</td></tr>
-<tr><td>Advanced memory operations</td><td>🚧 <strong>In Progress</strong></td><td>Part VII (25+)</td></tr>
-<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part VIII</td></tr>
-<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part IX</td></tr>
-<tr><td>Scaling up</td><td>📋 <strong>Coming Soon</strong></td><td>Part X</td></tr>
+<tr><td>Debugging GPU Programs</td><td>📋 <strong>Coming Soon</strong></td><td>Part II</td></tr>
+<tr><td>Core algorithms</td><td>✅ <strong>Available</strong></td><td>Part III (9-14)</td></tr>
+<tr><td>MAX Graph integration</td><td>✅ <strong>Available</strong></td><td>Part IV (15-17)</td></tr>
+<tr><td>PyTorch integration</td><td>✅ <strong>Available</strong></td><td>Part V (18-20)</td></tr>
+<tr><td>Functional patterns &amp; benchmarking</td><td>✅ <strong>Available</strong></td><td>Part VI (21)</td></tr>
+<tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VII (22-24)</td></tr>
+<tr><td>Advanced memory operations</td><td>🚧 <strong>In Progress</strong></td><td>Part VIII (25+)</td></tr>
+<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part IX</td></tr>
+<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part X</td></tr>
+<tr><td>Multi-GPU &amp; Advanced Applications</td><td>📋 <strong>Coming Soon</strong></td><td>Part XI</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
@@ -293,7 +293,14 @@ if thread_id &lt; data_size:
 <li>Work with both raw pointers and LayoutTensor abstractions</li>
 <li>Learn shared memory basics for inter-thread communication</li>
 </ul>
-<p><strong>Part II: GPU Algorithms (Puzzles 9-14) ✅</strong></p>
+<p><strong>Part II: Debugging GPU Programs 📋</strong></p>
+<ul>
+<li>Master GPU debugger and debugging techniques</li>
+<li>Learn to use sanitizers for catching memory errors and race conditions</li>
+<li>Develop systematic approaches to identifying and fixing GPU bugs</li>
+<li>Build confidence for tackling complex GPU programming challenges</li>
+</ul>
+<p><strong>Part III: GPU Algorithms (Puzzles 9-14) ✅</strong></p>
 <ul>
 <li>Implement parallel reductions and pooling operations</li>
 <li>Build efficient convolution kernels</li>
@@ -7363,7 +7370,8 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <p>The implementation demonstrates that <strong>sophisticated neural network operations</strong> can be built by orchestrating simpler, well-tested GPU kernels rather than writing monolithic implementations.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-bonus-challenges"><a class="header" href="#-bonus-challenges">🎯 Bonus Challenges</a></h1>
+<h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
 <h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: Advanced softmax implementations</a></h2>
 <p><em>This challenge extends <a href="bonuses/../puzzle_16/puzzle_16.html">Puzzle 16: Softmax Op</a></em></p>
 <p>Here are some advanced challenges to extend your softmax implementation:</p>
