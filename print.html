@@ -15969,6 +15969,876 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ol>
 <p>This solution transforms a naive memory-bound convolution into an optimized implementation that hides memory latency behind useful work, demonstrating fundamental principles of high-performance GPU programming.</p>
 </details>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="gpu-synchronization-primitives"><a class="header" href="#gpu-synchronization-primitives">GPU Synchronization Primitives</a></h1>
+<blockquote>
+<p><strong>Beyond Simple Parallelism</strong></p>
+<p>This chapter introduces <strong>synchronization patterns</strong> that enable complex GPU algorithms requiring precise coordination between threads. Unlike previous puzzles that focused on simple parallel operations, these challenges explore <strong>architectural approaches</strong> used in production GPU software.</p>
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+<li><strong>Thread specialization</strong>: Different thread groups executing distinct algorithms within a single block</li>
+<li><strong>Producer-consumer pipelines</strong>: Multi-stage processing with explicit data dependencies</li>
+<li><strong>Advanced barrier APIs</strong>: Fine-grained synchronization control beyond basic <code>barrier()</code> calls</li>
+<li><strong>Memory barrier coordination</strong>: Explicit control over memory visibility and ordering</li>
+<li><strong>Iterative algorithm patterns</strong>: Double-buffering and pipeline coordination for complex computations</li>
+</ul>
+<p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
+</blockquote>
+<h2 id="overview-45"><a class="header" href="#overview-45">Overview</a></h2>
+<p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
+<p><strong>Core learning objectives:</strong></p>
+<ul>
+<li><strong>Understand when and why</strong> different synchronization primitives are needed</li>
+<li><strong>Design multi-stage algorithms</strong> with proper thread specialization</li>
+<li><strong>Implement iterative patterns</strong> that require precise memory coordination</li>
+<li><strong>Optimize synchronization overhead</strong> while maintaining correctness guarantees</li>
+</ul>
+<p><strong>Architectural progression:</strong> These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.</p>
+<h2 id="key-concepts-42"><a class="header" href="#key-concepts-42">Key concepts</a></h2>
+<p><strong>Thread coordination paradigms:</strong></p>
+<ul>
+<li><strong>Simple parallelism</strong>: All threads execute identical operations (previous puzzles)</li>
+<li><strong>Specialized parallelism</strong>: Different thread groups execute distinct algorithms (this chapter)</li>
+<li><strong>Pipeline parallelism</strong>: Sequential stages with producer-consumer relationships</li>
+<li><strong>Iterative parallelism</strong>: Multiple passes with careful buffer management</li>
+</ul>
+<p><strong>Synchronization primitive hierarchy:</strong></p>
+<ul>
+<li><strong>Basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></strong>: Simple thread synchronization within blocks</li>
+<li><strong>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a></strong>: Fine-grained memory barrier control with state tracking</li>
+<li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer synchronization</li>
+</ul>
+<p><strong>Memory consistency models:</strong></p>
+<ul>
+<li><strong>Shared memory coordination</strong>: Fast on-chip memory for inter-thread communication</li>
+<li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different memory spaces</li>
+<li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative algorithms</li>
+</ul>
+<h2 id="configuration-35"><a class="header" href="#configuration-35">Configuration</a></h2>
+<p><strong>System architecture:</strong></p>
+<ul>
+<li><strong>Block size</strong>: <code>TPB = 256</code> threads per block for optimal occupancy</li>
+<li><strong>Grid configuration</strong>: Multiple blocks processing different data tiles</li>
+<li><strong>Memory hierarchy</strong>: Strategic use of shared memory, registers, and global memory</li>
+<li><strong>Data types</strong>: <code>DType.float32</code> for numerical computations</li>
+</ul>
+<p><strong>Synchronization patterns covered:</strong></p>
+<ol>
+<li><strong>Multi-stage pipelines</strong>: Thread specialization with barrier coordination</li>
+<li><strong>Double-buffered iterations</strong>: Memory barrier management for iterative algorithms</li>
+<li><strong>Streaming computation</strong>: Asynchronous copy coordination for high-throughput processing</li>
+</ol>
+<p><strong>Performance considerations:</strong></p>
+<ul>
+<li><strong>Synchronization overhead</strong>: Understanding the cost of different barrier types</li>
+<li><strong>Memory bandwidth</strong>: Optimizing access patterns for maximum throughput</li>
+<li><strong>Thread utilization</strong>: Balancing specialized roles with overall efficiency</li>
+</ul>
+<h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
+<p>This chapter contains three interconnected puzzles that build upon each other:</p>
+<h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="puzzle_26/barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
+<p><strong>Focus</strong>: Thread specialization and pipeline architecture</p>
+<p>Learn how to design GPU kernels where different thread groups execute completely different algorithms within the same block. This puzzle introduces <strong>producer-consumer relationships</strong> and strategic barrier placement for coordinating between different algorithmic stages.</p>
+<p><strong>Key concepts</strong>:</p>
+<ul>
+<li>Thread role specialization (Stage 1: load, Stage 2: process, Stage 3: output)</li>
+<li>Producer-consumer data flow between processing stages</li>
+<li>Strategic barrier placement between different algorithms</li>
+</ul>
+<p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific computations, neural network layer coordination</p>
+<h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="puzzle_26/memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
+<p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
+<p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
+<p><strong>Key concepts</strong>:</p>
+<ul>
+<li>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> vs basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></li>
+<li>Double-buffering with alternating read/write buffer roles</li>
+<li>Iterative algorithm coordination with explicit memory barriers</li>
+</ul>
+<p><strong>Real-world applications</strong>: Iterative solvers (Jacobi, Gauss-Seidel), cellular automata, simulation time-stepping</p>
+<h2 id="getting-started-6"><a class="header" href="#getting-started-6">Getting started</a></h2>
+<p><strong>Recommended approach:</strong></p>
+<ol>
+<li><strong>Start with <a href="puzzle_26/barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
+<li><strong>Progress to <a href="puzzle_26/memory_barrier.html">Memory Barriers</a></strong>: Master fine-grained synchronization control</li>
+<li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput applications</li>
+</ol>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Comfort with basic GPU programming concepts (threads, blocks, shared memory)</li>
+<li>Understanding of memory hierarchies and access patterns</li>
+<li>Familiarity with barrier synchronization from previous puzzles</li>
+</ul>
+<p><strong>Learning outcomes:</strong>
+By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
+<p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_26/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_26/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
+<h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
+<p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
+<p><strong>Note:</strong> <em>You have specialized thread roles: Stage 1 (threads 0-127) loads and preprocesses data, Stage 2 (threads 128-255) applies blur operations, and Stage 3 (all threads) performs final smoothing.</em></p>
+<p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>producer-consumer pipeline</strong> where different thread groups execute completely different algorithms within a single GPU block. Unlike traditional GPU programming where all threads execute the same algorithm on different data, this approach divides threads by <strong>functional specialization</strong>.</p>
+<p><strong>Pipeline concept:</strong> The algorithm processes data through three distinct stages, where each stage has specialized thread groups that execute different algorithms. Each stage produces data that the next stage consumes, creating explicit <strong>producer-consumer relationships</strong> that must be carefully synchronized with barriers.</p>
+<p><strong>Data dependencies and synchronization:</strong> Each stage produces data that the next stage consumes:</p>
+<ul>
+<li><strong>Stage 1 → Stage 2</strong>: First stage produces preprocessed data for blur processing</li>
+<li><strong>Stage 2 → Stage 3</strong>: Second stage produces blur results for final smoothing</li>
+<li><strong>Barriers prevent race conditions</strong> by ensuring complete stage completion before dependent stages begin</li>
+</ul>
+<p>Concretely, the multi-stage pipeline implements a coordinated image processing algorithm with three mathematical operations:</p>
+<p><strong>Stage 1 - Preprocessing Enhancement:</strong></p>
+<p>\[P[i] = I[i] \times 1.1\]</p>
+<p>where \(P[i]\) is the preprocessed data and \(I[i]\) is the input data.</p>
+<p><strong>Stage 2 - Horizontal Blur Filter:</strong></p>
+<p>\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in [0, 255]\]</p>
+<p>where \(B[i]\) is the blur result, and \(N_i\) is the count of valid neighbors within the tile boundary.</p>
+<p><strong>Stage 3 - Cascading Neighbor Smoothing:</strong></p>
+<p>\[F[i] = \begin{cases}
+(B[i] + B[i+1]) \times 0.6 &amp; \text{if } i = 0 \\
+((B[i] + B[i-1]) \times 0.6 + B[i+1]) \times 0.6 &amp; \text{if } 0 &lt; i &lt; 255 \\
+(B[i] + B[i-1]) \times 0.6 &amp; \text{if } i = 255
+\end{cases}\]</p>
+<p>where \(F[i]\) is the final output with cascading smoothing applied.</p>
+<p><strong>Thread Specialization:</strong></p>
+<ul>
+<li><strong>Threads 0-127</strong>: Compute \(P[i]\) for \(i \in \{0, 1, 2, \ldots, 255\}\) (2 elements per thread)</li>
+<li><strong>Threads 128-255</strong>: Compute \(B[i]\) for \(i \in \{0, 1, 2, \ldots, 255\}\) (2 elements per thread)</li>
+<li><strong>All 256 threads</strong>: Compute \(F[i]\) for \(i \in \{0, 1, 2, \ldots, 255\}\) (1 element per thread)</li>
+</ul>
+<p><strong>Synchronization Points:</strong></p>
+<p>\[\text{barrier}_1 \Rightarrow P[i] \text{ complete} \Rightarrow \text{barrier}_2 \Rightarrow B[i] \text{ complete} \Rightarrow \text{barrier}_3 \Rightarrow F[i] \text{ complete}\]</p>
+<h2 id="key-concepts-43"><a class="header" href="#key-concepts-43">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Implementing thread role specialization within a single GPU block</li>
+<li>Coordinating producer-consumer relationships between processing stages</li>
+<li>Using barriers to synchronize between different algorithms (not just within the same algorithm)</li>
+</ul>
+<p>The key insight is understanding how to design multi-stage pipelines where different thread groups execute completely different algorithms, coordinated through strategic barrier placement.</p>
+<p><strong>Why this matters:</strong> Most GPU tutorials teach barrier usage within a single algorithm - synchronizing threads during reductions or shared memory operations. But real-world GPU algorithms often require <strong>architectural complexity</strong> with multiple distinct processing stages that must be carefully orchestrated. This puzzle demonstrates how to transform monolithic algorithms into specialized, coordinated processing pipelines.</p>
+<p><strong>Previous vs. current barrier usage:</strong></p>
+<ul>
+<li><strong>Previous puzzles (<a href="puzzle_26/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_26/../puzzle_10/puzzle_10.html">P10</a>, <a href="puzzle_26/../puzzle_13/puzzle_13.html">P13</a>):</strong> All threads execute the same algorithm, barriers sync within algorithm steps</li>
+<li><strong>This puzzle:</strong> Different thread groups execute different algorithms, barriers coordinate between different algorithms</li>
+</ul>
+<p><strong>Thread specialization architecture:</strong> Unlike data parallelism where threads differ only in their data indices, this puzzle implements <strong>algorithmic parallelism</strong> where threads execute fundamentally different code paths based on their role in the pipeline.</p>
+<h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
+<p><strong>System parameters:</strong></p>
+<ul>
+<li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
+<li><strong>Threads per block</strong>: <code>TPB = 256</code> threads organized as <code>(256, 1)</code> block dimension</li>
+<li><strong>Grid configuration</strong>: <code>(4, 1)</code> blocks to process entire image in tiles (4 blocks total)</li>
+<li><strong>Data type</strong>: <code>DType.float32</code> for all computations</li>
+</ul>
+<p><strong>Thread specialization architecture:</strong></p>
+<ul>
+<li>
+<p><strong>Stage 1 threads</strong>: <code>STAGE1_THREADS = 128</code> (threads 0-127, first half of block)</p>
+<ul>
+<li><strong>Responsibility</strong>: Load input data from global memory and apply preprocessing</li>
+<li><strong>Work distribution</strong>: Each thread processes 2 elements for efficient load balancing</li>
+<li><strong>Output</strong>: Populates <code>input_shared[256]</code> with preprocessed data</li>
+</ul>
+</li>
+<li>
+<p><strong>Stage 2 threads</strong>: <code>STAGE2_THREADS = 128</code> (threads 128-255, second half of block)</p>
+<ul>
+<li><strong>Responsibility</strong>: Apply horizontal blur filter on preprocessed data</li>
+<li><strong>Work distribution</strong>: Each thread processes 2 blur operations</li>
+<li><strong>Output</strong>: Populates <code>blur_shared[256]</code> with blur results</li>
+</ul>
+</li>
+<li>
+<p><strong>Stage 3 threads</strong>: All 256 threads collaborate</p>
+<ul>
+<li><strong>Responsibility</strong>: Final smoothing and output to global memory</li>
+<li><strong>Work distribution</strong>: One-to-one mapping (thread <code>i</code> processes element <code>i</code>)</li>
+<li><strong>Output</strong>: Writes final results to global <code>output</code> array</li>
+</ul>
+</li>
+</ul>
+<h2 id="code-to-complete-46"><a class="header" href="#code-to-complete-46">Code to complete</a></h2>
+<pre><code class="language-mojo">
+alias TPB = 256  # Threads per block for pipeline stages
+alias SIZE = 1024  # Image size (1D for simplicity)
+alias BLOCKS_PER_GRID = (4, 1)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+
+# Multi-stage processing configuration
+alias STAGE1_THREADS = TPB // 2
+alias STAGE2_THREADS = TPB // 2
+alias BLUR_RADIUS = 2
+
+
+fn multi_stage_image_blur_pipeline[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Multi-stage image blur pipeline with barrier coordination.
+
+    Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
+    Stage 2 (threads 128-255): Apply 5-point blur with BLUR_RADIUS=2
+    Stage 3 (all threads): Final neighbor smoothing and output
+    """
+
+    # Shared memory buffers for pipeline stages
+    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Stage 1: Load and preprocess (threads 0-127)
+
+    # FILL ME IN (roughly 10 lines)
+
+    barrier()  # Wait for Stage 1 completion
+
+    # Stage 2: Apply blur (threads 128-255)
+
+    # FILL ME IN (roughly 25 lines)
+
+    barrier()  # Wait for Stage 2 completion
+
+    # Stage 3: Final smoothing (all threads)
+
+    # FILL ME IN (roughly 7 lines)
+
+    barrier()  # Ensure all writes complete
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="thread-role-identification"><a class="header" href="#thread-role-identification"><strong>Thread role identification</strong></a></h3>
+<ul>
+<li>Use thread index comparisons to determine which stage each thread should execute</li>
+<li>Stage 1: First half of threads (threads 0-127)</li>
+<li>Stage 2: Second half of threads (threads 128-255)</li>
+<li>Stage 3: All threads participate</li>
+</ul>
+<h3 id="stage-1-approach"><a class="header" href="#stage-1-approach"><strong>Stage 1 approach</strong></a></h3>
+<ul>
+<li>Identify Stage 1 threads using appropriate index comparison</li>
+<li>Each thread should handle multiple elements for load balancing</li>
+<li>Apply the preprocessing enhancement factor</li>
+<li>Implement proper boundary handling with zero-padding</li>
+</ul>
+<h3 id="stage-2-approach"><a class="header" href="#stage-2-approach"><strong>Stage 2 approach</strong></a></h3>
+<ul>
+<li>Identify Stage 2 threads and map their indices to processing range</li>
+<li>Implement the blur kernel by averaging neighboring elements</li>
+<li>Handle boundary conditions by only including valid neighbors</li>
+<li>Process multiple elements per thread for efficiency</li>
+</ul>
+<h3 id="stage-3-approach"><a class="header" href="#stage-3-approach"><strong>Stage 3 approach</strong></a></h3>
+<ul>
+<li>All threads participate in final processing</li>
+<li>Apply neighbor smoothing using the specified scaling factor</li>
+<li>Handle edge cases where neighbors may not exist</li>
+<li>Write results to global output with bounds checking</li>
+</ul>
+<h3 id="synchronization-strategy"><a class="header" href="#synchronization-strategy"><strong>Synchronization strategy</strong></a></h3>
+<ul>
+<li>Place barriers between stages to prevent race conditions</li>
+<li>Ensure each stage completes before dependent stages begin</li>
+<li>Use final barrier to guarantee completion before block exit</li>
+</ul>
+</div>
+</details>
+<h2 id="running-the-code-30"><a class="header" href="#running-the-code-30">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --multi-stage
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --multi-stage
+</code></pre>
+  </div>
+</div>
+<p>After completing the puzzle successfully, you should see output similar to:</p>
+<pre><code>Puzzle 26: GPU Synchronization Primitives
+==================================================
+TPB: 256
+SIZE: 1024
+STAGE1_THREADS: 128
+STAGE2_THREADS: 128
+BLUR_RADIUS: 2
+
+Testing Puzzle 26A: Multi-Stage Pipeline Coordination
+============================================================
+Multi-stage pipeline blur completed
+Input sample: 0.0 1.01 2.02
+Output sample: 1.6665002 2.3331003 3.3996604
+✅ Multi-stage pipeline coordination test PASSED!
+</code></pre>
+<h2 id="solution-46"><a class="header" href="#solution-46">Solution</a></h2>
+<p>The key insight is recognizing this as a <strong>pipeline architecture problem</strong> with thread role specialization:</p>
+<ol>
+<li><strong>Design stage-specific thread groups</strong>: Divide threads by function, not just by data</li>
+<li><strong>Implement producer-consumer chains</strong>: Stage 1 produces for Stage 2, Stage 2 produces for Stage 3</li>
+<li><strong>Use strategic barrier placement</strong>: Synchronize between different algorithms, not within the same algorithm</li>
+<li><strong>Optimize memory access patterns</strong>: Ensure coalesced reads and efficient shared memory usage</li>
+</ol>
+<details class="solution-details">
+<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p>The multi-stage pipeline solution demonstrates sophisticated thread specialization and barrier coordination. This approach transforms a traditional monolithic GPU algorithm into a specialized, coordinated processing pipeline.</p>
+<h2 id="pipeline-architecture-design"><a class="header" href="#pipeline-architecture-design"><strong>Pipeline architecture design</strong></a></h2>
+<p>The fundamental breakthrough in this puzzle is <strong>thread specialization by role</strong> rather than by data:</p>
+<p><strong>Traditional approach:</strong> All threads execute the same algorithm on different data</p>
+<ul>
+<li>Everyone performs identical operations (like reductions or matrix operations)</li>
+<li>Barriers synchronize threads within the same algorithm steps</li>
+<li>Thread roles differ only by data indices they process</li>
+</ul>
+<p><strong>This puzzle’s innovation:</strong> Different thread groups execute completely different algorithms</p>
+<ul>
+<li>Threads 0-127 execute loading and preprocessing algorithms</li>
+<li>Threads 128-255 execute blur processing algorithms</li>
+<li>All threads collaborate in final smoothing algorithm</li>
+<li>Barriers coordinate between different algorithms, not within the same algorithm</li>
+</ul>
+<h2 id="producer-consumer-coordination"><a class="header" href="#producer-consumer-coordination"><strong>Producer-consumer coordination</strong></a></h2>
+<p>Unlike previous puzzles where threads were peers in the same algorithm, this establishes explicit producer-consumer relationships:</p>
+<ul>
+<li><strong>Stage 1</strong>: Producer (creates preprocessed data for Stage 2)</li>
+<li><strong>Stage 2</strong>: Consumer (uses Stage 1 data) + Producer (creates blur data for Stage 3)</li>
+<li><strong>Stage 3</strong>: Consumer (uses Stage 2 data)</li>
+</ul>
+<h2 id="strategic-barrier-placement"><a class="header" href="#strategic-barrier-placement"><strong>Strategic barrier placement</strong></a></h2>
+<p>Understanding when barriers are necessary vs. wasteful:</p>
+<ul>
+<li><strong>Necessary</strong>: Between dependent stages to prevent race conditions</li>
+<li><strong>Wasteful</strong>: Within independent operations of the same stage</li>
+<li><strong>Performance insight</strong>: Each barrier has a cost - use them strategically</li>
+</ul>
+<p><strong>Critical synchronization points:</strong></p>
+<ol>
+<li><strong>After Stage 1</strong>: Prevent Stage 2 from reading incomplete preprocessed data</li>
+<li><strong>After Stage 2</strong>: Prevent Stage 3 from reading incomplete blur results</li>
+<li><strong>After Stage 3</strong>: Ensure all output writes complete before block termination</li>
+</ol>
+<h2 id="thread-utilization-patterns"><a class="header" href="#thread-utilization-patterns"><strong>Thread utilization patterns</strong></a></h2>
+<ul>
+<li><strong>Stage 1</strong>: 50% utilization (128/256 threads active, 128 idle)</li>
+<li><strong>Stage 2</strong>: 50% utilization (128 active, 128 idle)</li>
+<li><strong>Stage 3</strong>: 100% utilization (all 256 threads active)</li>
+</ul>
+<p>This demonstrates sophisticated <strong>algorithmic parallelism</strong> where different thread groups specialize in different computational tasks within a coordinated pipeline, moving beyond simple data parallelism to architectural thinking required for real-world GPU algorithms.</p>
+<h2 id="memory-hierarchy-optimization"><a class="header" href="#memory-hierarchy-optimization"><strong>Memory hierarchy optimization</strong></a></h2>
+<p><strong>Shared memory architecture:</strong></p>
+<ul>
+<li>Two specialized buffers handle data flow between stages</li>
+<li>Global memory access minimized to boundary operations only</li>
+<li>All intermediate processing uses fast shared memory</li>
+</ul>
+<p><strong>Access pattern benefits:</strong></p>
+<ul>
+<li><strong>Stage 1</strong>: Coalesced global memory reads for input loading</li>
+<li><strong>Stage 2</strong>: Fast shared memory reads for blur processing</li>
+<li><strong>Stage 3</strong>: Coalesced global memory writes for output</li>
+</ul>
+<h2 id="real-world-applications"><a class="header" href="#real-world-applications"><strong>Real-world applications</strong></a></h2>
+<p>This pipeline architecture pattern is fundamental to:</p>
+<p><strong>Image processing pipelines:</strong></p>
+<ul>
+<li>Multi-stage filters (blur, sharpen, edge detection in sequence)</li>
+<li>Color space conversions (RGB → HSV → processing → RGB)</li>
+<li>Noise reduction with multiple algorithm passes</li>
+</ul>
+<p><strong>Scientific computing:</strong></p>
+<ul>
+<li>Stencil computations with multi-stage finite difference methods</li>
+<li>Signal processing with filtering, transformation, and analysis pipelines</li>
+<li>Computational fluid dynamics with multi-stage solver iterations</li>
+</ul>
+<p><strong>Machine learning:</strong></p>
+<ul>
+<li>Neural network layers with specialized thread groups for different operations</li>
+<li>Data preprocessing pipelines (load, normalize, augment in coordinated stages)</li>
+<li>Batch processing where different thread groups handle different operations</li>
+</ul>
+<h2 id="key-technical-insights-1"><a class="header" href="#key-technical-insights-1"><strong>Key technical insights</strong></a></h2>
+<p><strong>Algorithmic vs. data parallelism:</strong></p>
+<ul>
+<li><strong>Data parallelism</strong>: Threads execute identical code on different data elements</li>
+<li><strong>Algorithmic parallelism</strong>: Threads execute fundamentally different algorithms based on their specialized roles</li>
+</ul>
+<p><strong>Barrier usage philosophy:</strong></p>
+<ul>
+<li><strong>Strategic placement</strong>: Barriers only where necessary to prevent race conditions between dependent stages</li>
+<li><strong>Performance consideration</strong>: Each barrier incurs synchronization overhead - use sparingly but correctly</li>
+<li><strong>Correctness guarantee</strong>: Proper barrier placement ensures deterministic results regardless of thread execution timing</li>
+</ul>
+<p><strong>Thread specialization benefits:</strong></p>
+<ul>
+<li><strong>Algorithmic optimization</strong>: Each stage can be optimized for its specific computational pattern</li>
+<li><strong>Memory access optimization</strong>: Different stages can use different memory access strategies</li>
+<li><strong>Resource utilization</strong>: Complex algorithms can be decomposed into specialized, efficient components</li>
+</ul>
+<p>This solution demonstrates how to design sophisticated GPU algorithms that leverage thread specialization and strategic synchronization for complex multi-stage computations, moving beyond simple parallel loops to architectural approaches used in production GPU software.</p>
+</details>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="double-buffered-stencil-computation-1"><a class="header" href="#double-buffered-stencil-computation-1">Double-Buffered Stencil Computation</a></h1>
+<blockquote>
+<p><strong>🔬 Fine-Grained Synchronization: mbarrier vs barrier()</strong></p>
+<p>This puzzle introduces <strong>explicit memory barrier APIs</strong> that provide significantly more control than the basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> function used in previous puzzles.</p>
+<p><strong>Basic <code>barrier()</code> limitations:</strong></p>
+<ul>
+<li><strong>Fire-and-forget</strong>: Single synchronization point with no state tracking</li>
+<li><strong>Block-wide only</strong>: All threads in the block must participate simultaneously</li>
+<li><strong>No reusability</strong>: Each barrier() call creates a new synchronization event</li>
+<li><strong>Coarse-grained</strong>: Limited control over memory ordering and timing</li>
+<li><strong>Static coordination</strong>: Cannot adapt to different thread participation patterns</li>
+</ul>
+<p><strong>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/"><code>mbarrier APIs</code></a> capabilities:</strong></p>
+<ul>
+<li><strong>Precise control</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
+<li><strong>State tracking</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
+<li><strong>Flexible waiting</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> allows threads to wait for specific completion states</li>
+<li><strong>Reusable objects</strong>: Same barrier can be reinitialized and reused across multiple iterations</li>
+<li><strong>Multiple barriers</strong>: Different barrier objects for different synchronization points (initialization, iteration, finalization)</li>
+<li><strong>Hardware optimization</strong>: Maps directly to GPU hardware synchronization primitives for better performance</li>
+<li><strong>Memory semantics</strong>: Explicit control over memory visibility and ordering guarantees</li>
+</ul>
+<p><strong>Why this matters for iterative algorithms:</strong>
+In double-buffering patterns, you need <strong>precise coordination</strong> between buffer swap phases. Basic <code>barrier()</code> cannot provide the fine-grained control required for:</p>
+<ul>
+<li><strong>Buffer role alternation</strong>: Ensuring all writes to buffer_A complete before reading from buffer_A begins</li>
+<li><strong>Iteration boundaries</strong>: Coordinating multiple synchronization points within a single kernel</li>
+<li><strong>State management</strong>: Tracking which threads have completed which phase of processing</li>
+<li><strong>Performance optimization</strong>: Minimizing synchronization overhead through reusable barrier objects</li>
+</ul>
+<p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU computing applications like iterative solvers, simulation frameworks, and high-performance image processing pipelines.</p>
+</blockquote>
+<h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
+<p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.</p>
+<p><strong>Note:</strong> <em>You have alternating buffer roles: <code>buffer_A</code> and <code>buffer_B</code> swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps.</em></p>
+<p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>double-buffering pattern</strong> where two shared memory buffers alternate roles as read and write targets across multiple iterations. Unlike simple stencil operations that process data once, this approach performs iterative refinement with careful memory barrier coordination to prevent race conditions during buffer transitions.</p>
+<p><strong>Pipeline concept:</strong> The algorithm processes data through iterative stencil refinement, where each iteration reads from one buffer and writes to another. The buffers alternate roles each iteration, creating a ping-pong pattern that enables continuous processing without data corruption.</p>
+<p><strong>Data dependencies and synchronization:</strong> Each iteration depends on the complete results of the previous iteration:</p>
+<ul>
+<li><strong>Iteration N → Iteration N+1</strong>: Current iteration produces refined data that next iteration consumes</li>
+<li><strong>Buffer coordination</strong>: Read and write buffers swap roles each iteration</li>
+<li><strong>Memory barriers prevent race conditions</strong> by ensuring all writes complete before any thread begins reading from the newly written buffer</li>
+</ul>
+<p>Concretely, the double-buffered stencil implements an iterative smoothing algorithm with three mathematical operations:</p>
+<p><strong>Iteration Pattern - Buffer Alternation:</strong></p>
+<p>\[\text{Iteration } i: \begin{cases}
+\text{Read from buffer_A, Write to buffer_B} &amp; \text{if } i \bmod 2 = 0 \\
+\text{Read from buffer_B, Write to buffer_A} &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>Stencil Operation - 3-Point Average:</strong></p>
+<p>\[S^{(i+1)}[j] = \frac{1}{N_j} \sum_{k=-1}^{1} S^{(i)}[j+k] \quad \text{where } j+k \in [0, 255]\]</p>
+<p>where \(S^{(i)}[j]\) is the stencil value at position \(j\) after iteration \(i\), and \(N_j\) is the count of valid neighbors.</p>
+<p><strong>Memory Barrier Coordination:</strong></p>
+<p>\[\text{mbarrier_arrive}() \Rightarrow \text{mbarrier_test_wait}() \Rightarrow \text{buffer swap} \Rightarrow \text{next iteration}\]</p>
+<p><strong>Final Output Selection:</strong></p>
+<p>\[\text{Output}[j] = \begin{cases}
+\text{buffer_A}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 0 \\
+\text{buffer_B}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 1
+\end{cases}\]</p>
+<h2 id="key-concepts-44"><a class="header" href="#key-concepts-44">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Implementing double-buffering patterns for iterative algorithms</li>
+<li>Coordinating explicit memory barriers using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a></li>
+<li>Managing alternating read/write buffer roles across iterations</li>
+</ul>
+<p>The key insight is understanding how to safely coordinate buffer swapping in iterative algorithms where race conditions between read and write operations can corrupt data if not properly synchronized.</p>
+<p><strong>Why this matters:</strong> Most GPU tutorials show simple one-pass algorithms, but real-world applications often require <strong>iterative refinement</strong> with multiple passes over data. Double-buffering is essential for algorithms like iterative solvers, image processing filters, and simulation updates where each iteration depends on the complete results of the previous iteration.</p>
+<p><strong>Previous vs. current synchronization:</strong></p>
+<ul>
+<li><strong>Previous puzzles (<a href="puzzle_26/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_26/../puzzle_10/puzzle_10.html">P10</a>, <a href="puzzle_26/../puzzle_13/puzzle_13.html">P13</a>):</strong> Simple <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> calls for single-pass algorithms</li>
+<li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
+</ul>
+<p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this puzzle uses <strong>explicit memory barriers</strong> that provide fine-grained control over when memory operations complete, essential for complex memory access patterns.</p>
+<h2 id="configuration-37"><a class="header" href="#configuration-37">Configuration</a></h2>
+<p><strong>System parameters:</strong></p>
+<ul>
+<li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
+<li><strong>Threads per block</strong>: <code>TPB = 256</code> threads organized as <code>(256, 1)</code> block dimension</li>
+<li><strong>Grid configuration</strong>: <code>(4, 1)</code> blocks to process entire image in tiles (4 blocks total)</li>
+<li><strong>Data type</strong>: <code>DType.float32</code> for all computations</li>
+</ul>
+<p><strong>Iteration parameters:</strong></p>
+<ul>
+<li><strong>Stencil iterations</strong>: <code>STENCIL_ITERATIONS = 3</code> refinement passes</li>
+<li><strong>Buffer count</strong>: <code>BUFFER_COUNT = 2</code> (double-buffering)</li>
+<li><strong>Stencil kernel</strong>: 3-point averaging with radius 1</li>
+</ul>
+<p><strong>Buffer architecture:</strong></p>
+<ul>
+<li><strong>buffer_A</strong>: Primary shared memory buffer (<code>[256]</code> elements)</li>
+<li><strong>buffer_B</strong>: Secondary shared memory buffer (<code>[256]</code> elements)</li>
+<li><strong>Role alternation</strong>: Buffers swap between read source and write target each iteration</li>
+</ul>
+<p><strong>Processing requirements:</strong></p>
+<p><strong>Initialization phase:</strong></p>
+<ul>
+<li><strong>Buffer setup</strong>: Initialize buffer_A with input data, buffer_B with zeros</li>
+<li><strong>Barrier initialization</strong>: Set up <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init">mbarrier objects</a> for synchronization points</li>
+<li><strong>Thread coordination</strong>: All threads participate in initialization</li>
+</ul>
+<p><strong>Iterative processing:</strong></p>
+<ul>
+<li><strong>Even iterations</strong> (0, 2, 4…): Read from buffer_A, write to buffer_B</li>
+<li><strong>Odd iterations</strong> (1, 3, 5…): Read from buffer_B, write to buffer_A</li>
+<li><strong>Stencil operation</strong>: 3-point average \((\text{left} + \text{center} + \text{right}) / 3\)</li>
+<li><strong>Boundary handling</strong>: Use adaptive averaging for elements at buffer edges</li>
+</ul>
+<p><strong>Memory barrier coordination:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive">mbarrier_arrive()</a></strong>: Each thread signals completion of write phase</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait">mbarrier_test_wait()</a></strong>: All threads wait until everyone completes writes</li>
+<li><strong>Buffer swap safety</strong>: Prevents reading from buffer while others still writing</li>
+<li><strong>Barrier reinitialization</strong>: Reset barrier state between iterations</li>
+</ul>
+<p><strong>Output phase:</strong></p>
+<ul>
+<li><strong>Final buffer selection</strong>: Choose active buffer based on iteration parity</li>
+<li><strong>Global memory write</strong>: Copy final results to output array</li>
+<li><strong>Completion barrier</strong>: Ensure all writes finish before block termination</li>
+</ul>
+<h2 id="code-to-complete-47"><a class="header" href="#code-to-complete-47">Code to complete</a></h2>
+<pre><code class="language-mojo">
+# Double-buffered stencil configuration
+alias STENCIL_ITERATIONS = 3
+alias BUFFER_COUNT = 2
+
+
+fn double_buffered_stencil_computation[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Double-buffered stencil computation with memory barrier coordination.
+
+    Iteratively applies 3-point stencil using alternating buffers.
+    Uses mbarrier APIs for precise buffer swap coordination.
+    """
+
+    # Double-buffering: Two shared memory buffers
+    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    # Memory barriers for coordinating buffer swaps
+    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Initialize barriers (only thread 0)
+    if local_i == 0:
+        mbarrier_init(init_barrier.ptr, TPB)
+        mbarrier_init(iter_barrier.ptr, TPB)
+        mbarrier_init(final_barrier.ptr, TPB)
+
+    # Initialize buffer_A with input data
+
+    # FILL ME IN (roughly 4 lines)
+
+    # Wait for buffer_A initialization
+    _ = mbarrier_arrive(init_barrier.ptr)
+    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+
+    # Iterative stencil processing with double-buffering
+    @parameter
+    for iteration in range(STENCIL_ITERATIONS):
+
+        @parameter
+        if iteration % 2 == 0:
+            # Even iteration: Read from A, Write to B
+
+            # FILL ME IN (roughly 12 lines)
+            ...
+
+        else:
+            # Odd iteration: Read from B, Write to A
+
+            # FILL ME IN (roughly 12 lines)
+            ...
+
+        # Memory barrier: wait for all writes before buffer swap
+        _ = mbarrier_arrive(iter_barrier.ptr)
+        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+
+        # Reinitialize barrier for next iteration
+        if local_i == 0:
+            mbarrier_init(iter_barrier.ptr, TPB)
+
+    # Write final results from active buffer
+    if local_i &lt; TPB and global_i &lt; size:
+
+        @parameter
+        if STENCIL_ITERATIONS % 2 == 0:
+            # Even iterations end in buffer_A
+            output[global_i] = buffer_A[local_i]
+        else:
+            # Odd iterations end in buffer_B
+            output[global_i] = buffer_B[local_i]
+
+    # Final barrier
+    _ = mbarrier_arrive(final_barrier.ptr)
+    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="buffer-initialization"><a class="header" href="#buffer-initialization"><strong>Buffer initialization</strong></a></h3>
+<ul>
+<li>Initialize <code>buffer_A</code> with input data, <code>buffer_B</code> can start empty</li>
+<li>Use proper bounds checking with zero-padding for out-of-range elements</li>
+<li>Only thread 0 should initialize the mbarrier objects</li>
+<li>Set up separate barriers for different synchronization points</li>
+</ul>
+<h3 id="iteration-control"><a class="header" href="#iteration-control"><strong>Iteration control</strong></a></h3>
+<ul>
+<li>Use <code>@parameter for iteration in range(STENCIL_ITERATIONS)</code> for compile-time unrolling</li>
+<li>Determine buffer roles using <code>iteration % 2</code> to alternate read/write assignments</li>
+<li>Apply stencil operation only within valid bounds with neighbor checking</li>
+</ul>
+<h3 id="stencil-computation"><a class="header" href="#stencil-computation"><strong>Stencil computation</strong></a></h3>
+<ul>
+<li>Implement 3-point averaging: <code>(left + center + right) / 3</code></li>
+<li>Handle boundary conditions by only including valid neighbors in average</li>
+<li>Use adaptive counting to handle edge cases gracefully</li>
+</ul>
+<h3 id="memory-barrier-coordination"><a class="header" href="#memory-barrier-coordination"><strong>Memory barrier coordination</strong></a></h3>
+<ul>
+<li>Call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a> after each thread completes its write operations</li>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> to ensure all threads finish before buffer swap</li>
+<li>Reinitialize barriers between iterations for reuse: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init"><code>mbarrier_init()</code></a></li>
+<li>Only thread 0 should reinitialize barriers to avoid race conditions</li>
+</ul>
+<h3 id="output-selection"><a class="header" href="#output-selection"><strong>Output selection</strong></a></h3>
+<ul>
+<li>Choose final active buffer based on <code>STENCIL_ITERATIONS % 2</code></li>
+<li>Even iteration counts end with data in buffer_A</li>
+<li>Odd iteration counts end with data in buffer_B</li>
+<li>Write final results to global output with bounds checking</li>
+</ul>
+</div>
+</details>
+<h2 id="running-the-code-31"><a class="header" href="#running-the-code-31">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --double-buffer
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --double-buffer
+</code></pre>
+  </div>
+</div>
+<p>After completing the puzzle successfully, you should see output similar to:</p>
+<pre><code>Puzzle 26: GPU Synchronization Primitives
+==================================================
+TPB: 256
+SIZE: 1024
+STENCIL_ITERATIONS: 3
+BUFFER_COUNT: 2
+
+Testing Puzzle 26B: Double-Buffered Stencil Computation
+============================================================
+Double-buffered stencil completed
+Input sample: 1.0 1.0 1.0
+GPU output sample: 1.0 1.0 1.0
+✅ Double-buffered stencil test PASSED!
+</code></pre>
+<h2 id="solution-47"><a class="header" href="#solution-47">Solution</a></h2>
+<p>The key insight is recognizing this as a <strong>double-buffering architecture problem</strong> with explicit memory barrier coordination:</p>
+<ol>
+<li><strong>Design alternating buffer roles</strong>: Swap read/write responsibilities each iteration</li>
+<li><strong>Implement explicit memory barriers</strong>: Use mbarrier APIs for precise synchronization control</li>
+<li><strong>Coordinate iterative processing</strong>: Ensure complete iteration results before buffer swaps</li>
+<li><strong>Optimize memory access patterns</strong>: Keep all processing in fast shared memory</li>
+</ol>
+<details class="solution-details">
+<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p>The double-buffered stencil solution demonstrates sophisticated memory barrier coordination and iterative processing patterns. This approach enables safe iterative refinement algorithms that require precise control over memory access timing.</p>
+<h2 id="double-buffering-architecture-design"><a class="header" href="#double-buffering-architecture-design"><strong>Double-buffering architecture design</strong></a></h2>
+<p>The fundamental breakthrough in this puzzle is <strong>explicit memory barrier control</strong> rather than simple thread synchronization:</p>
+<p><strong>Traditional approach:</strong> Use basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> for simple thread coordination</p>
+<ul>
+<li>All threads execute same operation on different data</li>
+<li>Single barrier call synchronizes thread completion</li>
+<li>No control over specific memory operation timing</li>
+</ul>
+<p><strong>This puzzle’s innovation:</strong> Different buffer roles coordinated with explicit memory barriers</p>
+<ul>
+<li>buffer_A and buffer_B alternate between read source and write target</li>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> provide precise control over memory operation completion</li>
+<li>Explicit coordination prevents race conditions during buffer transitions</li>
+</ul>
+<h2 id="iterative-processing-coordination"><a class="header" href="#iterative-processing-coordination"><strong>Iterative processing coordination</strong></a></h2>
+<p>Unlike single-pass algorithms, this establishes iterative refinement with careful buffer management:</p>
+<ul>
+<li><strong>Iteration 0</strong>: Read from buffer_A (initialized with input), write to buffer_B</li>
+<li><strong>Iteration 1</strong>: Read from buffer_B (previous results), write to buffer_A</li>
+<li><strong>Iteration 2</strong>: Read from buffer_A (previous results), write to buffer_B</li>
+<li><strong>Continue alternating</strong>: Each iteration refines results from previous iteration</li>
+</ul>
+<h2 id="memory-barrier-api-usage"><a class="header" href="#memory-barrier-api-usage"><strong>Memory barrier API usage</strong></a></h2>
+<p>Understanding the mbarrier coordination pattern:</p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init">mbarrier_init()</a></strong>: Initialize barrier for specific thread count (TPB)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive">mbarrier_arrive()</a></strong>: Signal individual thread completion of write phase</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait">mbarrier_test_wait()</a></strong>: Block until all threads signal completion</li>
+<li><strong>Reinitialization</strong>: Reset barrier state between iterations for reuse</li>
+</ul>
+<p><strong>Critical timing sequence:</strong></p>
+<ol>
+<li><strong>All threads write</strong>: Each thread updates its assigned buffer element</li>
+<li><strong>Signal completion</strong>: Each thread calls <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
+<li><strong>Wait for all</strong>: All threads call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a></li>
+<li><strong>Safe to proceed</strong>: Now safe to swap buffer roles for next iteration</li>
+</ol>
+<h2 id="stencil-operation-mechanics"><a class="header" href="#stencil-operation-mechanics"><strong>Stencil operation mechanics</strong></a></h2>
+<p>The 3-point stencil operation with adaptive boundary handling:</p>
+<p><strong>Interior elements</strong> (indices 1 to 254):</p>
+<pre><code class="language-mojo"># Average with left, center, and right neighbors
+stencil_sum = buffer[i-1] + buffer[i] + buffer[i+1]
+result[i] = stencil_sum / 3.0
+</code></pre>
+<p><strong>Boundary elements</strong> (indices 0 and 255):</p>
+<pre><code class="language-mojo"># Only include valid neighbors in average
+stencil_count = 0
+for neighbor in valid_neighbors:
+    stencil_sum += buffer[neighbor]
+    stencil_count += 1
+result[i] = stencil_sum / stencil_count
+</code></pre>
+<h2 id="buffer-role-alternation"><a class="header" href="#buffer-role-alternation"><strong>Buffer role alternation</strong></a></h2>
+<p>The ping-pong buffer pattern ensures data integrity:</p>
+<p><strong>Even iterations</strong> (0, 2, 4…):</p>
+<ul>
+<li><strong>Read source</strong>: buffer_A contains current data</li>
+<li><strong>Write target</strong>: buffer_B receives updated results</li>
+<li><strong>Memory flow</strong>: buffer_A → stencil operation → buffer_B</li>
+</ul>
+<p><strong>Odd iterations</strong> (1, 3, 5…):</p>
+<ul>
+<li><strong>Read source</strong>: buffer_B contains current data</li>
+<li><strong>Write target</strong>: buffer_A receives updated results</li>
+<li><strong>Memory flow</strong>: buffer_B → stencil operation → buffer_A</li>
+</ul>
+<h2 id="race-condition-prevention-1"><a class="header" href="#race-condition-prevention-1"><strong>Race condition prevention</strong></a></h2>
+<p>Memory barriers eliminate multiple categories of race conditions:</p>
+<p><strong>Without barriers (broken)</strong>:</p>
+<pre><code class="language-mojo"># Thread A writes to buffer_B[10]
+buffer_B[10] = stencil_result_A
+
+# Thread B immediately reads buffer_B[10] for its stencil
+# RACE CONDITION: Thread B might read old value before Thread A's write completes
+stencil_input = buffer_B[10]  // Undefined behavior!
+</code></pre>
+<p><strong>With barriers (correct)</strong>:</p>
+<pre><code class="language-mojo"># All threads write their results
+buffer_B[local_i] = stencil_result
+
+# Signal write completion
+mbarrier_arrive(barrier)
+
+# Wait for ALL threads to complete writes
+mbarrier_test_wait(barrier, TPB)
+
+# Now safe to read - all writes guaranteed complete
+stencil_input = buffer_B[neighbor_index]  // Always sees correct values
+</code></pre>
+<h2 id="output-buffer-selection"><a class="header" href="#output-buffer-selection"><strong>Output buffer selection</strong></a></h2>
+<p>Final result location depends on iteration parity:</p>
+<p><strong>Mathematical determination</strong>:</p>
+<ul>
+<li><strong>STENCIL_ITERATIONS = 3</strong> (odd number)</li>
+<li><strong>Final active buffer</strong>: Iteration 2 writes to buffer_B</li>
+<li><strong>Output source</strong>: Copy from buffer_B to global memory</li>
+</ul>
+<p><strong>Implementation pattern</strong>:</p>
+<pre><code class="language-mojo">@parameter
+if STENCIL_ITERATIONS % 2 == 0:
+    # Even total iterations end in buffer_A
+    output[global_i] = buffer_A[local_i]
+else:
+    # Odd total iterations end in buffer_B
+    output[global_i] = buffer_B[local_i]
+</code></pre>
+<h2 id="performance-characteristics-6"><a class="header" href="#performance-characteristics-6"><strong>Performance characteristics</strong></a></h2>
+<p><strong>Memory hierarchy optimization:</strong></p>
+<ul>
+<li><strong>Global memory</strong>: Accessed only for input loading and final output</li>
+<li><strong>Shared memory</strong>: All iterative processing uses fast shared memory</li>
+<li><strong>Register usage</strong>: Minimal due to shared memory focus</li>
+</ul>
+<p><strong>Synchronization overhead:</strong></p>
+<ul>
+<li><strong>mbarrier cost</strong>: Higher than basic barrier() but provides essential control</li>
+<li><strong>Iteration scaling</strong>: Overhead increases linearly with iteration count</li>
+<li><strong>Thread efficiency</strong>: All threads remain active throughout processing</li>
+</ul>
+<h2 id="real-world-applications-1"><a class="header" href="#real-world-applications-1"><strong>Real-world applications</strong></a></h2>
+<p>This double-buffering pattern is fundamental to:</p>
+<p><strong>Iterative solvers:</strong></p>
+<ul>
+<li>Gauss-Seidel and Jacobi methods for linear systems</li>
+<li>Iterative refinement for numerical accuracy</li>
+<li>Multigrid methods with level-by-level processing</li>
+</ul>
+<p><strong>Image processing:</strong></p>
+<ul>
+<li>Multi-pass filters (bilateral, guided, edge-preserving)</li>
+<li>Iterative denoising algorithms</li>
+<li>Heat diffusion and anisotropic smoothing</li>
+</ul>
+<p><strong>Simulation algorithms:</strong></p>
+<ul>
+<li>Cellular automata with state evolution</li>
+<li>Particle systems with position updates</li>
+<li>Fluid dynamics with iterative pressure solving</li>
+</ul>
+<h2 id="key-technical-insights-2"><a class="header" href="#key-technical-insights-2"><strong>Key technical insights</strong></a></h2>
+<p><strong>Memory barrier philosophy:</strong></p>
+<ul>
+<li><strong>Explicit control</strong>: Precise timing control over memory operations vs automatic synchronization</li>
+<li><strong>Race prevention</strong>: Essential for any algorithm with alternating read/write patterns</li>
+<li><strong>Performance trade-off</strong>: Higher synchronization cost for guaranteed correctness</li>
+</ul>
+<p><strong>Double-buffering benefits:</strong></p>
+<ul>
+<li><strong>Data integrity</strong>: Eliminates read-while-write hazards</li>
+<li><strong>Algorithm clarity</strong>: Clean separation between current and next iteration state</li>
+<li><strong>Memory efficiency</strong>: No need for global memory intermediate storage</li>
+</ul>
+<p><strong>Iteration management:</strong></p>
+<ul>
+<li><strong>Compile-time unrolling</strong>: <code>@parameter for</code> enables optimization opportunities</li>
+<li><strong>State tracking</strong>: Buffer role alternation must be deterministic</li>
+<li><strong>Boundary handling</strong>: Adaptive stencil operations handle edge cases gracefully</li>
+</ul>
+<p>This solution demonstrates how to design iterative GPU algorithms that require precise memory access control, moving beyond simple parallel loops to sophisticated memory management patterns used in production numerical software.</p>
+</details>
 
                     </main>
 
