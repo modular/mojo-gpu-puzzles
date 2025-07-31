@@ -212,7 +212,21 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
-<h4 id="option-1-uv-recommended-for-users"><a class="header" href="#option-1-uv-recommended-for-users">Option 1: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a> (recommended for users)</a></h4>
+<h4 id="recommended-option-1-pixi"><a class="header" href="#recommended-option-1-pixi"><strong>(Recommended) Option 1</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+<p><code>pixi</code> is the <strong>recommended option</strong> for this project because:</p>
+<ul>
+<li>✅ Easy access to Modular’s MAX/Mojo packages</li>
+<li>✅ Handles CUDA toolkit and GPU dependencies</li>
+<li>✅ Full conda + PyPI ecosystem support</li>
+</ul>
+<p><strong>Note: A few puzzles only work with <code>pixi</code>.</strong></p>
+<p><strong>Install:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
+</code></pre>
+<p><strong>Update:</strong></p>
+<pre><code class="language-bash">pixi self-update
+</code></pre>
+<h4 id="option-2-uv"><a class="header" href="#option-2-uv">Option 2: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></a></h4>
 <p><strong>Install:</strong></p>
 <pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
 </code></pre>
@@ -222,27 +236,20 @@ cd mojo-gpu-puzzles
 <p><strong>Create a virtual environment:</strong></p>
 <pre><code class="language-bash">uv venv &amp;&amp; source .venv/bin/activate
 </code></pre>
-<h4 id="option-2-pixi-recommended-for-contributors"><a class="header" href="#option-2-pixi-recommended-for-contributors">Option 2: <a href="https://pixi.sh/latest/#installation">pixi</a> (recommended for contributors)</a></h4>
-<p><strong>Install:</strong></p>
-<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
-</code></pre>
-<p><strong>Update:</strong></p>
-<pre><code class="language-bash">pixi self-update
-</code></pre>
 </li>
 <li>
-<p>Run the puzzles via <code>uv</code> or <code>pixi</code> as follows:</p>
+<p>Run the puzzles via <code>pixi</code> or <code>uv</code> as follows:</p>
  <div class="code-tabs" data-tab-group="package-manager">
    <div class="tab-buttons">
-     <button class="tab-button">uv</button>
      <button class="tab-button">pixi</button>
-   </div>
-   <div class="tab-content">
-<pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
-</code></pre>
+     <button class="tab-button">uv</button>
    </div>
    <div class="tab-content">
 <pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
+</code></pre>
+   </div>
+   <div class="tab-content">
+<pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
 </code></pre>
    </div>
  </div>
@@ -250,8 +257,8 @@ cd mojo-gpu-puzzles
 </ol>
 <p>For example, to run puzzle 01:</p>
 <ul>
-<li><code>uv run poe p01</code> or</li>
-<li><code>pixi run p01</code></li>
+<li><code>pixi run p01</code> or</li>
+<li><code>uv run poe p01</code></li>
 </ul>
 <h3 id="knowledge-prerequisites"><a class="header" href="#knowledge-prerequisites">Knowledge prerequisites</a></h3>
 <p>Basic knowledge of:</p>
