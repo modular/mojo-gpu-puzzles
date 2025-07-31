@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 18: 1D Convolution Op - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 18: Softmax Op - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,52 +186,197 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-18-1d-convolution-op"><a class="header" href="#puzzle-18-1d-convolution-op">Puzzle 18: 1D Convolution Op</a></h1>
-<blockquote>
-<h2 id="from-max-graph-to-pytorch-custom-ops"><a class="header" href="#from-max-graph-to-pytorch-custom-ops">From MAX Graph to PyTorch custom ops</a></h2>
-<p>We’re now entering Part IV of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
-<p>In <a href="../puzzle_15/puzzle_15.html">Puzzle 15</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
-<ul>
-<li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
-<li>Integrate with PyTorch’s tensor system and autograd</li>
-<li>Compare MAX Graph vs PyTorch approaches for custom operations</li>
-<li>Understand the critical pattern of explicit output tensor allocation</li>
-</ul>
-<p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
-</blockquote>
+                        <h1 id="puzzle-18-softmax-op"><a class="header" href="#puzzle-18-softmax-op">Puzzle 18: Softmax Op</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="../puzzle_15/puzzle_15.html">Puzzle 15</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
-<p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
+<p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
+<p>Mathematically, the softmax function is defined as:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
+<p>Where:</p>
+<ul>
+<li>\(x_i\) is the \(i\)-th element of the input vector</li>
+<li>\(n\) is the length of the input vector</li>
+</ul>
+<p>However, this direct implementation can lead to numerical overflow issues when values are large. To address this, we use a more numerically stable version:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+<p>Our GPU implementation uses parallel reduction for both finding the maximum value and computing the sum of exponentials, making it highly efficient for large vectors.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<ul>
+<li>Parallel reduction for efficient maximum and sum calculations</li>
+<li>Numerical stability through max-subtraction technique</li>
+<li>Shared memory usage for thread communication</li>
+<li>Custom MAX Graph operation integration with Python</li>
+<li>Thread synchronization with barriers</li>
+</ul>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: \(\text{SIZE} = 128\)</li>
+<li>Threads per block: \(\text{TPB} = 128\)</li>
+<li>Grid dimensions: \(1 \times 1\) block</li>
+<li>Shared memory: Two shared variables for max and sum</li>
+</ul>
+<p>Layout configuration:</p>
+<ul>
+<li>Input tensor: <code>Layout.row_major(SIZE)</code></li>
+<li>Output tensor: <code>Layout.row_major(SIZE)</code></li>
+<li>Custom op parameters: <code>{"input_size": input_tensor.shape[0]}</code></li>
+</ul>
+<p>Key aspects of this puzzle include:</p>
+<ol>
+<li><strong>Numerical stability</strong>: Understanding how to handle potential numerical issues</li>
+<li><strong>Parallel reductions</strong>: Using shared memory for efficient max and sum calculations</li>
+<li><strong>Custom op integration</strong>: Completing the Python interface for our Mojo GPU kernel</li>
+<li><strong>Testing and verification</strong>: Ensuring our implementation matches the expected results</li>
+</ol>
+<p>Our softmax custom operation will:</p>
+<ul>
+<li>Accept NumPy arrays from Python</li>
+<li>Process them efficiently on the GPU</li>
+<li>Return normalized probability distributions</li>
+<li>Match the results of SciPy’s softmax implementation</li>
+</ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
-<pre><code class="language-python">import torch
-from max.torch import CustomOpLibrary
+<p>To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.</p>
+<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel:</a></h3>
+<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from layout import Layout, LayoutTensor
+from layout.tensor_builder import LayoutTensorBuild as tb
+from math import exp
+from utils.numerics import max_finite, min_finite
 
 
-def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
-    """
-    1D convolution using our custom PyTorch operation.
+alias SIZE = 128
+alias TPB = 128
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias layout = Layout.row_major(SIZE)
 
-    This demonstrates the transition from MAX Graph (p15) to PyTorch CustomOpLibrary.
-    Uses the EXACT same Mojo kernel, but different Python integration!
-    """
-    # Load our custom operations
+
+fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    # FILL IN (roughly 31 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Use shared memory for both the maximum value and sum to ensure all threads can access these values</li>
+<li>Remember to call <code>barrier()</code> at appropriate points to synchronize threads</li>
+<li>Implement parallel reduction by having each thread process a portion of the input array</li>
+<li>Use a tree-based reduction pattern to minimize thread divergence</li>
+<li>Handle out-of-bounds access carefully, especially for large inputs</li>
+<li>For numerical stability, calculate \(e^{x_i - max}\) instead of \(e^{x_i}\)</li>
+</ol>
+</div>
+</details>
+<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel:</a></h3>
+<pre><code class="language-mojo">fn softmax_cpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+):
+    # FILL IN (roughly 10 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Create a sequential implementation that follows the same mathematical steps as the GPU version</li>
+<li>First find the maximum value across all inputs</li>
+<li>Then compute \(e^{x_i - max}\) for each element and accumulate the sum</li>
+<li>Finally, normalize by dividing each element by the sum</li>
+<li>Use scalar operations since we don’t have parallel threads in the CPU implementation</li>
+</ol>
+</div>
+</details>
+<h3 id="test-the-cpu-and-gpu-kernels"><a class="header" href="#test-the-cpu-and-gpu-kernels">Test the CPU and GPU kernels</a></h3>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p18-test-kernels
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p18-test-kernels
+</code></pre>
+  </div>
+</div>
+<p>when done correctly you’ll see</p>
+<pre><code class="language-txt">Total Discovered Tests: 1
+
+Passed : 1 (100.00%)
+Failed : 0 (0.00%)
+Skipped: 0 (0.00%)
+</code></pre>
+<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition:</a></h3>
+<pre><code class="language-python">from pathlib import Path
+import numpy as np
+from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
+from max.dtype import DType
+from max.engine import InferenceSession
+from max.graph import DeviceRef, Graph, TensorType, ops
+from numpy.typing import NDArray
+from scipy.special import softmax as scipy_softmax
+
+
+def softmax(
+    input: NDArray[np.float32],
+    session: InferenceSession,
+    device: Device,
+) -&gt; Tensor:
+    dtype = DType.float32
+    input_tensor = Tensor.from_numpy(input).to(device)
     mojo_kernels = Path(__file__).parent / "op"
-    ops = CustomOpLibrary(mojo_kernels)
 
-    # Create output tensor with same shape as input
-    output_tensor = torch.empty_like(input_tensor)
-
-    # Call our custom conv1d operation with explicit output tensor
-    # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
-
-    # FILL IN with 1 line of code
-
-    return output_tensor
+    with Graph(
+        "softmax_graph",
+        input_types=[
+            TensorType(
+                dtype,
+                shape=input_tensor.shape,
+                device=DeviceRef.from_device(device),
+            ),
+        ],
+        custom_extensions=[mojo_kernels],
+    ) as graph:
+        # FILL IN (roughly 4 unformatted lines)
+        pass
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Use <code>graph.inputs[0]</code> to access the input tensor passed to the graph</li>
+<li>Call <code>ops.custom()</code> with the name matching your registered custom op (“softmax”)</li>
+<li>Pass the input tensor as a value to the custom operation</li>
+<li>Specify the output type to match the input shape</li>
+<li>Include the “input_size” parameter which is required by the kernel</li>
+<li>Set <code>graph.outputs</code> to a list containing your operation’s output tensor</li>
+</ol>
+</div>
+</details>
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -247,115 +392,392 @@ def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt
 </code></pre>
   </div>
 </div>
-<p>When successful, you should see output similar to:</p>
-<pre><code>Puzzle 18: From MAX Graph to PyTorch Custom Ops
-============================================================
-Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
-Convolution kernel: [0. 1. 2. 3.]
-
-NumPy reference result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
-
-Testing PyTorch Custom Op (device: cuda)
-----------------------------------------
-PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
-✅ PyTorch custom op verification PASSED
-
-Comparing with MAX Graph approach (like p15)
---------------------------------------------
-MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
-✅ MAX Graph verification PASSED
-✅ PyTorch and MAX Graph results MATCH
+<p>When successful, you should see output similar to on CPU and GPU:</p>
+<pre><code>Input shape: (128,)
+First few random input values: [ 1.1810775   0.60472375  0.5718309   0.6644599  -0.08899796]
+Compiling softmax graph on Device(type=cpu,id=0)
+Executing softmax on Device(type=cpu,id=0)
+====================================================================================================
+Compiling softmax graph on Device(type=gpu,id=0)
+Executing softmax on Device(type=gpu,id=0)
+====================================================================================================
+First few softmax results on CPU (custom Mojo kernel): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+First few softmax results on GPU (custom Mojo kernel): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+First few expected results (SciPy calculation): [0.01718348 0.00965615 0.0093437  0.01025055 0.0048253 ]
+Verification passed: Custom kernel results match SciPy calculation
+Sum of all probabilities on CPU: 1.0
+Sum of all probabilities on GPU: 1.0
 </code></pre>
+<p>This indicates that your custom MAX Graph operation correctly implements the softmax algorithm and produces a valid probability distribution.</p>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>The solution requires calling the compiled custom operation with the proper arguments:</p>
-<pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
-    # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
-    torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+<p>To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a>, we’re creating a bridge between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities.</p>
+<p>The softmax operation we’re implementing is mathematically defined as:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
+<p>However, to prevent numerical overflow, we use the more stable form:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation:</a></h3>
+<pre><code class="language-mojo">fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
+    # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
+    # do not influence the result (max(min_finite, x) == x for any x).
+    var thread_max: Scalar[dtype] = min_finite[dtype]()
+    if global_i &lt; input_size:
+        thread_max = rebind[Scalar[dtype]](input[global_i])
+    shared_max[local_i] = thread_max
+
+    barrier()
+
+    # Parallel reduction to find max similar to reduction we saw before
+    stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared_max[local_i] = max(
+                shared_max[local_i], shared_max[local_i + stride]
+            )
+        barrier()
+        stride = stride // 2
+
+    block_max = shared_max[0]
+
+    # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to 0.0,
+    # ensuring that if these elements are accessed in the parallel sum reduction below they
+    # do not influence the result (adding 0.0 does not change the sum).
+    var exp_val: Scalar[dtype] = 0.0
+    if global_i &lt; input_size:
+        exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+    shared_sum[local_i] = exp_val
+    barrier()
+
+    # Parallel reduction for sum similar to reduction we saw before
+    stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared_sum[local_i] += shared_sum[local_i + stride]
+        barrier()
+        stride = stride // 2
+
+    block_sum = shared_sum[0]
+
+    # Normalize by sum
+    if global_i &lt; input_size:
+        output[global_i] = exp_val / block_sum
+
+
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates several critical concepts:</p>
-<h3 id="1-torchcompile-integration"><a class="header" href="#1-torchcompile-integration">1. <strong>torch.compile() integration</strong></a></h3>
-<p>The solution shows <code>torch.compile</code> integration</p>
-<pre><code class="language-python">torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+Our GPU implementation implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
+<h4 id="kernel-signature-and-memory-management"><a class="header" href="#kernel-signature-and-memory-management">Kernel signature and memory management</a></h4>
+<pre><code class="language-mojo">fn softmax_gpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+)
 </code></pre>
-<h3 id="2-explicit-output-tensor-allocation"><a class="header" href="#2-explicit-output-tensor-allocation">2. <strong>Explicit Output Tensor Allocation</strong></a></h3>
-<pre><code class="language-python">output_tensor = torch.empty_like(input_tensor)
+<p>The kernel is parameterized with:</p>
+<ul>
+<li>Common layout parameter for both input and output tensors</li>
+<li>Vector size as an Integer parameter</li>
+<li>Configurable data type with float32 as default</li>
+<li>Mutable output tensor for in-place computation</li>
+<li>Non-mutable input tensor (mut=False)</li>
+</ul>
+<h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
+<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
+shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
 </code></pre>
+<p>The kernel allocates two shared memory buffers:</p>
 <ul>
-<li>Unlike MAX Graph which handles output allocation automatically</li>
-<li>PyTorch CustomOpLibrary requires <strong>pre-allocated output tensors</strong></li>
-<li>The Mojo operation signature expects <code>(out, input, kernel)</code> order</li>
+<li><code>shared_max</code>: For parallel maximum finding reduction</li>
+<li><code>shared_sum</code>: For parallel sum computation</li>
+<li>Both use <code>TPB</code> (Threads Per Block = 128) as their size</li>
+<li>Shared memory provides fast access for all threads within a block</li>
 </ul>
-<h3 id="3-parameter-dictionary"><a class="header" href="#3-parameter-dictionary">3. <strong>Parameter Dictionary</strong></a></h3>
-<pre><code class="language-python">ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+<h4 id="thread-indexing"><a class="header" href="#thread-indexing">Thread indexing</a></h4>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
+local_i = thread_idx.x
 </code></pre>
+<p>Each thread computes:</p>
 <ul>
-<li>Parameters are passed as a dictionary to the operation</li>
-<li>These become compile-time parameters in the Mojo kernel</li>
-<li>Must match the parameter names in the Mojo <code>@staticmethod fn execute</code> signature</li>
+<li><code>global_i</code>: Its global index in the entire computation space</li>
+<li><code>local_i</code>: Its local index within the current thread block
+This mapping ensures each thread processes exactly one input element.</li>
 </ul>
-<h3 id="4-same-kernel-different-integration"><a class="header" href="#4-same-kernel-different-integration">4. <strong>Same Kernel, Different Integration</strong></a></h3>
-<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 15:</p>
+<h4 id="maximum-finding-phase"><a class="header" href="#maximum-finding-phase">Maximum-finding phase</a></h4>
+<pre><code class="language-mojo">var thread_max: Scalar[dtype] = min_finite[dtype]()
+if global_i &lt; input_size:
+    thread_max = rebind[Scalar[dtype]](input[global_i])
+
+shared_max[local_i] = thread_max
+barrier()
+</code></pre>
+<p>This initializes each thread with:</p>
 <ul>
-<li>Same GPU kernel code</li>
-<li>Same memory access patterns</li>
-<li>Same computational logic</li>
-<li>Only the Python wrapper layer changes</li>
+<li>The minimum finite value for elements outside the valid range</li>
+<li>The actual input value for threads that map to valid elements</li>
+<li>Storage in shared memory for the reduction process</li>
+<li>A barrier synchronization to ensure all threads complete memory writes</li>
 </ul>
+<h4 id="parallel-max-reduction"><a class="header" href="#parallel-max-reduction">Parallel max reduction</a></h4>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
+    barrier()
+    stride = stride // 2
+</code></pre>
+<p>This implements a parallel tree-reduction pattern:</p>
+<ol>
+<li>Start with <code>stride = 64</code> (half of <code>TPB</code>)</li>
+<li>Each active thread compares two values separated by the stride</li>
+<li>Store the maximum in the lower index</li>
+<li>Synchronize all threads with a barrier</li>
+<li>Halve the stride and repeat</li>
+<li>After \(\log_2(TPB)\) steps, shared_max[0] contains the global maximum</li>
+</ol>
+<p>This logarithmic reduction is significantly faster than a linear scan on large inputs.</p>
+<h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
+<pre><code class="language-mojo">block_max = shared_max[0]
+
+var exp_val: Scalar[dtype] = 0.0
+if global_i &lt; input_size:
+    exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+</code></pre>
+<p>Each thread:</p>
+<ol>
+<li>Reads the global maximum from shared memory</li>
+<li>Subtracts it from its input value before taking the exponential</li>
+<li>This subtraction is crucial for numerical stability - it prevents overflow</li>
+<li>The largest exponent becomes \(e^0 = 1\), and all others are \(e^{negative} &lt; 1\)</li>
+</ol>
+<h4 id="parallel-sum-reduction"><a class="header" href="#parallel-sum-reduction">Parallel sum reduction</a></h4>
+<pre><code class="language-mojo">shared_sum[local_i] = exp_val
+barrier()
+
+stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared_sum[local_i] += shared_sum[local_i + stride]
+    barrier()
+    stride = stride // 2
+</code></pre>
+<p>The second reduction phase:</p>
+<ol>
+<li>Stores all exponential values in shared memory</li>
+<li>Uses the same tree-based reduction pattern as for max</li>
+<li>But performs addition instead of maximum comparison</li>
+<li>After \(\log_2(TPB)\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
+</ol>
+<h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
+<pre><code class="language-mojo">block_sum = shared_sum[0]
+
+if global_i &lt; input_size:
+    output[global_i] = exp_val / block_sum
+</code></pre>
+<p>Each thread:</p>
+<ol>
+<li>Reads the total sum from shared memory</li>
+<li>Divides its exponential value by this sum</li>
+<li>Writes the normalized probability to the output buffer</li>
+<li>This produces a valid probability distribution that sums to 1</li>
+</ol>
+<h4 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h4>
+<p>The implementation has excellent performance characteristics:</p>
+<ul>
+<li><strong>Complexity</strong>: \(O(\log n)\) for both max and sum calculations vs \(O(n)\) in a sequential approach</li>
+<li><strong>Memory efficiency</strong>: Uses only \(2 \times TPB\) elements of shared memory</li>
+<li><strong>Work efficiency</strong>: Each thread performs approximately \(2 \times \log_2(n)\) operations</li>
+<li><strong>Load balancing</strong>: Each thread handles the same amount of work</li>
+<li><strong>Synchronization</strong>: Uses minimal barriers, only where necessary</li>
+<li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal bandwidth</li>
+</ul>
+<p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
+</div>
+<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
+<pre><code class="language-mojo">fn softmax_cpu_kernel[
+    layout: Layout,
+    input_size: Int,
+    dtype: DType = DType.float32,
+](
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+):
+    var max_val: Scalar[dtype] = min_finite[dtype]()
+    for i in range(input_size):
+        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+
+    var sum_exp: Scalar[dtype] = 0.0
+    for i in range(input_size):
+        var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+        output[i] = exp_val
+        sum_exp += exp_val
+
+    for i in range(input_size):
+        output[i] = output[i] / sum_exp
+
+
+</code></pre>
+<div class="solution-explanation">
+Our CPU implementation provides a sequential fallback that follows the same mathematical approach but is optimized for single-threaded execution. Let's analyze each phase:
+<ol>
+<li>
+<p><strong>Maximum Finding</strong>:</p>
+<pre><code class="language-mojo">var max_val: Scalar[dtype] = min_finite[dtype]()
+for i in range(input_size):
+    max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
+</code></pre>
+<p>We initialize with the minimum finite value and perform a linear scan through the array, keeping track of the maximum value encountered. This has \(O(n)\) complexity but works efficiently on CPU where we don’t have many cores to parallelize across.</p>
+</li>
+<li>
+<p><strong>Exponential Computation and Summation</strong>:</p>
+<pre><code class="language-mojo">var sum_exp: Scalar[dtype] = 0.0
+for i in range(input_size):
+    var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+    output[i] = exp_val
+    sum_exp += exp_val
+</code></pre>
+<p>We compute \(e^{x_i - max}\) for each element, store the result in the output buffer, and accumulate the sum \(\sum_{j=1}^{n} e^{x_j - max}\) in a single pass. This approach minimizes memory operations compared to using separate loops.</p>
+</li>
+<li>
+<p><strong>Normalization</strong>:</p>
+<pre><code class="language-mojo">for i in range(input_size):
+    output[i] = output[i] / sum_exp
+</code></pre>
+<p>Finally, we normalize each element by dividing by the sum, producing a proper probability distribution according to the softmax formula:</p>
+<p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
+</li>
+</ol>
+<p>The CPU implementation uses the same numerical stability technique (subtracting the maximum) but with sequential operations rather than parallel ones. It’s simpler than the GPU version since it doesn’t need to handle shared memory or thread synchronization, but it’s also less efficient for large inputs.</p>
+<p>Both implementations are registered with MAX Graph’s custom operation system through the <code>@compiler.register("softmax")</code> decorator, allowing seamless execution on either device type based on availability.</p>
+</div>
+<h3 id="python-integration"><a class="header" href="#python-integration">Python integration:</a></h3>
+<pre><code class="language-python">    with Graph(
+        "softmax_graph",
+        input_types=[
+            TensorType(
+                dtype,
+                shape=input_tensor.shape,
+                device=DeviceRef.from_device(device),
+            ),
+        ],
+        custom_extensions=[mojo_kernels],
+    ) as graph:
+        input_value = graph.inputs[0]
+
+        # The output shape is the same as the input for softmax
+        # Note: the name must match the name used in `@compiler.register("softmax")` in op/softmax.mojo
+        output = ops.custom(
+            name="softmax",
+            values=[input_value],
+            device=DeviceRef.from_device(device),
+            out_types=[
+                TensorType(
+                    dtype=input_value.tensor.dtype,
+                    shape=input_value.tensor.shape,
+                    device=DeviceRef.from_device(device),
+                )
+            ],
+            parameters={
+                "target": "gpu" if device == Accelerator() else "cpu",
+                "input_size": input_tensor.shape[0],
+                "dtype": dtype,
+            },
+        )[0].tensor
+        graph.output(output)
+
+</code></pre>
+<div class="solution-explanation">
+The Python integration creates a seamless bridge between NumPy arrays and our optimized Mojo GPU kernel. The implementation consists of several key components:
+<ol>
+<li>
+<p><strong>Graph Setup and Configuration</strong>:</p>
+<pre><code class="language-python">with Graph(
+    "softmax_graph",
+    input_types=[
+        TensorType(
+            dtype,
+            shape=input_tensor.shape,
+            device=DeviceRef.from_device(device),
+        ),
+    ],
+    custom_extensions=[mojo_kernels],
+) as graph:
+</code></pre>
+<p>This creates a computation graph named “softmax_graph” that:</p>
+<ul>
+<li>Defines the input tensor type with proper dtype and shape</li>
+<li>Maps the tensor to the target device (CPU or GPU)</li>
+<li>Loads our custom Mojo operations from the specified directory</li>
+<li>The <code>custom_extensions</code> parameter is crucial for linking to our Mojo implementation</li>
+</ul>
+</li>
+<li>
+<p><strong>Custom Operation Configuration</strong>:</p>
+<pre><code class="language-python">output = ops.custom(
+    name="softmax",
+    values=[input_value],
+    out_types=[
+        TensorType(
+            dtype=input_value.tensor.dtype,
+            shape=input_value.tensor.shape,
+            device=DeviceRef.from_device(device),
+        )
+    ],
+    parameters={
+        "target": "gpu" if device == Accelerator() else "cpu",
+        "input_size": input_tensor.shape[0],
+        "dtype": dtype,
+    },
+)[0].tensor
+</code></pre>
+<p>This sets up our custom operation with:</p>
+<ul>
+<li>Name matching the <code>@compiler.register("softmax")</code> in our Mojo code</li>
+<li>Input values passed as a list</li>
+<li>Output type definition matching the input shape and type</li>
+<li>Parameters required by our kernel, including the target device, vector size and data type</li>
+<li>We extract the tensor from the first returned element with <code>[0].tensor</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Graph Output Definition</strong>:</p>
+<pre><code class="language-python">graph.output(output)
+</code></pre>
+<p>This registers our operation’s result as the graph’s output.</p>
+</li>
+</ol>
+<p>The main script includes comprehensive testing that:</p>
+<ul>
+<li>Generates random input data: <code>np.random.randn(INPUT_SIZE).astype(np.float32)</code></li>
+<li>Calculates expected results with SciPy: <code>scipy_softmax(input_array)</code></li>
+<li>Verifies numerical accuracy: <code>np.testing.assert_allclose(..., rtol=1e-5)</code></li>
+<li>Confirms the output is a valid probability distribution: <code>np.sum(result.to_numpy())</code></li>
+</ul>
+<p>This implementation showcases the power of MAX Graph for integrating high-performance Mojo kernels with Python’s scientific computing ecosystem, providing both efficiency and ease of use.</p>
 </div>
 </details>
-<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>This puzzle illustrates several important patterns for PyTorch custom operations:</p>
-<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
-<tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
-<tr><td><strong>Operation Call</strong></td><td><code>ops.custom(...)</code></td><td><code>torch.compile(op)(...)</code></td></tr>
-<tr><td><strong>Parameter Passing</strong></td><td><code>parameters={...}</code></td><td><code>op[{...}]</code></td></tr>
-<tr><td><strong>Device Management</strong></td><td>Explicit device context</td><td>PyTorch tensor device</td></tr>
-<tr><td><strong>Memory Management</strong></td><td>MAX Graph tensors</td><td>PyTorch tensors</td></tr>
-</tbody></table>
-</div>
-<h3 id="critical-pattern-explicit-output-tensor-allocation"><a class="header" href="#critical-pattern-explicit-output-tensor-allocation">Critical pattern: Explicit output tensor allocation</a></h3>
-<p>The most important difference is that PyTorch CustomOpLibrary requires <strong>explicit output tensor allocation</strong>:</p>
-<pre><code class="language-python"># ❌ This won't work - no output tensor
-result = torch.compile(conv1d)(input_tensor, kernel_tensor)
-
-# ✅ This works - pre-allocated output tensor
-output_tensor = torch.empty_like(input_tensor)
-torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
-</code></pre>
-<p>This pattern ensures:</p>
-<ul>
-<li>Memory is allocated on the correct device</li>
-<li>Output tensor has the right shape and dtype</li>
-<li>The Mojo kernel can write directly to the output buffer</li>
-</ul>
-<h3 id="torchcompile-integration"><a class="header" href="#torchcompile-integration">torch.compile() integration</a></h3>
-<p><code>torch.compile()</code> is essential because it:</p>
-<ul>
-<li>Handles memory layout conversion between PyTorch and Mojo</li>
-<li>Manages device synchronization (CPU ↔ GPU)</li>
-<li>Optimizes tensor format conversion</li>
-<li>Provides proper error handling for memory operations</li>
-</ul>
-<p><em>Note: Without <code>torch.compile()</code>, you might encounter <code>std::bad_alloc</code> errors because the raw operation can’t handle PyTorch’s tensor memory management.</em></p>
-<h2 id="debugging-custom-operations"><a class="header" href="#debugging-custom-operations">Debugging custom operations</a></h2>
-<p>Common issues and solutions:</p>
-<ol>
-<li><strong>Memory Allocation Errors</strong>: Always use <code>torch.compile()</code></li>
-<li><strong>Wrong Output Shape</strong>: Ensure output tensor matches expected dimensions</li>
-<li><strong>Device Mismatch</strong>: All tensors must be on the same device</li>
-<li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>
-</ol>
-<p>The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../bonuses/part4.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_17/puzzle_17.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -369,7 +791,7 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../bonuses/part4.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_17/puzzle_17.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

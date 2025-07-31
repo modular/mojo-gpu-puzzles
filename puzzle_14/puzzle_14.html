@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 14: Matrix Multiplication (MatMul) - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 14: Prefix Sum - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,49 +186,54 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-14-matrix-multiplication-matmul"><a class="header" href="#puzzle-14-matrix-multiplication-matmul">Puzzle 14: Matrix Multiplication (MatMul)</a></h1>
+                        <h1 id="puzzle-14-prefix-sum"><a class="header" href="#puzzle-14-prefix-sum">Puzzle 14: Prefix Sum</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
-<p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
-<p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
-<p><img src="./media/videos/720p30/puzzle_14_viz.gif" alt="Matrix Multiply visualization" /></p>
-<p>This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:</p>
+<p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
+<p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
+<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
+<p><img src="./media/videos/720p30/puzzle_14_viz.gif" alt="Prefix sum" /></p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Parallel algorithms with logarithmic complexity</li>
+<li>Shared memory coordination patterns</li>
+<li>Multi-phase computation strategies</li>
+</ul>
+<p>The key insight is understanding how to transform a sequential operation into an efficient parallel algorithm using shared memory.</p>
+<p>For example, given an input sequence \([3, 1, 4, 1, 5, 9]\), the prefix sum would produce:</p>
+<ul>
+<li>\([3]\) (just the first element)</li>
+<li>\([3, 4]\) (3 + 1)</li>
+<li>\([3, 4, 8]\) (previous sum + 4)</li>
+<li>\([3, 4, 8, 9]\) (previous sum + 1)</li>
+<li>\([3, 4, 8, 9, 14]\) (previous sum + 5)</li>
+<li>\([3, 4, 8, 9, 14, 23]\) (previous sum + 9)</li>
+</ul>
+<p>Mathematically, for a sequence \([x_0, x_1, …, x_n]\), the prefix sum produces:
+\[ [x_0, x_0+x_1, x_0+x_1+x_2, …, \sum_{i=0}^n x_i] \]</p>
+<p>While a sequential algorithm would need \(O(n)\) steps, our parallel approach will use a clever two-phase algorithm that completes in \(O(\log n)\) steps! Here’s a visualization of this process:</p>
+<p>This puzzle is split into two parts to help you master the concept:</p>
 <ul>
 <li>
-<p><a href="./naive.html">Naive Version</a></p>
+<p><a href="./simple.html">Simple Version</a>
+Start with a single block implementation where all data fits in shared memory. This helps understand the core parallel algorithm.</p>
 </li>
 <li>
-<p><a href="./na%C3%AFve.html">Naive Version</a>
-The straightforward implementation where each thread computes one element of the output matrix. While simple to understand, this approach makes many redundant memory accesses.</p>
-</li>
-<li>
-<p><a href="./shared_memory.html">Shared Memory Version</a>
-Improves performance by loading blocks of input matrices into fast shared memory, reducing global memory accesses. Each thread still computes one output element but reads from shared memory.</p>
-</li>
-<li>
-<p><a href="./tiled.html">Tiled Version</a>
-Further optimizes by dividing the computation into tiles, allowing threads to cooperate on loading and computing blocks of the output matrix. This approach better utilizes memory hierarchy and thread cooperation.</p>
+<p><a href="./complete.html">Complete Version</a>
+Then tackle the more challenging case of handling larger arrays that span multiple blocks, requiring coordination between blocks.</p>
 </li>
 </ul>
-<p>Each version builds upon the previous one, introducing new optimization techniques common in GPU programming. You’ll learn how different memory access patterns and thread cooperation strategies affect performance.</p>
-<p>The progression illustrates a common pattern in GPU optimization:</p>
-<ol>
-<li>Start with a correct but naive implementation</li>
-<li>Reduce global memory access with shared memory</li>
-<li>Improve data locality and thread cooperation with tiling</li>
-<li>Use high-level abstractions while maintaining performance</li>
-</ol>
-<p>Choose a version to begin your matrix multiplication journey!</p>
+<p>Each version builds on the previous one, helping you develop a deep understanding of parallel prefix sum computation. The simple version establishes the fundamental algorithm, while the complete version shows how to scale it to larger datasets - a common requirement in real-world GPU applications.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_13/puzzle_13.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_13/block_boundary.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_14/naïve.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_14/simple.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -238,11 +243,11 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_13/puzzle_13.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_13/block_boundary.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_14/naïve.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_14/simple.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

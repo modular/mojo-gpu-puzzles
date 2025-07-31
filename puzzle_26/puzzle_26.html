@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 26: GPU Synchronization Primitives - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 26: Advanced Warp Patterns - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,118 +186,163 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="gpu-synchronization-primitives"><a class="header" href="#gpu-synchronization-primitives">GPU Synchronization Primitives</a></h1>
-<blockquote>
-<p><strong>Beyond Simple Parallelism</strong></p>
-<p>This chapter introduces <strong>synchronization patterns</strong> that enable complex GPU algorithms requiring precise coordination between threads. Unlike previous puzzles that focused on simple parallel operations, these challenges explore <strong>architectural approaches</strong> used in production GPU software.</p>
-<p><strong>What you’ll learn:</strong></p>
-<ul>
-<li><strong>Thread specialization</strong>: Different thread groups executing distinct algorithms within a single block</li>
-<li><strong>Producer-consumer pipelines</strong>: Multi-stage processing with explicit data dependencies</li>
-<li><strong>Advanced barrier APIs</strong>: Fine-grained synchronization control beyond basic <code>barrier()</code> calls</li>
-<li><strong>Memory barrier coordination</strong>: Explicit control over memory visibility and ordering</li>
-<li><strong>Iterative algorithm patterns</strong>: Double-buffering and pipeline coordination for complex computations</li>
-</ul>
-<p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
-</blockquote>
+                        <h1 id="puzzle-26-advanced-warp-patterns"><a class="header" href="#puzzle-26-advanced-warp-patterns">Puzzle 26: Advanced Warp Patterns</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
-<p><strong>Core learning objectives:</strong></p>
+<p>Welcome to <strong>Puzzle 26: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + multi-phase reduction patterns to elegant single-function-call algorithms that leverage hardware-optimized butterfly networks and parallel scan units.</p>
+<p><strong>Key insight:</strong> <em>GPU warps can perform sophisticated tree-based communication and parallel scan operations in hardware - Mojo’s advanced warp primitives harness butterfly networks and dedicated scan units to provide \(O(\log n)\) algorithms with single-instruction simplicity.</em></p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
+<h3 id="advanced-warp-communication-model"><a class="header" href="#advanced-warp-communication-model"><strong>Advanced warp communication model</strong></a></h3>
+<p>Understand sophisticated communication patterns within GPU warps:</p>
+<pre><code>GPU Warp Butterfly Network (32 threads, XOR-based communication)
+Offset 16: Lane 0 ↔ Lane 16, Lane 1 ↔ Lane 17, ..., Lane 15 ↔ Lane 31
+Offset 8:  Lane 0 ↔ Lane 8,  Lane 1 ↔ Lane 9,  ..., Lane 23 ↔ Lane 31
+Offset 4:  Lane 0 ↔ Lane 4,  Lane 1 ↔ Lane 5,  ..., Lane 27 ↔ Lane 31
+Offset 2:  Lane 0 ↔ Lane 2,  Lane 1 ↔ Lane 3,  ..., Lane 29 ↔ Lane 31
+Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
+
+Hardware Prefix Sum (parallel scan acceleration)
+Input:  [1, 2, 3, 4, 5, 6, 7, 8, ...]
+Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
+</code></pre>
+<p><strong>Hardware reality:</strong></p>
 <ul>
-<li><strong>Understand when and why</strong> different synchronization primitives are needed</li>
-<li><strong>Design multi-stage algorithms</strong> with proper thread specialization</li>
-<li><strong>Implement iterative patterns</strong> that require precise memory coordination</li>
-<li><strong>Optimize synchronization overhead</strong> while maintaining correctness guarantees</li>
+<li><strong>Butterfly networks</strong>: XOR-based communication creates optimal tree topologies</li>
+<li><strong>Dedicated scan units</strong>: Hardware-accelerated parallel prefix operations</li>
+<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms replace \(O(n)\) sequential patterns</li>
+<li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
 </ul>
-<p><strong>Architectural progression:</strong> These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.</p>
+<h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
+<p>Master the sophisticated communication primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: XOR-based butterfly communication for tree algorithms</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: Hardware-accelerated parallel scan operations</li>
+<li><strong>Advanced coordination patterns</strong>: Combining multiple primitives for complex algorithms</li>
+</ol>
+<blockquote>
+<p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like parallel reductions, stream compaction, quicksort partitioning, and FFT operations that would otherwise require dozens of lines of shared memory coordination code.</p>
+</blockquote>
+<h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 14):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = input[global_i]
+barrier()
+offset = 1
+for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
+    var current_val: output.element_type = 0
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        current_val = shared[local_i - offset]
+    barrier()
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        shared[local_i] += current_val
+    barrier()
+    offset *= 2
+
+# Advanced warp primitives eliminate all this complexity:
+current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)  # Single call!
+output[global_i] = scan_result
+</code></pre>
+<h3 id="when-advanced-warp-operations-excel"><a class="header" href="#when-advanced-warp-operations-excel"><strong>When advanced warp operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<div class="table-wrapper"><table><thead><tr><th>Algorithm Pattern</th><th>Traditional</th><th>Advanced Warp Operations</th></tr></thead><tbody>
+<tr><td>Parallel reductions</td><td>Shared memory + barriers</td><td>Single <code>shuffle_xor</code> tree</td></tr>
+<tr><td>Prefix/scan operations</td><td>Multi-phase algorithms</td><td>Hardware <code>prefix_sum</code></td></tr>
+<tr><td>Stream compaction</td><td>Complex indexing</td><td><code>prefix_sum</code> + coordination</td></tr>
+<tr><td>Quicksort partition</td><td>Manual position calculation</td><td>Combined primitives</td></tr>
+<tr><td>Tree algorithms</td><td>Recursive shared memory</td><td>Butterfly communication</td></tr>
+</tbody></table>
+</div>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before diving into advanced warp communication, ensure you’re comfortable with:</p>
+<ul>
+<li><strong>Part VII warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a> and <a href="../puzzle_25/puzzle_25.html">Puzzle 25</a>)</li>
+<li><strong>Parallel algorithm theory</strong>: Tree reductions, parallel scan, and butterfly networks</li>
+<li><strong>GPU memory hierarchy</strong>: Shared memory patterns and synchronization (see <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>)</li>
+<li><strong>Mathematical operations</strong>: Understanding XOR operations and logarithmic complexity</li>
+</ul>
+<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
+<h3 id="1-butterfly-communication-with-shuffle_xor"><a class="header" href="#1-butterfly-communication-with-shuffle_xor"><strong>1. Butterfly communication with shuffle_xor</strong></a></h3>
+<p><strong>→ <a href="./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
+<p>Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Using <code>shuffle_xor()</code> for creating butterfly network topologies</li>
+<li>Implementing \(O(\log n)\) parallel reductions with tree communication</li>
+<li>Understanding XOR-based lane pairing and communication patterns</li>
+<li>Advanced conditional butterfly operations for multi-value reductions</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">max_val = input[global_i]
+offset = WARP_SIZE // 2
+while offset &gt; 0:
+    max_val = max(max_val, shuffle_xor(max_val, offset))
+    offset //= 2
+# All lanes now have global maximum
+</code></pre>
+<h3 id="2-hardware-accelerated-parallel-scan-with-prefix_sum"><a class="header" href="#2-hardware-accelerated-parallel-scan-with-prefix_sum"><strong>2. Hardware-accelerated parallel scan with prefix_sum</strong></a></h3>
+<p><strong>→ <a href="./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
+<p>Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
+<p><strong>What you’ll master:</strong></p>
+<ul>
+<li>Using <code>prefix_sum()</code> for hardware-accelerated cumulative operations</li>
+<li>Implementing stream compaction and parallel partitioning</li>
+<li>Combining <code>prefix_sum</code> with <code>shuffle_xor</code> for advanced coordination</li>
+<li>Understanding inclusive vs exclusive scan patterns</li>
+</ul>
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)
+output[global_i] = scan_result  # Hardware-optimized cumulative sum
+</code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p><strong>Thread coordination paradigms:</strong></p>
+<h3 id="butterfly-network-communication"><a class="header" href="#butterfly-network-communication"><strong>Butterfly network communication</strong></a></h3>
+<p>Understanding XOR-based communication topologies:</p>
 <ul>
-<li><strong>Simple parallelism</strong>: All threads execute identical operations (previous puzzles)</li>
-<li><strong>Specialized parallelism</strong>: Different thread groups execute distinct algorithms (this chapter)</li>
-<li><strong>Pipeline parallelism</strong>: Sequential stages with producer-consumer relationships</li>
-<li><strong>Iterative parallelism</strong>: Multiple passes with careful buffer management</li>
+<li><strong>XOR pairing</strong>: <code>lane_id ⊕ mask</code> creates symmetric communication pairs</li>
+<li><strong>Tree reduction</strong>: Logarithmic complexity through hierarchical data exchange</li>
+<li><strong>Parallel coordination</strong>: All lanes participate simultaneously in reduction</li>
+<li><strong>Dynamic algorithms</strong>: Works for any power-of-2 <code>WARP_SIZE</code> (32, 64, etc.)</li>
 </ul>
-<p><strong>Synchronization primitive hierarchy:</strong></p>
+<h3 id="hardware-accelerated-parallel-scan"><a class="header" href="#hardware-accelerated-parallel-scan"><strong>Hardware-accelerated parallel scan</strong></a></h3>
+<p>Recognizing dedicated scan unit capabilities:</p>
 <ul>
-<li><strong>Basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></strong>: Simple thread synchronization within blocks</li>
-<li><strong>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a></strong>: Fine-grained memory barrier control with state tracking</li>
-<li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer synchronization</li>
+<li><strong>Prefix sum operations</strong>: Cumulative operations with hardware acceleration</li>
+<li><strong>Stream compaction</strong>: Parallel filtering and data reorganization</li>
+<li><strong>Single-function simplicity</strong>: Complex algorithms become single calls</li>
+<li><strong>Zero synchronization</strong>: Hardware handles all coordination internally</li>
 </ul>
-<p><strong>Memory consistency models:</strong></p>
+<h3 id="algorithm-complexity-transformation"><a class="header" href="#algorithm-complexity-transformation"><strong>Algorithm complexity transformation</strong></a></h3>
+<p>Converting traditional patterns to advanced warp operations:</p>
 <ul>
-<li><strong>Shared memory coordination</strong>: Fast on-chip memory for inter-thread communication</li>
-<li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different memory spaces</li>
-<li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative algorithms</li>
+<li><strong>Sequential reductions</strong> (\(O(n)\)) → <strong>Butterfly reductions</strong> (\(O(\log n)\))</li>
+<li><strong>Multi-phase scan algorithms</strong> → <strong>Single hardware prefix_sum</strong></li>
+<li><strong>Complex shared memory patterns</strong> → <strong>Register-only operations</strong></li>
+<li><strong>Explicit synchronization</strong> → <strong>Hardware-managed coordination</strong></li>
 </ul>
-<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
-<p><strong>System architecture:</strong></p>
+<h3 id="advanced-coordination-patterns"><a class="header" href="#advanced-coordination-patterns"><strong>Advanced coordination patterns</strong></a></h3>
+<p>Combining multiple primitives for sophisticated algorithms:</p>
 <ul>
-<li><strong>Block size</strong>: <code>TPB = 256</code> threads per block for optimal occupancy</li>
-<li><strong>Grid configuration</strong>: Multiple blocks processing different data tiles</li>
-<li><strong>Memory hierarchy</strong>: Strategic use of shared memory, registers, and global memory</li>
-<li><strong>Data types</strong>: <code>DType.float32</code> for numerical computations</li>
+<li><strong>Dual reductions</strong>: Simultaneous min/max tracking with butterfly patterns</li>
+<li><strong>Parallel partitioning</strong>: <code>shuffle_xor</code> + <code>prefix_sum</code> for quicksort-style operations</li>
+<li><strong>Conditional operations</strong>: Lane-based output selection with global coordination</li>
+<li><strong>Multi-primitive algorithms</strong>: Complex parallel patterns with optimal performance</li>
 </ul>
-<p><strong>Synchronization patterns covered:</strong></p>
-<ol>
-<li><strong>Multi-stage pipelines</strong>: Thread specialization with barrier coordination</li>
-<li><strong>Double-buffered iterations</strong>: Memory barrier management for iterative algorithms</li>
-<li><strong>Streaming computation</strong>: Asynchronous copy coordination for high-throughput processing</li>
-</ol>
-<p><strong>Performance considerations:</strong></p>
-<ul>
-<li><strong>Synchronization overhead</strong>: Understanding the cost of different barrier types</li>
-<li><strong>Memory bandwidth</strong>: Optimizing access patterns for maximum throughput</li>
-<li><strong>Thread utilization</strong>: Balancing specialized roles with overall efficiency</li>
-</ul>
-<h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
-<p>This chapter contains three interconnected puzzles that build upon each other:</p>
-<h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
-<p><strong>Focus</strong>: Thread specialization and pipeline architecture</p>
-<p>Learn how to design GPU kernels where different thread groups execute completely different algorithms within the same block. This puzzle introduces <strong>producer-consumer relationships</strong> and strategic barrier placement for coordinating between different algorithmic stages.</p>
-<p><strong>Key concepts</strong>:</p>
-<ul>
-<li>Thread role specialization (Stage 1: load, Stage 2: process, Stage 3: output)</li>
-<li>Producer-consumer data flow between processing stages</li>
-<li>Strategic barrier placement between different algorithms</li>
-</ul>
-<p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific computations, neural network layer coordination</p>
-<h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
-<p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
-<p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
-<p><strong>Key concepts</strong>:</p>
-<ul>
-<li>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> vs basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></li>
-<li>Double-buffering with alternating read/write buffer roles</li>
-<li>Iterative algorithm coordination with explicit memory barriers</li>
-</ul>
-<p><strong>Real-world applications</strong>: Iterative solvers (Jacobi, Gauss-Seidel), cellular automata, simulation time-stepping</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p><strong>Recommended approach:</strong></p>
-<ol>
-<li><strong>Start with <a href="barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
-<li><strong>Progress to <a href="memory_barrier.html">Memory Barriers</a></strong>: Master fine-grained synchronization control</li>
-<li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput applications</li>
-</ol>
-<p><strong>Prerequisites:</strong></p>
-<ul>
-<li>Comfort with basic GPU programming concepts (threads, blocks, shared memory)</li>
-<li>Understanding of memory hierarchies and access patterns</li>
-<li>Familiarity with barrier synchronization from previous puzzles</li>
-</ul>
-<p><strong>Learning outcomes:</strong>
-By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
-<p><strong>Ready to dive in?</strong> Start with <strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
+<p>Ready to harness advanced GPU warp-level communication? Start with butterfly network operations to understand tree-based communication, then progress to hardware-accelerated parallel scan for optimal algorithm performance.</p>
+<p>💡 <strong>Success tip</strong>: Think of advanced warp operations as <strong>hardware-accelerated parallel algorithm building blocks</strong>. These primitives replace entire categories of complex shared memory algorithms with single, optimized function calls.</p>
+<p><strong>Learning objective</strong>: By the end of Puzzle 24, you’ll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_25/puzzle_25.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_25/warp_broadcast.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_26/barrier.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_26/warp_shuffle_xor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -307,11 +352,11 @@ By completing this chapter, you’ll have the foundation to design and implement
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_25/puzzle_25.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_25/warp_broadcast.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_26/barrier.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_26/warp_shuffle_xor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

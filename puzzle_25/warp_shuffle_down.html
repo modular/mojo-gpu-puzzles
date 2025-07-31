@@ -1,0 +1,728 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>⬇️ warp.shuffle_down() - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="warpshuffle_down-one-to-one-communication"><a class="header" href="#warpshuffle_down-one-to-one-communication"><code>warp.shuffle_down()</code> One-to-One Communication</a></h1>
+<p>For warp-level neighbor communication we can use <code>shuffle_down()</code> to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down()</a> operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations.</em></p>
+<blockquote>
+<p><strong>What are stencil operations?</strong> <a href="https://en.wikipedia.org/wiki/Iterative_Stencil_Loops">Stencil</a> operations are computations where each output element depends on a fixed pattern of neighboring input elements. Common examples include finite differences (derivatives), convolutions, and moving averages. The “stencil” refers to the pattern of neighbor access - like a 3-point stencil that reads <code>[i-1, i, i+1]</code> or a 5-point stencil that reads <code>[i-2, i-1, i, i+1, i+2]</code>.</p>
+</blockquote>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll master:</p>
+<ul>
+<li><strong>Warp-level data shuffling</strong> with <code>shuffle_down()</code></li>
+<li><strong>Neighbor access patterns</strong> for stencil computations</li>
+<li><strong>Boundary handling</strong> at warp edges</li>
+<li><strong>Multi-offset shuffling</strong> for extended neighbor access</li>
+<li><strong>Cross-warp coordination</strong> in multi-block scenarios</li>
+</ul>
+<p>The <code>shuffle_down</code> operation enables each lane to access data from lanes at higher indices:
+\[\Large \text{shuffle_down}(\text{value}, \text{offset}) = \text{value_from_lane}(\text{lane_id} + \text{offset})\]</p>
+<p>This transforms complex neighbor access patterns into simple warp-level operations, enabling efficient stencil computations without explicit memory indexing.</p>
+<h2 id="1-basic-neighbor-difference"><a class="header" href="#1-basic-neighbor-difference">1. Basic neighbor difference</a></h2>
+<h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="the-shuffle_down-concept"><a class="header" href="#the-shuffle_down-concept">The shuffle_down concept</a></h3>
+<p>Traditional neighbor access requires complex indexing and bounds checking:</p>
+<pre><code class="language-mojo"># Traditional approach - complex and error-prone
+if global_i &lt; size - 1:
+    next_value = input[global_i + 1]  # Potential out-of-bounds
+    result = next_value - current_value
+</code></pre>
+<p><strong>Problems with traditional approach:</strong></p>
+<ul>
+<li><strong>Bounds checking</strong>: Must manually verify array bounds</li>
+<li><strong>Memory access</strong>: Requires separate memory loads</li>
+<li><strong>Synchronization</strong>: May need barriers for shared memory patterns</li>
+<li><strong>Complex logic</strong>: Handling edge cases becomes verbose</li>
+</ul>
+<p>With <code>shuffle_down()</code>, neighbor access becomes elegant:</p>
+<pre><code class="language-mojo"># Warp shuffle approach - simple and safe
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # Get value from lane+1
+if lane &lt; WARP_SIZE - 1:
+    result = next_val - current_val
+</code></pre>
+<p><strong>Benefits of shuffle_down:</strong></p>
+<ul>
+<li><strong>Zero memory overhead</strong>: No additional memory accesses</li>
+<li><strong>Automatic bounds</strong>: Hardware handles warp boundaries</li>
+<li><strong>No synchronization</strong>: SIMT execution guarantees correctness</li>
+<li><strong>Composable</strong>: Easy to combine with other warp operations</li>
+</ul>
+<h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
+<p>Implement finite differences using <code>shuffle_down()</code> to access the next element.</p>
+<p><strong>Mathematical operation:</strong> Compute the discrete derivative (finite difference) for each element:
+\[\Large \text{output}[i] = \text{input}[i+1] - \text{input}[i]\]</p>
+<p>This transforms input data <code>[0, 1, 4, 9, 16, 25, ...]</code> (squares: <code>i * i</code>) into differences <code>[1, 3, 5, 7, 9, ...]</code> (odd numbers), effectively computing the discrete derivative of the quadratic function.</p>
+<pre><code class="language-mojo">alias SIZE = WARP_SIZE
+alias BLOCKS_PER_GRID = (1, 1)
+alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+
+
+fn neighbor_difference[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Compute finite differences: output[i] = input[i+1] - input[i]
+    Uses shuffle_down(val, 1) to get the next neighbor's value.
+    Works across multiple blocks, each processing one warp worth of data.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    # FILL IN (roughly 7 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-understanding-shuffle_down"><a class="header" href="#1-understanding-shuffle_down">1. <strong>Understanding shuffle_down</strong></a></h3>
+<p>The <code>shuffle_down(value, offset)</code> operation allows each lane to receive data from a lane at a higher index. Study how this can give you access to neighboring elements without explicit memory loads.</p>
+<p><strong>What <code>shuffle_down(val, 1)</code> does:</strong></p>
+<ul>
+<li>Lane 0 gets value from Lane 1</li>
+<li>Lane 1 gets value from Lane 2</li>
+<li>…</li>
+<li>Lane 30 gets value from Lane 31</li>
+<li>Lane 31 gets undefined value (handled by boundary check)</li>
+</ul>
+<h3 id="2-warp-boundary-considerations"><a class="header" href="#2-warp-boundary-considerations">2. <strong>Warp boundary considerations</strong></a></h3>
+<p>Consider what happens at the edges of a warp. Some lanes may not have valid neighbors to access via shuffle operations.</p>
+<p><strong>Challenge:</strong> Design your algorithm to handle cases where shuffle operations may return undefined data for lanes at warp boundaries.</p>
+<p>For neighbor difference with <code>WARP_SIZE = 32</code>:</p>
+<ul>
+<li>
+<p><strong>Valid difference</strong> (<code>lane &lt; WARP_SIZE - 1</code>): <strong>Lanes 0-30</strong> (31 lanes)</p>
+<ul>
+<li><strong>When</strong>: \(\text{lane_id}() \in {0, 1, \cdots, 30}\)</li>
+<li><strong>Why</strong>: <code>shuffle_down(current_val, 1)</code> successfully gets next neighbor’s value</li>
+<li><strong>Result</strong>: <code>output[i] = input[i+1] - input[i]</code> (finite difference)</li>
+</ul>
+</li>
+<li>
+<p><strong>Boundary case</strong> (else): <strong>Lane 31</strong> (1 lane)</p>
+<ul>
+<li><strong>When</strong>: \(\text{lane_id}() = 31\)</li>
+<li><strong>Why</strong>: <code>shuffle_down(current_val, 1)</code> returns undefined data (no lane 32)</li>
+<li><strong>Result</strong>: <code>output[i] = 0</code> (cannot compute difference)</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-lane-identification"><a class="header" href="#3-lane-identification">3. <strong>Lane identification</strong></a></h3>
+<pre><code class="language-mojo">lane = lane_id()  # Returns 0 to WARP_SIZE-1
+</code></pre>
+<p><strong>Lane numbering:</strong> Within each warp, lanes are numbered 0, 1, 2, …, <code>WARP_SIZE-1</code></p>
+</div>
+</details>
+<p><strong>Test the neighbor difference:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --neighbor
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+✅ Basic neighbor difference test passed!
+</code></pre>
+<h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn neighbor_difference[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Compute finite differences: output[i] = input[i+1] - input[i]
+    Uses shuffle_down(val, 1) to get the next neighbor's value.
+    Works across multiple blocks, each processing one warp worth of data.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    if global_i &lt; size:
+        # Get current value
+        current_val = input[global_i]
+
+        # Get next neighbor's value using shuffle_down
+        next_val = shuffle_down(current_val, 1)
+
+        # Compute difference - valid within warp boundaries
+        # Last lane of each warp has no valid neighbor within the warp
+        # Note there's only one warp in this test, so we don't need to check global_i &lt; size - 1
+        # We'll see how this works with multiple blocks in the next tests
+        if lane &lt; WARP_SIZE - 1:
+            output[global_i] = next_val - current_val
+        else:
+            # Last thread in warp or last thread overall, set to 0
+            output[global_i] = 0
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates how <code>shuffle_down()</code> transforms traditional array indexing into efficient warp-level communication.</p>
+<p><strong>Algorithm breakdown:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]           # Each lane reads its element
+    next_val = shuffle_down(current_val, 1) # Hardware shifts data right
+
+    if lane &lt; WARP_SIZE - 1:
+        output[global_i] = next_val - current_val  # Compute difference
+    else:
+        output[global_i] = 0                       # Boundary handling
+</code></pre>
+<p><strong>SIMT execution deep dive:</strong></p>
+<pre><code>Cycle 1: All lanes load their values simultaneously
+  Lane 0: current_val = input[0] = 0
+  Lane 1: current_val = input[1] = 1
+  Lane 2: current_val = input[2] = 4
+  ...
+  Lane 31: current_val = input[31] = 961
+
+Cycle 2: shuffle_down(current_val, 1) executes on all lanes
+  Lane 0: receives current_val from Lane 1 → next_val = 1
+  Lane 1: receives current_val from Lane 2 → next_val = 4
+  Lane 2: receives current_val from Lane 3 → next_val = 9
+  ...
+  Lane 30: receives current_val from Lane 31 → next_val = 961
+  Lane 31: receives undefined (no Lane 32) → next_val = ?
+
+Cycle 3: Difference computation (lanes 0-30 only)
+  Lane 0: output[0] = 1 - 0 = 1
+  Lane 1: output[1] = 4 - 1 = 3
+  Lane 2: output[2] = 9 - 4 = 5
+  ...
+  Lane 31: output[31] = 0 (boundary condition)
+</code></pre>
+<p><strong>Mathematical insight:</strong> This implements the discrete derivative operator \(D\):
+\[\Large D<a href="i">f</a> = f(i+1) - f(i)\]</p>
+<p>For our quadratic input \(f(i) = i^2\):
+\[\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\]</p>
+<p><strong>Why shuffle_down is superior:</strong></p>
+<ol>
+<li><strong>Memory efficiency</strong>: Traditional approach requires <code>input[global_i + 1]</code> load, potentially causing cache misses</li>
+<li><strong>Bounds safety</strong>: No risk of out-of-bounds access; hardware handles warp boundaries</li>
+<li><strong>SIMT optimization</strong>: Single instruction processes all lanes simultaneously</li>
+<li><strong>Register communication</strong>: Data moves between registers, not through memory hierarchy</li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Latency</strong>: 1 cycle (vs 100+ cycles for memory access)</li>
+<li><strong>Bandwidth</strong>: 0 bytes (vs 4 bytes per thread for traditional)</li>
+<li><strong>Parallelism</strong>: All 32 lanes process simultaneously</li>
+</ul>
+</div>
+</details>
+<h2 id="2-multi-offset-moving-average"><a class="header" href="#2-multi-offset-moving-average">2. Multi-offset moving average</a></h2>
+<h3 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h3>
+<ul>
+<li>Vector size: <code>SIZE_2 = 64</code> (multi-block scenario)</li>
+<li>Grid configuration: <code>BLOCKS_PER_GRID = (2, 1)</code> blocks per grid</li>
+<li>Block configuration: <code>THREADS_PER_BLOCK = (WARP_SIZE, 1)</code> threads per block</li>
+</ul>
+<h3 id="code-to-complete-1"><a class="header" href="#code-to-complete-1">Code to complete</a></h3>
+<p>Implement a 3-point moving average using multiple <code>shuffle_down</code> operations.</p>
+<p><strong>Mathematical operation:</strong> Compute a sliding window average using three consecutive elements:
+\[\Large \text{output}[i] = \frac{1}{3}\left(\text{input}[i] + \text{input}[i+1] + \text{input}[i+2]\right)\]</p>
+<p><strong>Boundary handling:</strong> The algorithm gracefully degrades at warp boundaries:</p>
+<ul>
+<li><strong>Full 3-point window</strong>: \(\text{output}[i] = \frac{1}{3}\sum_{k=0}^{2} \text{input}[i+k]\) when all neighbors available</li>
+<li><strong>2-point window</strong>: \(\text{output}[i] = \frac{1}{2}\sum_{k=0}^{1} \text{input}[i+k]\) when only next neighbor available</li>
+<li><strong>1-point window</strong>: \(\text{output}[i] = \text{input}[i]\) when no neighbors available</li>
+</ul>
+<p>This demonstrates how <code>shuffle_down()</code> enables efficient stencil operations with automatic boundary handling within warp limits.</p>
+<pre><code class="language-mojo">alias SIZE_2 = 64
+alias BLOCKS_PER_GRID_2 = (2, 1)
+alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+alias layout_2 = Layout.row_major(SIZE_2)
+
+
+fn moving_average_3[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
+    Uses shuffle_down with offsets 1 and 2 to access neighbors.
+    Works within warp boundaries across multiple blocks.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    # FILL IN (roughly 10 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-multi-offset-shuffle-patterns"><a class="header" href="#1-multi-offset-shuffle-patterns">1. <strong>Multi-offset shuffle patterns</strong></a></h3>
+<p>This puzzle requires accessing multiple neighbors simultaneously. You’ll need to use shuffle operations with different offsets.</p>
+<p><strong>Key questions:</strong></p>
+<ul>
+<li>How can you get both <code>input[i+1]</code> and <code>input[i+2]</code> using shuffle operations?</li>
+<li>What’s the relationship between shuffle offset and neighbor distance?</li>
+<li>Can you perform multiple shuffles on the same source value?</li>
+</ul>
+<p><strong>Visualization concept:</strong></p>
+<pre><code>Your lane needs:  current_val, next_val, next_next_val
+Shuffle offsets:  0 (direct),  1,        2
+</code></pre>
+<p><strong>Think about:</strong> How many shuffle operations do you need, and what offsets should you use?</p>
+<h3 id="2-tiered-boundary-handling"><a class="header" href="#2-tiered-boundary-handling">2. <strong>Tiered boundary handling</strong></a></h3>
+<p>Unlike the simple neighbor difference, this puzzle has multiple boundary scenarios because you need access to 2 neighbors.</p>
+<p><strong>Boundary scenarios to consider:</strong></p>
+<ul>
+<li><strong>Full window:</strong> Lane can access both neighbors → use all 3 values</li>
+<li><strong>Partial window:</strong> Lane can access 1 neighbor → use 2 values</li>
+<li><strong>No window:</strong> Lane can’t access any neighbors → use 1 value</li>
+</ul>
+<p><strong>Critical thinking:</strong></p>
+<ul>
+<li>Which lanes fall into each category?</li>
+<li>How should you weight the averages when you have fewer values?</li>
+<li>What boundary conditions should you check?</li>
+</ul>
+<p><strong>Pattern to consider:</strong></p>
+<pre><code>if (can_access_both_neighbors):
+    # 3-point average
+elif (can_access_one_neighbor):
+    # 2-point average
+else:
+    # 1-point (no averaging)
+</code></pre>
+<h3 id="3-multi-block-coordination"><a class="header" href="#3-multi-block-coordination">3. <strong>Multi-block coordination</strong></a></h3>
+<p>This puzzle uses multiple blocks, each processing a different section of the data.</p>
+<p><strong>Important considerations:</strong></p>
+<ul>
+<li>Each block has its own warp with lanes 0 to WARP_SIZE-1</li>
+<li>Boundary conditions apply within each warp independently</li>
+<li>Lane numbering resets for each block</li>
+</ul>
+<p><strong>Questions to think about:</strong></p>
+<ul>
+<li>Does your boundary logic work correctly for both Block 0 and Block 1?</li>
+<li>Are you checking both lane boundaries AND global array boundaries?</li>
+<li>How does <code>global_i</code> relate to <code>lane_id()</code> in different blocks?</li>
+</ul>
+<p><strong>Debugging tip:</strong> Test your logic by tracing through what happens at the boundary lanes of each block.</p>
+</div>
+</details>
+<p><strong>Test the moving average:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --average
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --average
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE_2:  64
+output: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
+expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
+✅ Moving average test passed!
+</code></pre>
+<h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn moving_average_3[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
+    Uses shuffle_down with offsets 1 and 2 to access neighbors.
+    Works within warp boundaries across multiple blocks.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    lane = lane_id()
+
+    if global_i &lt; size:
+        # Get current, next, and next+1 values
+        current_val = input[global_i]
+        next_val = shuffle_down(current_val, 1)
+        next_next_val = shuffle_down(current_val, 2)
+
+        # Compute 3-point average - valid within warp boundaries
+        if lane &lt; WARP_SIZE - 2 and global_i &lt; size - 2:
+            output[global_i] = (current_val + next_val + next_next_val) / 3.0
+        elif lane &lt; WARP_SIZE - 1 and global_i &lt; size - 1:
+            # Second-to-last in warp: only current + next available
+            output[global_i] = (current_val + next_val) / 2.0
+        else:
+            # Last thread in warp or boundary cases: only current available
+            output[global_i] = current_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates advanced multi-offset shuffling for complex stencil operations.</p>
+<p><strong>Complete algorithm analysis:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    # Step 1: Acquire all needed data via multiple shuffles
+    current_val = input[global_i]                   # Direct access
+    next_val = shuffle_down(current_val, 1)         # Right neighbor
+    next_next_val = shuffle_down(current_val, 2)    # Right+1 neighbor
+
+    # Step 2: Adaptive computation based on available data
+    if lane &lt; WARP_SIZE - 2 and global_i &lt; size - 2:
+        # Full 3-point stencil available
+        output[global_i] = (current_val + next_val + next_next_val) / 3.0
+    elif lane &lt; WARP_SIZE - 1 and global_i &lt; size - 1:
+        # Only 2-point stencil available (near warp boundary)
+        output[global_i] = (current_val + next_val) / 2.0
+    else:
+        # No stencil possible (at warp boundary)
+        output[global_i] = current_val
+</code></pre>
+<p><strong>Multi-offset execution trace (<code>WARP_SIZE = 32</code>):</strong></p>
+<pre><code>Initial state (Block 0, elements 0-31):
+  Lane 0: current_val = input[0] = 1
+  Lane 1: current_val = input[1] = 2
+  Lane 2: current_val = input[2] = 4
+  ...
+  Lane 31: current_val = input[31] = X
+
+First shuffle: shuffle_down(current_val, 1)
+  Lane 0: next_val = input[1] = 2
+  Lane 1: next_val = input[2] = 4
+  Lane 2: next_val = input[3] = 7
+  ...
+  Lane 30: next_val = input[31] = X
+  Lane 31: next_val = undefined
+
+Second shuffle: shuffle_down(current_val, 2)
+  Lane 0: next_next_val = input[2] = 4
+  Lane 1: next_next_val = input[3] = 7
+  Lane 2: next_next_val = input[4] = 11
+  ...
+  Lane 29: next_next_val = input[31] = X
+  Lane 30: next_next_val = undefined
+  Lane 31: next_next_val = undefined
+
+Computation phase:
+  Lanes 0-29: Full 3-point average → (current + next + next_next) / 3
+  Lane 30:    2-point average → (current + next) / 2
+  Lane 31:    1-point average → current (passthrough)
+</code></pre>
+<p><strong>Mathematical foundation:</strong> This implements a variable-width discrete convolution:
+\[\Large h[i] = \sum_{k=0}^{K(i)-1} w_k^{(i)} \cdot f[i+k]\]</p>
+<p>Where the kernel adapts based on position:</p>
+<ul>
+<li><strong>Interior points</strong>: \(K(i) = 3\), \(\mathbf{w}^{(i)} = [\frac{1}{3}, \frac{1}{3}, \frac{1}{3}]\)</li>
+<li><strong>Near boundary</strong>: \(K(i) = 2\), \(\mathbf{w}^{(i)} = [\frac{1}{2}, \frac{1}{2}]\)</li>
+<li><strong>At boundary</strong>: \(K(i) = 1\), \(\mathbf{w}^{(i)} = [1]\)</li>
+</ul>
+<p><strong>Multi-block coordination:</strong> With <code>SIZE_2 = 64</code> and 2 blocks:</p>
+<pre><code>Block 0 (global indices 0-31):
+  Lane boundaries apply to global indices 29, 30, 31
+
+Block 1 (global indices 32-63):
+  Lane boundaries apply to global indices 61, 62, 63
+  Lane numbers reset: global_i=32 → lane=0, global_i=63 → lane=31
+</code></pre>
+<p><strong>Performance optimizations:</strong></p>
+<ol>
+<li><strong>Parallel data acquisition</strong>: Both shuffle operations execute simultaneously</li>
+<li><strong>Conditional branching</strong>: GPU handles divergent lanes efficiently via predication</li>
+<li><strong>Memory coalescing</strong>: Sequential global memory access pattern optimal for GPU</li>
+<li><strong>Register reuse</strong>: All intermediate values stay in registers</li>
+</ol>
+<p><strong>Signal processing perspective:</strong> This is a causal FIR filter with impulse response \(h[n] = \frac{1}{3}[\delta[n] + \delta[n-1] + \delta[n-2]]\), providing smoothing with a cutoff frequency at \(f_c \approx 0.25f_s\).</p>
+</div>
+</details>
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>Here is what the core pattern of this section looks like</p>
+<pre><code class="language-mojo">current_val = input[global_i]
+neighbor_val = shuffle_down(current_val, offset)
+if lane &lt; WARP_SIZE - offset:
+    result = compute(current_val, neighbor_val)
+</code></pre>
+<p><strong>Key benefits:</strong></p>
+<ul>
+<li><strong>Hardware efficiency</strong>: Register-to-register communication</li>
+<li><strong>Boundary safety</strong>: Automatic warp limit handling</li>
+<li><strong>SIMT optimization</strong>: Single instruction, all lanes parallel</li>
+</ul>
+<p><strong>Applications</strong>: Finite differences, stencil operations, moving averages, convolutions.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_25/puzzle_25.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_25/warp_broadcast.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_25/puzzle_25.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_25/warp_broadcast.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 Learn about Roofline Model - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="understanding-gpu-performance-the-roofline-model"><a class="header" href="#understanding-gpu-performance-the-roofline-model">Understanding GPU Performance: The Roofline Model</a></h1>
+<p>Having implemented the naive matrix multiplication, you might be wondering: <em>How well is our kernel actually performing?</em> Is it limited by the GPU’s computational power, or is something else holding it back?</p>
+<p>The <strong>roofline model</strong> is your compass for GPU optimization—it reveals which hardware bottleneck limits your kernel’s performance and guides you toward the most impactful optimizations. Rather than guessing at improvements, the roofline model shows you exactly where to focus your efforts.</p>
+<h2 id="1-two-ceilings-for-every-gpu-kernel"><a class="header" href="#1-two-ceilings-for-every-gpu-kernel">1. Two ceilings for every GPU kernel</a></h2>
+<p>Every GPU kernel operates under two fundamental constraints:</p>
+<ul>
+<li><strong>Compute ceiling</strong> – how quickly the cores can execute floating-point operations (peak FLOPs/s)</li>
+<li><strong>Memory ceiling</strong> – how quickly the memory system can feed those cores with data (peak bytes/s)</li>
+</ul>
+<p>Understanding which ceiling constrains your kernel is crucial for optimization strategy. The roofline model visualizes this relationship by plotting two key metrics:</p>
+<p><strong>X-axis: Arithmetic Intensity</strong> – How much computation you extract per byte of data</p>
+<p>\[\Large I = \frac{\text{Total FLOPs}}{\text{Total Bytes from Memory}} \quad [\text{FLOP/B}]\]</p>
+<p><strong>Y-axis: Sustained Performance</strong> – How fast your kernel actually runs</p>
+<p>\[\Large P_{\text{sustained}} = \frac{\text{Total FLOPs}}{\text{Elapsed Time}} \quad [\text{GFLOP/s}]\]</p>
+<p>Two “roofs” bound all achievable performance:</p>
+<div class="table-wrapper"><table><thead><tr><th>Roof</th><th>Equation</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><strong>Memory roof</strong></td><td>\(P = B_{\text{peak}} \cdot I\)</td><td>Sloped line; performance limited by memory bandwidth</td></tr>
+<tr><td><strong>Compute roof</strong></td><td>\(P = P_{\text{peak}}\)</td><td>Horizontal line; performance limited by compute throughput</td></tr>
+</tbody></table>
+</div>
+<p>The <strong>critical intensity</strong></p>
+<p>\[\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\]</p>
+<p>marks where a kernel transitions from memory-bound (\(I &lt; I^* \)) to compute-bound (\(I &gt; I^* \)).</p>
+<h2 id="2-hardware-example-nvidia-a100-specifications"><a class="header" href="#2-hardware-example-nvidia-a100-specifications">2. Hardware example: NVIDIA A100 specifications</a></h2>
+<p>Let’s ground this theory in concrete numbers using the NVIDIA A100:</p>
+<p><strong>Peak FP32 throughput</strong>
+\[\Large P_{\text{peak}} = 19.5 \text{ TFLOP/s} = 19{,}500 \text{ GFLOP/s}\]</p>
+<p><strong>Peak HBM2 bandwidth</strong>
+\[\Large B_{\text{peak}} = 1{,}555 \text{ GB/s}\]</p>
+<p><strong>Critical intensity</strong>
+\[\Large I^* = \frac{19{,}500}{1{,}555} \approx 12.5 \text{ FLOP/B}\]</p>
+<p><em>Source: <a href="https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf">NVIDIA A100 Tensor Core GPU Architecture</a></em></p>
+<p>This means kernels with arithmetic intensity below 12.5 FLOP/B are memory-bound, while those above are compute-bound.</p>
+<h2 id="3-visualizing-our-matrix-multiplication-implementations"><a class="header" href="#3-visualizing-our-matrix-multiplication-implementations">3. Visualizing our matrix multiplication implementations</a></h2>
+<p>The animation below shows how our puzzle implementations map onto the A100’s roofline model:</p>
+<p><img src="media/videos/720p30/roofline_model_viz.gif" alt="Roofline Model Visualization" /></p>
+<p>The visualization demonstrates the optimization journey we’ll take in this puzzle:</p>
+<ol>
+<li><strong>Hardware constraints</strong> – The red memory roof and blue compute roof define performance limits</li>
+<li><strong>Our starting point</strong> – The naive implementation (left purple dot) sitting firmly on the memory roof</li>
+<li><strong>Optimization target</strong> – The shared memory version (right purple dot) with improved arithmetic intensity</li>
+<li><strong>Ultimate goal</strong> – The golden arrow pointing toward the critical intensity where kernels become compute-bound</li>
+</ol>
+<h2 id="4-analyzing-our-naive-implementation"><a class="header" href="#4-analyzing-our-naive-implementation">4. Analyzing our naive implementation</a></h2>
+<p>Let’s examine why our naive kernel from the previous section performs as it does. For our \(2 \times 2\) matrix multiplication:</p>
+<p><strong>Computation per output element</strong>: \(\text{SIZE} + (\text{SIZE}-1) = 3 \text{ FLOPs }\)</p>
+<blockquote>
+<p>Each element requires \(\text{SIZE}\) multiplications and \(\text{SIZE} - 1\) additions:
+\[C_{00} = A_{00} \cdot B_{00} + A_{01} \cdot B_{10}\]
+For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
+</blockquote>
+<p><strong>Memory accesses per output element</strong>:</p>
+<ul>
+<li>Row from matrix A: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>Column from matrix B: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>Total: \(16\) bytes per output element</li>
+</ul>
+<p><strong>Arithmetic intensity</strong>:
+\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\]</p>
+<p>Since \(I_{\text{naive}} = 0.1875 \ll I^* = 12.5\), our naive kernel is <strong>severely memory-bound</strong>.</p>
+<p><strong>Expected performance</strong>:
+\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\]</p>
+<p>This represents only \(\frac{292}{19{,}500} \approx 1.5%\) of the GPU’s computational potential! The visualization clearly shows this as the leftmost purple dot sitting squarely on the memory roof—we’re nowhere near the compute ceiling.</p>
+<h2 id="5-the-path-forward-shared-memory-optimization"><a class="header" href="#5-the-path-forward-shared-memory-optimization">5. The path forward: shared memory optimization</a></h2>
+<p>The roofline model reveals our optimization strategy: <strong>increase arithmetic intensity</strong> by reducing redundant memory accesses. This is exactly what the shared memory approach accomplishes:</p>
+<p><strong>Shared memory benefits</strong>:</p>
+<ul>
+<li><strong>Cooperative loading</strong>: Threads work together to load matrix blocks into fast shared memory</li>
+<li><strong>Data reuse</strong>: Each loaded element serves multiple computations</li>
+<li><strong>Reduced global memory traffic</strong>: Fewer accesses to slow global memory</li>
+</ul>
+<p><strong>Expected arithmetic intensity improvement</strong>:
+\[\Large I_{\text{shared}} = \frac{12 \text{ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\]</p>
+<p>While still memory-bound for our small \(2 \times 2\) case, this 2× improvement in arithmetic intensity scales dramatically for larger matrices where shared memory tiles can be reused many more times.</p>
+<h2 id="6-optimization-strategies-revealed-by-the-roofline"><a class="header" href="#6-optimization-strategies-revealed-by-the-roofline">6. Optimization strategies revealed by the roofline</a></h2>
+<p>The roofline model not only diagnoses current performance but also illuminates optimization paths. Here are the key techniques we’ll explore in later puzzles:</p>
+<div class="table-wrapper"><table><thead><tr><th>Technique</th><th>Roofline effect</th><th>Implementation approach</th></tr></thead><tbody>
+<tr><td><strong>Shared memory tiling</strong></td><td>↑ Arithmetic intensity through data reuse</td><td>Cooperative loading, block-wise computation</td></tr>
+<tr><td><strong>Register blocking</strong></td><td>Reduce memory traffic with register accumulation</td><td>Loop unrolling with register variables</td></tr>
+<tr><td><strong>Kernel fusion</strong></td><td>More FLOPs per byte by combining operations</td><td>Single kernel handling multiple computation stages</td></tr>
+<tr><td><strong>Memory coalescing</strong></td><td>Maximize effective bandwidth utilization</td><td>Structured access patterns, proper thread organization</td></tr>
+<tr><td><strong>Asynchronous memory copies</strong></td><td>Dedicated copy engine enables compute-memory overlap</td><td><code>copy_dram_to_sram_async</code> with computation overlap</td></tr>
+<tr><td><strong>Mixed precision</strong></td><td>Smaller data types reduce memory pressure</td><td>FP16/BF16 input with FP32 accumulation</td></tr>
+</tbody></table>
+</div>
+<p>Each technique moves kernels along the roofline—either up the memory roof (better bandwidth utilization) or rightward toward the compute roof (higher arithmetic intensity).</p>
+<p><strong>Note on asynchronous operations</strong>: Standard GPU memory loads (<code>ld.global</code>) are already asynchronous - warps continue executing until they need the loaded data. Specialized async copy instructions like <code>cp.async</code> (CUDA) or <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a> (Mojo) provide additional benefits by using dedicated copy engines, bypassing registers, and enabling better resource utilization rather than simply making synchronous operations asynchronous.</p>
+<h2 id="7-beyond-simple-rooflines"><a class="header" href="#7-beyond-simple-rooflines">7. Beyond simple rooflines</a></h2>
+<p><strong>Multi-level memory</strong>: Advanced rooflines include separate ceilings for L2 cache, shared memory, and register bandwidth to identify which memory hierarchy level constrains performance.</p>
+<p><strong>Communication rooflines</strong>: For multi-GPU applications, replace memory bandwidth with interconnect bandwidth (NVLink, InfiniBand) to analyze scaling efficiency.</p>
+<p><strong>Specialized units</strong>: Modern GPUs include tensor cores with their own performance characteristics, requiring specialized roofline analysis.</p>
+<h2 id="8-using-the-roofline-in-practice"><a class="header" href="#8-using-the-roofline-in-practice">8. Using the roofline in practice</a></h2>
+<ol>
+<li><strong>Profile your kernel</strong>: Use tools like Nsight Compute to measure actual FLOPs and memory traffic</li>
+<li><strong>Plot the data point</strong>: Calculate arithmetic intensity and sustained performance</li>
+<li><strong>Identify the bottleneck</strong>: Memory-bound kernels sit on the memory roof; compute-bound kernels approach the compute roof</li>
+<li><strong>Choose optimizations</strong>: Focus on bandwidth improvements for memory-bound kernels, algorithmic changes for compute-bound ones</li>
+<li><strong>Measure and iterate</strong>: Verify that optimizations move kernels in the expected direction</li>
+</ol>
+<h2 id="connection-to-our-shared-memory-puzzle"><a class="header" href="#connection-to-our-shared-memory-puzzle">Connection to our shared memory puzzle</a></h2>
+<p>In the next section, we’ll implement the <strong>shared memory optimization</strong> that begins moving our kernel up the roofline. As the visualization shows, this takes us from the left purple dot (naive) to the right purple dot (shared memory)—a clear performance improvement through better data reuse.</p>
+<p>While our \(2 \times 2\) example won’t reach the compute roof, you’ll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding <strong>why</strong> shared memory helps and <strong>how much</strong> improvement to expect.</p>
+<p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_16/naïve.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_16/shared_memory.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_16/naïve.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_16/shared_memory.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

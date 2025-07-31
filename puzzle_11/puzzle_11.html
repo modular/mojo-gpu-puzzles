@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 11: 1D Convolution - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 11: Pooling - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,60 +186,27 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-11-1d-convolution"><a class="header" href="#puzzle-11-1d-convolution">Puzzle 11: 1D Convolution</a></h1>
-<blockquote>
-<h2 id="moving-to-layouttensor"><a class="header" href="#moving-to-layouttensor">Moving to LayoutTensor</a></h2>
-<p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches to GPU memory management:</p>
-<ol>
-<li>Raw memory management with direct pointer manipulation using <a href="https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a></li>
-<li>The more structured <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> and its related abstractions such as <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild/">LayoutTensorBuild</a></li>
-</ol>
-<p>Starting from this puzzle, we’re transitioning exclusively to using <code>LayoutTensor</code>. This abstraction provides several benefits:</p>
-<ul>
-<li>Type-safe memory access patterns</li>
-<li>Clear representation of data layouts</li>
-<li>Better code maintainability</li>
-<li>Reduced chance of memory-related bugs</li>
-<li>More expressive code that better represents the underlying computations</li>
-<li>A lot more … that we’ll uncover gradually!</li>
-</ul>
-<p>This transition aligns with best practices in modern GPU programming in Mojo 🔥, where higher-level abstractions help manage complexity without sacrificing performance.</p>
-</blockquote>
+                        <h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
-<p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
-<p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<p><img src="./media/videos/720p30/puzzle_11_viz.gif" alt="1D Convolution" /></p>
-<p>For those new to convolution, think of it as a weighted sliding window operation. At each position, we multiply the kernel values with the corresponding input values and sum the results. In mathematical notation, this is often written as:</p>
-<p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
-<p>In pseudocode, 1D convolution is:</p>
-<pre><code class="language-python">for i in range(SIZE):
-    for j in range(CONV):
-        if i + j &lt; SIZE:
-            ret[i] += a_host[i + j] * b_host[j]
-</code></pre>
-<p>This puzzle is split into two parts to help you build understanding progressively:</p>
-<ul>
-<li>
-<p><a href="./simple.html">Simple Version with Single Block</a>
-Start here to learn the basics of implementing convolution with shared memory in a single block using LayoutTensor.</p>
-</li>
-<li>
-<p><a href="./block_boundary.html">Block Boundary Version</a>
-Then tackle the more challenging case where data needs to be shared across block boundaries, leveraging LayoutTensor’s capabilities.</p>
-</li>
-</ul>
-<p>Each version presents unique challenges in terms of memory access patterns and thread coordination. The simple version helps you understand the basic convolution operation, while the complete version tests your ability to handle more complex scenarios that arise in real-world GPU programming.</p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
+<p><img src="./media/videos/720p30/puzzle_11_viz.gif" alt="Pooling visualization" /></p>
+<h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
+<h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
+<p>Learn how to implement sliding window operations with manual memory management and synchronization.</p>
+<h3 id="-layouttensor-version"><a class="header" href="#-layouttensor-version"><a href="./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
+<p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
+<p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_10/layout_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_08/layout_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_11/simple.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_11/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -249,11 +216,11 @@ Then tackle the more challenging case where data needs to be shared across block
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_10/layout_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_08/layout_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_11/simple.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_11/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

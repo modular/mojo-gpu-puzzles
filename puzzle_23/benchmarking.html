@@ -1,0 +1,512 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📊 Benchmarking in Mojo - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
+<blockquote>
+<p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
+</blockquote>
+<h2 id="running-benchmarks"><a class="header" href="#running-benchmarks">Running benchmarks</a></h2>
+<p>To execute the comprehensive benchmark suite:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --benchmark
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --benchmark
+</code></pre>
+  </div>
+</div>
+<p>Your output will show performance measurements for each pattern:</p>
+<pre><code class="language-txt">SIZE: 1024
+simd_width: 4
+Running p21 GPU Benchmarks...
+SIMD width: 4
+--------------------------------------------------------------------------------
+Testing SIZE=16, TILE=4
+Running elementwise_16_4
+Running tiled_16_4
+Running manual_vectorized_16_4
+Running vectorized_16_4
+--------------------------------------------------------------------------------
+Testing SIZE=128, TILE=16
+Running elementwise_128_16
+Running tiled_128_16
+Running manual_vectorized_128_16
+Testing SIZE=128, TILE=16, Vectorize within tiles
+Running vectorized_128_16
+--------------------------------------------------------------------------------
+Testing SIZE=1048576 (1M), TILE=1024
+Running elementwise_1M_1024
+Running tiled_1M_1024
+Running manual_vectorized_1M_1024
+Running vectorized_1M_1024
+----------------------------------------------------------
+| name                      | met (ms)           | iters |
+----------------------------------------------------------
+| elementwise_16_4          | 4.59953155         | 100   |
+| tiled_16_4                | 3.16459014         | 100   |
+| manual_vectorized_16_4    | 4.60563415         | 100   |
+| vectorized_16_4           | 3.15671539         | 100   |
+| elementwise_128_16        | 3.1611135375       | 80    |
+| tiled_128_16              | 3.1669656300000004 | 100   |
+| manual_vectorized_128_16  | 3.1609855625       | 80    |
+| vectorized_128_16         | 3.16142578         | 100   |
+| elementwise_1M_1024       | 11.338706742857143 | 70    |
+| tiled_1M_1024             | 12.044989871428571 | 70    |
+| manual_vectorized_1M_1024 | 15.749412314285713 | 70    |
+| vectorized_1M_1024        | 13.377229          | 100   |
+----------------------------------------------------------
+
+Benchmarks completed!
+</code></pre>
+<h2 id="benchmark-configuration"><a class="header" href="#benchmark-configuration">Benchmark configuration</a></h2>
+<p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module:</p>
+<pre><code class="language-mojo">from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
+</code></pre>
+<ul>
+<li><strong><code>max_iters=10</code></strong>: Up to 10 iterations for statistical reliability</li>
+<li><strong><code>min_warmuptime_secs=0.2</code></strong>: GPU warmup before measurement</li>
+<li>Check out the <a href="https://docs.modular.com/mojo/stdlib/benchmark/">benchmark documentation</a></li>
+</ul>
+<h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
+<h3 id="core-workflow-pattern"><a class="header" href="#core-workflow-pattern">Core workflow pattern</a></h3>
+<p>Each benchmark follows a streamlined pattern:</p>
+<pre><code class="language-mojo">@parameter
+fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
+    @parameter
+    fn pattern_workflow(ctx: DeviceContext) raises:
+        # Setup: Create buffers and initialize data
+        # Compute: Execute the algorithm being measured
+        # Prevent optimization: keep(out.unsafe_ptr())
+        # Synchronize: ctx.synchronize()
+
+    bench_ctx = DeviceContext()
+    b.iter_custom[pattern_workflow](bench_ctx)
+</code></pre>
+<p><strong>Key phases:</strong></p>
+<ol>
+<li><strong>Setup</strong>: Buffer allocation and data initialization</li>
+<li><strong>Computation</strong>: The actual algorithm being benchmarked</li>
+<li><strong>Prevent optimization</strong>: Critical for accurate measurement</li>
+<li><strong>Synchronization</strong>: Ensure GPU work completes</li>
+</ol>
+<blockquote>
+<p><strong>Critical: The <code>keep()</code> function</strong>
+<code>keep(out.unsafe_ptr())</code> prevents the compiler from optimizing away your computation as “unused code.” Without this, you might measure nothing instead of your algorithm! This is essential for accurate GPU benchmarking because kernels are launched asynchronously.</p>
+</blockquote>
+<h3 id="why-custom-iteration-works-for-gpu"><a class="header" href="#why-custom-iteration-works-for-gpu">Why custom iteration works for GPU</a></h3>
+<p>Standard benchmarking assumes CPU-style synchronous execution. GPU kernels launch asynchronously, so we need:</p>
+<ul>
+<li><strong>GPU context management</strong>: Proper DeviceContext lifecycle</li>
+<li><strong>Memory management</strong>: Buffer cleanup between iterations</li>
+<li><strong>Synchronization handling</strong>: Accurate timing of async operations</li>
+<li><strong>Overhead isolation</strong>: Separate setup cost from computation cost</li>
+</ul>
+<h2 id="test-scenarios-and-thread-analysis"><a class="header" href="#test-scenarios-and-thread-analysis">Test scenarios and thread analysis</a></h2>
+<p>The benchmark suite tests three scenarios to reveal performance characteristics:</p>
+<h3 id="thread-utilization-summary"><a class="header" href="#thread-utilization-summary">Thread utilization summary</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Problem Size</th><th>Pattern</th><th>Threads</th><th>SIMD ops/thread</th><th>Total SIMD ops</th></tr></thead><tbody>
+<tr><td><strong>SIZE=16</strong></td><td>Elementwise</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td></td><td>Tiled</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td></td><td>Manual</td><td>1</td><td>4</td><td>4</td></tr>
+<tr><td></td><td>Vectorize</td><td>4</td><td>1</td><td>4</td></tr>
+<tr><td><strong>SIZE=128</strong></td><td>Elementwise</td><td>32</td><td>1</td><td>32</td></tr>
+<tr><td></td><td>Tiled</td><td>8</td><td>4</td><td>32</td></tr>
+<tr><td></td><td>Manual</td><td>2</td><td>16</td><td>32</td></tr>
+<tr><td></td><td>Vectorize</td><td>8</td><td>4</td><td>32</td></tr>
+<tr><td><strong>SIZE=1M</strong></td><td>Elementwise</td><td>262,144</td><td>1</td><td>262,144</td></tr>
+<tr><td></td><td>Tiled</td><td>1,024</td><td>256</td><td>262,144</td></tr>
+<tr><td></td><td>Manual</td><td>256</td><td>1,024</td><td>262,144</td></tr>
+<tr><td></td><td>Vectorize</td><td>1,024</td><td>256</td><td>262,144</td></tr>
+</tbody></table>
+</div>
+<h3 id="performance-characteristics-by-problem-size"><a class="header" href="#performance-characteristics-by-problem-size">Performance characteristics by problem size</a></h3>
+<p><strong>Small problems (SIZE=16):</strong></p>
+<ul>
+<li>Launch overhead dominates (~3-4ms baseline)</li>
+<li>Thread count differences don’t matter</li>
+<li>Tiled/vectorize show lower overhead</li>
+</ul>
+<p><strong>Medium problems (SIZE=128):</strong></p>
+<ul>
+<li>Still overhead-dominated (~3.16ms for all)</li>
+<li>Performance differences nearly disappear</li>
+<li>Transitional behavior between overhead and computation</li>
+</ul>
+<p><strong>Large problems (SIZE=1M):</strong></p>
+<ul>
+<li>Real algorithmic differences emerge</li>
+<li>Memory bandwidth becomes primary factor</li>
+<li>Clear performance ranking appears</li>
+</ul>
+<h2 id="what-the-data-shows"><a class="header" href="#what-the-data-shows">What the data shows</a></h2>
+<p>Based on empirical benchmark results across different hardware:</p>
+<h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
+<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~11.3ms</td><td>Max parallelism wins for memory-bound ops</td></tr>
+<tr><td>🥈</td><td><strong>Tiled</strong></td><td>~12.0ms</td><td>Good balance of parallelism + locality</td></tr>
+<tr><td>🥉</td><td><strong>Mojo vectorize</strong></td><td>~13.4ms</td><td>Automatic optimization has overhead</td></tr>
+<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~15.7ms</td><td>Complex indexing hurts simple operations</td></tr>
+</tbody></table>
+</div>
+<h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
+<blockquote>
+<p><strong>For simple memory-bound operations:</strong> Maximum parallelism (elementwise) outperforms complex memory optimizations at scale.</p>
+</blockquote>
+<p><strong>Why elementwise wins:</strong></p>
+<ul>
+<li><strong>262,144 threads</strong> provide excellent latency hiding</li>
+<li><strong>Simple memory patterns</strong> achieve good coalescing</li>
+<li><strong>Minimal overhead</strong> per thread</li>
+<li><strong>Scales naturally</strong> with GPU core count</li>
+</ul>
+<p><strong>Why manual vectorization struggles:</strong></p>
+<ul>
+<li><strong>Only 256 threads</strong> limit parallelism</li>
+<li><strong>Complex indexing</strong> adds computational overhead</li>
+<li><strong>Cache pressure</strong> from large chunks per thread</li>
+<li><strong>Diminishing returns</strong> for simple arithmetic</li>
+</ul>
+<p><strong>Framework intelligence:</strong></p>
+<ul>
+<li>Automatic iteration count adjustment (70-100 iterations)</li>
+<li>Statistical reliability across different execution times</li>
+<li>Handles thermal throttling and system variation</li>
+</ul>
+<h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
+<h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
+<pre><code class="language-txt">| name                     | met (ms)           | iters |
+| elementwise_1M_1024      | 11.338706742857143 | 70    |
+</code></pre>
+<ul>
+<li><strong><code>met (ms)</code></strong>: Total execution time for all iterations</li>
+<li><strong><code>iters</code></strong>: Number of iterations performed</li>
+<li><strong>Compare within problem size</strong>: Same-size comparisons are most meaningful</li>
+</ul>
+<h3 id="making-optimization-decisions"><a class="header" href="#making-optimization-decisions">Making optimization decisions</a></h3>
+<p><strong>Choose patterns based on empirical evidence:</strong></p>
+<p><strong>For production workloads:</strong></p>
+<ul>
+<li><strong>Large datasets (&gt;100K elements)</strong>: Elementwise typically optimal</li>
+<li><strong>Small/startup datasets (&lt;1K elements)</strong>: Tiled or vectorize for lower overhead</li>
+<li><strong>Development speed priority</strong>: Mojo vectorize for automatic optimization</li>
+<li><strong>Avoid manual vectorization</strong>: Complexity rarely pays off for simple operations</li>
+</ul>
+<p><strong>Performance optimization workflow:</strong></p>
+<ol>
+<li><strong>Profile first</strong>: Measure before optimizing</li>
+<li><strong>Test at scale</strong>: Small problems mislead about real performance</li>
+<li><strong>Consider total cost</strong>: Include development and maintenance effort</li>
+<li><strong>Validate improvements</strong>: Confirm with benchmarks on target hardware</li>
+</ol>
+<h2 id="advanced-benchmarking-techniques"><a class="header" href="#advanced-benchmarking-techniques">Advanced benchmarking techniques</a></h2>
+<h3 id="custom-test-scenarios"><a class="header" href="#custom-test-scenarios">Custom test scenarios</a></h3>
+<p>Modify parameters to test different conditions:</p>
+<pre><code class="language-mojo"># Different problem sizes
+benchmark_elementwise_parameterized[1024, 32]  # Large problem
+benchmark_elementwise_parameterized[64, 8]     # Small problem
+
+# Different tile sizes
+benchmark_tiled_parameterized[256, 8]   # Small tiles
+benchmark_tiled_parameterized[256, 64]  # Large tiles
+</code></pre>
+<h3 id="hardware-considerations"><a class="header" href="#hardware-considerations">Hardware considerations</a></h3>
+<p>Your results will vary based on:</p>
+<ul>
+<li><strong>GPU architecture</strong>: SIMD width, core count, memory bandwidth</li>
+<li><strong>System configuration</strong>: PCIe bandwidth, CPU performance</li>
+<li><strong>Thermal state</strong>: GPU boost clocks vs sustained performance</li>
+<li><strong>Concurrent workloads</strong>: Other processes affecting GPU utilization</li>
+</ul>
+<h2 id="best-practices-summary"><a class="header" href="#best-practices-summary">Best practices summary</a></h2>
+<p><strong>Benchmarking workflow:</strong></p>
+<ol>
+<li><strong>Warm up GPU</strong> before critical measurements</li>
+<li><strong>Run multiple iterations</strong> for statistical significance</li>
+<li><strong>Test multiple problem sizes</strong> to understand scaling</li>
+<li><strong>Use <code>keep()</code> consistently</strong> to prevent optimization artifacts</li>
+<li><strong>Compare like with like</strong> (same problem size, same hardware)</li>
+</ol>
+<p><strong>Performance decision framework:</strong></p>
+<ul>
+<li><strong>Start simple</strong>: Begin with elementwise for memory-bound operations</li>
+<li><strong>Measure don’t guess</strong>: Theoretical analysis guides, empirical data decides</li>
+<li><strong>Scale matters</strong>: Small problem performance doesn’t predict large problem behavior</li>
+<li><strong>Total cost optimization</strong>: Balance development time vs runtime performance</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<p>With benchmarking mastery:</p>
+<ul>
+<li><strong>Profile real applications</strong>: Apply these patterns to actual workloads</li>
+<li><strong>Advanced GPU patterns</strong>: Explore reductions, convolutions, and matrix operations</li>
+<li><strong>Multi-GPU scaling</strong>: Understand distributed GPU computing patterns</li>
+<li><strong>Memory optimization</strong>: Dive deeper into shared memory and advanced caching</li>
+</ul>
+<p>💡 <strong>Key takeaway</strong>: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.</p>
+<h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking Ahead: When you need more control</a></h2>
+<p>The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require <strong>direct thread communication</strong>:</p>
+<h3 id="algorithms-that-benefit-from-warp-programming"><a class="header" href="#algorithms-that-benefit-from-warp-programming"><strong>Algorithms that benefit from warp programming:</strong></a></h3>
+<ul>
+<li><strong>Reductions</strong>: Sum, max, min operations across thread groups</li>
+<li><strong>Prefix operations</strong>: Cumulative sums, running maximums</li>
+<li><strong>Data shuffling</strong>: Reorganizing data between threads</li>
+<li><strong>Cooperative algorithms</strong>: Where threads must coordinate closely</li>
+</ul>
+<h3 id="performance-preview"><a class="header" href="#performance-preview"><strong>Performance preview:</strong></a></h3>
+<p>In Part VI, we’ll revisit several algorithms from Part II and show how warp operations can:</p>
+<ul>
+<li><strong>Simplify code</strong>: Replace complex shared memory patterns with single function calls</li>
+<li><strong>Improve performance</strong>: Eliminate barriers and reduce memory traffic</li>
+<li><strong>Enable new algorithms</strong>: Unlock patterns impossible with pure functional approaches</li>
+</ul>
+<p><strong>Coming up next</strong>: <a href="../puzzle_24/puzzle_24.html">Part VII: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 14’s prefix sum.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_23/gpu-thread-vs-simd.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_24/puzzle_24.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_23/gpu-thread-vs-simd.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_24/puzzle_24.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

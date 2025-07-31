@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 25: Async Memory Operations &amp; Copy Overlap - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 25: Warp Communication - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,449 +186,153 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-25-async-memory-operations--copy-overlap"><a class="header" href="#puzzle-25-async-memory-operations--copy-overlap">Puzzle 25: Async Memory Operations &amp; Copy Overlap</a></h1>
-<p><strong>The GPU Memory Bottleneck:</strong> Most real-world GPU algorithms hit a frustrating wall - they’re not limited by compute power, but by <strong>memory bandwidth</strong>. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.</p>
-<p>Consider this common scenario in GPU programming:</p>
-<pre><code class="language-mojo"># The performance killer - sequential memory operations
-load_input_tile()     # ← 500 cycles waiting for DRAM
-load_kernel_data()    # ← Another 100 cycles waiting
-barrier()             # ← All threads wait idle
-compute()             # ← Finally, 50 cycles of actual work
-# Total: 650 cycles, only 7.7% compute utilization!
+                        <h1 id="puzzle-25-warp-communication"><a class="header" href="#puzzle-25-warp-communication">Puzzle 25: Warp Communication</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Welcome to <strong>Puzzle 25: Warp Communication Primitives</strong>! This puzzle introduces you to advanced GPU <strong>warp-level communication operations</strong> - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast</a> to implement neighbor communication and collective coordination without complex shared memory patterns.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + indexing + boundary checking patterns to elegant warp communication calls that leverage hardware-optimized data movement.</p>
+<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp communication operations harness this synchronization to provide powerful data exchange primitives with automatic boundary handling and zero explicit synchronization.</em></p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
+<h3 id="warp-communication-model"><a class="header" href="#warp-communication-model"><strong>Warp communication model</strong></a></h3>
+<p>Understand the fundamental communication patterns within GPU warps:</p>
+<pre><code>GPU Warp (32 threads, SIMT lockstep execution)
+├── Lane 0  ──shuffle_down──&gt; Lane 1  ──shuffle_down──&gt; Lane 2
+├── Lane 1  ──shuffle_down──&gt; Lane 2  ──shuffle_down──&gt; Lane 3
+├── Lane 2  ──shuffle_down──&gt; Lane 3  ──shuffle_down──&gt; Lane 4
+│   ...
+└── Lane 31 ──shuffle_down──&gt; undefined (boundary)
+
+Broadcast pattern:
+Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 </code></pre>
-<p><strong>What if you could do this instead?</strong></p>
-<pre><code class="language-mojo"># The performance win - overlapped operations
-launch_async_load()   # ← Start 500-cycle transfer in background
-load_small_data()     # ← 100 cycles of useful work while waiting
-wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
-# Total: ~550 cycles, 45% better utilization!
-</code></pre>
-<p><strong>This is the power of async memory operations</strong> - the difference between a sluggish algorithm and one that maximizes your GPU’s potential.</p>
-<h2 id="why-this-matters"><a class="header" href="#why-this-matters">Why this matters</a></h2>
-<p>In this puzzle, you’ll transform a memory-bound 1D convolution from <a href="../puzzle_11/puzzle_11.html">Puzzle 11</a> into a high-performance implementation that <strong>hides memory latency behind computation</strong>. This isn’t just an academic exercise - these patterns are fundamental to:</p>
+<p><strong>Hardware reality:</strong></p>
 <ul>
-<li><strong>Deep learning</strong>: Efficiently loading weights and activations</li>
-<li><strong>Scientific computing</strong>: Overlapping data transfers in stencil operations</li>
-<li><strong>Image processing</strong>: Streaming large datasets through memory hierarchies</li>
-<li><strong>Any memory-bound algorithm</strong>: Converting waiting time into productive work</li>
+<li><strong>Register-to-register communication</strong>: Data moves directly between thread registers</li>
+<li><strong>Zero memory overhead</strong>: No shared memory allocation required</li>
+<li><strong>Automatic boundary handling</strong>: Hardware manages warp edge cases</li>
+<li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
+<h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
+<p>Master the core communication primitives from <code>gpu.warp</code>:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: Get value from lane at higher index (neighbor access)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast"><code>broadcast(value)</code></a></strong>: Share lane 0’s value with all other lanes (one-to-many)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>: Get value from specific lane (random access)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>: Get value from lane at lower index (reverse neighbor)</li>
+</ol>
+<blockquote>
+<p><strong>Note:</strong> This puzzle focuses on <code>shuffle_down()</code> and <code>broadcast()</code> as the most commonly used communication patterns. For complete coverage of all warp operations, see the <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/">Mojo GPU Warp Documentation</a>.</p>
+</blockquote>
+<h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
+shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared[local_i] = input[global_i]
+barrier()
+if local_i &lt; WARP_SIZE - 1:
+    next_value = shared[local_i + 1]  # Neighbor access
+    result = next_value - shared[local_i]
+else:
+    result = 0  # Boundary handling
+barrier()
+
+# Warp communication eliminates all this complexity:
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # Direct neighbor access
+if lane &lt; WARP_SIZE - 1:
+    result = next_val - current_val
+else:
+    result = 0
+</code></pre>
+<h3 id="when-warp-communication-excels"><a class="header" href="#when-warp-communication-excels"><strong>When warp communication excels</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<div class="table-wrapper"><table><thead><tr><th>Communication Pattern</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
+<tr><td>Neighbor access</td><td>Shared memory</td><td>Register-to-register</td></tr>
+<tr><td>Stencil operations</td><td>Complex indexing</td><td>Simple shuffle patterns</td></tr>
+<tr><td>Block coordination</td><td>Barriers + shared</td><td>Single broadcast</td></tr>
+<tr><td>Boundary handling</td><td>Manual checks</td><td>Hardware automatic</td></tr>
+</tbody></table>
+</div>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
-<p>Before diving in, ensure you have solid foundation in:</p>
-<p><strong>Essential GPU programming concepts:</strong></p>
+<p>Before diving into warp communication, ensure you’re comfortable with:</p>
 <ul>
-<li><strong>Shared memory programming</strong> (<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>) - You’ll extend matmul patterns</li>
-<li><strong>Memory coalescing</strong> (<a href="../puzzle_19/puzzle_19.html">Puzzle 19</a>) - Critical for optimal async transfers</li>
-<li><strong>Tiled processing</strong> (<a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>) - The foundation for this optimization</li>
+<li><strong>Part VII warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>)</li>
+<li><strong>GPU thread hierarchy</strong>: Blocks, warps, and lane numbering</li>
+<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>Boundary condition handling</strong>: Managing edge cases in parallel algorithms</li>
 </ul>
-<p><strong>Hardware understanding:</strong></p>
+<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
+<h3 id="1-neighbor-communication-with-shuffle_down"><a class="header" href="#1-neighbor-communication-with-shuffle_down"><strong>1. Neighbor communication with shuffle_down</strong></a></h3>
+<p><strong>→ <a href="./warp_shuffle_down.html">Warp Shuffle Down</a></strong></p>
+<p>Master neighbor-based communication patterns for stencil operations and finite differences.</p>
+<p><strong>What you’ll master:</strong></p>
 <ul>
-<li>GPU memory hierarchy (DRAM → Shared Memory → Registers)</li>
-<li>Thread block organization and synchronization</li>
-<li>Basic understanding of memory latency vs. bandwidth</li>
+<li>Using <code>shuffle_down()</code> for accessing adjacent lane data</li>
+<li>Implementing finite differences and moving averages</li>
+<li>Handling warp boundaries automatically</li>
+<li>Multi-offset shuffling for extended neighbor access</li>
 </ul>
-<p><strong>API familiarity:</strong> <a href="https://docs.modular.com/mojo/stdlib/gpu/memory/">Mojo GPU Memory Operations</a></p>
-<blockquote>
-<p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that may require modern GPU architectures. If you encounter compilation errors related to <code>.async</code> modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.</p>
-<p><strong>Check your GPU compute capability:</strong></p>
-<pre><code class="language-bash">nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)
+if lane &lt; WARP_SIZE - 1:
+    result = compute_with_neighbors(current_val, next_val)
 </code></pre>
+<h3 id="2-collective-coordination-with-broadcast"><a class="header" href="#2-collective-coordination-with-broadcast"><strong>2. Collective coordination with broadcast</strong></a></h3>
+<p><strong>→ <a href="./warp_broadcast.html">Warp Broadcast</a></strong></p>
+<p>Master one-to-many communication patterns for block-level coordination and collective decision-making.</p>
+<p><strong>What you’ll master:</strong></p>
 <ul>
-<li><strong>SM_70 and above</strong> (e.g., V100, T4, A10G, RTX 20+ series): Basic async copy supported</li>
-<li><strong>SM_80 and above</strong> (e.g., A100, RTX 30+ series): Full async copy features</li>
-<li><strong>SM_90 and above</strong> (e.g., H100, RTX 40+ series): Advanced TMA operations supported</li>
+<li>Using <code>broadcast()</code> for sharing computed values across lanes</li>
+<li>Implementing block-level statistics and collective decisions</li>
+<li>Combining broadcast with conditional logic</li>
+<li>Advanced broadcast-shuffle coordination patterns</li>
 </ul>
-</blockquote>
-<h2 id="what-youll-focus"><a class="header" href="#what-youll-focus">What you’ll focus</a></h2>
-<p>By the end of this puzzle, you’ll have hands-on experience with:</p>
-<h3 id="core-techniques"><a class="header" href="#core-techniques"><strong>Core techniques</strong></a></h3>
-<ul>
-<li><strong>Async copy primitives</strong>: Launch background DRAM→SRAM transfers</li>
-<li><strong>Latency hiding</strong>: Overlap expensive memory operations with useful computation</li>
-<li><strong>Thread layout optimization</strong>: Match memory access patterns to hardware</li>
-<li><strong>Pipeline programming</strong>: Structure algorithms for maximum memory utilization</li>
-</ul>
-<h3 id="key-apis-youll-focus"><a class="header" href="#key-apis-youll-focus"><strong>Key APIs you’ll focus</strong></a></h3>
-<p>Building on the async copy operations introduced in <a href="../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14’s idiomatic matmul</a>, you’ll now focus specifically on their memory optimization potential:</p>
-<ul>
-<li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: Launch background DRAM→SRAM transfers using dedicated copy engines</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all"><code>async_copy_wait_all()</code></a></strong>: Synchronize transfer completion before accessing shared memory</li>
-</ul>
-<p><strong>What’s different from Puzzle 14?</strong> While Puzzle 14 used async copy for clean tile loading in matmul, this puzzle focuses specifically on <strong>latency hiding</strong> - structuring algorithms to overlap expensive memory operations with useful computation work.</p>
-<h3 id="performance-impact"><a class="header" href="#performance-impact"><strong>Performance impact</strong></a></h3>
-<p>These techniques can provide <strong>significant speedups</strong> for memory-bound algorithms by:</p>
-<ul>
-<li><strong>Hiding DRAM latency</strong>: Convert idle waiting into productive computation time</li>
-<li><strong>Maximizing bandwidth</strong>: Optimal memory access patterns prevent cache misses</li>
-<li><strong>Pipeline efficiency</strong>: Keep compute units busy while memory transfers happen in parallel</li>
-</ul>
-<blockquote>
-<p><strong>What are async copy operations?</strong> <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution">Asynchronous copy operations</a> allow GPU blocks to initiate memory transfers that execute in the background while the block continues with other work. This enables overlapping computation with memory movement, a fundamental optimization technique for memory-bound algorithms.</p>
-</blockquote>
-<p>💡 <strong>Success tip</strong>: Think of this as <strong>pipeline programming for GPU memory</strong> - overlap stages, hide latencies, and maximize throughput. The goal is to keep your expensive compute units busy while data moves in the background.</p>
-<h2 id="understanding-halo-regions"><a class="header" href="#understanding-halo-regions">Understanding halo regions</a></h2>
-<p>Before diving into async copy operations, it’s essential to understand <strong>halo regions</strong> (also called ghost cells or guard cells), which are fundamental to tile-based processing with stencil operations like convolution.</p>
-<h3 id="what-is-a-halo-region"><a class="header" href="#what-is-a-halo-region">What is a halo region?</a></h3>
-<p>A <strong>halo region</strong> consists of <strong>extra elements</strong> that extend beyond the boundaries of a processing tile to provide necessary neighboring data for stencil computations. When processing elements near tile edges, the stencil operation requires access to data from adjacent tiles.</p>
-<h3 id="why-halo-regions-are-necessary"><a class="header" href="#why-halo-regions-are-necessary">Why halo regions are necessary</a></h3>
-<p>Consider a 1D convolution with a 5-point kernel on a tile:</p>
-<pre><code>Original data:   [... | a b c d e f g h i j k l m n o | ...]
-Processing tile:       [c d e f g h i j k l m n o]
-                            ^                 ^
-                     Need neighbors    Need neighbors
-                     from left tile    from right tile
-
-With halo:       [a b | c d e f g h i j k l m n o | p q]
-                  ^^^                               ^^^
-                  Left halo                      Right halo
+<p><strong>Key pattern:</strong></p>
+<pre><code class="language-mojo">var shared_value = 0.0
+if lane == 0:
+    shared_value = compute_block_statistic()
+shared_value = broadcast(shared_value)
+result = use_shared_value(shared_value, local_data)
 </code></pre>
-<p><strong>Key characteristics:</strong></p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<h3 id="communication-patterns"><a class="header" href="#communication-patterns"><strong>Communication patterns</strong></a></h3>
+<p>Understanding fundamental warp communication paradigms:</p>
 <ul>
-<li><strong>Halo size</strong>: Typically <code>KERNEL_SIZE // 2</code> elements on each side</li>
-<li><strong>Purpose</strong>: Enable correct stencil computation at tile boundaries</li>
-<li><strong>Content</strong>: Copies of data from neighboring tiles or boundary conditions</li>
-<li><strong>Memory overhead</strong>: Small additional storage for significant computational benefit</li>
+<li><strong>Neighbor communication</strong>: Lane-to-adjacent-lane data exchange</li>
+<li><strong>Collective coordination</strong>: One-lane-to-all-lanes information sharing</li>
+<li><strong>Stencil operations</strong>: Accessing fixed patterns of neighboring data</li>
+<li><strong>Boundary handling</strong>: Managing communication at warp edges</li>
 </ul>
-<h3 id="halo-region-in-convolution"><a class="header" href="#halo-region-in-convolution">Halo region in convolution</a></h3>
-<p>For a 5-point convolution kernel \([k_0, k_1, k_2, k_3, k_4]\):</p>
+<h3 id="hardware-optimization"><a class="header" href="#hardware-optimization"><strong>Hardware optimization</strong></a></h3>
+<p>Recognizing how warp communication maps to GPU hardware:</p>
 <ul>
-<li><strong>Center element</strong>: \(k_2\) aligns with the current processing element</li>
-<li><strong>Left neighbors</strong>: \(k_0, k_1\) require 2 elements to the left</li>
-<li><strong>Right neighbors</strong>: \(k_3, k_4\) require 2 elements to the right</li>
-<li><strong>Halo size</strong>: <code>HALO_SIZE = 5 // 2 = 2</code> elements on each side</li>
+<li><strong>Register file communication</strong>: Direct inter-thread register access</li>
+<li><strong>SIMT execution</strong>: All lanes execute communication simultaneously</li>
+<li><strong>Zero latency</strong>: Communication happens within the execution unit</li>
+<li><strong>Automatic synchronization</strong>: No explicit barriers needed</li>
 </ul>
-<p><strong>Without halo regions:</strong></p>
+<h3 id="algorithm-transformation"><a class="header" href="#algorithm-transformation"><strong>Algorithm transformation</strong></a></h3>
+<p>Converting traditional parallel patterns to warp communication:</p>
 <ul>
-<li>Tile boundary elements cannot perform full convolution</li>
-<li>Results in incorrect output or complex boundary handling logic</li>
-<li>Performance suffers from scattered memory access patterns</li>
+<li><strong>Array neighbor access</strong> → <code>shuffle_down()</code></li>
+<li><strong>Shared memory coordination</strong> → <code>broadcast()</code></li>
+<li><strong>Complex boundary logic</strong> → Hardware-handled edge cases</li>
+<li><strong>Multi-stage synchronization</strong> → Single communication operations</li>
 </ul>
-<p><strong>With halo regions:</strong></p>
-<ul>
-<li>All tile elements can perform full convolution using local data</li>
-<li>Simplified, efficient computation with predictable memory access</li>
-<li>Better cache utilization and memory coalescing</li>
-</ul>
-<p>This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.</p>
-<h2 id="async-copy-overlap-with-1d-convolution"><a class="header" href="#async-copy-overlap-with-1d-convolution">Async copy overlap with 1D convolution</a></h2>
-<p><strong>Building on <a href="../puzzle_11/puzzle_11.html">Puzzle 11</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 11, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
-<h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
-<ul>
-<li>Vector size: <code>VECTOR_SIZE = 16384</code> (16K elements across multiple blocks)</li>
-<li>Tile size: <code>CONV_TILE_SIZE = 256</code> (processing tile size)</li>
-<li>Block configuration: <code>(256, 1)</code> threads per block</li>
-<li>Grid configuration: <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> blocks per grid (64 blocks)</li>
-<li>Kernel size: <code>KERNEL_SIZE = 5</code> (simple 1D convolution, same as Puzzle 11)</li>
-<li>Data type: <code>DType.float32</code></li>
-<li>Layout: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
-</ul>
-<h3 id="the-async-copy-opportunity"><a class="header" href="#the-async-copy-opportunity">The async copy opportunity</a></h3>
-<p><strong>Building on Puzzle 14:</strong> You’ve already seen <code>copy_dram_to_sram_async</code> used for clean tile loading in matmul. Now we’ll focus on its <strong>latency hiding capabilities</strong> - the key to high-performance memory-bound algorithms.</p>
-<p>Traditional synchronous memory loading forces compute units to wait idle during transfers. Async copy operations enable overlapping transfers with useful work:</p>
-<pre><code class="language-mojo"># Synchronous approach - INEFFICIENT:
-for i in range(CONV_TILE_SIZE):
-    input_shared[i] = input[base_idx + i]  # Each load waits for DRAM
-for i in range(KERNEL_SIZE):
-    kernel_shared[i] = kernel[i]           # More waiting for DRAM
-barrier()  # All threads wait before computation begins
-# ↑ Total time = input_transfer_time + kernel_transfer_time
-
-# Async copy approach - EFFICIENT:
-copy_dram_to_sram_async[thread_layout](input_shared, input_tile)  # Launch background transfer
-# While input transfers in background, load kernel synchronously
-for i in range(KERNEL_SIZE):
-    kernel_shared[i] = kernel[i]  # Overlaps with async input transfer
-async_copy_wait_all()  # Wait only when both operations complete
-# ↑ Total time = MAX(input_transfer_time, kernel_transfer_time)
-</code></pre>
-<p><strong>Why async copy works so well:</strong></p>
-<ul>
-<li><strong>Dedicated copy engines</strong>: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in <a href="../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14</a>)</li>
-<li><strong>Latency hiding</strong>: Memory transfers happen while GPU threads execute other operations</li>
-<li><strong>Optimal coalescing</strong>: Thread layouts ensure efficient DRAM access patterns</li>
-<li><strong>Resource utilization</strong>: Compute units stay busy instead of waiting idle</li>
-</ul>
-<h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
-<p>Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 14’s matmul implementation.</p>
-<p><strong>Mathematical operation:</strong> Compute 1D convolution across large vector using async copy for efficiency:
-\[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
-<p><strong>Async copy algorithm:</strong></p>
-<ol>
-<li><strong>Async tile loading:</strong> Launch background DRAM→SRAM transfer for input data</li>
-<li><strong>Overlapped operations:</strong> Load small kernel data while input transfers</li>
-<li><strong>Synchronization:</strong> Wait for transfers, then compute using shared memory</li>
-</ol>
-<pre><code class="language-mojo">alias VECTOR_SIZE = 16384
-alias CONV_TILE_SIZE = 256
-alias KERNEL_SIZE = 5
-alias HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
-alias BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-alias BLOCKS_PER_GRID_ASYNC = (
-    VECTOR_SIZE + CONV_TILE_SIZE - 1
-) // CONV_TILE_SIZE
-alias THREADS_PER_BLOCK_ASYNC = 256
-alias dtype = DType.float32
-alias layout_async = Layout.row_major(VECTOR_SIZE)
-
-
-fn async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
-](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
-):
-    """Demonstrates async copy operations building on p14 patterns.
-
-    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
-    for efficient memory transfers, extending the patterns from p14 matmul.
-    """
-
-    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
-    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
-
-    # FILL IN HERE (roughly 19 lines)
-
-
-</code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
-<details>
-<summary><strong>Tips</strong></summary>
-<div class="solution-tips">
-<h3 id="1-understanding-async-copy-mechanics"><a class="header" href="#1-understanding-async-copy-mechanics">1. <strong>Understanding async copy mechanics</strong></a></h3>
-<p>Async copy operations initiate background transfers while your block continues executing other code.</p>
-<p><strong>Key questions to explore:</strong></p>
-<ul>
-<li>What data needs to be transferred from DRAM to shared memory?</li>
-<li>Which operations can execute while the transfer happens in the background?</li>
-<li>How does the hardware coordinate multiple concurrent operations?</li>
-</ul>
-<p><strong>Thread layout considerations:</strong></p>
-<ul>
-<li>Your block has <code>(THREADS_PER_BLOCK_ASYNC, 1) = (256, 1)</code> threads</li>
-<li>The tile has <code>CONV_TILE_SIZE = 256</code> elements</li>
-<li>What layout pattern ensures optimal memory coalescing?</li>
-</ul>
-<h3 id="2-identifying-overlap-opportunities"><a class="header" href="#2-identifying-overlap-opportunities">2. <strong>Identifying overlap opportunities</strong></a></h3>
-<p>The goal is to hide memory latency behind useful computation.</p>
-<p><strong>Analysis approach:</strong></p>
-<ul>
-<li>What operations must happen sequentially vs. in parallel?</li>
-<li>Which data transfers are large (expensive) vs. small (cheap)?</li>
-<li>How can you structure the algorithm to maximize parallel execution?</li>
-</ul>
-<p><strong>Memory hierarchy considerations:</strong></p>
-<ul>
-<li>Large input tile: 256 elements × 4 bytes = 1KB transfer</li>
-<li>Small kernel: 5 elements × 4 bytes = 20 bytes</li>
-<li>Which transfer benefits most from async optimization?</li>
-</ul>
-<h3 id="3-synchronization-strategy"><a class="header" href="#3-synchronization-strategy">3. <strong>Synchronization strategy</strong></a></h3>
-<p>Proper synchronization ensures correctness without sacrificing performance.</p>
-<p><strong>Timing analysis:</strong></p>
-<ul>
-<li>When does each operation actually need its data to be ready?</li>
-<li>What’s the minimum synchronization required for correctness?</li>
-<li>How do you avoid unnecessary stalls while maintaining data dependencies?</li>
-</ul>
-<p><strong>Race condition prevention:</strong></p>
-<ul>
-<li>What happens if computation starts before transfers complete?</li>
-<li>How do memory fences and barriers coordinate different memory operations?</li>
-</ul>
-</div>
-</details>
-<p><strong>Test the async copy overlap:</strong></p>
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run p25
-</code></pre>
-  </div>
-</div>
-<h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
-<details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
-<p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
-<pre><code class="language-mojo">fn async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
-](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
-):
-    """Demonstrates async copy operations building on p14 patterns.
-
-    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
-    for efficient memory transfers, extending the patterns from p14 matmul.
-    """
-
-    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
-    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
-
-    local_i = thread_idx.x
-
-    # Phase 1: Launch async copy for input tile
-    # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-
-    # Use async copy with thread layout matching p14 pattern
-    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
-    copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
-
-    # Phase 2: Load kernel synchronously (small data)
-    if local_i &lt; KERNEL_SIZE:
-        kernel_shared[local_i] = kernel[local_i]
-
-    # Phase 3: Wait for async copy to complete
-    async_copy_wait_all()  # Always wait since we always do async copy
-    barrier()  # Sync all threads
-
-    # Phase 4: Compute convolution
-    global_i = block_idx.x * CONV_TILE_SIZE + local_i
-    if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
-        var result: output.element_type = 0
-
-        # Simple convolution avoiding boundary issues
-        if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
-            # Full convolution for center elements
-            for k in range(KERNEL_SIZE):
-                input_idx = local_i + k - HALO_SIZE
-                if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
-                    result += input_shared[input_idx] * kernel_shared[k]
-        else:
-            # For boundary elements, just copy input (no convolution)
-            result = input_shared[local_i]
-
-        output[global_i] = result
-
-
-</code></pre>
-<h4 id="phase-by-phase-breakdown"><a class="header" href="#phase-by-phase-breakdown"><strong>Phase-by-phase breakdown</strong></a></h4>
-<p><strong>Phase 1: Async Copy Launch</strong></p>
-<pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
-input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
-copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
-</code></pre>
-<ul>
-<li>
-<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile"><code>tile</code> method</a> does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.</p>
-</li>
-<li>
-<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code> creates a <code>256 x 1</code> layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
-</li>
-<li>
-<p><strong>Async Copy Launch</strong>: <code>copy_dram_to_sram_async</code> initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.</p>
-</li>
-</ul>
-<p><strong>Phase 2: Overlapped Operation</strong></p>
-<pre><code class="language-mojo"># Phase 2: Load kernel synchronously (small data)
-if local_i &lt; KERNEL_SIZE:
-    kernel_shared[local_i] = kernel[local_i]
-</code></pre>
-<ul>
-<li>
-<p><strong>Simultaneous Execution</strong>: While the 1KB input tile transfers in the background, threads load the small 20-byte kernel synchronously. This overlap is the key optimization.</p>
-</li>
-<li>
-<p><strong>Size-Based Strategy</strong>: Large transfers (input tile) use async copy; small transfers (kernel) use synchronous loading. This balances complexity with performance benefit.</p>
-</li>
-</ul>
-<p><strong>Phase 3: Synchronization</strong></p>
-<pre><code class="language-mojo"># Phase 3: Wait for async copy to complete
-async_copy_wait_all()  # Always wait since we always do async copy
-barrier()  # Sync all threads
-</code></pre>
-<ul>
-<li>
-<p><strong>Transfer Completion</strong>: <code>async_copy_wait_all()</code> blocks until all async transfers complete. This is essential before accessing <code>input_shared</code>.</p>
-</li>
-<li>
-<p><strong>Thread Synchronization</strong>: <code>barrier()</code> ensures all threads see the completed transfer before proceeding to computation.</p>
-</li>
-</ul>
-<p><strong>Phase 4: Computation</strong></p>
-<pre><code class="language-mojo"># Phase 4: Compute convolution
-global_i = block_idx.x * CONV_TILE_SIZE + local_i
-if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
-    var result: output.element_type = 0
-
-    if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
-        # Full convolution for center elements
-        for k in range(KERNEL_SIZE):
-            input_idx = local_i + k - HALO_SIZE
-            if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
-                result += input_shared[input_idx] * kernel_shared[k]
-    else:
-        # For boundary elements, just copy input (no convolution)
-        result = input_shared[local_i]
-
-    output[global_i] = result
-</code></pre>
-<ul>
-<li>
-<p><strong>Fast Shared Memory Access</strong>: All computation uses pre-loaded shared memory data, avoiding slow DRAM access during the compute-intensive convolution loop.</p>
-</li>
-<li>
-<p><strong>Simplified Boundary Handling</strong>: The implementation uses a pragmatic approach to handle elements near tile boundaries:</p>
-<ul>
-<li><strong>Center elements</strong> (<code>local_i &gt;= HALO_SIZE</code> and <code>local_i &lt; CONV_TILE_SIZE - HALO_SIZE</code>): Apply full 5-point convolution using shared memory data</li>
-<li><strong>Boundary elements</strong> (first 2 and last 2 elements in each tile): Copy input directly without convolution to avoid complex boundary logic</li>
-</ul>
-<p><strong>Educational rationale</strong>: This approach prioritizes demonstrating async copy patterns over complex boundary handling. For a 256-element tile with <code>HALO_SIZE = 2</code>, elements 0-1 and 254-255 use input copying, while elements 2-253 use full convolution. This keeps the focus on memory optimization while providing a working implementation.</p>
-</li>
-</ul>
-<h4 id="performance-analysis"><a class="header" href="#performance-analysis"><strong>Performance analysis</strong></a></h4>
-<p><strong>Without Async Copy (Synchronous):</strong></p>
-<pre><code>Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
-           = Large_DRAM_transfer + Small_DRAM_transfer + convolution
-           = Major_latency + Minor_latency + computation_work
-</code></pre>
-<p><strong>With Async Copy (Overlapped):</strong></p>
-<pre><code>Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
-           = MAX(Major_latency, Minor_latency) + computation_work
-           = Major_latency + computation_work
-</code></pre>
-<p><strong>Speedup</strong>: Performance improvement from hiding the smaller kernel transfer latency behind the larger input transfer. The actual speedup depends on the relative sizes of transfers and available memory bandwidth. In memory-bound scenarios with larger overlaps, speedups can be much more significant.</p>
-<h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
-<ol>
-<li>
-<p><strong>Thread Layout Matching</strong>: The <code>Layout.row_major(256, 1)</code> layout precisely matches the block’s <code>(256, 1)</code> thread organization, enabling optimal memory coalescing.</p>
-</li>
-<li>
-<p><strong>Race Condition Avoidance</strong>: Proper sequencing (async copy → kernel load → wait → barrier → compute) eliminates all race conditions that could corrupt shared memory.</p>
-</li>
-<li>
-<p><strong>Hardware Optimization</strong>: Modern GPUs have dedicated hardware for async copy operations, allowing true parallelism between memory and compute units.</p>
-</li>
-<li>
-<p><strong>Memory Hierarchy Exploitation</strong>: The pattern moves data through the hierarchy efficiently: DRAM → Shared Memory → Registers → Computation.</p>
-</li>
-<li>
-<p><strong>Test-Implementation Consistency</strong>: The test verification logic matches the boundary handling strategy by checking <code>local_i_in_tile = i % CONV_TILE_SIZE</code> to determine whether each element should expect convolution results (center elements) or input copying (boundary elements). This ensures accurate validation of the simplified boundary approach.</p>
-</li>
-</ol>
-<p>This solution transforms a naive memory-bound convolution into an optimized implementation that hides memory latency behind useful work, demonstrating fundamental principles of high-performance GPU programming.</p>
-</details>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p>Ready to harness GPU warp-level communication? Start with neighbor-based shuffle operations to understand the foundation, then progress to collective broadcast patterns for advanced coordination.</p>
+<p>💡 <strong>Success tip</strong>: Think of warp communication as <strong>hardware-accelerated message passing</strong> between threads in the same warp. This mental model will guide you toward efficient communication patterns that leverage the GPU’s SIMT architecture.</p>
+<p><strong>Learning objective</strong>: By the end of Puzzle 25, you’ll recognize when warp communication can replace complex shared memory patterns, enabling you to write simpler, faster neighbor-based and coordination algorithms.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_shuffle_down.html">Warp Shuffle Down Operations</a></strong> to master neighbor communication, then advance to <strong><a href="./warp_broadcast.html">Warp Broadcast Operations</a></strong> for collective coordination patterns!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_24/warp_prefix_sum.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_24/warp_extra.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_26/puzzle_26.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_25/warp_shuffle_down.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -638,11 +342,11 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_24/warp_prefix_sum.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_24/warp_extra.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_26/puzzle_26.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_25/warp_shuffle_down.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

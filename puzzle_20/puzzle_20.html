@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 20: Kernel Fusion and Custom Backward Pass - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 20: 1D Convolution Op - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,112 +186,180 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-20-kernel-fusion-and-custom-backward-pass"><a class="header" href="#puzzle-20-kernel-fusion-and-custom-backward-pass">Puzzle 20: Kernel Fusion and Custom Backward Pass</a></h1>
+                        <h1 id="puzzle-20-1d-convolution-op"><a class="header" href="#puzzle-20-1d-convolution-op">Puzzle 20: 1D Convolution Op</a></h1>
 <blockquote>
-<h2 id="kernel-fusion-and-autograd-integration"><a class="header" href="#kernel-fusion-and-autograd-integration">Kernel fusion and autograd integration</a></h2>
-<p>We’re continuing Part IV with a focus on <strong>kernel fusion</strong> and <strong>autograd integration</strong>.</p>
-<p>Building on <a href="../puzzle_19/puzzle_19.html">Puzzle 19</a>, you’ll now explore how to combine multiple operations into a single efficient kernel and integrate it with PyTorch’s autograd system. You’ll learn:</p>
+<h2 id="from-max-graph-to-pytorch-custom-ops"><a class="header" href="#from-max-graph-to-pytorch-custom-ops">From MAX Graph to PyTorch custom ops</a></h2>
+<p>We’re now entering Part V of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
+<p>In <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
 <ul>
-<li>How kernel fusion improves performance in both forward and backward passes</li>
-<li>Why custom backward passes are crucial for fused operations</li>
-<li>How to design fused kernels with proper gradient flow</li>
-<li>The performance implications of different fusion strategies</li>
+<li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
+<li>Integrate with PyTorch’s tensor system and autograd</li>
+<li>Compare MAX Graph vs PyTorch approaches for custom operations</li>
+<li>Understand the critical pattern of explicit output tensor allocation</li>
 </ul>
-<p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as important as <strong>how you implement them</strong>.</p>
+<p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both forward and backward passes. While both fused and unfused implementations produce identical results, they use different strategies that lead to significant performance differences.</p>
-<p>You’ll compare:</p>
-<ul>
-<li><strong>Unfused approach</strong>: Separate kernels for LayerNorm and Linear</li>
-<li><strong>Fused kernel</strong>: Combined operation in a single kernel</li>
-<li><strong>Custom backward pass</strong>: Gradient computation for fused operations</li>
-</ul>
-<p>This comparison teaches the critical importance of kernel fusion and proper gradient computation in deep learning operations.</p>
-<h2 id="background-layernorm--linear-operations"><a class="header" href="#background-layernorm--linear-operations">Background: LayerNorm + Linear operations</a></h2>
-<p>LayerNorm and Linear are fundamental operations in transformer architectures, particularly in attention mechanisms and feed-forward networks. Here’s how they’re typically used:</p>
+<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
+<p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
 <pre><code class="language-python">import torch
-import torch.nn.functional as F
+from max.torch import CustomOpLibrary
 
-# Input: hidden states
-x = torch.randn(batch_size, seq_len, hidden_dim)
 
-# LayerNorm parameters
-ln_weight = torch.ones(hidden_dim)  # scale parameter (γ)
-ln_bias = torch.zeros(hidden_dim)   # shift parameter (β)
+def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
+    """
+    1D convolution using our custom PyTorch operation.
 
-# Linear layer parameters
-linear_weight = torch.randn(output_dim, hidden_dim)
-linear_bias = torch.zeros(output_dim)
+    This demonstrates the transition from MAX Graph (p15) to PyTorch CustomOpLibrary.
+    Uses the EXACT same Mojo kernel, but different Python integration!
+    """
+    # Load our custom operations
+    mojo_kernels = Path(__file__).parent / "op"
+    ops = CustomOpLibrary(mojo_kernels)
 
-# Unfused operations (with autograd)
-ln_output = F.layer_norm(x, [hidden_dim], weight=ln_weight, bias=ln_bias)
-output = F.linear(ln_output, linear_weight, linear_bias)
+    # Create output tensor with same shape as input
+    output_tensor = torch.empty_like(input_tensor)
 
-# Fused operation (custom implementation)
-# This is what you'll implement in this puzzle
-output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, linear_bias)
+    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+
+    # FILL IN with 1 line of code
+
+    return output_tensor
+
 </code></pre>
-<p>When fused, these operations are combined into a single efficient kernel that:</p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
+<p>You can run the puzzle with:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p20
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p20
+</code></pre>
+  </div>
+</div>
+<p>When successful, you should see output similar to:</p>
+<pre><code>Puzzle 20: From MAX Graph to PyTorch Custom Ops
+============================================================
+Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
+Convolution kernel: [0. 1. 2. 3.]
+
+NumPy reference result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+
+Testing PyTorch Custom Op (device: cuda)
+----------------------------------------
+PyTorch custom op result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ PyTorch custom op verification PASSED
+
+Comparing with MAX Graph approach (like p15)
+--------------------------------------------
+MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
+✅ MAX Graph verification PASSED
+✅ PyTorch and MAX Graph results MATCH
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<p>The solution requires calling the compiled custom operation with the proper arguments:</p>
+<pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
+    # The Mojo signature expects: (out, input, kernel)
+    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates several critical concepts:</p>
+<h3 id="1-torchcompile-integration"><a class="header" href="#1-torchcompile-integration">1. <strong>torch.compile() integration</strong></a></h3>
+<p>The solution shows <code>torch.compile</code> integration</p>
+<pre><code class="language-python">torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<h3 id="2-explicit-output-tensor-allocation"><a class="header" href="#2-explicit-output-tensor-allocation">2. <strong>Explicit Output Tensor Allocation</strong></a></h3>
+<pre><code class="language-python">output_tensor = torch.empty_like(input_tensor)
+</code></pre>
 <ul>
-<li>Reduces memory bandwidth usage</li>
-<li>Minimizes kernel launch overhead</li>
-<li>Improves cache utilization</li>
-<li>Eliminates intermediate allocations</li>
+<li>Unlike MAX Graph which handles output allocation automatically</li>
+<li>PyTorch CustomOpLibrary requires <strong>pre-allocated output tensors</strong></li>
+<li>The Mojo operation signature expects <code>(out, input, kernel)</code> order</li>
 </ul>
-<p>In practice, this fusion can provide up to 1.5-2x speedup in both forward and backward passes, which is crucial for transformer training efficiency.</p>
-<h3 id="why-custom-backward-passes-matter"><a class="header" href="#why-custom-backward-passes-matter">Why custom backward passes matter</a></h3>
-<p>PyTorch’s autograd system automatically computes gradients for individual operations, but fused operations require custom backward passes to:</p>
+<h3 id="3-parameter-dictionary"><a class="header" href="#3-parameter-dictionary">3. <strong>Parameter Dictionary</strong></a></h3>
+<pre><code class="language-python">ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+</code></pre>
 <ul>
-<li>Maintain numerical stability</li>
-<li>Ensure proper gradient flow</li>
-<li>Optimize memory access patterns</li>
-<li>Handle atomic operations for gradient accumulation</li>
+<li>Parameters are passed as a dictionary to the operation</li>
+<li>These become compile-time parameters in the Mojo kernel</li>
+<li>Must match the parameter names in the Mojo <code>@staticmethod fn execute</code> signature</li>
 </ul>
-<h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
-<p>This puzzle is structured in two parts to build your understanding systematically:</p>
-<h3 id="forward-pass-implementation"><a class="header" href="#forward-pass-implementation"><strong><a href="./forward_pass.html">Forward pass implementation</a></strong></a></h3>
-<p>Start here to implement the fused forward kernel and understand kernel fusion benefits.</p>
-<p><strong>What you’ll do:</strong></p>
+<h3 id="4-same-kernel-different-integration"><a class="header" href="#4-same-kernel-different-integration">4. <strong>Same Kernel, Different Integration</strong></a></h3>
+<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 17:</p>
 <ul>
-<li>Implement both unfused and fused forward kernels</li>
-<li>Learn fundamental kernel fusion techniques</li>
-<li>See the same operations implemented with different strategies</li>
-<li>Understand performance implications of fusion</li>
-<li>Master memory access patterns for optimal performance</li>
+<li>Same GPU kernel code</li>
+<li>Same memory access patterns</li>
+<li>Same computational logic</li>
+<li>Only the Python wrapper layer changes</li>
 </ul>
-<h3 id="backward-pass-implementation"><a class="header" href="#backward-pass-implementation"><strong><a href="./backward_pass.html">Backward pass implementation</a></strong></a></h3>
-<p>Deep dive into autograd integration and gradient computation.</p>
-<p><strong>What you’ll learn:</strong></p>
+</div>
+</details>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>This puzzle illustrates several important patterns for PyTorch custom operations:</p>
+<div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
+<tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
+<tr><td><strong>Operation Call</strong></td><td><code>ops.custom(...)</code></td><td><code>torch.compile(op)(...)</code></td></tr>
+<tr><td><strong>Parameter Passing</strong></td><td><code>parameters={...}</code></td><td><code>op[{...}]</code></td></tr>
+<tr><td><strong>Device Management</strong></td><td>Explicit device context</td><td>PyTorch tensor device</td></tr>
+<tr><td><strong>Memory Management</strong></td><td>MAX Graph tensors</td><td>PyTorch tensors</td></tr>
+</tbody></table>
+</div>
+<h3 id="critical-pattern-explicit-output-tensor-allocation"><a class="header" href="#critical-pattern-explicit-output-tensor-allocation">Critical pattern: Explicit output tensor allocation</a></h3>
+<p>The most important difference is that PyTorch CustomOpLibrary requires <strong>explicit output tensor allocation</strong>:</p>
+<pre><code class="language-python"># ❌ This won't work - no output tensor
+result = torch.compile(conv1d)(input_tensor, kernel_tensor)
+
+# ✅ This works - pre-allocated output tensor
+output_tensor = torch.empty_like(input_tensor)
+torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
+</code></pre>
+<p>This pattern ensures:</p>
 <ul>
-<li>How to implement custom backward passes</li>
-<li>Why proper gradient flow is crucial</li>
-<li>Real-world implications for training efficiency</li>
-<li>Optimization strategies for backward operations</li>
-<li>Mathematical foundations of gradient computation</li>
-<li>Atomic operations for gradient accumulation</li>
-<li>Numerical stability in backward passes</li>
+<li>Memory is allocated on the correct device</li>
+<li>Output tensor has the right shape and dtype</li>
+<li>The Mojo kernel can write directly to the output buffer</li>
 </ul>
-<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to explore kernel fusion and autograd integration? Start with the <strong><a href="./forward_pass.html">Forward pass implementation</a></strong> to implement the fused kernel, then move to <strong><a href="./backward_pass.html">Backward pass implementation</a></strong> to understand gradient computation.</p>
-<p>The puzzle includes a comprehensive testing framework that verifies:</p>
+<h3 id="torchcompile-integration"><a class="header" href="#torchcompile-integration">torch.compile() integration</a></h3>
+<p><code>torch.compile()</code> is essential because it:</p>
 <ul>
-<li>Numerical correctness against PyTorch’s implementation for both forward and backward passes</li>
-<li>Performance comparison between our CPU and GPU implementations</li>
-<li>Gradient computation accuracy for all parameters (input, LayerNorm weights/bias, Linear weights/bias)</li>
-<li>Memory usage optimization through kernel fusion</li>
+<li>Handles memory layout conversion between PyTorch and Mojo</li>
+<li>Manages device synchronization (CPU ↔ GPU)</li>
+<li>Optimizes tensor format conversion</li>
+<li>Provides proper error handling for memory operations</li>
 </ul>
-<p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs unfused) affect both forward and backward pass performance - this insight applies to many deep learning operations beyond LayerNorm + Linear. The backward pass implementation is particularly important as it directly impacts training efficiency and numerical stability.</p>
+<p><em>Note: Without <code>torch.compile()</code>, you might encounter <code>std::bad_alloc</code> errors because the raw operation can’t handle PyTorch’s tensor memory management.</em></p>
+<h2 id="debugging-custom-operations"><a class="header" href="#debugging-custom-operations">Debugging custom operations</a></h2>
+<p>Common issues and solutions:</p>
+<ol>
+<li><strong>Memory Allocation Errors</strong>: Always use <code>torch.compile()</code></li>
+<li><strong>Wrong Output Shape</strong>: Ensure output tensor matches expected dimensions</li>
+<li><strong>Device Mismatch</strong>: All tensors must be on the same device</li>
+<li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>
+</ol>
+<p>The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_19/performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../bonuses/part4.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_20/forward_pass.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_21/puzzle_21.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -301,11 +369,11 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_19/performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../bonuses/part4.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_20/forward_pass.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_21/puzzle_21.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -234,7 +234,8 @@ Aristotle, (Nicomachean Ethics)</p>
 <li><strong>Lower Barrier to Entry</strong> enabling more programmers to harness GPU power effectively</li>
 </ul>
 <blockquote>
-<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong> &gt;<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
+<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong>
+<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
 </blockquote>
 <h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU Programming Mindset</a></h2>
 <p>Effective GPU programming requires a fundamental shift in how we think about computation. Here are some key mental models that will guide your journey:</p>
@@ -274,14 +275,15 @@ if thread_id &lt; data_size:
 <div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
 <tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
 <tr><td>Debugging GPU Programs</td><td>📋 <strong>Coming Soon</strong></td><td>Part II</td></tr>
-<tr><td>Core algorithms</td><td>✅ <strong>Available</strong></td><td>Part III (9-14)</td></tr>
-<tr><td>MAX Graph integration</td><td>✅ <strong>Available</strong></td><td>Part IV (15-17)</td></tr>
-<tr><td>PyTorch integration</td><td>✅ <strong>Available</strong></td><td>Part V (18-20)</td></tr>
-<tr><td>Functional patterns &amp; benchmarking</td><td>✅ <strong>Available</strong></td><td>Part VI (21)</td></tr>
-<tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VII (22-24)</td></tr>
-<tr><td>Advanced memory operations</td><td>🚧 <strong>In Progress</strong></td><td>Part VIII (25+)</td></tr>
-<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part IX</td></tr>
-<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part X</td></tr>
+<tr><td>Core algorithms</td><td>✅ <strong>Available</strong></td><td>Part III (11-16)</td></tr>
+<tr><td>MAX Graph integration</td><td>✅ <strong>Available</strong></td><td>Part IV (17-19)</td></tr>
+<tr><td>PyTorch integration</td><td>✅ <strong>Available</strong></td><td>Part V (20-22)</td></tr>
+<tr><td>Functional patterns &amp; benchmarking</td><td>✅ <strong>Available</strong></td><td>Part VI (23)</td></tr>
+<tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VII (24-26)</td></tr>
+<tr><td>Block-level programming</td><td>📋 <strong>Coming Soon</strong></td><td>Part VIII (27)</td></tr>
+<tr><td>Advanced memory operations</td><td>✅ <strong>Available</strong></td><td>Part IX (28-29)</td></tr>
+<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part X</td></tr>
+<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part XI</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
@@ -299,54 +301,60 @@ if thread_id &lt; data_size:
 <li>Develop systematic approaches to identifying and fixing GPU bugs</li>
 <li>Build confidence for tackling complex GPU programming challenges</li>
 </ul>
-<p><strong>Part III: GPU Algorithms (Puzzles 9-14) ✅</strong></p>
+<p><strong>Part III: GPU Algorithms (Puzzles 11-16) ✅</strong></p>
 <ul>
 <li>Implement parallel reductions and pooling operations</li>
 <li>Build efficient convolution kernels</li>
 <li>Master prefix sum (scan) algorithms</li>
 <li>Optimize matrix multiplication with tiling strategies</li>
 </ul>
-<p><strong>Part III: MAX Graph Integration (Puzzles 15-17) ✅</strong></p>
+<p><strong>Part IV: MAX Graph Integration (Puzzles 17-19) ✅</strong></p>
 <ul>
 <li>Create custom MAX Graph operations</li>
 <li>Interface GPU kernels with Python code</li>
 <li>Build production-ready operations like softmax and attention</li>
 </ul>
-<p><strong>Part IV: PyTorch Integration (Puzzles 18-20) ✅</strong></p>
+<p><strong>Part V: PyTorch Integration (Puzzles 20-22) ✅</strong></p>
 <ul>
 <li>Bridge Mojo GPU kernels with PyTorch tensors</li>
 <li>Use CustomOpLibrary for seamless tensor marshalling</li>
 <li>Integrate with torch.compile for optimized execution</li>
 <li>Master kernel fusion and custom backward passes</li>
 </ul>
-<p><strong>Part V: Mojo Functional Patterns &amp; Benchmarking (Puzzle 21) ✅</strong></p>
+<p><strong>Part VI: Mojo Functional Patterns &amp; Benchmarking (Puzzle 23) ✅</strong></p>
 <ul>
 <li>Master functional patterns: elementwise, tiled processing, vectorization</li>
 <li>Learn systematic performance optimization and trade-offs</li>
 <li>Develop quantitative benchmarking skills for performance analysis</li>
 <li>Understand GPU threading vs SIMD execution hierarchies</li>
 </ul>
-<p><strong>Part VI: Warp-Level Programming (Puzzles 22-24) ✅</strong></p>
+<p><strong>Part VII: Warp-Level Programming (Puzzles 24-26) ✅</strong></p>
 <ul>
 <li>Master warp fundamentals and SIMT execution models</li>
 <li>Learn essential warp operations: sum, shuffle_down, broadcast</li>
 <li>Implement advanced patterns with shuffle_xor and prefix_sum</li>
 <li>Combine warp programming with functional patterns effectively</li>
 </ul>
-<p><strong>Part VII: Advanced Memory Operations (Puzzle 25+) 🚧</strong></p>
+<p><strong>Part VIII: Block-Level Programming (Puzzle 27) 📋</strong></p>
+<ul>
+<li>Master block-wide reductions with <code>block.sum()</code> and <code>block.max()</code></li>
+<li>Learn block-level prefix sum patterns and communication</li>
+<li>Implement efficient block.broadcast() for intra-block coordination</li>
+</ul>
+<p><strong>Part IX: Advanced Memory Systems (Puzzles 28-29) ✅</strong></p>
 <ul>
 <li>Achieve optimal memory coalescing patterns</li>
 <li>Use async memory operations for overlapping compute with latency hiding</li>
 <li>Learn memory fences and synchronization primitives</li>
 <li>Master prefetching and cache optimization strategies</li>
 </ul>
-<p><strong>Part VIII: Performance Analysis &amp; Optimization 📋</strong></p>
+<p><strong>Part X: Performance Analysis &amp; Optimization 📋</strong></p>
 <ul>
 <li>Profile GPU kernels and identify bottlenecks</li>
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p><strong>Part IX: Advanced GPU Features 📋</strong></p>
+<p><strong>Part XI: Advanced GPU Features 📋</strong></p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Implement GPU-based random number generation</li>
@@ -1645,7 +1653,7 @@ Block 2:             [6 7 8]
 </ul>
 <blockquote>
 <p>🔑 <strong>2D thread indexing convention</strong></p>
-<p>We extend the block-based indexing from <a href="puzzle_07/../puzzle_04/puzzle_04.html">puzzle 04</a> to 2D:</p>
+<p>We extend the block-based indexing from <a href="puzzle_07/../puzzle_04/puzzle_04.html">puzzle 4</a> to 2D:</p>
 <pre><code class="language-txt">Global position calculation:
 row = block_dim.y * block_idx.y + thread_idx.y
 col = block_dim.x * block_idx.x + thread_idx.x
@@ -2384,15 +2392,15 @@ Block 1 output: [11 11 11 11]
 <p>This pattern shows how LayoutTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-9-pooling"><a class="header" href="#puzzle-9-pooling">Puzzle 9: Pooling</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
 <h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
-<p><img src="puzzle_09/./media/videos/720p30/puzzle_09_viz.gif" alt="Pooling visualization" /></p>
+<p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="Pooling visualization" /></p>
 <h2 id="implementation-approaches-4"><a class="header" href="#implementation-approaches-4">Implementation approaches</a></h2>
-<h3 id="-raw-memory-approach-5"><a class="header" href="#-raw-memory-approach-5"><a href="puzzle_09/./raw.html">🔰 Raw memory approach</a></a></h3>
+<h3 id="-raw-memory-approach-5"><a class="header" href="#-raw-memory-approach-5"><a href="puzzle_11/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to implement sliding window operations with manual memory management and synchronization.</p>
-<h3 id="-layouttensor-version-3"><a class="header" href="#-layouttensor-version-3"><a href="puzzle_09/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
+<h3 id="-layouttensor-version-3"><a class="header" href="#-layouttensor-version-3"><a href="puzzle_11/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
@@ -2444,7 +2452,7 @@ fn pooling(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p09/p09.mojo" class="filename">View full file: problems/p09/p09.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -2464,11 +2472,11 @@ fn pooling(
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p09
+<pre><code class="language-bash">uv run poe p11
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p09
+<pre><code class="language-bash">pixi run p11
 </code></pre>
   </div>
 </div>
@@ -2581,7 +2589,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor for sliding window operations</li>
-<li>Managing shared memory with <code>LayoutTensorBuilder</code> that we saw in <a href="puzzle_09/../puzzle_08/layout_tensor.html">puzzle_08</a></li>
+<li>Managing shared memory with <code>LayoutTensorBuilder</code> that we saw in <a href="puzzle_11/../puzzle_08/layout_tensor.html">puzzle_08</a></li>
 <li>Efficient neighbor access patterns</li>
 <li>Boundary condition handling</li>
 </ul>
@@ -2625,7 +2633,7 @@ fn pooling[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p09/p09_layout_tensor.mojo" class="filename">View full file: problems/p09/p09_layout_tensor.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11_layout_tensor.mojo" class="filename">View full file: problems/p11/p11_layout_tensor.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -2646,11 +2654,11 @@ fn pooling[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p09_layout_tensor
+<pre><code class="language-bash">uv run poe p11_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p09_layout_tensor
+<pre><code class="language-bash">pixi run p11_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -2770,15 +2778,15 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-10-dot-product"><a class="header" href="#puzzle-10-dot-product">Puzzle 10: Dot Product</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
 <h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
-<p><img src="puzzle_10/./media/videos/720p30/puzzle_10_viz.gif" alt="Dot product visualization" /></p>
+<p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Dot product visualization" /></p>
 <h2 id="implementation-approaches-5"><a class="header" href="#implementation-approaches-5">Implementation approaches</a></h2>
-<h3 id="-raw-memory-approach-6"><a class="header" href="#-raw-memory-approach-6"><a href="puzzle_10/./raw.html">🔰 Raw memory approach</a></a></h3>
+<h3 id="-raw-memory-approach-6"><a class="header" href="#-raw-memory-approach-6"><a href="puzzle_12/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to implement the reduction with manual memory management and synchronization.</p>
-<h3 id="-layouttensor-version-4"><a class="header" href="#-layouttensor-version-4"><a href="puzzle_10/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
+<h3 id="-layouttensor-version-4"><a class="header" href="#-layouttensor-version-4"><a href="puzzle_12/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
@@ -2828,7 +2836,7 @@ fn dot_product(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -2848,11 +2856,11 @@ fn dot_product(
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p10
+<pre><code class="language-bash">uv run poe p12
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p10
+<pre><code class="language-bash">pixi run p12
 </code></pre>
   </div>
 </div>
@@ -3018,7 +3026,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Similar to the <a href="puzzle_10/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_10/../puzzle_09/layout_tensor.html">puzzle 9</a>, implementing parallel reduction with LayoutTensor</li>
+<li>Similar to the <a href="puzzle_12/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_12/../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
 <li>Managing shared memory using <code>LayoutTensorBuilder</code></li>
 <li>Coordinating threads for collective operations</li>
 <li>Using layout-aware tensor operations</li>
@@ -3067,7 +3075,7 @@ fn dot_product[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10_layout_tensor.mojo" class="filename">View full file: problems/p10/p10_layout_tensor.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12_layout_tensor.mojo" class="filename">View full file: problems/p12/p12_layout_tensor.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -3087,11 +3095,11 @@ fn dot_product[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p10_layout_tensor
+<pre><code class="language-bash">uv run poe p12_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p10_layout_tensor
+<pre><code class="language-bash">pixi run p12_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -3245,7 +3253,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-1d-convolution"><a class="header" href="#puzzle-11-1d-convolution">Puzzle 11: 1D Convolution</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-13-1d-convolution"><a class="header" href="#puzzle-13-1d-convolution">Puzzle 13: 1D Convolution</a></h1>
 <blockquote>
 <h2 id="moving-to-layouttensor"><a class="header" href="#moving-to-layouttensor">Moving to LayoutTensor</a></h2>
 <p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches to GPU memory management:</p>
@@ -3268,7 +3276,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="1D Convolution" /></p>
+<p><img src="puzzle_13/./media/videos/720p30/puzzle_13_viz.gif" alt="1D Convolution" /></p>
 <p>For those new to convolution, think of it as a weighted sliding window operation. At each position, we multiply the kernel values with the corresponding input values and sum the results. In mathematical notation, this is often written as:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>In pseudocode, 1D convolution is:</p>
@@ -3280,11 +3288,11 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>This puzzle is split into two parts to help you build understanding progressively:</p>
 <ul>
 <li>
-<p><a href="puzzle_11/./simple.html">Simple Version with Single Block</a>
+<p><a href="puzzle_13/./simple.html">Simple Version with Single Block</a>
 Start here to learn the basics of implementing convolution with shared memory in a single block using LayoutTensor.</p>
 </li>
 <li>
-<p><a href="puzzle_11/./block_boundary.html">Block Boundary Version</a>
+<p><a href="puzzle_13/./block_boundary.html">Block Boundary Version</a>
 Then tackle the more challenging case where data needs to be shared across block boundaries, leveraging LayoutTensor’s capabilities.</p>
 </li>
 </ul>
@@ -3339,7 +3347,7 @@ fn conv_1d_simple[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -3360,11 +3368,11 @@ fn conv_1d_simple[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11 --simple
+<pre><code class="language-bash">uv run poe p13 --simple
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11 --simple
+<pre><code class="language-bash">pixi run p13 --simple
 </code></pre>
   </div>
 </div>
@@ -3561,7 +3569,7 @@ fn conv_1d_block_boundary[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -3582,11 +3590,11 @@ fn conv_1d_block_boundary[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11 --block-boundary
+<pre><code class="language-bash">uv run poe p13 --block-boundary
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11 --block-boundary
+<pre><code class="language-bash">pixi run p13 --block-boundary
 </code></pre>
   </div>
 </div>
@@ -3789,12 +3797,12 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-prefix-sum"><a class="header" href="#puzzle-12-prefix-sum">Puzzle 12: Prefix Sum</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-14-prefix-sum"><a class="header" href="#puzzle-14-prefix-sum">Puzzle 14: Prefix Sum</a></h1>
 <h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
-<p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Prefix sum" /></p>
+<p><img src="puzzle_14/./media/videos/720p30/puzzle_14_viz.gif" alt="Prefix sum" /></p>
 <h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -3818,11 +3826,11 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <p>This puzzle is split into two parts to help you master the concept:</p>
 <ul>
 <li>
-<p><a href="puzzle_12/./simple.html">Simple Version</a>
+<p><a href="puzzle_14/./simple.html">Simple Version</a>
 Start with a single block implementation where all data fits in shared memory. This helps understand the core parallel algorithm.</p>
 </li>
 <li>
-<p><a href="puzzle_12/./complete.html">Complete Version</a>
+<p><a href="puzzle_14/./complete.html">Complete Version</a>
 Then tackle the more challenging case of handling larger arrays that span multiple blocks, requiring coordination between blocks.</p>
 </li>
 </ul>
@@ -3867,7 +3875,7 @@ fn prefix_sum_simple[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -3887,11 +3895,11 @@ fn prefix_sum_simple[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12 --simple
+<pre><code class="language-bash">uv run poe p14 --simple
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12 --simple
+<pre><code class="language-bash">pixi run p14 --simple
 </code></pre>
   </div>
 </div>
@@ -4091,7 +4099,7 @@ fn prefix_sum_block_sum_phase[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
             ctx.enqueue_function[
@@ -4116,7 +4124,7 @@ fn prefix_sum_block_sum_phase[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="1-build-on-the-simple-prefix-sum"><a class="header" href="#1-build-on-the-simple-prefix-sum">1. Build on the simple prefix sum</a></h3>
-<p>The <a href="puzzle_12/./simple.html">Simple Version</a> shows how to implement a single-block prefix sum. You’ll need to extend that approach to work across multiple blocks:</p>
+<p>The <a href="puzzle_14/./simple.html">Simple Version</a> shows how to implement a single-block prefix sum. You’ll need to extend that approach to work across multiple blocks:</p>
 <pre><code>Simple version (single block): [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
 
 Complete version (two blocks):
@@ -4160,11 +4168,11 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12 --complete
+<pre><code class="language-bash">uv run poe p14 --complete
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12 --complete
+<pre><code class="language-bash">pixi run p14 --complete
 </code></pre>
   </div>
 </div>
@@ -4454,10 +4462,10 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <p>This two-kernel approach is a fundamental pattern in GPU programming for algorithms that require cross-block communication. The same strategy can be applied to other parallel algorithms like radix sort, histogram calculation, and reduction operations.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-13-axis-sum"><a class="header" href="#puzzle-13-axis-sum">Puzzle 13: Axis Sum</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-axis-sum"><a class="header" href="#puzzle-15-axis-sum">Puzzle 15: Axis Sum</a></h1>
 <h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
-<p><img src="puzzle_13/./media/videos/720p30/puzzle_13_viz.gif" alt="Axis Sum visualization" /></p>
+<p><img src="puzzle_15/./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -4512,7 +4520,7 @@ fn axis_sum[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/p15.mojo" class="filename">View full file: problems/p15/p15.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -4532,11 +4540,11 @@ fn axis_sum[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p13
+<pre><code class="language-bash">uv run poe p15
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p13
+<pre><code class="language-bash">pixi run p15
 </code></pre>
   </div>
 </div>
@@ -4709,27 +4717,27 @@ while stride &gt; 0:
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-14-matrix-multiplication-matmul"><a class="header" href="#puzzle-14-matrix-multiplication-matmul">Puzzle 14: Matrix Multiplication (MatMul)</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-16-matrix-multiplication-matmul"><a class="header" href="#puzzle-16-matrix-multiplication-matmul">Puzzle 16: Matrix Multiplication (MatMul)</a></h1>
 <h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
 <p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
 <p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
-<p><img src="puzzle_14/./media/videos/720p30/puzzle_14_viz.gif" alt="Matrix Multiply visualization" /></p>
+<p><img src="puzzle_16/./media/videos/720p30/puzzle_16_viz.gif" alt="Matrix Multiply visualization" /></p>
 <p>This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:</p>
 <ul>
 <li>
-<p><a href="puzzle_14/./naive.html">Naive Version</a></p>
+<p><a href="puzzle_16/./naive.html">Naive Version</a></p>
 </li>
 <li>
-<p><a href="puzzle_14/./na%C3%AFve.html">Naive Version</a>
+<p><a href="puzzle_16/./na%C3%AFve.html">Naive Version</a>
 The straightforward implementation where each thread computes one element of the output matrix. While simple to understand, this approach makes many redundant memory accesses.</p>
 </li>
 <li>
-<p><a href="puzzle_14/./shared_memory.html">Shared Memory Version</a>
+<p><a href="puzzle_16/./shared_memory.html">Shared Memory Version</a>
 Improves performance by loading blocks of input matrices into fast shared memory, reducing global memory accesses. Each thread still computes one output element but reads from shared memory.</p>
 </li>
 <li>
-<p><a href="puzzle_14/./tiled.html">Tiled Version</a>
+<p><a href="puzzle_16/./tiled.html">Tiled Version</a>
 Further optimizes by dividing the computation into tiles, allowing threads to cooperate on loading and computing blocks of the output matrix. This approach better utilizes memory hierarchy and thread cooperation.</p>
 </li>
 </ul>
@@ -4794,7 +4802,7 @@ fn naive_matmul[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -4814,11 +4822,11 @@ fn naive_matmul[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --naive
+<pre><code class="language-bash">uv run poe p16 --naive
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --naive
+<pre><code class="language-bash">pixi run p16 --naive
 </code></pre>
   </div>
 </div>
@@ -4968,7 +4976,7 @@ for k in range(size):
 <p>This means kernels with arithmetic intensity below 12.5 FLOP/B are memory-bound, while those above are compute-bound.</p>
 <h2 id="3-visualizing-our-matrix-multiplication-implementations"><a class="header" href="#3-visualizing-our-matrix-multiplication-implementations">3. Visualizing our matrix multiplication implementations</a></h2>
 <p>The animation below shows how our puzzle implementations map onto the A100’s roofline model:</p>
-<p><img src="puzzle_14/media/videos/720p30/roofline_model_viz.gif" alt="Roofline Model Visualization" /></p>
+<p><img src="puzzle_16/media/videos/720p30/roofline_model_viz.gif" alt="Roofline Model Visualization" /></p>
 <p>The visualization demonstrates the optimization journey we’ll take in this puzzle:</p>
 <ol>
 <li><strong>Hardware constraints</strong> – The red memory roof and blue compute roof define performance limits</li>
@@ -5083,7 +5091,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -5103,11 +5111,11 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --single-block
+<pre><code class="language-bash">uv run poe p16 --single-block
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --single-block
+<pre><code class="language-bash">pixi run p16 --single-block
 </code></pre>
   </div>
 </div>
@@ -5423,7 +5431,7 @@ fn matmul_tiled[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -5496,11 +5504,11 @@ Thread(1,2) in Block(1,0):
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --tiled
+<pre><code class="language-bash">uv run poe p16 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --tiled
+<pre><code class="language-bash">pixi run p16 --tiled
 </code></pre>
   </div>
 </div>
@@ -5913,10 +5921,10 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-1d-convolution-op"><a class="header" href="#puzzle-15-1d-convolution-op">Puzzle 15: 1D Convolution Op</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-17-1d-convolution-op"><a class="header" href="#puzzle-17-1d-convolution-op">Puzzle 17: 1D Convolution Op</a></h1>
 <blockquote>
 <h2 id="bridging-to-python-with-max-graph"><a class="header" href="#bridging-to-python-with-max-graph">Bridging to Python with MAX Graph</a></h2>
-<p>We’re now entering Part III of our GPU puzzle journey: <strong>Interfacing with Python via MAX Graph Custom Ops</strong>.</p>
+<p>We’re now entering Part IV of our GPU puzzle journey: <strong>Interfacing with Python via MAX Graph Custom Ops</strong>.</p>
 <p>In previous puzzles, we’ve learned how to write efficient GPU kernels in Mojo. Now we’ll explore how to:</p>
 <ul>
 <li>Package these kernels as custom operations that can be called from Python</li>
@@ -5926,7 +5934,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 <p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
 </blockquote>
 <h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
-<p>In <a href="puzzle_15/../puzzle_11/puzzle_11.html">Puzzle 11</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
+<p>In <a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">alias TPB = 15
 alias BLOCKS_PER_GRID = (2, 1)
@@ -6049,7 +6057,7 @@ struct Conv1DCustomOp:
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/op/conv1d.mojo" class="filename">View full file: problems/p17/op/conv1d.mojo</a></p>
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6057,11 +6065,11 @@ struct Conv1DCustomOp:
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p15
+<pre><code class="language-bash">uv run poe p17
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p15
+<pre><code class="language-bash">pixi run p17
 </code></pre>
   </div>
 </div>
@@ -6104,7 +6112,7 @@ This single line does several important things:
 <h3 id="python-mojo-integration-flow"><a class="header" href="#python-mojo-integration-flow">Python-Mojo integration flow</a></h3>
 <ol>
 <li>
-<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/p15.py" class="filename">problems/p15/p15.py</a>)</strong>:</p>
+<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py" class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
@@ -6133,7 +6141,7 @@ This single line does several important things:
 <li>
 <p><strong>Kernel execution</strong>:</p>
 <ul>
-<li>When <a href="puzzle_15/">model.execute(…)</a> is called, our <code>conv1d_kernel</code> receives the data</li>
+<li>When <a href="puzzle_17/">model.execute(…)</a> is called, our <code>conv1d_kernel</code> receives the data</li>
 <li>GPU thread configuration is set with <code>grid_dim</code> and <code>block_dim</code></li>
 <li>Results are transferred back to CPU with <code>result.to(CPU())</code></li>
 <li>NumPy verification compares our results with the expected output</li>
@@ -6260,7 +6268,7 @@ with Graph(
 <li>Calling <code>ops.custom</code> with the registered operation name</li>
 <li>Passing input values and parameters that match our operation’s signature</li>
 </ol>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-16-softmax-op"><a class="header" href="#puzzle-16-softmax-op">Puzzle 16: Softmax Op</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-18-softmax-op"><a class="header" href="#puzzle-18-softmax-op">Puzzle 18: Softmax Op</a></h1>
 <h2 id="overview-30"><a class="header" href="#overview-30">Overview</a></h2>
 <p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
 <p>Mathematically, the softmax function is defined as:</p>
@@ -6339,7 +6347,7 @@ fn softmax_gpu_kernel[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/op/softmax.mojo" class="filename">View full file: problems/p16/op/softmax.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -6367,7 +6375,7 @@ fn softmax_gpu_kernel[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/op/softmax.mojo" class="filename">View full file: problems/p16/op/softmax.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/op/softmax.mojo" class="filename">View full file: problems/p18/op/softmax.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -6387,11 +6395,11 @@ fn softmax_gpu_kernel[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16-test-kernels
+<pre><code class="language-bash">uv run poe p18-test-kernels
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p16-test-kernels
+<pre><code class="language-bash">pixi run p18-test-kernels
 </code></pre>
   </div>
 </div>
@@ -6437,7 +6445,7 @@ def softmax(
         pass
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p16/p16.py" class="filename">View full file: problems/p16/p16.py</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -6458,11 +6466,11 @@ def softmax(
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16
+<pre><code class="language-bash">uv run poe p18
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p16
+<pre><code class="language-bash">pixi run p18
 </code></pre>
   </div>
 </div>
@@ -6486,7 +6494,7 @@ Sum of all probabilities on GPU: 1.0
 <h2 id="solution-24"><a class="header" href="#solution-24">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in <a href="puzzle_16/../puzzle_15/puzzle_15.html">Puzzle 15</a>, we’re creating a bridge between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities.</p>
+<p>To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in <a href="puzzle_18/../puzzle_17/puzzle_17.html">Puzzle 17</a>, we’re creating a bridge between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities.</p>
 <p>The softmax operation we’re implementing is mathematically defined as:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
 <p>However, to prevent numerical overflow, we use the more stable form:</p>
@@ -6846,7 +6854,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
 <p>This implementation showcases the power of MAX Graph for integrating high-performance Mojo kernels with Python’s scientific computing ecosystem, providing both efficiency and ease of use.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-17-attention-op"><a class="header" href="#puzzle-17-attention-op">Puzzle 17: Attention Op</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
 <h2 id="overview-31"><a class="header" href="#overview-31">Overview</a></h2>
 <p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
@@ -6899,12 +6907,12 @@ Step 2: softmax(Scores) → Weights(1,16)  [sum = 1.0]
          ↓
 Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
-<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to \((1,16)\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 14!</p>
+<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to \((1,16)\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 16!</p>
 <p>Our GPU implementation <strong>reuses and combines optimized kernels from previous puzzles</strong>:</p>
 <ul>
-<li><strong><a href="puzzle_17/../puzzle_14/puzzle_14.html">Tiled matrix multiplication from Puzzle 14</a></strong> for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
+<li><strong><a href="puzzle_19/../puzzle_16/puzzle_16.html">Tiled matrix multiplication from Puzzle 16</a></strong> for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
 <li><strong>Shared memory transpose</strong> for computing \(K^T\) efficiently</li>
-<li><strong><a href="puzzle_17/../puzzle_16/puzzle_16.html">Parallel softmax from Puzzle 16</a></strong> for numerically stable attention weight computation</li>
+<li><strong><a href="puzzle_19/../puzzle_18/puzzle_18.html">Parallel softmax from Puzzle 18</a></strong> for numerically stable attention weight computation</li>
 </ul>
 <blockquote>
 <p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the <code>matmul_idiomatic_tiled</code> from Puzzle 14 and <code>softmax_kernel</code> from Puzzle 16, showcasing the power of modular GPU kernel design.</p>
@@ -6912,7 +6920,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <h2 id="key-concepts-27"><a class="header" href="#key-concepts-27">Key concepts</a></h2>
 <ul>
 <li>Vector attention mechanism for sequence processing</li>
-<li><strong>Kernel reuse</strong>: Leveraging proven implementations from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a> and <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a></li>
+<li><strong>Kernel reuse</strong>: Leveraging proven implementations from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a> and <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
 <li>Efficient matrix multiplication using shared memory tiling</li>
 <li>Memory-optimized tensor reshaping to minimize buffer allocation</li>
 <li>Integration of multiple optimized kernels into a single operation</li>
@@ -6939,8 +6947,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <ol>
 <li><strong>Multi-kernel orchestration</strong>: Combining transpose, matmul, and softmax operations</li>
 <li><strong>Memory optimization</strong>: Using reshape operations and buffer reuse to minimize allocations</li>
-<li><strong>Numerical stability</strong>: Leveraging the proven softmax implementation from <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a></li>
-<li><strong>Performance optimization</strong>: Using tiled algorithms from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a> for all matrix operations</li>
+<li><strong>Numerical stability</strong>: Leveraging the proven softmax implementation from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
+<li><strong>Performance optimization</strong>: Using tiled algorithms from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a> for all matrix operations</li>
 <li><strong>Multi-input operations</strong>: Handling three input tensors (Q, K, V) in a single custom op</li>
 </ol>
 <p>Our attention custom operation will:</p>
@@ -6951,7 +6959,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <li>Match the results of NumPy reference implementation</li>
 </ul>
 <h2 id="code-to-complete-26"><a class="header" href="#code-to-complete-26">Code to complete</a></h2>
-<p>To complete this puzzle, we’ll leverage the tiled matmul kernel from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a> and the softmax kernel from <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a>. You only need to implement the transpose kernel in the Mojo file using shared memory.</p>
+<p>To complete this puzzle, we’ll leverage the tiled matmul kernel from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a> and the softmax kernel from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a>. You only need to implement the transpose kernel in the Mojo file using shared memory.</p>
 <h3 id="1-implement-the-transpose-kernel"><a class="header" href="#1-implement-the-transpose-kernel">1. Implement the transpose kernel</a></h3>
 <pre><code class="language-mojo">fn transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
@@ -6968,7 +6976,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/op/attention.mojo" class="filename">View full file: problems/p17/op/attention.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -7072,7 +7080,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             # FILL ME IN 2 lines
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/op/attention.mojo" class="filename">View full file: problems/p17/op/attention.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a></p>
 <h3 id="test-the-kernels"><a class="header" href="#test-the-kernels">Test the kernels</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -7080,11 +7088,11 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p17
+<pre><code class="language-bash">uv run poe p19
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p17
+<pre><code class="language-bash">pixi run p19
 </code></pre>
   </div>
 </div>
@@ -7173,12 +7181,12 @@ Output vector norms:
 <h2 id="solution-25"><a class="header" href="#solution-25">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>To solve this puzzle, we need to implement the transpose kernel in Mojo and complete the Python graph definition for our attention custom operation. This puzzle builds upon concepts from previous puzzles, combining <strong>tiled matrix multiplication from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a></strong> and <strong>softmax from <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> into a complete attention mechanism.</p>
+<p>To solve this puzzle, we need to implement the transpose kernel in Mojo and complete the Python graph definition for our attention custom operation. This puzzle builds upon concepts from previous puzzles, combining <strong>tiled matrix multiplication from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and <strong>softmax from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete attention mechanism.</p>
 <h3 id="reused-kernels"><a class="header" href="#reused-kernels">Reused kernels</a></h3>
 <p>Our implementation directly incorporates these proven kernels:</p>
 <ol>
-<li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a> - Powers both \(Q \times K^T\) and \(\text{weights} \times V\) operations</li>
-<li><strong><code>softmax_kernel</code></strong> from <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a> - Provides numerically stable attention weight computation</li>
+<li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a> - Powers both \(Q \times K^T\) and \(\text{weights} \times V\) operations</li>
+<li><strong><code>softmax_kernel</code></strong> from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a> - Provides numerically stable attention weight computation</li>
 </ol>
 <p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations built by orchestrating proven, optimized components rather than monolithic implementations.</p>
 <p>The attention operation follows the canonical mathematical definition:</p>
@@ -7316,14 +7324,14 @@ weights = scores_2d.reshape[layout_scores]()
 </ul>
 <h4 id="strategic-kernel-reuse-pattern"><a class="header" href="#strategic-kernel-reuse-pattern">Strategic kernel reuse pattern</a></h4>
 <ul>
-<li><strong>Steps 3 &amp; 7</strong>: Both leverage <code>matmul_idiomatic_tiled</code> from <a href="puzzle_17/../puzzle_14/puzzle_14.html">Puzzle 14</a>
+<li><strong>Steps 3 &amp; 7</strong>: Both leverage <code>matmul_idiomatic_tiled</code> from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a>
 <ul>
 <li>Step 3: \(Q \times K^T\) → attention scores computation \((1,d) \times (d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
 <li>Step 7: \(\text{weights} \times V\) → final weighted output \((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
 <li>Both operations include bounds checking for robustness with variable matrix dimensions</li>
 </ul>
 </li>
-<li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from <a href="puzzle_17/../puzzle_16/puzzle_16.html">Puzzle 16</a>
+<li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a>
 <ul>
 <li>Converts raw scores into normalized probability distribution</li>
 <li>Ensures numerical stability through max subtraction and parallel reduction</li>
@@ -7366,7 +7374,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-bonus-challenges"><a class="header" href="#-bonus-challenges">🎯 Bonus Challenges</a></h1>
 <h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
 <h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: Advanced softmax implementations</a></h2>
-<p><em>This challenge extends <a href="bonuses/../puzzle_16/puzzle_16.html">Puzzle 16: Softmax Op</a></em></p>
+<p><em>This challenge extends <a href="bonuses/../puzzle_18/puzzle_18.html">Puzzle 18: Softmax Op</a></em></p>
 <p>Here are some advanced challenges to extend your softmax implementation:</p>
 <h3 id="1-large-scale-softmax-handling-tpb--size"><a class="header" href="#1-large-scale-softmax-handling-tpb--size">1. Large-scale softmax: Handling <code>TPB &lt; SIZE</code></a></h3>
 <p>When the input size exceeds the number of threads per block (<code>TPB &lt; SIZE</code>), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:</p>
@@ -7392,7 +7400,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Compare performance differences between these implementations</li>
 </ul>
 <h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: Advanced attention mechanisms</a></h2>
-<p><em>This challenge extends <a href="bonuses/../puzzle_17/puzzle_17.html">Puzzle 17: Attention Op</a></em></p>
+<p><em>This challenge extends <a href="bonuses/../puzzle_19/puzzle_19.html">Puzzle 19: Attention Op</a></em></p>
 <p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
 <h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
 <p>Extend the attention mechanism to handle longer sequences using the existing kernels:</p>
@@ -7423,11 +7431,11 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Compare performance with different batch sizes (2, 4, 8)</li>
 <li>Analyze memory usage patterns</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-18-1d-convolution-op"><a class="header" href="#puzzle-18-1d-convolution-op">Puzzle 18: 1D Convolution Op</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-20-1d-convolution-op"><a class="header" href="#puzzle-20-1d-convolution-op">Puzzle 20: 1D Convolution Op</a></h1>
 <blockquote>
 <h2 id="from-max-graph-to-pytorch-custom-ops"><a class="header" href="#from-max-graph-to-pytorch-custom-ops">From MAX Graph to PyTorch custom ops</a></h2>
-<p>We’re now entering Part IV of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
-<p>In <a href="puzzle_18/../puzzle_15/puzzle_15.html">Puzzle 15</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
+<p>We’re now entering Part V of our GPU puzzle journey: <strong>PyTorch Custom Operations</strong>.</p>
+<p>In <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17</a>, we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we’ll explore how to:</p>
 <ul>
 <li>Use the same Mojo kernel with PyTorch’s CustomOpLibrary</li>
 <li>Integrate with PyTorch’s tensor system and autograd</li>
@@ -7437,7 +7445,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
 </blockquote>
 <h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
-<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="puzzle_18/../puzzle_15/puzzle_15.html">Puzzle 15</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
+<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
 <h2 id="code-to-complete-27"><a class="header" href="#code-to-complete-27">Code to complete</a></h2>
 <p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
@@ -7468,7 +7476,7 @@ def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt
     return output_tensor
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p18/p18.py" class="filename">View full file: problems/p18/p18.py</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -7476,16 +7484,16 @@ def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p18
+<pre><code class="language-bash">uv run poe p20
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p18
+<pre><code class="language-bash">pixi run p20
 </code></pre>
   </div>
 </div>
 <p>When successful, you should see output similar to:</p>
-<pre><code>Puzzle 18: From MAX Graph to PyTorch Custom Ops
+<pre><code>Puzzle 20: From MAX Graph to PyTorch Custom Ops
 ============================================================
 Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
 Convolution kernel: [0. 1. 2. 3.]
@@ -7535,7 +7543,7 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 <li>Must match the parameter names in the Mojo <code>@staticmethod fn execute</code> signature</li>
 </ul>
 <h3 id="4-same-kernel-different-integration"><a class="header" href="#4-same-kernel-different-integration">4. <strong>Same Kernel, Different Integration</strong></a></h3>
-<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 15:</p>
+<p>The underlying Mojo kernel (<code>conv1d_kernel</code>) is identical to Puzzle 17:</p>
 <ul>
 <li>Same GPU kernel code</li>
 <li>Same memory access patterns</li>
@@ -7587,11 +7595,11 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 <li><strong>Parameter Errors</strong>: Verify parameter names match Mojo operation signature</li>
 </ol>
 <p>The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-embedding-op"><a class="header" href="#puzzle-19-embedding-op">Puzzle 19: Embedding Op</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-21-embedding-op"><a class="header" href="#puzzle-21-embedding-op">Puzzle 21: Embedding Op</a></h1>
 <blockquote>
 <h2 id="memory-access-patterns-and-performance"><a class="header" href="#memory-access-patterns-and-performance">Memory access patterns and performance</a></h2>
 <p>We’re continuing Part IV with a focus on <strong>memory-bound operations</strong> and <strong>GPU memory access optimization</strong>.</p>
-<p>Building on <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a>, you’ll now explore how different kernel implementations of the same operation can have dramatically different performance characteristics. You’ll learn:</p>
+<p>Building on <a href="puzzle_21/../puzzle_20/puzzle_20.html">Puzzle 20</a>, you’ll now explore how different kernel implementations of the same operation can have dramatically different performance characteristics. You’ll learn:</p>
 <ul>
 <li>How GPU memory coalescing affects performance</li>
 <li>Why grid configuration matters for memory-bound operations</li>
@@ -7630,7 +7638,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <p>This operation is <strong>memory-bound</strong> - performance depends on how efficiently you can read from the embedding table and write to the output tensor.</p>
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
 <p>This puzzle is structured in two parts to build your understanding systematically:</p>
-<h3 id="simple-embedding-kernel"><a class="header" href="#simple-embedding-kernel"><strong><a href="puzzle_19/./simple_embedding_kernel.html">Simple embedding kernel</a></strong></a></h3>
+<h3 id="simple-embedding-kernel"><a class="header" href="#simple-embedding-kernel"><strong><a href="puzzle_21/./simple_embedding_kernel.html">Simple embedding kernel</a></strong></a></h3>
 <p>Start here to implement the actual puzzle code and understand the kernel implementations.</p>
 <p><strong>What you’ll do:</strong></p>
 <ul>
@@ -7639,7 +7647,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <li>See the same algorithm implemented with different threading strategies</li>
 <li>Understand custom operation registration in Mojo</li>
 </ul>
-<h3 id="performance-comparison"><a class="header" href="#performance-comparison"><strong><a href="puzzle_19/./performance.html">Performance comparison</a></strong></a></h3>
+<h3 id="performance-comparison"><a class="header" href="#performance-comparison"><strong><a href="puzzle_21/./performance.html">Performance comparison</a></strong></a></h3>
 <p>Deep dive into why the kernels perform differently and the theory behind memory coalescing.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
@@ -7649,7 +7657,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <li>Optimization strategies for memory-bound operations</li>
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to explore GPU memory optimization? Start with the <strong><a href="puzzle_19/./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the code, then move to <strong><a href="puzzle_19/./performance.html">Performance comparison</a></strong> to understand the performance implications.</p>
+<p>Ready to explore GPU memory optimization? Start with the <strong><a href="puzzle_21/./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the code, then move to <strong><a href="puzzle_21/./performance.html">Performance comparison</a></strong> to understand the performance implications.</p>
 <p>💡 <strong>Success tip:</strong> Pay attention to how the different grid configurations (1D vs 2D) affect memory access patterns - this insight applies to many GPU programming scenarios beyond embeddings.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="embedding-kernels-coaleasced-vs-non-coaleasced"><a class="header" href="#embedding-kernels-coaleasced-vs-non-coaleasced">Embedding Kernels: Coaleasced vs non-Coaleasced</a></h1>
 <p>In this puzzle, you’ll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.</p>
@@ -7714,7 +7722,7 @@ fn embedding_kernel_coalesced[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/embedding.mojo" class="filename">View full file: problems/p19/op/embedding.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -7787,7 +7795,7 @@ fn embedding_kernel_coalesced[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p19/op/embedding.mojo" class="filename">View full file: problems/p19/op/embedding.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -7802,7 +7810,7 @@ fn embedding_kernel_coalesced[
 </div>
 </details>
 <h2 id="custom-ops-registration"><a class="header" href="#custom-ops-registration">Custom ops registration</a></h2>
-<p>The kernels are wrapped in PyTorch custom operations for easy integration. The registration pattern is the same as MAX custom ops explained in <a href="puzzle_19/../puzzle_15/puzzle_15.html#understanding-max-graph-custom-ops">Understanding MAX Graph custom ops</a>:</p>
+<p>The kernels are wrapped in PyTorch custom operations for easy integration. The registration pattern is the same as MAX custom ops explained in <a href="puzzle_21/../puzzle_17/puzzle_17.html#understanding-max-graph-custom-ops">Understanding MAX Graph custom ops</a>:</p>
 <h3 id="1d-coalesced-operation"><a class="header" href="#1d-coalesced-operation">1D coalesced operation</a></h3>
 <p>This operation registers the optimized 1D embedding kernel as <code>"embedding"</code>:</p>
 <pre><code class="language-mojo">import compiler
@@ -8066,16 +8074,16 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p19
+<pre><code class="language-bash">uv run poe p21
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p19
+<pre><code class="language-bash">pixi run p21
 </code></pre>
   </div>
 </div>
 <p>When successful, you should see output similar to:</p>
-<pre><code>Puzzle 19: Mojo Embedding Kernel Comparison
+<pre><code>Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
 Configuration: B=8, L=512, V=10000, E=512
 ------------------------------------------------------------
@@ -8339,11 +8347,11 @@ Warp threads might access:
 <li><strong>Use memory-bound benchmarks</strong> to validate optimizations</li>
 </ol>
 <p>The core insight: <strong>memory access patterns</strong> often determine GPU performance more than computational complexity, especially for memory-bound operations like embeddings.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-20-kernel-fusion-and-custom-backward-pass"><a class="header" href="#puzzle-20-kernel-fusion-and-custom-backward-pass">Puzzle 20: Kernel Fusion and Custom Backward Pass</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-22-kernel-fusion-and-custom-backward-pass"><a class="header" href="#puzzle-22-kernel-fusion-and-custom-backward-pass">Puzzle 22: Kernel Fusion and Custom Backward Pass</a></h1>
 <blockquote>
 <h2 id="kernel-fusion-and-autograd-integration"><a class="header" href="#kernel-fusion-and-autograd-integration">Kernel fusion and autograd integration</a></h2>
 <p>We’re continuing Part IV with a focus on <strong>kernel fusion</strong> and <strong>autograd integration</strong>.</p>
-<p>Building on <a href="puzzle_20/../puzzle_19/puzzle_19.html">Puzzle 19</a>, you’ll now explore how to combine multiple operations into a single efficient kernel and integrate it with PyTorch’s autograd system. You’ll learn:</p>
+<p>Building on <a href="puzzle_22/../puzzle_21/puzzle_21.html">Puzzle 21</a>, you’ll now explore how to combine multiple operations into a single efficient kernel and integrate it with PyTorch’s autograd system. You’ll learn:</p>
 <ul>
 <li>How kernel fusion improves performance in both forward and backward passes</li>
 <li>Why custom backward passes are crucial for fused operations</li>
@@ -8403,7 +8411,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 </ul>
 <h2 id="learning-path-1"><a class="header" href="#learning-path-1">Learning path</a></h2>
 <p>This puzzle is structured in two parts to build your understanding systematically:</p>
-<h3 id="forward-pass-implementation"><a class="header" href="#forward-pass-implementation"><strong><a href="puzzle_20/./forward_pass.html">Forward pass implementation</a></strong></a></h3>
+<h3 id="forward-pass-implementation"><a class="header" href="#forward-pass-implementation"><strong><a href="puzzle_22/./forward_pass.html">Forward pass implementation</a></strong></a></h3>
 <p>Start here to implement the fused forward kernel and understand kernel fusion benefits.</p>
 <p><strong>What you’ll do:</strong></p>
 <ul>
@@ -8413,7 +8421,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Understand performance implications of fusion</li>
 <li>Master memory access patterns for optimal performance</li>
 </ul>
-<h3 id="backward-pass-implementation"><a class="header" href="#backward-pass-implementation"><strong><a href="puzzle_20/./backward_pass.html">Backward pass implementation</a></strong></a></h3>
+<h3 id="backward-pass-implementation"><a class="header" href="#backward-pass-implementation"><strong><a href="puzzle_22/./backward_pass.html">Backward pass implementation</a></strong></a></h3>
 <p>Deep dive into autograd integration and gradient computation.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
@@ -8426,7 +8434,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Numerical stability in backward passes</li>
 </ul>
 <h2 id="getting-started-1"><a class="header" href="#getting-started-1">Getting started</a></h2>
-<p>Ready to explore kernel fusion and autograd integration? Start with the <strong><a href="puzzle_20/./forward_pass.html">Forward pass implementation</a></strong> to implement the fused kernel, then move to <strong><a href="puzzle_20/./backward_pass.html">Backward pass implementation</a></strong> to understand gradient computation.</p>
+<p>Ready to explore kernel fusion and autograd integration? Start with the <strong><a href="puzzle_22/./forward_pass.html">Forward pass implementation</a></strong> to implement the fused kernel, then move to <strong><a href="puzzle_22/./backward_pass.html">Backward pass implementation</a></strong> to understand gradient computation.</p>
 <p>The puzzle includes a comprehensive testing framework that verifies:</p>
 <ul>
 <li>Numerical correctness against PyTorch’s implementation for both forward and backward passes</li>
@@ -8602,7 +8610,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <h3 id="1-unfused-implementation"><a class="header" href="#1-unfused-implementation">1. Unfused implementation</a></h3>
 <p>The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:</p>
 <h4 id="matrix-multiplication-kernel"><a class="header" href="#matrix-multiplication-kernel">Matrix multiplication kernel</a></h4>
-<p>From <a href="puzzle_20/../puzzle_14/puzzle_14.html">Puzzle 14</a>, we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:</p>
+<p>From <a href="puzzle_22/../puzzle_16/puzzle_16.html">Puzzle 16</a>, we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:</p>
 <pre><code class="language-mojo"># Idiomatic tiled matmul from p14.mojo - adapted for [batch*seq, hidden] @ [hidden, output] -&gt; [batch*seq, output]
 fn matmul_idiomatic_tiled[
     a_layout: Layout,
@@ -8825,11 +8833,11 @@ fn matmul_idiomatic_tiled[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --unfused
+<pre><code class="language-bash">uv run poe p22 --unfused
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --unfused
+<pre><code class="language-bash">pixi run p22 --unfused
 </code></pre>
   </div>
 </div>
@@ -8837,7 +8845,7 @@ fn matmul_idiomatic_tiled[
 <pre><code class="language-txt">Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
 ✅ Loaded Mojo operations library
 ============================================================
-   Puzzle 20: UNFUSED Algorithm Test &amp; Benchmark
+   Puzzle 22: UNFUSED Algorithm Test &amp; Benchmark
 ============================================================
 
 🧪 Correctness Testing for UNFUSED Algorithm
@@ -9152,11 +9160,11 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --fused
+<pre><code class="language-bash">uv run poe p22 --fused
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --fused
+<pre><code class="language-bash">pixi run p22 --fused
 </code></pre>
   </div>
 </div>
@@ -9164,7 +9172,7 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 <pre><code class="language-txt">Testing with dimensions: [4, 4, 8] -&gt; [4, 4, 16]
 ✅ Loaded Mojo operations library
 ============================================================
-   Puzzle 20: FUSED Algorithm Test &amp; Benchmark
+   Puzzle 22: FUSED Algorithm Test &amp; Benchmark
 ============================================================
 
 🧪 Correctness Testing for FUSED Algorithm
@@ -9417,7 +9425,7 @@ FUSED Algorithm Test Completed!
 <p>The mathematical operations we’re implementing are:</p>
 <ol>
 <li>
-<p>LayerNorm backward (details of derivation in <a href="puzzle_20/backward_pass.html#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a>):
+<p>LayerNorm backward (details of derivation in <a href="puzzle_22/backward_pass.html#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a>):
 \[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
 </li>
 <li>
@@ -9618,11 +9626,11 @@ where:</p>
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20 --backward
+<pre><code class="language-bash">uv run poe p22 --backward
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 --backward
+<pre><code class="language-bash">pixi run p22 --backward
 </code></pre>
   </div>
 </div>
@@ -10031,7 +10039,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>The computation order matches the forward pass for numerical stability</li>
 </ul>
 <p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="part-v-mojo-functional-patterns---high-level-gpu-programming"><a class="header" href="#part-v-mojo-functional-patterns---high-level-gpu-programming">Part V: Mojo Functional Patterns - High-Level GPU Programming</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-23-gpu-functional-programming-patterns"><a class="header" href="#puzzle-23-gpu-functional-programming-patterns">Puzzle 23: GPU Functional Programming Patterns</a></h1>
 <h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
 <p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
@@ -10056,7 +10064,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>Thread scheduling optimized automatically</li>
 <li>Memory hierarchy optimization built-in</li>
 </ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_21/../puzzle_22/puzzle_22.html">Part VI</a></strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII</a></strong>.</p>
 <h3 id="four-fundamental-patterns"><a class="header" href="#four-fundamental-patterns"><strong>Four fundamental patterns</strong></a></h3>
 <p>Master the complete spectrum of GPU functional programming:</p>
 <ol>
@@ -10091,7 +10099,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 </ul>
 <h2 id="learning-path-2"><a class="header" href="#learning-path-2">Learning path</a></h2>
 <h3 id="1-elementwise-operations"><a class="header" href="#1-elementwise-operations"><strong>1. Elementwise operations</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
+<p><strong>→ <a href="puzzle_23/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
 <p>Start with the foundation: automatic thread management and SIMD vectorization.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -10104,7 +10112,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <pre><code class="language-mojo">elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 </code></pre>
 <h3 id="2-tiled-processing"><a class="header" href="#2-tiled-processing"><strong>2. Tiled processing</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
+<p><strong>→ <a href="puzzle_23/./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
 <p>Build on elementwise with memory-optimized tiling patterns.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -10115,7 +10123,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 </ul>
 <p><strong>Key insight:</strong> Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</p>
 <h3 id="3-advanced-vectorization"><a class="header" href="#3-advanced-vectorization"><strong>3. Advanced vectorization</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
+<p><strong>→ <a href="puzzle_23/./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
 <p>Explore manual control and automatic vectorization strategies.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -10130,7 +10138,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>Mojo vectorize</strong>: Automatic optimization, built-in safety, clean code</li>
 </ul>
 <h3 id="-4-threading-vs-simd-concepts"><a class="header" href="#-4-threading-vs-simd-concepts">🧠 <strong>4. Threading vs SIMD concepts</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
+<p><strong>→ <a href="puzzle_23/./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
 <p>Understand the fundamental relationship between parallelism levels.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -10141,7 +10149,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 </ul>
 <p><strong>Key insight:</strong> GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</p>
 <h3 id="-5-performance-benchmarking-in-mojo"><a class="header" href="#-5-performance-benchmarking-in-mojo">📊 <strong>5. Performance benchmarking in Mojo</strong></a></h3>
-<p><strong>→ <a href="puzzle_21/./benchmarking.html">Benchmarking in Mojo</a></strong></p>
+<p><strong>→ <a href="puzzle_23/./benchmarking.html">Benchmarking in Mojo</a></strong></p>
 <p>Learn to measure, analyze, and optimize GPU performance scientifically.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -10155,7 +10163,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p>Ready to transform your GPU programming skills? Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.</p>
 <p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not just the <strong>how</strong>. The conceptual framework you develop here will serve you throughout your GPU programming career.</p>
 <p><strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_21/./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_23/./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
 <p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
@@ -10207,7 +10215,7 @@ fn elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -10270,11 +10278,11 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --elementwise
+<pre><code class="language-bash">uv run poe p23 --elementwise
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --elementwise
+<pre><code class="language-bash">pixi run p23 --elementwise
 </code></pre>
   </div>
 </div>
@@ -10467,16 +10475,16 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
 <p>Once you’ve mastered elementwise operations, you’re ready for:</p>
 <ul>
-<li><strong><a href="puzzle_21/./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
-<li><strong><a href="puzzle_21/./vectorize.html">Vectorization</a></strong>: Fine-grained SIMD control</li>
-<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_23/./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
+<li><strong><a href="puzzle_23/./vectorize.html">Vectorization</a></strong>: Fine-grained SIMD control</li>
+<li><strong><a href="puzzle_23/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_23/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
 <h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
-<p>You’ve already seen tiling in action with <strong><a href="puzzle_21/../puzzle_14/tiled.html">Puzzle 14’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
+<p>You’ve already seen tiling in action with <strong><a href="puzzle_23/../puzzle_16/tiled.html">Puzzle 16’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
 <p><strong>Key insight:</strong> <em>Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</em></p>
 <h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
@@ -10534,7 +10542,7 @@ fn tiled_elementwise_add[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -10586,11 +10594,11 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --tiled
+<pre><code class="language-bash">uv run poe p23 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --tiled
+<pre><code class="language-bash">pixi run p23 --tiled
 </code></pre>
   </div>
 </div>
@@ -10797,9 +10805,9 @@ Tiled:       Moderate parallelism, localized memory access
 <h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next steps</a></h2>
 <p>Now that you understand both elementwise and tiled patterns:</p>
 <ul>
-<li><strong><a href="puzzle_21/./vectorize.html">Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
-<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_23/./vectorize.html">Vectorization</a></strong>: Fine-grained control over SIMD operations</li>
+<li><strong><a href="puzzle_23/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_23/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
@@ -10871,7 +10879,7 @@ Tiled:       Moderate parallelism, localized memory access
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -10903,11 +10911,11 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --manual-vectorized
+<pre><code class="language-bash">uv run poe p23 --manual-vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --manual-vectorized
+<pre><code class="language-bash">pixi run p23 --manual-vectorized
 </code></pre>
   </div>
 </div>
@@ -11072,7 +11080,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p21/p21.mojo" class="filename">View full file: problems/p21/p21.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -11109,11 +11117,11 @@ fn vectorized_add[width: Int](i: Int):
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --vectorized
+<pre><code class="language-bash">uv run poe p23 --vectorized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --vectorized
+<pre><code class="language-bash">pixi run p23 --vectorized
 </code></pre>
   </div>
 </div>
@@ -11278,8 +11286,8 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <h2 id="next-steps-2"><a class="header" href="#next-steps-2">Next steps</a></h2>
 <p>Now that you understand all three fundamental patterns:</p>
 <ul>
-<li><strong><a href="puzzle_21/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="puzzle_23/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
+<li><strong><a href="puzzle_23/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
@@ -11301,7 +11309,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_21/../puzzle_22/puzzle_22.html">Part VI</a></strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII</a></strong>.</p>
 <p><strong>What Mojo abstracts for you:</strong></p>
 <ul>
 <li><strong>Grid/Block configuration</strong>: Automatically calculated based on problem size</li>
@@ -11311,7 +11319,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 </ul>
 <h3 id="simd-within-gpu-threads"><a class="header" href="#simd-within-gpu-threads">SIMD within GPU threads</a></h3>
 <p>Each GPU thread can process multiple data elements simultaneously using <strong>SIMD (Single Instruction, Multiple Data)</strong> operations:</p>
-<pre><code class="language-mojo">// Within one GPU thread:
+<pre><code class="language-mojo"># Within one GPU thread:
 a_simd = a.load[simd_width](idx, 0)      # Load 4 floats simultaneously
 b_simd = b.load[simd_width](idx, 0)      # Load 4 floats simultaneously
 result = a_simd + b_simd                 # Add 4 pairs simultaneously
@@ -11420,7 +11428,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 <h2 id="next-steps-3"><a class="header" href="#next-steps-3">Next steps</a></h2>
 <p>With a solid understanding of GPU threading vs SIMD concepts:</p>
 <ul>
-<li><strong><a href="puzzle_21/./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
+<li><strong><a href="puzzle_23/./benchmarking.html">📊 Benchmarking</a></strong>: Measure and compare actual performance</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
@@ -11437,11 +11445,11 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21 --benchmark
+<pre><code class="language-bash">uv run poe p23 --benchmark
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 --benchmark
+<pre><code class="language-bash">pixi run p23 --benchmark
 </code></pre>
   </div>
 </div>
@@ -11689,8 +11697,8 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Improve performance</strong>: Eliminate barriers and reduce memory traffic</li>
 <li><strong>Enable new algorithms</strong>: Unlock patterns impossible with pure functional approaches</li>
 </ul>
-<p><strong>Coming up next</strong>: <a href="puzzle_21/../puzzle_21/puzzle_21.html">Part VI: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 12’s prefix sum.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---synchronized-execution-primitives"><a class="header" href="#part-vi-gpu-warp-programming---synchronized-execution-primitives">Part VI: GPU Warp Programming - Synchronized Execution Primitives</a></h1>
+<p><strong>Coming up next</strong>: <a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 14’s prefix sum.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
 <h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
 <p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
@@ -11726,7 +11734,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
 </ol>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
-<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p10.mojo):
+<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p12.mojo):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
 barrier()
@@ -11764,7 +11772,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 </ul>
 <h2 id="learning-path-3"><a class="header" href="#learning-path-3">Learning path</a></h2>
 <h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
-<p><strong>→ <a href="puzzle_22/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
+<p><strong>→ <a href="puzzle_24/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
 <p>Understand the hardware foundation that makes warp operations possible.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -11775,7 +11783,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 </ul>
 <p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
 <h3 id="2-warp-sum-fundamentals"><a class="header" href="#2-warp-sum-fundamentals"><strong>2. Warp sum fundamentals</strong></a></h3>
-<p><strong>→ <a href="puzzle_22/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<p><strong>→ <a href="puzzle_24/./warp_sum.html">warp.sum() Essentials</a></strong></p>
 <p>Master the most important warp operation through dot product implementation.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -11791,7 +11799,7 @@ if lane_id() == 0:
     output[0] = total
 </code></pre>
 <h3 id="3-when-to-use-warp-programming"><a class="header" href="#3-when-to-use-warp-programming"><strong>3. When to use warp programming</strong></a></h3>
-<p><strong>→ <a href="puzzle_22/./warp_extra.html">When to Use Warp Programming</a></strong></p>
+<p><strong>→ <a href="puzzle_24/./warp_extra.html">When to Use Warp Programming</a></strong></p>
 <p>Learn the decision framework for choosing warp operations over alternatives.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -11827,7 +11835,7 @@ if lane_id() == 0:
 <p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
 <p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
 <p><strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_22/./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_24/./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp lanes &amp; SIMT execution</a></h1>
 <h2 id="mental-model-for-warp-programming-vs-simd"><a class="header" href="#mental-model-for-warp-programming-vs-simd">Mental model for warp programming vs SIMD</a></h2>
 <h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
@@ -11881,7 +11889,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 </code></pre>
 <p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.</p>
 <h3 id="where-warps-fit-in-gpu-execution-hierarchy"><a class="header" href="#where-warps-fit-in-gpu-execution-hierarchy">Where warps fit in GPU execution hierarchy</a></h3>
-<p>For complete context on how warps relate to the overall GPU execution model, see <a href="puzzle_22/../puzzle_20/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
+<p>For complete context on how warps relate to the overall GPU execution model, see <a href="puzzle_24/../puzzle_23/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
 <pre><code>GPU Device
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
@@ -12128,9 +12136,9 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </div>
 <h2 id="next-steps-5"><a class="header" href="#next-steps-5">Next steps</a></h2>
 <p>Now that you understand the SIMT foundation, you’re ready to see how these concepts enable powerful warp operations. The next section will show you how <code>sum()</code> transforms complex reduction patterns into simple, efficient function calls.</p>
-<p><strong>→ Continue to <a href="puzzle_22/./warp_sum.html">warp.sum() Essentials</a></strong></p>
+<p><strong>→ Continue to <a href="puzzle_24/./warp_sum.html">warp.sum() Essentials</a></strong></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpsum-essentials---warp-level-dot-product"><a class="header" href="#warpsum-essentials---warp-level-dot-product">warp.sum() Essentials - Warp-Level Dot Product</a></h1>
-<p>Implement the dot product we saw in <a href="puzzle_22/../puzzle_10/puzzle_10.html">puzzle 10</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
+<p>Implement the dot product we saw in <a href="puzzle_24/../puzzle_12/puzzle_12.html">puzzle 12</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
 <h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
@@ -12152,8 +12160,8 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
-<h2 id="the-traditional-complexity-from-puzzle-10"><a class="header" href="#the-traditional-complexity-from-puzzle-10">The traditional complexity (from Puzzle 10)</a></h2>
-<p>Recall the complex approach from <code>p10.mojo</code> that required shared memory, barriers, and tree reduction:</p>
+<h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
+<p>Recall the complex approach from <a href="puzzle_24/../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a> that required shared memory, barriers, and tree reduction:</p>
 <pre><code class="language-mojo">alias SIZE = WARP_SIZE
 alias BLOCKS_PER_GRID = (1, 1)
 alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
@@ -12163,7 +12171,7 @@ alias in_layout = Layout.row_major(SIZE)
 alias out_layout = Layout.row_major(1)
 
 
-fn traditional_dot_product_p10_style[
+fn traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
@@ -12171,7 +12179,7 @@ fn traditional_dot_product_p10_style[
     b: LayoutTensor[mut=False, dtype, in_layout],
 ):
     """
-    This is the complex approach from p10_layout_tensor.mojo - kept for comparison.
+    This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
     shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -12211,11 +12219,11 @@ fn traditional_dot_product_p10_style[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --traditional
+<pre><code class="language-bash">uv run poe p24 --traditional
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --traditional
+<pre><code class="language-bash">pixi run p24 --traditional
 </code></pre>
   </div>
 </div>
@@ -12237,7 +12245,7 @@ fn simple_warp_dot_product[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p22/p22.mojo" class="filename">View full file: problems/p22/p22.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -12285,11 +12293,11 @@ if global_i &lt; size:
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --kernel
+<pre><code class="language-bash">uv run poe p24 --kernel
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --kernel
+<pre><code class="language-bash">pixi run p24 --kernel
 </code></pre>
   </div>
 </div>
@@ -12300,7 +12308,7 @@ SIMD_WIDTH: 8
 === RESULT ===
 out: 10416.0
 expected: 10416.0
-🚀 Notice how simple the warp version is compared to p10.mojo!
+🚀 Notice how simple the warp version is compared to p12.mojo!
    Same kernel structure, but warp_sum() replaces all the complexity!
 </code></pre>
 <h3 id="solution-33"><a class="header" href="#solution-33">Solution</a></h3>
@@ -12440,11 +12448,11 @@ warp_size = WARP_SIZE         # 32 (NVIDIA) or 64 (AMD)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --functional
+<pre><code class="language-bash">uv run poe p24 --functional
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --functional
+<pre><code class="language-bash">pixi run p24 --functional
 </code></pre>
   </div>
 </div>
@@ -12533,11 +12541,11 @@ expected: 10416.0
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --benchmark
+<pre><code class="language-bash">uv run poe p24 --benchmark
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --benchmark
+<pre><code class="language-bash">pixi run p24 --benchmark
 </code></pre>
   </div>
 </div>
@@ -12635,7 +12643,7 @@ Benchmarks completed!
 <h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
 <p>Once you’ve mastered warp sum operations, you’re ready for:</p>
 <ul>
-<li><strong><a href="puzzle_22/./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
+<li><strong><a href="puzzle_24/./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
 <li><strong>Advanced warp operations</strong>: <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code> for complex communication patterns</li>
 <li><strong>Multi-warp algorithms</strong>: Combining warp operations with block-level synchronization</li>
 <li><strong>Part VII: Memory Coalescing</strong>: Optimizing memory access patterns for maximum bandwidth</li>
@@ -12730,9 +12738,9 @@ mojo p22.mojo --benchmark
 <li>Small problems or heavy divergence</li>
 </ul>
 <p><strong>When in doubt:</strong> Implement both and benchmark. The performance difference will guide your decision.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---communication-primitives"><a class="header" href="#part-vi-gpu-warp-programming---communication-primitives">Part VI: GPU Warp Programming - Communication Primitives</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-25-warp-communication"><a class="header" href="#puzzle-25-warp-communication">Puzzle 25: Warp Communication</a></h1>
 <h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
-<p>Welcome to <strong>Puzzle 23: Warp Communication Primitives</strong>! This puzzle introduces you to advanced GPU <strong>warp-level communication operations</strong> - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast</a> to implement neighbor communication and collective coordination without complex shared memory patterns.</p>
+<p>Welcome to <strong>Puzzle 25: Warp Communication Primitives</strong>! This puzzle introduces you to advanced GPU <strong>warp-level communication operations</strong> - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast</a> to implement neighbor communication and collective coordination without complex shared memory patterns.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + indexing + boundary checking patterns to elegant warp communication calls that leverage hardware-optimized data movement.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp communication operations harness this synchronization to provide powerful data exchange primitives with automatic boundary handling and zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn-2"><a class="header" href="#what-youll-learn-2">What you’ll learn</a></h2>
@@ -12798,14 +12806,14 @@ else:
 <h2 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h2>
 <p>Before diving into warp communication, ensure you’re comfortable with:</p>
 <ul>
-<li><strong>Part VI warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="puzzle_23/../puzzle_22/puzzle_22.html">Puzzle 22</a>)</li>
+<li><strong>Part VII warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="puzzle_25/../puzzle_24/puzzle_24.html">Puzzle 24</a>)</li>
 <li><strong>GPU thread hierarchy</strong>: Blocks, warps, and lane numbering</li>
 <li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>Boundary condition handling</strong>: Managing edge cases in parallel algorithms</li>
 </ul>
 <h2 id="learning-path-4"><a class="header" href="#learning-path-4">Learning path</a></h2>
 <h3 id="1-neighbor-communication-with-shuffle_down"><a class="header" href="#1-neighbor-communication-with-shuffle_down"><strong>1. Neighbor communication with shuffle_down</strong></a></h3>
-<p><strong>→ <a href="puzzle_23/./warp_shuffle_down.html">Warp Shuffle Down</a></strong></p>
+<p><strong>→ <a href="puzzle_25/./warp_shuffle_down.html">Warp Shuffle Down</a></strong></p>
 <p>Master neighbor-based communication patterns for stencil operations and finite differences.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -12821,7 +12829,7 @@ if lane &lt; WARP_SIZE - 1:
     result = compute_with_neighbors(current_val, next_val)
 </code></pre>
 <h3 id="2-collective-coordination-with-broadcast"><a class="header" href="#2-collective-coordination-with-broadcast"><strong>2. Collective coordination with broadcast</strong></a></h3>
-<p><strong>→ <a href="puzzle_23/./warp_broadcast.html">Warp Broadcast</a></strong></p>
+<p><strong>→ <a href="puzzle_25/./warp_broadcast.html">Warp Broadcast</a></strong></p>
 <p>Master one-to-many communication patterns for block-level coordination and collective decision-making.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -12865,8 +12873,8 @@ result = use_shared_value(shared_value, local_data)
 <h2 id="getting-started-4"><a class="header" href="#getting-started-4">Getting started</a></h2>
 <p>Ready to harness GPU warp-level communication? Start with neighbor-based shuffle operations to understand the foundation, then progress to collective broadcast patterns for advanced coordination.</p>
 <p>💡 <strong>Success tip</strong>: Think of warp communication as <strong>hardware-accelerated message passing</strong> between threads in the same warp. This mental model will guide you toward efficient communication patterns that leverage the GPU’s SIMT architecture.</p>
-<p><strong>Learning objective</strong>: By the end of Puzzle 23, you’ll recognize when warp communication can replace complex shared memory patterns, enabling you to write simpler, faster neighbor-based and coordination algorithms.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_23/./warp_shuffle_down.html">Warp Shuffle Down Operations</a></strong> to master neighbor communication, then advance to <strong><a href="puzzle_23/./warp_broadcast.html">Warp Broadcast Operations</a></strong> for collective coordination patterns!</p>
+<p><strong>Learning objective</strong>: By the end of Puzzle 25, you’ll recognize when warp communication can replace complex shared memory patterns, enabling you to write simpler, faster neighbor-based and coordination algorithms.</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_25/./warp_shuffle_down.html">Warp Shuffle Down Operations</a></strong> to master neighbor communication, then advance to <strong><a href="puzzle_25/./warp_broadcast.html">Warp Broadcast Operations</a></strong> for collective coordination patterns!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpshuffle_down-one-to-one-communication"><a class="header" href="#warpshuffle_down-one-to-one-communication"><code>warp.shuffle_down()</code> One-to-One Communication</a></h1>
 <p>For warp-level neighbor communication we can use <code>shuffle_down()</code> to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down()</a> operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations.</em></p>
@@ -12952,7 +12960,7 @@ fn neighbor_difference[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -13001,11 +13009,11 @@ fn neighbor_difference[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --neighbor
+<pre><code class="language-bash">uv run poe p25 --neighbor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --neighbor
+<pre><code class="language-bash">pixi run p25 --neighbor
 </code></pre>
   </div>
 </div>
@@ -13088,7 +13096,7 @@ Cycle 3: Difference computation (lanes 0-30 only)
   Lane 31: output[31] = 0 (boundary condition)
 </code></pre>
 <p><strong>Mathematical insight:</strong> This implements the discrete derivative operator \(D\):
-\[\Large D<a href="puzzle_23/i">f</a> = f(i+1) - f(i)\]</p>
+\[\Large D<a href="puzzle_25/i">f</a> = f(i+1) - f(i)\]</p>
 <p>For our quadratic input \(f(i) = i^2\):
 \[\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\]</p>
 <p><strong>Why shuffle_down is superior:</strong></p>
@@ -13210,11 +13218,11 @@ else:
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --average
+<pre><code class="language-bash">uv run poe p25 --average
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --average
+<pre><code class="language-bash">pixi run p25 --average
 </code></pre>
   </div>
 </div>
@@ -13438,7 +13446,7 @@ result = use_collective_value(collective_value)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -13477,11 +13485,11 @@ shared_value = broadcast(shared_value)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --broadcast-basic
+<pre><code class="language-bash">uv run poe p25 --broadcast-basic
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --broadcast-basic
+<pre><code class="language-bash">pixi run p25 --broadcast-basic
 </code></pre>
   </div>
 </div>
@@ -13678,11 +13686,11 @@ else:
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --broadcast-conditional
+<pre><code class="language-bash">uv run poe p25 --broadcast-conditional
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --broadcast-conditional
+<pre><code class="language-bash">pixi run p25 --broadcast-conditional
 </code></pre>
   </div>
 </div>
@@ -13902,11 +13910,11 @@ result = combine(current_val, neighbor_val, shared_param)
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --broadcast-shuffle-coordination
+<pre><code class="language-bash">uv run poe p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --broadcast-shuffle-coordination
+<pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
 </div>
@@ -14064,9 +14072,9 @@ result = use_shared_value(shared_value, local_data)
 <li><strong>Composable patterns</strong>: Easily combines with shuffle and other warp operations</li>
 </ul>
 <p><strong>Applications</strong>: Block statistics, collective decisions, parameter sharing, adaptive algorithms.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="part-vi-gpu-warp-programming---advanced-communication-primitives"><a class="header" href="#part-vi-gpu-warp-programming---advanced-communication-primitives">Part VI: GPU Warp Programming - Advanced Communication Primitives</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-26-advanced-warp-patterns"><a class="header" href="#puzzle-26-advanced-warp-patterns">Puzzle 26: Advanced Warp Patterns</a></h1>
 <h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
-<p>Welcome to <strong>Puzzle 24: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
+<p>Welcome to <strong>Puzzle 26: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + multi-phase reduction patterns to elegant single-function-call algorithms that leverage hardware-optimized butterfly networks and parallel scan units.</p>
 <p><strong>Key insight:</strong> <em>GPU warps can perform sophisticated tree-based communication and parallel scan operations in hardware - Mojo’s advanced warp primitives harness butterfly networks and dedicated scan units to provide \(O(\log n)\) algorithms with single-instruction simplicity.</em></p>
 <h2 id="what-youll-learn-3"><a class="header" href="#what-youll-learn-3">What you’ll learn</a></h2>
@@ -14101,7 +14109,7 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 <p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like parallel reductions, stream compaction, quicksort partitioning, and FFT operations that would otherwise require dozens of lines of shared memory coordination code.</p>
 </blockquote>
 <h3 id="performance-transformation-example-2"><a class="header" href="#performance-transformation-example-2"><strong>Performance transformation example</strong></a></h3>
-<pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 12):
+<pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 14):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = input[global_i]
 barrier()
@@ -14134,14 +14142,14 @@ output[global_i] = scan_result
 <h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Before diving into advanced warp communication, ensure you’re comfortable with:</p>
 <ul>
-<li><strong>Part VI warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="puzzle_24/../puzzle_22/puzzle_22.html">Puzzle 22</a> and <a href="puzzle_24/../puzzle_23/puzzle_23.html">Puzzle 23</a>)</li>
+<li><strong>Part VII warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="puzzle_26/../puzzle_24/puzzle_24.html">Puzzle 24</a> and <a href="puzzle_26/../puzzle_25/puzzle_25.html">Puzzle 25</a>)</li>
 <li><strong>Parallel algorithm theory</strong>: Tree reductions, parallel scan, and butterfly networks</li>
-<li><strong>GPU memory hierarchy</strong>: Shared memory patterns and synchronization (see <a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a>)</li>
+<li><strong>GPU memory hierarchy</strong>: Shared memory patterns and synchronization (see <a href="puzzle_26/../puzzle_14/puzzle_14.html">Puzzle 14</a>)</li>
 <li><strong>Mathematical operations</strong>: Understanding XOR operations and logarithmic complexity</li>
 </ul>
 <h2 id="learning-path-5"><a class="header" href="#learning-path-5">Learning path</a></h2>
 <h3 id="1-butterfly-communication-with-shuffle_xor"><a class="header" href="#1-butterfly-communication-with-shuffle_xor"><strong>1. Butterfly communication with shuffle_xor</strong></a></h3>
-<p><strong>→ <a href="puzzle_24/./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
+<p><strong>→ <a href="puzzle_26/./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
 <p>Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -14159,7 +14167,7 @@ while offset &gt; 0:
 # All lanes now have global maximum
 </code></pre>
 <h3 id="2-hardware-accelerated-parallel-scan-with-prefix_sum"><a class="header" href="#2-hardware-accelerated-parallel-scan-with-prefix_sum"><strong>2. Hardware-accelerated parallel scan with prefix_sum</strong></a></h3>
-<p><strong>→ <a href="puzzle_24/./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
+<p><strong>→ <a href="puzzle_26/./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
 <p>Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
 <p><strong>What you’ll master:</strong></p>
 <ul>
@@ -14210,7 +14218,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 <p>Ready to harness advanced GPU warp-level communication? Start with butterfly network operations to understand tree-based communication, then progress to hardware-accelerated parallel scan for optimal algorithm performance.</p>
 <p>💡 <strong>Success tip</strong>: Think of advanced warp operations as <strong>hardware-accelerated parallel algorithm building blocks</strong>. These primitives replace entire categories of complex shared memory algorithms with single, optimized function calls.</p>
 <p><strong>Learning objective</strong>: By the end of Puzzle 24, you’ll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_24/./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="puzzle_24/./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_26/./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="puzzle_26/./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpshuffle_xor-butterfly-communication"><a class="header" href="#warpshuffle_xor-butterfly-communication"><code>warp.shuffle_xor()</code> Butterfly Communication</a></h1>
 <p>For warp-level butterfly communication we can use <code>shuffle_xor()</code> to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor()</a> operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \(O(\log n)\) complexity relative to warp size.</em></p>
@@ -14300,7 +14308,7 @@ fn butterfly_pair_swap[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -14333,11 +14341,11 @@ fn butterfly_pair_swap[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --pair-swap
+<pre><code class="language-bash">uv run poe p26 --pair-swap
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --pair-swap
+<pre><code class="language-bash">pixi run p26 --pair-swap
 </code></pre>
   </div>
 </div>
@@ -14537,11 +14545,11 @@ Result: All lanes have global maximum = 7
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --parallel-max
+<pre><code class="language-bash">uv run poe p26 --parallel-max
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --parallel-max
+<pre><code class="language-bash">pixi run p26 --parallel-max
 </code></pre>
   </div>
 </div>
@@ -14731,11 +14739,11 @@ fn butterfly_conditional_max[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --conditional-max
+<pre><code class="language-bash">uv run poe p26 --conditional-max
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --conditional-max
+<pre><code class="language-bash">pixi run p26 --conditional-max
 </code></pre>
   </div>
 </div>
@@ -14950,7 +14958,7 @@ while offset &gt; 0:
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h3 id="the-prefix_sum-advantage"><a class="header" href="#the-prefix_sum-advantage">The <code>prefix_sum</code> advantage</a></h3>
-<p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In <a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a>, we implemented this the hard way with explicit shared memory management:</p>
+<p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In <a href="puzzle_26/../puzzle_14/puzzle_14.html">Puzzle 14</a>, we implemented this the hard way with explicit shared memory management:</p>
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
@@ -15040,7 +15048,7 @@ output[global_i] = scan_result
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p24/p24.mojo" class="filename">View full file: problems/p24/p24.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -15078,11 +15086,11 @@ output[global_i] = scan_result
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --prefix-sum
+<pre><code class="language-bash">uv run poe p26 --prefix-sum
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --prefix-sum
+<pre><code class="language-bash">pixi run p26 --prefix-sum
 </code></pre>
   </div>
 </div>
@@ -15096,45 +15104,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <h3 id="solution-43"><a class="header" href="#solution-43">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[mut=False, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-):
-    """
-    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
-    Compare this to Puzzle 12's complex shared memory + barrier approach.
-
-    Puzzle 12 approach:
-    - Shared memory allocation
-    - Multiple barrier synchronizations
-    - Log(n) iterations with manual tree reduction
-    - Complex multi-phase algorithm
-
-    Warp prefix_sum approach:
-    - Single function call!
-    - Hardware-optimized parallel scan
-    - Automatic synchronization
-    - O(log n) complexity, but implemented in hardware.
-
-    NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
-    For multi-warp scenarios, additional coordination would be needed.
-    """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-
-    if global_i &lt; size:
-        current_val = input[global_i]
-
-        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
-        # But it only works within the current warp (WARP_SIZE threads)
-        scan_result = prefix_sum[exclusive=False](
-            rebind[Scalar[dtype]](current_val)
-        )
-
-        output[global_i] = scan_result
-
-
+<pre><code class="language-mojo">
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates how <code>prefix_sum()</code> replaces complex multi-phase algorithms with a single hardware-optimized function call.</p>
@@ -15142,7 +15112,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]
 
-    # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+    # This one call replaces ~30 lines of complex shared memory logic from Puzzle 14!
     # But it only works within the current warp (WARP_SIZE threads)
     scan_result = prefix_sum[exclusive=False](
         rebind[Scalar[dtype]](current_val)
@@ -15178,9 +15148,9 @@ Cycle 3: Store results
 </code></pre>
 <p><strong>Mathematical insight:</strong> This implements the inclusive prefix sum operation:
 \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
-<p><strong>Comparison with Puzzle 12’s approach:</strong></p>
+<p><strong>Comparison with Puzzle 14’s approach:</strong></p>
 <ul>
-<li><strong><a href="puzzle_24/../puzzle_12/puzzle_12.html">Puzzle 12</a></strong>: ~30 lines of shared memory + multiple barriers + complex indexing</li>
+<li><strong><a href="puzzle_26/../puzzle_14/puzzle_14.html">Puzzle 14</a></strong>: ~30 lines of shared memory + multiple barriers + complex indexing</li>
 <li><strong>Warp primitive</strong>: 1 function call with hardware acceleration</li>
 <li><strong>Performance</strong>: Same \(O(\log n)\) complexity, but implemented in specialized hardware</li>
 <li><strong>Memory</strong>: Zero shared memory usage vs explicit allocation</li>
@@ -15297,11 +15267,11 @@ Cycle 3: Store results
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --partition
+<pre><code class="language-bash">uv run poe p26 --partition
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --partition
+<pre><code class="language-bash">pixi run p26 --partition
 </code></pre>
   </div>
 </div>
@@ -15316,60 +15286,7 @@ pivot: 5.0
 <h3 id="solution-44"><a class="header" href="#solution-44">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn warp_partition[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[mut=False, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    pivot: Float32,
-):
-    """
-    Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
-    This implements a warp-level quicksort partition step that places elements &lt; pivot
-    on the left and elements &gt;= pivot on the right.
-
-    ALGORITHM COMPLEXITY - combines two advanced warp primitives:
-    1. shuffle_xor(): Butterfly pattern for warp-level reductions
-    2. prefix_sum(): Warp-level exclusive scan for position calculation.
-
-    This demonstrates the power of warp primitives for sophisticated parallel algorithms
-    within a single warp (works for any WARP_SIZE: 32, 64, etc.).
-
-    Example with pivot=5:
-    Input:  [3, 7, 1, 8, 2, 9, 4, 6]
-    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
-    """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-
-    if global_i &lt; size:
-        current_val = input[global_i]
-
-        # Phase 1: Create warp-level predicates
-        predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
-        predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
-
-        # Phase 2: Warp-level prefix sum to get positions within warp
-        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
-        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
-
-        # Phase 3: Get total left count using shuffle_xor reduction
-        warp_left_total = predicate_left
-
-        # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
-        offset = WARP_SIZE // 2
-        while offset &gt; 0:
-            warp_left_total += shuffle_xor(warp_left_total, offset)
-            offset //= 2
-
-        # Phase 4: Write to output positions
-        if current_val &lt; pivot:
-            # Left partition: use warp-level position
-            output[Int(warp_left_pos)] = current_val
-        else:
-            # Right partition: offset by total left count + right position
-            output[Int(warp_left_total + warp_right_pos)] = current_val
-
-
+<pre><code class="language-mojo">
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates advanced coordination between multiple warp primitives to implement sophisticated parallel algorithms.</p>
@@ -15537,7 +15454,7 @@ final_pos = local_pos + partition_offset
 <li><strong>Parallel algorithms</strong>: Load balancing, work distribution, data restructuring</li>
 </ul>
 <p>The combination of <code>prefix_sum()</code> and <code>shuffle_xor()</code> demonstrates how modern GPU warp primitives can implement sophisticated parallel algorithms with minimal code complexity and optimal performance characteristics.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-25-async-memory-operations--copy-overlap"><a class="header" href="#puzzle-25-async-memory-operations--copy-overlap">Puzzle 25: Async Memory Operations &amp; Copy Overlap</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-28-async-memory-operations--copy-overlap"><a class="header" href="#puzzle-28-async-memory-operations--copy-overlap">Puzzle 28: Async Memory Operations &amp; Copy Overlap</a></h1>
 <p><strong>The GPU Memory Bottleneck:</strong> Most real-world GPU algorithms hit a frustrating wall - they’re not limited by compute power, but by <strong>memory bandwidth</strong>. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.</p>
 <p>Consider this common scenario in GPU programming:</p>
 <pre><code class="language-mojo"># The performance killer - sequential memory operations
@@ -15556,7 +15473,7 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 </code></pre>
 <p><strong>This is the power of async memory operations</strong> - the difference between a sluggish algorithm and one that maximizes your GPU’s potential.</p>
 <h2 id="why-this-matters"><a class="header" href="#why-this-matters">Why this matters</a></h2>
-<p>In this puzzle, you’ll transform a memory-bound 1D convolution from <a href="puzzle_25/../puzzle_11/puzzle_11.html">Puzzle 11</a> into a high-performance implementation that <strong>hides memory latency behind computation</strong>. This isn’t just an academic exercise - these patterns are fundamental to:</p>
+<p>In this puzzle, you’ll transform a memory-bound 1D convolution from <a href="puzzle_28/../puzzle_13/puzzle_13.html">Puzzle 13</a> into a high-performance implementation that <strong>hides memory latency behind computation</strong>. This isn’t just an academic exercise - these patterns are fundamental to:</p>
 <ul>
 <li><strong>Deep learning</strong>: Efficiently loading weights and activations</li>
 <li><strong>Scientific computing</strong>: Overlapping data transfers in stencil operations</li>
@@ -15567,9 +15484,9 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 <p>Before diving in, ensure you have solid foundation in:</p>
 <p><strong>Essential GPU programming concepts:</strong></p>
 <ul>
-<li><strong>Shared memory programming</strong> (<a href="puzzle_25/../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="puzzle_25/../puzzle_14/puzzle_14.html">Puzzle 14</a>) - You’ll extend matmul patterns</li>
-<li><strong>Memory coalescing</strong> (<a href="puzzle_25/../puzzle_19/puzzle_19.html">Puzzle 19</a>) - Critical for optimal async transfers</li>
-<li><strong>Tiled processing</strong> (<a href="puzzle_25/../puzzle_21/puzzle_21.html">Puzzle 21</a>) - The foundation for this optimization</li>
+<li><strong>Shared memory programming</strong> (<a href="puzzle_28/../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="puzzle_28/../puzzle_16/puzzle_16.html">Puzzle 16</a>) - You’ll extend matmul patterns</li>
+<li><strong>Memory coalescing</strong> (<a href="puzzle_28/../puzzle_21/puzzle_21.html">Puzzle 21</a>) - Critical for optimal async transfers</li>
+<li><strong>Tiled processing</strong> (<a href="puzzle_28/../puzzle_23/puzzle_23.html">Puzzle 23</a>) - The foundation for this optimization</li>
 </ul>
 <p><strong>Hardware understanding:</strong></p>
 <ul>
@@ -15599,12 +15516,12 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 <li><strong>Pipeline programming</strong>: Structure algorithms for maximum memory utilization</li>
 </ul>
 <h3 id="key-apis-youll-focus"><a class="header" href="#key-apis-youll-focus"><strong>Key APIs you’ll focus</strong></a></h3>
-<p>Building on the async copy operations introduced in <a href="puzzle_25/../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14’s idiomatic matmul</a>, you’ll now focus specifically on their memory optimization potential:</p>
+<p>Building on the async copy operations introduced in <a href="puzzle_28/../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16’s idiomatic matmul</a>, you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
 <li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: Launch background DRAM→SRAM transfers using dedicated copy engines</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all"><code>async_copy_wait_all()</code></a></strong>: Synchronize transfer completion before accessing shared memory</li>
 </ul>
-<p><strong>What’s different from Puzzle 14?</strong> While Puzzle 14 used async copy for clean tile loading in matmul, this puzzle focuses specifically on <strong>latency hiding</strong> - structuring algorithms to overlap expensive memory operations with useful computation work.</p>
+<p><strong>What’s different from Puzzle 16?</strong> While Puzzle 16 used async copy for clean tile loading in matmul, this puzzle focuses specifically on <strong>latency hiding</strong> - structuring algorithms to overlap expensive memory operations with useful computation work.</p>
 <h3 id="performance-impact"><a class="header" href="#performance-impact"><strong>Performance impact</strong></a></h3>
 <p>These techniques can provide <strong>significant speedups</strong> for memory-bound algorithms by:</p>
 <ul>
@@ -15661,19 +15578,19 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 </ul>
 <p>This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.</p>
 <h2 id="async-copy-overlap-with-1d-convolution"><a class="header" href="#async-copy-overlap-with-1d-convolution">Async copy overlap with 1D convolution</a></h2>
-<p><strong>Building on <a href="puzzle_25/../puzzle_11/puzzle_11.html">Puzzle 11</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 11, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
+<p><strong>Building on <a href="puzzle_28/../puzzle_13/puzzle_13.html">Puzzle 13</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 13, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
 <h3 id="configuration-34"><a class="header" href="#configuration-34">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>VECTOR_SIZE = 16384</code> (16K elements across multiple blocks)</li>
 <li>Tile size: <code>CONV_TILE_SIZE = 256</code> (processing tile size)</li>
 <li>Block configuration: <code>(256, 1)</code> threads per block</li>
 <li>Grid configuration: <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> blocks per grid (64 blocks)</li>
-<li>Kernel size: <code>KERNEL_SIZE = 5</code> (simple 1D convolution, same as Puzzle 11)</li>
+<li>Kernel size: <code>KERNEL_SIZE = 5</code> (simple 1D convolution, same as Puzzle 13)</li>
 <li>Data type: <code>DType.float32</code></li>
 <li>Layout: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
 </ul>
 <h3 id="the-async-copy-opportunity"><a class="header" href="#the-async-copy-opportunity">The async copy opportunity</a></h3>
-<p><strong>Building on Puzzle 14:</strong> You’ve already seen <code>copy_dram_to_sram_async</code> used for clean tile loading in matmul. Now we’ll focus on its <strong>latency hiding capabilities</strong> - the key to high-performance memory-bound algorithms.</p>
+<p><strong>Building on Puzzle 16:</strong> You’ve already seen <code>copy_dram_to_sram_async</code> used for clean tile loading in matmul. Now we’ll focus on its <strong>latency hiding capabilities</strong> - the key to high-performance memory-bound algorithms.</p>
 <p>Traditional synchronous memory loading forces compute units to wait idle during transfers. Async copy operations enable overlapping transfers with useful work:</p>
 <pre><code class="language-mojo"># Synchronous approach - INEFFICIENT:
 for i in range(CONV_TILE_SIZE):
@@ -15693,13 +15610,13 @@ async_copy_wait_all()  # Wait only when both operations complete
 </code></pre>
 <p><strong>Why async copy works so well:</strong></p>
 <ul>
-<li><strong>Dedicated copy engines</strong>: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in <a href="puzzle_25/../puzzle_14/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 14</a>)</li>
+<li><strong>Dedicated copy engines</strong>: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in <a href="puzzle_28/../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16</a>)</li>
 <li><strong>Latency hiding</strong>: Memory transfers happen while GPU threads execute other operations</li>
 <li><strong>Optimal coalescing</strong>: Thread layouts ensure efficient DRAM access patterns</li>
 <li><strong>Resource utilization</strong>: Compute units stay busy instead of waiting idle</li>
 </ul>
 <h3 id="code-to-complete-45"><a class="header" href="#code-to-complete-45">Code to complete</a></h3>
-<p>Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 14’s matmul implementation.</p>
+<p>Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 16’s matmul implementation.</p>
 <p><strong>Mathematical operation:</strong> Compute 1D convolution across large vector using async copy for efficiency:
 \[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
 <p><strong>Async copy algorithm:</strong></p>
@@ -15742,7 +15659,7 @@ fn async_copy_overlap_convolution[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">View full file: problems/p25/p25.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -15796,11 +15713,11 @@ fn async_copy_overlap_convolution[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25
+<pre><code class="language-bash">uv run poe p28
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25
+<pre><code class="language-bash">pixi run p28
 </code></pre>
   </div>
 </div>
@@ -15970,7 +15887,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ol>
 <p>This solution transforms a naive memory-bound convolution into an optimized implementation that hides memory latency behind useful work, demonstrating fundamental principles of high-performance GPU programming.</p>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="gpu-synchronization-primitives"><a class="header" href="#gpu-synchronization-primitives">GPU Synchronization Primitives</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-29-gpu-synchronization-primitives"><a class="header" href="#puzzle-29-gpu-synchronization-primitives">Puzzle 29: GPU Synchronization Primitives</a></h1>
 <blockquote>
 <p><strong>Beyond Simple Parallelism</strong></p>
 <p>This chapter introduces <strong>synchronization patterns</strong> that enable complex GPU algorithms requiring precise coordination between threads. Unlike previous puzzles that focused on simple parallel operations, these challenges explore <strong>architectural approaches</strong> used in production GPU software.</p>
@@ -16036,7 +15953,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
 <p>This chapter contains three interconnected puzzles that build upon each other:</p>
-<h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="puzzle_26/barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
+<h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
 <p><strong>Focus</strong>: Thread specialization and pipeline architecture</p>
 <p>Learn how to design GPU kernels where different thread groups execute completely different algorithms within the same block. This puzzle introduces <strong>producer-consumer relationships</strong> and strategic barrier placement for coordinating between different algorithmic stages.</p>
 <p><strong>Key concepts</strong>:</p>
@@ -16046,7 +15963,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li>Strategic barrier placement between different algorithms</li>
 </ul>
 <p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific computations, neural network layer coordination</p>
-<h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="puzzle_26/memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
+<h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
 <p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
 <p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
 <p><strong>Key concepts</strong>:</p>
@@ -16059,8 +15976,8 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <h2 id="getting-started-6"><a class="header" href="#getting-started-6">Getting started</a></h2>
 <p><strong>Recommended approach:</strong></p>
 <ol>
-<li><strong>Start with <a href="puzzle_26/barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
-<li><strong>Progress to <a href="puzzle_26/memory_barrier.html">Memory Barriers</a></strong>: Master fine-grained synchronization control</li>
+<li><strong>Start with <a href="puzzle_29/barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
+<li><strong>Progress to <a href="puzzle_29/memory_barrier.html">Memory Barriers</a></strong>: Master fine-grained synchronization control</li>
 <li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput applications</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
@@ -16071,7 +15988,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <p><strong>Learning outcomes:</strong>
 By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
-<p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_26/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_26/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
+<p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
 <h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
@@ -16117,7 +16034,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 <p><strong>Why this matters:</strong> Most GPU tutorials teach barrier usage within a single algorithm - synchronizing threads during reductions or shared memory operations. But real-world GPU algorithms often require <strong>architectural complexity</strong> with multiple distinct processing stages that must be carefully orchestrated. This puzzle demonstrates how to transform monolithic algorithms into specialized, coordinated processing pipelines.</p>
 <p><strong>Previous vs. current barrier usage:</strong></p>
 <ul>
-<li><strong>Previous puzzles (<a href="puzzle_26/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_26/../puzzle_10/puzzle_10.html">P10</a>, <a href="puzzle_26/../puzzle_13/puzzle_13.html">P13</a>):</strong> All threads execute the same algorithm, barriers sync within algorithm steps</li>
+<li><strong>Previous puzzles (<a href="puzzle_29/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_29/../puzzle_12/puzzle_12.html">P12</a>, <a href="puzzle_29/../puzzle_15/puzzle_15.html">P15</a>):</strong> All threads execute the same algorithm, barriers sync within algorithm steps</li>
 <li><strong>This puzzle:</strong> Different thread groups execute different algorithms, barriers coordinate between different algorithms</li>
 </ul>
 <p><strong>Thread specialization architecture:</strong> Unlike data parallelism where threads differ only in their data indices, this puzzle implements <strong>algorithmic parallelism</strong> where threads execute fundamentally different code paths based on their role in the pipeline.</p>
@@ -16212,7 +16129,7 @@ fn multi_stage_image_blur_pipeline[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -16260,16 +16177,16 @@ fn multi_stage_image_blur_pipeline[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --multi-stage
+<pre><code class="language-bash">uv run poe p29 --multi-stage
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --multi-stage
+<pre><code class="language-bash">pixi run p29 --multi-stage
 </code></pre>
   </div>
 </div>
 <p>After completing the puzzle successfully, you should see output similar to:</p>
-<pre><code>Puzzle 26: GPU Synchronization Primitives
+<pre><code>Puzzle 29: GPU Synchronization Primitives
 ==================================================
 TPB: 256
 SIZE: 1024
@@ -16277,7 +16194,7 @@ STAGE1_THREADS: 128
 STAGE2_THREADS: 128
 BLUR_RADIUS: 2
 
-Testing Puzzle 26A: Multi-Stage Pipeline Coordination
+Testing Puzzle 29A: Multi-Stage Pipeline Coordination
 ============================================================
 Multi-stage pipeline blur completed
 Input sample: 0.0 1.01 2.02
@@ -16460,7 +16377,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <p><strong>Why this matters:</strong> Most GPU tutorials show simple one-pass algorithms, but real-world applications often require <strong>iterative refinement</strong> with multiple passes over data. Double-buffering is essential for algorithms like iterative solvers, image processing filters, and simulation updates where each iteration depends on the complete results of the previous iteration.</p>
 <p><strong>Previous vs. current synchronization:</strong></p>
 <ul>
-<li><strong>Previous puzzles (<a href="puzzle_26/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_26/../puzzle_10/puzzle_10.html">P10</a>, <a href="puzzle_26/../puzzle_13/puzzle_13.html">P13</a>):</strong> Simple <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> calls for single-pass algorithms</li>
+<li><strong>Previous puzzles (<a href="puzzle_29/../puzzle_08/puzzle_08.html">P8</a>, <a href="puzzle_29/../puzzle_12/puzzle_12.html">P12</a>, <a href="puzzle_29/../puzzle_15/puzzle_15.html">P15</a>):</strong> Simple <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> calls for single-pass algorithms</li>
 <li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
 </ul>
 <p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this puzzle uses <strong>explicit memory barriers</strong> that provide fine-grained control over when memory operations complete, essential for complex memory access patterns.</p>
@@ -16599,7 +16516,7 @@ fn double_buffered_stencil_computation[
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -16646,23 +16563,23 @@ fn double_buffered_stencil_computation[
     <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --double-buffer
+<pre><code class="language-bash">uv run poe p29 --double-buffer
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --double-buffer
+<pre><code class="language-bash">pixi run p29 --double-buffer
 </code></pre>
   </div>
 </div>
 <p>After completing the puzzle successfully, you should see output similar to:</p>
-<pre><code>Puzzle 26: GPU Synchronization Primitives
+<pre><code>Puzzle 29: GPU Synchronization Primitives
 ==================================================
 TPB: 256
 SIZE: 1024
 STENCIL_ITERATIONS: 3
 BUFFER_COUNT: 2
 
-Testing Puzzle 26B: Double-Buffered Stencil Computation
+Testing Puzzle 29B: Double-Buffered Stencil Computation
 ============================================================
 Double-buffered stencil completed
 Input sample: 1.0 1.0 1.0

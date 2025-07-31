@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Puzzle 15: 1D Convolution Op - Mojo 🔥 GPU Puzzles</title>
+        <title>Puzzle 15: Axis Sum - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -186,144 +186,78 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="puzzle-15-1d-convolution-op"><a class="header" href="#puzzle-15-1d-convolution-op">Puzzle 15: 1D Convolution Op</a></h1>
-<blockquote>
-<h2 id="bridging-to-python-with-max-graph"><a class="header" href="#bridging-to-python-with-max-graph">Bridging to Python with MAX Graph</a></h2>
-<p>We’re now entering Part III of our GPU puzzle journey: <strong>Interfacing with Python via MAX Graph Custom Ops</strong>.</p>
-<p>In previous puzzles, we’ve learned how to write efficient GPU kernels in Mojo. Now we’ll explore how to:</p>
-<ul>
-<li>Package these kernels as custom operations that can be called from Python</li>
-<li>Integrate with the MAX Graph system for accelerated machine learning</li>
-<li>Bridge the gap between high-level Python APIs and low-level GPU code</li>
-</ul>
-<p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
-</blockquote>
+                        <h1 id="puzzle-15-axis-sum"><a class="header" href="#puzzle-15-axis-sum">Puzzle 15: Axis Sum</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In <a href="../puzzle_11/puzzle_11.html">Puzzle 11</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
-<p>The 1D convolution kernel we’ll be working with is already implemented:</p>
-<pre><code class="language-mojo">alias TPB = 15
-alias BLOCKS_PER_GRID = (2, 1)
+<p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
+<p><img src="./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
+<ul>
+<li>Parallel reduction along matrix dimensions using LayoutTensor</li>
+<li>Using block coordinates for data partitioning</li>
+<li>Efficient shared memory reduction patterns</li>
+<li>Working with multi-dimensional tensor layouts</li>
+</ul>
+<p>The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging LayoutTensor’s dimensional indexing.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Matrix dimensions: \(\text{BATCH} \times \text{SIZE} = 4 \times 6\)</li>
+<li>Threads per block: \(\text{TPB} = 8\)</li>
+<li>Grid dimensions: \(1 \times \text{BATCH}\)</li>
+<li>Shared memory: \(\text{TPB}\) elements per block</li>
+<li>Input layout: <code>Layout.row_major(BATCH, SIZE)</code></li>
+<li>Output layout: <code>Layout.row_major(BATCH, 1)</code></li>
+</ul>
+<p>Matrix visualization:</p>
+<pre><code class="language-txt">Row 0: [0, 1, 2, 3, 4, 5]       → Block(0,0)
+Row 1: [6, 7, 8, 9, 10, 11]     → Block(0,1)
+Row 2: [12, 13, 14, 15, 16, 17] → Block(0,2)
+Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
+</code></pre>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to Complete</a></h2>
+<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from layout import Layout, LayoutTensor
+from layout.tensor_builder import LayoutTensorBuild as tb
 
 
-fn conv1d_kernel[
-    in_layout: Layout,
-    out_layout: Layout,
-    conv_layout: Layout,
-    input_size: Int,
-    conv_size: Int,
-    dtype: DType = DType.float32,
+alias TPB = 8
+alias BATCH = 4
+alias SIZE = 6
+alias BLOCKS_PER_GRID = (1, BATCH)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias dtype = DType.float32
+alias in_layout = Layout.row_major(BATCH, SIZE)
+alias out_layout = Layout.row_major(BATCH, 1)
+
+
+fn axis_sum[
+    in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=True, dtype, in_layout],
-    kernel: LayoutTensor[mut=True, dtype, conv_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # first: need to account for padding
-    shared_a = tb[dtype]().row_major[TPB + conv_size - 1]().shared().alloc()
-    shared_b = tb[dtype]().row_major[conv_size]().shared().alloc()
-    if global_i &lt; input_size:
-        shared_a[local_i] = input[global_i]
-
-    # second: load elements needed for convolution at block boundary
-    if local_i &lt; conv_size - 1:
-        # indices from next block
-        next_idx = global_i + TPB
-        if next_idx &lt; input_size:
-            shared_a[TPB + local_i] = input[next_idx]
-
-    if local_i &lt; conv_size:
-        shared_b[local_i] = kernel[local_i]
-
-    barrier()
-
-    if global_i &lt; input_size:
-        var local_sum: output.element_type = 0
-
-        @parameter
-        for j in range(conv_size):
-            if local_i + j &lt; TPB + conv_size - 1:
-                local_sum += shared_a[local_i + j] * shared_b[j]
-
-        output[global_i] = local_sum
+    batch = block_idx.y
+    # FILL ME IN (roughly 15 lines)
 
 
 </code></pre>
-<p>The key aspects of this puzzle include:</p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/p15.mojo" class="filename">View full file: problems/p15/p15.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
 <ol>
-<li><strong>Custom op registration</strong>: Understanding how to expose Mojo functions to Python via the <code>@compiler.register</code> decorator</li>
-<li><strong>Packaging custom ops</strong>: Learning how to package Mojo code for use with MAX Graph</li>
-<li><strong>Python integration</strong>: Calling custom operations from Python through MAX Graph</li>
-<li><strong>Cross-language data flow</strong>: Managing data types and memory between Python and GPU</li>
+<li>Use <code>batch = block_idx.y</code> to select row</li>
+<li>Load elements: <code>cache[local_i] = a[batch * size + local_i]</code></li>
+<li>Perform parallel reduction with halving stride</li>
+<li>Thread 0 writes final sum to <code>output[batch]</code></li>
 </ol>
-<p>This custom operation will:</p>
-<ul>
-<li>Accept <a href="https://numpy.org/doc/stable/">NumPy</a> arrays as input from Python</li>
-<li>Transfer this data to the GPU</li>
-<li>Execute our optimized convolution kernel</li>
-<li>Return the results back to Python</li>
-</ul>
-<p>When you complete this puzzle, you’ll have created a seamless bridge between Python’s rich ecosystem and Mojo’s powerful GPU performance.</p>
-<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>To complete this puzzle, you only need to fill one line to call the <code>conv1d_kernel</code>:</p>
-<pre><code class="language-mojo">import compiler
-from runtime.asyncrt import DeviceContextPtr
-from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
-
-
-@compiler.register("conv1d")
-struct Conv1DCustomOp:
-    @staticmethod
-    fn execute[
-        # The kind of device this will be run on: "cpu" or "gpu"
-        target: StaticString,
-        input_size: Int,
-        conv_size: Int,
-        dtype: DType = DType.float32,
-    ](
-        output: OutputTensor[rank=1],
-        input: InputTensor[rank = output.rank],
-        kernel: InputTensor[rank = output.rank],
-        # the context is needed for some GPU calls
-        ctx: DeviceContextPtr,
-    ) raises:
-        output_tensor = output.to_layout_tensor()
-        input_tensor = input.to_layout_tensor()
-        kernel_tensor = kernel.to_layout_tensor()
-        alias in_layout = input_tensor.layout
-        alias output_layout = output_tensor.layout
-        alias conv_layout = kernel_tensor.layout
-
-        @parameter
-        if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
-            # making sure the output tensor is zeroed out before the kernel is called
-            gpu_ctx.enqueue_memset(
-                DeviceBuffer[output_tensor.dtype](
-                    gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output_tensor.dtype]]](
-                        output_tensor.ptr
-                    ),
-                    input_size,
-                    owning=False,
-                ),
-                0,
-            )
-
-            # FILL ME IN with 1 line calling our conv1d_kernel
-
-        elif target == "cpu":
-            # we can fallback to CPU
-            pass
-        else:
-            raise Error("Unsupported target: " + target)
-
-
-</code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/op/conv1d.mojo" class="filename">View full file: problems/p15/op/conv1d.mojo</a></p>
-<p>You can run the puzzle with:</p>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the Code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">uv</button>
@@ -338,207 +272,181 @@ struct Conv1DCustomOp:
 </code></pre>
   </div>
 </div>
-<p>When successful, you should see output similar to:</p>
-<pre><code>Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
-Convolution kernel: [0. 1. 2. 3.]
-Expected result (NumPy calculation): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
-Compiling 1D convolution graph...
-Executing 1D convolution...
-1D Convolution result (custom Mojo kernel): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
-Verification passed: Custom kernel results match NumPy calculation
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 </code></pre>
-<p>This indicates that your custom MAX Graph operation correctly implements the 1D convolution algorithm.</p>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
-<p>The solution is:</p>
-<pre><code class="language-mojo">            gpu_ctx.enqueue_function[
-                conv1d_kernel[
-                    in_layout, out_layout, conv_layout, input_size, conv_size
-                ]
-            ](
-                output_tensor,
-                input_tensor,
-                kernel_tensor,
-                grid_dim=BLOCKS_PER_GRID,
-                block_dim=(TPB, 1),
-            )
+<pre><code class="language-mojo">fn axis_sum[
+    in_layout: Layout, out_layout: Layout
+](
+    output: LayoutTensor[mut=False, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    batch = block_idx.y
+    cache = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    # Visualize:
+    # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 0: [0,1,2,3,4,5]
+    # Block(0,1): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 1: [6,7,8,9,10,11]
+    # Block(0,2): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 2: [12,13,14,15,16,17]
+    # Block(0,3): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 3: [18,19,20,21,22,23]
+
+    # each row is handled by each block bc we have grid_dim=(1, BATCH)
+
+    if local_i &lt; size:
+        cache[local_i] = a[batch, local_i]
+    else:
+        # Add zero-initialize padding elements for later reduction
+        cache[local_i] = 0
+
+    barrier()
+
+    # do reduction sum per each block
+    stride = TPB // 2
+    while stride &gt; 0:
+        # Read phase: all threads read the values they need first to avoid race conditions
+        var temp_val: output.element_type = 0
+        if local_i &lt; stride:
+            temp_val = cache[local_i + stride]
+
+        barrier()
+
+        # Write phase: all threads safely write their computed values
+        if local_i &lt; stride:
+            cache[local_i] += temp_val
+
+        barrier()
+        stride //= 2
+
+    # writing with local thread = 0 that has the sum for each batch
+    if local_i == 0:
+        output[batch, 0] = cache[0]
+
+
 </code></pre>
 <div class="solution-explanation">
-This single line does several important things:
-<ol>
-<li>Calls <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a> on the GPU context (<code>gpu_ctx</code> is of type <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/">DeviceContext</a>) to schedule our kernel execution</li>
-<li>Passes the necessary layout and size information as <strong>compile-time</strong> parameters</li>
-<li>Provides the output, input, and kernel tensors as runtime arguments</li>
-<li>Configures the execution grid with the appropriate dimensions</li>
-</ol>
-<p>Let’s break down how this works in the larger context:</p>
-<h3 id="python-mojo-integration-flow"><a class="header" href="#python-mojo-integration-flow">Python-Mojo integration flow</a></h3>
-<ol>
-<li>
-<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p15/p15.py" class="filename">problems/p15/p15.py</a>)</strong>:</p>
-<ul>
-<li>Creates NumPy arrays for input and kernel</li>
-<li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
-<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Tensors with <code>Tensor.from_numpy(input).to(device)</code></li>
-<li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
-</ul>
-</li>
-<li>
-<p><strong>Graph building</strong>:</p>
-<ul>
-<li>Defines input and output tensor types with <a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
-<li>Specifies parameters for our operation via <code>parameters={...}</code></li>
-<li>Creates a computation graph with <a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
-<li>Calls our operation using <a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
-</ul>
-</li>
-<li>
-<p><strong>Custom op registration</strong>:</p>
-<ul>
-<li>The <code>@compiler.register("conv1d")</code> decorator exposes our operation to MAX Graph. See <a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a></li>
-<li>The <code>execute</code> method parameters define the interface (inputs, outputs, context)</li>
-<li>Input/output tensors are converted to LayoutTensors for use in our kernel</li>
-<li>Device context manages GPU memory allocation and kernel execution</li>
-</ul>
-</li>
-<li>
-<p><strong>Kernel execution</strong>:</p>
-<ul>
-<li>When <a href="">model.execute(…)</a> is called, our <code>conv1d_kernel</code> receives the data</li>
-<li>GPU thread configuration is set with <code>grid_dim</code> and <code>block_dim</code></li>
-<li>Results are transferred back to CPU with <code>result.to(CPU())</code></li>
-<li>NumPy verification compares our results with the expected output</li>
-</ul>
-</li>
-</ol>
-<h3 id="key-components-in-detail"><a class="header" href="#key-components-in-detail">Key Components in Detail</a></h3>
+<p>The solution implements a parallel row-wise sum reduction for a 2D matrix using LayoutTensor. Here’s a comprehensive breakdown:</p>
+<h3 id="matrix-layout-and-block-mapping"><a class="header" href="#matrix-layout-and-block-mapping">Matrix Layout and Block Mapping</a></h3>
+<pre><code class="language-txt">Input Matrix (4×6) with LayoutTensor:                Block Assignment:
+[[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
+ [ a[1,0]  a[1,1]  a[1,2]  a[1,3]  a[1,4]  a[1,5] ] → Block(0,1)
+ [ a[2,0]  a[2,1]  a[2,2]  a[2,3]  a[2,4]  a[2,5] ] → Block(0,2)
+ [ a[3,0]  a[3,1]  a[3,2]  a[3,3]  a[3,4]  a[3,5] ] → Block(0,3)
+</code></pre>
+<h3 id="parallel-reduction-process"><a class="header" href="#parallel-reduction-process">Parallel Reduction Process</a></h3>
 <ol>
 <li>
-<p><strong>Custom Op Structure</strong>:</p>
-<pre><code class="language-mojo">@compiler.register("conv1d")
-struct Conv1DCustomOp:
-    @staticmethod
-    fn execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
-    ) raises:
-        # Implementation
+<p><strong>Initial Data Loading</strong>:</p>
+<pre><code class="language-txt">Block(0,0): cache = [a[0,0] a[0,1] a[0,2] a[0,3] a[0,4] a[0,5] * *]  // * = padding
+Block(0,1): cache = [a[1,0] a[1,1] a[1,2] a[1,3] a[1,4] a[1,5] * *]
+Block(0,2): cache = [a[2,0] a[2,1] a[2,2] a[2,3] a[2,4] a[2,5] * *]
+Block(0,3): cache = [a[3,0] a[3,1] a[3,2] a[3,3] a[3,4] a[3,5] * *]
 </code></pre>
+</li>
+<li>
+<p><strong>Reduction Steps</strong> (for Block 0,0):</p>
+<pre><code class="language-txt">Initial:  [0  1  2  3  4  5  *  *]
+Stride 4: [4  5  6  7  4  5  *  *]
+Stride 2: [10 12 6  7  4  5  *  *]
+Stride 1: [15 12 6  7  4  5  *  *]
+</code></pre>
+</li>
+</ol>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key Implementation Features:</a></h3>
+<ol>
+<li>
+<p><strong>Layout Configuration</strong>:</p>
 <ul>
-<li><code>target</code> indicates the device type (“gpu” or “cpu”)</li>
-<li><code>input_size</code> and <code>conv_size</code> are parameters passed from Python</li>
-<li>Tensor types ensure correct shape and type checking</li>
-<li>Return type is <code>raises</code> for proper error handling</li>
+<li>Input: row-major layout (BATCH × SIZE)</li>
+<li>Output: row-major layout (BATCH × 1)</li>
+<li>Each block processes one complete row</li>
 </ul>
 </li>
 <li>
-<p><strong>Tensor Conversion</strong>:</p>
-<pre><code class="language-mojo">output_tensor = output.to_layout_tensor()
-input_tensor = input.to_layout_tensor()
-kernel_tensor = kernel.to_layout_tensor()
-</code></pre>
+<p><strong>Memory Access Pattern</strong>:</p>
 <ul>
-<li>MAX Graph tensors are converted to Mojo LayoutTensors</li>
-<li>This allows our kernel to work with them directly</li>
-<li>The layouts are extracted for compile-time optimization</li>
+<li>LayoutTensor 2D indexing for input: <code>a[batch, local_i]</code></li>
+<li>Shared memory for efficient reduction</li>
+<li>LayoutTensor 2D indexing for output: <code>output[batch, 0]</code></li>
 </ul>
 </li>
 <li>
-<p><strong>Device Context Usage</strong>:</p>
-<pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
-gpu_ctx.enqueue_memset(...)  # Zero output buffer
-gpu_ctx.enqueue_function[...](...) # Schedule kernel
+<p><strong>Parallel Reduction Logic</strong>:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        cache[local_i] += cache[local_i + stride]
+    barrier()
+    stride //= 2
 </code></pre>
+<p><strong>Note</strong>: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    var temp_val: output.element_type = 0
+    if local_i &lt; stride:
+        temp_val = cache[local_i + stride]  # Read phase
+    barrier()
+    if local_i &lt; stride:
+        cache[local_i] += temp_val  # Write phase
+    barrier()
+    stride //= 2
+</code></pre>
+</li>
+<li>
+<p><strong>Output Writing</strong>:</p>
+<pre><code class="language-mojo">if local_i == 0:
+    output[batch, 0] = cache[0]  --&gt; One result per batch
+</code></pre>
+</li>
+</ol>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance Optimizations:</a></h3>
+<ol>
+<li>
+<p><strong>Memory Efficiency</strong>:</p>
 <ul>
-<li>Device context manages GPU resources</li>
-<li>Memory operations ensure correct buffer state</li>
-<li>Function enqueueing schedules our kernel for execution</li>
+<li>Coalesced memory access through LayoutTensor</li>
+<li>Shared memory for fast reduction</li>
+<li>Single write per row result</li>
+</ul>
+</li>
+<li>
+<p><strong>Thread Utilization</strong>:</p>
+<ul>
+<li>Perfect load balancing across rows</li>
+<li>No thread divergence in main computation</li>
+<li>Efficient parallel reduction pattern</li>
+</ul>
+</li>
+<li>
+<p><strong>Synchronization</strong>:</p>
+<ul>
+<li>Minimal barriers (only during reduction)</li>
+<li>Independent processing between rows</li>
+<li>No inter-block communication needed</li>
+<li><strong>Race condition consideration</strong>: The current implementation may have read-write hazards during parallel reduction that could be resolved with explicit read-write phase separation</li>
 </ul>
 </li>
 </ol>
-<p>This solution demonstrates the complete flow from Python data through MAX Graph to GPU execution and back, leveraging Mojo’s powerful type system and parametric functions to create efficient, type-safe, accelerated operations.</p>
+<h3 id="complexity-analysis"><a class="header" href="#complexity-analysis">Complexity Analysis:</a></h3>
+<ul>
+<li>Time: \(O(\log n)\) per row, where n is row length</li>
+<li>Space: \(O(TPB)\) shared memory per block</li>
+<li>Total parallel time: \(O(\log n)\) with sufficient threads</li>
+</ul>
+</div>
 </details>
-<h2 id="understanding-max-graph-custom-ops"><a class="header" href="#understanding-max-graph-custom-ops">Understanding MAX Graph custom ops</a></h2>
-<blockquote>
-<p>Check out the follow tutorials for more details:</p>
-<ul>
-<li><a href="https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/">Get started with MAX Graph in Python</a></li>
-<li><a href="https://docs.modular.com/max/tutorials/build-custom-ops/">MAX Graph custom op for GPUs</a></li>
-</ul>
-</blockquote>
-<h3 id="custom-op-registration"><a class="header" href="#custom-op-registration">Custom op registration</a></h3>
-<p>The core of creating a custom operation is the <code>@compiler.register</code> decorator and the associated structure:</p>
-<pre><code class="language-mojo">@compiler.register("conv1d")
-struct Conv1DCustomOp:
-    @staticmethod
-    fn execute[...](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[type = output.dtype, rank = output.rank],
-        ctx: DeviceContextPtr,
-    ) raises:
-        # Implementation here
-</code></pre>
-<p>Key components of the registration:</p>
-<ul>
-<li>The <strong>name</strong> passed to the decorator (<code>"conv1d"</code>) is what Python code will use to call this operation</li>
-<li>The <strong>struct</strong> must have an <code>execute</code> method with the correct signature</li>
-<li><strong>OutputTensor</strong> and <strong>InputTensor</strong> types define the interface for Python data</li>
-<li><strong>DeviceContextPtr</strong> provides access to the execution environment</li>
-</ul>
-<h3 id="packaging-custom-ops"><a class="header" href="#packaging-custom-ops">Packaging custom ops</a></h3>
-<p>Before the custom operation can be used from Python, it needs to be packaged:</p>
-<pre><code class="language-bash">mojo package op -o op.mojopkg
-</code></pre>
-<p>This command:</p>
-<ol>
-<li>Compiles the Mojo code into a deployable package</li>
-<li>Creates the necessary metadata for MAX Graph to understand the operation</li>
-<li>Produces a binary artifact (<code>op.mojopkg</code>) that can be loaded by Python</li>
-</ol>
-<p>The package must be placed in a location where MAX Graph can find it, typically in a directory accessible to the Python code.</p>
-<h3 id="python-integration"><a class="header" href="#python-integration">Python integration</a></h3>
-<p>On the Python side, here’s how the custom operation is used:</p>
-<pre><code class="language-python"># Path to the directory containing our Mojo operations
-mojo_kernels = Path(__file__).parent / "op"
-
-# Configure our graph with the custom conv1d operation
-with Graph(
-    "conv_1d_graph",
-    input_types=[...],
-    custom_extensions=[mojo_kernels],  # Load our custom op package
-) as graph:
-    # Define inputs to the graph
-    input_value, kernel_value = graph.inputs
-
-    # Use our custom operation by name
-    output = ops.custom(
-        name="conv1d",  # Must match the name in @compiler.register
-        values=[input_value, kernel_value],
-        out_types=[...],
-        parameters={
-            "input_size": input_tensor.shape[0],
-            "conv_size": kernel_tensor.shape[0],
-            "dtype": dtype,
-        },
-    )[0].tensor
-</code></pre>
-<p>The key elements are:</p>
-<ol>
-<li>Specifying the path to our custom operations with <code>custom_extensions</code></li>
-<li>Calling <code>ops.custom</code> with the registered operation name</li>
-<li>Passing input values and parameters that match our operation’s signature</li>
-</ol>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_14/tiled.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_14/complete.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
@@ -552,7 +460,7 @@ with Graph(
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_14/tiled.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_14/complete.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 

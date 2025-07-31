@@ -1,7 +1,7 @@
 from manim import *
 
-BATCH = 4
-SIZE = 6
+SIZE = 6  # Match the example size
+CONV = 3  # Convolution kernel size
 TPB = 8
 
 class Puzzle13Visualization(Scene):
@@ -9,41 +9,54 @@ class Puzzle13Visualization(Scene):
         array_scale = 0.5
         thread_scale = 0.4
 
-        # Input matrix - show corners with ellipsis
-        input_matrix = VGroup()
-        matrix_bg = Rectangle(
-            width=array_scale * 3 + 1.0,  # Reduced width to show only corners
-            height=array_scale * BATCH + 1.0,
+        # Input arrays a and b (kernel)
+        input_arrays = VGroup()
+
+        # Input array a
+        array_bg = Rectangle(
+            width=array_scale * SIZE + 1.0,
+            height=array_scale + 0.6,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
             fill_opacity=0.2
         )
+        array = VGroup()
+        for i in range(SIZE):
+            cell = Square(side_length=array_scale, stroke_width=1)
+            index_text = Text(f"a[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            array.add(cell)
+        array.arrange(RIGHT, buff=0.1)
+        array.move_to(array_bg)
+        array_group = VGroup(array_bg, array)
+        array_label = Text(f"Input Array (size={SIZE})", font_size=18)
+        array_label.next_to(array_group, UP, buff=0.2)
+        input_arrays.add(VGroup(array_label, array_group))
 
-        # Create corner cells and ellipsis
-        matrix_cells = VGroup()
-        for batch in range(BATCH):
-            row = VGroup()
-            # First element
-            cell1 = Square(side_length=array_scale, stroke_width=1)
-            index_text1 = Text(f"a[{batch}][0]", font_size=10, color=YELLOW)
-            cell1.add(index_text1)
-            # Last element
-            cell2 = Square(side_length=array_scale, stroke_width=1)
-            index_text2 = Text(f"a[{batch}][{SIZE-1}]", font_size=10, color=YELLOW)
-            cell2.add(index_text2)
-            # Add horizontal dots
-            row.add(cell1, Text("...", color=YELLOW), cell2)
-            row.arrange(RIGHT, buff=0.2)
-            matrix_cells.add(row)
+        # Kernel array b
+        kernel_bg = Rectangle(
+            width=array_scale * CONV + 1.0,
+            height=array_scale + 0.6,
+            stroke_color=BLUE_D,
+            fill_color=BLUE_E,
+            fill_opacity=0.2
+        )
+        kernel = VGroup()
+        for i in range(CONV):
+            cell = Square(side_length=array_scale, stroke_width=1)
+            index_text = Text(f"b[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            kernel.add(cell)
+        kernel.arrange(RIGHT, buff=0.1)
+        kernel.move_to(kernel_bg)
+        kernel_group = VGroup(kernel_bg, kernel)
+        kernel_label = Text(f"Convolution Kernel (size={CONV})", font_size=18)
+        kernel_label.next_to(kernel_group, UP, buff=0.2)
+        input_arrays.add(VGroup(kernel_label, kernel_group))
 
-        matrix_cells.arrange(DOWN, buff=0.2)
-        matrix_cells.move_to(matrix_bg)
-
-        matrix_group = VGroup(matrix_bg, matrix_cells)
-        matrix_label = Text("Input Matrix (4×6)", font_size=18)
-        matrix_label.next_to(matrix_group, UP, buff=0.2)
-        input_group = VGroup(matrix_label, matrix_group)
-        input_group.to_edge(LEFT, buff=0.5)
+        # Arrange arrays side by side
+        input_arrays.arrange(RIGHT, buff=1.0)
+        input_arrays.to_edge(UP, buff=0.2)
 
         # GPU Block
         block_bg = Rectangle(
@@ -71,12 +84,24 @@ class Puzzle13Visualization(Scene):
         threads.arrange(RIGHT, buff=0.2)
         threads.next_to(block_bg.get_top(), DOWN, buff=0.3)
 
-        # Shared memory section
-        shared_label = Text("Shared Memory Cache (TPB=8)", font_size=14, color=WHITE)
-        parallel_text = Text("Parallel row reduction", font_size=14, color=YELLOW)
+        # Barrier sync
+        barrier_group = VGroup()
+        barrier_line = DashedLine(
+            start=threads.get_left() + LEFT * 0.8,
+            end=threads.get_right() + RIGHT * 0.8,
+            color=RED_D,
+            dash_length=0.15
+        ).next_to(threads, DOWN, buff=0.3)
+        barrier_text = Text("barrier()", font_size=14, color=RED_D)
+        barrier_text.next_to(barrier_line, DOWN, buff=0.15)
+        barrier_group.add(barrier_line, barrier_text)
+
+        # Shared memory
+        shared_label = Text("Shared Memory (TPB=8)", font_size=14, color=WHITE)
+        parallel_text = Text("Sliding window convolution", font_size=14, color=YELLOW)
         shared_label_group = VGroup(shared_label, Text(" • ", font_size=14, color=WHITE), parallel_text)
         shared_label_group.arrange(RIGHT, buff=0.3)
-        shared_label_group.next_to(threads, DOWN, buff=0.5)
+        shared_label_group.next_to(barrier_group, DOWN, buff=0.3)
 
         shared_mem = Rectangle(
             width=6.4,
@@ -84,7 +109,7 @@ class Puzzle13Visualization(Scene):
             stroke_color=PURPLE_D,
             fill_color=PURPLE_E,
             fill_opacity=0.2
-        ).next_to(shared_label_group, DOWN, buff=0.2)
+        ).next_to(shared_label_group, DOWN, buff=0.15)
 
         # Shared memory cells
         shared_cells = VGroup()
@@ -97,79 +122,58 @@ class Puzzle13Visualization(Scene):
         shared_cells.arrange(RIGHT, buff=0)
         shared_cells.move_to(shared_mem)
 
-        # Create initial block label and grid label
-        block_label = Text("Block(0,0)", font_size=14, color=WHITE)
+        block_label = Text("Block 0", font_size=14, color=WHITE)
         block_label.next_to(block_bg, UP, buff=0.2)
-
-        grid_label = Text("Grid(1×4) • Block(8×1)", font_size=14, color=WHITE)
-        grid_label.next_to(block_label, UP, buff=0.2)
-
-        # Add labels to a label group that will move with the block
-        labels = VGroup(block_label, grid_label)
 
         block = VGroup(
             block_bg,
             threads,
+            barrier_group,
             shared_label_group,
-            shared_mem,
-            shared_cells,
+            shared_mem, shared_cells,
+            block_label
         )
         block.move_to(ORIGIN)
 
-        # Output array - show as vertical array with dots
+        # Output array - use full SIZE
         output_bg = Rectangle(
-            width=array_scale + 1.0,
-            height=array_scale * 3 + 1.0,  # Reduced height to show only corners
+            width=array_scale * SIZE + 1.0,  # Use full SIZE
+            height=array_scale + 0.6,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
             fill_opacity=0.2
         )
-
         output_array = VGroup()
-        # First element
-        cell1 = Square(side_length=array_scale, stroke_width=1)
-        cell1.add(Text("out[0]", font_size=10, color=YELLOW))
-        # Vertical dots
-        dots = Text("⋮", color=YELLOW, font_size=24)
-        # Last element
-        cell2 = Square(side_length=array_scale, stroke_width=1)
-        cell2.add(Text(f"out[{BATCH-1}]", font_size=10, color=YELLOW))
-
-        output_array.add(cell1, dots, cell2)
-        output_array.arrange(DOWN, buff=0.2)
+        for i in range(SIZE):  # Use full SIZE
+            cell = Square(side_length=array_scale, stroke_width=1)
+            index_text = Text(f"out[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            output_array.add(cell)
+        output_array.arrange(RIGHT, buff=0.1)
         output_array.move_to(output_bg)
-
         output_group = VGroup(output_bg, output_array)
-        output_label = Text("Output Array (size=4)", font_size=18)
-        output_label.next_to(output_group, UP, buff=0.2)
+        output_label = Text(f"Output Array (size={SIZE})", font_size=18).next_to(output_group, UP, buff=0.2)
         output_group = VGroup(output_label, output_group)
-        output_group.to_edge(RIGHT, buff=0.5)
+        output_group.to_edge(DOWN, buff=0.2)
 
         # Initial animations
-        self.play(Write(input_group))
-        self.play(Create(block), Create(labels))
+        self.play(
+            Write(input_arrays[0][0]),
+            Write(input_arrays[1][0])
+        )
+        self.play(
+            Create(input_arrays[0][1]),
+            Create(input_arrays[1][1])
+        )
+        self.play(Create(block))
         self.play(Create(output_group))
 
-        # Show multiple row processing
-        for batch in range(2):  # Show first two rows to demonstrate pattern
-            # Create new labels for the current batch
-            new_block_label = Text(f"Block(0,{batch})", font_size=14, color=WHITE)
-            new_block_label.next_to(block_bg, UP, buff=0.2)
-            new_grid_label = Text("Grid(1×4) • Block(8×1)", font_size=14, color=WHITE)
-            new_grid_label.next_to(new_block_label, UP, buff=0.2)
-            new_labels = VGroup(new_block_label, new_grid_label)
-
-            # Move block and transform labels together
-            self.play(
-                block.animate.move_to(block.get_center() + DOWN * batch * array_scale * 2),
-                Transform(labels, new_labels.move_to(new_labels.get_center() + DOWN * batch * array_scale * 2))
-            )
-
-            # Show data loading from current row to shared memory
-            load_arrows = VGroup()
-            # Arrow from first element
-            start = matrix_cells[batch][0].get_center()
-            end = shared_cells[0].get_top()
+        # Show parallel loading
+        initial_arrows = VGroup()
+        for i in range(SIZE):
+            # a[i] to thread
+            start = array[i].get_bottom()
+            end = threads[i].get_top()
             arrow1 = Arrow(
                 start, end,
                 buff=0.2,
@@ -178,110 +182,102 @@ class Puzzle13Visualization(Scene):
                 max_tip_length_to_length_ratio=0.2
             ).set_opacity(0.6)
 
-            # Arrow from last element
-            start = matrix_cells[batch][2].get_center()
-            end = shared_cells[SIZE-1].get_top()
-            arrow2 = Arrow(
+            # kernel to thread if in range
+            if i < CONV:
+                start = kernel[i].get_bottom()
+                end = threads[i].get_top()
+                arrow2 = Arrow(
+                    start, end,
+                    buff=0.2,
+                    color=BLUE_C,
+                    stroke_width=2,
+                    max_tip_length_to_length_ratio=0.2
+                ).set_opacity(0.6)
+                initial_arrows.add(arrow2)
+
+            # Thread to shared memory
+            start = threads[i].get_bottom()
+            end = shared_cells[i].get_top()
+            arrow3 = Arrow(
                 start, end,
                 buff=0.2,
-                color=BLUE_C,
+                color=PURPLE_C,
                 stroke_width=2,
                 max_tip_length_to_length_ratio=0.2
             ).set_opacity(0.6)
 
-            # Add loading text showing the exact indexing
-            load_text = Text(f"Loading: a[{batch}][0:{SIZE}]", font_size=14, color=YELLOW)
-            load_text.next_to(shared_cells, UP, buff=0.2)
+            initial_arrows.add(arrow1, arrow3)
 
-            load_arrows.add(arrow1, arrow2, load_text)
+        self.play(FadeIn(initial_arrows))
+        self.wait(0.5)
+        self.play(FadeOut(initial_arrows))
 
-            self.play(FadeIn(load_arrows))
-            self.wait(0.5)
-            self.play(FadeOut(load_arrows))
+        # Show convolution window sliding
+        window_highlight = Rectangle(
+            width=cell_size * CONV,
+            height=cell_size + 0.2,
+            stroke_color=YELLOW,
+            fill_opacity=0.2
+        )
+        window_label = Text("Window size=3", font_size=14, color=YELLOW)
+        window_label.next_to(window_highlight, DOWN, buff=0.1)
 
-            # Show parallel reduction with stride halving
-            stride = TPB // 2
-            while stride > 0:
-                arrows = VGroup()
-                highlights = VGroup()
+        # Slide through all positions including partial windows
+        for pos in range(SIZE):
+            # Calculate available elements for this window
+            remaining = SIZE - pos  # How many elements remain from this position
+            window_size = min(CONV, remaining)  # Take min of CONV or remaining elements
 
-                for i in range(stride):
-                    # Highlight active cells
-                    h1 = Square(
-                        side_length=cell_size,
-                        stroke_color=YELLOW,
-                        fill_opacity=0.2
-                    ).move_to(shared_cells[i])
-                    h2 = Square(
-                        side_length=cell_size,
-                        stroke_color=YELLOW,
-                        fill_opacity=0.2
-                    ).move_to(shared_cells[i + stride])
-                    highlights.add(h1, h2)
+            if window_size == 0:  # Skip if no elements available
+                break
 
-                    # Curved arrows showing parallel reduction
-                    curved_arrow = CurvedArrow(
-                        start_point=shared_cells[i + stride].get_center(),
-                        end_point=shared_cells[i].get_center(),
-                        angle=-TAU/4,
-                        color=GREEN_C,
-                        stroke_width=2,
-                        tip_length=0.2
-                    )
+            window_cells = VGroup(*[shared_cells[i] for i in range(pos, pos + window_size)])
 
-                    # Operation text
-                    midpoint = (shared_cells[i].get_center() + shared_cells[i + stride].get_center()) / 2
-                    op_text = Text("+", font_size=32, color=GREEN_C, weight=BOLD)
-                    op_text.move_to(midpoint)
-                    op_text.shift(DOWN * 0.5)
+            # Center window highlight on available cells
+            window_highlight.move_to(window_cells.get_center())
+            if window_size < CONV:
+                # Adjust width for partial windows
+                window_highlight.stretch_to_fit_width(cell_size * window_size)
 
-                    arrows.add(VGroup(curved_arrow, op_text))
+            # Show multiplication and sum
+            arrows = VGroup()
 
-                # Show reduction step info
-                active_text = Text(f"Parallel reduction: stride={stride}", font_size=14, color=YELLOW)
-                active_text.next_to(shared_cells, DOWN, buff=0.5)
+            # Show multiplications for available elements
+            for i in range(window_size):
+                mult_text = Text("×", font_size=32, color=GREEN_C, weight=BOLD, stroke_width=2)
+                mult_text.next_to(shared_cells[pos + i], UP, buff=0.3)
+                arrows.add(mult_text)
 
-                self.play(
-                    FadeIn(highlights),
-                    FadeIn(active_text)
-                )
-                self.play(FadeIn(arrows))
-                self.wait(0.5)
-                self.play(
-                    FadeOut(highlights),
-                    FadeOut(arrows),
-                    FadeOut(active_text)
-                )
+            # Plus symbol
+            plus_text = Text("+", font_size=36, color=GREEN_C, weight=BOLD, stroke_width=2)
+            plus_text.next_to(window_highlight, DOWN, buff=0.3)
+            arrows.add(plus_text)
 
-                stride //= 2
-
-            # Show final output for this row
+            # Output arrow
             output_arrow = Arrow(
-                shared_cells[0].get_center(),
-                output_array[batch].get_center(),
+                plus_text.get_bottom(),
+                output_array[pos].get_top(),
                 buff=0.2,
                 color=GREEN_C,
-                stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
-            ).set_opacity(0.6)
-
-            output_text = Text(f"out[{batch}] = sum(a[{batch}][:])", font_size=14, color=GREEN_C)
-            output_text.next_to(output_arrow, UP, buff=0.1)
-
-            self.play(
-                FadeIn(output_arrow),
-                FadeIn(output_text)
+                stroke_width=4
             )
-            self.wait(0.5)
-            self.play(
-                FadeOut(output_arrow),
-                FadeOut(output_text)
-            )
+            arrows.add(output_arrow)
 
-        # Show "..." to indicate remaining rows processed similarly
-        continue_text = Text("Remaining rows are processed similarly ...", font_size=18, color=YELLOW)
-        continue_text.next_to(block, DOWN, buff=0.3)
-        self.play(Write(continue_text))
+            if pos == 0:
+                self.play(
+                    Create(window_highlight),
+                    Write(window_label)
+                )
+            else:
+                self.play(
+                    Transform(window_highlight, window_highlight.copy()),
+                    window_label.animate.next_to(window_highlight, DOWN, buff=0.1)
+                )
+
+            self.play(FadeIn(arrows))
+            self.wait(0.3)
+            self.play(FadeOut(arrows))
+
         self.wait(60)
 
 if __name__ == "__main__":

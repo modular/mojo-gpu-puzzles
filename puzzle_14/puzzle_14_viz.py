@@ -1,281 +1,228 @@
 from manim import *
 
-class MatmulVisualization(Scene):
+SIZE = 8
+TPB = 8
+
+class Puzzle14Visualization(Scene):
     def construct(self):
         array_scale = 0.5
+        thread_scale = 0.4
 
-        # Add title at the top
-        title = Text("Matrix Multiplication", font_size=32, color=YELLOW)
-        title.to_edge(UP, buff=0.5)
+        # Input array - use generic indices
+        array = VGroup()
+        for i in range(SIZE):
+            cell = Square(side_length=array_scale, stroke_width=1)
+            index_text = Text(f"a[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            array.add(cell)
 
-        # Play title animation first
-        self.play(Write(title))
-        self.wait(0.5)
+        # GPU Block
+        block_bg = Rectangle(
+            width=7,
+            height=3.7,
+            stroke_color=GOLD_D,
+            fill_color=DARK_GRAY,
+            fill_opacity=0.1
+        )
 
-        # Matrix A (4x3)
-        matrix_a_bg = Rectangle(
-            width=array_scale * 4,
-            height=array_scale * 5,
+        # Threads
+        threads = VGroup()
+        for i in range(TPB):
+            thread_cell = RoundedRectangle(
+                width=0.6,
+                height=0.8,
+                corner_radius=0.1,
+                stroke_color=WHITE,
+                fill_color=DARK_GRAY,
+                fill_opacity=0.8
+            )
+            thread_text = Text(f"T{i}", font_size=12, color=YELLOW)
+            thread_cell.add(thread_text)
+            threads.add(thread_cell)
+        threads.arrange(RIGHT, buff=0.2)
+        threads.next_to(block_bg.get_top(), DOWN, buff=0.3)
+
+        # Shared memory section
+        shared_label = Text("Shared Memory (TPB=8)", font_size=14, color=WHITE)
+        parallel_text = Text("Parallel prefix sum", font_size=14, color=YELLOW)
+        shared_label_group = VGroup(shared_label, Text(" • ", font_size=14, color=WHITE), parallel_text)
+        shared_label_group.arrange(RIGHT, buff=0.3)
+        shared_label_group.next_to(threads, DOWN, buff=0.5)
+
+        shared_mem = Rectangle(
+            width=6.4,
+            height=1,
+            stroke_color=PURPLE_D,
+            fill_color=PURPLE_E,
+            fill_opacity=0.2
+        ).next_to(shared_label_group, DOWN, buff=0.2)
+
+        # Shared memory cells
+        shared_cells = VGroup()
+        cell_size = 0.7
+        for i in range(TPB):
+            cell = Square(side_length=cell_size, stroke_width=1, stroke_color=PURPLE_D)
+            index_text = Text(f"shared[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            shared_cells.add(cell)
+        shared_cells.arrange(RIGHT, buff=0)
+        shared_cells.move_to(shared_mem)
+
+        block_label = Text("Block 0", font_size=14, color=WHITE)
+        block_label.next_to(block_bg, UP, buff=0.2)
+
+        block = VGroup(
+            block_bg,
+            threads,
+            shared_label_group,
+            shared_mem,
+            shared_cells,
+            block_label
+        )
+        block.move_to(ORIGIN)
+
+        # Output array - use generic indices
+        output_array = VGroup()
+        for i in range(SIZE):
+            cell = Square(side_length=array_scale, stroke_width=1)
+            index_text = Text(f"out[{i}]", font_size=10, color=YELLOW)
+            cell.add(index_text)
+            output_array.add(cell)
+
+        # Input array setup
+        input_bg = Rectangle(
+            width=array_scale * SIZE + 1.0,
+            height=array_scale + 0.6,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
             fill_opacity=0.2
         )
+        array.arrange(RIGHT, buff=0.1)
+        array.move_to(input_bg)
+        array_group = VGroup(input_bg, array)
+        array_label = Text("Input Array (size=8)", font_size=18)
+        array_label.next_to(array_group, UP, buff=0.2)
+        input_group = VGroup(array_label, array_group)
+        input_group.to_edge(UP, buff=0.2)
 
-        # Create A matrix cells
-        matrix_a_cells = VGroup()
-        for i in range(4):
-            row = VGroup()
-            for j in range(3):
-                cell = Square(side_length=array_scale, stroke_width=1)
-                index_text = Text(f"a[{i}][{j}]", font_size=10, color=YELLOW)
-                cell.add(index_text)
-                row.add(cell)
-            row.arrange(RIGHT, buff=0.1)
-            matrix_a_cells.add(row)
-
-        matrix_a_cells.arrange(DOWN, buff=0.1)
-        matrix_a_cells.move_to(matrix_a_bg)
-
-        matrix_a_group = VGroup(matrix_a_bg, matrix_a_cells)
-        matrix_a_label = Text("Matrix A (4×3)", font_size=18)
-        matrix_a_label.next_to(matrix_a_group, UP, buff=0.2)
-        matrix_a = VGroup(matrix_a_label, matrix_a_group)
-        matrix_a.to_edge(LEFT, buff=2)
-        matrix_a.to_edge(UP, buff=2)
-
-        # Matrix B (3x4)
-        matrix_b_bg = Rectangle(
-            width=array_scale * 5,
-            height=array_scale * 4,
+        # Output array setup
+        output_bg = Rectangle(
+            width=array_scale * SIZE + 1.0,
+            height=array_scale + 0.6,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
             fill_opacity=0.2
         )
+        output_array.arrange(RIGHT, buff=0.1)
+        output_array.move_to(output_bg)
+        output_group = VGroup(output_bg, output_array)
+        output_label = Text("Output Array (size=8)", font_size=18)
+        output_label.next_to(output_group, UP, buff=0.2)
+        output_group = VGroup(output_label, output_group)
+        output_group.to_edge(DOWN, buff=0.2)
 
-        # Create B matrix cells
-        matrix_b_cells = VGroup()
-        for i in range(3):
-            row = VGroup()
-            for j in range(4):
-                cell = Square(side_length=array_scale, stroke_width=1)
-                index_text = Text(f"b[{i}][{j}]", font_size=10, color=YELLOW)
-                cell.add(index_text)
-                row.add(cell)
-            row.arrange(RIGHT, buff=0.1)
-            matrix_b_cells.add(row)
-
-        matrix_b_cells.arrange(DOWN, buff=0.1)
-        matrix_b_cells.move_to(matrix_b_bg)
-
-        matrix_b_group = VGroup(matrix_b_bg, matrix_b_cells)
-        matrix_b_label = Text("Matrix B (3×4)", font_size=18)
-        matrix_b_label.next_to(matrix_b_group, UP, buff=0.2)
-        matrix_b = VGroup(matrix_b_label, matrix_b_group)
-
-        # Add multiplication symbol between A and B
-        mult_symbol = Text("×", font_size=36, color=WHITE)
-        mult_symbol.next_to(matrix_a, RIGHT, buff=0.8)
-
-        # Position B after multiplication symbol
-        matrix_b.next_to(mult_symbol, RIGHT, buff=0.8)
-
-        # Add equals symbol between B and C
-        equals_symbol = Text("=", font_size=36, color=WHITE)
-        equals_symbol.next_to(matrix_b, RIGHT, buff=0.8)
-
-        # Result Matrix C (4x4) - Create this BEFORE using its components
-        matrix_c_bg = Rectangle(
-            width=array_scale * 5,
-            height=array_scale * 5,
-            stroke_color=PURPLE_D,
-            fill_color=PURPLE_E,
-            fill_opacity=0.2
-        )
-
-        # Create C matrix cells
-        matrix_c_cells = VGroup()
-        for i in range(4):
-            row = VGroup()
-            for j in range(4):
-                cell = Square(side_length=array_scale, stroke_width=1)
-                index_text = Text(f"c[{i}][{j}]", font_size=10, color=YELLOW)
-                cell.add(index_text)
-                row.add(cell)
-            row.arrange(RIGHT, buff=0.1)
-            matrix_c_cells.add(row)
-
-        matrix_c_cells.arrange(DOWN, buff=0.1)
-        matrix_c_cells.move_to(matrix_c_bg)
-
-        matrix_c_group = VGroup(matrix_c_bg, matrix_c_cells)
-        matrix_c_label = Text("Matrix C (4×4)", font_size=18)
-        matrix_c_label.next_to(matrix_c_group, UP, buff=0.2)
-
-        # Now create the complete matrix C group
-        matrix_c = VGroup(matrix_c_label, matrix_c_group)
-        matrix_c.next_to(equals_symbol, RIGHT, buff=0.8)
-
-        # Adjust vertical positions - shift everything up by adjusting the DOWN shift
-        matrix_a.shift(DOWN * 0.3)
-        matrix_b.shift(DOWN * 0.3)
-        matrix_c.shift(DOWN * 0.3)
-        mult_symbol.shift(DOWN * 0.3)
-        equals_symbol.shift(DOWN * 0.3)
-
-        # Initial display with operation symbols
+        # Initial animations - fix the order and reference correct groups
         self.play(
-            Write(matrix_a),
-            Write(mult_symbol),
-            Write(matrix_b),
-            Write(equals_symbol),
-            Write(matrix_c)
+            Write(input_group)  # Use input_group instead of separate label and array
         )
-        self.wait(0.5)
-
-        # Demonstrate computation for C[1,2] (second row, third column)
-        i, j = 1, 2  # Example indices
-
-        # Highlight row i of matrix A
-        row_highlight = Rectangle(
-            width=array_scale * 3 + 0.2,
-            height=array_scale + 0.1,
-            stroke_color=YELLOW,
-            fill_color=YELLOW,
-            fill_opacity=0.2
-        ).move_to(matrix_a_cells[i])
-
-        # Highlight column j of matrix B
-        col_highlight = Rectangle(
-            width=array_scale + 0.1,
-            height=array_scale * 3 + 0.2,
-            stroke_color=YELLOW,
-            fill_color=YELLOW,
-            fill_opacity=0.2
-        ).move_to(VGroup(*[matrix_b_cells[k][j] for k in range(3)]))
-
-        # Highlight target cell in C
-        target_highlight = Square(
-            side_length=array_scale + 0.1,
-            stroke_color=YELLOW,
-            fill_color=YELLOW,
-            fill_opacity=0.2
-        ).move_to(matrix_c_cells[i][j])
-
+        self.play(Create(block))
         self.play(
-            FadeIn(row_highlight),
-            FadeIn(col_highlight),
-            FadeIn(target_highlight)
+            Create(output_group)  # Use output_group directly
         )
 
-        # Show dot product computation in a horizontal line
-        dot_product_terms = VGroup()
-        plus_signs = VGroup()
-        arrows = VGroup()
-
-        # Adjust dot product line position to account for new spacing
-        dot_product_line_center = matrix_b.get_center() + DOWN * 3
-
-        for k in range(3):
-            # Create multiplication terms
-            term = Text(f"a[{i}][{k}]×b[{k}][{j}]", font_size=18, color=WHITE)
-
-            if k == 0:
-                term.move_to(dot_product_line_center + LEFT * 3)
-            else:
-                # Add plus sign before the term
-                plus = Text("+", font_size=18, color=WHITE)
-                plus.next_to(dot_product_terms[-1], RIGHT, buff=0.2)
-                plus_signs.add(plus)
-                # Position term after plus sign
-                term.next_to(plus, RIGHT, buff=0.2)
-
-            dot_product_terms.add(term)
-
-            # Create smaller arrows from matrix elements to terms
-            arrow1 = Arrow(
-                matrix_a_cells[i][k].get_center(),
-                term.get_top(),
-                buff=0.1,
+        # Show data loading to shared memory
+        load_arrows = VGroup()
+        for i in range(SIZE):
+            start = array[i].get_bottom()
+            end = shared_cells[i].get_top()
+            arrow = Arrow(
+                start, end,
+                buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.15
+                max_tip_length_to_length_ratio=0.2
             ).set_opacity(0.6)
+            load_arrows.add(arrow)
 
-            arrow2 = Arrow(
-                matrix_b_cells[k][j].get_center(),
-                term.get_top(),
-                buff=0.1,
+        self.play(FadeIn(load_arrows))
+        self.wait(0.5)
+        self.play(FadeOut(load_arrows))
+
+        # Show reduction steps matching p12.mojo algorithm
+        for step in range(3):  # log2(8) = 3 steps
+            offset = 2 ** step
+            arrows = VGroup()
+            highlights = VGroup()
+
+            for i in range(SIZE):
+                if i >= offset:  # This matches the condition in p12.mojo
+                    # Highlight active cells
+                    h1 = Square(
+                        side_length=cell_size,
+                        stroke_color=YELLOW,
+                        fill_opacity=0.2
+                    ).move_to(shared_cells[i - offset])
+                    h2 = Square(
+                        side_length=cell_size,
+                        stroke_color=YELLOW,
+                        fill_opacity=0.2
+                    ).move_to(shared_cells[i])
+                    highlights.add(h1, h2)
+
+                    # Curved arrows showing the addition pattern
+                    curved_arrow = CurvedArrow(
+                        start_point=shared_cells[i - offset].get_center(),
+                        end_point=shared_cells[i].get_center(),
+                        angle=-TAU/4,
+                        color=GREEN_C,
+                        stroke_width=2,
+                        tip_length=0.2
+                    )
+
+                    # Operation text showing which values are being added
+                    midpoint = (shared_cells[i].get_center() + shared_cells[i - offset].get_center()) / 2
+                    op_text = Text("+", font_size=32, color=GREEN_C, weight=BOLD)
+                    op_text.move_to(midpoint)
+                    op_text.shift(DOWN * 0.5)
+
+                    arrows.add(VGroup(curved_arrow, op_text))
+
+            # Show step information matching the algorithm
+            active_text = Text(f"Step {step + 1}: shared[i] += shared[i-{offset}] for i≥{offset}",
+                             font_size=14, color=YELLOW)
+            active_text.next_to(shared_cells, DOWN, buff=0.2)
+
+            self.play(
+                FadeIn(highlights),
+                FadeIn(active_text)
+            )
+            self.play(FadeIn(arrows))
+            self.wait(0.5)
+            self.play(
+                FadeOut(highlights),
+                FadeOut(arrows),
+                FadeOut(active_text)
+            )
+
+        # Final output arrows remain straight
+        output_arrows = VGroup()
+        for i in range(SIZE):
+            start = shared_cells[i].get_bottom()
+            end = output_array[i].get_top()
+            arrow = Arrow(
+                start, end,
+                buff=0.2,
                 color=GREEN_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.15
+                max_tip_length_to_length_ratio=0.2
             ).set_opacity(0.6)
+            output_arrows.add(arrow)
 
-            arrows.add(arrow1, arrow2)
-
-            # Animate each term and its arrows
-            if k > 0:
-                self.play(
-                    Create(arrow1),
-                    Create(arrow2),
-                    Write(term),
-                    Write(plus_signs[-1])
-                )
-            else:
-                self.play(
-                    Create(arrow1),
-                    Create(arrow2),
-                    Write(term)
-                )
-            self.wait(0.3)
-
-        # Show equals sign and result
-        equals_sign = Text("=", font_size=18, color=WHITE)
-        equals_sign.next_to(dot_product_terms[-1], RIGHT, buff=0.2)
-
-        result_text = Text("c[1][2]", font_size=20, color=YELLOW)
-        result_text.next_to(equals_sign, RIGHT, buff=0.2)
-
-        # Smaller result arrow
-        result_arrow = Arrow(
-            result_text.get_right(),
-            target_highlight.get_center(),
-            buff=0.1,
-            color=PURPLE_C,
-            stroke_width=2,
-            max_tip_length_to_length_ratio=0.15
-        ).set_opacity(0.6)
-
-        self.play(
-            Write(equals_sign),
-            Write(result_text),
-            Create(result_arrow)
-        )
+        self.play(FadeIn(output_arrows))
         self.wait(0.5)
+        self.play(FadeOut(output_arrows))
 
-        # Cleanup
-        self.play(
-            FadeOut(arrows),
-            FadeOut(dot_product_terms),
-            FadeOut(plus_signs),
-            FadeOut(equals_sign),
-            FadeOut(result_text),
-            FadeOut(result_arrow),
-            FadeOut(row_highlight),
-            FadeOut(col_highlight),
-            FadeOut(target_highlight)
-        )
-
-        # Show text about repeating for all elements
-        final_text = Text("Repeat for all elements of C", font_size=18, color=YELLOW)
-        final_text.next_to(matrix_b, DOWN, buff=1)
-        self.play(Write(final_text))
         self.wait(60)
-
-        # At the end, fade out title and subtitle with everything else
-        self.play(
-            FadeOut(title),
-            *[FadeOut(mob) for mob in self.mobjects]
-        )
 
 if __name__ == "__main__":
     with tempconfig({
@@ -285,5 +232,5 @@ if __name__ == "__main__":
         "quality": "medium_quality",
         "output_file": "puzzle_14_viz"
     }):
-        scene = MatmulVisualization()
+        scene = Puzzle14Visualization()
         scene.render()
