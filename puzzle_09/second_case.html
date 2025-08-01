@@ -367,7 +367,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 38          for offset in range(ITER):
 </code></pre>
-<p><strong>📝 First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
@@ -384,12 +384,12 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 38          for offset in range(ITER):
 </code></pre>
-<p><strong>📝 Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 44          output[thread_id] = window_sum
 </code></pre>
-<p><strong>🚨 CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
@@ -471,7 +471,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
 <li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
 </ul>
-<p><strong>💡 Professional Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+<p><strong>💡 Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
 </div>
 </details>
 <h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>

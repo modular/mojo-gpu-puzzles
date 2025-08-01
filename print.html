@@ -2418,8 +2418,8 @@ Block 1 output: [11 11 11 11]
 <li><strong>Use specialized tools</strong>: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis</li>
 </ul>
 <p>But here’s the exciting part: <strong>once you master GPU debugging, you’ll understand parallel computing at a deeper level than most developers ever reach</strong>.</p>
-<h2 id="what-youll-master-in-this-puzzle"><a class="header" href="#what-youll-master-in-this-puzzle">What you’ll master in this puzzle</a></h2>
-<p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>debug</em> GPU code professionally. You’ll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
+<h2 id="what-youll-learn-in-this-puzzle"><a class="header" href="#what-youll-learn-in-this-puzzle">What you’ll learn in this puzzle</a></h2>
+<p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>debug</em> GPU code as well. You’ll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
 <h3 id="essential-skills-youll-develop"><a class="header" href="#essential-skills-youll-develop"><strong>Essential skills you’ll develop</strong></a></h3>
 <ol>
 <li><strong>Professional debugging workflow</strong> - The systematic approach professionals use</li>
@@ -2704,7 +2704,7 @@ pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
 <p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>🚨 Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (<code>/usr/local/cuda/</code>) to the conda environment, enabling full GPU debugging capabilities.</p>
+<p><strong>🚨Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (<code>/usr/local/cuda/</code>) to the conda environment, enabling full GPU debugging capabilities.</p>
 <p><strong>What this command does under the hood:</strong></p>
 <pre><code class="language-bash"># Creates symlinks to system CUDA-GDB binaries
 ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
@@ -2923,7 +2923,7 @@ CUDA thread hit application kernel entry function breakpoint, p01_add_10_UnsafeP
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=0x302000000, a=0x302000200) at p01.mojo:16
 16          i = thread_idx.x
 </code></pre>
-<p><strong>🎯 Success! You’re automatically stopped inside the GPU kernel!</strong> The <code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16 where <code>i = thread_idx.x</code> executes.</p>
+<p><strong>Success! You’re automatically stopped inside the GPU kernel!</strong> The <code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16 where <code>i = thread_idx.x</code> executes.</p>
 <p><strong>Important</strong>: You <strong>don’t</strong> need to manually set breakpoints like <code>break add_10</code> - the kernel entry breakpoint is automatic. GPU kernel functions have mangled names in CUDA-GDB (like <code>p01_add_10_UnsafePointer...</code>), but you’re already inside the kernel and can start debugging immediately.</p>
 <p><strong>Step 3: Explore the parallel execution</strong></p>
 <pre><code class="language-gdb"># See all the GPU threads that are paused at your breakpoint
@@ -3174,7 +3174,6 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <h3 id="gpu-state-inspection"><a class="header" href="#gpu-state-inspection">GPU state inspection</a></h3>
 <pre><code class="language-bash">(cuda-gdb) info cuda threads    # Show all GPU threads and their state
 (cuda-gdb) info cuda blocks     # Show all thread blocks
-# (cuda-gdb) info cuda memory   # ❌ Doesn't work - "Unrecognized option: 'memory'"
 (cuda-gdb) cuda kernel          # List active GPU kernels
 </code></pre>
 <h3 id="thread-navigation-the-most-powerful-feature"><a class="header" href="#thread-navigation-the-most-powerful-feature">Thread navigation (The most powerful feature!)</a></h3>
@@ -3183,13 +3182,13 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 (cuda-gdb) cuda thread          # Show current thread coordinates
 </code></pre>
 <h3 id="thread-specific-variable-inspection"><a class="header" href="#thread-specific-variable-inspection">Thread-specific variable inspection</a></h3>
-<pre><code class="language-bash"># ✅ Local variables and function parameters:
+<pre><code class="language-bash"># Local variables and function parameters:
 (cuda-gdb) print i              # Local thread index variable
 (cuda-gdb) print output         # Function parameter pointers
 (cuda-gdb) print a              # Function parameter pointers
 </code></pre>
 <h3 id="gpu-memory-access"><a class="header" href="#gpu-memory-access">GPU memory access</a></h3>
-<pre><code class="language-bash"># ✅ Array inspection using local variables (what actually works):
+<pre><code class="language-bash"># Array inspection using local variables (what actually works):
 (cuda-gdb) print array[i]       # Thread-specific array access using local variable
 (cuda-gdb) print array[0]@4     # View multiple elements: {{val1}, {val2}, {val3}, {val4}}
 (cuda-gdb) print/x &amp;array[0]    # Memory address of array start
@@ -3326,7 +3325,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 # Memory debugging
 (cuda-gdb) print array[i]              # Thread-specific data using local variable
 (cuda-gdb) print array[0]@4            # Array segments: {{val1}, {val2}, {val3}, {val4}}
-# (cuda-gdb) info cuda memory          # ❌ Doesn't work in Mojo
 </code></pre>
 <hr />
 <h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
@@ -3490,7 +3488,7 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 <li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
 <li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
 </ol>
-<p><strong>💡 Professional Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
+<p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
 </div>
 </details>
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
@@ -3697,7 +3695,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 38          for offset in range(ITER):
 </code></pre>
-<p><strong>📝 First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
@@ -3714,12 +3712,12 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 38          for offset in range(ITER):
 </code></pre>
-<p><strong>📝 Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 44          output[thread_id] = window_sum
 </code></pre>
-<p><strong>🚨 CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
@@ -3801,7 +3799,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
 <li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
 </ul>
-<p><strong>💡 Professional Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+<p><strong>💡 Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
 </div>
 </details>
 <h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>
@@ -4117,21 +4115,21 @@ if thread_id &lt; SIZE - 1:    // Not all threads enter
         output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
 </code></pre>
 <h2 id="key-debugging-lessons-2"><a class="header" href="#key-debugging-lessons-2">Key debugging lessons</a></h2>
-<p><strong>Barrier Deadlock Detection</strong>:</p>
+<p><strong>Barrier deadlock detection</strong>:</p>
 <ol>
 <li><strong>Use <code>info cuda threads</code></strong> - Shows which threads are at which lines</li>
 <li><strong>Look for thread state divergence</strong> - Some threads at different program locations</li>
 <li><strong>Trace conditional execution paths</strong> - Check if all threads reach the same barriers</li>
 <li><strong>Verify barrier reachability</strong> - Ensure no thread can skip a barrier that others reach</li>
 </ol>
-<p><strong>Professional GPU Debugging Reality</strong>:</p>
+<p><strong>Professional GPU debugging reality</strong>:</p>
 <ul>
 <li><strong>Deadlocks are silent killers</strong> - programs just hang with no error messages</li>
 <li><strong>Thread coordination debugging requires patience</strong> - systematic analysis of each thread’s path</li>
 <li><strong>Conditional barriers are the #1 deadlock cause</strong> - always verify all threads reach the same sync points</li>
 <li><strong>CUDA-GDB thread inspection is essential</strong> - the only way to see thread coordination failures</li>
 </ul>
-<p><strong>Advanced GPU Synchronization</strong>:</p>
+<p><strong>Advanced GPU synchronization</strong>:</p>
 <ul>
 <li><strong>Barrier rule</strong>: ALL threads in a block must reach the SAME barrier</li>
 <li><strong>Conditional execution pitfalls</strong>: Any if-statement can cause thread divergence</li>
@@ -4148,28 +4146,28 @@ if thread_id &lt; SIZE - 1:    // Not all threads enter
 <p>This type of debugging - using CUDA-GDB to analyze thread states, identify divergent execution paths, and verify barrier reachability - is exactly what professional GPU developers do when facing deadlock issues in production systems.</p>
 </div>
 </details>
-<h2 id="next-steps-gpu-debugging-mastery-complete"><a class="header" href="#next-steps-gpu-debugging-mastery-complete">Next Steps: GPU Debugging Mastery Complete</a></h2>
+<h2 id="next-steps-gpu-debugging-mastery-complete"><a class="header" href="#next-steps-gpu-debugging-mastery-complete">Next steps: GPU debugging mastery complete</a></h2>
 <p>🏆 <strong>You’ve completed the GPU debugging trilogy!</strong></p>
-<h3 id="your-complete-gpu-debugging-arsenal"><a class="header" href="#your-complete-gpu-debugging-arsenal">Your Complete GPU Debugging Arsenal</a></h3>
-<p><strong>From the <a href="puzzle_09/./first_case.html">First Case</a> - Crash Debugging:</strong></p>
+<h3 id="your-complete-gpu-debugging-arsenal"><a class="header" href="#your-complete-gpu-debugging-arsenal">Your complete GPU debugging arsenal</a></h3>
+<p><strong>From the <a href="puzzle_09/./first_case.html">First Case</a> - Crash debugging:</strong></p>
 <ul>
 <li>✅ <strong>Systematic crash investigation</strong> using error messages as guides</li>
 <li>✅ <strong>Memory bug detection</strong> through pointer address inspection</li>
 <li>✅ <strong>CUDA-GDB fundamentals</strong> for memory-related issues</li>
 </ul>
-<p><strong>From the <a href="puzzle_09/./second_case.html">Second Case</a> - Logic Bug Debugging:</strong></p>
+<p><strong>From the <a href="puzzle_09/./second_case.html">Second Case</a> - Logic bug debugging:</strong></p>
 <ul>
 <li>✅ <strong>Algorithm error investigation</strong> without obvious symptoms</li>
 <li>✅ <strong>Pattern analysis techniques</strong> for tracing wrong results to root causes</li>
 <li>✅ <strong>Execution flow debugging</strong> when variable inspection fails</li>
 </ul>
-<p><strong>From the <a href="puzzle_09/./third_case.html">Third Case</a> - Coordination Debugging:</strong></p>
+<p><strong>From the <a href="puzzle_09/./third_case.html">Third Case</a> - Coordination debugging:</strong></p>
 <ul>
 <li>✅ <strong>Barrier deadlock investigation</strong> for thread coordination failures</li>
 <li>✅ <strong>Multi-thread state analysis</strong> using advanced CUDA-GDB techniques</li>
 <li>✅ <strong>Synchronization verification</strong> for complex parallel programs</li>
 </ul>
-<h3 id="the-professional-gpu-debugging-methodology"><a class="header" href="#the-professional-gpu-debugging-methodology">The Professional GPU Debugging Methodology</a></h3>
+<h3 id="the-professional-gpu-debugging-methodology"><a class="header" href="#the-professional-gpu-debugging-methodology">The professional GPU debugging methodology</a></h3>
 <p>You’ve mastered the systematic approach used by professional GPU developers:</p>
 <ol>
 <li><strong>Read the symptoms</strong> - Crashes? Wrong results? Infinite hangs?</li>

@@ -376,7 +376,7 @@ pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
 <p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>🚨 Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (<code>/usr/local/cuda/</code>) to the conda environment, enabling full GPU debugging capabilities.</p>
+<p><strong>🚨Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (<code>/usr/local/cuda/</code>) to the conda environment, enabling full GPU debugging capabilities.</p>
 <p><strong>What this command does under the hood:</strong></p>
 <pre><code class="language-bash"># Creates symlinks to system CUDA-GDB binaries
 ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
@@ -595,7 +595,7 @@ CUDA thread hit application kernel entry function breakpoint, p01_add_10_UnsafeP
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=0x302000000, a=0x302000200) at p01.mojo:16
 16          i = thread_idx.x
 </code></pre>
-<p><strong>🎯 Success! You’re automatically stopped inside the GPU kernel!</strong> The <code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16 where <code>i = thread_idx.x</code> executes.</p>
+<p><strong>Success! You’re automatically stopped inside the GPU kernel!</strong> The <code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16 where <code>i = thread_idx.x</code> executes.</p>
 <p><strong>Important</strong>: You <strong>don’t</strong> need to manually set breakpoints like <code>break add_10</code> - the kernel entry breakpoint is automatic. GPU kernel functions have mangled names in CUDA-GDB (like <code>p01_add_10_UnsafePointer...</code>), but you’re already inside the kernel and can start debugging immediately.</p>
 <p><strong>Step 3: Explore the parallel execution</strong></p>
 <pre><code class="language-gdb"># See all the GPU threads that are paused at your breakpoint
@@ -846,7 +846,6 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <h3 id="gpu-state-inspection"><a class="header" href="#gpu-state-inspection">GPU state inspection</a></h3>
 <pre><code class="language-bash">(cuda-gdb) info cuda threads    # Show all GPU threads and their state
 (cuda-gdb) info cuda blocks     # Show all thread blocks
-# (cuda-gdb) info cuda memory   # ❌ Doesn't work - "Unrecognized option: 'memory'"
 (cuda-gdb) cuda kernel          # List active GPU kernels
 </code></pre>
 <h3 id="thread-navigation-the-most-powerful-feature"><a class="header" href="#thread-navigation-the-most-powerful-feature">Thread navigation (The most powerful feature!)</a></h3>
@@ -855,13 +854,13 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 (cuda-gdb) cuda thread          # Show current thread coordinates
 </code></pre>
 <h3 id="thread-specific-variable-inspection"><a class="header" href="#thread-specific-variable-inspection">Thread-specific variable inspection</a></h3>
-<pre><code class="language-bash"># ✅ Local variables and function parameters:
+<pre><code class="language-bash"># Local variables and function parameters:
 (cuda-gdb) print i              # Local thread index variable
 (cuda-gdb) print output         # Function parameter pointers
 (cuda-gdb) print a              # Function parameter pointers
 </code></pre>
 <h3 id="gpu-memory-access"><a class="header" href="#gpu-memory-access">GPU memory access</a></h3>
-<pre><code class="language-bash"># ✅ Array inspection using local variables (what actually works):
+<pre><code class="language-bash"># Array inspection using local variables (what actually works):
 (cuda-gdb) print array[i]       # Thread-specific array access using local variable
 (cuda-gdb) print array[0]@4     # View multiple elements: {{val1}, {val2}, {val3}, {val4}}
 (cuda-gdb) print/x &amp;array[0]    # Memory address of array start
@@ -998,7 +997,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 # Memory debugging
 (cuda-gdb) print array[i]              # Thread-specific data using local variable
 (cuda-gdb) print array[0]@4            # Array segments: {{val1}, {val2}, {val3}, {val4}}
-# (cuda-gdb) info cuda memory          # ❌ Doesn't work in Mojo
 </code></pre>
 <hr />
 <h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
