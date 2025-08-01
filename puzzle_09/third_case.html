@@ -430,15 +430,15 @@ if thread_id &lt; SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
 <h4 id="step-11-the-fundamental-barrier-rule-violation"><a class="header" href="#step-11-the-fundamental-barrier-rule-violation">Step 11: the fundamental barrier rule violation</a></h4>
 <p><strong>GPU Barrier Rule</strong>: ALL threads in a thread block must reach the SAME barrier for synchronization to complete.</p>
 <p><strong>What went wrong</strong>:</p>
-<pre><code class="language-mojo">// ❌ WRONG: Barrier inside conditional
-if thread_id &lt; SIZE - 1:    // Not all threads enter
-    // ... some computation ...
-    barrier()               // Only some threads reach this
+<pre><code class="language-mojo"># ❌ WRONG: Barrier inside conditional
+if thread_id &lt; SIZE - 1:    # Not all threads enter
+    # ... some computation ...
+    barrier()               # Only some threads reach this
 
-// ✅ CORRECT: Barrier outside conditional
-if thread_id &lt; SIZE - 1:    // Not all threads enter
-    // ... some computation ...
-// barrier()                // ALL threads reach this
+# ✅ CORRECT: Barrier outside conditional
+if thread_id &lt; SIZE - 1:    # Not all threads enter
+    # ... some computation ...
+ barrier()                # ALL threads reach this
 </code></pre>
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
 <pre><code class="language-mojo">fn collaborative_filter(
@@ -448,19 +448,19 @@ if thread_id &lt; SIZE - 1:    // Not all threads enter
     thread_id = thread_idx.x
     shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
 
-    // Phase 1: Initialize shared workspace (all threads participate)
+    # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
         shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
     barrier()
 
-    // Phase 2: Collaborative processing
+    # Phase 2: Collaborative processing
     if thread_id &lt; SIZE - 1:
         if thread_id &gt; 0:
             shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
-    // ✅ FIX: Move barrier outside conditional so ALL threads reach it
+    # ✅ FIX: Move barrier outside conditional so ALL threads reach it
     barrier()
 
-    // Phase 3: Final synchronization and output
+    # Phase 3: Final synchronization and output
     barrier()
 
     if thread_id &lt; SIZE - 1:
@@ -530,7 +530,7 @@ if thread_id &lt; SIZE - 1:    // Not all threads enter
 <li><strong>Test systematically</strong> - Verify each hypothesis through targeted investigation</li>
 <li><strong>Trace to root cause</strong> - Follow the evidence chain to the source</li>
 </ol>
-<p><strong>🎯 Achievement Unlocked</strong>: You can now debug the three most common GPU programming issues:</p>
+<p><strong>Achievement Unlocked</strong>: You can now debug the three most common GPU programming issues:</p>
 <ul>
 <li><strong>Memory crashes</strong> (<a href="./first_case.html">First Case</a>) - null pointers, out-of-bounds access</li>
 <li><strong>Logic bugs</strong> (<a href="./second_case.html">Second Case</a>) - algorithmic errors, incorrect results</li>
