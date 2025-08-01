@@ -292,7 +292,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <li><strong>Set breakpoints inside GPU kernels</strong> - pause execution when any thread hits your breakpoint</li>
 <li><strong>Switch between GPU threads</strong> - examine what different threads are doing at the same moment</li>
 <li><strong>Inspect thread-specific data</strong> - see how the same variable has different values across threads</li>
-<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10 TODO)</li>
+<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10)</li>
 <li><strong>Analyze parallel execution</strong> - understand how your threads interact and synchronize</li>
 </ul>
 <h3 id="connecting-to-concepts-from-previous-puzzles"><a class="header" href="#connecting-to-concepts-from-previous-puzzles">Connecting to concepts from previous puzzles</a></h3>
@@ -393,29 +393,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <li><strong>Short execution time</strong> so you can iterate quickly</li>
 </ul>
 <p>By the end of this tutorial, you’ll have debugged the same program using all four debugging approaches, seen real debugger output, and learned the essential debugging commands you’ll use daily.</p>
-<h3 id="your-debugging-toolbox-four-approaches"><a class="header" href="#your-debugging-toolbox-four-approaches">Your debugging toolbox: Four approaches</a></h3>
-<p>Here’s what we’ll explore, from simplest to most powerful:</p>
-<pre><code class="language-bash"># Approach 1: JIT + LLDB (Start here - debug CPU setup code)
-pixi run mojo debug solutions/p01/p01.mojo
-
-# Approach 2: JIT + CUDA-GDB (Debug the GPU kernel)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
-
-# Approach 3: Binary + LLDB (Professional CPU debugging)
-pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
-pixi run mojo debug solutions/p01/p01_debug
-
-# Approach 4: Binary + CUDA-GDB (Professional GPU debugging)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01_debug
-</code></pre>
-<p><strong>What each approach teaches you:</strong></p>
-<ul>
-<li><strong>LLDB approaches</strong> → Debug buffer allocation, memory setup, host-side logic</li>
-<li><strong>CUDA-GDB approaches</strong> → Debug parallel execution, thread behavior, GPU memory</li>
-<li><strong>JIT approaches</strong> → Quick iteration, learning, prototyping</li>
-<li><strong>Binary approaches</strong> → Production debugging, performance analysis, serious bug hunting</li>
-</ul>
-<p><strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful). By the end, you’ll know exactly which approach to use for different types of bugs.</p>
+<h3 id="learning-path-through-the-debugging-approaches"><a class="header" href="#learning-path-through-the-debugging-approaches">Learning path through the debugging approaches</a></h3>
+<p>We’ll explore the <a href="#the-four-debugging-combinations">four debugging combinations</a> using Puzzle 01 as our example. <strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful).</p>
 <p><strong>⚠️ Important for GPU debugging</strong>:</p>
 <ul>
 <li>The <code>--break-on-launch</code> flag is <strong>required</strong> for CUDA-GDB approaches</li>
@@ -599,13 +578,10 @@ pixi run mojo debug solutions/p01/p01_debug
 <pre><code class="language-bash"># Make sure you've run this already (once is enough)
 pixi run setup-cuda-gdb
 
-# Option A: JIT debugging with CUDA-GDB (we'll use this)
+# We'll use JIT + CUDA-GDB (Approach 2 from above)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
-
-# Option B: Pre-compiled binary debugging with CUDA-GDB
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01_debug
 </code></pre>
-<p>We’ll use <strong>Option A</strong> (JIT approach) since it’s perfect for learning and quick iterations.</p>
+<p>We’ll use the <strong>JIT + CUDA-GDB approach</strong> since it’s perfect for learning and quick iterations.</p>
 <p><strong>Step 2: Launch and automatically stop at GPU kernel entry</strong></p>
 <p>The CUDA-GDB prompt looks like: <code>(cuda-gdb)</code>. Start the program:</p>
 <pre><code class="language-gdb"># Run the program - it automatically stops when the GPU kernel launches
@@ -823,6 +799,27 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <hr />
 <h2 id="essential-debugging-commands-reference"><a class="header" href="#essential-debugging-commands-reference">Essential debugging commands reference</a></h2>
 <p>Now that you’ve learned the debugging workflow, here’s your <strong>quick reference guide</strong> for daily debugging sessions. Bookmark this section!</p>
+<h3 id="gdb-command-abbreviations-save-time"><a class="header" href="#gdb-command-abbreviations-save-time">GDB command abbreviations (save time!)</a></h3>
+<p><strong>Most commonly used shortcuts</strong> for faster debugging:</p>
+<div class="table-wrapper"><table><thead><tr><th>Abbreviation</th><th>Full Command</th><th>Function</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td>Start/launch the program</td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td>Resume execution</td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td>Step over (same level)</td></tr>
+<tr><td><code>s</code></td><td><code>step</code></td><td>Step into functions</td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td>Set breakpoint</td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td>Print variable value</td></tr>
+<tr><td><code>l</code></td><td><code>list</code></td><td>Show source code</td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td>Exit debugger</td></tr>
+</tbody></table>
+</div>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash">(cuda-gdb) r                    # Instead of 'run'
+(cuda-gdb) b 39                 # Instead of 'break 39'
+(cuda-gdb) p thread_id          # Instead of 'print thread_id'
+(cuda-gdb) n                    # Instead of 'next'
+(cuda-gdb) c                    # Instead of 'continue'
+</code></pre>
+<p><strong>⚡ Pro tip</strong>: Use abbreviations for 3-5x faster debugging sessions!</p>
 <h2 id="lldb-commands-cpu-host-code-debugging"><a class="header" href="#lldb-commands-cpu-host-code-debugging">LLDB commands (CPU host code debugging)</a></h2>
 <p><strong>When to use</strong>: Debugging device setup, memory allocation, program flow, host-side crashes</p>
 <h3 id="execution-control"><a class="header" href="#execution-control">Execution control</a></h3>
@@ -1004,13 +1001,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 # (cuda-gdb) info cuda memory          # ❌ Doesn't work in Mojo
 </code></pre>
 <hr />
-<h2 id="whats-next-real-debugging-challenges"><a class="header" href="#whats-next-real-debugging-challenges">What’s Next: Real Debugging Challenges</a></h2>
-<p>You’re now ready for <strong>Puzzle 10: Memory Error Detection &amp; Race Conditions with Sanitizers</strong> - a hands-on debugging challenge where you’ll:</p>
-<p><strong>Investigate a real GPU crash</strong> using your new debugging skills
-<strong>Apply systematic debugging</strong> to identify the root cause
-<strong>Fix complex GPU bugs</strong> that mirror real-world problems
-<strong>Apply your knowledge</strong> by solving challenging parallel programming issues</p>
-<p>You’ll apply everything you learned here - CUDA-GDB commands, thread navigation, conditional breakpoints, memory inspection - to solve debugging challenges that build on these foundational skills.</p>
 <h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
 <p>GPU debugging involves thousands of parallel threads, complex memory hierarchies, and specialized tools. You now have:</p>
 <ul>
@@ -1038,7 +1028,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_09/first_case.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -1052,7 +1042,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_09/first_case.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

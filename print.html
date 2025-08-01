@@ -2399,7 +2399,122 @@ Block 1 output: [11 11 11 11]
 <p>This pattern shows how LayoutTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="-mojo-gpu-debugging-essentials"><a class="header" href="#-mojo-gpu-debugging-essentials">📚 Mojo GPU Debugging Essentials</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-9-gpu-debugging-workflow"><a class="header" href="#puzzle-9-gpu-debugging-workflow">Puzzle 9: GPU Debugging Workflow</a></h1>
+<h2 id="the-moment-every-gpu-programmer-faces"><a class="header" href="#the-moment-every-gpu-programmer-faces">The moment every GPU programmer faces</a></h2>
+<p>You’ve learned to write GPU kernels, work with shared memory, and coordinate thousands of parallel threads. Your code compiles perfectly. You run it with confidence, expecting beautiful results, and then…</p>
+<ul>
+<li><strong>CRASH</strong></li>
+<li><strong>Wrong results</strong></li>
+<li><strong>Infinite hang</strong></li>
+</ul>
+<p>Welcome to the reality of GPU programming: <strong>debugging parallel code running on thousands of threads simultaneously</strong>. This is where theory meets practice, where algorithmic knowledge meets investigative skills, and where patience becomes your greatest asset.</p>
+<h2 id="why-gpu-debugging-is-uniquely-challenging"><a class="header" href="#why-gpu-debugging-is-uniquely-challenging">Why GPU debugging is uniquely challenging</a></h2>
+<p>Unlike traditional CPU debugging where you follow a single thread through sequential execution, GPU debugging requires you to:</p>
+<ul>
+<li><strong>Think in parallel</strong>: Thousands of threads executing simultaneously, each potentially doing something different</li>
+<li><strong>Navigate multiple memory spaces</strong>: Global memory, shared memory, registers, constant memory</li>
+<li><strong>Handle coordination failures</strong>: Race conditions, barrier deadlocks, memory access violations</li>
+<li><strong>Debug optimized code</strong>: JIT compilation, variable optimization, limited symbol information</li>
+<li><strong>Use specialized tools</strong>: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis</li>
+</ul>
+<p>But here’s the exciting part: <strong>once you master GPU debugging, you’ll understand parallel computing at a deeper level than most developers ever reach</strong>.</p>
+<h2 id="what-youll-master-in-this-puzzle"><a class="header" href="#what-youll-master-in-this-puzzle">What you’ll master in this puzzle</a></h2>
+<p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>debug</em> GPU code professionally. You’ll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
+<h3 id="essential-skills-youll-develop"><a class="header" href="#essential-skills-youll-develop"><strong>Essential skills you’ll develop</strong></a></h3>
+<ol>
+<li><strong>Professional debugging workflow</strong> - The systematic approach professionals use</li>
+<li><strong>Tool mastery</strong> - LLDB for host code, CUDA-GDB for GPU kernels</li>
+<li><strong>Pattern recognition</strong> - Instantly identify common GPU bug types</li>
+<li><strong>Investigation techniques</strong> - Find root causes when variables are optimized out</li>
+<li><strong>Thread coordination debugging</strong> - The most advanced GPU debugging skill</li>
+</ol>
+<h3 id="real-world-debugging-scenarios"><a class="header" href="#real-world-debugging-scenarios"><strong>Real-world debugging scenarios</strong></a></h3>
+<p>You’ll tackle the three most common GPU programming failures:</p>
+<ul>
+<li><strong>Memory crashes</strong> - Null pointers, illegal memory access, segmentation faults</li>
+<li><strong>Logic bugs</strong> - Correct execution with wrong results, algorithmic errors</li>
+<li><strong>Coordination deadlocks</strong> - Barrier synchronization failures, infinite hangs</li>
+</ul>
+<p>Each scenario teaches different investigation techniques and builds your debugging intuition.</p>
+<h2 id="your-debugging-journey"><a class="header" href="#your-debugging-journey">Your debugging journey</a></h2>
+<p>This puzzle takes you through a carefully designed progression from basic debugging concepts to advanced parallel coordination failures:</p>
+<h3 id="-step-1-mojo-gpu-debugging-essentials"><a class="header" href="#-step-1-mojo-gpu-debugging-essentials">📚 <strong>Step 1: <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a></strong></a></h3>
+<p><strong>Foundation building</strong> - Master the tools and workflow</p>
+<ul>
+<li>Set up your debugging environment with <code>pixi</code> and CUDA-GDB</li>
+<li>Learn the four debugging approaches: JIT vs binary, CPU vs GPU</li>
+<li>Master essential CUDA-GDB commands for GPU kernel inspection</li>
+<li>Practice with hands-on examples using familiar code from previous puzzles</li>
+<li>Understand when to use each debugging approach</li>
+</ul>
+<p><strong>Key outcome</strong>: Professional debugging workflow and tool proficiency</p>
+<h3 id="-step-2-detective-work-first-case"><a class="header" href="#-step-2-detective-work-first-case">🧐 <strong>Step 2: <a href="puzzle_09/./first_case.html">Detective Work: First Case</a></strong></a></h3>
+<p><strong>Memory crash investigation</strong> - Debug a GPU program that crashes</p>
+<ul>
+<li>Investigate <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> crashes</li>
+<li>Learn systematic pointer inspection techniques</li>
+<li>Master null pointer detection and validation</li>
+<li>Practice professional crash analysis workflow</li>
+<li>Understand GPU memory access failures</li>
+</ul>
+<p><strong>Key outcome</strong>: Ability to debug GPU memory crashes and pointer issues</p>
+<h3 id="-step-3-detective-work-second-case"><a class="header" href="#-step-3-detective-work-second-case">🔍 <strong>Step 3: <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a></strong></a></h3>
+<p><strong>Logic bug investigation</strong> - Debug a program with wrong results</p>
+<ul>
+<li>Investigate LayoutTensor-based algorithmic errors</li>
+<li>Learn execution flow analysis when variables are optimized out</li>
+<li>Master loop boundary analysis and iteration counting</li>
+<li>Practice pattern recognition in incorrect results</li>
+<li>Debug without direct variable inspection</li>
+</ul>
+<p><strong>Key outcome</strong>: Ability to debug algorithmic errors and logic bugs in GPU kernels</p>
+<h3 id="-step-4-detective-work-third-case"><a class="header" href="#-step-4-detective-work-third-case">🕵️ <strong>Step 4: <a href="puzzle_09/./third_case.html">Detective Work: Third Case</a></strong></a></h3>
+<p><strong>Barrier deadlock investigation</strong> - Debug a program that hangs forever</p>
+<ul>
+<li>Investigate barrier synchronization failures</li>
+<li>Master multi-thread state analysis across parallel execution</li>
+<li>Learn conditional execution path tracing</li>
+<li>Practice thread coordination debugging</li>
+<li>Understand the most challenging GPU debugging scenario</li>
+</ul>
+<p><strong>Key outcome</strong>: Advanced thread coordination debugging - the pinnacle of GPU debugging skills</p>
+<h2 id="the-detective-mindset"><a class="header" href="#the-detective-mindset">The detective mindset</a></h2>
+<p>GPU debugging requires a different mindset than traditional programming. You become a <strong>detective</strong> investigating a crime scene where:</p>
+<ul>
+<li><strong>The evidence is limited</strong> - Variables are optimized out, symbols are mangled</li>
+<li><strong>Multiple suspects exist</strong> - Thousands of threads, any could be the culprit</li>
+<li><strong>The timeline is complex</strong> - Parallel execution, race conditions, timing dependencies</li>
+<li><strong>The tools are specialized</strong> - CUDA-GDB, thread navigation, GPU memory inspection</li>
+</ul>
+<p>But like any good detective, you’ll learn to:</p>
+<ul>
+<li><strong>Follow the clues systematically</strong> - Error messages, crash patterns, thread states</li>
+<li><strong>Form hypotheses</strong> - What could cause this specific behavior?</li>
+<li><strong>Test theories</strong> - Use debugging commands to verify or disprove ideas</li>
+<li><strong>Trace back to root causes</strong> - From symptoms to the actual source of problems</li>
+</ul>
+<h2 id="prerequisites-and-expectations"><a class="header" href="#prerequisites-and-expectations">Prerequisites and expectations</a></h2>
+<p><strong>What you need to know</strong>:</p>
+<ul>
+<li>GPU programming concepts from Puzzles 1-8 (thread indexing, memory management, barriers)</li>
+<li>Basic command-line comfort (you’ll use terminal-based debugging tools)</li>
+<li>Patience and systematic thinking (GPU debugging requires methodical investigation)</li>
+</ul>
+<p><strong>What you’ll gain</strong>:</p>
+<ul>
+<li><strong>Professional debugging skills</strong> used in GPU development teams</li>
+<li><strong>Deep parallel computing understanding</strong> that comes from seeing execution at the thread level</li>
+<li><strong>Problem-solving confidence</strong> for the most challenging GPU programming scenarios</li>
+<li><strong>Tool mastery</strong> that will serve you throughout your GPU programming career</li>
+</ul>
+<h2 id="ready-to-begin"><a class="header" href="#ready-to-begin">Ready to begin?</a></h2>
+<p>GPU debugging is where you transition from <em>learning</em> GPU programming to <em>mastering</em> it. Every professional GPU developer has spent countless hours debugging parallel code, learning to think in thousands of simultaneous threads, and developing the patience to investigate complex coordination failures.</p>
+<p>This is your opportunity to join that elite group.</p>
+<p><strong>Start your debugging journey</strong>: <a href="puzzle_09/./essentials.html">📚 Mojo GPU Debugging Essentials</a></p>
+<hr />
+<p><em>“Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.”</em> - Brian Kernighan</p>
+<p><em>In GPU programming, this wisdom is amplified by a factor of thousands - the number of parallel threads you’re debugging simultaneously.</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-mojo-gpu-debugging-essentials"><a class="header" href="#-mojo-gpu-debugging-essentials">📚 Mojo GPU Debugging Essentials</a></h1>
 <p>Welcome to the world of GPU debugging! After learning GPU programming concepts through puzzles 1-8, you’re now ready to learn the most critical skill for any GPU programmer: <strong>how to debug when things go wrong</strong>.</p>
 <p>GPU debugging can seem intimidating at first - you’re dealing with thousands of threads running in parallel, different memory spaces, and hardware-specific behaviors. But with the right tools and workflow, debugging GPU code becomes systematic and manageable.</p>
 <p>In this guide, you’ll learn to debug both the <strong>CPU host code</strong> (where you set up your GPU operations) and the <strong>GPU kernel code</strong> (where the parallel computation happens). We’ll use real examples, actual debugger output, and step-by-step workflows that you can immediately apply to your own projects.</p>
@@ -2505,7 +2620,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <li><strong>Set breakpoints inside GPU kernels</strong> - pause execution when any thread hits your breakpoint</li>
 <li><strong>Switch between GPU threads</strong> - examine what different threads are doing at the same moment</li>
 <li><strong>Inspect thread-specific data</strong> - see how the same variable has different values across threads</li>
-<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10 TODO)</li>
+<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10)</li>
 <li><strong>Analyze parallel execution</strong> - understand how your threads interact and synchronize</li>
 </ul>
 <h3 id="connecting-to-concepts-from-previous-puzzles"><a class="header" href="#connecting-to-concepts-from-previous-puzzles">Connecting to concepts from previous puzzles</a></h3>
@@ -2606,29 +2721,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <li><strong>Short execution time</strong> so you can iterate quickly</li>
 </ul>
 <p>By the end of this tutorial, you’ll have debugged the same program using all four debugging approaches, seen real debugger output, and learned the essential debugging commands you’ll use daily.</p>
-<h3 id="your-debugging-toolbox-four-approaches"><a class="header" href="#your-debugging-toolbox-four-approaches">Your debugging toolbox: Four approaches</a></h3>
-<p>Here’s what we’ll explore, from simplest to most powerful:</p>
-<pre><code class="language-bash"># Approach 1: JIT + LLDB (Start here - debug CPU setup code)
-pixi run mojo debug solutions/p01/p01.mojo
-
-# Approach 2: JIT + CUDA-GDB (Debug the GPU kernel)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
-
-# Approach 3: Binary + LLDB (Professional CPU debugging)
-pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
-pixi run mojo debug solutions/p01/p01_debug
-
-# Approach 4: Binary + CUDA-GDB (Professional GPU debugging)
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01_debug
-</code></pre>
-<p><strong>What each approach teaches you:</strong></p>
-<ul>
-<li><strong>LLDB approaches</strong> → Debug buffer allocation, memory setup, host-side logic</li>
-<li><strong>CUDA-GDB approaches</strong> → Debug parallel execution, thread behavior, GPU memory</li>
-<li><strong>JIT approaches</strong> → Quick iteration, learning, prototyping</li>
-<li><strong>Binary approaches</strong> → Production debugging, performance analysis, serious bug hunting</li>
-</ul>
-<p><strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful). By the end, you’ll know exactly which approach to use for different types of bugs.</p>
+<h3 id="learning-path-through-the-debugging-approaches"><a class="header" href="#learning-path-through-the-debugging-approaches">Learning path through the debugging approaches</a></h3>
+<p>We’ll explore the <a href="puzzle_09/essentials.html#the-four-debugging-combinations">four debugging combinations</a> using Puzzle 01 as our example. <strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful).</p>
 <p><strong>⚠️ Important for GPU debugging</strong>:</p>
 <ul>
 <li>The <code>--break-on-launch</code> flag is <strong>required</strong> for CUDA-GDB approaches</li>
@@ -2812,13 +2906,10 @@ pixi run mojo debug solutions/p01/p01_debug
 <pre><code class="language-bash"># Make sure you've run this already (once is enough)
 pixi run setup-cuda-gdb
 
-# Option A: JIT debugging with CUDA-GDB (we'll use this)
+# We'll use JIT + CUDA-GDB (Approach 2 from above)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
-
-# Option B: Pre-compiled binary debugging with CUDA-GDB
-pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01_debug
 </code></pre>
-<p>We’ll use <strong>Option A</strong> (JIT approach) since it’s perfect for learning and quick iterations.</p>
+<p>We’ll use the <strong>JIT + CUDA-GDB approach</strong> since it’s perfect for learning and quick iterations.</p>
 <p><strong>Step 2: Launch and automatically stop at GPU kernel entry</strong></p>
 <p>The CUDA-GDB prompt looks like: <code>(cuda-gdb)</code>. Start the program:</p>
 <pre><code class="language-gdb"># Run the program - it automatically stops when the GPU kernel launches
@@ -3036,6 +3127,27 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <hr />
 <h2 id="essential-debugging-commands-reference"><a class="header" href="#essential-debugging-commands-reference">Essential debugging commands reference</a></h2>
 <p>Now that you’ve learned the debugging workflow, here’s your <strong>quick reference guide</strong> for daily debugging sessions. Bookmark this section!</p>
+<h3 id="gdb-command-abbreviations-save-time"><a class="header" href="#gdb-command-abbreviations-save-time">GDB command abbreviations (save time!)</a></h3>
+<p><strong>Most commonly used shortcuts</strong> for faster debugging:</p>
+<div class="table-wrapper"><table><thead><tr><th>Abbreviation</th><th>Full Command</th><th>Function</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td>Start/launch the program</td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td>Resume execution</td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td>Step over (same level)</td></tr>
+<tr><td><code>s</code></td><td><code>step</code></td><td>Step into functions</td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td>Set breakpoint</td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td>Print variable value</td></tr>
+<tr><td><code>l</code></td><td><code>list</code></td><td>Show source code</td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td>Exit debugger</td></tr>
+</tbody></table>
+</div>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash">(cuda-gdb) r                    # Instead of 'run'
+(cuda-gdb) b 39                 # Instead of 'break 39'
+(cuda-gdb) p thread_id          # Instead of 'print thread_id'
+(cuda-gdb) n                    # Instead of 'next'
+(cuda-gdb) c                    # Instead of 'continue'
+</code></pre>
+<p><strong>⚡ Pro tip</strong>: Use abbreviations for 3-5x faster debugging sessions!</p>
 <h2 id="lldb-commands-cpu-host-code-debugging"><a class="header" href="#lldb-commands-cpu-host-code-debugging">LLDB commands (CPU host code debugging)</a></h2>
 <p><strong>When to use</strong>: Debugging device setup, memory allocation, program flow, host-side crashes</p>
 <h3 id="execution-control"><a class="header" href="#execution-control">Execution control</a></h3>
@@ -3217,13 +3329,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 # (cuda-gdb) info cuda memory          # ❌ Doesn't work in Mojo
 </code></pre>
 <hr />
-<h2 id="whats-next-real-debugging-challenges"><a class="header" href="#whats-next-real-debugging-challenges">What’s Next: Real Debugging Challenges</a></h2>
-<p>You’re now ready for <strong>Puzzle 10: Memory Error Detection &amp; Race Conditions with Sanitizers</strong> - a hands-on debugging challenge where you’ll:</p>
-<p><strong>Investigate a real GPU crash</strong> using your new debugging skills
-<strong>Apply systematic debugging</strong> to identify the root cause
-<strong>Fix complex GPU bugs</strong> that mirror real-world problems
-<strong>Apply your knowledge</strong> by solving challenging parallel programming issues</p>
-<p>You’ll apply everything you learned here - CUDA-GDB commands, thread navigation, conditional breakpoints, memory inspection - to solve debugging challenges that build on these foundational skills.</p>
 <h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
 <p>GPU debugging involves thousands of parallel threads, complex memory hierarchies, and specialized tools. You now have:</p>
 <ul>
@@ -3242,8 +3347,845 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference">CUDA-GDB Command Reference</a></li>
 </ul>
 <p><strong>Note</strong>: GPU debugging requires patience and systematic investigation. The workflow and commands in this puzzle provide the foundation for debugging complex GPU issues you’ll encounter in real applications.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-detective-work-first-case"><a class="header" href="#-detective-work-first-case">🧐 Detective Work: First Case</a></h1>
 <h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
+<p>In this puzzle, you’ll face a GPU program that crashes and the task is to find the issue without looking at the code and only through <code>(cuda-gdb)</code>. Run the debugger and be a detective!</p>
+<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>Systematic debugging</strong>: Using error messages as clues to find root causes</li>
+<li><strong>Error analysis</strong>: Reading crash messages and stack traces</li>
+<li><strong>Hypothesis formation</strong>: Making educated guesses about the problem</li>
+<li><strong>Debugging workflow</strong>: Step-by-step investigation process</li>
+</ul>
+<h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code</p>
+<pre><code class="language-mojo">fn add_10(
+    result: UnsafePointer[Scalar[dtype]], input: UnsafePointer[Scalar[dtype]]
+):
+    i = thread_idx.x
+    result[i] = input[i] + 10.0
+
+
+</code></pre>
+<p>firsthand experience, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --first-case
+</code></pre>
+<p>You’ll see output like when the program crashes with this error:</p>
+<pre><code class="language-txt">CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
+[24326:24326:20250801,180816.333593:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)
+[24326:24326:20250801,180816.333653:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq: No such file or directory (2)
+Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
+Stack dump:
+0.      Program arguments: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo problems/p09/p09.mojo
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  mojo                      0x0000653a338d3d2b
+1  mojo                      0x0000653a338d158a
+2  mojo                      0x0000653a338d48d7
+3  libc.so.6                 0x00007cbc08442520
+4  libc.so.6                 0x00007cbc0851e88d syscall + 29
+5  libAsyncRTMojoBindings.so 0x00007cbc0ab68653
+6  libc.so.6                 0x00007cbc08442520
+7  libc.so.6                 0x00007cbc084969fc pthread_kill + 300
+8  libc.so.6                 0x00007cbc08442476 raise + 22
+9  libc.so.6                 0x00007cbc084287f3 abort + 211
+10 libAsyncRTMojoBindings.so 0x00007cbc097c7c7b
+11 libAsyncRTMojoBindings.so 0x00007cbc097c7c9e
+12 (error)                   0x00007cbb5c00600f
+mojo crashed!
+Please file a bug report.
+</code></pre>
+<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your Task: Detective Work</a></h2>
+<p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> means the GPU tried to access invalid memory</li>
+<li><strong>Check the breakpoint information</strong> - Look at the function parameters shown when CUDA-GDB stops</li>
+<li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer parameter</li>
+<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large hex numbers (what does <code>0x0</code> mean?)</li>
+<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see which one fails</li>
+<li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence from symptom to root cause</li>
+<li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another doesn’t, focus on the broken one</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-Step Investigation with CUDA-GDB</a></h2>
+<h3 id="launch-the-debugger-1"><a class="header" href="#launch-the-debugger-1">Launch the Debugger</a></h3>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+</code></pre>
+<h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
+<p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
+<pre><code>(cuda-gdb) run
+CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
+31          i = thread_idx.x
+</code></pre>
+<p><strong>🔍 First Clue</strong>: The function signature shows <code>(result=0x302000000, input=0x0)</code></p>
+<ul>
+<li><code>result</code> has a valid GPU memory address</li>
+<li><code>input</code> is <code>0x0</code> - this is a null pointer!</li>
+</ul>
+<h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic Variable Inspection</a></h3>
+<pre><code>(cuda-gdb) next
+32          result[i] = input[i] + 10.0
+(cuda-gdb) print i
+$1 = 0
+(cuda-gdb) print result
+$2 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+(cuda-gdb) print input
+$3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
+</code></pre>
+<p><strong>🔍 Evidence Gathering</strong>:</p>
+<ul>
+<li>✅ Thread index <code>i=0</code> is valid</li>
+<li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
+<li>❌ Input pointer <code>0x0</code> is null</li>
+</ul>
+<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
+<pre><code>(cuda-gdb) print input[i]
+Cannot access memory at address 0x0
+</code></pre>
+<p><strong>💥 Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
+<h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root Cause Analysis</a></h2>
+<p><strong>The Problem</strong>: Now if we look at the <a href="puzzle_09/../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
+<pre><code class="language-mojo">input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
+</code></pre>
+<p><strong>Why This Crashes</strong>:</p>
+<ol>
+<li><code>UnsafePointer[Scalar[dtype]]()</code> creates an uninitialized pointer (null)</li>
+<li>This null pointer gets passed to the GPU kernel</li>
+<li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
+</ol>
+<h2 id="the-fix"><a class="header" href="#the-fix">The Fix</a></h2>
+<p>Replace null pointer creation with proper buffer allocation:</p>
+<pre><code class="language-mojo"># Wrong: Creates null pointer
+input_ptr = UnsafePointer[Scalar[dtype]]()
+
+# Correct: Allocates and initialize actual GPU memory for safe processing
+input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+</code></pre>
+<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key Debugging Lessons</a></h2>
+<p><strong>Pattern Recognition</strong>:</p>
+<ul>
+<li><code>0x0</code> addresses are always null pointers</li>
+<li>Valid GPU addresses are large hex numbers (e.g., <code>0x302000000</code>)</li>
+</ul>
+<p><strong>Debugging Strategy</strong>:</p>
+<ol>
+<li><strong>Read crash messages</strong> - They often hint at the problem type</li>
+<li><strong>Check function parameters</strong> - CUDA-GDB shows them at breakpoint entry</li>
+<li><strong>Inspect all pointers</strong> - Compare addresses to identify null/invalid ones</li>
+<li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
+<li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
+</ol>
+<p><strong>💡 Professional Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
+</div>
+</details>
+<h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
+<p>🎯 <strong>You’ve mastered crash debugging!</strong> You can now:</p>
+<ul>
+<li>✅ <strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
+<li>✅ <strong>Identify null pointer bugs</strong> through pointer address inspection</li>
+<li>✅ <strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
+</ul>
+<h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your Next Challenge: <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a></a></h3>
+<p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but produces <strong>wrong results</strong>?</p>
+<p>The <a href="puzzle_09/./second_case.html">Second Case</a> presents a completely different debugging challenge:</p>
+<ul>
+<li>❌ <strong>No crash messages</strong> to guide you</li>
+<li>❌ <strong>No obvious pointer problems</strong> to investigate</li>
+<li>❌ <strong>No stack traces</strong> pointing to the issue</li>
+<li>✅ <strong>Just wrong results</strong> that need systematic investigation</li>
+</ul>
+<p><strong>New skills you’ll develop:</strong></p>
+<ul>
+<li><strong>Logic bug detection</strong> - Finding algorithmic errors without crashes</li>
+<li><strong>Pattern analysis</strong> - Using incorrect output to trace back to root causes</li>
+<li><strong>Execution flow debugging</strong> - When variable inspection fails due to optimizations</li>
+</ul>
+<p>The systematic investigation approach you learned here - reading clues, forming hypotheses, testing systematically - forms the foundation for debugging the more subtle logic errors ahead.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-detective-work-second-case"><a class="header" href="#-detective-work-second-case">🔍 Detective Work: Second Case</a></h1>
+<h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
+<p>Building on your <a href="puzzle_09/./first_case.html">crash debugging skills from the First Case</a>, you’ll now face a completely different challenge: a <strong>logic bug</strong> that produces incorrect results without crashing.</p>
+<p><strong>The debugging shift:</strong></p>
+<ul>
+<li><strong>First Case</strong>: Clear crash signals (<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>) guided your investigation</li>
+<li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results that require detective work</li>
+</ul>
+<p>This intermediate-level debugging challenge teaches you to investigate <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
+<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="puzzle_09/./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>LayoutTensor debugging</strong>: Investigating structured data access patterns</li>
+<li><strong>Logic bug detection</strong>: Finding algorithmic errors that don’t crash</li>
+<li><strong>Loop boundary analysis</strong>: Understanding iteration count problems</li>
+<li><strong>Result pattern analysis</strong>: Using output data to trace back to root causes</li>
+</ul>
+<h2 id="running-the-code-14"><a class="header" href="#running-the-code-14">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code:</p>
+<pre><code class="language-mojo">fn process_sliding_window(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+
+    # Each thread processes a sliding window of 3 elements
+    window_sum = Scalar[dtype](0.0)
+
+    # Sum elements in sliding window: [i-1, i, i+1]
+    for offset in range(ITER):
+        idx = thread_id + offset - 1
+        if 0 &lt;= idx &lt; SIZE:
+            value = rebind[Scalar[dtype]](input[idx])
+            window_sum += value
+
+    output[thread_id] = window_sum
+
+
+</code></pre>
+<p>First experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --second-case
+</code></pre>
+<p>You’ll see output like this - <strong>no crash, but wrong results</strong>:</p>
+<pre><code class="language-txt">This program computes sliding window sums for each position...
+
+Input array: [0, 1, 2, 3]
+Computing sliding window sums (window size = 3)...
+Each position should sum its neighbors: [left + center + right]
+Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
+Expected: [1.0, 3.0, 6.0, 5.0]
+❌ Test FAILED - Sliding window sums are incorrect!
+Check the window indexing logic...
+</code></pre>
+<h2 id="your-task-detective-work-1"><a class="header" href="#your-task-detective-work-1">Your task: detective work</a></h2>
+<p><strong>Challenge</strong>: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>What pattern do you see in the wrong results?</li>
+<li>How would you investigate a loop that might not be running correctly?</li>
+<li>What debugging strategy works when you can’t inspect variables directly?</li>
+<li>How can you apply the systematic investigation approach from <a href="puzzle_09/./first_case.html">First Case</a> when there are no crash signals to guide you?</li>
+</ul>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+</code></pre>
+<h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
+<p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
+<div class="table-wrapper"><table><thead><tr><th>Short</th><th>Full</th><th>Usage Example</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 39</code></td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>All debugging commands below use these shortcuts for efficiency!</strong></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Pattern analysis first</strong> - Look at the relationship between expected and actual results (what’s the mathematical pattern in the differences?)</li>
+<li><strong>Focus on execution flow</strong> - Count loop iterations when variables aren’t accessible</li>
+<li><strong>Use simple breakpoints</strong> - Complex debugging commands often fail with optimized code</li>
+<li><strong>Mathematical reasoning</strong> - Work out what each thread should access vs what it actually accesses</li>
+<li><strong>Missing data investigation</strong> - If results are consistently smaller than expected, what might be missing?</li>
+<li><strong>Host output verification</strong> - The final results often reveal the pattern of the bug</li>
+<li><strong>Algorithm boundary analysis</strong> - Check if loops are processing the right number of elements</li>
+<li><strong>Cross-validate with working cases</strong> - Why does thread 3 work correctly but others don’t?</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb-1"><a class="header" href="#step-by-step-investigation-with-cuda-gdb-1">Step-by-step investigation with CUDA-GDB</a></h2>
+<h3 id="phase-1-launch-and-initial-analysis"><a class="header" href="#phase-1-launch-and-initial-analysis">Phase 1: Launch and initial analysis</a></h3>
+<h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: Start the debugger</a></h4>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+</code></pre>
+<h4 id="step-2-analyze-the-symptoms-first"><a class="header" href="#step-2-analyze-the-symptoms-first">Step 2: analyze the symptoms first</a></h4>
+<p>Before diving into the debugger, let’s examine what we know:</p>
+<pre><code class="language-txt">Actual result: [0.0, 1.0, 3.0, 5.0]
+Expected: [1.0, 3.0, 6.0, 5.0]
+</code></pre>
+<p><strong>🔍 Pattern Recognition</strong>:</p>
+<ul>
+<li>Thread 0: Got 0.0, Expected 1.0 → Missing 1.0</li>
+<li>Thread 1: Got 1.0, Expected 3.0 → Missing 2.0</li>
+<li>Thread 2: Got 3.0, Expected 6.0 → Missing 3.0</li>
+<li>Thread 3: Got 5.0, Expected 5.0 → ✅ Correct</li>
+</ul>
+<p><strong>Initial Hypothesis</strong>: Each thread is missing some data, but thread 3 works correctly.</p>
+<h3 id="phase-2-entering-the-kernel"><a class="header" href="#phase-2-entering-the-kernel">Phase 2: Entering the kernel</a></h3>
+<h4 id="step-3-observe-the-breakpoint-entry"><a class="header" href="#step-3-observe-the-breakpoint-entry">Step 3: Observe the breakpoint entry</a></h4>
+<p>Based on the real debugging session, here’s what happens:</p>
+<pre><code class="language-bash">(cuda-gdb) r
+Starting program: .../mojo run problems/p09/p09.mojo --second-case
+
+This program computes sliding window sums for each position...
+Input array: [0, 1, 2, 3]
+Computing sliding window sums (window size = 3)...
+Each position should sum its neighbors: [left + center + right]
+
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
+
+CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
+30          input: LayoutTensor[mut=False, dtype, vector_layout],
+</code></pre>
+<h4 id="step-4-navigate-to-the-main-logic"><a class="header" href="#step-4-navigate-to-the-main-logic">Step 4: Navigate to the main logic</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+29          output: LayoutTensor[mut=True, dtype, vector_layout],
+(cuda-gdb) n
+32          thread_id = thread_idx.x
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<h4 id="step-5-test-variable-accessibility---crucial-discovery"><a class="header" href="#step-5-test-variable-accessibility---crucial-discovery">Step 5: Test variable accessibility - crucial discovery</a></h4>
+<pre><code class="language-bash">(cuda-gdb) p thread_id
+$1 = 0
+</code></pre>
+<p><strong>✅ Good</strong>: Thread ID is accessible.</p>
+<pre><code class="language-bash">(cuda-gdb) p window_sum
+Cannot access memory at address 0x0
+</code></pre>
+<p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
+<pre><code class="language-bash">(cuda-gdb) p input[0]
+Attempt to take address of value not located in memory.
+</code></pre>
+<p><strong>❌ Problem</strong>: Direct LayoutTensor indexing doesn’t work.</p>
+<pre><code class="language-bash">(cuda-gdb) p input.ptr[0]
+$2 = {0}
+(cuda-gdb) p input.ptr[0]@4
+$3 = {{0}, {1}, {2}, {3}}
+</code></pre>
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>input.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
+<h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
+<h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
+<pre><code class="language-bash">(cuda-gdb) b 39
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
+(cuda-gdb) c
+Continuing.
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:39
+39              idx = thread_id + offset - 1
+</code></pre>
+<p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
+<h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<p><strong>📝 First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+39              idx = thread_id + offset - 1
+(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+41                  value = rebind[Scalar[dtype]](input[idx])
+(cuda-gdb) n
+42                  window_sum += value
+(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<p><strong>📝 Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+44          output[thread_id] = window_sum
+</code></pre>
+<p><strong>🚨 CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
+<h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+28      fn process_sliding_window(
+(cuda-gdb) n
+[Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
+0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
+(cuda-gdb) p output.ptr[0]@4
+No symbol "output" in current context.
+(cuda-gdb) p offset
+No symbol "offset" in current context.
+</code></pre>
+<p><strong>🔍 Context Lost</strong>: After kernel completion, we lose access to kernel variables. This is normal behavior.</p>
+<h3 id="phase-4-root-cause-analysis"><a class="header" href="#phase-4-root-cause-analysis">Phase 4: Root cause analysis</a></h3>
+<h4 id="step-11-algorithm-analysis-from-observed-execution"><a class="header" href="#step-11-algorithm-analysis-from-observed-execution">Step 11: Algorithm analysis from observed execution</a></h4>
+<p>From our debugging session, we observed:</p>
+<ol>
+<li><strong>Loop Iterations</strong>: Only 2 iterations (offset = 0, offset = 1)</li>
+<li><strong>Expected</strong>: A sliding window of size 3 should require 3 iterations (offset = 0, 1, 2)</li>
+<li><strong>Missing</strong>: The third iteration (offset = 2)</li>
+</ol>
+<p>Looking at what each thread should compute:</p>
+<ul>
+<li><strong>Thread 0</strong>: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0</li>
+<li><strong>Thread 1</strong>: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0</li>
+<li><strong>Thread 2</strong>: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0</li>
+<li><strong>Thread 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0</li>
+</ul>
+<h4 id="step-12-trace-the-actual-execution-for-thread-0"><a class="header" href="#step-12-trace-the-actual-execution-for-thread-0">Step 12: Trace the actual execution for thread 0</a></h4>
+<p>With only 2 iterations (offset = 0, 1):</p>
+<p><strong>Iteration 1 (offset = 0)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 0 - 1 = -1</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= -1 &lt; 4:</code> → <strong>False</strong></li>
+<li>Skip the sum operation</li>
+</ul>
+<p><strong>Iteration 2 (offset = 1)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 1 - 1 = 0</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 0 &lt; 4:</code> → <strong>True</strong></li>
+<li><code>window_sum += input[0]</code> → <code>window_sum += 0</code></li>
+</ul>
+<p><strong>Missing Iteration 3 (offset = 2)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 2 - 1 = 1</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 1 &lt; 4:</code> → <strong>True</strong></li>
+<li><code>window_sum += input[1]</code> → <code>window_sum += 1</code> ← <strong>THIS NEVER HAPPENS</strong></li>
+</ul>
+<p><strong>Result</strong>: Thread 0 gets <code>window_sum = 0</code> instead of <code>window_sum = 0 + 1 = 1</code></p>
+<h3 id="phase-5-bug-confirmation"><a class="header" href="#phase-5-bug-confirmation">Phase 5: Bug confirmation</a></h3>
+<p>Looking at the problem code, we find:</p>
+<pre><code class="language-mojo">alias ITER = 2                       # ← BUG: Should be 3!
+
+for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
+    idx = thread_id + offset - 1     # ← Missing offset = 2
+    if 0 &lt;= idx &lt; SIZE:
+        window_sum += input[idx]
+</code></pre>
+<p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
+<p><strong>The Fix</strong>: Change <code>alias ITER = 2</code> to <code>alias ITER = 3</code> in the source code.</p>
+<h2 id="key-debugging-lessons-1"><a class="header" href="#key-debugging-lessons-1">Key debugging lessons</a></h2>
+<p><strong>When Variables Are Inaccessible</strong>:</p>
+<ol>
+<li><strong>Focus on execution flow</strong> - Count breakpoint hits and loop iterations</li>
+<li><strong>Use mathematical reasoning</strong> - Work out what should happen vs what does happen</li>
+<li><strong>Pattern analysis</strong> - Let the wrong results guide your investigation</li>
+<li><strong>Cross-validation</strong> - Test your hypothesis against multiple data points</li>
+</ol>
+<p><strong>Professional GPU Debugging Reality</strong>:</p>
+<ul>
+<li><strong>Variable inspection often fails</strong> due to compiler optimizations</li>
+<li><strong>Execution flow analysis</strong> is more reliable than data inspection</li>
+<li><strong>Host output patterns</strong> provide crucial debugging clues</li>
+<li><strong>Source code reasoning</strong> complements limited debugger capabilities</li>
+</ul>
+<p><strong>LayoutTensor Debugging</strong>:</p>
+<ul>
+<li>Even with LayoutTensor abstractions, underlying algorithmic bugs still manifest</li>
+<li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
+<li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
+</ul>
+<p><strong>💡 Professional Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+</div>
+</details>
+<h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>
+<p>🎯 <strong>You’ve mastered logic bug debugging!</strong> You can now:</p>
+<ul>
+<li>✅ <strong>Investigate algorithmic errors</strong> without crashes or obvious symptoms</li>
+<li>✅ <strong>Use pattern analysis</strong> to trace wrong results back to root causes</li>
+<li>✅ <strong>Debug with limited variable access</strong> using execution flow analysis</li>
+<li>✅ <strong>Apply mathematical reasoning</strong> when debugger tools have limitations</li>
+</ul>
+<h3 id="your-final-challenge-detective-work-third-case"><a class="header" href="#your-final-challenge-detective-work-third-case">Your Final Challenge: <a href="puzzle_09/./third_case.html">Detective Work: Third Case</a></a></h3>
+<p><strong>But what if your program doesn’t crash AND doesn’t finish?</strong> What if it just <strong>hangs forever</strong>?</p>
+<p>The <a href="puzzle_09/./third_case.html">Third Case</a> presents the ultimate debugging challenge:</p>
+<ul>
+<li>❌ <strong>No crash messages</strong> (like First Case)</li>
+<li>❌ <strong>No wrong results</strong> (like Second Case)</li>
+<li>❌ <strong>No completion at all</strong> - just infinite hanging</li>
+<li>✅ <strong>Silent deadlock</strong> requiring advanced thread coordination analysis</li>
+</ul>
+<p><strong>New skills you’ll develop:</strong></p>
+<ul>
+<li><strong>Barrier deadlock detection</strong> - Finding coordination failures in parallel threads</li>
+<li><strong>Multi-thread state analysis</strong> - Examining all threads simultaneously</li>
+<li><strong>Synchronization debugging</strong> - Understanding thread cooperation breakdowns</li>
+</ul>
+<p><strong>The debugging evolution:</strong></p>
+<ol>
+<li><strong>First Case</strong>: Follow crash signals → Find memory bugs</li>
+<li><strong>Second Case</strong>: Analyze result patterns → Find logic bugs</li>
+<li><strong>Third Case</strong>: Investigate thread states → Find coordination bugs</li>
+</ol>
+<p>The systematic investigation skills from both previous cases - hypothesis formation, evidence gathering, pattern analysis - become crucial when debugging the most challenging GPU issue: threads that coordinate incorrectly and wait forever.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-detective-work-third-case"><a class="header" href="#-detective-work-third-case">🕵 Detective Work: Third Case</a></h1>
+<h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
+<p>You’ve mastered debugging <a href="puzzle_09/./first_case.html">memory crashes</a> and <a href="puzzle_09/./second_case.html">logic bugs</a>. Now face the ultimate GPU debugging challenge: a <strong>barrier deadlock</strong> that causes the program to hang indefinitely with no error messages, no wrong results - just eternal silence.</p>
+<p><strong>The complete debugging journey:</strong></p>
+<ul>
+<li><strong><a href="puzzle_09/./first_case.html">First Case</a></strong>: Program crashes → Follow error signals → Find memory bugs</li>
+<li><strong><a href="puzzle_09/./second_case.html">Second Case</a></strong>: Program produces wrong results → Analyze patterns → Find logic bugs</li>
+<li><strong>[Third Case]</strong>: Program hangs forever → Investigate thread states → Find coordination bugs</li>
+</ul>
+<p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
+<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="puzzle_09/./first_case.html">Detective Work: First Case</a>, and <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>Barrier deadlock detection</strong>: Identifying when threads wait forever at synchronization points</li>
+<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns</li>
+<li><strong>Conditional execution analysis</strong>: Debugging when some threads take different code paths</li>
+<li><strong>Thread coordination debugging</strong>: Using CUDA-GDB to analyze multi-thread synchronization failures</li>
+</ul>
+<h2 id="running-the-code-15"><a class="header" href="#running-the-code-15">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+
+    # Shared memory workspace for collaborative processing
+    shared_workspace = tb[dtype]().row_major[SIZE - 1]().shared().alloc()
+
+    # Phase 1: Initialize shared workspace (all threads participate)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+    barrier()
+
+    # Phase 2: Collaborative processing
+    if thread_id &lt; SIZE - 1:
+        # Apply collaborative filter with neighbors
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+        barrier()
+
+    # Phase 3: Final synchronization and output
+    barrier()
+
+    # Write filtered results back to output
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+
+
+</code></pre>
+<p>First experience the issue firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --third-case
+</code></pre>
+<p>You’ll see output like this - <strong>the program hangs indefinitely</strong>:</p>
+<pre><code class="language-txt">Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+[HANGS FOREVER - Use Ctrl+C to stop]
+</code></pre>
+<p>⚠️ <strong>Warning</strong>: This program will hang and never complete. Use <code>Ctrl+C</code> to stop it.</p>
+<h2 id="your-task-detective-work-2"><a class="header" href="#your-task-detective-work-2">Your task: detective work</a></h2>
+<p><strong>Challenge</strong>: The program launches successfully but hangs during GPU computation and never returns. Without looking at the complete code, what would be your systematic approach to investigate this deadlock?</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>What could cause a GPU kernel to never complete?</li>
+<li>How would you investigate thread coordination issues?</li>
+<li>What debugging strategy works when the program just “freezes” with no error messages?</li>
+<li>How do you debug when threads might not be cooperating correctly?</li>
+<li>How can you combine systematic investigation (<a href="puzzle_09/./first_case.html">First Case</a>) with execution flow analysis (<a href="puzzle_09/./second_case.html">Second Case</a>) to debug coordination failures?</li>
+</ul>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h3 id="gdb-command-shortcuts-faster-debugging-1"><a class="header" href="#gdb-command-shortcuts-faster-debugging-1">GDB command shortcuts (faster debugging)</a></h3>
+<p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
+<div class="table-wrapper"><table><thead><tr><th>Short</th><th>Full</th><th>Usage Example</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 62</code></td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>All debugging commands below use these shortcuts for efficiency!</strong></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Silent hang investigation</strong> - When programs freeze without error messages, what GPU primitives could cause infinite waiting?</li>
+<li><strong>Thread state inspection</strong> - Use <code>info cuda threads</code> to see where different threads are stopped</li>
+<li><strong>Conditional execution analysis</strong> - Check which threads execute which code paths (do all threads follow the same path?)</li>
+<li><strong>Synchronization point investigation</strong> - Look for places where threads might need to coordinate</li>
+<li><strong>Thread divergence detection</strong> - Are all threads at the same program location, or are some elsewhere?</li>
+<li><strong>Coordination primitive analysis</strong> - What happens if threads don’t all participate in the same synchronization operations?</li>
+<li><strong>Execution flow tracing</strong> - Follow the path each thread takes through conditional statements</li>
+<li><strong>Thread ID impact analysis</strong> - How do different thread IDs affect which code paths execute?</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb-2"><a class="header" href="#step-by-step-investigation-with-cuda-gdb-2">Step-by-step investigation with CUDA-GDB</a></h2>
+<h3 id="phase-1-launch-and-initial-setup"><a class="header" href="#phase-1-launch-and-initial-setup">Phase 1: launch and initial setup</a></h3>
+<h4 id="step-1-start-the-debugger-1"><a class="header" href="#step-1-start-the-debugger-1">Step 1: start the debugger</a></h4>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h4 id="step-2-analyze-the-hanging-behavior"><a class="header" href="#step-2-analyze-the-hanging-behavior">Step 2: analyze the hanging behavior</a></h4>
+<p>Before diving into debugging, let’s understand what we know:</p>
+<pre><code class="language-txt">Expected: Program completes and shows filtered results
+Actual: Program hangs at "Waiting for GPU computation to complete..."
+</code></pre>
+<p><strong>🔍 Initial Hypothesis</strong>: The GPU kernel is deadlocked - some synchronization primitive is causing threads to wait forever.</p>
+<h3 id="phase-2-entering-the-kernel-1"><a class="header" href="#phase-2-entering-the-kernel-1">Phase 2: entering the kernel</a></h3>
+<h4 id="step-3-launch-and-observe-kernel-entry"><a class="header" href="#step-3-launch-and-observe-kernel-entry">Step 3: launch and observe kernel entry</a></h4>
+<pre><code class="language-bash">(cuda-gdb) r
+Starting program: .../mojo run problems/p09/p09.mojo --third-case
+
+Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
+
+CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
+    output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
+52          input: LayoutTensor[mut=False, dtype, vector_layout],
+</code></pre>
+<p><strong>🔍 Key Observations</strong>:</p>
+<ul>
+<li><strong>Grid</strong>: (1,1,1) - single block</li>
+<li><strong>Block</strong>: (4,1,1) - 4 threads total (0, 1, 2, 3)</li>
+<li><strong>Current thread</strong>: (0,0,0) - debugging thread 0</li>
+<li><strong>Function</strong>: collaborative_filter with shared memory operations</li>
+</ul>
+<h4 id="step-4-navigate-through-initialization"><a class="header" href="#step-4-navigate-through-initialization">Step 4: navigate through initialization</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+51          output: LayoutTensor[mut=True, dtype, vector_layout],
+(cuda-gdb) n
+54          thread_id = thread_idx.x
+(cuda-gdb) n
+57          shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+(cuda-gdb) n
+60          if thread_id &lt; SIZE - 1:
+(cuda-gdb) p thread_id
+$1 = 0
+</code></pre>
+<p><strong>✅ Thread 0 state</strong>: <code>thread_id = 0</code>, about to check condition <code>0 &lt; 3</code> → <strong>True</strong></p>
+<h4 id="step-5-trace-through-phase-1"><a class="header" href="#step-5-trace-through-phase-1">Step 5: trace through phase 1</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+61              shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+(cuda-gdb) n
+60          if thread_id &lt; SIZE - 1:
+(cuda-gdb) n
+62          barrier()
+</code></pre>
+<p><strong>Phase 1 Complete</strong>: Thread 0 executed the initialization and reached the first barrier.</p>
+<h3 id="phase-3-the-critical-barrier-investigation"><a class="header" href="#phase-3-the-critical-barrier-investigation">Phase 3: the critical barrier investigation</a></h3>
+<h4 id="step-6-examine-the-first-barrier"><a class="header" href="#step-6-examine-the-first-barrier">Step 6: examine the first barrier</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+65          if thread_id &lt; SIZE - 1:
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    65
+</code></pre>
+<p><strong>✅ Good</strong>: All 4 threads are at line 65 (after the first barrier). The first barrier worked correctly.</p>
+<p><strong>🔍 Critical Point</strong>: Now we’re entering Phase 2 with another conditional statement.</p>
+<h4 id="step-7-trace-through-phase-2---thread-0-perspective"><a class="header" href="#step-7-trace-through-phase-2---thread-0-perspective">Step 7: trace through phase 2 - thread 0 perspective</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+67              if thread_id &gt; 0:
+</code></pre>
+<p><strong>Thread 0 Analysis</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Thread 0 enters the Phase 2 block</p>
+<pre><code class="language-bash">(cuda-gdb) n
+69              barrier()
+</code></pre>
+<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 69</p>
+<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 69.</p>
+<pre><code class="language-bash">(cuda-gdb) n # &lt;-- if you run it the program hangs!
+[HANGS HERE - Program never proceeds beyond this point]
+</code></pre>
+<h4 id="step-8-investigate-other-threads"><a class="header" href="#step-8-investigate-other-threads">Step 8: investigate other threads</a></h4>
+<pre><code class="language-bash">(cuda-gdb) cuda thread (1,0,0)
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
+69              barrier()
+(cuda-gdb) p thread_id
+$2 = 1
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    69
+   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    72
+</code></pre>
+<p><strong>SMOKING GUN DISCOVERED</strong>:</p>
+<ul>
+<li><strong>Threads 0, 1, 2</strong>: All waiting at line 69 (barrier inside the conditional block)</li>
+<li><strong>Thread 3</strong>: At line 72 (after the conditional block, never reached the barrier!)</li>
+</ul>
+<h4 id="step-9-analyze-thread-3s-execution-path"><a class="header" href="#step-9-analyze-thread-3s-execution-path">Step 9: analyze thread 3’s execution path</a></h4>
+<p><strong>🔍 Thread 3 Analysis from the info output</strong>:</p>
+<ul>
+<li><strong>Thread 3</strong>: Located at line 72 (PC: 0x00007fffd3273b10)</li>
+<li><strong>Phase 2 condition</strong>: <code>thread_id &lt; SIZE - 1</code> → <code>3 &lt; 3</code> → <strong>False</strong></li>
+<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 65-69)</li>
+<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 69</li>
+<li><strong>Current state</strong>: Thread 3 is at line 72 (final barrier), while threads 0,1,2 are stuck at line 69</li>
+</ul>
+<h3 id="phase-4-root-cause-analysis-1"><a class="header" href="#phase-4-root-cause-analysis-1">Phase 4: root cause analysis</a></h3>
+<h4 id="step-10-deadlock-mechanism-identified"><a class="header" href="#step-10-deadlock-mechanism-identified">Step 10: deadlock mechanism identified</a></h4>
+<pre><code class="language-mojo"># Phase 2: Collaborative processing
+if thread_id &lt; SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
+    # Apply collaborative filter with neighbors
+    if thread_id &gt; 0:
+        shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    barrier()                   # ← DEADLOCK: Only 3 out of 4 threads reach here!
+</code></pre>
+<p><strong>💀 Deadlock Mechanism</strong>:</p>
+<ol>
+<li><strong>Thread 0</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 1</strong>: <code>1 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 2</strong>: <code>2 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 3</strong>: <code>3 &lt; 3</code> → <strong>False</strong> → <strong>NEVER enters block</strong> → <strong>Continues to line 72</strong></li>
+</ol>
+<p><strong>Result</strong>: 3 threads wait forever for the 4th thread, but thread 3 never arrives at the barrier.</p>
+<h3 id="phase-5-bug-confirmation-and-solution"><a class="header" href="#phase-5-bug-confirmation-and-solution">Phase 5: bug confirmation and solution</a></h3>
+<h4 id="step-11-the-fundamental-barrier-rule-violation"><a class="header" href="#step-11-the-fundamental-barrier-rule-violation">Step 11: the fundamental barrier rule violation</a></h4>
+<p><strong>GPU Barrier Rule</strong>: ALL threads in a thread block must reach the SAME barrier for synchronization to complete.</p>
+<p><strong>What went wrong</strong>:</p>
+<pre><code class="language-mojo">// ❌ WRONG: Barrier inside conditional
+if thread_id &lt; SIZE - 1:    // Not all threads enter
+    // ... some computation ...
+    barrier()               // Only some threads reach this
+
+// ✅ CORRECT: Barrier outside conditional
+if thread_id &lt; SIZE - 1:    // Not all threads enter
+    // ... some computation ...
+// barrier()                // ALL threads reach this
+</code></pre>
+<p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+    shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+
+    // Phase 1: Initialize shared workspace (all threads participate)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+    barrier()
+
+    // Phase 2: Collaborative processing
+    if thread_id &lt; SIZE - 1:
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    // ✅ FIX: Move barrier outside conditional so ALL threads reach it
+    barrier()
+
+    // Phase 3: Final synchronization and output
+    barrier()
+
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+</code></pre>
+<h2 id="key-debugging-lessons-2"><a class="header" href="#key-debugging-lessons-2">Key debugging lessons</a></h2>
+<p><strong>Barrier Deadlock Detection</strong>:</p>
+<ol>
+<li><strong>Use <code>info cuda threads</code></strong> - Shows which threads are at which lines</li>
+<li><strong>Look for thread state divergence</strong> - Some threads at different program locations</li>
+<li><strong>Trace conditional execution paths</strong> - Check if all threads reach the same barriers</li>
+<li><strong>Verify barrier reachability</strong> - Ensure no thread can skip a barrier that others reach</li>
+</ol>
+<p><strong>Professional GPU Debugging Reality</strong>:</p>
+<ul>
+<li><strong>Deadlocks are silent killers</strong> - programs just hang with no error messages</li>
+<li><strong>Thread coordination debugging requires patience</strong> - systematic analysis of each thread’s path</li>
+<li><strong>Conditional barriers are the #1 deadlock cause</strong> - always verify all threads reach the same sync points</li>
+<li><strong>CUDA-GDB thread inspection is essential</strong> - the only way to see thread coordination failures</li>
+</ul>
+<p><strong>Advanced GPU Synchronization</strong>:</p>
+<ul>
+<li><strong>Barrier rule</strong>: ALL threads in a block must reach the SAME barrier</li>
+<li><strong>Conditional execution pitfalls</strong>: Any if-statement can cause thread divergence</li>
+<li><strong>Shared memory coordination</strong>: Requires careful barrier placement for correct synchronization</li>
+<li><strong>LayoutTensor doesn’t prevent deadlocks</strong>: Higher-level abstractions still need correct synchronization</li>
+</ul>
+<p><strong>💡 Key Insight</strong>: Barrier deadlocks are among the hardest GPU bugs to debug because:</p>
+<ul>
+<li><strong>No visible error</strong> - just infinite waiting</li>
+<li><strong>Requires multi-thread analysis</strong> - can’t debug by examining one thread</li>
+<li><strong>Silent failure mode</strong> - looks like performance issue, not correctness bug</li>
+<li><strong>Complex thread coordination</strong> - need to trace execution paths across all threads</li>
+</ul>
+<p>This type of debugging - using CUDA-GDB to analyze thread states, identify divergent execution paths, and verify barrier reachability - is exactly what professional GPU developers do when facing deadlock issues in production systems.</p>
+</div>
+</details>
+<h2 id="next-steps-gpu-debugging-mastery-complete"><a class="header" href="#next-steps-gpu-debugging-mastery-complete">Next Steps: GPU Debugging Mastery Complete</a></h2>
+<p>🏆 <strong>You’ve completed the GPU debugging trilogy!</strong></p>
+<h3 id="your-complete-gpu-debugging-arsenal"><a class="header" href="#your-complete-gpu-debugging-arsenal">Your Complete GPU Debugging Arsenal</a></h3>
+<p><strong>From the <a href="puzzle_09/./first_case.html">First Case</a> - Crash Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Systematic crash investigation</strong> using error messages as guides</li>
+<li>✅ <strong>Memory bug detection</strong> through pointer address inspection</li>
+<li>✅ <strong>CUDA-GDB fundamentals</strong> for memory-related issues</li>
+</ul>
+<p><strong>From the <a href="puzzle_09/./second_case.html">Second Case</a> - Logic Bug Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Algorithm error investigation</strong> without obvious symptoms</li>
+<li>✅ <strong>Pattern analysis techniques</strong> for tracing wrong results to root causes</li>
+<li>✅ <strong>Execution flow debugging</strong> when variable inspection fails</li>
+</ul>
+<p><strong>From the <a href="puzzle_09/./third_case.html">Third Case</a> - Coordination Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Barrier deadlock investigation</strong> for thread coordination failures</li>
+<li>✅ <strong>Multi-thread state analysis</strong> using advanced CUDA-GDB techniques</li>
+<li>✅ <strong>Synchronization verification</strong> for complex parallel programs</li>
+</ul>
+<h3 id="the-professional-gpu-debugging-methodology"><a class="header" href="#the-professional-gpu-debugging-methodology">The Professional GPU Debugging Methodology</a></h3>
+<p>You’ve mastered the systematic approach used by professional GPU developers:</p>
+<ol>
+<li><strong>Read the symptoms</strong> - Crashes? Wrong results? Infinite hangs?</li>
+<li><strong>Form hypotheses</strong> - Memory issue? Logic error? Coordination problem?</li>
+<li><strong>Gather evidence</strong> - Use CUDA-GDB strategically based on the bug type</li>
+<li><strong>Test systematically</strong> - Verify each hypothesis through targeted investigation</li>
+<li><strong>Trace to root cause</strong> - Follow the evidence chain to the source</li>
+</ol>
+<p><strong>🎯 Achievement Unlocked</strong>: You can now debug the three most common GPU programming issues:</p>
+<ul>
+<li><strong>Memory crashes</strong> (<a href="puzzle_09/./first_case.html">First Case</a>) - null pointers, out-of-bounds access</li>
+<li><strong>Logic bugs</strong> (<a href="puzzle_09/./second_case.html">Second Case</a>) - algorithmic errors, incorrect results</li>
+<li><strong>Coordination deadlocks</strong> (<a href="puzzle_09/./third_case.html">Third Case</a>) - barrier synchronization failures</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
+<h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="Pooling visualization" /></p>
@@ -3253,10 +4195,10 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <h3 id="-layouttensor-version-3"><a class="header" href="#-layouttensor-version-3"><a href="puzzle_11/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-17"><a class="header" href="#overview-17">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
-<h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
+<h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using shared memory for sliding window operations</li>
@@ -3314,7 +4256,7 @@ fn pooling(
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
+<h2 id="running-the-code-16"><a class="header" href="#running-the-code-16">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -3432,10 +4374,10 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
-<h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
+<h2 id="key-concepts-20"><a class="header" href="#key-concepts-20">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor for sliding window operations</li>
@@ -3496,7 +4438,7 @@ fn pooling[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-14"><a class="header" href="#running-the-code-14">Running the code</a></h2>
+<h2 id="running-the-code-17"><a class="header" href="#running-the-code-17">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -3629,7 +4571,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
-<h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
+<h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Dot product visualization" /></p>
@@ -3639,10 +4581,10 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <h3 id="-layouttensor-version-4"><a class="header" href="#-layouttensor-version-4"><a href="puzzle_12/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
-<h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
+<h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing parallel reduction operations</li>
@@ -3698,7 +4640,7 @@ fn dot_product(
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-15"><a class="header" href="#running-the-code-15">Running the code</a></h2>
+<h2 id="running-the-code-18"><a class="header" href="#running-the-code-18">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -3870,10 +4812,10 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
-<h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
+<h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Similar to the <a href="puzzle_12/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_12/../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
@@ -3937,7 +4879,7 @@ fn dot_product[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-16"><a class="header" href="#running-the-code-16">Running the code</a></h2>
+<h2 id="running-the-code-19"><a class="header" href="#running-the-code-19">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4122,7 +5064,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 <p>This transition aligns with best practices in modern GPU programming in Mojo 🔥, where higher-level abstractions help manage complexity without sacrificing performance.</p>
 </blockquote>
-<h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
+<h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
@@ -4150,7 +5092,7 @@ Then tackle the more challenging case where data needs to be shared across block
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
 <p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor `output.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<h2 id="key-concepts-20"><a class="header" href="#key-concepts-20">Key concepts</a></h2>
+<h2 id="key-concepts-23"><a class="header" href="#key-concepts-23">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing sliding window operations on GPUs</li>
@@ -4210,7 +5152,7 @@ fn conv_1d_simple[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-17"><a class="header" href="#running-the-code-17">Running the code</a></h3>
+<h3 id="running-the-code-20"><a class="header" href="#running-the-code-20">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4432,7 +5374,7 @@ fn conv_1d_block_boundary[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-18"><a class="header" href="#running-the-code-18">Running the code</a></h3>
+<h3 id="running-the-code-21"><a class="header" href="#running-the-code-21">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4648,12 +5590,12 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-14-prefix-sum"><a class="header" href="#puzzle-14-prefix-sum">Puzzle 14: Prefix Sum</a></h1>
-<h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
+<h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
 <p><img src="puzzle_14/./media/videos/720p30/puzzle_14_viz.gif" alt="Prefix sum" /></p>
-<h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
+<h2 id="key-concepts-24"><a class="header" href="#key-concepts-24">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Parallel algorithms with logarithmic complexity</li>
@@ -4737,7 +5679,7 @@ fn prefix_sum_simple[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-19"><a class="header" href="#running-the-code-19">Running the code</a></h3>
+<h3 id="running-the-code-22"><a class="header" href="#running-the-code-22">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5010,7 +5952,7 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <p>Where <code>???</code> should contain your block sums that will be used in the second phase.</p>
 </div>
 </details>
-<h3 id="running-the-code-20"><a class="header" href="#running-the-code-20">Running the code</a></h3>
+<h3 id="running-the-code-23"><a class="header" href="#running-the-code-23">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5313,10 +6255,10 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-axis-sum"><a class="header" href="#puzzle-15-axis-sum">Puzzle 15: Axis Sum</a></h1>
-<h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
+<h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="puzzle_15/./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
-<h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
+<h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Parallel reduction along matrix dimensions using LayoutTensor</li>
@@ -5382,7 +6324,7 @@ fn axis_sum[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-21"><a class="header" href="#running-the-code-21">Running the Code</a></h2>
+<h2 id="running-the-code-24"><a class="header" href="#running-the-code-24">Running the Code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5568,7 +6510,7 @@ while stride &gt; 0:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-16-matrix-multiplication-matmul"><a class="header" href="#puzzle-16-matrix-multiplication-matmul">Puzzle 16: Matrix Multiplication (MatMul)</a></h1>
-<h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
+<h2 id="overview-28"><a class="header" href="#overview-28">Overview</a></h2>
 <p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
 <p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
@@ -5601,10 +6543,10 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 </ol>
 <p>Choose a version to begin your matrix multiplication journey!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
-<h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
+<h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
-<h2 id="key-concepts-23"><a class="header" href="#key-concepts-23">Key concepts</a></h2>
+<h2 id="key-concepts-26"><a class="header" href="#key-concepts-26">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>2D thread organization for matrix operations</li>
@@ -5664,7 +6606,7 @@ fn naive_matmul[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-22"><a class="header" href="#running-the-code-22">Running the code</a></h2>
+<h2 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5895,9 +6837,9 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <p>While our \(2 \times 2\) example won’t reach the compute roof, you’ll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding <strong>why</strong> shared memory helps and <strong>how much</strong> improvement to expect.</p>
 <p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
-<h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
+<h2 id="overview-30"><a class="header" href="#overview-30">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
-<h2 id="key-concepts-24"><a class="header" href="#key-concepts-24">Key concepts</a></h2>
+<h2 id="key-concepts-27"><a class="header" href="#key-concepts-27">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Block-local memory management with LayoutTensor</li>
@@ -5953,7 +6895,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-23"><a class="header" href="#running-the-code-23">Running the code</a></h2>
+<h2 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6185,9 +7127,9 @@ if row &lt; size and col &lt; size:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tiled-matrix-multiplication"><a class="header" href="#tiled-matrix-multiplication">Tiled Matrix Multiplication</a></h1>
-<h2 id="overview-28"><a class="header" href="#overview-28">Overview</a></h2>
+<h2 id="overview-31"><a class="header" href="#overview-31">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
-<h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
+<h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
 <ul>
 <li>Matrix tiling with LayoutTensor for efficient computation</li>
 <li>Multi-block coordination with proper layouts</li>
@@ -6346,7 +7288,7 @@ Thread(1,2) in Block(1,0):
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-24"><a class="header" href="#running-the-code-24">Running the code</a></h2>
+<h2 id="running-the-code-27"><a class="header" href="#running-the-code-27">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6783,7 +7725,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </ul>
 <p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
 </blockquote>
-<h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
+<h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
 <p>In <a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">alias TPB = 15
@@ -7119,7 +8061,7 @@ with Graph(
 <li>Passing input values and parameters that match our operation’s signature</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-18-softmax-op"><a class="header" href="#puzzle-18-softmax-op">Puzzle 18: Softmax Op</a></h1>
-<h2 id="overview-30"><a class="header" href="#overview-30">Overview</a></h2>
+<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
 <p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
 <p>Mathematically, the softmax function is defined as:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
@@ -7131,7 +8073,7 @@ with Graph(
 <p>However, this direct implementation can lead to numerical overflow issues when values are large. To address this, we use a more numerically stable version:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
 <p>Our GPU implementation uses parallel reduction for both finding the maximum value and computing the sum of exponentials, making it highly efficient for large vectors.</p>
-<h2 id="key-concepts-26"><a class="header" href="#key-concepts-26">Key concepts</a></h2>
+<h2 id="key-concepts-29"><a class="header" href="#key-concepts-29">Key concepts</a></h2>
 <ul>
 <li>Parallel reduction for efficient maximum and sum calculations</li>
 <li>Numerical stability through max-subtraction technique</li>
@@ -7705,7 +8647,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
-<h2 id="overview-31"><a class="header" href="#overview-31">Overview</a></h2>
+<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
 <p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
@@ -7767,7 +8709,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <blockquote>
 <p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the <code>matmul_idiomatic_tiled</code> from Puzzle 14 and <code>softmax_kernel</code> from Puzzle 16, showcasing the power of modular GPU kernel design.</p>
 </blockquote>
-<h2 id="key-concepts-27"><a class="header" href="#key-concepts-27">Key concepts</a></h2>
+<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
 <ul>
 <li>Vector attention mechanism for sequence processing</li>
 <li><strong>Kernel reuse</strong>: Leveraging proven implementations from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a> and <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
@@ -8294,7 +9236,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 </ul>
 <p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
 </blockquote>
-<h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
+<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
 <p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
 <h2 id="code-to-complete-27"><a class="header" href="#code-to-complete-27">Code to complete</a></h2>
@@ -8402,7 +9344,7 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 </ul>
 </div>
 </details>
-<h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
+<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
 <p>This puzzle illustrates several important patterns for PyTorch custom operations:</p>
 <div class="table-wrapper"><table><thead><tr><th>Concept</th><th>MAX Graph (p15)</th><th>PyTorch CustomOpLibrary (p18)</th></tr></thead><tbody>
 <tr><td><strong>Output Allocation</strong></td><td>Automatic</td><td>Manual (<code>torch.empty_like()</code>)</td></tr>
@@ -8458,7 +9400,7 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 </ul>
 <p>This puzzle demonstrates that <strong>how you access memory</strong> can be more important than <strong>what computation you perform</strong>.</p>
 </blockquote>
-<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
+<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
 <p>In this puzzle, you’ll implement two different GPU kernels for embedding operations - a fundamental component in neural networks. While both kernels produce identical results, they use different memory access patterns that lead to significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
@@ -9102,7 +10044,7 @@ Key Learning Points:
 </ul>
 </div>
 </details>
-<h2 id="key-concepts-29"><a class="header" href="#key-concepts-29">Key concepts</a></h2>
+<h2 id="key-concepts-32"><a class="header" href="#key-concepts-32">Key concepts</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Concept</th><th>1D Coalesced</th><th>2D Non-coalesced</th></tr></thead><tbody>
 <tr><td><strong>Thread organization</strong></td><td>1D flat indexing</td><td>2D grid (batch×seq, embed)</td></tr>
 <tr><td><strong>Memory access</strong></td><td>Consecutive addresses</td><td>Potentially scattered</td></tr>
@@ -9210,7 +10152,7 @@ Warp threads might access:
 </ul>
 <p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as important as <strong>how you implement them</strong>.</p>
 </blockquote>
-<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
+<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
 <p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both forward and backward passes. While both fused and unfused implementations produce identical results, they use different strategies that lead to significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
@@ -9294,7 +10236,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 </ul>
 <p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs unfused) affect both forward and backward pass performance - this insight applies to many deep learning operations beyond LayerNorm + Linear. The backward pass implementation is particularly important as it directly impacts training efficiency and numerical stability.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-fused-vs-unfused-kernels"><a class="header" href="#-fused-vs-unfused-kernels">⚛️ Fused vs Unfused Kernels</a></h1>
-<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
+<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
 <p>In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the <a href="https://arxiv.org/abs/1607.06450">LayerNorm</a> and Linear operation:</p>
 <ol>
 <li><strong>Unfused approach</strong>: Executes LayerNorm and Linear as separate operations</li>
@@ -9307,7 +10249,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Improving cache utilization</li>
 <li>Eliminating intermediate memory allocations</li>
 </ul>
-<h2 id="key-concepts-30"><a class="header" href="#key-concepts-30">Key concepts</a></h2>
+<h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Kernel fusion techniques</strong> for combining multiple operations</li>
@@ -9675,7 +10617,7 @@ fn matmul_idiomatic_tiled[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the code</a></h3>
+<h3 id="running-the-code-28"><a class="header" href="#running-the-code-28">Running the code</a></h3>
 <p>To test your unfused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -10002,7 +10944,7 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h3>
+<h3 id="running-the-code-29"><a class="header" href="#running-the-code-29">Running the code</a></h3>
 <p>To test your fused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -10265,7 +11207,7 @@ FUSED Algorithm Test Completed!
 </ol>
 <p>💡 <strong>Key insight</strong>: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-autograd-integration--backward-pass"><a class="header" href="#-autograd-integration--backward-pass">⛓️ Autograd Integration &amp; Backward Pass</a></h1>
-<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
+<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
 <p>In this puzzle, we explore the backward pass implementation of the fused LayerNorm + Linear operation. The backward pass computes gradients with respect to:</p>
 <ul>
 <li>Input tensor</li>
@@ -10295,7 +11237,7 @@ where:</p>
 <li>\(y_{linear}\) is the Linear layer output</li>
 <li>The chain rule ensures proper gradient flow through both operations</li>
 </ul>
-<h2 id="key-concepts-31"><a class="header" href="#key-concepts-31">Key concepts</a></h2>
+<h2 id="key-concepts-34"><a class="header" href="#key-concepts-34">Key concepts</a></h2>
 <ul>
 <li>
 <p><strong>Thread organization</strong>:</p>
@@ -10468,7 +11410,7 @@ where:</p>
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-27"><a class="header" href="#running-the-code-27">Running the code</a></h3>
+<h3 id="running-the-code-30"><a class="header" href="#running-the-code-30">Running the code</a></h3>
 <p>To test your fused backward implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -10890,7 +11832,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 </ul>
 <p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-23-gpu-functional-programming-patterns"><a class="header" href="#puzzle-23-gpu-functional-programming-patterns">Puzzle 23: GPU Functional Programming Patterns</a></h1>
-<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
+<h2 id="overview-40"><a class="header" href="#overview-40">Overview</a></h2>
 <p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
 <p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
@@ -11017,7 +11959,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <div style="break-before: page; page-break-before: always;"></div><h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
 <p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
-<h2 id="key-concepts-32"><a class="header" href="#key-concepts-32">Key concepts</a></h2>
+<h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
@@ -11120,7 +12062,7 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 <p>This shows that each thread handles a different SIMD chunk, automatically spaced by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
 </div>
 </details>
-<h2 id="running-the-code-28"><a class="header" href="#running-the-code-28">Running the code</a></h2>
+<h2 id="running-the-code-31"><a class="header" href="#running-the-code-31">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -11332,12 +12274,12 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
-<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
+<h2 id="overview-41"><a class="header" href="#overview-41">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
 <p>You’ve already seen tiling in action with <strong><a href="puzzle_23/../puzzle_16/tiled.html">Puzzle 16’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
 <p><strong>Key insight:</strong> <em>Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</em></p>
-<h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
+<h2 id="key-concepts-36"><a class="header" href="#key-concepts-36">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Tile-based memory organization</strong> for cache optimization</li>
@@ -11436,7 +12378,7 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-29"><a class="header" href="#running-the-code-29">Running the code</a></h2>
+<h2 id="running-the-code-32"><a class="header" href="#running-the-code-32">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -11661,7 +12603,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
-<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
+<h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
 <ol>
 <li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index calculations</li>
@@ -11669,7 +12611,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ol>
 <p>Both approaches build on tiling concepts but with different trade-offs between control, safety, and performance optimization.</p>
 <p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance requirements and complexity levels.</em></p>
-<h2 id="key-concepts-34"><a class="header" href="#key-concepts-34">Key concepts</a></h2>
+<h2 id="key-concepts-37"><a class="header" href="#key-concepts-37">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Manual SIMD operations</strong> with explicit index management</li>
@@ -12141,7 +13083,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
-<h2 id="overview-40"><a class="header" href="#overview-40">Overview</a></h2>
+<h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
@@ -12282,7 +13224,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 </ul>
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
-<h2 id="overview-41"><a class="header" href="#overview-41">Overview</a></h2>
+<h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
 <p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
@@ -12549,7 +13491,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 </ul>
 <p><strong>Coming up next</strong>: <a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 14’s prefix sum.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
-<h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
+<h2 id="overview-45"><a class="header" href="#overview-45">Overview</a></h2>
 <p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
@@ -12990,7 +13932,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpsum-essentials---warp-level-dot-product"><a class="header" href="#warpsum-essentials---warp-level-dot-product">warp.sum() Essentials - Warp-Level Dot Product</a></h1>
 <p>Implement the dot product we saw in <a href="puzzle_24/../puzzle_12/puzzle_12.html">puzzle 12</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
-<h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
+<h2 id="key-concepts-38"><a class="header" href="#key-concepts-38">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
@@ -13589,7 +14531,7 @@ mojo p22.mojo --benchmark
 </ul>
 <p><strong>When in doubt:</strong> Implement both and benchmark. The performance difference will guide your decision.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-25-warp-communication"><a class="header" href="#puzzle-25-warp-communication">Puzzle 25: Warp Communication</a></h1>
-<h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
+<h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
 <p>Welcome to <strong>Puzzle 25: Warp Communication Primitives</strong>! This puzzle introduces you to advanced GPU <strong>warp-level communication operations</strong> - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast</a> to implement neighbor communication and collective coordination without complex shared memory patterns.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + indexing + boundary checking patterns to elegant warp communication calls that leverage hardware-optimized data movement.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp communication operations harness this synchronization to provide powerful data exchange primitives with automatic boundary handling and zero explicit synchronization.</em></p>
@@ -13695,7 +14637,7 @@ if lane == 0:
 shared_value = broadcast(shared_value)
 result = use_shared_value(shared_value, local_data)
 </code></pre>
-<h2 id="key-concepts-36"><a class="header" href="#key-concepts-36">Key concepts</a></h2>
+<h2 id="key-concepts-39"><a class="header" href="#key-concepts-39">Key concepts</a></h2>
 <h3 id="communication-patterns"><a class="header" href="#communication-patterns"><strong>Communication patterns</strong></a></h3>
 <p>Understanding fundamental warp communication paradigms:</p>
 <ul>
@@ -13731,7 +14673,7 @@ result = use_shared_value(shared_value, local_data)
 <blockquote>
 <p><strong>What are stencil operations?</strong> <a href="https://en.wikipedia.org/wiki/Iterative_Stencil_Loops">Stencil</a> operations are computations where each output element depends on a fixed pattern of neighboring input elements. Common examples include finite differences (derivatives), convolutions, and moving averages. The “stencil” refers to the pattern of neighbor access - like a 3-point stencil that reads <code>[i-1, i, i+1]</code> or a 5-point stencil that reads <code>[i-2, i-1, i, i+1, i+2]</code>.</p>
 </blockquote>
-<h2 id="key-concepts-37"><a class="header" href="#key-concepts-37">Key concepts</a></h2>
+<h2 id="key-concepts-40"><a class="header" href="#key-concepts-40">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Warp-level data shuffling</strong> with <code>shuffle_down()</code></li>
@@ -14214,7 +15156,7 @@ if lane &lt; WARP_SIZE - offset:
 <blockquote>
 <p><strong>What are broadcast operations?</strong> Broadcast operations are communication patterns where one thread computes a value and shares it with all other threads in a group. This is essential for coordination tasks like computing block-level statistics, making collective decisions, or sharing configuration parameters across all threads in a warp.</p>
 </blockquote>
-<h2 id="key-concepts-38"><a class="header" href="#key-concepts-38">Key concepts</a></h2>
+<h2 id="key-concepts-41"><a class="header" href="#key-concepts-41">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Warp-level broadcasting</strong> with <code>broadcast()</code></li>
@@ -14923,7 +15865,7 @@ result = use_shared_value(shared_value, local_data)
 </ul>
 <p><strong>Applications</strong>: Block statistics, collective decisions, parameter sharing, adaptive algorithms.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-26-advanced-warp-patterns"><a class="header" href="#puzzle-26-advanced-warp-patterns">Puzzle 26: Advanced Warp Patterns</a></h1>
-<h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
+<h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
 <p>Welcome to <strong>Puzzle 26: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + multi-phase reduction patterns to elegant single-function-call algorithms that leverage hardware-optimized butterfly networks and parallel scan units.</p>
 <p><strong>Key insight:</strong> <em>GPU warps can perform sophisticated tree-based communication and parallel scan operations in hardware - Mojo’s advanced warp primitives harness butterfly networks and dedicated scan units to provide \(O(\log n)\) algorithms with single-instruction simplicity.</em></p>
@@ -15031,7 +15973,7 @@ while offset &gt; 0:
 scan_result = prefix_sum[exclusive=False](current_val)
 output[global_i] = scan_result  # Hardware-optimized cumulative sum
 </code></pre>
-<h2 id="key-concepts-39"><a class="header" href="#key-concepts-39">Key concepts</a></h2>
+<h2 id="key-concepts-42"><a class="header" href="#key-concepts-42">Key concepts</a></h2>
 <h3 id="butterfly-network-communication"><a class="header" href="#butterfly-network-communication"><strong>Butterfly network communication</strong></a></h3>
 <p>Understanding XOR-based communication topologies:</p>
 <ul>
@@ -15075,7 +16017,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 <blockquote>
 <p><strong>What are butterfly networks?</strong> <a href="https://en.wikipedia.org/wiki/Butterfly_network">Butterfly networks</a> are communication topologies where threads exchange data based on XOR patterns of their indices. The name comes from the visual pattern when drawn - connections that look like butterfly wings. These networks are fundamental to parallel algorithms like FFT, bitonic sort, and parallel reductions because they enable \(O(\log n)\) communication complexity.</p>
 </blockquote>
-<h2 id="key-concepts-40"><a class="header" href="#key-concepts-40">Key concepts</a></h2>
+<h2 id="key-concepts-43"><a class="header" href="#key-concepts-43">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>XOR-based communication patterns</strong> with <code>shuffle_xor()</code></li>
@@ -15788,7 +16730,7 @@ while offset &gt; 0:
 <blockquote>
 <p><strong>What is parallel scan?</strong> <a href="https://en.wikipedia.org/wiki/Prefix_sum">Parallel scan (prefix sum)</a> is a fundamental parallel primitive that computes cumulative operations across data elements. For addition, it transforms <code>[a, b, c, d]</code> into <code>[a, a+b, a+b+c, a+b+c+d]</code>. This operation is essential for parallel algorithms like stream compaction, quicksort partitioning, and parallel sorting.</p>
 </blockquote>
-<h2 id="key-concepts-41"><a class="header" href="#key-concepts-41">Key concepts</a></h2>
+<h2 id="key-concepts-44"><a class="header" href="#key-concepts-44">Key concepts</a></h2>
 <p>In this puzzle, you’ll master:</p>
 <ul>
 <li><strong>Hardware-optimized parallel scan</strong> with <code>prefix_sum()</code></li>
@@ -16751,7 +17693,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
 </blockquote>
-<h2 id="overview-45"><a class="header" href="#overview-45">Overview</a></h2>
+<h2 id="overview-48"><a class="header" href="#overview-48">Overview</a></h2>
 <p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
@@ -16761,7 +17703,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li><strong>Optimize synchronization overhead</strong> while maintaining correctness guarantees</li>
 </ul>
 <p><strong>Architectural progression:</strong> These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.</p>
-<h2 id="key-concepts-42"><a class="header" href="#key-concepts-42">Key concepts</a></h2>
+<h2 id="key-concepts-45"><a class="header" href="#key-concepts-45">Key concepts</a></h2>
 <p><strong>Thread coordination paradigms:</strong></p>
 <ul>
 <li><strong>Simple parallelism</strong>: All threads execute identical operations (previous puzzles)</li>
@@ -16840,7 +17782,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
 <p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
-<h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
+<h2 id="overview-49"><a class="header" href="#overview-49">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
 <p><strong>Note:</strong> <em>You have specialized thread roles: Stage 1 (threads 0-127) loads and preprocesses data, Stage 2 (threads 128-255) applies blur operations, and Stage 3 (all threads) performs final smoothing.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>producer-consumer pipeline</strong> where different thread groups execute completely different algorithms within a single GPU block. Unlike traditional GPU programming where all threads execute the same algorithm on different data, this approach divides threads by <strong>functional specialization</strong>.</p>
@@ -16873,7 +17815,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 </ul>
 <p><strong>Synchronization Points:</strong></p>
 <p>\[\text{barrier}_1 \Rightarrow P[i] \text{ complete} \Rightarrow \text{barrier}_2 \Rightarrow B[i] \text{ complete} \Rightarrow \text{barrier}_3 \Rightarrow F[i] \text{ complete}\]</p>
-<h2 id="key-concepts-43"><a class="header" href="#key-concepts-43">Key concepts</a></h2>
+<h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing thread role specialization within a single GPU block</li>
@@ -17019,7 +17961,7 @@ fn multi_stage_image_blur_pipeline[
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-30"><a class="header" href="#running-the-code-30">Running the code</a></h2>
+<h2 id="running-the-code-33"><a class="header" href="#running-the-code-33">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -17189,7 +18131,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 </ul>
 <p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU computing applications like iterative solvers, simulation frameworks, and high-performance image processing pipelines.</p>
 </blockquote>
-<h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
+<h2 id="overview-50"><a class="header" href="#overview-50">Overview</a></h2>
 <p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.</p>
 <p><strong>Note:</strong> <em>You have alternating buffer roles: <code>buffer_A</code> and <code>buffer_B</code> swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>double-buffering pattern</strong> where two shared memory buffers alternate roles as read and write targets across multiple iterations. Unlike simple stencil operations that process data once, this approach performs iterative refinement with careful memory barrier coordination to prevent race conditions during buffer transitions.</p>
@@ -17216,7 +18158,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 \text{buffer_A}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 0 \\
 \text{buffer_B}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 1
 \end{cases}\]</p>
-<h2 id="key-concepts-44"><a class="header" href="#key-concepts-44">Key concepts</a></h2>
+<h2 id="key-concepts-47"><a class="header" href="#key-concepts-47">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing double-buffering patterns for iterative algorithms</li>
@@ -17405,7 +18347,7 @@ fn double_buffered_stencil_computation[
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-31"><a class="header" href="#running-the-code-31">Running the code</a></h2>
+<h2 id="running-the-code-34"><a class="header" href="#running-the-code-34">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">

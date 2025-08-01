@@ -1,0 +1,595 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🕵 Detective Work: Third Case - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-detective-work-third-case"><a class="header" href="#-detective-work-third-case">🕵 Detective Work: Third Case</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>You’ve mastered debugging <a href="./first_case.html">memory crashes</a> and <a href="./second_case.html">logic bugs</a>. Now face the ultimate GPU debugging challenge: a <strong>barrier deadlock</strong> that causes the program to hang indefinitely with no error messages, no wrong results - just eternal silence.</p>
+<p><strong>The complete debugging journey:</strong></p>
+<ul>
+<li><strong><a href="./first_case.html">First Case</a></strong>: Program crashes → Follow error signals → Find memory bugs</li>
+<li><strong><a href="./second_case.html">Second Case</a></strong>: Program produces wrong results → Analyze patterns → Find logic bugs</li>
+<li><strong>[Third Case]</strong>: Program hangs forever → Investigate thread states → Find coordination bugs</li>
+</ul>
+<p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="./first_case.html">Detective Work: First Case</a>, and <a href="./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>Barrier deadlock detection</strong>: Identifying when threads wait forever at synchronization points</li>
+<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns</li>
+<li><strong>Conditional execution analysis</strong>: Debugging when some threads take different code paths</li>
+<li><strong>Thread coordination debugging</strong>: Using CUDA-GDB to analyze multi-thread synchronization failures</li>
+</ul>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+
+    # Shared memory workspace for collaborative processing
+    shared_workspace = tb[dtype]().row_major[SIZE - 1]().shared().alloc()
+
+    # Phase 1: Initialize shared workspace (all threads participate)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+    barrier()
+
+    # Phase 2: Collaborative processing
+    if thread_id &lt; SIZE - 1:
+        # Apply collaborative filter with neighbors
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+        barrier()
+
+    # Phase 3: Final synchronization and output
+    barrier()
+
+    # Write filtered results back to output
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+
+
+</code></pre>
+<p>First experience the issue firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --third-case
+</code></pre>
+<p>You’ll see output like this - <strong>the program hangs indefinitely</strong>:</p>
+<pre><code class="language-txt">Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+[HANGS FOREVER - Use Ctrl+C to stop]
+</code></pre>
+<p>⚠️ <strong>Warning</strong>: This program will hang and never complete. Use <code>Ctrl+C</code> to stop it.</p>
+<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
+<p><strong>Challenge</strong>: The program launches successfully but hangs during GPU computation and never returns. Without looking at the complete code, what would be your systematic approach to investigate this deadlock?</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>What could cause a GPU kernel to never complete?</li>
+<li>How would you investigate thread coordination issues?</li>
+<li>What debugging strategy works when the program just “freezes” with no error messages?</li>
+<li>How do you debug when threads might not be cooperating correctly?</li>
+<li>How can you combine systematic investigation (<a href="./first_case.html">First Case</a>) with execution flow analysis (<a href="./second_case.html">Second Case</a>) to debug coordination failures?</li>
+</ul>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
+<p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
+<div class="table-wrapper"><table><thead><tr><th>Short</th><th>Full</th><th>Usage Example</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 62</code></td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>All debugging commands below use these shortcuts for efficiency!</strong></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Silent hang investigation</strong> - When programs freeze without error messages, what GPU primitives could cause infinite waiting?</li>
+<li><strong>Thread state inspection</strong> - Use <code>info cuda threads</code> to see where different threads are stopped</li>
+<li><strong>Conditional execution analysis</strong> - Check which threads execute which code paths (do all threads follow the same path?)</li>
+<li><strong>Synchronization point investigation</strong> - Look for places where threads might need to coordinate</li>
+<li><strong>Thread divergence detection</strong> - Are all threads at the same program location, or are some elsewhere?</li>
+<li><strong>Coordination primitive analysis</strong> - What happens if threads don’t all participate in the same synchronization operations?</li>
+<li><strong>Execution flow tracing</strong> - Follow the path each thread takes through conditional statements</li>
+<li><strong>Thread ID impact analysis</strong> - How do different thread IDs affect which code paths execute?</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-step investigation with CUDA-GDB</a></h2>
+<h3 id="phase-1-launch-and-initial-setup"><a class="header" href="#phase-1-launch-and-initial-setup">Phase 1: launch and initial setup</a></h3>
+<h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: start the debugger</a></h4>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h4 id="step-2-analyze-the-hanging-behavior"><a class="header" href="#step-2-analyze-the-hanging-behavior">Step 2: analyze the hanging behavior</a></h4>
+<p>Before diving into debugging, let’s understand what we know:</p>
+<pre><code class="language-txt">Expected: Program completes and shows filtered results
+Actual: Program hangs at "Waiting for GPU computation to complete..."
+</code></pre>
+<p><strong>🔍 Initial Hypothesis</strong>: The GPU kernel is deadlocked - some synchronization primitive is causing threads to wait forever.</p>
+<h3 id="phase-2-entering-the-kernel"><a class="header" href="#phase-2-entering-the-kernel">Phase 2: entering the kernel</a></h3>
+<h4 id="step-3-launch-and-observe-kernel-entry"><a class="header" href="#step-3-launch-and-observe-kernel-entry">Step 3: launch and observe kernel entry</a></h4>
+<pre><code class="language-bash">(cuda-gdb) r
+Starting program: .../mojo run problems/p09/p09.mojo --third-case
+
+Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
+
+CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
+    output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
+52          input: LayoutTensor[mut=False, dtype, vector_layout],
+</code></pre>
+<p><strong>🔍 Key Observations</strong>:</p>
+<ul>
+<li><strong>Grid</strong>: (1,1,1) - single block</li>
+<li><strong>Block</strong>: (4,1,1) - 4 threads total (0, 1, 2, 3)</li>
+<li><strong>Current thread</strong>: (0,0,0) - debugging thread 0</li>
+<li><strong>Function</strong>: collaborative_filter with shared memory operations</li>
+</ul>
+<h4 id="step-4-navigate-through-initialization"><a class="header" href="#step-4-navigate-through-initialization">Step 4: navigate through initialization</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+51          output: LayoutTensor[mut=True, dtype, vector_layout],
+(cuda-gdb) n
+54          thread_id = thread_idx.x
+(cuda-gdb) n
+57          shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+(cuda-gdb) n
+60          if thread_id &lt; SIZE - 1:
+(cuda-gdb) p thread_id
+$1 = 0
+</code></pre>
+<p><strong>✅ Thread 0 state</strong>: <code>thread_id = 0</code>, about to check condition <code>0 &lt; 3</code> → <strong>True</strong></p>
+<h4 id="step-5-trace-through-phase-1"><a class="header" href="#step-5-trace-through-phase-1">Step 5: trace through phase 1</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+61              shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+(cuda-gdb) n
+60          if thread_id &lt; SIZE - 1:
+(cuda-gdb) n
+62          barrier()
+</code></pre>
+<p><strong>Phase 1 Complete</strong>: Thread 0 executed the initialization and reached the first barrier.</p>
+<h3 id="phase-3-the-critical-barrier-investigation"><a class="header" href="#phase-3-the-critical-barrier-investigation">Phase 3: the critical barrier investigation</a></h3>
+<h4 id="step-6-examine-the-first-barrier"><a class="header" href="#step-6-examine-the-first-barrier">Step 6: examine the first barrier</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+65          if thread_id &lt; SIZE - 1:
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    65
+</code></pre>
+<p><strong>✅ Good</strong>: All 4 threads are at line 65 (after the first barrier). The first barrier worked correctly.</p>
+<p><strong>🔍 Critical Point</strong>: Now we’re entering Phase 2 with another conditional statement.</p>
+<h4 id="step-7-trace-through-phase-2---thread-0-perspective"><a class="header" href="#step-7-trace-through-phase-2---thread-0-perspective">Step 7: trace through phase 2 - thread 0 perspective</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+67              if thread_id &gt; 0:
+</code></pre>
+<p><strong>Thread 0 Analysis</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Thread 0 enters the Phase 2 block</p>
+<pre><code class="language-bash">(cuda-gdb) n
+69              barrier()
+</code></pre>
+<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 69</p>
+<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 69.</p>
+<pre><code class="language-bash">(cuda-gdb) n # &lt;-- if you run it the program hangs!
+[HANGS HERE - Program never proceeds beyond this point]
+</code></pre>
+<h4 id="step-8-investigate-other-threads"><a class="header" href="#step-8-investigate-other-threads">Step 8: investigate other threads</a></h4>
+<pre><code class="language-bash">(cuda-gdb) cuda thread (1,0,0)
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
+69              barrier()
+(cuda-gdb) p thread_id
+$2 = 1
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    69
+   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    72
+</code></pre>
+<p><strong>SMOKING GUN DISCOVERED</strong>:</p>
+<ul>
+<li><strong>Threads 0, 1, 2</strong>: All waiting at line 69 (barrier inside the conditional block)</li>
+<li><strong>Thread 3</strong>: At line 72 (after the conditional block, never reached the barrier!)</li>
+</ul>
+<h4 id="step-9-analyze-thread-3s-execution-path"><a class="header" href="#step-9-analyze-thread-3s-execution-path">Step 9: analyze thread 3’s execution path</a></h4>
+<p><strong>🔍 Thread 3 Analysis from the info output</strong>:</p>
+<ul>
+<li><strong>Thread 3</strong>: Located at line 72 (PC: 0x00007fffd3273b10)</li>
+<li><strong>Phase 2 condition</strong>: <code>thread_id &lt; SIZE - 1</code> → <code>3 &lt; 3</code> → <strong>False</strong></li>
+<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 65-69)</li>
+<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 69</li>
+<li><strong>Current state</strong>: Thread 3 is at line 72 (final barrier), while threads 0,1,2 are stuck at line 69</li>
+</ul>
+<h3 id="phase-4-root-cause-analysis"><a class="header" href="#phase-4-root-cause-analysis">Phase 4: root cause analysis</a></h3>
+<h4 id="step-10-deadlock-mechanism-identified"><a class="header" href="#step-10-deadlock-mechanism-identified">Step 10: deadlock mechanism identified</a></h4>
+<pre><code class="language-mojo"># Phase 2: Collaborative processing
+if thread_id &lt; SIZE - 1:        # ← Only threads 0, 1, 2 enter this block
+    # Apply collaborative filter with neighbors
+    if thread_id &gt; 0:
+        shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    barrier()                   # ← DEADLOCK: Only 3 out of 4 threads reach here!
+</code></pre>
+<p><strong>💀 Deadlock Mechanism</strong>:</p>
+<ol>
+<li><strong>Thread 0</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 1</strong>: <code>1 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 2</strong>: <code>2 &lt; 3</code> → <strong>True</strong> → Enters block → <strong>Waits at barrier</strong> (line 69)</li>
+<li><strong>Thread 3</strong>: <code>3 &lt; 3</code> → <strong>False</strong> → <strong>NEVER enters block</strong> → <strong>Continues to line 72</strong></li>
+</ol>
+<p><strong>Result</strong>: 3 threads wait forever for the 4th thread, but thread 3 never arrives at the barrier.</p>
+<h3 id="phase-5-bug-confirmation-and-solution"><a class="header" href="#phase-5-bug-confirmation-and-solution">Phase 5: bug confirmation and solution</a></h3>
+<h4 id="step-11-the-fundamental-barrier-rule-violation"><a class="header" href="#step-11-the-fundamental-barrier-rule-violation">Step 11: the fundamental barrier rule violation</a></h4>
+<p><strong>GPU Barrier Rule</strong>: ALL threads in a thread block must reach the SAME barrier for synchronization to complete.</p>
+<p><strong>What went wrong</strong>:</p>
+<pre><code class="language-mojo">// ❌ WRONG: Barrier inside conditional
+if thread_id &lt; SIZE - 1:    // Not all threads enter
+    // ... some computation ...
+    barrier()               // Only some threads reach this
+
+// ✅ CORRECT: Barrier outside conditional
+if thread_id &lt; SIZE - 1:    // Not all threads enter
+    // ... some computation ...
+// barrier()                // ALL threads reach this
+</code></pre>
+<p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+    shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+
+    // Phase 1: Initialize shared workspace (all threads participate)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+    barrier()
+
+    // Phase 2: Collaborative processing
+    if thread_id &lt; SIZE - 1:
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    // ✅ FIX: Move barrier outside conditional so ALL threads reach it
+    barrier()
+
+    // Phase 3: Final synchronization and output
+    barrier()
+
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+</code></pre>
+<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
+<p><strong>Barrier Deadlock Detection</strong>:</p>
+<ol>
+<li><strong>Use <code>info cuda threads</code></strong> - Shows which threads are at which lines</li>
+<li><strong>Look for thread state divergence</strong> - Some threads at different program locations</li>
+<li><strong>Trace conditional execution paths</strong> - Check if all threads reach the same barriers</li>
+<li><strong>Verify barrier reachability</strong> - Ensure no thread can skip a barrier that others reach</li>
+</ol>
+<p><strong>Professional GPU Debugging Reality</strong>:</p>
+<ul>
+<li><strong>Deadlocks are silent killers</strong> - programs just hang with no error messages</li>
+<li><strong>Thread coordination debugging requires patience</strong> - systematic analysis of each thread’s path</li>
+<li><strong>Conditional barriers are the #1 deadlock cause</strong> - always verify all threads reach the same sync points</li>
+<li><strong>CUDA-GDB thread inspection is essential</strong> - the only way to see thread coordination failures</li>
+</ul>
+<p><strong>Advanced GPU Synchronization</strong>:</p>
+<ul>
+<li><strong>Barrier rule</strong>: ALL threads in a block must reach the SAME barrier</li>
+<li><strong>Conditional execution pitfalls</strong>: Any if-statement can cause thread divergence</li>
+<li><strong>Shared memory coordination</strong>: Requires careful barrier placement for correct synchronization</li>
+<li><strong>LayoutTensor doesn’t prevent deadlocks</strong>: Higher-level abstractions still need correct synchronization</li>
+</ul>
+<p><strong>💡 Key Insight</strong>: Barrier deadlocks are among the hardest GPU bugs to debug because:</p>
+<ul>
+<li><strong>No visible error</strong> - just infinite waiting</li>
+<li><strong>Requires multi-thread analysis</strong> - can’t debug by examining one thread</li>
+<li><strong>Silent failure mode</strong> - looks like performance issue, not correctness bug</li>
+<li><strong>Complex thread coordination</strong> - need to trace execution paths across all threads</li>
+</ul>
+<p>This type of debugging - using CUDA-GDB to analyze thread states, identify divergent execution paths, and verify barrier reachability - is exactly what professional GPU developers do when facing deadlock issues in production systems.</p>
+</div>
+</details>
+<h2 id="next-steps-gpu-debugging-mastery-complete"><a class="header" href="#next-steps-gpu-debugging-mastery-complete">Next Steps: GPU Debugging Mastery Complete</a></h2>
+<p>🏆 <strong>You’ve completed the GPU debugging trilogy!</strong></p>
+<h3 id="your-complete-gpu-debugging-arsenal"><a class="header" href="#your-complete-gpu-debugging-arsenal">Your Complete GPU Debugging Arsenal</a></h3>
+<p><strong>From the <a href="./first_case.html">First Case</a> - Crash Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Systematic crash investigation</strong> using error messages as guides</li>
+<li>✅ <strong>Memory bug detection</strong> through pointer address inspection</li>
+<li>✅ <strong>CUDA-GDB fundamentals</strong> for memory-related issues</li>
+</ul>
+<p><strong>From the <a href="./second_case.html">Second Case</a> - Logic Bug Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Algorithm error investigation</strong> without obvious symptoms</li>
+<li>✅ <strong>Pattern analysis techniques</strong> for tracing wrong results to root causes</li>
+<li>✅ <strong>Execution flow debugging</strong> when variable inspection fails</li>
+</ul>
+<p><strong>From the <a href="./third_case.html">Third Case</a> - Coordination Debugging:</strong></p>
+<ul>
+<li>✅ <strong>Barrier deadlock investigation</strong> for thread coordination failures</li>
+<li>✅ <strong>Multi-thread state analysis</strong> using advanced CUDA-GDB techniques</li>
+<li>✅ <strong>Synchronization verification</strong> for complex parallel programs</li>
+</ul>
+<h3 id="the-professional-gpu-debugging-methodology"><a class="header" href="#the-professional-gpu-debugging-methodology">The Professional GPU Debugging Methodology</a></h3>
+<p>You’ve mastered the systematic approach used by professional GPU developers:</p>
+<ol>
+<li><strong>Read the symptoms</strong> - Crashes? Wrong results? Infinite hangs?</li>
+<li><strong>Form hypotheses</strong> - Memory issue? Logic error? Coordination problem?</li>
+<li><strong>Gather evidence</strong> - Use CUDA-GDB strategically based on the bug type</li>
+<li><strong>Test systematically</strong> - Verify each hypothesis through targeted investigation</li>
+<li><strong>Trace to root cause</strong> - Follow the evidence chain to the source</li>
+</ol>
+<p><strong>🎯 Achievement Unlocked</strong>: You can now debug the three most common GPU programming issues:</p>
+<ul>
+<li><strong>Memory crashes</strong> (<a href="./first_case.html">First Case</a>) - null pointers, out-of-bounds access</li>
+<li><strong>Logic bugs</strong> (<a href="./second_case.html">Second Case</a>) - algorithmic errors, incorrect results</li>
+<li><strong>Coordination deadlocks</strong> (<a href="./third_case.html">Third Case</a>) - barrier synchronization failures</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_09/second_case.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_09/second_case.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

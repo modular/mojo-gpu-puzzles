@@ -1,0 +1,414 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🧐 Detective Work: First Case - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-detective-work-first-case"><a class="header" href="#-detective-work-first-case">🧐 Detective Work: First Case</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>In this puzzle, you’ll face a GPU program that crashes and the task is to find the issue without looking at the code and only through <code>(cuda-gdb)</code>. Run the debugger and be a detective!</p>
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>Systematic debugging</strong>: Using error messages as clues to find root causes</li>
+<li><strong>Error analysis</strong>: Reading crash messages and stack traces</li>
+<li><strong>Hypothesis formation</strong>: Making educated guesses about the problem</li>
+<li><strong>Debugging workflow</strong>: Step-by-step investigation process</li>
+</ul>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code</p>
+<pre><code class="language-mojo">fn add_10(
+    result: UnsafePointer[Scalar[dtype]], input: UnsafePointer[Scalar[dtype]]
+):
+    i = thread_idx.x
+    result[i] = input[i] + 10.0
+
+
+</code></pre>
+<p>firsthand experience, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --first-case
+</code></pre>
+<p>You’ll see output like when the program crashes with this error:</p>
+<pre><code class="language-txt">CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
+[24326:24326:20250801,180816.333593:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)
+[24326:24326:20250801,180816.333653:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq: No such file or directory (2)
+Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
+Stack dump:
+0.      Program arguments: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo problems/p09/p09.mojo
+Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
+0  mojo                      0x0000653a338d3d2b
+1  mojo                      0x0000653a338d158a
+2  mojo                      0x0000653a338d48d7
+3  libc.so.6                 0x00007cbc08442520
+4  libc.so.6                 0x00007cbc0851e88d syscall + 29
+5  libAsyncRTMojoBindings.so 0x00007cbc0ab68653
+6  libc.so.6                 0x00007cbc08442520
+7  libc.so.6                 0x00007cbc084969fc pthread_kill + 300
+8  libc.so.6                 0x00007cbc08442476 raise + 22
+9  libc.so.6                 0x00007cbc084287f3 abort + 211
+10 libAsyncRTMojoBindings.so 0x00007cbc097c7c7b
+11 libAsyncRTMojoBindings.so 0x00007cbc097c7c9e
+12 (error)                   0x00007cbb5c00600f
+mojo crashed!
+Please file a bug report.
+</code></pre>
+<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your Task: Detective Work</a></h2>
+<p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> means the GPU tried to access invalid memory</li>
+<li><strong>Check the breakpoint information</strong> - Look at the function parameters shown when CUDA-GDB stops</li>
+<li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer parameter</li>
+<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large hex numbers (what does <code>0x0</code> mean?)</li>
+<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see which one fails</li>
+<li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence from symptom to root cause</li>
+<li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another doesn’t, focus on the broken one</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-Step Investigation with CUDA-GDB</a></h2>
+<h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the Debugger</a></h3>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+</code></pre>
+<h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
+<p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
+<pre><code>(cuda-gdb) run
+CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
+31          i = thread_idx.x
+</code></pre>
+<p><strong>🔍 First Clue</strong>: The function signature shows <code>(result=0x302000000, input=0x0)</code></p>
+<ul>
+<li><code>result</code> has a valid GPU memory address</li>
+<li><code>input</code> is <code>0x0</code> - this is a null pointer!</li>
+</ul>
+<h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic Variable Inspection</a></h3>
+<pre><code>(cuda-gdb) next
+32          result[i] = input[i] + 10.0
+(cuda-gdb) print i
+$1 = 0
+(cuda-gdb) print result
+$2 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+(cuda-gdb) print input
+$3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
+</code></pre>
+<p><strong>🔍 Evidence Gathering</strong>:</p>
+<ul>
+<li>✅ Thread index <code>i=0</code> is valid</li>
+<li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
+<li>❌ Input pointer <code>0x0</code> is null</li>
+</ul>
+<h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
+<pre><code>(cuda-gdb) print input[i]
+Cannot access memory at address 0x0
+</code></pre>
+<p><strong>💥 Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
+<h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root Cause Analysis</a></h2>
+<p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
+<pre><code class="language-mojo">input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
+</code></pre>
+<p><strong>Why This Crashes</strong>:</p>
+<ol>
+<li><code>UnsafePointer[Scalar[dtype]]()</code> creates an uninitialized pointer (null)</li>
+<li>This null pointer gets passed to the GPU kernel</li>
+<li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
+</ol>
+<h2 id="the-fix"><a class="header" href="#the-fix">The Fix</a></h2>
+<p>Replace null pointer creation with proper buffer allocation:</p>
+<pre><code class="language-mojo"># Wrong: Creates null pointer
+input_ptr = UnsafePointer[Scalar[dtype]]()
+
+# Correct: Allocates and initialize actual GPU memory for safe processing
+input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+</code></pre>
+<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key Debugging Lessons</a></h2>
+<p><strong>Pattern Recognition</strong>:</p>
+<ul>
+<li><code>0x0</code> addresses are always null pointers</li>
+<li>Valid GPU addresses are large hex numbers (e.g., <code>0x302000000</code>)</li>
+</ul>
+<p><strong>Debugging Strategy</strong>:</p>
+<ol>
+<li><strong>Read crash messages</strong> - They often hint at the problem type</li>
+<li><strong>Check function parameters</strong> - CUDA-GDB shows them at breakpoint entry</li>
+<li><strong>Inspect all pointers</strong> - Compare addresses to identify null/invalid ones</li>
+<li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
+<li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
+</ol>
+<p><strong>💡 Professional Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
+</div>
+</details>
+<h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
+<p>🎯 <strong>You’ve mastered crash debugging!</strong> You can now:</p>
+<ul>
+<li>✅ <strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
+<li>✅ <strong>Identify null pointer bugs</strong> through pointer address inspection</li>
+<li>✅ <strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
+</ul>
+<h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your Next Challenge: <a href="./second_case.html">Detective Work: Second Case</a></a></h3>
+<p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but produces <strong>wrong results</strong>?</p>
+<p>The <a href="./second_case.html">Second Case</a> presents a completely different debugging challenge:</p>
+<ul>
+<li>❌ <strong>No crash messages</strong> to guide you</li>
+<li>❌ <strong>No obvious pointer problems</strong> to investigate</li>
+<li>❌ <strong>No stack traces</strong> pointing to the issue</li>
+<li>✅ <strong>Just wrong results</strong> that need systematic investigation</li>
+</ul>
+<p><strong>New skills you’ll develop:</strong></p>
+<ul>
+<li><strong>Logic bug detection</strong> - Finding algorithmic errors without crashes</li>
+<li><strong>Pattern analysis</strong> - Using incorrect output to trace back to root causes</li>
+<li><strong>Execution flow debugging</strong> - When variable inspection fails due to optimizations</li>
+</ul>
+<p>The systematic investigation approach you learned here - reading clues, forming hypotheses, testing systematically - forms the foundation for debugging the more subtle logic errors ahead.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_09/essentials.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_09/second_case.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_09/essentials.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_09/second_case.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

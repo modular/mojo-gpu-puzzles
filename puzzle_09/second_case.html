@@ -1,0 +1,563 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔍 Detective Work: Second Case - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-detective-work-second-case"><a class="header" href="#-detective-work-second-case">🔍 Detective Work: Second Case</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Building on your <a href="./first_case.html">crash debugging skills from the First Case</a>, you’ll now face a completely different challenge: a <strong>logic bug</strong> that produces incorrect results without crashing.</p>
+<p><strong>The debugging shift:</strong></p>
+<ul>
+<li><strong>First Case</strong>: Clear crash signals (<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>) guided your investigation</li>
+<li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results that require detective work</li>
+</ul>
+<p>This intermediate-level debugging challenge teaches you to investigate <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
+<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
+ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+</code></pre>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this debugging challenge, you’ll learn about:</p>
+<ul>
+<li><strong>LayoutTensor debugging</strong>: Investigating structured data access patterns</li>
+<li><strong>Logic bug detection</strong>: Finding algorithmic errors that don’t crash</li>
+<li><strong>Loop boundary analysis</strong>: Understanding iteration count problems</li>
+<li><strong>Result pattern analysis</strong>: Using output data to trace back to root causes</li>
+</ul>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>Given the kernel and without looking at the complete code:</p>
+<pre><code class="language-mojo">fn process_sliding_window(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    input: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+
+    # Each thread processes a sliding window of 3 elements
+    window_sum = Scalar[dtype](0.0)
+
+    # Sum elements in sliding window: [i-1, i, i+1]
+    for offset in range(ITER):
+        idx = thread_id + offset - 1
+        if 0 &lt;= idx &lt; SIZE:
+            value = rebind[Scalar[dtype]](input[idx])
+            window_sum += value
+
+    output[thread_id] = window_sum
+
+
+</code></pre>
+<p>First experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<pre><code class="language-bash">pixi run p09 --second-case
+</code></pre>
+<p>You’ll see output like this - <strong>no crash, but wrong results</strong>:</p>
+<pre><code class="language-txt">This program computes sliding window sums for each position...
+
+Input array: [0, 1, 2, 3]
+Computing sliding window sums (window size = 3)...
+Each position should sum its neighbors: [left + center + right]
+Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
+Expected: [1.0, 3.0, 6.0, 5.0]
+❌ Test FAILED - Sliding window sums are incorrect!
+Check the window indexing logic...
+</code></pre>
+<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
+<p><strong>Challenge</strong>: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?</p>
+<p><strong>Think about:</strong></p>
+<ul>
+<li>What pattern do you see in the wrong results?</li>
+<li>How would you investigate a loop that might not be running correctly?</li>
+<li>What debugging strategy works when you can’t inspect variables directly?</li>
+<li>How can you apply the systematic investigation approach from <a href="./first_case.html">First Case</a> when there are no crash signals to guide you?</li>
+</ul>
+<p>Start with:</p>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+</code></pre>
+<h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
+<p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
+<div class="table-wrapper"><table><thead><tr><th>Short</th><th>Full</th><th>Usage Example</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 39</code></td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>All debugging commands below use these shortcuts for efficiency!</strong></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>Pattern analysis first</strong> - Look at the relationship between expected and actual results (what’s the mathematical pattern in the differences?)</li>
+<li><strong>Focus on execution flow</strong> - Count loop iterations when variables aren’t accessible</li>
+<li><strong>Use simple breakpoints</strong> - Complex debugging commands often fail with optimized code</li>
+<li><strong>Mathematical reasoning</strong> - Work out what each thread should access vs what it actually accesses</li>
+<li><strong>Missing data investigation</strong> - If results are consistently smaller than expected, what might be missing?</li>
+<li><strong>Host output verification</strong> - The final results often reveal the pattern of the bug</li>
+<li><strong>Algorithm boundary analysis</strong> - Check if loops are processing the right number of elements</li>
+<li><strong>Cross-validate with working cases</strong> - Why does thread 3 work correctly but others don’t?</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 Investigation & Solution</strong></summary>
+<div class="solution-explanation">
+<h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-step investigation with CUDA-GDB</a></h2>
+<h3 id="phase-1-launch-and-initial-analysis"><a class="header" href="#phase-1-launch-and-initial-analysis">Phase 1: Launch and initial analysis</a></h3>
+<h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: Start the debugger</a></h4>
+<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+</code></pre>
+<h4 id="step-2-analyze-the-symptoms-first"><a class="header" href="#step-2-analyze-the-symptoms-first">Step 2: analyze the symptoms first</a></h4>
+<p>Before diving into the debugger, let’s examine what we know:</p>
+<pre><code class="language-txt">Actual result: [0.0, 1.0, 3.0, 5.0]
+Expected: [1.0, 3.0, 6.0, 5.0]
+</code></pre>
+<p><strong>🔍 Pattern Recognition</strong>:</p>
+<ul>
+<li>Thread 0: Got 0.0, Expected 1.0 → Missing 1.0</li>
+<li>Thread 1: Got 1.0, Expected 3.0 → Missing 2.0</li>
+<li>Thread 2: Got 3.0, Expected 6.0 → Missing 3.0</li>
+<li>Thread 3: Got 5.0, Expected 5.0 → ✅ Correct</li>
+</ul>
+<p><strong>Initial Hypothesis</strong>: Each thread is missing some data, but thread 3 works correctly.</p>
+<h3 id="phase-2-entering-the-kernel"><a class="header" href="#phase-2-entering-the-kernel">Phase 2: Entering the kernel</a></h3>
+<h4 id="step-3-observe-the-breakpoint-entry"><a class="header" href="#step-3-observe-the-breakpoint-entry">Step 3: Observe the breakpoint entry</a></h4>
+<p>Based on the real debugging session, here’s what happens:</p>
+<pre><code class="language-bash">(cuda-gdb) r
+Starting program: .../mojo run problems/p09/p09.mojo --second-case
+
+This program computes sliding window sums for each position...
+Input array: [0, 1, 2, 3]
+Computing sliding window sums (window size = 3)...
+Each position should sum its neighbors: [left + center + right]
+
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
+
+CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
+30          input: LayoutTensor[mut=False, dtype, vector_layout],
+</code></pre>
+<h4 id="step-4-navigate-to-the-main-logic"><a class="header" href="#step-4-navigate-to-the-main-logic">Step 4: Navigate to the main logic</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+29          output: LayoutTensor[mut=True, dtype, vector_layout],
+(cuda-gdb) n
+32          thread_id = thread_idx.x
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<h4 id="step-5-test-variable-accessibility---crucial-discovery"><a class="header" href="#step-5-test-variable-accessibility---crucial-discovery">Step 5: Test variable accessibility - crucial discovery</a></h4>
+<pre><code class="language-bash">(cuda-gdb) p thread_id
+$1 = 0
+</code></pre>
+<p><strong>✅ Good</strong>: Thread ID is accessible.</p>
+<pre><code class="language-bash">(cuda-gdb) p window_sum
+Cannot access memory at address 0x0
+</code></pre>
+<p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
+<pre><code class="language-bash">(cuda-gdb) p input[0]
+Attempt to take address of value not located in memory.
+</code></pre>
+<p><strong>❌ Problem</strong>: Direct LayoutTensor indexing doesn’t work.</p>
+<pre><code class="language-bash">(cuda-gdb) p input.ptr[0]
+$2 = {0}
+(cuda-gdb) p input.ptr[0]@4
+$3 = {{0}, {1}, {2}, {3}}
+</code></pre>
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>input.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
+<h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
+<h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
+<pre><code class="language-bash">(cuda-gdb) b 39
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
+(cuda-gdb) c
+Continuing.
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:39
+39              idx = thread_id + offset - 1
+</code></pre>
+<p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
+<h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<p><strong>📝 First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+
+CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
+39              idx = thread_id + offset - 1
+(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+41                  value = rebind[Scalar[dtype]](input[idx])
+(cuda-gdb) n
+42                  window_sum += value
+(cuda-gdb) n
+40              if 0 &lt;= idx &lt; SIZE:
+(cuda-gdb) n
+38          for offset in range(ITER):
+</code></pre>
+<p><strong>📝 Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+44          output[thread_id] = window_sum
+</code></pre>
+<p><strong>🚨 CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
+<h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+28      fn process_sliding_window(
+(cuda-gdb) n
+[Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
+0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
+(cuda-gdb) p output.ptr[0]@4
+No symbol "output" in current context.
+(cuda-gdb) p offset
+No symbol "offset" in current context.
+</code></pre>
+<p><strong>🔍 Context Lost</strong>: After kernel completion, we lose access to kernel variables. This is normal behavior.</p>
+<h3 id="phase-4-root-cause-analysis"><a class="header" href="#phase-4-root-cause-analysis">Phase 4: Root cause analysis</a></h3>
+<h4 id="step-11-algorithm-analysis-from-observed-execution"><a class="header" href="#step-11-algorithm-analysis-from-observed-execution">Step 11: Algorithm analysis from observed execution</a></h4>
+<p>From our debugging session, we observed:</p>
+<ol>
+<li><strong>Loop Iterations</strong>: Only 2 iterations (offset = 0, offset = 1)</li>
+<li><strong>Expected</strong>: A sliding window of size 3 should require 3 iterations (offset = 0, 1, 2)</li>
+<li><strong>Missing</strong>: The third iteration (offset = 2)</li>
+</ol>
+<p>Looking at what each thread should compute:</p>
+<ul>
+<li><strong>Thread 0</strong>: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0</li>
+<li><strong>Thread 1</strong>: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0</li>
+<li><strong>Thread 2</strong>: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0</li>
+<li><strong>Thread 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0</li>
+</ul>
+<h4 id="step-12-trace-the-actual-execution-for-thread-0"><a class="header" href="#step-12-trace-the-actual-execution-for-thread-0">Step 12: Trace the actual execution for thread 0</a></h4>
+<p>With only 2 iterations (offset = 0, 1):</p>
+<p><strong>Iteration 1 (offset = 0)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 0 - 1 = -1</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= -1 &lt; 4:</code> → <strong>False</strong></li>
+<li>Skip the sum operation</li>
+</ul>
+<p><strong>Iteration 2 (offset = 1)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 1 - 1 = 0</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 0 &lt; 4:</code> → <strong>True</strong></li>
+<li><code>window_sum += input[0]</code> → <code>window_sum += 0</code></li>
+</ul>
+<p><strong>Missing Iteration 3 (offset = 2)</strong>:</p>
+<ul>
+<li><code>idx = thread_id + offset - 1 = 0 + 2 - 1 = 1</code></li>
+<li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 1 &lt; 4:</code> → <strong>True</strong></li>
+<li><code>window_sum += input[1]</code> → <code>window_sum += 1</code> ← <strong>THIS NEVER HAPPENS</strong></li>
+</ul>
+<p><strong>Result</strong>: Thread 0 gets <code>window_sum = 0</code> instead of <code>window_sum = 0 + 1 = 1</code></p>
+<h3 id="phase-5-bug-confirmation"><a class="header" href="#phase-5-bug-confirmation">Phase 5: Bug confirmation</a></h3>
+<p>Looking at the problem code, we find:</p>
+<pre><code class="language-mojo">alias ITER = 2                       # ← BUG: Should be 3!
+
+for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
+    idx = thread_id + offset - 1     # ← Missing offset = 2
+    if 0 &lt;= idx &lt; SIZE:
+        window_sum += input[idx]
+</code></pre>
+<p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
+<p><strong>The Fix</strong>: Change <code>alias ITER = 2</code> to <code>alias ITER = 3</code> in the source code.</p>
+<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
+<p><strong>When Variables Are Inaccessible</strong>:</p>
+<ol>
+<li><strong>Focus on execution flow</strong> - Count breakpoint hits and loop iterations</li>
+<li><strong>Use mathematical reasoning</strong> - Work out what should happen vs what does happen</li>
+<li><strong>Pattern analysis</strong> - Let the wrong results guide your investigation</li>
+<li><strong>Cross-validation</strong> - Test your hypothesis against multiple data points</li>
+</ol>
+<p><strong>Professional GPU Debugging Reality</strong>:</p>
+<ul>
+<li><strong>Variable inspection often fails</strong> due to compiler optimizations</li>
+<li><strong>Execution flow analysis</strong> is more reliable than data inspection</li>
+<li><strong>Host output patterns</strong> provide crucial debugging clues</li>
+<li><strong>Source code reasoning</strong> complements limited debugger capabilities</li>
+</ul>
+<p><strong>LayoutTensor Debugging</strong>:</p>
+<ul>
+<li>Even with LayoutTensor abstractions, underlying algorithmic bugs still manifest</li>
+<li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
+<li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
+</ul>
+<p><strong>💡 Professional Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+</div>
+</details>
+<h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>
+<p>🎯 <strong>You’ve mastered logic bug debugging!</strong> You can now:</p>
+<ul>
+<li>✅ <strong>Investigate algorithmic errors</strong> without crashes or obvious symptoms</li>
+<li>✅ <strong>Use pattern analysis</strong> to trace wrong results back to root causes</li>
+<li>✅ <strong>Debug with limited variable access</strong> using execution flow analysis</li>
+<li>✅ <strong>Apply mathematical reasoning</strong> when debugger tools have limitations</li>
+</ul>
+<h3 id="your-final-challenge-detective-work-third-case"><a class="header" href="#your-final-challenge-detective-work-third-case">Your Final Challenge: <a href="./third_case.html">Detective Work: Third Case</a></a></h3>
+<p><strong>But what if your program doesn’t crash AND doesn’t finish?</strong> What if it just <strong>hangs forever</strong>?</p>
+<p>The <a href="./third_case.html">Third Case</a> presents the ultimate debugging challenge:</p>
+<ul>
+<li>❌ <strong>No crash messages</strong> (like First Case)</li>
+<li>❌ <strong>No wrong results</strong> (like Second Case)</li>
+<li>❌ <strong>No completion at all</strong> - just infinite hanging</li>
+<li>✅ <strong>Silent deadlock</strong> requiring advanced thread coordination analysis</li>
+</ul>
+<p><strong>New skills you’ll develop:</strong></p>
+<ul>
+<li><strong>Barrier deadlock detection</strong> - Finding coordination failures in parallel threads</li>
+<li><strong>Multi-thread state analysis</strong> - Examining all threads simultaneously</li>
+<li><strong>Synchronization debugging</strong> - Understanding thread cooperation breakdowns</li>
+</ul>
+<p><strong>The debugging evolution:</strong></p>
+<ol>
+<li><strong>First Case</strong>: Follow crash signals → Find memory bugs</li>
+<li><strong>Second Case</strong>: Analyze result patterns → Find logic bugs</li>
+<li><strong>Third Case</strong>: Investigate thread states → Find coordination bugs</li>
+</ol>
+<p>The systematic investigation skills from both previous cases - hypothesis formation, evidence gathering, pattern analysis - become crucial when debugging the most challenging GPU issue: threads that coordinate incorrectly and wait forever.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_09/first_case.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_09/third_case.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_09/first_case.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_09/third_case.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
