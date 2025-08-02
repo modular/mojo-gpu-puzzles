@@ -516,7 +516,7 @@ Process 186951 exited with status = 0 (0x00000000)
 <li>Quick prototyping and experimenting with code changes</li>
 </ul>
 <p><strong>Key insight</strong>: LLDB is perfect for <strong>host-side debugging</strong> - everything that happens on your CPU before and after GPU execution. For the actual GPU kernel debugging, you need our next approach…</p>
-<h2 id="tutorial-step-2-professional-binary-debugging"><a class="header" href="#tutorial-step-2-professional-binary-debugging">Tutorial step 2: Professional binary debugging</a></h2>
+<h2 id="tutorial-step-2-binary-debugging"><a class="header" href="#tutorial-step-2-binary-debugging">Tutorial step 2: Binary debugging</a></h2>
 <p>You’ve learned JIT debugging - now let’s explore the <strong>professional approach</strong> used in production environments.</p>
 <p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or you need to debug the same program repeatedly. Building a binary first gives you more control and faster debugging iterations.</p>
 <h3 id="build-your-debug-binary"><a class="header" href="#build-your-debug-binary">Build your debug binary</a></h3>
@@ -838,7 +838,7 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 </code></pre>
 <h3 id="variable-inspection"><a class="header" href="#variable-inspection">Variable inspection</a></h3>
 <pre><code class="language-bash">(lldb) print variable_name   # Show variable value
-(lldb) print *pointer        # Dereference pointer
+(lldb) print pointer[offset]        # Dereference pointer
 (lldb) print array[0]@4      # Show first 4 array elements
 </code></pre>
 <h2 id="cuda-gdb-commands-gpu-kernel-debugging"><a class="header" href="#cuda-gdb-commands-gpu-kernel-debugging">CUDA-GDB commands (GPU kernel debugging)</a></h2>
@@ -863,31 +863,11 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <pre><code class="language-bash"># Array inspection using local variables (what actually works):
 (cuda-gdb) print array[i]       # Thread-specific array access using local variable
 (cuda-gdb) print array[0]@4     # View multiple elements: {{val1}, {val2}, {val3}, {val4}}
-(cuda-gdb) print/x &amp;array[0]    # Memory address of array start
 </code></pre>
 <h3 id="advanced-gpu-debugging"><a class="header" href="#advanced-gpu-debugging">Advanced GPU debugging</a></h3>
 <pre><code class="language-bash"># Memory watching
 (cuda-gdb) watch array[i]     # Break on memory changes
 (cuda-gdb) rwatch array[i]    # Break on memory reads
-</code></pre>
-<h2 id="puzzle-specific-debugging-patterns"><a class="header" href="#puzzle-specific-debugging-patterns">Puzzle-specific debugging patterns</a></h2>
-<p><strong>Apply these patterns to debug concepts from specific puzzles:</strong></p>
-<h3 id="array-operations-puzzles-1-5"><a class="header" href="#array-operations-puzzles-1-5">Array operations (Puzzles 1-5)</a></h3>
-<pre><code class="language-bash"># Verify each thread processes its correct array element
-(cuda-gdb) print a[i]         # Input for this thread
-(cuda-gdb) print output[i]    # Output for this thread
-(cuda-gdb) print i           # Confirm thread index
-</code></pre>
-<h3 id="2d-grid-operations-puzzles-4-7"><a class="header" href="#2d-grid-operations-puzzles-4-7">2D grid operations (Puzzles 4, 7)</a></h3>
-<pre><code class="language-bash"># Debug 2D thread indexing and memory access
-(cuda-gdb) print row            # Row coordinate
-(cuda-gdb) print col            # Column coordinate
-(cuda-gdb) print row * width + col       # 2D to 1D index conversion
-(cuda-gdb) print matrix[row * width + col] # 2D array access
-</code></pre>
-<h3 id="shared-memory-puzzle-8"><a class="header" href="#shared-memory-puzzle-8">Shared memory (Puzzle 8)</a></h3>
-<pre><code class="language-bash"># Debug shared memory access and synchronization
-(cuda-gdb) print shared_data[local_i]  # Thread's shared memory slot
 </code></pre>
 <hr />
 <h2 id="quick-reference-debugging-decision-tree"><a class="header" href="#quick-reference-debugging-decision-tree">Quick reference: Debugging decision tree</a></h2>
@@ -905,50 +885,6 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 <pre><code class="language-bash">pixi run mojo build -O0 -g your_program.mojo -o debug_binary
 pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 </code></pre>
-<h2 id="real-world-debugging-scenarios-youll-encounter-these"><a class="header" href="#real-world-debugging-scenarios-youll-encounter-these">Real-world debugging scenarios (You’ll encounter these!)</a></h2>
-<h3 id="scenario-1-my-kernel-never-runs"><a class="header" href="#scenario-1-my-kernel-never-runs">Scenario 1: “My kernel never runs!”</a></h3>
-<p><strong>Symptoms</strong>: Program runs but produces no output, or crashes silently.</p>
-<p><strong>Debug approach</strong>:</p>
-<pre><code class="language-bash"># Check if kernel was actually launched
-(cuda-gdb) cuda kernel
-# Should show your kernel in the list
-
-# Verify GPU device is accessible
-(cuda-gdb) info cuda devices
-# Should show your GPU
-
-# Check for launch configuration errors
-(cuda-gdb) break your_kernel        # Set breakpoint in kernel
-(cuda-gdb) run                      # If breakpoint never hits, kernel didn't launch
-</code></pre>
-<p><strong>Common causes</strong>: Wrong launch configuration, GPU out of memory, compilation errors.</p>
-<h3 id="scenario-2-results-are-wrong-but-no-crash"><a class="header" href="#scenario-2-results-are-wrong-but-no-crash">Scenario 2: “Results are wrong but no crash!”</a></h3>
-<p><strong>Symptoms</strong>: Program completes successfully but produces incorrect output.</p>
-<p><strong>Debug approach</strong>:</p>
-<pre><code class="language-bash"># Compare input and output for specific threads
-(cuda-gdb) break kernel_name if thread_idx.x == 0
-(cuda-gdb) print input[0]           # Expected input
-(cuda-gdb) print output[0]          # Actual output
-(cuda-gdb) step                     # Step through computation
-(cuda-gdb) print intermediate_value # Check intermediate results
-</code></pre>
-<p><strong>Common causes</strong>: Logic errors, incorrect indexing, race conditions.</p>
-<h3 id="scenario-4-shared-memory-race-condition"><a class="header" href="#scenario-4-shared-memory-race-condition">Scenario 4: “Shared memory race condition!”</a></h3>
-<p><strong>Symptoms</strong>: Results vary between runs, some elements are incorrect randomly.</p>
-<p><strong>Debug approach</strong>:</p>
-<pre><code class="language-bash"># Check synchronization points
-(cuda-gdb) break after_shared_write
-(cuda-gdb) info cuda threads       # See which threads reached sync point
-
-# Examine shared memory across different threads
-(cuda-gdb) cuda thread (0,0,0)
-(cuda-gdb) print shared_data[0]@32  # Shared memory from thread 0's view
-
-(cuda-gdb) cuda thread (1,0,0)
-(cuda-gdb) print shared_data[0]@32  # Same data from thread 1's view
-# Should be identical after synchronization
-</code></pre>
-<p><strong>Common causes</strong>: Missing <code>barrier</code>, incorrect shared memory indexing.</p>
 <hr />
 <h2 id="youve-learned-the-essentials-of-gpu-debugging"><a class="header" href="#youve-learned-the-essentials-of-gpu-debugging">You’ve learned the essentials of GPU debugging!</a></h2>
 <p>You’ve completed a comprehensive tutorial on GPU debugging fundamentals. Here’s what you’ve accomplished:</p>
@@ -965,7 +901,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <li><strong>Saw threads in action</strong> - witnessed <code>thread_idx.x</code> having different values across parallel threads</li>
 <li><strong>Understood memory hierarchy</strong> - debugged global GPU memory, shared memory, thread-local variables</li>
 <li><strong>Learned thread navigation</strong> - jumped between thousands of parallel threads seamlessly</li>
-<li><strong>Applied conditional breakpoints</strong> - focused on specific threads and data conditions</li>
 </ul>
 <h3 id="from-theory-to-practice"><a class="header" href="#from-theory-to-practice">From theory to practice</a></h3>
 <p>You didn’t just read about GPU debugging - you <strong>experienced it</strong>:</p>
@@ -980,7 +915,6 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <div class="table-wrapper"><table><thead><tr><th>Problem Type</th><th>Tool</th><th>Command</th></tr></thead><tbody>
 <tr><td><strong>Program crashes before GPU</strong></td><td>LLDB</td><td><code>pixi run mojo debug program.mojo</code></td></tr>
 <tr><td><strong>GPU kernel issues</strong></td><td>CUDA-GDB</td><td><code>pixi run mojo debug --cuda-gdb --break-on-launch program.mojo</code></td></tr>
-<tr><td><strong>Memory violations</strong></td><td>CUDA-GDB + memcheck</td><td><code>(cuda-gdb) set cuda memcheck on</code></td></tr>
 <tr><td><strong>Race conditions</strong></td><td>CUDA-GDB + thread nav</td><td><code>(cuda-gdb) cuda thread (0,0,0)</code></td></tr>
 </tbody></table>
 </div>
