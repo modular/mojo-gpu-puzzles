@@ -1,0 +1,537 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🏁 Debug Race Condition - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="debugging-race-conditions"><a class="header" href="#debugging-race-conditions">Debugging Race Conditions</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
+<p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<pre><code class="language-mojo">alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
+alias dtype = DType.float32
+</code></pre>
+<h2 id="the-failing-kernel"><a class="header" href="#the-failing-kernel">The failing kernel</a></h2>
+<pre><code class="language-mojo">
+alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+
+    if row &lt; size and col &lt; size:
+        shared_sum[0] += a[row, col]
+
+    barrier()
+
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<pre><code class="language-bash">pixi run p10 --race-condition
+</code></pre>
+<p>and the output will look like</p>
+<pre><code class="language-txt">out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:122:33: AssertionError: `left == right` comparison failed:
+   left: 0.0
+  right: 6.0
+</code></pre>
+<p>Let’s see how <code>compute-sanitizer</code> can help us detection issues in our GPU code.</p>
+<h2 id="debugging-with-compute-sanitizer"><a class="header" href="#debugging-with-compute-sanitizer">Debugging with <code>compute-sanitizer</code></a></h2>
+<h3 id="step-1-identify-the-race-condition-with-racecheck"><a class="header" href="#step-1-identify-the-race-condition-with-racecheck">Step 1: Identify the race condition with <code>racecheck</code></a></h3>
+<p>Use <code>compute-sanitizer</code> with the <code>racecheck</code> tool to identify race conditions:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>the output will look like</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+========= Error: Race reported between Write access at p10_shared_memory_race_...+0x140
+=========     and Read access at p10_shared_memory_race_...+0xe0 [4 hazards]
+=========     and Write access at p10_shared_memory_race_...+0x140 [5 hazards]
+=========
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)
+</code></pre>
+<p><strong>Analysis</strong>: The program has <strong>1 race condition</strong> with <strong>9 individual hazards</strong>:</p>
+<ul>
+<li><strong>4 read-after-write hazards</strong> (threads reading while others write)</li>
+<li><strong>5 write-after-write hazards</strong> (multiple threads writing simultaneously)</li>
+</ul>
+<h3 id="step-2-compare-with-synccheck"><a class="header" href="#step-2-compare-with-synccheck">Step 2: Compare with <code>synccheck</code></a></h3>
+<p>Verify this is a race condition, not a synchronization issue:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool synccheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>and the output will be like</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= ERROR SUMMARY: 0 errors
+</code></pre>
+<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong> - there are no synchronization issues like deadlocks. The problem is <strong>race conditions</strong>, not synchronization bugs.</p>
+<h2 id="deadlock-vs-race-condition-understanding-the-difference"><a class="header" href="#deadlock-vs-race-condition-understanding-the-difference">Deadlock vs Race Condition: Understanding the Difference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Deadlock</th><th>Race Condition</th></tr></thead><tbody>
+<tr><td><strong>Symptom</strong></td><td>Program hangs forever</td><td>Program produces wrong results</td></tr>
+<tr><td><strong>Execution</strong></td><td>Never completes</td><td>Completes successfully</td></tr>
+<tr><td><strong>Timing</strong></td><td>Deterministic hang</td><td>Non-deterministic results</td></tr>
+<tr><td><strong>Root Cause</strong></td><td>Synchronization logic error</td><td>Unsynchronized data access</td></tr>
+<tr><td><strong>Detection Tool</strong></td><td><code>synccheck</code></td><td><code>racecheck</code></td></tr>
+<tr><td><strong>Example</strong></td><td><a href="../puzzle_09/third_case.html">Puzzle 09: Third case</a> barrier deadlock</td><td>Our shared memory <code>+=</code> operation</td></tr>
+</tbody></table>
+</div>
+<p><strong>In our specific case:</strong></p>
+<ul>
+<li><strong>Program completes</strong> → No deadlock (threads don’t get stuck)</li>
+<li><strong>Wrong results</strong> → Race condition (threads corrupt each other’s data)</li>
+<li><strong>Tool confirms</strong> → <code>synccheck</code> reports 0 errors, <code>racecheck</code> reports 9 hazards</li>
+</ul>
+<p><strong>Why this distinction matters for debugging:</strong></p>
+<ul>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+</ul>
+<h2 id="challenge"><a class="header" href="#challenge">Challenge</a></h2>
+<p>Equiped with these tools, fix the kernel failing kernel.</p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="understanding-the-hazard-breakdown"><a class="header" href="#understanding-the-hazard-breakdown">Understanding the hazard breakdown</a></h3>
+<p>The <code>shared_sum[0] += a[row, col]</code> operation creates hazards because it’s actually <strong>three separate memory operations</strong>:</p>
+<ol>
+<li><strong>READ</strong> <code>shared_sum[0]</code></li>
+<li><strong>ADD</strong> <code>a[row, col]</code> to the read value</li>
+<li><strong>WRITE</strong> the result back to <code>shared_sum[0]</code></li>
+</ol>
+<p>With 4 active threads (positions (0,0), (0,1), (1,0), (1,1)), these operations can interleave:</p>
+<ul>
+<li><strong>Thread timing overlap</strong> → Multiple threads read the same initial value (0.0)</li>
+<li><strong>Lost updates</strong> → Each thread writes back <code>0.0 + their_value</code>, overwriting others’ work</li>
+<li><strong>Non-atomic operation</strong> → The <code>+=</code> compound assignment isn’t atomic in GPU shared memory</li>
+</ul>
+<p><strong>Why we get exactly 9 hazards:</strong></p>
+<ul>
+<li>Each thread tries to perform read-modify-write</li>
+<li>4 threads × 2-3 hazards per thread = 9 total hazards</li>
+<li><code>compute-sanitizer</code> tracks every conflicting memory access pair</li>
+</ul>
+<h3 id="race-condition-debugging-tips"><a class="header" href="#race-condition-debugging-tips">Race condition debugging tips</a></h3>
+<ol>
+<li><strong>Use racecheck for data races</strong>: Detects shared memory hazards and data corruption</li>
+<li><strong>Use synccheck for deadlocks</strong>: Detects synchronization bugs (barrier issues, deadlocks)</li>
+<li><strong>Focus on shared memory access</strong>: Look for unsynchronized <code>+=</code>, <code>=</code> operations to shared variables</li>
+<li><strong>Identify the pattern</strong>: Read-modify-write operations are common race condition sources</li>
+<li><strong>Check barrier placement</strong>: Barriers must be placed BEFORE conflicting operations, not after</li>
+</ol>
+<p><strong>Why this distinction matters for debugging:</strong></p>
+<ul>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+</ul>
+<p><strong>Common race condition patterns to avoid:</strong></p>
+<ul>
+<li>Multiple threads writing to the same shared memory location</li>
+<li>Unsynchronized read-modify-write operations (<code>+=</code>, <code>++</code>, etc.)</li>
+<li>Barriers placed after the race condition instead of before</li>
+</ul>
+</div>
+</details>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">
+alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Fixed: sequential access with barriers eliminates race conditions."""
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+
+    # Only thread 0 does all the accumulation work to prevent races
+    if row == 0 and col == 0:
+        # Use local accumulation first, then single write to shared memory
+        local_sum = Scalar[dtype](0.0)
+        for r in range(size):
+            for c in range(size):
+                local_sum += rebind[Scalar[dtype]](a[r, c])
+
+        shared_sum[0] = local_sum  # Single write operation
+
+    barrier()  # Ensure thread 0 completes before others read
+
+    # All threads read the safely accumulated result after synchronization
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<h3 id="understanding-what-went-wrong"><a class="header" href="#understanding-what-went-wrong">Understanding what went wrong</a></h3>
+<h4 id="the-race-condition-problem-pattern"><a class="header" href="#the-race-condition-problem-pattern">The race condition problem pattern</a></h4>
+<p>The original failing code had this critical line:</p>
+<pre><code class="language-mojo">shared_sum[0] += a[row, col]  # RACE CONDITION!
+</code></pre>
+<p>This single line creates multiple hazards among the 4 valid threads:</p>
+<ol>
+<li><strong>Thread (0,0) reads</strong> <code>shared_sum[0]</code> (value: 0.0)</li>
+<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0) ← <strong>Read-after-write hazard!</strong></li>
+<li><strong>Thread (0,0) writes</strong> back <code>0.0 + 0</code></li>
+<li><strong>Thread (1,0) writes</strong> back <code>0.0 + 2</code> ← <strong>Write-after-write hazard!</strong></li>
+</ol>
+<h4 id="why-the-test-failed"><a class="header" href="#why-the-test-failed">Why the test failed</a></h4>
+<ul>
+<li>Multiple threads corrupt each other’s writes during the <code>+=</code> operation</li>
+<li>The <code>+=</code> operation gets interrupted, causing lost updates</li>
+<li>Expected sum of 6.0 (0+1+2+3), but race conditions resulted in 0.0</li>
+<li>The <code>barrier()</code> comes too late - after the race condition already occurred</li>
+</ul>
+<h4 id="what-are-race-conditions"><a class="header" href="#what-are-race-conditions">What are race conditions?</a></h4>
+<p><strong>Race conditions</strong> occur when multiple threads access shared data concurrently, and the result depends on the unpredictable timing of thread execution.</p>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on different runs</li>
+<li><strong>Timing-dependent</strong>: Results depend on which thread “wins the race”</li>
+<li><strong>Hard to reproduce</strong>: May only manifest under specific conditions or hardware</li>
+</ul>
+<h4 id="gpu-specific-dangers"><a class="header" href="#gpu-specific-dangers">GPU-specific dangers</a></h4>
+<p><strong>Massive parallelism impact:</strong></p>
+<ul>
+<li><strong>Warp-level corruption</strong>: Race conditions can affect entire warps (32 threads)</li>
+<li><strong>Memory coalescing issues</strong>: Races can disrupt efficient memory access patterns</li>
+<li><strong>Kernel-wide failures</strong>: Shared memory corruption can affect the entire GPU kernel</li>
+</ul>
+<p><strong>Hardware variations:</strong></p>
+<ul>
+<li><strong>Different GPU architectures</strong>: Race conditions may manifest differently across GPU models</li>
+<li><strong>Memory hierarchy</strong>: L1 cache, L2 cache, and global memory can all exhibit different race behaviors</li>
+<li><strong>Warp scheduling</strong>: Different thread scheduling can expose different race condition scenarios</li>
+</ul>
+<h3 id="strategy-single-writer-pattern"><a class="header" href="#strategy-single-writer-pattern">Strategy: Single writer pattern</a></h3>
+<p>The key insight is to eliminate concurrent writes to shared memory:</p>
+<ol>
+<li><strong>Single writer</strong>: Only one thread (thread at position (0,0)) does all accumulation work</li>
+<li><strong>Local accumulation</strong>: Thread at position (0,0) uses a local variable to avoid repeated shared memory access</li>
+<li><strong>Single shared memory write</strong>: One write operation eliminates write-write races</li>
+<li><strong>Barrier synchronization</strong>: Ensures writer completes before others read</li>
+<li><strong>Multiple readers</strong>: All threads safely read the final result</li>
+</ol>
+<h4 id="step-by-step-solution-breakdown"><a class="header" href="#step-by-step-solution-breakdown">Step-by-step solution breakdown</a></h4>
+<p><strong>Step 1: Thread identification</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+</code></pre>
+<p>Use direct coordinate check to identify thread at position (0,0).</p>
+<p><strong>Step 2: Single-threaded accumulation</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+    local_sum = Scalar[dtype](0.0)
+    for r in range(size):
+        for c in range(size):
+            local_sum += rebind[Scalar[dtype]](a[r, c])
+    shared_sum[0] = local_sum  # Single write operation
+</code></pre>
+<p>Only thread at position (0,0) performs all accumulation work, eliminating race conditions.</p>
+<p><strong>Step 3: Synchronization barrier</strong></p>
+<pre><code class="language-mojo">barrier()  # Ensure thread (0,0) completes before others read
+</code></pre>
+<p>All threads wait for thread at position (0,0) to finish accumulation.</p>
+<p><strong>Step 4: Safe parallel reads</strong></p>
+<pre><code class="language-mojo">if row &lt; size and col &lt; size:
+    output[row, col] = shared_sum[0]
+</code></pre>
+<p>All threads can safely read the result after synchronization.</p>
+<h3 id="important-note-on-efficiency"><a class="header" href="#important-note-on-efficiency">Important note on efficiency</a></h3>
+<p><strong>This solution prioritizes correctness over efficiency</strong>. While it eliminates race conditions, using only thread at position (0,0) for accumulation is <strong>not optimal</strong> for GPU performance - we’re essentially doing serial computation on a massively parallel device.</p>
+<p><strong>Coming up in <a href="../../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll learn efficient parallel reduction algorithms that leverage <strong>all threads</strong> for high-performance summation operations while maintaining race-free execution. This puzzle teaches the foundation of <strong>correctness first</strong> - once you understand how to avoid race conditions, Puzzle 11 will show you how to achieve both <strong>correctness AND performance</strong>.</p>
+<h3 id="verification"><a class="header" href="#verification">Verification</a></h3>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo solutions/p10/p10.mojo --race-condition
+</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([6.0, 6.0, 6.0, 6.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+✅ Race condition test PASSED! (racecheck will find hazards)
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
+</code></pre>
+<p><strong>✅ SUCCESS:</strong> Test passes and no race conditions detected!</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_10/memcheck.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_10/memcheck.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

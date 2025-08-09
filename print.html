@@ -4116,8 +4116,593 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <li><strong>Logic bugs</strong> (<a href="puzzle_09/./second_case.html">Second Case</a>) - algorithmic errors, incorrect results</li>
 <li><strong>Coordination deadlocks</strong> (<a href="puzzle_09/./third_case.html">Third Case</a>) - barrier synchronization failures</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-10-memory-error-detection--race-conditions-with-sanitizers"><a class="header" href="#puzzle-10-memory-error-detection--race-conditions-with-sanitizers">Puzzle 10: Memory Error Detection &amp; Race Conditions with Sanitizers</a></h1>
+<h2 id="the-moment-every-gpu-developer-dreads"><a class="header" href="#the-moment-every-gpu-developer-dreads">The moment every GPU developer dreads</a></h2>
+<p>You’ve written what looks like perfect GPU code. Your algorithm is sound, your memory management seems correct, and your thread coordination appears flawless. You run your tests with confidence and…</p>
+<ul>
+<li><strong>✅ ALL TESTS PASS</strong></li>
+<li><strong>✅ Performance looks great</strong></li>
+<li><strong>✅ Output matches expected results</strong></li>
+</ul>
+<p>You ship your code to production, feeling proud of your work. Then weeks later, you get the call:</p>
+<ul>
+<li><strong>“The application crashed in production”</strong></li>
+<li><strong>“Results are inconsistent between runs”</strong></li>
+<li><strong>“Memory corruption detected”</strong></li>
+</ul>
+<p>Welcome to the insidious world of <strong>silent GPU bugs</strong> - errors that hide in the shadows of massive parallelism, waiting to strike when you least expect them. These bugs can pass all your tests, produce correct results 99% of the time, and then catastrophically fail when it matters most.</p>
+<p><strong>Important note</strong>: This puzzle requires NVIDIA GPU hardware and is only available through <code>pixi</code>, as <code>compute-sanitizer</code> is part of NVIDIA’s CUDA toolkit.</p>
+<h2 id="why-gpu-bugs-are-uniquely-sinister"><a class="header" href="#why-gpu-bugs-are-uniquely-sinister">Why GPU bugs are uniquely sinister</a></h2>
+<p>Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are <strong>masters of disguise</strong>:</p>
+<p><strong>Silent corruption patterns:</strong></p>
+<ul>
+<li><strong>Memory violations that don’t crash</strong>: Out-of-bounds access to “lucky” memory locations</li>
+<li><strong>Race conditions that work “most of the time”</strong>: Timing-dependent bugs that appear random</li>
+<li><strong>Thread coordination failures</strong>: Deadlocks that only trigger under specific load conditions</li>
+</ul>
+<p><strong>Massive scale amplification:</strong></p>
+<ul>
+<li><strong>One thread’s bug affects thousands</strong>: A single memory violation can corrupt entire warps</li>
+<li><strong>Race conditions multiply exponentially</strong>: More threads = more opportunities for corruption</li>
+<li><strong>Hardware variations mask problems</strong>: Same bug behaves differently across GPU architectures</li>
+</ul>
+<p>But here’s the exciting part: <strong>once you master GPU sanitization tools, you’ll catch these elusive bugs before they ever reach production</strong>.</p>
+<h2 id="your-sanitization-toolkit-nvidia-compute-sanitizer"><a class="header" href="#your-sanitization-toolkit-nvidia-compute-sanitizer">Your sanitization toolkit: NVIDIA compute-sanitizer</a></h2>
+<p><strong>NVIDIA compute-sanitizer</strong> is your specialized weapon against GPU bugs. It can detect:</p>
+<ul>
+<li><strong>Memory violations</strong>: Out-of-bounds access, invalid pointers, memory leaks</li>
+<li><strong>Race conditions</strong>: Shared memory hazards between threads</li>
+<li><strong>Synchronization bugs</strong>: Deadlocks, barrier misuse, improper thread coordination</li>
+<li><strong>And more</strong>: Check <code>pixi run compute-sanitizer --help</code></li>
+</ul>
+<p>📖 <strong>Official documentation</strong>: <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">NVIDIA Compute Sanitizer User Guide</a></p>
+<p>Think of it as <strong>X-ray vision for your GPU programs</strong> - revealing hidden problems that normal testing can’t see.</p>
+<h2 id="what-youll-learn-in-this-puzzle-1"><a class="header" href="#what-youll-learn-in-this-puzzle-1">What you’ll learn in this puzzle</a></h2>
+<p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>hunt down the most elusive GPU bugs</em>. You’ll learn the detective skills that separate good GPU developers from great ones.</p>
+<h3 id="critical-skills-youll-develop"><a class="header" href="#critical-skills-youll-develop"><strong>Critical skills you’ll develop</strong></a></h3>
+<ol>
+<li><strong>Silent bug detection</strong> - Find problems that tests don’t catch</li>
+<li><strong>Memory corruption investigation</strong> - Track down undefined behavior before it strikes</li>
+<li><strong>Race condition mastery</strong> - Identify and eliminate concurrency hazards</li>
+<li><strong>Tool selection expertise</strong> - Know exactly which sanitizer to use when</li>
+<li><strong>Production debugging confidence</strong> - Catch bugs before they reach users</li>
+</ol>
+<h3 id="real-world-bug-hunting-scenarios"><a class="header" href="#real-world-bug-hunting-scenarios"><strong>Real-world bug hunting scenarios</strong></a></h3>
+<p>You’ll investigate the two most dangerous classes of GPU bugs:</p>
+<ul>
+<li><strong>Memory violations</strong> - The silent killers that corrupt data without warning</li>
+<li><strong>Race conditions</strong> - The chaos creators that make results unpredictable</li>
+</ul>
+<p>Each scenario teaches you to think like a GPU bug detective, following clues that are invisible to normal testing.</p>
+<h2 id="your-bug-hunting-journey"><a class="header" href="#your-bug-hunting-journey">Your bug hunting journey</a></h2>
+<p>This puzzle takes you through a carefully designed progression from discovering silent corruption to mastering parallel debugging:</p>
+<h3 id="-the-silent-corruption-mystery"><a class="header" href="#-the-silent-corruption-mystery">👮🏼‍♂️ <a href="puzzle_10/./memcheck.html">The Silent Corruption Mystery</a></a></h3>
+<p><strong>Memory violation investigation</strong> - When tests pass but memory lies</p>
+<ul>
+<li>Investigate programs that pass tests while committing memory crimes</li>
+<li>Learn to spot the telltale signs of undefined behavior (UB)</li>
+<li>Master <code>memcheck</code> - your memory violation detector</li>
+<li>Understand why GPU hardware masks memory errors</li>
+<li>Practice systematic memory access validation</li>
+</ul>
+<p><strong>Key outcome</strong>: Ability to detect memory violations that would otherwise go unnoticed until production</p>
+<h3 id="-the-race-condition-hunt"><a class="header" href="#-the-race-condition-hunt">🏁 <a href="puzzle_10/./racecheck.html">The Race Condition Hunt</a></a></h3>
+<p><strong>Concurrency bug investigation</strong> - When threads turn against each other</p>
+<ul>
+<li>Investigate programs that fail randomly due to thread timing</li>
+<li>Learn to identify shared memory hazards before they corrupt data</li>
+<li>Master <code>racecheck</code> - your race condition detector</li>
+<li>Compare <code>racecheck</code> vs <code>synccheck</code> for different concurrency bugs</li>
+<li>Practice thread synchronization strategies</li>
+</ul>
+<p><strong>Key outcome</strong>: Advanced concurrency debugging - the ability to tame thousands of parallel threads</p>
+<h2 id="the-gpu-detective-mindset"><a class="header" href="#the-gpu-detective-mindset">The GPU detective mindset</a></h2>
+<p>GPU sanitization requires you to become a <strong>parallel program detective</strong> investigating crimes where:</p>
+<ul>
+<li><strong>The evidence is hidden</strong> - Bugs occur in parallel execution you can’t directly observe</li>
+<li><strong>Multiple suspects exist</strong> - Thousands of threads, any combination could be guilty</li>
+<li><strong>The crime is intermittent</strong> - Race conditions and timing-dependent failures</li>
+<li><strong>The tools are specialized</strong> - Sanitizers that see what normal debugging can’t</li>
+</ul>
+<p>But like any good detective, you’ll learn to:</p>
+<ul>
+<li><strong>Follow invisible clues</strong> - Memory access patterns, thread timing, synchronization points</li>
+<li><strong>Think in parallel</strong> - Consider how thousands of threads interact simultaneously</li>
+<li><strong>Prevent future crimes</strong> - Build sanitization into your development workflow</li>
+<li><strong>Trust your tools</strong> - Let sanitizers reveal what manual testing cannot</li>
+</ul>
+<h2 id="prerequisites-and-expectations-1"><a class="header" href="#prerequisites-and-expectations-1">Prerequisites and expectations</a></h2>
+<p><strong>What you need to know</strong>:</p>
+<ul>
+<li>GPU programming concepts from Puzzles 1-8 (memory management, thread coordination, barriers)</li>
+<li><strong><a href="https://docs.modular.com/max/faq#gpu-requirements">Compatible NVIDIA GPU hardware</a></strong></li>
+<li>Environment setup with <code>pixi</code> package manager for accessing <code>compute-sanitizer</code></li>
+<li><strong>Prior puzzles</strong>: Familiarity with <a href="puzzle_10/../puzzle_04/introduction_layout_tensor.html">Puzzle 4</a> and <a href="puzzle_10/../puzzle_08/layout_tensor.html">Puzzle 8</a> are recommended</li>
+</ul>
+<p><strong>What you’ll gain</strong>:</p>
+<ul>
+<li><strong>Production-ready debugging skills</strong> used by professional GPU development teams</li>
+<li><strong>Silent bug detection mastery</strong> that prevents costly production failures</li>
+<li><strong>Parallel debugging confidence</strong> for the most challenging concurrency scenarios</li>
+<li><strong>Tool expertise</strong> that will serve you throughout your GPU programming career</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="the-silent-memory-corruption"><a class="header" href="#the-silent-memory-corruption">The Silent Memory Corruption</a></h1>
 <h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
+<p>Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA’s <code>compute-sanitizer</code> (avaible through <code>pixi</code>) with the <code>memcheck</code> tool, you’ll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.</p>
+<p><strong>Key insight</strong>: A GPU program can produce “correct” results while simultaneously performing illegal memory accesses.</p>
+<p><strong>Prerequisites</strong>: Understanding of <a href="puzzle_10/../puzzle_04/introduction_layout_tensor.html">Puzzle 4 LayoutTensor</a> and basic GPU memory concepts.</p>
+<h2 id="the-silent-memory-bug-discovery"><a class="header" href="#the-silent-memory-bug-discovery">The silent memory bug discovery</a></h2>
+<h3 id="test-passes-but-is-my-code-actually-correct"><a class="header" href="#test-passes-but-is-my-code-actually-correct">Test passes, but is my code actually correct?</a></h3>
+<p>Let’s start with a seemingly innocent program that appears to work perfectly (this is <a href="puzzle_10/../puzzle_04/layout_tensor.html">Puzzle 04</a> without guards):</p>
+<pre><code class="language-mojo">fn add_10_2d(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=True, dtype, layout],
+    size: Int,
+):
+    row = thread_idx.y
+    col = thread_idx.x
+    output[row, col] = a[row, col] + 10.0
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<p>When you run this program normally, everything looks fine:</p>
+<pre><code class="language-bash">pixi run p10 --memory-bug
+</code></pre>
+<pre><code class="language-txt">out shape: 2 x 2
+Running memory bug example (bounds checking issue)...
+out: HostBuffer([10.0, 11.0, 12.0, 13.0])
+expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
+✅ Memory test PASSED! (memcheck may find bounds violations)
+</code></pre>
+<p>✅ <strong>Test PASSED!</strong> The output matches expected results perfectly. Case closed, right?</p>
+<p><strong>Wrong!</strong> Let’s see what <code>compute-sanitizer</code> reveals:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+</code></pre>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running memory bug example (bounds checking issue)...
+
+========= Invalid __global__ read of size 4 bytes
+=========     at p10_add_10_2d_...+0x80
+=========     by thread (2,1,0) in block (0,0,0)
+=========     Access at 0xe0c000210 is out of bounds
+=========     and is 513 bytes after the nearest allocation at 0xe0c000000 of size 16 bytes
+
+========= Invalid __global__ read of size 4 bytes
+=========     at p10_add_10_2d_...+0x80
+=========     by thread (0,2,0) in block (0,0,0)
+=========     Access at 0xe0c000210 is out of bounds
+=========     and is 513 bytes after the nearest allocation at 0xe0c000000 of size 16 bytes
+
+========= Invalid __global__ read of size 4 bytes
+=========     at p10_add_10_2d_...+0x80
+=========     by thread (1,2,0) in block (0,0,0)
+=========     Access at 0xe0c000214 is out of bounds
+=========     and is 517 bytes after the nearest allocation at 0xe0c000000 of size 16 bytes
+
+========= Invalid __global__ read of size 4 bytes
+=========     at p10_add_10_2d_...+0x80
+=========     by thread (2,2,0) in block (0,0,0)
+=========     Access at 0xe0c000218 is out of bounds
+=========     and is 521 bytes after the nearest allocation at 0xe0c000000 of size 16 bytes
+
+========= Program hit CUDA_ERROR_LAUNCH_FAILED (error 719) due to "unspecified launch failure" on CUDA API call to cuStreamSynchronize.
+========= Program hit CUDA_ERROR_LAUNCH_FAILED (error 719) due to "unspecified launch failure" on CUDA API call to cuEventCreate.
+========= Program hit CUDA_ERROR_LAUNCH_FAILED (error 719) due to "unspecified launch failure" on CUDA API call to cuMemFreeAsync.
+
+========= ERROR SUMMARY: 7 errors
+</code></pre>
+<p>The program has <strong>7 total errors</strong> despite passing all tests:</p>
+<ul>
+<li><strong>4 memory violations</strong> (Invalid <strong>global</strong> read)</li>
+<li><strong>3 runtime errors</strong> (caused by the memory violations)</li>
+</ul>
+<h2 id="understanding-the-hidden-bug"><a class="header" href="#understanding-the-hidden-bug">Understanding the hidden bug</a></h2>
+<h3 id="root-cause-analysis-1"><a class="header" href="#root-cause-analysis-1">Root cause analysis</a></h3>
+<p><strong>The Problem:</strong></p>
+<ul>
+<li><strong>Tensor size</strong>: 2×2 (valid indices: 0, 1)</li>
+<li><strong>Thread grid</strong>: 3×3 (thread indices: 0, 1, 2)</li>
+<li><strong>Out-of-bounds threads</strong>: <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> access invalid memory</li>
+<li><strong>Missing bounds check</strong>: No validation of <code>thread_idx</code> against tensor dimensions</li>
+</ul>
+<h3 id="understanding-the-7-total-errors"><a class="header" href="#understanding-the-7-total-errors">Understanding the 7 total errors</a></h3>
+<p><strong>4 Memory Violations:</strong></p>
+<ul>
+<li>Each out-of-bounds thread <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> caused an “Invalid <strong>global</strong> read”</li>
+</ul>
+<p><strong>3 CUDA Runtime Errors:</strong></p>
+<ul>
+<li><code>cuStreamSynchronize</code> failed due to kernel launch failure</li>
+<li><code>cuEventCreate</code> failed during cleanup</li>
+<li><code>cuMemFreeAsync</code> failed during memory deallocation</li>
+</ul>
+<p><strong>Key Insight</strong>: Memory violations have cascading effects - one bad memory access causes multiple downstream CUDA API failures.</p>
+<p><strong>Why tests still passed:</strong></p>
+<ul>
+<li>Valid threads <code>(0,0)</code>, <code>(0,1)</code>, <code>(1,0)</code>, <code>(1,1)</code> wrote correct results</li>
+<li>Test only checked valid output locations</li>
+<li>Out-of-bounds accesses didn’t immediately crash the program</li>
+</ul>
+<h2 id="understanding-undefined-behavior-ub"><a class="header" href="#understanding-undefined-behavior-ub">Understanding undefined behavior (UB)</a></h2>
+<h3 id="what-is-undefined-behavior"><a class="header" href="#what-is-undefined-behavior">What is undefined behavior?</a></h3>
+<p><strong>Undefined Behavior (UB)</strong> occurs when a program performs operations that have no defined meaning according to the language specification. Out-of-bounds memory access is a classic example of undefined behavior.</p>
+<p><strong>Key characteristics of UB:</strong></p>
+<ul>
+<li>The program can do <strong>literally anything</strong>: crash, produce wrong results, appear to work, or corrupt memory</li>
+<li><strong>No guarantees</strong>: Behavior may change between compilers, hardware, drivers, or even different runs</li>
+</ul>
+<h3 id="why-undefined-behavior-is-especially-dangerous"><a class="header" href="#why-undefined-behavior-is-especially-dangerous">Why undefined behavior is especially dangerous</a></h3>
+<p><strong>Correctness issues:</strong></p>
+<ul>
+<li><strong>Unpredictable results</strong>: Your program may work during testing but fail in production</li>
+<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on different runs</li>
+<li><strong>Silent corruption</strong>: UB can corrupt data without any visible errors</li>
+<li><strong>Compiler optimizations</strong>: Compilers assume no UB occurs and may optimize in unexpected ways</li>
+</ul>
+<p><strong>Security vulnerabilities:</strong></p>
+<ul>
+<li><strong>Buffer overflows</strong>: Classic source of security exploits in systems programming</li>
+<li><strong>Memory corruption</strong>: Can lead to privilege escalation and code injection attacks</li>
+<li><strong>Information leakage</strong>: Out-of-bounds reads can expose sensitive data</li>
+<li><strong>Control flow hijacking</strong>: UB can be exploited to redirect program execution</li>
+</ul>
+<h3 id="gpu-specific-undefined-behavior-dangers"><a class="header" href="#gpu-specific-undefined-behavior-dangers">GPU-specific undefined behavior dangers</a></h3>
+<p><strong>Massive scale impact:</strong></p>
+<ul>
+<li><strong>Thread divergence</strong>: One thread’s UB can affect entire warps (32 threads)</li>
+<li><strong>Memory coalescing</strong>: Out-of-bounds access can corrupt neighboring threads’ data</li>
+<li><strong>Kernel failures</strong>: UB can cause entire GPU kernels to fail catastrophically</li>
+</ul>
+<p><strong>Hardware variations:</strong></p>
+<ul>
+<li><strong>Different GPU architectures</strong>: UB may manifest differently on different GPU models</li>
+<li><strong>Driver differences</strong>: Same UB may behave differently across driver versions</li>
+<li><strong>Memory layout changes</strong>: GPU memory allocation patterns can change UB manifestation</li>
+</ul>
+<h2 id="fixing-the-memory-violation"><a class="header" href="#fixing-the-memory-violation">Fixing the memory violation</a></h2>
+<h3 id="the-solution"><a class="header" href="#the-solution">The solution</a></h3>
+<p>As we saw in <a href="puzzle_10/../puzzle_04/layout_tensor.html">Puzzle 04</a>, we need to bound-check as follows:</p>
+<pre><code class="language-mojo">fn add_10_2d(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=True, dtype, layout],
+    size: Int,
+):
+    row = thread_idx.y
+    col = thread_idx.x
+    if col &lt; size and row &lt; size:
+        output[row, col] = a[row, col] + 10.0
+
+
+</code></pre>
+<p>The fix is simple: <strong>always validate thread indices against data dimensions</strong> before accessing memory.</p>
+<h3 id="verification-with-compute-sanitizer"><a class="header" href="#verification-with-compute-sanitizer">Verification with compute-sanitizer</a></h3>
+<pre><code class="language-bash"># Fix the bounds checking in your copy of p10.mojo, then run:
+pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+</code></pre>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running memory bug example (bounds checking issue)...
+out: HostBuffer([10.0, 11.0, 12.0, 13.0])
+expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
+✅ Memory test PASSED! (memcheck may find bounds violations)
+========= ERROR SUMMARY: 0 errors
+</code></pre>
+<p><strong>✅ SUCCESS:</strong> No memory violations detected!</p>
+<h2 id="key-learning-points"><a class="header" href="#key-learning-points">Key learning points</a></h2>
+<h3 id="why-manual-bounds-checking-matters"><a class="header" href="#why-manual-bounds-checking-matters">Why manual bounds checking matters</a></h3>
+<ol>
+<li><strong>Clarity</strong>: Makes the safety requirements explicit in the code</li>
+<li><strong>Control</strong>: You decide exactly what happens for out-of-bounds cases</li>
+<li><strong>Debugging</strong>: Easier to reason about when memory violations occur</li>
+</ol>
+<h3 id="gpu-memory-safety-rules"><a class="header" href="#gpu-memory-safety-rules">GPU memory safety rules</a></h3>
+<ol>
+<li><strong>Always validate thread indices</strong> against data dimensions</li>
+<li><strong>Avoid undefined behavior (UB) at all costs</strong> - out-of-bounds access is UB and can break everything</li>
+<li><strong>Use compute-sanitizer</strong> during development and testing</li>
+<li><strong>Never assume “it works” without memory checking</strong></li>
+<li><strong>Test with different grid/block configurations</strong> to catch undefined behavior (UB) that manifests inconsistently</li>
+</ol>
+<h3 id="compute-sanitizer-best-practices"><a class="header" href="#compute-sanitizer-best-practices">Compute-sanitizer best practices</a></h3>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
+</code></pre>
+<p><strong>Note</strong>: You may see Mojo runtime warnings in the sanitizer output. Focus on the <code>========= Invalid</code> and <code>========= ERROR SUMMARY</code> lines for actual memory violations.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="debugging-race-conditions"><a class="header" href="#debugging-race-conditions">Debugging Race Conditions</a></h1>
+<h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
+<p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
+<p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>
+<h2 id="configuration-4"><a class="header" href="#configuration-4">Configuration</a></h2>
+<pre><code class="language-mojo">alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
+alias dtype = DType.float32
+</code></pre>
+<h2 id="the-failing-kernel"><a class="header" href="#the-failing-kernel">The failing kernel</a></h2>
+<pre><code class="language-mojo">
+alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+
+    if row &lt; size and col &lt; size:
+        shared_sum[0] += a[row, col]
+
+    barrier()
+
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a></p>
+<h2 id="running-the-code-16"><a class="header" href="#running-the-code-16">Running the code</a></h2>
+<pre><code class="language-bash">pixi run p10 --race-condition
+</code></pre>
+<p>and the output will look like</p>
+<pre><code class="language-txt">out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:122:33: AssertionError: `left == right` comparison failed:
+   left: 0.0
+  right: 6.0
+</code></pre>
+<p>Let’s see how <code>compute-sanitizer</code> can help us detection issues in our GPU code.</p>
+<h2 id="debugging-with-compute-sanitizer"><a class="header" href="#debugging-with-compute-sanitizer">Debugging with <code>compute-sanitizer</code></a></h2>
+<h3 id="step-1-identify-the-race-condition-with-racecheck"><a class="header" href="#step-1-identify-the-race-condition-with-racecheck">Step 1: Identify the race condition with <code>racecheck</code></a></h3>
+<p>Use <code>compute-sanitizer</code> with the <code>racecheck</code> tool to identify race conditions:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>the output will look like</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+========= Error: Race reported between Write access at p10_shared_memory_race_...+0x140
+=========     and Read access at p10_shared_memory_race_...+0xe0 [4 hazards]
+=========     and Write access at p10_shared_memory_race_...+0x140 [5 hazards]
+=========
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)
+</code></pre>
+<p><strong>Analysis</strong>: The program has <strong>1 race condition</strong> with <strong>9 individual hazards</strong>:</p>
+<ul>
+<li><strong>4 read-after-write hazards</strong> (threads reading while others write)</li>
+<li><strong>5 write-after-write hazards</strong> (multiple threads writing simultaneously)</li>
+</ul>
+<h3 id="step-2-compare-with-synccheck"><a class="header" href="#step-2-compare-with-synccheck">Step 2: Compare with <code>synccheck</code></a></h3>
+<p>Verify this is a race condition, not a synchronization issue:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool synccheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>and the output will be like</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= ERROR SUMMARY: 0 errors
+</code></pre>
+<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong> - there are no synchronization issues like deadlocks. The problem is <strong>race conditions</strong>, not synchronization bugs.</p>
+<h2 id="deadlock-vs-race-condition-understanding-the-difference"><a class="header" href="#deadlock-vs-race-condition-understanding-the-difference">Deadlock vs Race Condition: Understanding the Difference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Deadlock</th><th>Race Condition</th></tr></thead><tbody>
+<tr><td><strong>Symptom</strong></td><td>Program hangs forever</td><td>Program produces wrong results</td></tr>
+<tr><td><strong>Execution</strong></td><td>Never completes</td><td>Completes successfully</td></tr>
+<tr><td><strong>Timing</strong></td><td>Deterministic hang</td><td>Non-deterministic results</td></tr>
+<tr><td><strong>Root Cause</strong></td><td>Synchronization logic error</td><td>Unsynchronized data access</td></tr>
+<tr><td><strong>Detection Tool</strong></td><td><code>synccheck</code></td><td><code>racecheck</code></td></tr>
+<tr><td><strong>Example</strong></td><td><a href="puzzle_10/../puzzle_09/third_case.html">Puzzle 09: Third case</a> barrier deadlock</td><td>Our shared memory <code>+=</code> operation</td></tr>
+</tbody></table>
+</div>
+<p><strong>In our specific case:</strong></p>
+<ul>
+<li><strong>Program completes</strong> → No deadlock (threads don’t get stuck)</li>
+<li><strong>Wrong results</strong> → Race condition (threads corrupt each other’s data)</li>
+<li><strong>Tool confirms</strong> → <code>synccheck</code> reports 0 errors, <code>racecheck</code> reports 9 hazards</li>
+</ul>
+<p><strong>Why this distinction matters for debugging:</strong></p>
+<ul>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+</ul>
+<h2 id="challenge"><a class="header" href="#challenge">Challenge</a></h2>
+<p>Equiped with these tools, fix the kernel failing kernel.</p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="understanding-the-hazard-breakdown"><a class="header" href="#understanding-the-hazard-breakdown">Understanding the hazard breakdown</a></h3>
+<p>The <code>shared_sum[0] += a[row, col]</code> operation creates hazards because it’s actually <strong>three separate memory operations</strong>:</p>
+<ol>
+<li><strong>READ</strong> <code>shared_sum[0]</code></li>
+<li><strong>ADD</strong> <code>a[row, col]</code> to the read value</li>
+<li><strong>WRITE</strong> the result back to <code>shared_sum[0]</code></li>
+</ol>
+<p>With 4 active threads (positions (0,0), (0,1), (1,0), (1,1)), these operations can interleave:</p>
+<ul>
+<li><strong>Thread timing overlap</strong> → Multiple threads read the same initial value (0.0)</li>
+<li><strong>Lost updates</strong> → Each thread writes back <code>0.0 + their_value</code>, overwriting others’ work</li>
+<li><strong>Non-atomic operation</strong> → The <code>+=</code> compound assignment isn’t atomic in GPU shared memory</li>
+</ul>
+<p><strong>Why we get exactly 9 hazards:</strong></p>
+<ul>
+<li>Each thread tries to perform read-modify-write</li>
+<li>4 threads × 2-3 hazards per thread = 9 total hazards</li>
+<li><code>compute-sanitizer</code> tracks every conflicting memory access pair</li>
+</ul>
+<h3 id="race-condition-debugging-tips"><a class="header" href="#race-condition-debugging-tips">Race condition debugging tips</a></h3>
+<ol>
+<li><strong>Use racecheck for data races</strong>: Detects shared memory hazards and data corruption</li>
+<li><strong>Use synccheck for deadlocks</strong>: Detects synchronization bugs (barrier issues, deadlocks)</li>
+<li><strong>Focus on shared memory access</strong>: Look for unsynchronized <code>+=</code>, <code>=</code> operations to shared variables</li>
+<li><strong>Identify the pattern</strong>: Read-modify-write operations are common race condition sources</li>
+<li><strong>Check barrier placement</strong>: Barriers must be placed BEFORE conflicting operations, not after</li>
+</ol>
+<p><strong>Why this distinction matters for debugging:</strong></p>
+<ul>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+</ul>
+<p><strong>Common race condition patterns to avoid:</strong></p>
+<ul>
+<li>Multiple threads writing to the same shared memory location</li>
+<li>Unsynchronized read-modify-write operations (<code>+=</code>, <code>++</code>, etc.)</li>
+<li>Barriers placed after the race condition instead of before</li>
+</ul>
+</div>
+</details>
+<h2 id="solution-12"><a class="header" href="#solution-12">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">
+alias SIZE = 2
+alias BLOCKS_PER_GRID = 1
+alias THREADS_PER_BLOCK = (3, 3)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Fixed: sequential access with barriers eliminates race conditions."""
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+
+    # Only thread 0 does all the accumulation work to prevent races
+    if row == 0 and col == 0:
+        # Use local accumulation first, then single write to shared memory
+        local_sum = Scalar[dtype](0.0)
+        for r in range(size):
+            for c in range(size):
+                local_sum += rebind[Scalar[dtype]](a[r, c])
+
+        shared_sum[0] = local_sum  # Single write operation
+
+    barrier()  # Ensure thread 0 completes before others read
+
+    # All threads read the safely accumulated result after synchronization
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<h3 id="understanding-what-went-wrong"><a class="header" href="#understanding-what-went-wrong">Understanding what went wrong</a></h3>
+<h4 id="the-race-condition-problem-pattern"><a class="header" href="#the-race-condition-problem-pattern">The race condition problem pattern</a></h4>
+<p>The original failing code had this critical line:</p>
+<pre><code class="language-mojo">shared_sum[0] += a[row, col]  # RACE CONDITION!
+</code></pre>
+<p>This single line creates multiple hazards among the 4 valid threads:</p>
+<ol>
+<li><strong>Thread (0,0) reads</strong> <code>shared_sum[0]</code> (value: 0.0)</li>
+<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0) ← <strong>Read-after-write hazard!</strong></li>
+<li><strong>Thread (0,0) writes</strong> back <code>0.0 + 0</code></li>
+<li><strong>Thread (1,0) writes</strong> back <code>0.0 + 2</code> ← <strong>Write-after-write hazard!</strong></li>
+</ol>
+<h4 id="why-the-test-failed"><a class="header" href="#why-the-test-failed">Why the test failed</a></h4>
+<ul>
+<li>Multiple threads corrupt each other’s writes during the <code>+=</code> operation</li>
+<li>The <code>+=</code> operation gets interrupted, causing lost updates</li>
+<li>Expected sum of 6.0 (0+1+2+3), but race conditions resulted in 0.0</li>
+<li>The <code>barrier()</code> comes too late - after the race condition already occurred</li>
+</ul>
+<h4 id="what-are-race-conditions"><a class="header" href="#what-are-race-conditions">What are race conditions?</a></h4>
+<p><strong>Race conditions</strong> occur when multiple threads access shared data concurrently, and the result depends on the unpredictable timing of thread execution.</p>
+<p><strong>Key characteristics:</strong></p>
+<ul>
+<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on different runs</li>
+<li><strong>Timing-dependent</strong>: Results depend on which thread “wins the race”</li>
+<li><strong>Hard to reproduce</strong>: May only manifest under specific conditions or hardware</li>
+</ul>
+<h4 id="gpu-specific-dangers"><a class="header" href="#gpu-specific-dangers">GPU-specific dangers</a></h4>
+<p><strong>Massive parallelism impact:</strong></p>
+<ul>
+<li><strong>Warp-level corruption</strong>: Race conditions can affect entire warps (32 threads)</li>
+<li><strong>Memory coalescing issues</strong>: Races can disrupt efficient memory access patterns</li>
+<li><strong>Kernel-wide failures</strong>: Shared memory corruption can affect the entire GPU kernel</li>
+</ul>
+<p><strong>Hardware variations:</strong></p>
+<ul>
+<li><strong>Different GPU architectures</strong>: Race conditions may manifest differently across GPU models</li>
+<li><strong>Memory hierarchy</strong>: L1 cache, L2 cache, and global memory can all exhibit different race behaviors</li>
+<li><strong>Warp scheduling</strong>: Different thread scheduling can expose different race condition scenarios</li>
+</ul>
+<h3 id="strategy-single-writer-pattern"><a class="header" href="#strategy-single-writer-pattern">Strategy: Single writer pattern</a></h3>
+<p>The key insight is to eliminate concurrent writes to shared memory:</p>
+<ol>
+<li><strong>Single writer</strong>: Only one thread (thread at position (0,0)) does all accumulation work</li>
+<li><strong>Local accumulation</strong>: Thread at position (0,0) uses a local variable to avoid repeated shared memory access</li>
+<li><strong>Single shared memory write</strong>: One write operation eliminates write-write races</li>
+<li><strong>Barrier synchronization</strong>: Ensures writer completes before others read</li>
+<li><strong>Multiple readers</strong>: All threads safely read the final result</li>
+</ol>
+<h4 id="step-by-step-solution-breakdown"><a class="header" href="#step-by-step-solution-breakdown">Step-by-step solution breakdown</a></h4>
+<p><strong>Step 1: Thread identification</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+</code></pre>
+<p>Use direct coordinate check to identify thread at position (0,0).</p>
+<p><strong>Step 2: Single-threaded accumulation</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+    local_sum = Scalar[dtype](0.0)
+    for r in range(size):
+        for c in range(size):
+            local_sum += rebind[Scalar[dtype]](a[r, c])
+    shared_sum[0] = local_sum  # Single write operation
+</code></pre>
+<p>Only thread at position (0,0) performs all accumulation work, eliminating race conditions.</p>
+<p><strong>Step 3: Synchronization barrier</strong></p>
+<pre><code class="language-mojo">barrier()  # Ensure thread (0,0) completes before others read
+</code></pre>
+<p>All threads wait for thread at position (0,0) to finish accumulation.</p>
+<p><strong>Step 4: Safe parallel reads</strong></p>
+<pre><code class="language-mojo">if row &lt; size and col &lt; size:
+    output[row, col] = shared_sum[0]
+</code></pre>
+<p>All threads can safely read the result after synchronization.</p>
+<h3 id="important-note-on-efficiency"><a class="header" href="#important-note-on-efficiency">Important note on efficiency</a></h3>
+<p><strong>This solution prioritizes correctness over efficiency</strong>. While it eliminates race conditions, using only thread at position (0,0) for accumulation is <strong>not optimal</strong> for GPU performance - we’re essentially doing serial computation on a massively parallel device.</p>
+<p><strong>Coming up in <a href="puzzle_10/../../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll learn efficient parallel reduction algorithms that leverage <strong>all threads</strong> for high-performance summation operations while maintaining race-free execution. This puzzle teaches the foundation of <strong>correctness first</strong> - once you understand how to avoid race conditions, Puzzle 11 will show you how to achieve both <strong>correctness AND performance</strong>.</p>
+<h3 id="verification"><a class="header" href="#verification">Verification</a></h3>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo solutions/p10/p10.mojo --race-condition
+</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([6.0, 6.0, 6.0, 6.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+✅ Race condition test PASSED! (racecheck will find hazards)
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
+</code></pre>
+<p><strong>✅ SUCCESS:</strong> Test passes and no race conditions detected!</p>
+</div>
+</details>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
+<h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="Pooling visualization" /></p>
@@ -4127,7 +4712,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <h3 id="-layouttensor-version-3"><a class="header" href="#-layouttensor-version-3"><a href="puzzle_11/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient window-based operations and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts-19"><a class="header" href="#key-concepts-19">Key concepts</a></h2>
@@ -4138,7 +4723,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <li>Coordinating thread access to neighboring elements</li>
 </ul>
 <p>The key insight is understanding how to efficiently access a window of elements using shared memory, with special handling for the first elements in the sequence.</p>
-<h2 id="configuration-4"><a class="header" href="#configuration-4">Configuration</a></h2>
+<h2 id="configuration-5"><a class="header" href="#configuration-5">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -4188,7 +4773,7 @@ fn pooling(
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-16"><a class="header" href="#running-the-code-16">Running the code</a></h2>
+<h2 id="running-the-code-17"><a class="header" href="#running-the-code-17">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4208,7 +4793,7 @@ fn pooling(
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 </code></pre>
-<h2 id="solution-12"><a class="header" href="#solution-12">Solution</a></h2>
+<h2 id="solution-13"><a class="header" href="#solution-13">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn pooling(
@@ -4306,7 +4891,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
 <p>Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
 <h2 id="key-concepts-20"><a class="header" href="#key-concepts-20">Key concepts</a></h2>
@@ -4318,7 +4903,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <li>Boundary condition handling</li>
 </ul>
 <p>The key insight is how LayoutTensor simplifies shared memory management while maintaining efficient window-based operations.</p>
-<h2 id="configuration-5"><a class="header" href="#configuration-5">Configuration</a></h2>
+<h2 id="configuration-6"><a class="header" href="#configuration-6">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -4370,7 +4955,7 @@ fn pooling[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-17"><a class="header" href="#running-the-code-17">Running the code</a></h2>
+<h2 id="running-the-code-18"><a class="header" href="#running-the-code-18">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4390,7 +4975,7 @@ fn pooling[
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 </code></pre>
-<h2 id="solution-13"><a class="header" href="#solution-13">Solution</a></h2>
+<h2 id="solution-14"><a class="header" href="#solution-14">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn pooling[
@@ -4503,7 +5088,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
-<h2 id="overview-22"><a class="header" href="#overview-22">Overview</a></h2>
+<h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Dot product visualization" /></p>
@@ -4513,7 +5098,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <h3 id="-layouttensor-version-4"><a class="header" href="#-layouttensor-version-4"><a href="puzzle_12/./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
 <p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
 <p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-23"><a class="header" href="#overview-23">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
@@ -4524,7 +5109,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <li>Coordinating threads for collective operations</li>
 </ul>
 <p>The key insight is understanding how to efficiently combine multiple values into a single result using parallel computation and shared memory.</p>
-<h2 id="configuration-6"><a class="header" href="#configuration-6">Configuration</a></h2>
+<h2 id="configuration-7"><a class="header" href="#configuration-7">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 8</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -4572,7 +5157,7 @@ fn dot_product(
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-18"><a class="header" href="#running-the-code-18">Running the code</a></h2>
+<h2 id="running-the-code-19"><a class="header" href="#running-the-code-19">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4592,7 +5177,7 @@ fn dot_product(
 <pre><code class="language-txt">out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
 </code></pre>
-<h2 id="solution-14"><a class="header" href="#solution-14">Solution</a></h2>
+<h2 id="solution-15"><a class="header" href="#solution-15">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn dot_product(
@@ -4744,7 +5329,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-24"><a class="header" href="#overview-24">Overview</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
 <p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
@@ -4756,7 +5341,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <li>Using layout-aware tensor operations</li>
 </ul>
 <p>The key insight is how LayoutTensor simplifies memory management while maintaining efficient parallel reduction patterns.</p>
-<h2 id="configuration-7"><a class="header" href="#configuration-7">Configuration</a></h2>
+<h2 id="configuration-8"><a class="header" href="#configuration-8">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 8</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -4811,7 +5396,7 @@ fn dot_product[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-19"><a class="header" href="#running-the-code-19">Running the code</a></h2>
+<h2 id="running-the-code-20"><a class="header" href="#running-the-code-20">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -4831,7 +5416,7 @@ fn dot_product[
 <pre><code class="language-txt">out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
 </code></pre>
-<h2 id="solution-15"><a class="header" href="#solution-15">Solution</a></h2>
+<h2 id="solution-16"><a class="header" href="#solution-16">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn dot_product[
@@ -4996,7 +5581,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 <p>This transition aligns with best practices in modern GPU programming in Mojo 🔥, where higher-level abstractions help manage complexity without sacrificing performance.</p>
 </blockquote>
-<h2 id="overview-25"><a class="header" href="#overview-25">Overview</a></h2>
+<h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
@@ -5032,7 +5617,7 @@ Then tackle the more challenging case where data needs to be shared across block
 <li>Using shared memory for overlapping regions</li>
 </ul>
 <p>The key insight is understanding how to efficiently access overlapping elements while maintaining correct boundary conditions.</p>
-<h2 id="configuration-8"><a class="header" href="#configuration-8">Configuration</a></h2>
+<h2 id="configuration-9"><a class="header" href="#configuration-9">Configuration</a></h2>
 <ul>
 <li>Input array size: <code>SIZE = 6</code> elements</li>
 <li>Kernel size: <code>CONV = 3</code> elements</li>
@@ -5084,7 +5669,7 @@ fn conv_1d_simple[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-20"><a class="header" href="#running-the-code-20">Running the code</a></h3>
+<h3 id="running-the-code-21"><a class="header" href="#running-the-code-21">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5104,7 +5689,7 @@ fn conv_1d_simple[
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 </code></pre>
-<h2 id="solution-16"><a class="header" href="#solution-16">Solution</a></h2>
+<h2 id="solution-17"><a class="header" href="#solution-17">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn conv_1d_simple[
@@ -5255,7 +5840,7 @@ if global_i &lt; SIZE:
 <div style="break-before: page; page-break-before: always;"></div><h1 id="block-boundary-version"><a class="header" href="#block-boundary-version">Block Boundary Version</a></h1>
 <p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<h2 id="configuration-9"><a class="header" href="#configuration-9">Configuration</a></h2>
+<h2 id="configuration-10"><a class="header" href="#configuration-10">Configuration</a></h2>
 <ul>
 <li>Input array size: <code>SIZE_2 = 15</code> elements</li>
 <li>Kernel size: <code>CONV_2 = 4</code> elements</li>
@@ -5306,7 +5891,7 @@ fn conv_1d_block_boundary[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-21"><a class="header" href="#running-the-code-21">Running the code</a></h3>
+<h3 id="running-the-code-22"><a class="header" href="#running-the-code-22">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5326,7 +5911,7 @@ fn conv_1d_block_boundary[
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0, 74.0, 80.0, 41.0, 14.0, 0.0])
 </code></pre>
-<h2 id="solution-17"><a class="header" href="#solution-17">Solution</a></h2>
+<h2 id="solution-18"><a class="header" href="#solution-18">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn conv_1d_block_boundary[
@@ -5522,7 +6107,7 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-14-prefix-sum"><a class="header" href="#puzzle-14-prefix-sum">Puzzle 14: Prefix Sum</a></h1>
-<h2 id="overview-26"><a class="header" href="#overview-26">Overview</a></h2>
+<h2 id="overview-28"><a class="header" href="#overview-28">Overview</a></h2>
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
@@ -5562,7 +6147,7 @@ Then tackle the more challenging case of handling larger arrays that span multip
 <div style="break-before: page; page-break-before: always;"></div><h1 id="simple-version"><a class="header" href="#simple-version">Simple Version</a></h1>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
-<h2 id="configuration-10"><a class="header" href="#configuration-10">Configuration</a></h2>
+<h2 id="configuration-11"><a class="header" href="#configuration-11">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -5611,7 +6196,7 @@ fn prefix_sum_simple[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-22"><a class="header" href="#running-the-code-22">Running the code</a></h3>
+<h3 id="running-the-code-23"><a class="header" href="#running-the-code-23">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5631,7 +6216,7 @@ fn prefix_sum_simple[
 <pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 </code></pre>
-<h2 id="solution-18"><a class="header" href="#solution-18">Solution</a></h2>
+<h2 id="solution-19"><a class="header" href="#solution-19">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn prefix_sum_simple[
@@ -5773,7 +6358,7 @@ output:       [0    1    3    6    10   15   21   28]
 <div style="break-before: page; page-break-before: always;"></div><h1 id="complete-version"><a class="header" href="#complete-version">Complete Version</a></h1>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to synchronize across multiple blocks to get the correct result.</em></p>
-<h2 id="configuration-11"><a class="header" href="#configuration-11">Configuration</a></h2>
+<h2 id="configuration-12"><a class="header" href="#configuration-12">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE_2 = 15</code> elements</li>
 <li>Threads per block: <code>TPB = 8</code></li>
@@ -5884,7 +6469,7 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <p>Where <code>???</code> should contain your block sums that will be used in the second phase.</p>
 </div>
 </details>
-<h3 id="running-the-code-23"><a class="header" href="#running-the-code-23">Running the code</a></h3>
+<h3 id="running-the-code-24"><a class="header" href="#running-the-code-24">Running the code</a></h3>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -5904,7 +6489,7 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
 </code></pre>
-<h2 id="solution-19"><a class="header" href="#solution-19">Solution</a></h2>
+<h2 id="solution-20"><a class="header" href="#solution-20">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
@@ -6187,7 +6772,7 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-axis-sum"><a class="header" href="#puzzle-15-axis-sum">Puzzle 15: Axis Sum</a></h1>
-<h2 id="overview-27"><a class="header" href="#overview-27">Overview</a></h2>
+<h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="puzzle_15/./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
@@ -6199,7 +6784,7 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <li>Working with multi-dimensional tensor layouts</li>
 </ul>
 <p>The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging LayoutTensor’s dimensional indexing.</p>
-<h2 id="configuration-12"><a class="header" href="#configuration-12">Configuration</a></h2>
+<h2 id="configuration-13"><a class="header" href="#configuration-13">Configuration</a></h2>
 <ul>
 <li>Matrix dimensions: \(\text{BATCH} \times \text{SIZE} = 4 \times 6\)</li>
 <li>Threads per block: \(\text{TPB} = 8\)</li>
@@ -6256,7 +6841,7 @@ fn axis_sum[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-24"><a class="header" href="#running-the-code-24">Running the Code</a></h2>
+<h2 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the Code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6276,7 +6861,7 @@ fn axis_sum[
 <pre><code class="language-txt">out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 </code></pre>
-<h2 id="solution-20"><a class="header" href="#solution-20">Solution</a></h2>
+<h2 id="solution-21"><a class="header" href="#solution-21">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn axis_sum[
@@ -6442,7 +7027,7 @@ while stride &gt; 0:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-16-matrix-multiplication-matmul"><a class="header" href="#puzzle-16-matrix-multiplication-matmul">Puzzle 16: Matrix Multiplication (MatMul)</a></h1>
-<h2 id="overview-28"><a class="header" href="#overview-28">Overview</a></h2>
+<h2 id="overview-30"><a class="header" href="#overview-30">Overview</a></h2>
 <p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
 <p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
@@ -6472,7 +7057,7 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 </ol>
 <p>Choose a version to begin your matrix multiplication journey!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
-<h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
+<h2 id="overview-31"><a class="header" href="#overview-31">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts-26"><a class="header" href="#key-concepts-26">Key concepts</a></h2>
@@ -6484,7 +7069,7 @@ This is the most straightforward implementation where each thread computes one e
 <li>Thread-to-output element mapping</li>
 </ul>
 <p>The key insight is understanding how to map 2D thread indices to matrix elements and compute dot products in parallel.</p>
-<h2 id="configuration-13"><a class="header" href="#configuration-13">Configuration</a></h2>
+<h2 id="configuration-14"><a class="header" href="#configuration-14">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
 <li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
@@ -6535,7 +7120,7 @@ fn naive_matmul[
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-25"><a class="header" href="#running-the-code-25">Running the code</a></h2>
+<h2 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6555,7 +7140,7 @@ fn naive_matmul[
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 </code></pre>
-<h2 id="solution-21"><a class="header" href="#solution-21">Solution</a></h2>
+<h2 id="solution-22"><a class="header" href="#solution-22">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn naive_matmul[
@@ -6766,7 +7351,7 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <p>While our \(2 \times 2\) example won’t reach the compute roof, you’ll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding <strong>why</strong> shared memory helps and <strong>how much</strong> improvement to expect.</p>
 <p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
-<h2 id="overview-30"><a class="header" href="#overview-30">Overview</a></h2>
+<h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
 <h2 id="key-concepts-27"><a class="header" href="#key-concepts-27">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -6778,7 +7363,7 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <li>Efficient use of LayoutTensor for matrix operations</li>
 </ul>
 <p>The key insight is understanding how to use fast shared memory with LayoutTensor to reduce expensive global memory operations.</p>
-<h2 id="configuration-14"><a class="header" href="#configuration-14">Configuration</a></h2>
+<h2 id="configuration-15"><a class="header" href="#configuration-15">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
 <li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
@@ -6824,7 +7409,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-26"><a class="header" href="#running-the-code-26">Running the code</a></h2>
+<h2 id="running-the-code-27"><a class="header" href="#running-the-code-27">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -6844,7 +7429,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 </code></pre>
-<h2 id="solution-22"><a class="header" href="#solution-22">Solution</a></h2>
+<h2 id="solution-23"><a class="header" href="#solution-23">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn single_block_matmul[
@@ -7056,7 +7641,7 @@ if row &lt; size and col &lt; size:
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tiled-matrix-multiplication"><a class="header" href="#tiled-matrix-multiplication">Tiled Matrix Multiplication</a></h1>
-<h2 id="overview-31"><a class="header" href="#overview-31">Overview</a></h2>
+<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
 <h2 id="key-concepts-28"><a class="header" href="#key-concepts-28">Key concepts</a></h2>
 <ul>
@@ -7065,7 +7650,7 @@ if row &lt; size and col &lt; size:
 <li>Efficient shared memory usage through TensorBuilder</li>
 <li>Boundary handling for tiles with LayoutTensor indexing</li>
 </ul>
-<h2 id="configuration-15"><a class="header" href="#configuration-15">Configuration</a></h2>
+<h2 id="configuration-16"><a class="header" href="#configuration-16">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE_TILED} = 9\)</li>
 <li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
@@ -7217,7 +7802,7 @@ Thread(1,2) in Block(1,0):
 </ol>
 </div>
 </details>
-<h2 id="running-the-code-27"><a class="header" href="#running-the-code-27">Running the code</a></h2>
+<h2 id="running-the-code-28"><a class="header" href="#running-the-code-28">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -7654,7 +8239,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </ul>
 <p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
 </blockquote>
-<h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
+<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
 <p>In <a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">alias TPB = 15
@@ -7804,7 +8389,7 @@ Executing 1D convolution...
 Verification passed: Custom kernel results match NumPy calculation
 </code></pre>
 <p>This indicates that your custom MAX Graph operation correctly implements the 1D convolution algorithm.</p>
-<h2 id="solution-23"><a class="header" href="#solution-23">Solution</a></h2>
+<h2 id="solution-24"><a class="header" href="#solution-24">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
@@ -7990,7 +8575,7 @@ with Graph(
 <li>Passing input values and parameters that match our operation’s signature</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-18-softmax-op"><a class="header" href="#puzzle-18-softmax-op">Puzzle 18: Softmax Op</a></h1>
-<h2 id="overview-33"><a class="header" href="#overview-33">Overview</a></h2>
+<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
 <p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
 <p>Mathematically, the softmax function is defined as:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
@@ -8010,7 +8595,7 @@ with Graph(
 <li>Custom MAX Graph operation integration with Python</li>
 <li>Thread synchronization with barriers</li>
 </ul>
-<h2 id="configuration-16"><a class="header" href="#configuration-16">Configuration</a></h2>
+<h2 id="configuration-17"><a class="header" href="#configuration-17">Configuration</a></h2>
 <ul>
 <li>Vector size: \(\text{SIZE} = 128\)</li>
 <li>Threads per block: \(\text{TPB} = 128\)</li>
@@ -8212,7 +8797,7 @@ Sum of all probabilities on CPU: 1.0
 Sum of all probabilities on GPU: 1.0
 </code></pre>
 <p>This indicates that your custom MAX Graph operation correctly implements the softmax algorithm and produces a valid probability distribution.</p>
-<h2 id="solution-24"><a class="header" href="#solution-24">Solution</a></h2>
+<h2 id="solution-25"><a class="header" href="#solution-25">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <p>To solve this puzzle, we need to implement both the Mojo kernels (GPU and CPU) and the Python graph definition for our softmax custom operation. Similar to what we did in <a href="puzzle_18/../puzzle_17/puzzle_17.html">Puzzle 17</a>, we’re creating a bridge between Python’s ecosystem and Mojo’s GPU-accelerated computing capabilities.</p>
@@ -8576,7 +9161,7 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
 </div>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
-<h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
+<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
 <p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
@@ -8648,7 +9233,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <li>Custom MAX Graph operation with multi-input support</li>
 <li>CPU fallback implementation for compatibility</li>
 </ul>
-<h2 id="configuration-17"><a class="header" href="#configuration-17">Configuration</a></h2>
+<h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
 <ul>
 <li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16\) - number of key/value vectors in our sequence</li>
 <li><strong>Model dimension</strong>: \(\text{D} = 16\) - dimensionality of each vector (query, keys, values)</li>
@@ -8899,7 +9484,7 @@ Output vector norms:
   Expected: 0.092764
 </code></pre>
 <p>This indicates that your custom MAX Graph operation correctly implements the attention algorithm and produces results matching the NumPy reference implementation.</p>
-<h2 id="solution-25"><a class="header" href="#solution-25">Solution</a></h2>
+<h2 id="solution-26"><a class="header" href="#solution-26">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <p>To solve this puzzle, we need to implement the transpose kernel in Mojo and complete the Python graph definition for our attention custom operation. This puzzle builds upon concepts from previous puzzles, combining <strong>tiled matrix multiplication from <a href="puzzle_19/../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and <strong>softmax from <a href="puzzle_19/../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete attention mechanism.</p>
@@ -9165,7 +9750,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 </ul>
 <p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
 </blockquote>
-<h2 id="overview-35"><a class="header" href="#overview-35">Overview</a></h2>
+<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
 <p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="puzzle_20/../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
 <h2 id="code-to-complete-27"><a class="header" href="#code-to-complete-27">Code to complete</a></h2>
@@ -9232,7 +9817,7 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 ✅ MAX Graph verification PASSED
 ✅ PyTorch and MAX Graph results MATCH
 </code></pre>
-<h2 id="solution-26"><a class="header" href="#solution-26">Solution</a></h2>
+<h2 id="solution-27"><a class="header" href="#solution-27">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <p>The solution requires calling the compiled custom operation with the proper arguments:</p>
@@ -9329,7 +9914,7 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 </ul>
 <p>This puzzle demonstrates that <strong>how you access memory</strong> can be more important than <strong>what computation you perform</strong>.</p>
 </blockquote>
-<h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
+<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
 <p>In this puzzle, you’ll implement two different GPU kernels for embedding operations - a fundamental component in neural networks. While both kernels produce identical results, they use different memory access patterns that lead to significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
@@ -9827,7 +10412,7 @@ Key Learning Points:
 • Coalesced memory access should be faster
 • Grid configuration affects GPU utilization
 </code></pre>
-<h2 id="solution-27"><a class="header" href="#solution-27">Solution</a></h2>
+<h2 id="solution-28"><a class="header" href="#solution-28">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <p>The solution involves implementing the coordinate transformations and memory operations for both kernels:</p>
@@ -10081,7 +10666,7 @@ Warp threads might access:
 </ul>
 <p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as important as <strong>how you implement them</strong>.</p>
 </blockquote>
-<h2 id="overview-37"><a class="header" href="#overview-37">Overview</a></h2>
+<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
 <p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both forward and backward passes. While both fused and unfused implementations produce identical results, they use different strategies that lead to significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
@@ -10165,7 +10750,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 </ul>
 <p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs unfused) affect both forward and backward pass performance - this insight applies to many deep learning operations beyond LayerNorm + Linear. The backward pass implementation is particularly important as it directly impacts training efficiency and numerical stability.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-fused-vs-unfused-kernels"><a class="header" href="#-fused-vs-unfused-kernels">⚛️ Fused vs Unfused Kernels</a></h1>
-<h2 id="overview-38"><a class="header" href="#overview-38">Overview</a></h2>
+<h2 id="overview-40"><a class="header" href="#overview-40">Overview</a></h2>
 <p>In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the <a href="https://arxiv.org/abs/1607.06450">LayerNorm</a> and Linear operation:</p>
 <ol>
 <li><strong>Unfused approach</strong>: Executes LayerNorm and Linear as separate operations</li>
@@ -10318,7 +10903,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 </ul>
 </li>
 </ol>
-<h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
+<h2 id="configuration-19"><a class="header" href="#configuration-19">Configuration</a></h2>
 <ul>
 <li>Batch size: <code>BATCH_SIZE = 4</code></li>
 <li>Sequence length: <code>SEQ_LEN = 4</code></li>
@@ -10546,7 +11131,7 @@ fn matmul_idiomatic_tiled[
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-28"><a class="header" href="#running-the-code-28">Running the code</a></h3>
+<h3 id="running-the-code-29"><a class="header" href="#running-the-code-29">Running the code</a></h3>
 <p>To test your unfused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -10609,7 +11194,7 @@ Benchmarking CPU vs GPU UNFUSED
 
 UNFUSED Algorithm Test Completed!
 </code></pre>
-<h2 id="solution-28"><a class="header" href="#solution-28">Solution</a></h2>
+<h2 id="solution-29"><a class="header" href="#solution-29">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn layernorm_kernel[
@@ -10873,7 +11458,7 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-29"><a class="header" href="#running-the-code-29">Running the code</a></h3>
+<h3 id="running-the-code-30"><a class="header" href="#running-the-code-30">Running the code</a></h3>
 <p>To test your fused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -10936,7 +11521,7 @@ Correctness Summary:
 
 FUSED Algorithm Test Completed!
 </code></pre>
-<h2 id="solution-29"><a class="header" href="#solution-29">Solution</a></h2>
+<h2 id="solution-30"><a class="header" href="#solution-30">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn minimal_fused_kernel[
@@ -11136,7 +11721,7 @@ FUSED Algorithm Test Completed!
 </ol>
 <p>💡 <strong>Key insight</strong>: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-autograd-integration--backward-pass"><a class="header" href="#-autograd-integration--backward-pass">⛓️ Autograd Integration &amp; Backward Pass</a></h1>
-<h2 id="overview-39"><a class="header" href="#overview-39">Overview</a></h2>
+<h2 id="overview-41"><a class="header" href="#overview-41">Overview</a></h2>
 <p>In this puzzle, we explore the backward pass implementation of the fused LayerNorm + Linear operation. The backward pass computes gradients with respect to:</p>
 <ul>
 <li>Input tensor</li>
@@ -11208,7 +11793,7 @@ where:</p>
 </ul>
 </li>
 </ul>
-<h2 id="configuration-19"><a class="header" href="#configuration-19">Configuration</a></h2>
+<h2 id="configuration-20"><a class="header" href="#configuration-20">Configuration</a></h2>
 <ul>
 <li>Batch size: <code>BATCH_SIZE = 4</code></li>
 <li>Sequence length: <code>SEQ_LEN = 4</code></li>
@@ -11339,7 +11924,7 @@ where:</p>
 </ol>
 </div>
 </details>
-<h3 id="running-the-code-30"><a class="header" href="#running-the-code-30">Running the code</a></h3>
+<h3 id="running-the-code-31"><a class="header" href="#running-the-code-31">Running the code</a></h3>
 <p>To test your fused backward implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -11409,7 +11994,7 @@ Backward Pass Test Summary:
 
 BACKWARD PASS Test Completed!
 </code></pre>
-<h2 id="solution-30"><a class="header" href="#solution-30">Solution</a></h2>
+<h2 id="solution-31"><a class="header" href="#solution-31">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn minimal_fused_kernel_backward[
@@ -11761,7 +12346,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 </ul>
 <p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-23-gpu-functional-programming-patterns"><a class="header" href="#puzzle-23-gpu-functional-programming-patterns">Puzzle 23: GPU Functional Programming Patterns</a></h1>
-<h2 id="overview-40"><a class="header" href="#overview-40">Overview</a></h2>
+<h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
 <p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
 <p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
@@ -11900,7 +12485,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
-<h2 id="configuration-20"><a class="header" href="#configuration-20">Configuration</a></h2>
+<h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Data type: <code>DType.float32</code></li>
@@ -11991,7 +12576,7 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 <p>This shows that each thread handles a different SIMD chunk, automatically spaced by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
 </div>
 </details>
-<h2 id="running-the-code-31"><a class="header" href="#running-the-code-31">Running the code</a></h2>
+<h2 id="running-the-code-32"><a class="header" href="#running-the-code-32">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -12020,7 +12605,7 @@ idx: 416
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-31"><a class="header" href="#solution-31">Solution</a></h2>
+<h2 id="solution-32"><a class="header" href="#solution-32">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn elementwise_add[
@@ -12203,7 +12788,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
-<h2 id="overview-41"><a class="header" href="#overview-41">Overview</a></h2>
+<h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
 <p>You’ve already seen tiling in action with <strong><a href="puzzle_23/../puzzle_16/tiled.html">Puzzle 16’s tiled matrix multiplication</a></strong>, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.</p>
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
@@ -12220,7 +12805,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>The same mathematical operation as elementwise:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with a completely different execution strategy optimized for memory hierarchy.</p>
-<h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
+<h2 id="configuration-22"><a class="header" href="#configuration-22">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
@@ -12307,7 +12892,7 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-32"><a class="header" href="#running-the-code-32">Running the code</a></h2>
+<h2 id="running-the-code-33"><a class="header" href="#running-the-code-33">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -12338,7 +12923,7 @@ tile_id: 31
 out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
-<h2 id="solution-32"><a class="header" href="#solution-32">Solution</a></h2>
+<h2 id="solution-33"><a class="header" href="#solution-33">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">alias TILE_SIZE = 32
@@ -12532,7 +13117,7 @@ Tiled:       Moderate parallelism, localized memory access
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
-<h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
+<h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
 <p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
 <ol>
 <li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index calculations</li>
@@ -12552,7 +13137,7 @@ Tiled:       Moderate parallelism, localized memory access
 <p>The same mathematical operation as before:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
 <p>But with sophisticated vectorization strategies for maximum performance.</p>
-<h2 id="configuration-22"><a class="header" href="#configuration-22">Configuration</a></h2>
+<h2 id="configuration-23"><a class="header" href="#configuration-23">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
@@ -13012,7 +13597,7 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-gpu-threading-vs-simd---understanding-the-execution-hierarchy"><a class="header" href="#-gpu-threading-vs-simd---understanding-the-execution-hierarchy">🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></h1>
-<h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
+<h2 id="overview-45"><a class="header" href="#overview-45">Overview</a></h2>
 <p>After exploring <strong>elementwise</strong>, <strong>tiled</strong>, and <strong>vectorization</strong> patterns, you’ve seen different ways to organize GPU computation. This section clarifies the fundamental relationship between <strong>GPU threads</strong> and <strong>SIMD operations</strong> - two distinct but complementary levels of parallelism that work together for optimal performance.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</em></p>
@@ -13153,7 +13738,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 </ul>
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
-<h2 id="overview-44"><a class="header" href="#overview-44">Overview</a></h2>
+<h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
 <p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
@@ -13420,7 +14005,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 </ul>
 <p><strong>Coming up next</strong>: <a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 14’s prefix sum.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
-<h2 id="overview-45"><a class="header" href="#overview-45">Overview</a></h2>
+<h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
 <p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
@@ -13873,7 +14458,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <p>The mathematical operation is a dot product (inner product):
 \[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
 <p>But the implementation teaches fundamental patterns for all warp-level GPU programming in Mojo.</p>
-<h2 id="configuration-23"><a class="header" href="#configuration-23">Configuration</a></h2>
+<h2 id="configuration-24"><a class="header" href="#configuration-24">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU architecture)</li>
 <li>Data type: <code>DType.float32</code></li>
@@ -14032,7 +14617,7 @@ expected: 10416.0
 🚀 Notice how simple the warp version is compared to p12.mojo!
    Same kernel structure, but warp_sum() replaces all the complexity!
 </code></pre>
-<h3 id="solution-33"><a class="header" href="#solution-33">Solution</a></h3>
+<h3 id="solution-34"><a class="header" href="#solution-34">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn simple_warp_dot_product[
@@ -14187,7 +14772,7 @@ expected: 10416.0
 🔧 Functional approach shows modern Mojo style with warp operations!
    Clean, composable, and still leverages warp hardware primitives!
 </code></pre>
-<h3 id="solution-34"><a class="header" href="#solution-34">Solution</a></h3>
+<h3 id="solution-35"><a class="header" href="#solution-35">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn functional_warp_dot_product[
@@ -14460,7 +15045,7 @@ mojo p22.mojo --benchmark
 </ul>
 <p><strong>When in doubt:</strong> Implement both and benchmark. The performance difference will guide your decision.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-25-warp-communication"><a class="header" href="#puzzle-25-warp-communication">Puzzle 25: Warp Communication</a></h1>
-<h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
+<h2 id="overview-48"><a class="header" href="#overview-48">Overview</a></h2>
 <p>Welcome to <strong>Puzzle 25: Warp Communication Primitives</strong>! This puzzle introduces you to advanced GPU <strong>warp-level communication operations</strong> - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast</a> to implement neighbor communication and collective coordination without complex shared memory patterns.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + indexing + boundary checking patterns to elegant warp communication calls that leverage hardware-optimized data movement.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp communication operations harness this synchronization to provide powerful data exchange primitives with automatic boundary handling and zero explicit synchronization.</em></p>
@@ -14615,7 +15200,7 @@ result = use_shared_value(shared_value, local_data)
 \[\Large \text{shuffle_down}(\text{value}, \text{offset}) = \text{value_from_lane}(\text{lane_id} + \text{offset})\]</p>
 <p>This transforms complex neighbor access patterns into simple warp-level operations, enabling efficient stencil computations without explicit memory indexing.</p>
 <h2 id="1-basic-neighbor-difference"><a class="header" href="#1-basic-neighbor-difference">1. Basic neighbor difference</a></h2>
-<h3 id="configuration-24"><a class="header" href="#configuration-24">Configuration</a></h3>
+<h3 id="configuration-25"><a class="header" href="#configuration-25">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -14745,7 +15330,7 @@ output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0
 expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
 ✅ Basic neighbor difference test passed!
 </code></pre>
-<h3 id="solution-35"><a class="header" href="#solution-35">Solution</a></h3>
+<h3 id="solution-36"><a class="header" href="#solution-36">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn neighbor_difference[
@@ -14836,7 +15421,7 @@ Cycle 3: Difference computation (lanes 0-30 only)
 </div>
 </details>
 <h2 id="2-multi-offset-moving-average"><a class="header" href="#2-multi-offset-moving-average">2. Multi-offset moving average</a></h2>
-<h3 id="configuration-25"><a class="header" href="#configuration-25">Configuration</a></h3>
+<h3 id="configuration-26"><a class="header" href="#configuration-26">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE_2 = 64</code> (multi-block scenario)</li>
 <li>Grid configuration: <code>BLOCKS_PER_GRID = (2, 1)</code> blocks per grid</li>
@@ -14954,7 +15539,7 @@ output: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.33
 expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
 ✅ Moving average test passed!
 </code></pre>
-<h3 id="solution-36"><a class="header" href="#solution-36">Solution</a></h3>
+<h3 id="solution-37"><a class="header" href="#solution-37">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn moving_average_3[
@@ -15139,7 +15724,7 @@ result = use_collective_value(collective_value)
 </ul>
 <p><strong>Test data:</strong> Input <code>[1, 2, 3, 4, 5, 6, 7, 8, ...]</code> should produce output <code>[11, 12, 13, 14, 15, 16, 17, 18, ...]</code></p>
 <p><strong>Challenge:</strong> How do you coordinate so that only one lane does the block-level computation, but all lanes can use the result in their individual operations?</p>
-<h3 id="configuration-26"><a class="header" href="#configuration-26">Configuration</a></h3>
+<h3 id="configuration-27"><a class="header" href="#configuration-27">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -15221,7 +15806,7 @@ output: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 
 expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0])
 ✅ Basic broadcast test passed!
 </code></pre>
-<h3 id="solution-37"><a class="header" href="#solution-37">Solution</a></h3>
+<h3 id="solution-38"><a class="header" href="#solution-38">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn basic_broadcast[
@@ -15324,7 +15909,7 @@ Cycle 3: Individual computation with broadcast value
 </ul>
 <p><strong>Test data:</strong> Input <code>[3, 1, 7, 2, 9, 4, 6, 8, ...]</code> (repeating pattern) should produce output <code>[1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, ...]</code></p>
 <p><strong>Challenge:</strong> How do you coordinate block-level analysis with element-wise conditional transformations across all lanes?</p>
-<h3 id="configuration-27"><a class="header" href="#configuration-27">Configuration</a></h3>
+<h3 id="configuration-28"><a class="header" href="#configuration-28">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -15422,7 +16007,7 @@ output: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0, 
 expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0])
 ✅ Conditional broadcast test passed!
 </code></pre>
-<h3 id="solution-38"><a class="header" href="#solution-38">Solution</a></h3>
+<h3 id="solution-39"><a class="header" href="#solution-39">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn conditional_broadcast[
@@ -15555,7 +16140,7 @@ Step 3: Conditional execution per lane
 <li>Expected output: <code>[30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, ...]</code></li>
 </ul>
 <p><strong>Challenge:</strong> How do you coordinate multiple warp primitives so that one lane’s computation affects all lanes, while each lane also accesses its neighbor’s data?</p>
-<h3 id="configuration-28"><a class="header" href="#configuration-28">Configuration</a></h3>
+<h3 id="configuration-29"><a class="header" href="#configuration-29">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -15646,7 +16231,7 @@ output: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 
 expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0, 60.0, 35.0])
 ✅ Broadcast + Shuffle coordination test passed!
 </code></pre>
-<h3 id="solution-39"><a class="header" href="#solution-39">Solution</a></h3>
+<h3 id="solution-40"><a class="header" href="#solution-40">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
@@ -15794,7 +16379,7 @@ result = use_shared_value(shared_value, local_data)
 </ul>
 <p><strong>Applications</strong>: Block statistics, collective decisions, parameter sharing, adaptive algorithms.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-26-advanced-warp-patterns"><a class="header" href="#puzzle-26-advanced-warp-patterns">Puzzle 26: Advanced Warp Patterns</a></h1>
-<h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
+<h2 id="overview-49"><a class="header" href="#overview-49">Overview</a></h2>
 <p>Welcome to <strong>Puzzle 26: Advanced Warp Communication Primitives</strong>! This puzzle introduces you to sophisticated GPU <strong>warp-level butterfly communication and parallel scan operations</strong> - hardware-accelerated primitives that enable efficient tree-based algorithms and parallel reductions within warps. You’ll learn about using <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor</a> for butterfly networks and <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum">prefix_sum</a> for hardware-optimized parallel scan without complex multi-phase shared memory algorithms.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + multi-phase reduction patterns to elegant single-function-call algorithms that leverage hardware-optimized butterfly networks and parallel scan units.</p>
 <p><strong>Key insight:</strong> <em>GPU warps can perform sophisticated tree-based communication and parallel scan operations in hardware - Mojo’s advanced warp primitives harness butterfly networks and dedicated scan units to provide \(O(\log n)\) algorithms with single-instruction simplicity.</em></p>
@@ -15959,7 +16544,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 \[\Large \text{shuffle_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
 <p>This transforms complex parallel algorithms into elegant butterfly communication patterns, enabling efficient tree reductions and sorting networks without explicit coordination.</p>
 <h2 id="1-basic-butterfly-pair-swap"><a class="header" href="#1-basic-butterfly-pair-swap">1. Basic butterfly pair swap</a></h2>
-<h3 id="configuration-29"><a class="header" href="#configuration-29">Configuration</a></h3>
+<h3 id="configuration-30"><a class="header" href="#configuration-30">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -16077,7 +16662,7 @@ output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.
 expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
 ✅ Butterfly pair swap test passed!
 </code></pre>
-<h3 id="solution-40"><a class="header" href="#solution-40">Solution</a></h3>
+<h3 id="solution-41"><a class="header" href="#solution-41">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn butterfly_pair_swap[
@@ -16164,7 +16749,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 </div>
 </details>
 <h2 id="2-butterfly-parallel-maximum"><a class="header" href="#2-butterfly-parallel-maximum">2. Butterfly parallel maximum</a></h2>
-<h3 id="configuration-30"><a class="header" href="#configuration-30">Configuration</a></h3>
+<h3 id="configuration-31"><a class="header" href="#configuration-31">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -16281,7 +16866,7 @@ output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0,
 expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
 ✅ Butterfly parallel max test passed!
 </code></pre>
-<h3 id="solution-41"><a class="header" href="#solution-41">Solution</a></h3>
+<h3 id="solution-42"><a class="header" href="#solution-42">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn butterfly_parallel_max[
@@ -16374,7 +16959,7 @@ Final result: All lanes have max_val = 1000
 </div>
 </details>
 <h2 id="3-butterfly-conditional-maximum"><a class="header" href="#3-butterfly-conditional-maximum">3. Butterfly conditional maximum</a></h2>
-<h3 id="configuration-31"><a class="header" href="#configuration-31">Configuration</a></h3>
+<h3 id="configuration-32"><a class="header" href="#configuration-32">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE_2 = 64</code> (multi-block scenario)</li>
 <li>Grid configuration: <code>BLOCKS_PER_GRID_2 = (2, 1)</code> blocks per grid</li>
@@ -16475,7 +17060,7 @@ output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9
 expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
 ✅ Butterfly conditional max test passed!
 </code></pre>
-<h3 id="solution-42"><a class="header" href="#solution-42">Solution</a></h3>
+<h3 id="solution-43"><a class="header" href="#solution-43">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn butterfly_conditional_max[
@@ -16670,7 +17255,7 @@ while offset &gt; 0:
 </ul>
 <p>This transforms multi-phase shared memory algorithms into elegant single-function calls, enabling efficient parallel scan operations without explicit synchronization.</p>
 <h2 id="1-warp-inclusive-prefix-sum"><a class="header" href="#1-warp-inclusive-prefix-sum">1. Warp inclusive prefix sum</a></h2>
-<h3 id="configuration-32"><a class="header" href="#configuration-32">Configuration</a></h3>
+<h3 id="configuration-33"><a class="header" href="#configuration-33">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -16822,7 +17407,7 @@ output: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91
 expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0, 120.0, 136.0, 153.0, 171.0, 190.0, 210.0, 231.0, 253.0, 276.0, 300.0, 325.0, 351.0, 378.0, 406.0, 435.0, 465.0, 496.0, 528.0]
 ✅ Warp inclusive prefix sum test passed!
 </code></pre>
-<h3 id="solution-43"><a class="header" href="#solution-43">Solution</a></h3>
+<h3 id="solution-44"><a class="header" href="#solution-44">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
@@ -16895,7 +17480,7 @@ Cycle 3: Store results
 </div>
 </details>
 <h2 id="2-warp-partition"><a class="header" href="#2-warp-partition">2. Warp partition</a></h2>
-<h3 id="configuration-33"><a class="header" href="#configuration-33">Configuration</a></h3>
+<h3 id="configuration-34"><a class="header" href="#configuration-34">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>SIZE = WARP_SIZE</code> (32 or 64 depending on GPU)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
@@ -17004,7 +17589,7 @@ expected: HostBuffer([3.0, 1.0, 2.0, 4.0, 0.0, 3.0, 1.0, 4.0, 3.0, 1.0, 2.0, 4.0
 pivot: 5.0
 ✅ Warp partition test passed!
 </code></pre>
-<h3 id="solution-44"><a class="header" href="#solution-44">Solution</a></h3>
+<h3 id="solution-45"><a class="header" href="#solution-45">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
@@ -17300,7 +17885,7 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 <p>This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.</p>
 <h2 id="async-copy-overlap-with-1d-convolution"><a class="header" href="#async-copy-overlap-with-1d-convolution">Async copy overlap with 1D convolution</a></h2>
 <p><strong>Building on <a href="puzzle_28/../puzzle_13/puzzle_13.html">Puzzle 13</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 13, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
-<h3 id="configuration-34"><a class="header" href="#configuration-34">Configuration</a></h3>
+<h3 id="configuration-35"><a class="header" href="#configuration-35">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>VECTOR_SIZE = 16384</code> (16K elements across multiple blocks)</li>
 <li>Tile size: <code>CONV_TILE_SIZE = 256</code> (processing tile size)</li>
@@ -17442,7 +18027,7 @@ fn async_copy_overlap_convolution[
 </code></pre>
   </div>
 </div>
-<h3 id="solution-45"><a class="header" href="#solution-45">Solution</a></h3>
+<h3 id="solution-46"><a class="header" href="#solution-46">Solution</a></h3>
 <details class="solution-details">
 <summary><strong>Complete Solution with Detailed Explanation</strong></summary>
 <p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
@@ -17622,7 +18207,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
 </blockquote>
-<h2 id="overview-48"><a class="header" href="#overview-48">Overview</a></h2>
+<h2 id="overview-50"><a class="header" href="#overview-50">Overview</a></h2>
 <p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
@@ -17652,7 +18237,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different memory spaces</li>
 <li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative algorithms</li>
 </ul>
-<h2 id="configuration-35"><a class="header" href="#configuration-35">Configuration</a></h2>
+<h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
 <p><strong>System architecture:</strong></p>
 <ul>
 <li><strong>Block size</strong>: <code>TPB = 256</code> threads per block for optimal occupancy</li>
@@ -17711,7 +18296,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
 <p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
-<h2 id="overview-49"><a class="header" href="#overview-49">Overview</a></h2>
+<h2 id="overview-51"><a class="header" href="#overview-51">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
 <p><strong>Note:</strong> <em>You have specialized thread roles: Stage 1 (threads 0-127) loads and preprocesses data, Stage 2 (threads 128-255) applies blur operations, and Stage 3 (all threads) performs final smoothing.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>producer-consumer pipeline</strong> where different thread groups execute completely different algorithms within a single GPU block. Unlike traditional GPU programming where all threads execute the same algorithm on different data, this approach divides threads by <strong>functional specialization</strong>.</p>
@@ -17759,7 +18344,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 <li><strong>This puzzle:</strong> Different thread groups execute different algorithms, barriers coordinate between different algorithms</li>
 </ul>
 <p><strong>Thread specialization architecture:</strong> Unlike data parallelism where threads differ only in their data indices, this puzzle implements <strong>algorithmic parallelism</strong> where threads execute fundamentally different code paths based on their role in the pipeline.</p>
-<h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
+<h2 id="configuration-37"><a class="header" href="#configuration-37">Configuration</a></h2>
 <p><strong>System parameters:</strong></p>
 <ul>
 <li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
@@ -17890,7 +18475,7 @@ fn multi_stage_image_blur_pipeline[
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-33"><a class="header" href="#running-the-code-33">Running the code</a></h2>
+<h2 id="running-the-code-34"><a class="header" href="#running-the-code-34">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -17922,7 +18507,7 @@ Input sample: 0.0 1.01 2.02
 Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 </code></pre>
-<h2 id="solution-46"><a class="header" href="#solution-46">Solution</a></h2>
+<h2 id="solution-47"><a class="header" href="#solution-47">Solution</a></h2>
 <p>The key insight is recognizing this as a <strong>pipeline architecture problem</strong> with thread role specialization:</p>
 <ol>
 <li><strong>Design stage-specific thread groups</strong>: Divide threads by function, not just by data</li>
@@ -18060,7 +18645,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 </ul>
 <p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU computing applications like iterative solvers, simulation frameworks, and high-performance image processing pipelines.</p>
 </blockquote>
-<h2 id="overview-50"><a class="header" href="#overview-50">Overview</a></h2>
+<h2 id="overview-52"><a class="header" href="#overview-52">Overview</a></h2>
 <p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.</p>
 <p><strong>Note:</strong> <em>You have alternating buffer roles: <code>buffer_A</code> and <code>buffer_B</code> swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>double-buffering pattern</strong> where two shared memory buffers alternate roles as read and write targets across multiple iterations. Unlike simple stencil operations that process data once, this approach performs iterative refinement with careful memory barrier coordination to prevent race conditions during buffer transitions.</p>
@@ -18102,7 +18687,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
 </ul>
 <p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this puzzle uses <strong>explicit memory barriers</strong> that provide fine-grained control over when memory operations complete, essential for complex memory access patterns.</p>
-<h2 id="configuration-37"><a class="header" href="#configuration-37">Configuration</a></h2>
+<h2 id="configuration-38"><a class="header" href="#configuration-38">Configuration</a></h2>
 <p><strong>System parameters:</strong></p>
 <ul>
 <li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
@@ -18276,7 +18861,7 @@ fn double_buffered_stencil_computation[
 </ul>
 </div>
 </details>
-<h2 id="running-the-code-34"><a class="header" href="#running-the-code-34">Running the code</a></h2>
+<h2 id="running-the-code-35"><a class="header" href="#running-the-code-35">Running the code</a></h2>
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -18307,7 +18892,7 @@ Input sample: 1.0 1.0 1.0
 GPU output sample: 1.0 1.0 1.0
 ✅ Double-buffered stencil test PASSED!
 </code></pre>
-<h2 id="solution-47"><a class="header" href="#solution-47">Solution</a></h2>
+<h2 id="solution-48"><a class="header" href="#solution-48">Solution</a></h2>
 <p>The key insight is recognizing this as a <strong>double-buffering architecture problem</strong> with explicit memory barrier coordination:</p>
 <ol>
 <li><strong>Design alternating buffer roles</strong>: Swap read/write responsibilities each iteration</li>
