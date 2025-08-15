@@ -211,7 +211,7 @@
 <p>Your output will show performance measurements for each pattern:</p>
 <pre><code class="language-txt">SIZE: 1024
 simd_width: 4
-Running p21 GPU Benchmarks...
+Running P21 GPU Benchmarks...
 SIMD width: 4
 --------------------------------------------------------------------------------
 Testing SIZE=16, TILE=4
@@ -224,6 +224,7 @@ Testing SIZE=128, TILE=16
 Running elementwise_128_16
 Running tiled_128_16
 Running manual_vectorized_128_16
+--------------------------------------------------------------------------------
 Testing SIZE=128, TILE=16, Vectorize within tiles
 Running vectorized_128_16
 --------------------------------------------------------------------------------
@@ -232,33 +233,31 @@ Running elementwise_1M_1024
 Running tiled_1M_1024
 Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
-----------------------------------------------------------
-| name                      | met (ms)           | iters |
-----------------------------------------------------------
-| elementwise_16_4          | 4.59953155         | 100   |
-| tiled_16_4                | 3.16459014         | 100   |
-| manual_vectorized_16_4    | 4.60563415         | 100   |
-| vectorized_16_4           | 3.15671539         | 100   |
-| elementwise_128_16        | 3.1611135375       | 80    |
-| tiled_128_16              | 3.1669656300000004 | 100   |
-| manual_vectorized_128_16  | 3.1609855625       | 80    |
-| vectorized_128_16         | 3.16142578         | 100   |
-| elementwise_1M_1024       | 11.338706742857143 | 70    |
-| tiled_1M_1024             | 12.044989871428571 | 70    |
-| manual_vectorized_1M_1024 | 15.749412314285713 | 70    |
-| vectorized_1M_1024        | 13.377229          | 100   |
-----------------------------------------------------------
+| name                      | met (ms)             | iters |
+| ------------------------- | -------------------- | ----- |
+| elementwise_16_4          | 0.06439936           | 100   |
+| tiled_16_4                | 0.06331391           | 100   |
+| manual_vectorized_16_4    | 0.063744             | 100   |
+| vectorized_16_4           | 0.06380544           | 100   |
+| elementwise_128_16        | 0.062341110000000005 | 100   |
+| tiled_128_16              | 0.0627712            | 100   |
+| manual_vectorized_128_16  | 0.06385632000000001  | 100   |
+| vectorized_128_16         | 0.0649728            | 100   |
+| elementwise_1M_1024       | 10.452562250000001   | 100   |
+| tiled_1M_1024             | 11.08958251          | 100   |
+| manual_vectorized_1M_1024 | 12.958359263736263   | 91    |
+| vectorized_1M_1024        | 11.13388061          | 100   |
 
 Benchmarks completed!
 </code></pre>
 <h2 id="benchmark-configuration"><a class="header" href="#benchmark-configuration">Benchmark configuration</a></h2>
 <p>The benchmarking system uses Mojo’s built-in <code>benchmark</code> module:</p>
 <pre><code class="language-mojo">from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
-bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
+bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 </code></pre>
 <ul>
 <li><strong><code>max_iters=10</code></strong>: Up to 10 iterations for statistical reliability</li>
-<li><strong><code>min_warmuptime_secs=0.2</code></strong>: GPU warmup before measurement</li>
+<li><strong><code>num_warmup_iters=1</code></strong>: GPU warmup before measurement</li>
 <li>Check out the <a href="https://docs.modular.com/mojo/stdlib/benchmark/">benchmark documentation</a></li>
 </ul>
 <h2 id="benchmarking-implementation-essentials"><a class="header" href="#benchmarking-implementation-essentials">Benchmarking implementation essentials</a></h2>
@@ -316,13 +315,13 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <h3 id="performance-characteristics-by-problem-size"><a class="header" href="#performance-characteristics-by-problem-size">Performance characteristics by problem size</a></h3>
 <p><strong>Small problems (SIZE=16):</strong></p>
 <ul>
-<li>Launch overhead dominates (~3-4ms baseline)</li>
+<li>Launch overhead dominates (~0.064ms baseline)</li>
 <li>Thread count differences don’t matter</li>
-<li>Tiled/vectorize show lower overhead</li>
+<li>Tiled/vectorize show slightly lower overhead</li>
 </ul>
 <p><strong>Medium problems (SIZE=128):</strong></p>
 <ul>
-<li>Still overhead-dominated (~3.16ms for all)</li>
+<li>Still overhead-dominated (~0.063ms for all)</li>
 <li>Performance differences nearly disappear</li>
 <li>Transitional behavior between overhead and computation</li>
 </ul>
@@ -336,10 +335,10 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <p>Based on empirical benchmark results across different hardware:</p>
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
-<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~11.3ms</td><td>Max parallelism wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Tiled</strong></td><td>~12.0ms</td><td>Good balance of parallelism + locality</td></tr>
-<tr><td>🥉</td><td><strong>Mojo vectorize</strong></td><td>~13.4ms</td><td>Automatic optimization has overhead</td></tr>
-<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~15.7ms</td><td>Complex indexing hurts simple operations</td></tr>
+<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~10.45ms</td><td>Max parallelism wins for memory-bound ops</td></tr>
+<tr><td>🥈</td><td><strong>Tiled</strong></td><td>~11.09ms</td><td>Good balance of parallelism + locality</td></tr>
+<tr><td>🥉</td><td><strong>Mojo vectorize</strong></td><td>~11.13ms</td><td>Automatic optimization competitive with tiling</td></tr>
+<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~12.96ms</td><td>Complex indexing hurts simple operations</td></tr>
 </tbody></table>
 </div>
 <h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
@@ -353,6 +352,12 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <li><strong>Minimal overhead</strong> per thread</li>
 <li><strong>Scales naturally</strong> with GPU core count</li>
 </ul>
+<p><strong>Why tiled and vectorize are competitive:</strong></p>
+<ul>
+<li><strong>Balanced approach</strong> between parallelism and memory locality</li>
+<li><strong>Automatic optimization</strong> (vectorize) performs nearly as well as manual tiling</li>
+<li><strong>Good thread utilization</strong> without excessive complexity</li>
+</ul>
 <p><strong>Why manual vectorization struggles:</strong></p>
 <ul>
 <li><strong>Only 256 threads</strong> limit parallelism</li>
@@ -362,14 +367,14 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 </ul>
 <p><strong>Framework intelligence:</strong></p>
 <ul>
-<li>Automatic iteration count adjustment (70-100 iterations)</li>
+<li>Automatic iteration count adjustment (91-100 iterations)</li>
 <li>Statistical reliability across different execution times</li>
 <li>Handles thermal throttling and system variation</li>
 </ul>
 <h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
 <h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
 <pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 11.338706742857143 | 70    |
+| elementwise_1M_1024      | 10.452562250000001 | 100   |
 </code></pre>
 <ul>
 <li><strong><code>met (ms)</code></strong>: Total execution time for all iterations</li>
