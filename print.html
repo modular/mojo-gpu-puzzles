@@ -2417,13 +2417,13 @@ Block 1 output: [11 11 11 11]
 <li><strong>Debug optimized code</strong>: JIT compilation, variable optimization, limited symbol information</li>
 <li><strong>Use specialized tools</strong>: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis</li>
 </ul>
-<p>But here’s the exciting part: <strong>once you master GPU debugging, you’ll understand parallel computing at a deeper level than most developers ever reach</strong>.</p>
+<p>But here’s the exciting part: <strong>once you learn GPU debugging, you’ll understand parallel computing at a deeper level than most developers ever reach</strong>.</p>
 <h2 id="what-youll-learn-in-this-puzzle"><a class="header" href="#what-youll-learn-in-this-puzzle">What you’ll learn in this puzzle</a></h2>
 <p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>debug</em> GPU code as well. You’ll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
 <h3 id="essential-skills-youll-develop"><a class="header" href="#essential-skills-youll-develop"><strong>Essential skills you’ll develop</strong></a></h3>
 <ol>
 <li><strong>Professional debugging workflow</strong> - The systematic approach professionals use</li>
-<li><strong>Tool mastery</strong> - LLDB for host code, CUDA-GDB for GPU kernels</li>
+<li><strong>Tool proficiency</strong> - LLDB for host code, CUDA-GDB for GPU kernels</li>
 <li><strong>Pattern recognition</strong> - Instantly identify common GPU bug types</li>
 <li><strong>Investigation techniques</strong> - Find root causes when variables are optimized out</li>
 <li><strong>Thread coordination debugging</strong> - The most advanced GPU debugging skill</li>
@@ -2439,11 +2439,11 @@ Block 1 output: [11 11 11 11]
 <h2 id="your-debugging-journey"><a class="header" href="#your-debugging-journey">Your debugging journey</a></h2>
 <p>This puzzle takes you through a carefully designed progression from basic debugging concepts to advanced parallel coordination failures:</p>
 <h3 id="-step-1-mojo-gpu-debugging-essentials"><a class="header" href="#-step-1-mojo-gpu-debugging-essentials">📚 <strong>Step 1: <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a></strong></a></h3>
-<p><strong>Foundation building</strong> - Master the tools and workflow</p>
+<p><strong>Foundation building</strong> - Learn the tools and workflow</p>
 <ul>
 <li>Set up your debugging environment with <code>pixi</code> and CUDA-GDB</li>
 <li>Learn the four debugging approaches: JIT vs binary, CPU vs GPU</li>
-<li>Master essential CUDA-GDB commands for GPU kernel inspection</li>
+<li>Learn essential CUDA-GDB commands for GPU kernel inspection</li>
 <li>Practice with hands-on examples using familiar code from previous puzzles</li>
 <li>Understand when to use each debugging approach</li>
 </ul>
@@ -2453,7 +2453,7 @@ Block 1 output: [11 11 11 11]
 <ul>
 <li>Investigate <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> crashes</li>
 <li>Learn systematic pointer inspection techniques</li>
-<li>Master null pointer detection and validation</li>
+<li>Learn null pointer detection and validation</li>
 <li>Practice professional crash analysis workflow</li>
 <li>Understand GPU memory access failures</li>
 </ul>
@@ -2463,7 +2463,7 @@ Block 1 output: [11 11 11 11]
 <ul>
 <li>Investigate LayoutTensor-based algorithmic errors</li>
 <li>Learn execution flow analysis when variables are optimized out</li>
-<li>Master loop boundary analysis and iteration counting</li>
+<li>Learn loop boundary analysis and iteration counting</li>
 <li>Practice pattern recognition in incorrect results</li>
 <li>Debug without direct variable inspection</li>
 </ul>
@@ -2472,7 +2472,7 @@ Block 1 output: [11 11 11 11]
 <p><strong>Barrier deadlock investigation</strong> - Debug a program that hangs forever</p>
 <ul>
 <li>Investigate barrier synchronization failures</li>
-<li>Master multi-thread state analysis across parallel execution</li>
+<li>Learn multi-thread state analysis across parallel execution</li>
 <li>Learn conditional execution path tracing</li>
 <li>Practice thread coordination debugging</li>
 <li>Understand the most challenging GPU debugging scenario</li>
@@ -2505,12 +2505,12 @@ Block 1 output: [11 11 11 11]
 <li><strong>Professional debugging skills</strong> used in GPU development teams</li>
 <li><strong>Deep parallel computing understanding</strong> that comes from seeing execution at the thread level</li>
 <li><strong>Problem-solving confidence</strong> for the most challenging GPU programming scenarios</li>
-<li><strong>Tool mastery</strong> that will serve you throughout your GPU programming career</li>
+<li><strong>Tool proficiency</strong> that will serve you throughout your GPU programming career</li>
 </ul>
 <h2 id="ready-to-begin"><a class="header" href="#ready-to-begin">Ready to begin?</a></h2>
-<p>GPU debugging is where you transition from <em>learning</em> GPU programming to <em>mastering</em> it. Every professional GPU developer has spent countless hours debugging parallel code, learning to think in thousands of simultaneous threads, and developing the patience to investigate complex coordination failures.</p>
+<p>GPU debugging is where you transition from <em>writing</em> GPU programs to <em>understanding</em> them deeply. Every professional GPU developer has spent countless hours debugging parallel code, learning to think in thousands of simultaneous threads, and developing the patience to investigate complex coordination failures.</p>
 <p>This is your opportunity to join that elite group.</p>
-<p><strong>Start your debugging journey</strong>: <a href="puzzle_09/./essentials.html">📚 Mojo GPU Debugging Essentials</a></p>
+<p><strong>Start your debugging journey</strong>: <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a></p>
 <hr />
 <p><em>“Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.”</em> - Brian Kernighan</p>
 <p><em>In GPU programming, this wisdom is amplified by a factor of thousands - the number of parallel threads you’re debugging simultaneously.</em></p>
@@ -3426,7 +3426,7 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 </div>
 </details>
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
-<p>🎯 <strong>You’ve mastered crash debugging!</strong> You can now:</p>
+<p><strong>You’ve learned crash debugging!</strong> You can now:</p>
 <ul>
 <li>✅ <strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
 <li>✅ <strong>Identify null pointer bugs</strong> through pointer address inspection</li>
@@ -3737,7 +3737,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 </div>
 </details>
 <h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>
-<p>🎯 <strong>You’ve mastered logic bug debugging!</strong> You can now:</p>
+<p><strong>You’ve learned logic bug debugging!</strong> You can now:</p>
 <ul>
 <li>✅ <strong>Investigate algorithmic errors</strong> without crashes or obvious symptoms</li>
 <li>✅ <strong>Use pattern analysis</strong> to trace wrong results back to root causes</li>
@@ -3768,7 +3768,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <p>The systematic investigation skills from both previous cases - hypothesis formation, evidence gathering, pattern analysis - become crucial when debugging the most challenging GPU issue: threads that coordinate incorrectly and wait forever.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-detective-work-third-case"><a class="header" href="#-detective-work-third-case">🕵 Detective Work: Third Case</a></h1>
 <h2 id="overview-18"><a class="header" href="#overview-18">Overview</a></h2>
-<p>You’ve mastered debugging <a href="puzzle_09/./first_case.html">memory crashes</a> and <a href="puzzle_09/./second_case.html">logic bugs</a>. Now face the ultimate GPU debugging challenge: a <strong>barrier deadlock</strong> that causes the program to hang indefinitely with no error messages, no wrong results - just eternal silence.</p>
+<p>You’ve learned debugging <a href="puzzle_09/./first_case.html">memory crashes</a> and <a href="puzzle_09/./second_case.html">logic bugs</a>. Now face the ultimate GPU debugging challenge: a <strong>barrier deadlock</strong> that causes the program to hang indefinitely with no error messages, no wrong results - just eternal silence.</p>
 <p><strong>The complete debugging journey:</strong></p>
 <ul>
 <li><strong><a href="puzzle_09/./first_case.html">First Case</a></strong>: Program crashes → Follow error signals → Find memory bugs</li>
@@ -4080,8 +4080,8 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <p>This type of debugging - using CUDA-GDB to analyze thread states, identify divergent execution paths, and verify barrier reachability - is exactly what professional GPU developers do when facing deadlock issues in production systems.</p>
 </div>
 </details>
-<h2 id="next-steps-gpu-debugging-mastery-complete"><a class="header" href="#next-steps-gpu-debugging-mastery-complete">Next steps: GPU debugging mastery complete</a></h2>
-<p>🏆 <strong>You’ve completed the GPU debugging trilogy!</strong></p>
+<h2 id="next-steps-gpu-debugging-skills-complete"><a class="header" href="#next-steps-gpu-debugging-skills-complete">Next steps: GPU debugging skills complete</a></h2>
+<p><strong>You’ve completed the GPU debugging trilogy!</strong></p>
 <h3 id="your-complete-gpu-debugging-arsenal"><a class="header" href="#your-complete-gpu-debugging-arsenal">Your complete GPU debugging arsenal</a></h3>
 <p><strong>From the <a href="puzzle_09/./first_case.html">First Case</a> - Crash debugging:</strong></p>
 <ul>
@@ -4102,7 +4102,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <li>✅ <strong>Synchronization verification</strong> for complex parallel programs</li>
 </ul>
 <h3 id="the-professional-gpu-debugging-methodology"><a class="header" href="#the-professional-gpu-debugging-methodology">The professional GPU debugging methodology</a></h3>
-<p>You’ve mastered the systematic approach used by professional GPU developers:</p>
+<p>You’ve learned the systematic approach used by professional GPU developers:</p>
 <ol>
 <li><strong>Read the symptoms</strong> - Crashes? Wrong results? Infinite hangs?</li>
 <li><strong>Form hypotheses</strong> - Memory issue? Logic error? Coordination problem?</li>
@@ -4133,7 +4133,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <p>Welcome to the insidious world of <strong>silent GPU bugs</strong> - errors that hide in the shadows of massive parallelism, waiting to strike when you least expect them. These bugs can pass all your tests, produce correct results 99% of the time, and then catastrophically fail when it matters most.</p>
 <p><strong>Important note</strong>: This puzzle requires NVIDIA GPU hardware and is only available through <code>pixi</code>, as <code>compute-sanitizer</code> is part of NVIDIA’s CUDA toolkit.</p>
 <h2 id="why-gpu-bugs-are-uniquely-sinister"><a class="header" href="#why-gpu-bugs-are-uniquely-sinister">Why GPU bugs are uniquely sinister</a></h2>
-<p>Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are <strong>masters of disguise</strong>:</p>
+<p>Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are <strong>experts at hiding</strong>:</p>
 <p><strong>Silent corruption patterns:</strong></p>
 <ul>
 <li><strong>Memory violations that don’t crash</strong>: Out-of-bounds access to “lucky” memory locations</li>
@@ -4146,7 +4146,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <li><strong>Race conditions multiply exponentially</strong>: More threads = more opportunities for corruption</li>
 <li><strong>Hardware variations mask problems</strong>: Same bug behaves differently across GPU architectures</li>
 </ul>
-<p>But here’s the exciting part: <strong>once you master GPU sanitization tools, you’ll catch these elusive bugs before they ever reach production</strong>.</p>
+<p>But here’s the exciting part: <strong>once you learn GPU sanitization tools, you’ll catch these elusive bugs before they ever reach production</strong>.</p>
 <h2 id="your-sanitization-toolkit-nvidia-compute-sanitizer"><a class="header" href="#your-sanitization-toolkit-nvidia-compute-sanitizer">Your sanitization toolkit: NVIDIA compute-sanitizer</a></h2>
 <p><strong>NVIDIA compute-sanitizer</strong> is your specialized weapon against GPU bugs. It can detect:</p>
 <ul>
@@ -4163,7 +4163,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <ol>
 <li><strong>Silent bug detection</strong> - Find problems that tests don’t catch</li>
 <li><strong>Memory corruption investigation</strong> - Track down undefined behavior before it strikes</li>
-<li><strong>Race condition mastery</strong> - Identify and eliminate concurrency hazards</li>
+<li><strong>Race condition detection</strong> - Identify and eliminate concurrency hazards</li>
 <li><strong>Tool selection expertise</strong> - Know exactly which sanitizer to use when</li>
 <li><strong>Production debugging confidence</strong> - Catch bugs before they reach users</li>
 </ol>
@@ -4175,13 +4175,13 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 </ul>
 <p>Each scenario teaches you to think like a GPU bug detective, following clues that are invisible to normal testing.</p>
 <h2 id="your-bug-hunting-journey"><a class="header" href="#your-bug-hunting-journey">Your bug hunting journey</a></h2>
-<p>This puzzle takes you through a carefully designed progression from discovering silent corruption to mastering parallel debugging:</p>
+<p>This puzzle takes you through a carefully designed progression from discovering silent corruption to learning parallel debugging:</p>
 <h3 id="-the-silent-corruption-mystery"><a class="header" href="#-the-silent-corruption-mystery">👮🏼‍♂️ <a href="puzzle_10/./memcheck.html">The Silent Corruption Mystery</a></a></h3>
 <p><strong>Memory violation investigation</strong> - When tests pass but memory lies</p>
 <ul>
 <li>Investigate programs that pass tests while committing memory crimes</li>
 <li>Learn to spot the telltale signs of undefined behavior (UB)</li>
-<li>Master <code>memcheck</code> - your memory violation detector</li>
+<li>Learn <code>memcheck</code> - your memory violation detector</li>
 <li>Understand why GPU hardware masks memory errors</li>
 <li>Practice systematic memory access validation</li>
 </ul>
@@ -4191,7 +4191,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <ul>
 <li>Investigate programs that fail randomly due to thread timing</li>
 <li>Learn to identify shared memory hazards before they corrupt data</li>
-<li>Master <code>racecheck</code> - your race condition detector</li>
+<li>Learn <code>racecheck</code> - your race condition detector</li>
 <li>Compare <code>racecheck</code> vs <code>synccheck</code> for different concurrency bugs</li>
 <li>Practice thread synchronization strategies</li>
 </ul>
@@ -4222,11 +4222,11 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <p><strong>What you’ll gain</strong>:</p>
 <ul>
 <li><strong>Production-ready debugging skills</strong> used by professional GPU development teams</li>
-<li><strong>Silent bug detection mastery</strong> that prevents costly production failures</li>
+<li><strong>Silent bug detection skills</strong> that prevent costly production failures</li>
 <li><strong>Parallel debugging confidence</strong> for the most challenging concurrency scenarios</li>
 <li><strong>Tool expertise</strong> that will serve you throughout your GPU programming career</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="the-silent-memory-corruption"><a class="header" href="#the-silent-memory-corruption">The Silent Memory Corruption</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-the-silent-memory-corruption"><a class="header" href="#-the-silent-memory-corruption">👮🏼‍♂️ The Silent Memory Corruption</a></h1>
 <h2 id="overview-19"><a class="header" href="#overview-19">Overview</a></h2>
 <p>Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA’s <code>compute-sanitizer</code> (avaible through <code>pixi</code>) with the <code>memcheck</code> tool, you’ll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.</p>
 <p><strong>Key insight</strong>: A GPU program can produce “correct” results while simultaneously performing illegal memory accesses.</p>
@@ -4409,7 +4409,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-bash">pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
 <p><strong>Note</strong>: You may see Mojo runtime warnings in the sanitizer output. Focus on the <code>========= Invalid</code> and <code>========= ERROR SUMMARY</code> lines for actual memory violations.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="debugging-race-conditions"><a class="header" href="#debugging-race-conditions">Debugging Race Conditions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-debugging-race-conditions"><a class="header" href="#-debugging-race-conditions">🏁 Debugging Race Conditions</a></h1>
 <h2 id="overview-20"><a class="header" href="#overview-20">Overview</a></h2>
 <p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
 <p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>

@@ -203,7 +203,7 @@
 <p>Welcome to the insidious world of <strong>silent GPU bugs</strong> - errors that hide in the shadows of massive parallelism, waiting to strike when you least expect them. These bugs can pass all your tests, produce correct results 99% of the time, and then catastrophically fail when it matters most.</p>
 <p><strong>Important note</strong>: This puzzle requires NVIDIA GPU hardware and is only available through <code>pixi</code>, as <code>compute-sanitizer</code> is part of NVIDIA’s CUDA toolkit.</p>
 <h2 id="why-gpu-bugs-are-uniquely-sinister"><a class="header" href="#why-gpu-bugs-are-uniquely-sinister">Why GPU bugs are uniquely sinister</a></h2>
-<p>Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are <strong>masters of disguise</strong>:</p>
+<p>Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are <strong>experts at hiding</strong>:</p>
 <p><strong>Silent corruption patterns:</strong></p>
 <ul>
 <li><strong>Memory violations that don’t crash</strong>: Out-of-bounds access to “lucky” memory locations</li>
@@ -216,7 +216,7 @@
 <li><strong>Race conditions multiply exponentially</strong>: More threads = more opportunities for corruption</li>
 <li><strong>Hardware variations mask problems</strong>: Same bug behaves differently across GPU architectures</li>
 </ul>
-<p>But here’s the exciting part: <strong>once you master GPU sanitization tools, you’ll catch these elusive bugs before they ever reach production</strong>.</p>
+<p>But here’s the exciting part: <strong>once you learn GPU sanitization tools, you’ll catch these elusive bugs before they ever reach production</strong>.</p>
 <h2 id="your-sanitization-toolkit-nvidia-compute-sanitizer"><a class="header" href="#your-sanitization-toolkit-nvidia-compute-sanitizer">Your sanitization toolkit: NVIDIA compute-sanitizer</a></h2>
 <p><strong>NVIDIA compute-sanitizer</strong> is your specialized weapon against GPU bugs. It can detect:</p>
 <ul>
@@ -233,7 +233,7 @@
 <ol>
 <li><strong>Silent bug detection</strong> - Find problems that tests don’t catch</li>
 <li><strong>Memory corruption investigation</strong> - Track down undefined behavior before it strikes</li>
-<li><strong>Race condition mastery</strong> - Identify and eliminate concurrency hazards</li>
+<li><strong>Race condition detection</strong> - Identify and eliminate concurrency hazards</li>
 <li><strong>Tool selection expertise</strong> - Know exactly which sanitizer to use when</li>
 <li><strong>Production debugging confidence</strong> - Catch bugs before they reach users</li>
 </ol>
@@ -245,13 +245,13 @@
 </ul>
 <p>Each scenario teaches you to think like a GPU bug detective, following clues that are invisible to normal testing.</p>
 <h2 id="your-bug-hunting-journey"><a class="header" href="#your-bug-hunting-journey">Your bug hunting journey</a></h2>
-<p>This puzzle takes you through a carefully designed progression from discovering silent corruption to mastering parallel debugging:</p>
+<p>This puzzle takes you through a carefully designed progression from discovering silent corruption to learning parallel debugging:</p>
 <h3 id="-the-silent-corruption-mystery"><a class="header" href="#-the-silent-corruption-mystery">👮🏼‍♂️ <a href="./memcheck.html">The Silent Corruption Mystery</a></a></h3>
 <p><strong>Memory violation investigation</strong> - When tests pass but memory lies</p>
 <ul>
 <li>Investigate programs that pass tests while committing memory crimes</li>
 <li>Learn to spot the telltale signs of undefined behavior (UB)</li>
-<li>Master <code>memcheck</code> - your memory violation detector</li>
+<li>Learn <code>memcheck</code> - your memory violation detector</li>
 <li>Understand why GPU hardware masks memory errors</li>
 <li>Practice systematic memory access validation</li>
 </ul>
@@ -261,7 +261,7 @@
 <ul>
 <li>Investigate programs that fail randomly due to thread timing</li>
 <li>Learn to identify shared memory hazards before they corrupt data</li>
-<li>Master <code>racecheck</code> - your race condition detector</li>
+<li>Learn <code>racecheck</code> - your race condition detector</li>
 <li>Compare <code>racecheck</code> vs <code>synccheck</code> for different concurrency bugs</li>
 <li>Practice thread synchronization strategies</li>
 </ul>
@@ -292,7 +292,7 @@
 <p><strong>What you’ll gain</strong>:</p>
 <ul>
 <li><strong>Production-ready debugging skills</strong> used by professional GPU development teams</li>
-<li><strong>Silent bug detection mastery</strong> that prevents costly production failures</li>
+<li><strong>Silent bug detection skills</strong> that prevent costly production failures</li>
 <li><strong>Parallel debugging confidence</strong> for the most challenging concurrency scenarios</li>
 <li><strong>Tool expertise</strong> that will serve you throughout your GPU programming career</li>
 </ul>
