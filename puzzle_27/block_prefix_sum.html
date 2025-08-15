@@ -1,0 +1,639 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📈 block.prefix_sum() Parallel Histogram Binning - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
+<p>Implement parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations to demonstrate advanced parallel filtering and extraction algorithms. Each thread will determine which bin its element belongs to, then use <code>block.prefix_sum()</code> to compute write positions for extracting elements of a specific bin, showcasing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation enables parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn:</p>
+<ul>
+<li><strong>Block-level prefix sum</strong> with <code>block.prefix_sum()</code></li>
+<li><strong>Parallel filtering and extraction</strong> using cumulative computations</li>
+<li><strong>Advanced parallel partitioning</strong> algorithms</li>
+<li><strong>Histogram binning</strong> with block-wide coordination</li>
+<li><strong>Exclusive vs inclusive</strong> prefix sum patterns</li>
+</ul>
+<p>The algorithm demonstrates histogram construction by extracting elements belonging to specific value ranges (bins):
+\[\Large \text{Bin}_k = \{x_i : k/N \leq x_i &lt; (k+1)/N\}\]</p>
+<p>Each thread computes which bin its element belongs to, then <code>block.prefix_sum()</code> coordinates parallel extraction.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 128</code> elements</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Number of bins: <code>NUM_BINS = 8</code> (ranges [0.0, 0.125), [0.125, 0.25), etc.)</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Warps per block: <code>128 / WARP_SIZE</code> (2 or 4 warps depending on GPU)</li>
+</ul>
+<h2 id="the-challenge-parallel-bin-extraction"><a class="header" href="#the-challenge-parallel-bin-extraction">The challenge: Parallel bin extraction</a></h2>
+<p>Traditional sequential histogram construction processes elements one by one:</p>
+<pre><code class="language-python"># Sequential approach - doesn't parallelize well
+histogram = [[] for _ in range(NUM_BINS)]
+for element in data:
+    bin_id = int(element * NUM_BINS)  # Determine bin
+    histogram[bin_id].append(element)  # Sequential append
+</code></pre>
+<p><strong>Problems with naive GPU parallelization:</strong></p>
+<ul>
+<li><strong>Race conditions</strong>: Multiple threads writing to same bin simultaneously</li>
+<li><strong>Uncoalesced memory</strong>: Threads access different memory locations</li>
+<li><strong>Load imbalance</strong>: Some bins may have many more elements than others</li>
+<li><strong>Complex synchronization</strong>: Need barriers and atomic operations</li>
+</ul>
+<h2 id="the-advanced-approach-blockprefix_sum-coordination"><a class="header" href="#the-advanced-approach-blockprefix_sum-coordination">The advanced approach: <code>block.prefix_sum()</code> coordination</a></h2>
+<p>Transform the complex parallel partitioning into coordinated extraction:</p>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
+<p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
+<pre><code class="language-mojo">alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+
+
+fn block_histogram_bin_extract[
+    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
+    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    size: Int,
+    target_bin: Int,
+    num_bins: Int,
+):
+    """Parallel histogram using block.prefix_sum() for bin extraction.
+
+    This demonstrates advanced parallel filtering and extraction:
+    1. Each thread determines which bin its element belongs to
+    2. Use block.prefix_sum() to compute write positions for target_bin elements
+    3. Extract and pack only elements belonging to target_bin
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread determines its bin and element value
+
+    # FILL IN (roughly 9 lines)
+
+    # Step 2: Create predicate for target bin extraction
+
+    # FILL IN (roughly 3 line)
+
+    # Step 3: Use block.prefix_sum() for parallel bin extraction!
+    # This computes where each thread should write within the target bin
+
+    # FILL IN (1 line)
+
+    # Step 4: Extract and pack elements belonging to target_bin
+
+    # FILL IN (roughly 2 line)
+
+    # Step 5: Final thread computes total count for this bin
+
+    # FILL IN (roughly 3 line)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-core-algorithm-structure-adapt-from-previous-puzzles"><a class="header" href="#1-core-algorithm-structure-adapt-from-previous-puzzles">1. <strong>Core algorithm structure (adapt from previous puzzles)</strong></a></h3>
+<p>Just like <code>block_sum_dot_product</code>, you need these key variables:</p>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
+local_i = thread_idx.x
+</code></pre>
+<p>Your function will have <strong>5 main steps</strong> (about 15-20 lines total):</p>
+<ol>
+<li>Load element and determine its bin</li>
+<li>Create binary predicate for target bin</li>
+<li>Run <code>block.prefix_sum()</code> on the predicate</li>
+<li>Conditionally write using computed offset</li>
+<li>Final thread computes total count</li>
+</ol>
+<h3 id="2-bin-calculation-use-mathfloor"><a class="header" href="#2-bin-calculation-use-mathfloor">2. <strong>Bin calculation (use <code>math.floor</code>)</strong></a></h3>
+<p>To classify a <code>Float32</code> value into bins:</p>
+<pre><code class="language-mojo">my_value = input_data[global_i][0]  # Extract SIMD like in dot product
+bin_number = Int(floor(my_value * num_bins))
+</code></pre>
+<p><strong>Edge case handling</strong>: Values exactly 1.0 would go to bin <code>NUM_BINS</code>, but you only have bins 0 to <code>NUM_BINS-1</code>. Use an <code>if</code> statement to clamp the maximum bin.</p>
+<h3 id="3-binary-predicate-creation"><a class="header" href="#3-binary-predicate-creation">3. <strong>Binary predicate creation</strong></a></h3>
+<p>Create an integer variable (0 or 1) indicating if this thread’s element belongs to target_bin:</p>
+<pre><code class="language-mojo">var belongs_to_target: Int = 0
+if (thread_has_valid_element) and (my_bin == target_bin):
+    belongs_to_target = 1
+</code></pre>
+<p>This is the key insight: prefix sum works on these binary flags to compute positions!</p>
+<h3 id="4-blockprefix_sum-call-pattern"><a class="header" href="#4-blockprefix_sum-call-pattern">4. <strong><code>block.prefix_sum()</code> call pattern</strong></a></h3>
+<p>Following the documentation, the call looks like:</p>
+<pre><code class="language-mojo">offset = block.prefix_sum[
+    dtype=DType.int32,         # Working with integer predicates
+    block_size=tpb,            # Same as block.sum()
+    exclusive=True             # Key: gives position BEFORE each thread
+](val=SIMD[DType.int32, 1](my_predicate_value))
+</code></pre>
+<p><strong>Why exclusive?</strong> Thread with predicate=1 at position 5 should write to output[4] if 4 elements came before it.</p>
+<h3 id="5-conditional-writing-pattern"><a class="header" href="#5-conditional-writing-pattern">5. <strong>Conditional writing pattern</strong></a></h3>
+<p>Only threads with <code>belongs_to_target == 1</code> should write:</p>
+<pre><code class="language-mojo">if belongs_to_target == 1:
+    bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
+</code></pre>
+<p>This is just like the bounds checking pattern from <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>, but now the condition is “belongs to target bin.”</p>
+<h3 id="6-final-count-computation"><a class="header" href="#6-final-count-computation">6. <strong>Final count computation</strong></a></h3>
+<p>The last thread (not thread 0!) computes the total count:</p>
+<pre><code class="language-mojo">if local_i == tpb - 1:  # Last thread in block
+    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+    count_output[0] = total_count
+</code></pre>
+<p><strong>Why last thread?</strong> It has the highest <code>offset</code> value, so <code>offset + contribution</code> gives the total.</p>
+<h3 id="7-data-types-and-conversions"><a class="header" href="#7-data-types-and-conversions">7. <strong>Data types and conversions</strong></a></h3>
+<p>Remember the patterns from previous puzzles:</p>
+<ul>
+<li><code>LayoutTensor</code> indexing returns SIMD: <code>input_data[i][0]</code></li>
+<li><code>block.prefix_sum()</code> returns SIMD: <code>offset[0]</code> to extract</li>
+<li>Array indexing needs <code>Int</code>: <code>Int(offset[0])</code> for <code>bin_output[...]</code></li>
+</ul>
+</div>
+</details>
+<p><strong>Test the block.prefix_sum() approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --histogram
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --histogram
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+NUM_BINS: 8
+
+Input sample: 0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 ...
+
+=== Processing Bin 0 (range [ 0.0 , 0.125 )) ===
+Bin 0 count: 26
+Bin 0 extracted elements: 0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 ...
+
+=== Processing Bin 1 (range [ 0.125 , 0.25 )) ===
+Bin 1 count: 24
+Bin 1 extracted elements: 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 ...
+
+=== Processing Bin 2 (range [ 0.25 , 0.375 )) ===
+Bin 2 count: 26
+Bin 2 extracted elements: 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 ...
+
+=== Processing Bin 3 (range [ 0.375 , 0.5 )) ===
+Bin 3 count: 22
+Bin 3 extracted elements: 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 ...
+
+=== Processing Bin 4 (range [ 0.5 , 0.625 )) ===
+Bin 4 count: 13
+Bin 4 extracted elements: 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 ...
+
+=== Processing Bin 5 (range [ 0.625 , 0.75 )) ===
+Bin 5 count: 12
+Bin 5 extracted elements: 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 ...
+
+=== Processing Bin 6 (range [ 0.75 , 0.875 )) ===
+Bin 6 count: 5
+Bin 6 extracted elements: 0.75 0.76 0.77 0.78 0.79
+
+=== Processing Bin 7 (range [ 0.875 , 1.0 )) ===
+Bin 7 count: 0
+Bin 7 extracted elements:
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_histogram_bin_extract[
+    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
+    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    size: Int,
+    target_bin: Int,
+    num_bins: Int,
+):
+    """Parallel histogram using block.prefix_sum() for bin extraction.
+
+    This demonstrates advanced parallel filtering and extraction:
+    1. Each thread determines which bin its element belongs to
+    2. Use block.prefix_sum() to compute write positions for target_bin elements
+    3. Extract and pack only elements belonging to target_bin
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread determines its bin and element value
+    var my_value: Scalar[dtype] = 0.0
+    var my_bin: Int = -1
+
+    if global_i &lt; size:
+        # `[0]` returns the underlying SIMD value
+        my_value = input_data[global_i][0]
+        # Bin values [0.0, 1.0) into num_bins buckets
+        my_bin = Int(floor(my_value * num_bins))
+        # Clamp to valid range
+        if my_bin &gt;= num_bins:
+            my_bin = num_bins - 1
+        if my_bin &lt; 0:
+            my_bin = 0
+
+    # Step 2: Create predicate for target bin extraction
+    var belongs_to_target: Int = 0
+    if global_i &lt; size and my_bin == target_bin:
+        belongs_to_target = 1
+
+    # Step 3: Use block.prefix_sum() for parallel bin extraction!
+    # This computes where each thread should write within the target bin
+    write_offset = block.prefix_sum[
+        dtype = DType.int32, block_size=tpb, exclusive=True
+    ](val=SIMD[DType.int32, 1](belongs_to_target))
+
+    # Step 4: Extract and pack elements belonging to target_bin
+    if belongs_to_target == 1:
+        bin_output[Int(write_offset[0])] = my_value
+
+    # Step 5: Final thread computes total count for this bin
+    if local_i == tpb - 1:
+        # Inclusive sum = exclusive sum + my contribution
+        total_count = write_offset[0] + belongs_to_target
+        count_output[0] = total_count
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The <code>block.prefix_sum()</code> kernel demonstrates advanced parallel coordination patterns by building on concepts from previous puzzles:</p>
+<h2 id="step-by-step-algorithm-walkthrough"><a class="header" href="#step-by-step-algorithm-walkthrough"><strong>Step-by-step algorithm walkthrough:</strong></a></h2>
+<h3 id="phase-1-element-processing-like-puzzle-12-dot-product"><a class="header" href="#phase-1-element-processing-like-puzzle-12-dot-product"><strong>Phase 1: Element processing (like <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> dot product)</strong></a></h3>
+<pre><code>Thread indexing (familiar pattern):
+  global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
+  local_i = thread_idx.x                              // Local thread index
+
+Element loading (like LayoutTensor pattern):
+  Thread 0:  my_value = input_data[0][0] = 0.00
+  Thread 1:  my_value = input_data[1][0] = 0.01
+  Thread 13: my_value = input_data[13][0] = 0.13
+  Thread 25: my_value = input_data[25][0] = 0.25
+  ...
+</code></pre>
+<h3 id="phase-2-bin-classification-new-concept"><a class="header" href="#phase-2-bin-classification-new-concept"><strong>Phase 2: Bin classification (new concept)</strong></a></h3>
+<pre><code>Bin calculation using floor operation:
+  Thread 0:  my_bin = Int(floor(0.00 * 8)) = 0  // Values [0.000, 0.125) → bin 0
+  Thread 1:  my_bin = Int(floor(0.01 * 8)) = 0  // Values [0.000, 0.125) → bin 0
+  Thread 13: my_bin = Int(floor(0.13 * 8)) = 1  // Values [0.125, 0.250) → bin 1
+  Thread 25: my_bin = Int(floor(0.25 * 8)) = 2  // Values [0.250, 0.375) → bin 2
+  ...
+</code></pre>
+<h3 id="phase-3-binary-predicate-creation-filtering-pattern"><a class="header" href="#phase-3-binary-predicate-creation-filtering-pattern"><strong>Phase 3: Binary predicate creation (filtering pattern)</strong></a></h3>
+<pre><code>For target_bin=0, create extraction mask:
+  Thread 0:  belongs_to_target = 1  (bin 0 == target 0)
+  Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
+  Thread 13: belongs_to_target = 0  (bin 1 != target 0)
+  Thread 25: belongs_to_target = 0  (bin 2 != target 0)
+  ...
+
+This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+</code></pre>
+<h3 id="phase-4-parallel-prefix-sum-the-magic"><a class="header" href="#phase-4-parallel-prefix-sum-the-magic"><strong>Phase 4: Parallel prefix sum (the magic!)</strong></a></h3>
+<pre><code>block.prefix_sum[exclusive=True] on predicates:
+Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
+                                                      ^
+                                                 doesn't matter
+
+Key insight: Each thread gets its WRITE POSITION in the output array!
+</code></pre>
+<h3 id="phase-5-coordinated-extraction-conditional-write"><a class="header" href="#phase-5-coordinated-extraction-conditional-write"><strong>Phase 5: Coordinated extraction (conditional write)</strong></a></h3>
+<pre><code>Only threads with belongs_to_target=1 write:
+  Thread 0:  bin_output[0] = 0.00   // Uses write_offset[0] = 0
+  Thread 1:  bin_output[1] = 0.01   // Uses write_offset[1] = 1
+  Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
+  Thread 13: (no write)             // belongs_to_target = 0
+  Thread 25: (no write)             // belongs_to_target = 0
+  ...
+
+Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
+</code></pre>
+<h3 id="phase-6-count-computation-like-blocksum-pattern"><a class="header" href="#phase-6-count-computation-like-blocksum-pattern"><strong>Phase 6: Count computation (like block.sum() pattern)</strong></a></h3>
+<pre><code>Last thread computes total (not thread 0!):
+  if local_i == tpb - 1:  // Thread 127 in our case
+      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+      count_output[0] = total
+</code></pre>
+<h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>
+<h3 id="connection-to-puzzle-12-traditional-dot-product"><a class="header" href="#connection-to-puzzle-12-traditional-dot-product"><strong>Connection to <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (Traditional dot product):</strong></a></h3>
+<ul>
+<li><strong>Same thread indexing</strong>: <code>global_i</code> and <code>local_i</code> patterns</li>
+<li><strong>Same bounds checking</strong>: <code>if global_i &lt; size</code> validation</li>
+<li><strong>Same data loading</strong>: LayoutTensor SIMD extraction with <code>[0]</code></li>
+</ul>
+<h3 id="connection-to-blocksum-earlier-in-this-puzzle"><a class="header" href="#connection-to-blocksum-earlier-in-this-puzzle"><strong>Connection to <a href="./block_sum.html"><code>block.sum()</code></a> (earlier in this puzzle):</strong></a></h3>
+<ul>
+<li><strong>Same block-wide operation</strong>: All threads participate in block primitive</li>
+<li><strong>Same result handling</strong>: Special thread (last instead of first) handles final result</li>
+<li><strong>Same SIMD conversion</strong>: <code>Int(result[0])</code> pattern for array indexing</li>
+</ul>
+<h3 id="advanced-concepts-unique-to-blockprefix_sum"><a class="header" href="#advanced-concepts-unique-to-blockprefix_sum"><strong>Advanced concepts unique to <code>block.prefix_sum()</code>:</strong></a></h3>
+<ul>
+<li><strong>Every thread gets result</strong>: Unlike <code>block.sum()</code> where only thread 0 matters</li>
+<li><strong>Coordinated write positions</strong>: Prefix sum eliminates race conditions automatically</li>
+<li><strong>Parallel filtering</strong>: Binary predicates enable sophisticated data reorganization</li>
+</ul>
+<h2 id="performance-advantages-over-naive-approaches"><a class="header" href="#performance-advantages-over-naive-approaches"><strong>Performance advantages over naive approaches:</strong></a></h2>
+<h3 id="vs-atomic-operations"><a class="header" href="#vs-atomic-operations"><strong>vs. Atomic operations:</strong></a></h3>
+<ul>
+<li><strong>No race conditions</strong>: Prefix sum gives unique write positions</li>
+<li><strong>Coalesced memory</strong>: Sequential writes improve cache performance</li>
+<li><strong>No serialization</strong>: All writes happen in parallel</li>
+</ul>
+<h3 id="vs-multi-pass-algorithms"><a class="header" href="#vs-multi-pass-algorithms"><strong>vs. Multi-pass algorithms:</strong></a></h3>
+<ul>
+<li><strong>Single kernel</strong>: Complete histogram extraction in one GPU launch</li>
+<li><strong>Full utilization</strong>: All threads work regardless of data distribution</li>
+<li><strong>Optimal memory bandwidth</strong>: Pattern optimized for GPU memory hierarchy</li>
+</ul>
+<p>This demonstrates how <code>block.prefix_sum()</code> enables sophisticated parallel algorithms that would be complex or impossible with simpler primitives like <code>block.sum()</code>.</p>
+</div>
+</details>
+<h2 id="performance-insights"><a class="header" href="#performance-insights">Performance insights</a></h2>
+<p><strong><code>block.prefix_sum()</code> vs Traditional:</strong></p>
+<ul>
+<li><strong>Algorithm sophistication</strong>: Advanced parallel partitioning vs sequential processing</li>
+<li><strong>Memory efficiency</strong>: Coalesced writes vs scattered random access</li>
+<li><strong>Synchronization</strong>: Built-in coordination vs manual barriers and atomics</li>
+<li><strong>Scalability</strong>: Works with any block size and bin count</li>
+</ul>
+<p><strong><code>block.prefix_sum()</code> vs <code>block.sum()</code>:</strong></p>
+<ul>
+<li><strong>Scope</strong>: Every thread gets result vs only thread 0</li>
+<li><strong>Use case</strong>: Complex partitioning vs simple aggregation</li>
+<li><strong>Algorithm type</strong>: Parallel scan primitive vs reduction primitive</li>
+<li><strong>Output pattern</strong>: Per-thread positions vs single total</li>
+</ul>
+<p><strong>When to use <code>block.prefix_sum()</code>:</strong></p>
+<ul>
+<li><strong>Parallel filtering</strong>: Extract elements matching criteria</li>
+<li><strong>Stream compaction</strong>: Remove unwanted elements</li>
+<li><strong>Parallel partitioning</strong>: Separate data into categories</li>
+<li><strong>Advanced algorithms</strong>: Load balancing, sorting, graph algorithms</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Once you’ve learned about <code>block.prefix_sum()</code> operations, you’re ready for:</p>
+<ul>
+<li><strong><a href="./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>
+<li><strong>Multi-block algorithms</strong>: Coordinating multiple blocks for larger problems</li>
+<li><strong>Advanced parallel algorithms</strong>: Sorting, graph traversal, dynamic load balancing</li>
+<li><strong>Complex memory patterns</strong>: Combining block operations with sophisticated memory access</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: Block prefix sum operations transform GPU programming from simple parallel computations to sophisticated parallel algorithms. While <code>block.sum()</code> simplified reductions, <code>block.prefix_sum()</code> enables advanced data reorganization patterns essential for high-performance parallel algorithms.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_27/block_sum.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_27/block_broadcast.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_27/block_sum.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_27/block_broadcast.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

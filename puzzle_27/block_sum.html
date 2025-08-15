@@ -1,0 +1,617 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔰 block.sum() Essentials - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="blocksum-essentials---block-level-dot-product"><a class="header" href="#blocksum-essentials---block-level-dot-product">block.sum() Essentials - Block-Level Dot Product</a></h1>
+<p>Implement the dot product we saw in <a href="../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn:</p>
+<ul>
+<li><strong>Block-level reductions</strong> with <code>block.sum()</code></li>
+<li><strong>Block-wide synchronization</strong> and thread coordination</li>
+<li><strong>Cross-warp communication</strong> within a single block</li>
+<li><strong>Performance transformation</strong> from complex to simple patterns</li>
+<li><strong>Thread 0 result management</strong> and conditional writes</li>
+</ul>
+<p>The mathematical operation is a dot product (inner product):
+\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+<p>But the implementation teaches fundamental patterns for all block-level GPU programming in Mojo.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 128</code> elements</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Warps per block: <code>128 / WARP_SIZE</code> (4 warps on NVIDIA, 2 or 4 warps on AMD)</li>
+</ul>
+<h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
+<p>Recall the complex approach from <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> that required shared memory, barriers, and tree reduction:</p>
+<pre><code class="language-mojo">fn traditional_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Traditional dot product using shared memory + barriers + tree reduction.
+    Educational but complex - shows the manual coordination needed."""
+
+    shared = tb[dtype]().row_major[tpb]().shared().alloc()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Each thread computes partial product
+    if global_i &lt; size:
+        a_val = rebind[Scalar[dtype]](a[global_i])
+        b_val = rebind[Scalar[dtype]](b[global_i])
+        shared[local_i] = a_val * b_val
+
+    barrier()
+
+    # Tree reduction in shared memory - complex but educational
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+
+    # Only thread 0 writes final result
+    if local_i == 0:
+        output[0] = shared[0]
+
+
+</code></pre>
+<p><strong>What makes this complex:</strong></p>
+<ul>
+<li><strong>Shared memory allocation</strong>: Manual memory management within blocks</li>
+<li><strong>Explicit barriers</strong>: <code>barrier()</code> calls to synchronize all threads in block</li>
+<li><strong>Tree reduction</strong>: Complex loop with stride-based indexing (64→32→16→8→4→2→1)</li>
+<li><strong>Cross-warp coordination</strong>: Must synchronize across multiple warps</li>
+<li><strong>Conditional writes</strong>: Only thread 0 writes the final result</li>
+</ul>
+<p>This works across the entire block (128 threads across 2 or 4 warps depending on GPU), but it’s verbose, error-prone, and requires deep understanding of block-level GPU synchronization.</p>
+<h2 id="the-warp-level-improvement-from-puzzle-24"><a class="header" href="#the-warp-level-improvement-from-puzzle-24">The warp-level improvement (from Puzzle 24)</a></h2>
+<p>Before jumping to block-level operations, recall how <a href="../puzzle_24/warp_sum.html">Puzzle 24</a> simplified reduction within a single warp using <code>warp.sum()</code>:</p>
+<pre><code class="language-mojo">fn simple_warp_dot_product[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
+    var partial_product: Scalar[dtype] = 0
+    if global_i &lt; size:
+        partial_product = (a[global_i] * b[global_i]).reduce_add()
+
+    # warp_sum() replaces all the shared memory + barriers + tree reduction
+    total = warp_sum(partial_product)
+
+    # Only lane 0 writes the result (all lanes have the same total)
+    if lane_id() == 0:
+        output[0] = total
+
+
+</code></pre>
+<p><strong>What <code>warp.sum()</code> achieved:</strong></p>
+<ul>
+<li><strong>Single warp scope</strong>: Works within 32 threads (NVIDIA) or 32/64 threads (AMD)</li>
+<li><strong>Hardware shuffle</strong>: Uses <code>shfl.sync.bfly.b32</code> instructions for efficiency</li>
+<li><strong>Zero shared memory</strong>: No explicit memory management needed</li>
+<li><strong>One line reduction</strong>: <code>total = warp_sum[warp_size=WARP_SIZE](val=partial_product)</code></li>
+</ul>
+<p><strong>But the limitation:</strong> <code>warp.sum()</code> only works within a single warp. For problems requiring multiple warps (like our 128-thread block), you’d still need the complex shared memory + barriers approach to coordinate between warps.</p>
+<p><strong>Test the traditional approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --traditional-dot-product
+</code></pre>
+  </div>
+</div>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<h3 id="blocksum-approach"><a class="header" href="#blocksum-approach"><code>block.sum()</code> approach</a></h3>
+<p>Transform the complex traditional approach into a simple block kernel using <code>block.sum()</code>:</p>
+<pre><code class="language-mojo">alias SIZE = 128
+alias TPB = 128
+alias NUM_BINS = 8
+alias in_layout = Layout.row_major(SIZE)
+alias out_layout = Layout.row_major(1)
+alias dtype = DType.float32
+
+
+fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # FILL IN (roughly 6 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+Expected result: 1381760.0
+Block.sum result: 1381760.0
+Block.sum() gives identical results!
+Compare the code: 15+ lines of barriers → 1 line of block.sum()!
+Just like warp.sum() but for the entire block
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-think-about-the-three-step-pattern"><a class="header" href="#1-think-about-the-three-step-pattern">1. <strong>Think about the three-step pattern</strong></a></h3>
+<p>Every block reduction follows the same conceptual pattern:</p>
+<ol>
+<li>Each thread computes its local contribution</li>
+<li>All threads participate in a block-wide reduction</li>
+<li>One designated thread handles the final result</li>
+</ol>
+<h3 id="2-remember-the-dot-product-math"><a class="header" href="#2-remember-the-dot-product-math">2. <strong>Remember the dot product math</strong></a></h3>
+<p>Each thread should handle one element pair from vectors <code>a</code> and <code>b</code>. What operation combines these into a “partial result” that can be summed across threads?</p>
+<h3 id="3-layouttensor-indexing-patterns"><a class="header" href="#3-layouttensor-indexing-patterns">3. <strong>LayoutTensor indexing patterns</strong></a></h3>
+<p>When accessing <code>LayoutTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
+<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> API concepts</strong></a></h3>
+<p>Study the function signature - it needs:</p>
+<ul>
+<li>A template parameter specifying the block size</li>
+<li>A template parameter for result distribution (<code>broadcast</code>)</li>
+<li>A runtime parameter containing the value to reduce</li>
+</ul>
+<h3 id="5-thread-coordination-principles"><a class="header" href="#5-thread-coordination-principles">5. <strong>Thread coordination principles</strong></a></h3>
+<ul>
+<li>Which threads have valid data to process? (Hint: bounds checking)</li>
+<li>Which thread should write the final result? (Hint: consistent choice)</li>
+<li>How do you identify that specific thread? (Hint: thread indexing)</li>
+</ul>
+</div>
+</details>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Each thread computes partial product
+    var partial_product: Scalar[dtype] = 0.0
+    if global_i &lt; size:
+        # LayoutTensor indexing `[0]` returns the underlying SIMD value
+        partial_product = a[global_i][0] * b[global_i][0]
+
+    # The magic: block.sum() replaces 15+ lines of manual reduction!
+    # Just like warp.sum() but for the entire block
+    total = block.sum[block_size=tpb, broadcast=False](
+        val=SIMD[DType.float32, 1](partial_product)
+    )
+
+    # Only thread 0 writes the result
+    if local_i == 0:
+        output[0] = total[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The <code>block.sum()</code> kernel demonstrates the fundamental transformation from complex block synchronization to expertly optimized implementations:</p>
+<p><strong>What disappeared from the traditional approach:</strong></p>
+<ul>
+<li><strong>15+ lines → 8 lines</strong>: Dramatic code reduction</li>
+<li><strong>Shared memory allocation</strong>: Zero memory management required</li>
+<li><strong>7+ barrier() calls</strong>: Zero explicit synchronization needed</li>
+<li><strong>Complex tree reduction</strong>: Single function call</li>
+<li><strong>Stride-based indexing</strong>: Eliminated entirely</li>
+<li><strong>Cross-warp coordination</strong>: Handled automatically by optimized implementation</li>
+</ul>
+<p><strong>Block-wide execution model:</strong></p>
+<pre><code>Block threads (128 threads across 4 warps):
+Warp 0 (threads 0-31):
+  Thread 0: partial_product = a[0] * b[0] = 0.0
+  Thread 1: partial_product = a[1] * b[1] = 2.0
+  ...
+  Thread 31: partial_product = a[31] * b[31] = 1922.0
+
+Warp 1 (threads 32-63):
+  Thread 32: partial_product = a[32] * b[32] = 2048.0
+  ...
+
+Warp 2 (threads 64-95):
+  Thread 64: partial_product = a[64] * b[64] = 8192.0
+  ...
+
+Warp 3 (threads 96-127):
+  Thread 96: partial_product = a[96] * b[96] = 18432.0
+  Thread 127: partial_product = a[127] * b[127] = 32258.0
+
+block.sum() hardware operation:
+All threads → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
+Thread 0 receives → total = 1381760.0 (when broadcast=False)
+</code></pre>
+<p><strong>Why this works without barriers:</strong></p>
+<ol>
+<li><strong>Block-wide execution</strong>: All threads execute each instruction in lockstep within warps</li>
+<li><strong>Built-in synchronization</strong>: <code>block.sum()</code> implementation handles synchronization internally</li>
+<li><strong>Cross-warp communication</strong>: Optimized communication between warps in the block</li>
+<li><strong>Coordinated result delivery</strong>: Only thread 0 receives the final result</li>
+</ol>
+<p><strong>Comparison to warp.sum() (Puzzle 24):</strong></p>
+<ul>
+<li><strong>Warp scope</strong>: <code>warp.sum()</code> works within 32/64 threads (single warp)</li>
+<li><strong>Block scope</strong>: <code>block.sum()</code> works across entire block (multiple warps)</li>
+<li><strong>Same simplicity</strong>: Both replace complex manual reductions with one-line calls</li>
+<li><strong>Automatic coordination</strong>: <code>block.sum()</code> handles the cross-warp barriers that <code>warp.sum()</code> cannot</li>
+</ul>
+</div>
+</details>
+<h2 id="technical-investigation-what-does-blocksum-actually-compile-to"><a class="header" href="#technical-investigation-what-does-blocksum-actually-compile-to">Technical investigation: What does <code>block.sum()</code> actually compile to?</a></h2>
+<p>To understand what <code>block.sum()</code> actually generates, we compiled the puzzle with debug information:</p>
+<pre><code class="language-bash">pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
+</code></pre>
+<p>This generated <strong>LLVM file</strong> <code>solutions/p27/p27.ll</code>. For example, on a compatible NVIDIA GPU, the <code>p27.ll</code> file has embedded <strong>PTX assembly</strong> showing the actual GPU instructions:</p>
+<h3 id="finding-1-not-a-single-instruction"><a class="header" href="#finding-1-not-a-single-instruction"><strong>Finding 1: Not a single instruction</strong></a></h3>
+<p><code>block.sum()</code> compiles to approximately <strong>20+ PTX instructions</strong>, organized in a two-phase reduction:</p>
+<p><strong>Phase 1: Warp-level reduction (butterfly shuffles)</strong></p>
+<pre><code class="language-ptx">shfl.sync.bfly.b32 %r23, %r46, 16, 31, -1;  // shuffle with offset 16
+add.f32            %r24, %r46, %r23;         // add shuffled values
+shfl.sync.bfly.b32 %r25, %r24, 8, 31, -1;   // shuffle with offset 8
+add.f32            %r26, %r24, %r25;         // add shuffled values
+// ... continues for offsets 4, 2, 1
+</code></pre>
+<p><strong>Phase 2: Cross-warp coordination</strong></p>
+<pre><code class="language-ptx">shr.u32            %r32, %r1, 5;             // compute warp ID
+mov.b32            %r34, _global_alloc_$__gpu_shared_mem; // shared memory
+bar.sync           0;                        // barrier synchronization
+// ... another butterfly shuffle sequence for cross-warp reduction
+</code></pre>
+<h3 id="finding-2-hardware-optimized-implementation"><a class="header" href="#finding-2-hardware-optimized-implementation"><strong>Finding 2: Hardware-optimized implementation</strong></a></h3>
+<ul>
+<li><strong>Butterfly shuffles</strong>: More efficient than tree reduction</li>
+<li><strong>Automatic barrier placement</strong>: Handles cross-warp synchronization</li>
+<li><strong>Optimized memory access</strong>: Uses shared memory strategically</li>
+<li><strong>Architecture-aware</strong>: Same API works on NVIDIA (32-thread warps) and AMD (32 or 64-thread warps)</li>
+</ul>
+<h3 id="finding-3-algorithm-complexity-analysis"><a class="header" href="#finding-3-algorithm-complexity-analysis"><strong>Finding 3: Algorithm complexity analysis</strong></a></h3>
+<p><strong>Our approach to investigation:</strong></p>
+<ol>
+<li>Located PTX assembly in binary ELF sections (<code>.nv_debug_ptx_txt</code>)</li>
+<li>Identified algorithmic differences rather than counting individual instructions</li>
+</ol>
+<p><strong>Key algorithmic differences observed:</strong></p>
+<ul>
+<li><strong>Traditional</strong>: Tree reduction with shared memory + multiple <code>bar.sync</code> calls</li>
+<li><strong>block.sum()</strong>: Butterfly shuffle pattern + optimized cross-warp coordination</li>
+</ul>
+<p>The performance advantage comes from <strong>expertly optimized algorithm choice</strong> (butterfly &gt; tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.</p>
+<h2 id="performance-insights"><a class="header" href="#performance-insights">Performance insights</a></h2>
+<p><strong><code>block.sum()</code> vs Traditional:</strong></p>
+<ul>
+<li><strong>Code simplicity</strong>: 15+ lines → 1 line for the reduction</li>
+<li><strong>Memory usage</strong>: No shared memory allocation required</li>
+<li><strong>Synchronization</strong>: No explicit barriers needed</li>
+<li><strong>Scalability</strong>: Works with any block size (up to hardware limits)</li>
+</ul>
+<p><strong><code>block.sum()</code> vs <code>warp.sum()</code>:</strong></p>
+<ul>
+<li><strong>Scope</strong>: Block-wide (128 threads) vs warp-wide (32 threads)</li>
+<li><strong>Use case</strong>: When you need reduction across entire block</li>
+<li><strong>Convenience</strong>: Same programming model, different scale</li>
+</ul>
+<p><strong>When to use <code>block.sum()</code>:</strong></p>
+<ul>
+<li><strong>Single block problems</strong>: When all data fits in one block</li>
+<li><strong>Block-level algorithms</strong>: Shared memory computations needing reduction</li>
+<li><strong>Convenience over scalability</strong>: Simpler than multi-block approaches</li>
+</ul>
+<h2 id="relationship-to-previous-puzzles"><a class="header" href="#relationship-to-previous-puzzles">Relationship to previous puzzles</a></h2>
+<p><strong>From Puzzle 12 (Traditional):</strong></p>
+<pre><code>Complex: shared memory + barriers + tree reduction
+↓
+Simple: block.sum() hardware primitive
+</code></pre>
+<p><strong>From Puzzle 24 (<code>warp.sum()</code>):</strong></p>
+<pre><code>Warp-level: warp.sum() across 32 threads (single warp)
+↓
+Block-level: block.sum() across 128 threads (multiple warps)
+</code></pre>
+<p><strong>Three-stage progression:</strong></p>
+<ol>
+<li><strong>Manual reduction</strong> (Puzzle 12): Complex shared memory + barriers + tree reduction</li>
+<li><strong>Warp primitives</strong> (Puzzle 24): <code>warp.sum()</code> - simple but limited to single warp</li>
+<li><strong>Block primitives</strong> (Puzzle 27): <code>block.sum()</code> - extends warp simplicity across multiple warps</li>
+</ol>
+<p><strong>The key insight:</strong> <code>block.sum()</code> gives you the simplicity of <code>warp.sum()</code> but scales across an entire block by automatically handling the complex cross-warp coordination that you’d otherwise need to implement manually.</p>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Once you’ve learned about <code>block.sum()</code> operations, you’re ready for:</p>
+<ul>
+<li><strong><a href="./block_prefix_sum.html">Block Prefix Sum Operations</a></strong>: Cumulative operations across block threads</li>
+<li><strong><a href="./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: Block operations extend warp programming concepts to entire thread blocks, providing optimized primitives that replace complex synchronization patterns while working across multiple warps simultaneously. Just like <code>warp.sum()</code> simplified warp-level reductions, <code>block.sum()</code> simplifies block-level reductions without sacrificing performance.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_27/puzzle_27.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_27/block_prefix_sum.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_27/puzzle_27.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_27/block_prefix_sum.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

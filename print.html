@@ -17760,6 +17760,1490 @@ final_pos = local_pos + partition_offset
 <li><strong>Parallel algorithms</strong>: Load balancing, work distribution, data restructuring</li>
 </ul>
 <p>The combination of <code>prefix_sum()</code> and <code>shuffle_xor()</code> demonstrates how modern GPU warp primitives can implement sophisticated parallel algorithms with minimal code complexity and optimal performance characteristics.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-27-block-level-programming"><a class="header" href="#puzzle-27-block-level-programming">Puzzle 27: Block-Level Programming</a></h1>
+<h2 id="overview-50"><a class="header" href="#overview-50">Overview</a></h2>
+<p>Welcome to <strong>Puzzle 27: Block-Level Programming</strong>! This puzzle introduces you to the fundamental building blocks of GPU parallel programming - <strong>block-level communication primitives</strong> that enable sophisticated parallel algorithms across entire thread blocks. You’ll explore three essential communication patterns that replace complex manual synchronization with elegant, hardware-optimized operations.</p>
+<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barriers + tree reduction patterns (Puzzle 12) to elegant single-function-call algorithms that leverage hardware-optimized block-wide communication primitives across multiple warps.</p>
+<p><strong>Key insight:</strong> <em>GPU thread blocks execute with sophisticated hardware coordination - Mojo’s block operations harness cross-warp communication and dedicated hardware units to provide complete parallel programming building blocks: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
+<h2 id="what-youll-learn-4"><a class="header" href="#what-youll-learn-4">What you’ll learn</a></h2>
+<h3 id="block-level-communication-model"><a class="header" href="#block-level-communication-model"><strong>Block-level communication model</strong></a></h3>
+<p>Understand the three fundamental communication patterns within GPU thread blocks:</p>
+<pre><code>GPU Thread Block (128 threads across 4 or 2 warps, hardware coordination)
+All-to-One (Reduction):     All threads → Single result at thread 0
+All-to-Each (Scan):         All threads → Each gets cumulative position
+One-to-All (Broadcast):     Thread 0 → All threads get same value
+
+Cross-warp coordination:
+├── Warp 0 (threads 0-31)   ──block.sum()──┐
+├── Warp 1 (threads 32-63)  ──block.sum()──┼→ Thread 0 result
+├── Warp 2 (threads 64-95)  ──block.sum()──┤
+└── Warp 3 (threads 96-127) ──block.sum()──┘
+</code></pre>
+<p><strong>Hardware reality:</strong></p>
+<ul>
+<li><strong>Cross-warp synchronization</strong>: Automatic coordination across multiple warps within a block</li>
+<li><strong>Dedicated hardware units</strong>: Specialized scan units and butterfly reduction networks</li>
+<li><strong>Zero explicit barriers</strong>: Hardware manages all synchronization internally</li>
+<li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms with single-instruction simplicity</li>
+</ul>
+<h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
+<p>Learn the complete parallel programming toolkit from <code>gpu.block</code>:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum(value)</code></a></strong>: All-to-one reduction for totals, averages, maximum/minimum values</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: All-to-each scan for parallel filtering and extraction</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast"><code>block.broadcast(value)</code></a></strong>: One-to-all distribution for parameter sharing and coordination</li>
+</ol>
+<blockquote>
+<p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like statistical computations, histogram binning, and normalization workflows that would otherwise require dozens of lines of complex shared memory coordination code.</p>
+</blockquote>
+<h3 id="performance-transformation-example-3"><a class="header" href="#performance-transformation-example-3"><strong>Performance transformation example</strong></a></h3>
+<pre><code class="language-mojo"># Complex block-wide reduction (traditional approach - from Puzzle 12):
+shared_memory[local_i] = my_value
+barrier()
+for stride in range(64, 0, -1):
+    if local_i &lt; stride:
+        shared_memory[local_i] += shared_memory[local_i + stride]
+    barrier()
+if local_i == 0:
+    output[block_idx.x] = shared_memory[0]
+
+# Block operations eliminate all this complexity:
+my_partial = compute_local_contribution()
+total = block.sum[block_size=128, broadcast=False](my_partial)  # Single call!
+if local_i == 0:
+    output[block_idx.x] = total[0]
+</code></pre>
+<h3 id="when-block-operations-excel"><a class="header" href="#when-block-operations-excel"><strong>When block operations excel</strong></a></h3>
+<p>Learn the performance characteristics:</p>
+<div class="table-wrapper"><table><thead><tr><th>Algorithm Pattern</th><th>Traditional</th><th>Block Operations</th></tr></thead><tbody>
+<tr><td>Block-wide reductions</td><td>Shared memory + barriers</td><td>Single <code>block.sum</code> call</td></tr>
+<tr><td>Parallel filtering</td><td>Complex indexing</td><td><code>block.prefix_sum</code> coordination</td></tr>
+<tr><td>Parameter sharing</td><td>Manual synchronization</td><td>Single <code>block.broadcast</code> call</td></tr>
+<tr><td>Cross-warp algorithms</td><td>Explicit barrier management</td><td>Hardware-managed coordination</td></tr>
+</tbody></table>
+</div>
+<h2 id="the-evolution-of-gpu-programming-patterns"><a class="header" href="#the-evolution-of-gpu-programming-patterns">The evolution of GPU programming patterns</a></h2>
+<h3 id="where-we-started-manual-coordination-puzzle-12"><a class="header" href="#where-we-started-manual-coordination-puzzle-12"><strong>Where we started: Manual coordination (Puzzle 12)</strong></a></h3>
+<p>Complex but educational - explicit shared memory, barriers, and tree reduction:</p>
+<pre><code class="language-mojo"># Manual approach: 15+ lines of complex synchronization
+shared_memory[local_i] = my_value
+barrier()
+# Tree reduction with stride-based indexing...
+for stride in range(64, 0, -1):
+    if local_i &lt; stride:
+        shared_memory[local_i] += shared_memory[local_i + stride]
+    barrier()
+</code></pre>
+<h3 id="the-intermediate-step-warp-programming-puzzle-24"><a class="header" href="#the-intermediate-step-warp-programming-puzzle-24"><strong>The intermediate step: Warp programming (Puzzle 24)</strong></a></h3>
+<p>Hardware-accelerated but limited scope - <code>warp.sum()</code> within 32-thread warps:</p>
+<pre><code class="language-mojo"># Warp approach: 1 line but single warp only
+total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
+</code></pre>
+<h3 id="the-destination-block-programming-this-puzzle"><a class="header" href="#the-destination-block-programming-this-puzzle"><strong>The destination: Block programming (This puzzle)</strong></a></h3>
+<p>Complete toolkit - hardware-optimized primitives across entire blocks:</p>
+<pre><code class="language-mojo"># Block approach: 1 line across multiple warps (128+ threads)
+total = block.sum[block_size=128, broadcast=False](val=partial_product)
+</code></pre>
+<h2 id="the-three-fundamental-communication-patterns"><a class="header" href="#the-three-fundamental-communication-patterns">The three fundamental communication patterns</a></h2>
+<p>Block-level programming provides three essential primitives that cover all parallel communication needs:</p>
+<h3 id="1-all-to-one-reduction-blocksum"><a class="header" href="#1-all-to-one-reduction-blocksum"><strong>1. All-to-One: Reduction (<code>block.sum()</code>)</strong></a></h3>
+<ul>
+<li><strong>Pattern</strong>: All threads contribute → One thread receives result</li>
+<li><strong>Use case</strong>: Computing totals, averages, finding maximum/minimum values</li>
+<li><strong>Example</strong>: Dot product, statistical aggregation</li>
+<li><strong>Hardware</strong>: Cross-warp butterfly reduction with automatic barriers</li>
+</ul>
+<h3 id="2-all-to-each-scan-blockprefix_sum"><a class="header" href="#2-all-to-each-scan-blockprefix_sum"><strong>2. All-to-Each: Scan (<code>block.prefix_sum()</code>)</strong></a></h3>
+<ul>
+<li><strong>Pattern</strong>: All threads contribute → Each thread receives cumulative position</li>
+<li><strong>Use case</strong>: Parallel filtering, stream compaction, histogram binning</li>
+<li><strong>Example</strong>: Computing write positions for parallel data extraction</li>
+<li><strong>Hardware</strong>: Parallel scan with cross-warp coordination</li>
+</ul>
+<h3 id="3-one-to-all-broadcast-blockbroadcast"><a class="header" href="#3-one-to-all-broadcast-blockbroadcast"><strong>3. One-to-All: Broadcast (<code>block.broadcast()</code>)</strong></a></h3>
+<ul>
+<li><strong>Pattern</strong>: One thread provides → All threads receive same value</li>
+<li><strong>Use case</strong>: Parameter sharing, configuration distribution</li>
+<li><strong>Example</strong>: Sharing computed mean for normalization algorithms</li>
+<li><strong>Hardware</strong>: Optimized distribution across multiple warps</li>
+</ul>
+<h2 id="learning-progression"><a class="header" href="#learning-progression">Learning progression</a></h2>
+<p>Complete this puzzle in three parts, building from simple to sophisticated:</p>
+<h3 id="part-1-blocksum-essentials"><a class="header" href="#part-1-blocksum-essentials"><strong>Part 1: <a href="puzzle_27/./block_sum.html">Block.sum() Essentials</a></strong></a></h3>
+<p><strong>Transform complex reduction to simple function call</strong></p>
+<p>Learn the foundational block reduction pattern by implementing dot product with <code>block.sum()</code>. This part shows how block operations replace 15+ lines of manual barriers with a single optimized call.</p>
+<p><strong>Key concepts:</strong></p>
+<ul>
+<li>Block-wide synchronization across multiple warps</li>
+<li>Hardware-optimized reduction patterns</li>
+<li>Thread 0 result management</li>
+<li>Performance comparison with traditional approaches</li>
+</ul>
+<p><strong>Expected outcome:</strong> Understand how <code>block.sum()</code> provides warp.sum() simplicity at block scale.</p>
+<hr />
+<h3 id="part-2-blockprefix_sum-parallel-histogram"><a class="header" href="#part-2-blockprefix_sum-parallel-histogram"><strong>Part 2: <a href="puzzle_27/./block_prefix_sum.html">Block.prefix_sum() Parallel Histogram</a></strong></a></h3>
+<p><strong>Advanced parallel filtering and extraction</strong></p>
+<p>Build sophisticated parallel algorithms using <code>block.prefix_sum()</code> for histogram binning. This part demonstrates how prefix sum enables complex data reorganization that would be difficult with simple reductions.</p>
+<p><strong>Key concepts:</strong></p>
+<ul>
+<li>Parallel filtering with binary predicates</li>
+<li>Coordinated write position computation</li>
+<li>Advanced partitioning algorithms</li>
+<li>Cross-thread data extraction patterns</li>
+</ul>
+<p><strong>Expected outcome:</strong> Understand how <code>block.prefix_sum()</code> enables sophisticated parallel algorithms beyond simple aggregation.</p>
+<hr />
+<h3 id="part-3-blockbroadcast-vector-normalization"><a class="header" href="#part-3-blockbroadcast-vector-normalization"><strong>Part 3: <a href="puzzle_27/./block_broadcast.html">Block.broadcast() Vector Normalization</a></strong></a></h3>
+<p><strong>Complete workflow combining all patterns</strong></p>
+<p>Implement vector mean normalization using the complete block operations toolkit. This part shows how all three primitives work together to solve real computational problems with mathematical correctness.</p>
+<p><strong>Key concepts:</strong></p>
+<ul>
+<li>One-to-all communication patterns</li>
+<li>Coordinated multi-phase algorithms</li>
+<li>Complete block operations workflow</li>
+<li>Real-world algorithm implementation</li>
+</ul>
+<p><strong>Expected outcome:</strong> Understand how to compose block operations for sophisticated parallel algorithms.</p>
+<h2 id="why-block-operations-matter"><a class="header" href="#why-block-operations-matter">Why block operations matter</a></h2>
+<h3 id="code-simplicity-transformation"><a class="header" href="#code-simplicity-transformation"><strong>Code simplicity transformation:</strong></a></h3>
+<pre><code>Traditional approach:  20+ lines of barriers, shared memory, complex indexing
+Block operations:      3-5 lines of composable, hardware-optimized primitives
+</code></pre>
+<h3 id="performance-advantages"><a class="header" href="#performance-advantages"><strong>Performance advantages:</strong></a></h3>
+<ul>
+<li><strong>Hardware optimization</strong>: Leverages GPU architecture-specific optimizations</li>
+<li><strong>Automatic synchronization</strong>: Eliminates manual barrier placement errors</li>
+<li><strong>Composability</strong>: Operations work together seamlessly</li>
+<li><strong>Portability</strong>: Same code works across different GPU architectures</li>
+</ul>
+<h3 id="educational-value"><a class="header" href="#educational-value"><strong>Educational value:</strong></a></h3>
+<ul>
+<li><strong>Conceptual clarity</strong>: Each operation has a clear communication purpose</li>
+<li><strong>Progressive complexity</strong>: Build from simple reductions to complex algorithms</li>
+<li><strong>Real applications</strong>: Patterns used extensively in scientific computing, graphics, AI</li>
+</ul>
+<h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
+<p>Before starting this puzzle, you should have completed:</p>
+<ul>
+<li><strong><a href="puzzle_27/../puzzle_12/puzzle_12.html">Puzzle 12</a></strong>: Understanding of manual GPU synchronization</li>
+<li><strong><a href="puzzle_27/../puzzle_24/puzzle_24.html">Puzzle 24</a></strong>: Experience with warp-level programming</li>
+</ul>
+<h2 id="expected-learning-outcomes"><a class="header" href="#expected-learning-outcomes">Expected learning outcomes</a></h2>
+<p>After completing all three parts, you’ll understand:</p>
+<ol>
+<li><strong>When to use each block operation</strong> for different parallel communication needs</li>
+<li><strong>How to compose operations</strong> to build sophisticated algorithms</li>
+<li><strong>Performance trade-offs</strong> between manual and automated approaches</li>
+<li><strong>Real-world applications</strong> of block-level programming patterns</li>
+<li><strong>Architecture-independent programming</strong> using hardware-optimized primitives</li>
+</ol>
+<h2 id="getting-started-6"><a class="header" href="#getting-started-6">Getting started</a></h2>
+<p><strong>Recommended approach:</strong> Complete the three parts in sequence, as each builds on concepts from the previous parts. The progression from simple reduction → advanced partitioning → complete workflow provides the optimal learning path for understanding block-level GPU programming.</p>
+<p>💡 <strong>Key insight</strong>: Block operations represent the sweet spot between programmer productivity and hardware performance - they provide the simplicity of high-level operations with the efficiency of carefully optimized low-level implementations. This puzzle teaches you to think at the right abstraction level for modern GPU programming.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="blocksum-essentials---block-level-dot-product"><a class="header" href="#blocksum-essentials---block-level-dot-product">block.sum() Essentials - Block-Level Dot Product</a></h1>
+<p>Implement the dot product we saw in <a href="puzzle_27/../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="puzzle_27/block_sum.html#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
+<h2 id="key-concepts-45"><a class="header" href="#key-concepts-45">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn:</p>
+<ul>
+<li><strong>Block-level reductions</strong> with <code>block.sum()</code></li>
+<li><strong>Block-wide synchronization</strong> and thread coordination</li>
+<li><strong>Cross-warp communication</strong> within a single block</li>
+<li><strong>Performance transformation</strong> from complex to simple patterns</li>
+<li><strong>Thread 0 result management</strong> and conditional writes</li>
+</ul>
+<p>The mathematical operation is a dot product (inner product):
+\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+<p>But the implementation teaches fundamental patterns for all block-level GPU programming in Mojo.</p>
+<h2 id="configuration-35"><a class="header" href="#configuration-35">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 128</code> elements</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Warps per block: <code>128 / WARP_SIZE</code> (4 warps on NVIDIA, 2 or 4 warps on AMD)</li>
+</ul>
+<h2 id="the-traditional-complexity-from-puzzle-12-1"><a class="header" href="#the-traditional-complexity-from-puzzle-12-1">The traditional complexity (from Puzzle 12)</a></h2>
+<p>Recall the complex approach from <a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a> that required shared memory, barriers, and tree reduction:</p>
+<pre><code class="language-mojo">fn traditional_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Traditional dot product using shared memory + barriers + tree reduction.
+    Educational but complex - shows the manual coordination needed."""
+
+    shared = tb[dtype]().row_major[tpb]().shared().alloc()
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Each thread computes partial product
+    if global_i &lt; size:
+        a_val = rebind[Scalar[dtype]](a[global_i])
+        b_val = rebind[Scalar[dtype]](b[global_i])
+        shared[local_i] = a_val * b_val
+
+    barrier()
+
+    # Tree reduction in shared memory - complex but educational
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+
+    # Only thread 0 writes final result
+    if local_i == 0:
+        output[0] = shared[0]
+
+
+</code></pre>
+<p><strong>What makes this complex:</strong></p>
+<ul>
+<li><strong>Shared memory allocation</strong>: Manual memory management within blocks</li>
+<li><strong>Explicit barriers</strong>: <code>barrier()</code> calls to synchronize all threads in block</li>
+<li><strong>Tree reduction</strong>: Complex loop with stride-based indexing (64→32→16→8→4→2→1)</li>
+<li><strong>Cross-warp coordination</strong>: Must synchronize across multiple warps</li>
+<li><strong>Conditional writes</strong>: Only thread 0 writes the final result</li>
+</ul>
+<p>This works across the entire block (128 threads across 2 or 4 warps depending on GPU), but it’s verbose, error-prone, and requires deep understanding of block-level GPU synchronization.</p>
+<h2 id="the-warp-level-improvement-from-puzzle-24"><a class="header" href="#the-warp-level-improvement-from-puzzle-24">The warp-level improvement (from Puzzle 24)</a></h2>
+<p>Before jumping to block-level operations, recall how <a href="puzzle_27/../puzzle_24/warp_sum.html">Puzzle 24</a> simplified reduction within a single warp using <code>warp.sum()</code>:</p>
+<pre><code class="language-mojo">fn simple_warp_dot_product[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
+    var partial_product: Scalar[dtype] = 0
+    if global_i &lt; size:
+        partial_product = (a[global_i] * b[global_i]).reduce_add()
+
+    # warp_sum() replaces all the shared memory + barriers + tree reduction
+    total = warp_sum(partial_product)
+
+    # Only lane 0 writes the result (all lanes have the same total)
+    if lane_id() == 0:
+        output[0] = total
+
+
+</code></pre>
+<p><strong>What <code>warp.sum()</code> achieved:</strong></p>
+<ul>
+<li><strong>Single warp scope</strong>: Works within 32 threads (NVIDIA) or 32/64 threads (AMD)</li>
+<li><strong>Hardware shuffle</strong>: Uses <code>shfl.sync.bfly.b32</code> instructions for efficiency</li>
+<li><strong>Zero shared memory</strong>: No explicit memory management needed</li>
+<li><strong>One line reduction</strong>: <code>total = warp_sum[warp_size=WARP_SIZE](val=partial_product)</code></li>
+</ul>
+<p><strong>But the limitation:</strong> <code>warp.sum()</code> only works within a single warp. For problems requiring multiple warps (like our 128-thread block), you’d still need the complex shared memory + barriers approach to coordinate between warps.</p>
+<p><strong>Test the traditional approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --traditional-dot-product
+</code></pre>
+  </div>
+</div>
+<h2 id="code-to-complete-45"><a class="header" href="#code-to-complete-45">Code to complete</a></h2>
+<h3 id="blocksum-approach"><a class="header" href="#blocksum-approach"><code>block.sum()</code> approach</a></h3>
+<p>Transform the complex traditional approach into a simple block kernel using <code>block.sum()</code>:</p>
+<pre><code class="language-mojo">alias SIZE = 128
+alias TPB = 128
+alias NUM_BINS = 8
+alias in_layout = Layout.row_major(SIZE)
+alias out_layout = Layout.row_major(1)
+alias dtype = DType.float32
+
+
+fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # FILL IN (roughly 6 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+Expected result: 1381760.0
+Block.sum result: 1381760.0
+Block.sum() gives identical results!
+Compare the code: 15+ lines of barriers → 1 line of block.sum()!
+Just like warp.sum() but for the entire block
+</code></pre>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-think-about-the-three-step-pattern"><a class="header" href="#1-think-about-the-three-step-pattern">1. <strong>Think about the three-step pattern</strong></a></h3>
+<p>Every block reduction follows the same conceptual pattern:</p>
+<ol>
+<li>Each thread computes its local contribution</li>
+<li>All threads participate in a block-wide reduction</li>
+<li>One designated thread handles the final result</li>
+</ol>
+<h3 id="2-remember-the-dot-product-math"><a class="header" href="#2-remember-the-dot-product-math">2. <strong>Remember the dot product math</strong></a></h3>
+<p>Each thread should handle one element pair from vectors <code>a</code> and <code>b</code>. What operation combines these into a “partial result” that can be summed across threads?</p>
+<h3 id="3-layouttensor-indexing-patterns"><a class="header" href="#3-layouttensor-indexing-patterns">3. <strong>LayoutTensor indexing patterns</strong></a></h3>
+<p>When accessing <code>LayoutTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
+<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> API concepts</strong></a></h3>
+<p>Study the function signature - it needs:</p>
+<ul>
+<li>A template parameter specifying the block size</li>
+<li>A template parameter for result distribution (<code>broadcast</code>)</li>
+<li>A runtime parameter containing the value to reduce</li>
+</ul>
+<h3 id="5-thread-coordination-principles"><a class="header" href="#5-thread-coordination-principles">5. <strong>Thread coordination principles</strong></a></h3>
+<ul>
+<li>Which threads have valid data to process? (Hint: bounds checking)</li>
+<li>Which thread should write the final result? (Hint: consistent choice)</li>
+<li>How do you identify that specific thread? (Hint: thread indexing)</li>
+</ul>
+</div>
+</details>
+<h2 id="solution-46"><a class="header" href="#solution-46">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Each thread computes partial product
+    var partial_product: Scalar[dtype] = 0.0
+    if global_i &lt; size:
+        # LayoutTensor indexing `[0]` returns the underlying SIMD value
+        partial_product = a[global_i][0] * b[global_i][0]
+
+    # The magic: block.sum() replaces 15+ lines of manual reduction!
+    # Just like warp.sum() but for the entire block
+    total = block.sum[block_size=tpb, broadcast=False](
+        val=SIMD[DType.float32, 1](partial_product)
+    )
+
+    # Only thread 0 writes the result
+    if local_i == 0:
+        output[0] = total[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The <code>block.sum()</code> kernel demonstrates the fundamental transformation from complex block synchronization to expertly optimized implementations:</p>
+<p><strong>What disappeared from the traditional approach:</strong></p>
+<ul>
+<li><strong>15+ lines → 8 lines</strong>: Dramatic code reduction</li>
+<li><strong>Shared memory allocation</strong>: Zero memory management required</li>
+<li><strong>7+ barrier() calls</strong>: Zero explicit synchronization needed</li>
+<li><strong>Complex tree reduction</strong>: Single function call</li>
+<li><strong>Stride-based indexing</strong>: Eliminated entirely</li>
+<li><strong>Cross-warp coordination</strong>: Handled automatically by optimized implementation</li>
+</ul>
+<p><strong>Block-wide execution model:</strong></p>
+<pre><code>Block threads (128 threads across 4 warps):
+Warp 0 (threads 0-31):
+  Thread 0: partial_product = a[0] * b[0] = 0.0
+  Thread 1: partial_product = a[1] * b[1] = 2.0
+  ...
+  Thread 31: partial_product = a[31] * b[31] = 1922.0
+
+Warp 1 (threads 32-63):
+  Thread 32: partial_product = a[32] * b[32] = 2048.0
+  ...
+
+Warp 2 (threads 64-95):
+  Thread 64: partial_product = a[64] * b[64] = 8192.0
+  ...
+
+Warp 3 (threads 96-127):
+  Thread 96: partial_product = a[96] * b[96] = 18432.0
+  Thread 127: partial_product = a[127] * b[127] = 32258.0
+
+block.sum() hardware operation:
+All threads → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
+Thread 0 receives → total = 1381760.0 (when broadcast=False)
+</code></pre>
+<p><strong>Why this works without barriers:</strong></p>
+<ol>
+<li><strong>Block-wide execution</strong>: All threads execute each instruction in lockstep within warps</li>
+<li><strong>Built-in synchronization</strong>: <code>block.sum()</code> implementation handles synchronization internally</li>
+<li><strong>Cross-warp communication</strong>: Optimized communication between warps in the block</li>
+<li><strong>Coordinated result delivery</strong>: Only thread 0 receives the final result</li>
+</ol>
+<p><strong>Comparison to warp.sum() (Puzzle 24):</strong></p>
+<ul>
+<li><strong>Warp scope</strong>: <code>warp.sum()</code> works within 32/64 threads (single warp)</li>
+<li><strong>Block scope</strong>: <code>block.sum()</code> works across entire block (multiple warps)</li>
+<li><strong>Same simplicity</strong>: Both replace complex manual reductions with one-line calls</li>
+<li><strong>Automatic coordination</strong>: <code>block.sum()</code> handles the cross-warp barriers that <code>warp.sum()</code> cannot</li>
+</ul>
+</div>
+</details>
+<h2 id="technical-investigation-what-does-blocksum-actually-compile-to"><a class="header" href="#technical-investigation-what-does-blocksum-actually-compile-to">Technical investigation: What does <code>block.sum()</code> actually compile to?</a></h2>
+<p>To understand what <code>block.sum()</code> actually generates, we compiled the puzzle with debug information:</p>
+<pre><code class="language-bash">pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
+</code></pre>
+<p>This generated <strong>LLVM file</strong> <code>solutions/p27/p27.ll</code>. For example, on a compatible NVIDIA GPU, the <code>p27.ll</code> file has embedded <strong>PTX assembly</strong> showing the actual GPU instructions:</p>
+<h3 id="finding-1-not-a-single-instruction"><a class="header" href="#finding-1-not-a-single-instruction"><strong>Finding 1: Not a single instruction</strong></a></h3>
+<p><code>block.sum()</code> compiles to approximately <strong>20+ PTX instructions</strong>, organized in a two-phase reduction:</p>
+<p><strong>Phase 1: Warp-level reduction (butterfly shuffles)</strong></p>
+<pre><code class="language-ptx">shfl.sync.bfly.b32 %r23, %r46, 16, 31, -1;  // shuffle with offset 16
+add.f32            %r24, %r46, %r23;         // add shuffled values
+shfl.sync.bfly.b32 %r25, %r24, 8, 31, -1;   // shuffle with offset 8
+add.f32            %r26, %r24, %r25;         // add shuffled values
+// ... continues for offsets 4, 2, 1
+</code></pre>
+<p><strong>Phase 2: Cross-warp coordination</strong></p>
+<pre><code class="language-ptx">shr.u32            %r32, %r1, 5;             // compute warp ID
+mov.b32            %r34, _global_alloc_$__gpu_shared_mem; // shared memory
+bar.sync           0;                        // barrier synchronization
+// ... another butterfly shuffle sequence for cross-warp reduction
+</code></pre>
+<h3 id="finding-2-hardware-optimized-implementation"><a class="header" href="#finding-2-hardware-optimized-implementation"><strong>Finding 2: Hardware-optimized implementation</strong></a></h3>
+<ul>
+<li><strong>Butterfly shuffles</strong>: More efficient than tree reduction</li>
+<li><strong>Automatic barrier placement</strong>: Handles cross-warp synchronization</li>
+<li><strong>Optimized memory access</strong>: Uses shared memory strategically</li>
+<li><strong>Architecture-aware</strong>: Same API works on NVIDIA (32-thread warps) and AMD (32 or 64-thread warps)</li>
+</ul>
+<h3 id="finding-3-algorithm-complexity-analysis"><a class="header" href="#finding-3-algorithm-complexity-analysis"><strong>Finding 3: Algorithm complexity analysis</strong></a></h3>
+<p><strong>Our approach to investigation:</strong></p>
+<ol>
+<li>Located PTX assembly in binary ELF sections (<code>.nv_debug_ptx_txt</code>)</li>
+<li>Identified algorithmic differences rather than counting individual instructions</li>
+</ol>
+<p><strong>Key algorithmic differences observed:</strong></p>
+<ul>
+<li><strong>Traditional</strong>: Tree reduction with shared memory + multiple <code>bar.sync</code> calls</li>
+<li><strong>block.sum()</strong>: Butterfly shuffle pattern + optimized cross-warp coordination</li>
+</ul>
+<p>The performance advantage comes from <strong>expertly optimized algorithm choice</strong> (butterfly &gt; tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.</p>
+<h2 id="performance-insights"><a class="header" href="#performance-insights">Performance insights</a></h2>
+<p><strong><code>block.sum()</code> vs Traditional:</strong></p>
+<ul>
+<li><strong>Code simplicity</strong>: 15+ lines → 1 line for the reduction</li>
+<li><strong>Memory usage</strong>: No shared memory allocation required</li>
+<li><strong>Synchronization</strong>: No explicit barriers needed</li>
+<li><strong>Scalability</strong>: Works with any block size (up to hardware limits)</li>
+</ul>
+<p><strong><code>block.sum()</code> vs <code>warp.sum()</code>:</strong></p>
+<ul>
+<li><strong>Scope</strong>: Block-wide (128 threads) vs warp-wide (32 threads)</li>
+<li><strong>Use case</strong>: When you need reduction across entire block</li>
+<li><strong>Convenience</strong>: Same programming model, different scale</li>
+</ul>
+<p><strong>When to use <code>block.sum()</code>:</strong></p>
+<ul>
+<li><strong>Single block problems</strong>: When all data fits in one block</li>
+<li><strong>Block-level algorithms</strong>: Shared memory computations needing reduction</li>
+<li><strong>Convenience over scalability</strong>: Simpler than multi-block approaches</li>
+</ul>
+<h2 id="relationship-to-previous-puzzles"><a class="header" href="#relationship-to-previous-puzzles">Relationship to previous puzzles</a></h2>
+<p><strong>From Puzzle 12 (Traditional):</strong></p>
+<pre><code>Complex: shared memory + barriers + tree reduction
+↓
+Simple: block.sum() hardware primitive
+</code></pre>
+<p><strong>From Puzzle 24 (<code>warp.sum()</code>):</strong></p>
+<pre><code>Warp-level: warp.sum() across 32 threads (single warp)
+↓
+Block-level: block.sum() across 128 threads (multiple warps)
+</code></pre>
+<p><strong>Three-stage progression:</strong></p>
+<ol>
+<li><strong>Manual reduction</strong> (Puzzle 12): Complex shared memory + barriers + tree reduction</li>
+<li><strong>Warp primitives</strong> (Puzzle 24): <code>warp.sum()</code> - simple but limited to single warp</li>
+<li><strong>Block primitives</strong> (Puzzle 27): <code>block.sum()</code> - extends warp simplicity across multiple warps</li>
+</ol>
+<p><strong>The key insight:</strong> <code>block.sum()</code> gives you the simplicity of <code>warp.sum()</code> but scales across an entire block by automatically handling the complex cross-warp coordination that you’d otherwise need to implement manually.</p>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
+<p>Once you’ve learned about <code>block.sum()</code> operations, you’re ready for:</p>
+<ul>
+<li><strong><a href="puzzle_27/./block_prefix_sum.html">Block Prefix Sum Operations</a></strong>: Cumulative operations across block threads</li>
+<li><strong><a href="puzzle_27/./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: Block operations extend warp programming concepts to entire thread blocks, providing optimized primitives that replace complex synchronization patterns while working across multiple warps simultaneously. Just like <code>warp.sum()</code> simplified warp-level reductions, <code>block.sum()</code> simplifies block-level reductions without sacrificing performance.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
+<p>Implement parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations to demonstrate advanced parallel filtering and extraction algorithms. Each thread will determine which bin its element belongs to, then use <code>block.prefix_sum()</code> to compute write positions for extracting elements of a specific bin, showcasing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation enables parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn:</p>
+<ul>
+<li><strong>Block-level prefix sum</strong> with <code>block.prefix_sum()</code></li>
+<li><strong>Parallel filtering and extraction</strong> using cumulative computations</li>
+<li><strong>Advanced parallel partitioning</strong> algorithms</li>
+<li><strong>Histogram binning</strong> with block-wide coordination</li>
+<li><strong>Exclusive vs inclusive</strong> prefix sum patterns</li>
+</ul>
+<p>The algorithm demonstrates histogram construction by extracting elements belonging to specific value ranges (bins):
+\[\Large \text{Bin}_k = \{x_i : k/N \leq x_i &lt; (k+1)/N\}\]</p>
+<p>Each thread computes which bin its element belongs to, then <code>block.prefix_sum()</code> coordinates parallel extraction.</p>
+<h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 128</code> elements</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Number of bins: <code>NUM_BINS = 8</code> (ranges [0.0, 0.125), [0.125, 0.25), etc.)</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Warps per block: <code>128 / WARP_SIZE</code> (2 or 4 warps depending on GPU)</li>
+</ul>
+<h2 id="the-challenge-parallel-bin-extraction"><a class="header" href="#the-challenge-parallel-bin-extraction">The challenge: Parallel bin extraction</a></h2>
+<p>Traditional sequential histogram construction processes elements one by one:</p>
+<pre><code class="language-python"># Sequential approach - doesn't parallelize well
+histogram = [[] for _ in range(NUM_BINS)]
+for element in data:
+    bin_id = int(element * NUM_BINS)  # Determine bin
+    histogram[bin_id].append(element)  # Sequential append
+</code></pre>
+<p><strong>Problems with naive GPU parallelization:</strong></p>
+<ul>
+<li><strong>Race conditions</strong>: Multiple threads writing to same bin simultaneously</li>
+<li><strong>Uncoalesced memory</strong>: Threads access different memory locations</li>
+<li><strong>Load imbalance</strong>: Some bins may have many more elements than others</li>
+<li><strong>Complex synchronization</strong>: Need barriers and atomic operations</li>
+</ul>
+<h2 id="the-advanced-approach-blockprefix_sum-coordination"><a class="header" href="#the-advanced-approach-blockprefix_sum-coordination">The advanced approach: <code>block.prefix_sum()</code> coordination</a></h2>
+<p>Transform the complex parallel partitioning into coordinated extraction:</p>
+<h2 id="code-to-complete-46"><a class="header" href="#code-to-complete-46">Code to complete</a></h2>
+<h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
+<p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
+<pre><code class="language-mojo">alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+
+
+fn block_histogram_bin_extract[
+    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
+    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    size: Int,
+    target_bin: Int,
+    num_bins: Int,
+):
+    """Parallel histogram using block.prefix_sum() for bin extraction.
+
+    This demonstrates advanced parallel filtering and extraction:
+    1. Each thread determines which bin its element belongs to
+    2. Use block.prefix_sum() to compute write positions for target_bin elements
+    3. Extract and pack only elements belonging to target_bin
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread determines its bin and element value
+
+    # FILL IN (roughly 9 lines)
+
+    # Step 2: Create predicate for target bin extraction
+
+    # FILL IN (roughly 3 line)
+
+    # Step 3: Use block.prefix_sum() for parallel bin extraction!
+    # This computes where each thread should write within the target bin
+
+    # FILL IN (1 line)
+
+    # Step 4: Extract and pack elements belonging to target_bin
+
+    # FILL IN (roughly 2 line)
+
+    # Step 5: Final thread computes total count for this bin
+
+    # FILL IN (roughly 3 line)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-core-algorithm-structure-adapt-from-previous-puzzles"><a class="header" href="#1-core-algorithm-structure-adapt-from-previous-puzzles">1. <strong>Core algorithm structure (adapt from previous puzzles)</strong></a></h3>
+<p>Just like <code>block_sum_dot_product</code>, you need these key variables:</p>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
+local_i = thread_idx.x
+</code></pre>
+<p>Your function will have <strong>5 main steps</strong> (about 15-20 lines total):</p>
+<ol>
+<li>Load element and determine its bin</li>
+<li>Create binary predicate for target bin</li>
+<li>Run <code>block.prefix_sum()</code> on the predicate</li>
+<li>Conditionally write using computed offset</li>
+<li>Final thread computes total count</li>
+</ol>
+<h3 id="2-bin-calculation-use-mathfloor"><a class="header" href="#2-bin-calculation-use-mathfloor">2. <strong>Bin calculation (use <code>math.floor</code>)</strong></a></h3>
+<p>To classify a <code>Float32</code> value into bins:</p>
+<pre><code class="language-mojo">my_value = input_data[global_i][0]  # Extract SIMD like in dot product
+bin_number = Int(floor(my_value * num_bins))
+</code></pre>
+<p><strong>Edge case handling</strong>: Values exactly 1.0 would go to bin <code>NUM_BINS</code>, but you only have bins 0 to <code>NUM_BINS-1</code>. Use an <code>if</code> statement to clamp the maximum bin.</p>
+<h3 id="3-binary-predicate-creation"><a class="header" href="#3-binary-predicate-creation">3. <strong>Binary predicate creation</strong></a></h3>
+<p>Create an integer variable (0 or 1) indicating if this thread’s element belongs to target_bin:</p>
+<pre><code class="language-mojo">var belongs_to_target: Int = 0
+if (thread_has_valid_element) and (my_bin == target_bin):
+    belongs_to_target = 1
+</code></pre>
+<p>This is the key insight: prefix sum works on these binary flags to compute positions!</p>
+<h3 id="4-blockprefix_sum-call-pattern"><a class="header" href="#4-blockprefix_sum-call-pattern">4. <strong><code>block.prefix_sum()</code> call pattern</strong></a></h3>
+<p>Following the documentation, the call looks like:</p>
+<pre><code class="language-mojo">offset = block.prefix_sum[
+    dtype=DType.int32,         # Working with integer predicates
+    block_size=tpb,            # Same as block.sum()
+    exclusive=True             # Key: gives position BEFORE each thread
+](val=SIMD[DType.int32, 1](my_predicate_value))
+</code></pre>
+<p><strong>Why exclusive?</strong> Thread with predicate=1 at position 5 should write to output[4] if 4 elements came before it.</p>
+<h3 id="5-conditional-writing-pattern"><a class="header" href="#5-conditional-writing-pattern">5. <strong>Conditional writing pattern</strong></a></h3>
+<p>Only threads with <code>belongs_to_target == 1</code> should write:</p>
+<pre><code class="language-mojo">if belongs_to_target == 1:
+    bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
+</code></pre>
+<p>This is just like the bounds checking pattern from <a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a>, but now the condition is “belongs to target bin.”</p>
+<h3 id="6-final-count-computation"><a class="header" href="#6-final-count-computation">6. <strong>Final count computation</strong></a></h3>
+<p>The last thread (not thread 0!) computes the total count:</p>
+<pre><code class="language-mojo">if local_i == tpb - 1:  # Last thread in block
+    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+    count_output[0] = total_count
+</code></pre>
+<p><strong>Why last thread?</strong> It has the highest <code>offset</code> value, so <code>offset + contribution</code> gives the total.</p>
+<h3 id="7-data-types-and-conversions"><a class="header" href="#7-data-types-and-conversions">7. <strong>Data types and conversions</strong></a></h3>
+<p>Remember the patterns from previous puzzles:</p>
+<ul>
+<li><code>LayoutTensor</code> indexing returns SIMD: <code>input_data[i][0]</code></li>
+<li><code>block.prefix_sum()</code> returns SIMD: <code>offset[0]</code> to extract</li>
+<li>Array indexing needs <code>Int</code>: <code>Int(offset[0])</code> for <code>bin_output[...]</code></li>
+</ul>
+</div>
+</details>
+<p><strong>Test the block.prefix_sum() approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --histogram
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --histogram
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+NUM_BINS: 8
+
+Input sample: 0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15 ...
+
+=== Processing Bin 0 (range [ 0.0 , 0.125 )) ===
+Bin 0 count: 26
+Bin 0 extracted elements: 0.0 0.01 0.02 0.03 0.04 0.05 0.06 0.07 ...
+
+=== Processing Bin 1 (range [ 0.125 , 0.25 )) ===
+Bin 1 count: 24
+Bin 1 extracted elements: 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 ...
+
+=== Processing Bin 2 (range [ 0.25 , 0.375 )) ===
+Bin 2 count: 26
+Bin 2 extracted elements: 0.25 0.26 0.27 0.28 0.29 0.3 0.31 0.32 ...
+
+=== Processing Bin 3 (range [ 0.375 , 0.5 )) ===
+Bin 3 count: 22
+Bin 3 extracted elements: 0.38 0.39 0.4 0.41 0.42 0.43 0.44 0.45 ...
+
+=== Processing Bin 4 (range [ 0.5 , 0.625 )) ===
+Bin 4 count: 13
+Bin 4 extracted elements: 0.5 0.51 0.52 0.53 0.54 0.55 0.56 0.57 ...
+
+=== Processing Bin 5 (range [ 0.625 , 0.75 )) ===
+Bin 5 count: 12
+Bin 5 extracted elements: 0.63 0.64 0.65 0.66 0.67 0.68 0.69 0.7 ...
+
+=== Processing Bin 6 (range [ 0.75 , 0.875 )) ===
+Bin 6 count: 5
+Bin 6 extracted elements: 0.75 0.76 0.77 0.78 0.79
+
+=== Processing Bin 7 (range [ 0.875 , 1.0 )) ===
+Bin 7 count: 0
+Bin 7 extracted elements:
+</code></pre>
+<h2 id="solution-47"><a class="header" href="#solution-47">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_histogram_bin_extract[
+    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
+    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    size: Int,
+    target_bin: Int,
+    num_bins: Int,
+):
+    """Parallel histogram using block.prefix_sum() for bin extraction.
+
+    This demonstrates advanced parallel filtering and extraction:
+    1. Each thread determines which bin its element belongs to
+    2. Use block.prefix_sum() to compute write positions for target_bin elements
+    3. Extract and pack only elements belonging to target_bin
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread determines its bin and element value
+    var my_value: Scalar[dtype] = 0.0
+    var my_bin: Int = -1
+
+    if global_i &lt; size:
+        # `[0]` returns the underlying SIMD value
+        my_value = input_data[global_i][0]
+        # Bin values [0.0, 1.0) into num_bins buckets
+        my_bin = Int(floor(my_value * num_bins))
+        # Clamp to valid range
+        if my_bin &gt;= num_bins:
+            my_bin = num_bins - 1
+        if my_bin &lt; 0:
+            my_bin = 0
+
+    # Step 2: Create predicate for target bin extraction
+    var belongs_to_target: Int = 0
+    if global_i &lt; size and my_bin == target_bin:
+        belongs_to_target = 1
+
+    # Step 3: Use block.prefix_sum() for parallel bin extraction!
+    # This computes where each thread should write within the target bin
+    write_offset = block.prefix_sum[
+        dtype = DType.int32, block_size=tpb, exclusive=True
+    ](val=SIMD[DType.int32, 1](belongs_to_target))
+
+    # Step 4: Extract and pack elements belonging to target_bin
+    if belongs_to_target == 1:
+        bin_output[Int(write_offset[0])] = my_value
+
+    # Step 5: Final thread computes total count for this bin
+    if local_i == tpb - 1:
+        # Inclusive sum = exclusive sum + my contribution
+        total_count = write_offset[0] + belongs_to_target
+        count_output[0] = total_count
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The <code>block.prefix_sum()</code> kernel demonstrates advanced parallel coordination patterns by building on concepts from previous puzzles:</p>
+<h2 id="step-by-step-algorithm-walkthrough"><a class="header" href="#step-by-step-algorithm-walkthrough"><strong>Step-by-step algorithm walkthrough:</strong></a></h2>
+<h3 id="phase-1-element-processing-like-puzzle-12-dot-product"><a class="header" href="#phase-1-element-processing-like-puzzle-12-dot-product"><strong>Phase 1: Element processing (like <a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a> dot product)</strong></a></h3>
+<pre><code>Thread indexing (familiar pattern):
+  global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
+  local_i = thread_idx.x                              // Local thread index
+
+Element loading (like LayoutTensor pattern):
+  Thread 0:  my_value = input_data[0][0] = 0.00
+  Thread 1:  my_value = input_data[1][0] = 0.01
+  Thread 13: my_value = input_data[13][0] = 0.13
+  Thread 25: my_value = input_data[25][0] = 0.25
+  ...
+</code></pre>
+<h3 id="phase-2-bin-classification-new-concept"><a class="header" href="#phase-2-bin-classification-new-concept"><strong>Phase 2: Bin classification (new concept)</strong></a></h3>
+<pre><code>Bin calculation using floor operation:
+  Thread 0:  my_bin = Int(floor(0.00 * 8)) = 0  // Values [0.000, 0.125) → bin 0
+  Thread 1:  my_bin = Int(floor(0.01 * 8)) = 0  // Values [0.000, 0.125) → bin 0
+  Thread 13: my_bin = Int(floor(0.13 * 8)) = 1  // Values [0.125, 0.250) → bin 1
+  Thread 25: my_bin = Int(floor(0.25 * 8)) = 2  // Values [0.250, 0.375) → bin 2
+  ...
+</code></pre>
+<h3 id="phase-3-binary-predicate-creation-filtering-pattern"><a class="header" href="#phase-3-binary-predicate-creation-filtering-pattern"><strong>Phase 3: Binary predicate creation (filtering pattern)</strong></a></h3>
+<pre><code>For target_bin=0, create extraction mask:
+  Thread 0:  belongs_to_target = 1  (bin 0 == target 0)
+  Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
+  Thread 13: belongs_to_target = 0  (bin 1 != target 0)
+  Thread 25: belongs_to_target = 0  (bin 2 != target 0)
+  ...
+
+This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+</code></pre>
+<h3 id="phase-4-parallel-prefix-sum-the-magic"><a class="header" href="#phase-4-parallel-prefix-sum-the-magic"><strong>Phase 4: Parallel prefix sum (the magic!)</strong></a></h3>
+<pre><code>block.prefix_sum[exclusive=True] on predicates:
+Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
+                                                      ^
+                                                 doesn't matter
+
+Key insight: Each thread gets its WRITE POSITION in the output array!
+</code></pre>
+<h3 id="phase-5-coordinated-extraction-conditional-write"><a class="header" href="#phase-5-coordinated-extraction-conditional-write"><strong>Phase 5: Coordinated extraction (conditional write)</strong></a></h3>
+<pre><code>Only threads with belongs_to_target=1 write:
+  Thread 0:  bin_output[0] = 0.00   // Uses write_offset[0] = 0
+  Thread 1:  bin_output[1] = 0.01   // Uses write_offset[1] = 1
+  Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
+  Thread 13: (no write)             // belongs_to_target = 0
+  Thread 25: (no write)             // belongs_to_target = 0
+  ...
+
+Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
+</code></pre>
+<h3 id="phase-6-count-computation-like-blocksum-pattern"><a class="header" href="#phase-6-count-computation-like-blocksum-pattern"><strong>Phase 6: Count computation (like block.sum() pattern)</strong></a></h3>
+<pre><code>Last thread computes total (not thread 0!):
+  if local_i == tpb - 1:  // Thread 127 in our case
+      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+      count_output[0] = total
+</code></pre>
+<h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>
+<h3 id="connection-to-puzzle-12-traditional-dot-product"><a class="header" href="#connection-to-puzzle-12-traditional-dot-product"><strong>Connection to <a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a> (Traditional dot product):</strong></a></h3>
+<ul>
+<li><strong>Same thread indexing</strong>: <code>global_i</code> and <code>local_i</code> patterns</li>
+<li><strong>Same bounds checking</strong>: <code>if global_i &lt; size</code> validation</li>
+<li><strong>Same data loading</strong>: LayoutTensor SIMD extraction with <code>[0]</code></li>
+</ul>
+<h3 id="connection-to-blocksum-earlier-in-this-puzzle"><a class="header" href="#connection-to-blocksum-earlier-in-this-puzzle"><strong>Connection to <a href="puzzle_27/./block_sum.html"><code>block.sum()</code></a> (earlier in this puzzle):</strong></a></h3>
+<ul>
+<li><strong>Same block-wide operation</strong>: All threads participate in block primitive</li>
+<li><strong>Same result handling</strong>: Special thread (last instead of first) handles final result</li>
+<li><strong>Same SIMD conversion</strong>: <code>Int(result[0])</code> pattern for array indexing</li>
+</ul>
+<h3 id="advanced-concepts-unique-to-blockprefix_sum"><a class="header" href="#advanced-concepts-unique-to-blockprefix_sum"><strong>Advanced concepts unique to <code>block.prefix_sum()</code>:</strong></a></h3>
+<ul>
+<li><strong>Every thread gets result</strong>: Unlike <code>block.sum()</code> where only thread 0 matters</li>
+<li><strong>Coordinated write positions</strong>: Prefix sum eliminates race conditions automatically</li>
+<li><strong>Parallel filtering</strong>: Binary predicates enable sophisticated data reorganization</li>
+</ul>
+<h2 id="performance-advantages-over-naive-approaches"><a class="header" href="#performance-advantages-over-naive-approaches"><strong>Performance advantages over naive approaches:</strong></a></h2>
+<h3 id="vs-atomic-operations"><a class="header" href="#vs-atomic-operations"><strong>vs. Atomic operations:</strong></a></h3>
+<ul>
+<li><strong>No race conditions</strong>: Prefix sum gives unique write positions</li>
+<li><strong>Coalesced memory</strong>: Sequential writes improve cache performance</li>
+<li><strong>No serialization</strong>: All writes happen in parallel</li>
+</ul>
+<h3 id="vs-multi-pass-algorithms"><a class="header" href="#vs-multi-pass-algorithms"><strong>vs. Multi-pass algorithms:</strong></a></h3>
+<ul>
+<li><strong>Single kernel</strong>: Complete histogram extraction in one GPU launch</li>
+<li><strong>Full utilization</strong>: All threads work regardless of data distribution</li>
+<li><strong>Optimal memory bandwidth</strong>: Pattern optimized for GPU memory hierarchy</li>
+</ul>
+<p>This demonstrates how <code>block.prefix_sum()</code> enables sophisticated parallel algorithms that would be complex or impossible with simpler primitives like <code>block.sum()</code>.</p>
+</div>
+</details>
+<h2 id="performance-insights-1"><a class="header" href="#performance-insights-1">Performance insights</a></h2>
+<p><strong><code>block.prefix_sum()</code> vs Traditional:</strong></p>
+<ul>
+<li><strong>Algorithm sophistication</strong>: Advanced parallel partitioning vs sequential processing</li>
+<li><strong>Memory efficiency</strong>: Coalesced writes vs scattered random access</li>
+<li><strong>Synchronization</strong>: Built-in coordination vs manual barriers and atomics</li>
+<li><strong>Scalability</strong>: Works with any block size and bin count</li>
+</ul>
+<p><strong><code>block.prefix_sum()</code> vs <code>block.sum()</code>:</strong></p>
+<ul>
+<li><strong>Scope</strong>: Every thread gets result vs only thread 0</li>
+<li><strong>Use case</strong>: Complex partitioning vs simple aggregation</li>
+<li><strong>Algorithm type</strong>: Parallel scan primitive vs reduction primitive</li>
+<li><strong>Output pattern</strong>: Per-thread positions vs single total</li>
+</ul>
+<p><strong>When to use <code>block.prefix_sum()</code>:</strong></p>
+<ul>
+<li><strong>Parallel filtering</strong>: Extract elements matching criteria</li>
+<li><strong>Stream compaction</strong>: Remove unwanted elements</li>
+<li><strong>Parallel partitioning</strong>: Separate data into categories</li>
+<li><strong>Advanced algorithms</strong>: Load balancing, sorting, graph algorithms</li>
+</ul>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
+<p>Once you’ve learned about <code>block.prefix_sum()</code> operations, you’re ready for:</p>
+<ul>
+<li><strong><a href="puzzle_27/./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>
+<li><strong>Multi-block algorithms</strong>: Coordinating multiple blocks for larger problems</li>
+<li><strong>Advanced parallel algorithms</strong>: Sorting, graph traversal, dynamic load balancing</li>
+<li><strong>Complex memory patterns</strong>: Combining block operations with sophisticated memory access</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: Block prefix sum operations transform GPU programming from simple parallel computations to sophisticated parallel algorithms. While <code>block.sum()</code> simplified reductions, <code>block.prefix_sum()</code> enables advanced data reorganization patterns essential for high-performance parallel algorithms.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="blockbroadcast-vector-normalization"><a class="header" href="#blockbroadcast-vector-normalization">block.broadcast() Vector Normalization</a></h1>
+<p>Implement vector mean normalization by combining <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast</a> operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast()</a> operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
+<h2 id="key-concepts-47"><a class="header" href="#key-concepts-47">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn:</p>
+<ul>
+<li><strong>Block-level broadcast</strong> with <code>block.broadcast()</code></li>
+<li><strong>One-to-all communication</strong> patterns</li>
+<li><strong>Source thread specification</strong> and parameter control</li>
+<li><strong>Complete block operations workflow</strong> combining multiple operations</li>
+<li><strong>Real-world algorithm implementation</strong> using coordinated block primitives</li>
+</ul>
+<p>The algorithm demonstrates vector mean normalization:
+\[\Large \text{output}[i] = \frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\]</p>
+<p>Each thread contributes to the mean calculation, then receives the broadcast mean to normalize its element.</p>
+<h2 id="configuration-37"><a class="header" href="#configuration-37">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 128</code> elements</li>
+<li>Data type: <code>DType.float32</code></li>
+<li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
+<li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
+<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major for input and output)</li>
+<li>Test data: Values cycling 1-8, so mean = 4.5</li>
+<li>Expected output: Normalized vector with mean = 1.0</li>
+</ul>
+<h2 id="the-challenge-coordinating-block-wide-computation-and-distribution"><a class="header" href="#the-challenge-coordinating-block-wide-computation-and-distribution">The challenge: Coordinating block-wide computation and distribution</a></h2>
+<p>Traditional approaches to mean normalization require complex coordination:</p>
+<pre><code class="language-python"># Sequential approach - doesn't utilize parallelism
+total = sum(input_array)
+mean = total / len(input_array)
+output_array = [x / mean for x in input_array]
+</code></pre>
+<p><strong>Problems with naive GPU parallelization:</strong></p>
+<ul>
+<li><strong>Multiple kernel launches</strong>: One pass to compute mean, another to normalize</li>
+<li><strong>Global memory round-trip</strong>: Store mean to global memory, read back later</li>
+<li><strong>Synchronization complexity</strong>: Need barriers between computation phases</li>
+<li><strong>Thread divergence</strong>: Different threads doing different tasks</li>
+</ul>
+<p><strong>Traditional GPU solution complexity:</strong></p>
+<pre><code class="language-mojo"># Phase 1: Reduce to find sum (complex shared memory + barriers)
+shared_sum[local_i] = my_value
+barrier()
+# Manual tree reduction with multiple barrier() calls...
+
+# Phase 2: Thread 0 computes mean
+if local_i == 0:
+    mean = shared_sum[0] / size
+    shared_mean[0] = mean
+
+barrier()
+
+# Phase 3: All threads read mean and normalize
+mean = shared_mean[0]  # Everyone reads the same value
+output[global_i] = my_value / mean
+</code></pre>
+<h2 id="the-advanced-approach-blocksum--blockbroadcast-coordination"><a class="header" href="#the-advanced-approach-blocksum--blockbroadcast-coordination">The advanced approach: <code>block.sum()</code> + <code>block.broadcast()</code> coordination</a></h2>
+<p>Transform the multi-phase coordination into elegant block operations workflow:</p>
+<h2 id="code-to-complete-47"><a class="header" href="#code-to-complete-47">Code to complete</a></h2>
+<h3 id="complete-block-operations-workflow"><a class="header" href="#complete-block-operations-workflow">Complete block operations workflow</a></h3>
+<p>Implement sophisticated vector mean normalization using the full block operations toolkit:</p>
+<pre><code class="language-mojo">
+alias vector_layout = Layout.row_major(SIZE)
+
+
+fn block_normalize_vector[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    size: Int,
+):
+    """Vector mean normalization using block.sum() + block.broadcast() combination.
+
+    This demonstrates the complete block operations workflow:
+    1. Use block.sum() to compute sum of all elements (all → one)
+    2. Thread 0 computes mean = sum / size
+    3. Use block.broadcast() to share mean to all threads (one → all)
+    4. Each thread normalizes: output[i] = input[i] / mean
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread loads its element
+
+    # FILL IN (roughly 3 lines)
+
+    # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
+
+    # FILL IN (1 line)
+
+    # Step 3: Thread 0 computes mean value
+
+    # FILL IN (roughly 4 lines)
+
+    # Step 4: block.broadcast() shares mean to ALL threads!
+    # This completes the block operations trilogy demonstration
+
+    # FILL IN (1 line)
+
+    # Step 5: Each thread normalizes by the mean
+
+    # FILL IN (roughly 3 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="1-complete-workflow-structure-builds-on-all-previous-operations"><a class="header" href="#1-complete-workflow-structure-builds-on-all-previous-operations">1. <strong>Complete workflow structure (builds on all previous operations)</strong></a></h3>
+<p>The algorithm follows the perfect block operations pattern:</p>
+<ol>
+<li>Each thread loads its element (familiar from all previous puzzles)</li>
+<li>Use <code>block.sum()</code> to compute total (from earlier in this puzzle)</li>
+<li>Thread 0 computes mean from the sum</li>
+<li>Use <code>block.broadcast()</code> to share mean to all threads (NEW!)</li>
+<li>Each thread normalizes using the broadcast mean</li>
+</ol>
+<h3 id="2-data-loading-and-sum-computation-familiar-patterns"><a class="header" href="#2-data-loading-and-sum-computation-familiar-patterns">2. <strong>Data loading and sum computation (familiar patterns)</strong></a></h3>
+<p>Load your element using the established LayoutTensor pattern:</p>
+<pre><code class="language-mojo">var my_value: Scalar[dtype] = 0.0
+if global_i &lt; size:
+    my_value = input_data[global_i][0]  # SIMD extraction
+</code></pre>
+<p>Then use <code>block.sum()</code> exactly like the dot product earlier:</p>
+<pre><code class="language-mojo">total_sum = block.sum[block_size=tpb, broadcast=False](...)
+</code></pre>
+<h3 id="3-mean-computation-thread-0-only"><a class="header" href="#3-mean-computation-thread-0-only">3. <strong>Mean computation (thread 0 only)</strong></a></h3>
+<p>Only thread 0 should compute the mean:</p>
+<pre><code class="language-mojo">var mean_value: Scalar[dtype] = 1.0  # Safe default
+if local_i == 0:
+    # Compute mean from total_sum and size
+</code></pre>
+<p><strong>Why thread 0?</strong> Consistent with <code>block.sum()</code> pattern where thread 0 receives the result.</p>
+<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
+<p>Study the function signature - it needs:</p>
+<ul>
+<li>Template parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
+<li>Runtime parameters: <code>val</code> (SIMD value to broadcast), <code>src_thread</code> (default=0)</li>
+</ul>
+<p>The call pattern follows the established template style:</p>
+<pre><code class="language-mojo">result = block.broadcast[
+    dtype = DType.float32,
+    width = 1,
+    block_size = tpb
+](val=SIMD[DType.float32, 1](value_to_broadcast), src_thread=UInt(0))
+</code></pre>
+<h3 id="5-understanding-the-broadcast-pattern"><a class="header" href="#5-understanding-the-broadcast-pattern">5. <strong>Understanding the broadcast pattern</strong></a></h3>
+<p><strong>Key insight</strong>: <code>block.broadcast()</code> takes a value from ONE thread and gives it to ALL threads:</p>
+<ul>
+<li><strong>Thread 0</strong> has the computed mean value</li>
+<li><strong>All threads</strong> need that same mean value</li>
+<li><strong><code>block.broadcast()</code></strong> copies thread 0’s value to everyone</li>
+</ul>
+<p>This is the opposite of <code>block.sum()</code> (all→one) and different from <code>block.prefix_sum()</code> (all→each position).</p>
+<h3 id="6-final-normalization-step"><a class="header" href="#6-final-normalization-step">6. <strong>Final normalization step</strong></a></h3>
+<p>Once every thread has the broadcast mean, normalize your element:</p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    normalized_value = my_value / broadcasted_mean[0]  # Extract SIMD
+    output_data[global_i] = normalized_value
+</code></pre>
+<p><strong>SIMD extraction</strong>: Remember that <code>block.broadcast()</code> returns SIMD, so use <code>[0]</code> to extract the scalar.</p>
+<h3 id="7-pattern-recognition-from-previous-puzzles"><a class="header" href="#7-pattern-recognition-from-previous-puzzles">7. <strong>Pattern recognition from previous puzzles</strong></a></h3>
+<ul>
+<li><strong>Thread indexing</strong>: Same <code>global_i</code>, <code>local_i</code> pattern as always</li>
+<li><strong>Bounds checking</strong>: Same <code>if global_i &lt; size</code> validation</li>
+<li><strong>SIMD handling</strong>: Same <code>[0]</code> extraction patterns</li>
+<li><strong>Block operations</strong>: Same template parameter style as <code>block.sum()</code></li>
+</ul>
+<p>The beauty is that each block operation follows consistent patterns!</p>
+</div>
+</details>
+<p><strong>Test the block.broadcast() approach:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --normalize
+</code></pre>
+  </div>
+</div>
+<p>Expected output when solved:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+
+Input sample: 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 ...
+Sum value: 576.0
+Mean value: 4.5
+
+Mean Normalization Results:
+Normalized sample: 0.22222222 0.44444445 0.6666667 0.8888889 1.1111112 1.3333334 1.5555556 1.7777778 ...
+
+Output sum: 128.0
+Output mean: 1.0
+✅ Success: Output mean is 1.0 (should be close to 1.0)
+</code></pre>
+<h2 id="solution-48"><a class="header" href="#solution-48">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_normalize_vector[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[mut=False, dtype, in_layout],
+    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    size: Int,
+):
+    """Vector mean normalization using block.sum() + block.broadcast() combination.
+
+    This demonstrates the complete block operations workflow:
+    1. Use block.sum() to compute sum of all elements (all → one)
+    2. Thread 0 computes mean = sum / size
+    3. Use block.broadcast() to share mean to all threads (one → all)
+    4. Each thread normalizes: output[i] = input[i] / mean
+    """
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Step 1: Each thread loads its element
+    var my_value: Scalar[dtype] = 0.0
+    if global_i &lt; size:
+        my_value = input_data[global_i][0]  # Extract SIMD value
+
+    # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
+    total_sum = block.sum[block_size=tpb, broadcast=False](
+        val=SIMD[DType.float32, 1](my_value)
+    )
+
+    # Step 3: Thread 0 computes mean value
+    var mean_value: Scalar[dtype] = 1.0  # Default to avoid division by zero
+    if local_i == 0:
+        if total_sum[0] &gt; 0.0:
+            mean_value = total_sum[0] / Float32(size)
+
+    # Step 4: block.broadcast() shares mean to ALL threads!
+    # This completes the block operations trilogy demonstration
+    broadcasted_mean = block.broadcast[
+        dtype = DType.float32, width=1, block_size=tpb
+    ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
+
+    # Step 5: Each thread normalizes by the mean
+    if global_i &lt; size:
+        normalized_value = my_value / broadcasted_mean[0]
+        output_data[global_i] = normalized_value
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The <code>block.broadcast()</code> kernel demonstrates the complete block operations workflow by combining all three fundamental communication patterns in a real algorithm that produces mathematically verifiable results:</p>
+<h2 id="complete-algorithm-walkthrough-with-concrete-execution"><a class="header" href="#complete-algorithm-walkthrough-with-concrete-execution"><strong>Complete algorithm walkthrough with concrete execution:</strong></a></h2>
+<h3 id="phase-1-parallel-data-loading-established-patterns-from-all-previous-puzzles"><a class="header" href="#phase-1-parallel-data-loading-established-patterns-from-all-previous-puzzles"><strong>Phase 1: Parallel data loading (established patterns from all previous puzzles)</strong></a></h3>
+<pre><code>Thread indexing (consistent across all puzzles):
+  global_i = block_dim.x * block_idx.x + thread_idx.x  // Maps to input array position
+  local_i = thread_idx.x                              // Position within block (0-127)
+
+Parallel element loading using LayoutTensor pattern:
+  Thread 0:   my_value = input_data[0][0] = 1.0    // First cycle value
+  Thread 1:   my_value = input_data[1][0] = 2.0    // Second cycle value
+  Thread 7:   my_value = input_data[7][0] = 8.0    // Last cycle value
+  Thread 8:   my_value = input_data[8][0] = 1.0    // Cycle repeats: 1,2,3,4,5,6,7,8,1,2...
+  Thread 15:  my_value = input_data[15][0] = 8.0   // 15 % 8 = 7, so 8th value
+  Thread 127: my_value = input_data[127][0] = 8.0  // 127 % 8 = 7, so 8th value
+
+All 128 threads load simultaneously - perfect parallel efficiency!
+</code></pre>
+<h3 id="phase-2-block-wide-sum-reduction-leveraging-earlier-blocksum-knowledge"><a class="header" href="#phase-2-block-wide-sum-reduction-leveraging-earlier-blocksum-knowledge"><strong>Phase 2: Block-wide sum reduction (leveraging earlier block.sum() knowledge)</strong></a></h3>
+<pre><code>block.sum() coordination across all 128 threads:
+  Contribution analysis:
+    - Values 1,2,3,4,5,6,7,8 repeat 16 times each (128/8 = 16)
+    - Thread contributions: 16×1 + 16×2 + 16×3 + 16×4 + 16×5 + 16×6 + 16×7 + 16×8
+    - Mathematical sum: 16 × (1+2+3+4+5+6+7+8) = 16 × 36 = 576.0
+
+block.sum() hardware execution:
+  All threads → [reduction tree] → Thread 0
+  total_sum = SIMD[DType.float32, 1](576.0)  // Only thread 0 receives this
+
+Threads 1-127: Have no access to total_sum (broadcast=False in block.sum)
+</code></pre>
+<h3 id="phase-3-exclusive-mean-computation-single-thread-processing"><a class="header" href="#phase-3-exclusive-mean-computation-single-thread-processing"><strong>Phase 3: Exclusive mean computation (single-thread processing)</strong></a></h3>
+<pre><code>Thread 0 performs critical computation:
+  Input: total_sum[0] = 576.0, size = 128
+  Computation: mean_value = 576.0 / 128.0 = 4.5
+
+  Verification: Expected mean = (1+2+3+4+5+6+7+8)/8 = 36/8 = 4.5 ✓
+
+All other threads (1-127):
+  mean_value = 1.0 (default safety value)
+  These values are irrelevant - will be overwritten by broadcast
+
+Critical insight: Only thread 0 has the correct mean value at this point!
+</code></pre>
+<h3 id="phase-4-block-wide-broadcast-distribution-one--all-communication"><a class="header" href="#phase-4-block-wide-broadcast-distribution-one--all-communication"><strong>Phase 4: Block-wide broadcast distribution (one → all communication)</strong></a></h3>
+<pre><code>block.broadcast() API execution:
+  Source: src_thread = UInt(0) → Thread 0's mean_value = 4.5
+  Target: All 128 threads in block
+
+Before broadcast:
+  Thread 0:   mean_value = 4.5  ← Source of truth
+  Thread 1:   mean_value = 1.0  ← Will be overwritten
+  Thread 2:   mean_value = 1.0  ← Will be overwritten
+  ...
+  Thread 127: mean_value = 1.0  ← Will be overwritten
+
+After block.broadcast() execution:
+  Thread 0:   broadcasted_mean[0] = 4.5  ← Receives own value back
+  Thread 1:   broadcasted_mean[0] = 4.5  ← Now has correct value!
+  Thread 2:   broadcasted_mean[0] = 4.5  ← Now has correct value!
+  ...
+  Thread 127: broadcasted_mean[0] = 4.5  ← Now has correct value!
+
+Result: Perfect synchronization - all threads have identical mean value!
+</code></pre>
+<h3 id="phase-5-parallel-mean-normalization-coordinated-processing"><a class="header" href="#phase-5-parallel-mean-normalization-coordinated-processing"><strong>Phase 5: Parallel mean normalization (coordinated processing)</strong></a></h3>
+<pre><code>Each thread independently normalizes using broadcast mean:
+  Thread 0:   normalized = 1.0 / 4.5 = 0.22222222...
+  Thread 1:   normalized = 2.0 / 4.5 = 0.44444444...
+  Thread 2:   normalized = 3.0 / 4.5 = 0.66666666...
+  Thread 7:   normalized = 8.0 / 4.5 = 1.77777777...
+  Thread 8:   normalized = 1.0 / 4.5 = 0.22222222...  (pattern repeats)
+  ...
+
+Mathematical verification:
+  Output sum = (0.222... + 0.444... + ... + 1.777...) × 16 = 4.5 × 16 × 2 = 128.0
+  Output mean = 128.0 / 128 = 1.0  Perfect normalization!
+
+Each value divided by original mean gives output with mean = 1.0
+</code></pre>
+<h3 id="phase-6-verification-of-correctness"><a class="header" href="#phase-6-verification-of-correctness"><strong>Phase 6: Verification of correctness</strong></a></h3>
+<pre><code>Input analysis:
+  - Sum: 576.0, Mean: 4.5
+  - Max: 8.0, Min: 1.0
+  - Range: [1.0, 8.0]
+
+Output analysis:
+  - Sum: 128.0, Mean: 1.0 ✓
+  - Max: 1.777..., Min: 0.222...
+  - Range: [0.222, 1.777] (all values scaled by factor 1/4.5)
+
+Proportional relationships preserved:
+  - Original 8:1 ratio becomes 1.777:0.222 = 8:1 ✓
+  - All relative magnitudes maintained perfectly
+</code></pre>
+<h2 id="why-this-complete-workflow-is-mathematically-and-computationally-superior"><a class="header" href="#why-this-complete-workflow-is-mathematically-and-computationally-superior"><strong>Why this complete workflow is mathematically and computationally superior:</strong></a></h2>
+<h3 id="technical-accuracy-and-verification"><a class="header" href="#technical-accuracy-and-verification"><strong>Technical accuracy and verification:</strong></a></h3>
+<pre><code>Mathematical proof of correctness:
+  Input: x₁, x₂, ..., xₙ where n = 128
+  Mean: μ = (∑xᵢ)/n = 576/128 = 4.5
+
+  Normalization: yᵢ = xᵢ/μ
+  Output mean: (∑yᵢ)/n = (∑xᵢ/μ)/n = (1/μ)(∑xᵢ)/n = (1/μ)μ = 1 ✓
+
+Algorithm produces provably correct mathematical result.
+</code></pre>
+<h3 id="connection-to-puzzle-12-foundational-patterns"><a class="header" href="#connection-to-puzzle-12-foundational-patterns"><strong>Connection to <a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a> (foundational patterns):</strong></a></h3>
+<ul>
+<li><strong>Thread coordination evolution</strong>: Same <code>global_i</code>, <code>local_i</code> patterns but with block primitives</li>
+<li><strong>Memory access patterns</strong>: Same LayoutTensor SIMD extraction <code>[0]</code> but optimized workflow</li>
+<li><strong>Complexity elimination</strong>: Replaces 20+ lines of manual barriers with 2 block operations</li>
+<li><strong>Educational progression</strong>: Manual → automated, complex → simple, error-prone → reliable</li>
+</ul>
+<h3 id="connection-to-blocksum-perfect-integration"><a class="header" href="#connection-to-blocksum-perfect-integration"><strong>Connection to <a href="puzzle_27/./block_sum.html"><code>block.sum()</code></a> (perfect integration):</strong></a></h3>
+<ul>
+<li><strong>API consistency</strong>: Identical template structure <code>[block_size=tpb, broadcast=False]</code></li>
+<li><strong>Result flow design</strong>: Thread 0 receives sum, naturally computes derived parameter</li>
+<li><strong>Seamless composition</strong>: Output of <code>block.sum()</code> becomes input for computation + broadcast</li>
+<li><strong>Performance optimization</strong>: Single-kernel workflow vs multi-pass approaches</li>
+</ul>
+<h3 id="connection-to-blockprefix_sum-complementary-communication"><a class="header" href="#connection-to-blockprefix_sum-complementary-communication"><strong>Connection to <a href="puzzle_27/./block_prefix_sum.html"><code>block.prefix_sum()</code></a> (complementary communication):</strong></a></h3>
+<ul>
+<li><strong>Distribution patterns</strong>: <code>prefix_sum</code> gives unique positions, <code>broadcast</code> gives shared values</li>
+<li><strong>Usage scenarios</strong>: <code>prefix_sum</code> for parallel partitioning, <code>broadcast</code> for parameter sharing</li>
+<li><strong>Template consistency</strong>: Same <code>dtype</code>, <code>block_size</code> parameter patterns across all operations</li>
+<li><strong>SIMD handling uniformity</strong>: All block operations return SIMD requiring <code>[0]</code> extraction</li>
+</ul>
+<h3 id="advanced-algorithmic-insights"><a class="header" href="#advanced-algorithmic-insights"><strong>Advanced algorithmic insights:</strong></a></h3>
+<pre><code>Communication pattern comparison:
+  Traditional approach:
+    1. Manual reduction:     O(log n) with explicit barriers
+    2. Shared memory write:  O(1) with synchronization
+    3. Shared memory read:   O(1) with potential bank conflicts
+    Total: Multiple synchronization points, error-prone
+
+  Block operations approach:
+    1. block.sum():          O(log n) hardware-optimized, automatic barriers
+    2. Computation:          O(1) single thread
+    3. block.broadcast():    O(log n) hardware-optimized, automatic distribution
+    Total: Two primitives, automatic synchronization, provably correct
+</code></pre>
+<h3 id="real-world-algorithm-patterns-demonstrated"><a class="header" href="#real-world-algorithm-patterns-demonstrated"><strong>Real-world algorithm patterns demonstrated:</strong></a></h3>
+<pre><code>Common parallel algorithm structure:
+  Phase 1: Parallel data processing      → All threads contribute
+  Phase 2: Global parameter computation  → One thread computes
+  Phase 3: Parameter distribution        → All threads receive
+  Phase 4: Coordinated parallel output   → All threads process
+
+This exact pattern appears in:
+  - Batch normalization (deep learning)
+  - Histogram equalization (image processing)
+  - Iterative numerical methods (scientific computing)
+  - Lighting calculations (computer graphics)
+
+Mean normalization is the perfect educational example of this fundamental pattern.
+</code></pre>
+<h2 id="block-operations-trilogy-completed"><a class="header" href="#block-operations-trilogy-completed"><strong>Block operations trilogy completed:</strong></a></h2>
+<h3 id="1-blocksum---all-to-one-reduction"><a class="header" href="#1-blocksum---all-to-one-reduction"><strong>1. <code>block.sum()</code> - All to One (Reduction)</strong></a></h3>
+<ul>
+<li><strong>Input</strong>: All threads provide values</li>
+<li><strong>Output</strong>: Thread 0 receives aggregated result</li>
+<li><strong>Use case</strong>: Computing totals, finding maximums, etc.</li>
+</ul>
+<h3 id="2-blockprefix_sum---all-to-each-scan"><a class="header" href="#2-blockprefix_sum---all-to-each-scan"><strong>2. <code>block.prefix_sum()</code> - All to Each (Scan)</strong></a></h3>
+<ul>
+<li><strong>Input</strong>: All threads provide values</li>
+<li><strong>Output</strong>: Each thread receives cumulative position</li>
+<li><strong>Use case</strong>: Computing write positions, parallel partitioning</li>
+</ul>
+<h3 id="3-blockbroadcast---one-to-all-broadcast"><a class="header" href="#3-blockbroadcast---one-to-all-broadcast"><strong>3. <code>block.broadcast()</code> - One to All (Broadcast)</strong></a></h3>
+<ul>
+<li><strong>Input</strong>: One thread provides value (typically thread 0)</li>
+<li><strong>Output</strong>: All threads receive the same value</li>
+<li><strong>Use case</strong>: Sharing computed parameters, configuration values</li>
+</ul>
+</div>
+</details>
+<p><strong>Complete block operations progression:</strong></p>
+<ol>
+<li><strong>Manual coordination</strong> (<a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a>): Understand parallel fundamentals</li>
+<li><strong>Warp primitives</strong> (<a href="puzzle_27/../puzzle_24/warp_sum.html">Puzzle 24</a>): Learn hardware-accelerated patterns</li>
+<li><strong>Block reduction</strong> (<a href="puzzle_27/./block_sum.html"><code>block.sum()</code></a>): Master all→one communication</li>
+<li><strong>Block scan</strong> (<a href="puzzle_27/./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): Master all→each communication</li>
+<li><strong>Block broadcast</strong> (<code>block.broadcast()</code>): Master one→all communication</li>
+</ol>
+<p><strong>The complete picture:</strong> Block operations provide the fundamental communication building blocks for sophisticated parallel algorithms, replacing complex manual coordination with clean, composable primitives.</p>
+<h2 id="performance-insights-and-technical-analysis"><a class="header" href="#performance-insights-and-technical-analysis">Performance insights and technical analysis</a></h2>
+<h3 id="quantitative-performance-comparison"><a class="header" href="#quantitative-performance-comparison"><strong>Quantitative performance comparison:</strong></a></h3>
+<p><strong><code>block.broadcast()</code> vs Traditional shared memory approach (for demonstration):</strong></p>
+<p><strong>Traditional Manual Approach:</strong></p>
+<pre><code>Phase 1: Manual reduction
+  • Shared memory allocation: ~5 cycles
+  • Barrier synchronization: ~10 cycles
+  • Tree reduction loop: ~15 cycles
+  • Error-prone manual indexing
+
+Phase 2: Mean computation: ~2 cycles
+
+Phase 3: Shared memory broadcast
+  • Manual write to shared: ~2 cycles
+  • Barrier synchronization: ~10 cycles
+  • All threads read: ~3 cycles
+
+Total: ~47 cycles
+  + synchronization overhead
+  + potential race conditions
+  + manual error debugging
+</code></pre>
+<p><strong>Block Operations Approach:</strong></p>
+<pre><code>Phase 1: block.sum()
+  • Hardware-optimized: ~3 cycles
+  • Automatic barriers: 0 explicit cost
+  • Optimized reduction: ~8 cycles
+  • Verified correct implementation
+
+Phase 2: Mean computation: ~2 cycles
+
+Phase 3: block.broadcast()
+  • Hardware-optimized: ~4 cycles
+  • Automatic distribution: 0 explicit cost
+  • Verified correct implementation
+
+Total: ~17 cycles
+  + automatic optimization
+  + guaranteed correctness
+  + composable design
+</code></pre>
+<h3 id="memory-hierarchy-advantages"><a class="header" href="#memory-hierarchy-advantages"><strong>Memory hierarchy advantages:</strong></a></h3>
+<p><strong>Cache efficiency:</strong></p>
+<ul>
+<li><strong>block.sum()</strong>: Optimized memory access patterns reduce cache misses</li>
+<li><strong>block.broadcast()</strong>: Efficient distribution minimizes memory bandwidth usage</li>
+<li><strong>Combined workflow</strong>: Single kernel reduces global memory round-trips by 100%</li>
+</ul>
+<p><strong>Memory bandwidth utilization:</strong></p>
+<pre><code>Traditional multi-kernel approach:
+  Kernel 1: Input → Reduction → Global memory write
+  Kernel 2: Global memory read → Broadcast → Output
+  Total global memory transfers: 3× array size
+
+Block operations single-kernel:
+  Input → block.sum() → block.broadcast() → Output
+  Total global memory transfers: 2× array size (33% improvement)
+</code></pre>
+<h3 id="when-to-use-each-block-operation"><a class="header" href="#when-to-use-each-block-operation"><strong>When to use each block operation:</strong></a></h3>
+<p><strong><code>block.sum()</code> optimal scenarios:</strong></p>
+<ul>
+<li><strong>Data aggregation</strong>: Computing totals, averages, maximum/minimum values</li>
+<li><strong>Reduction patterns</strong>: Any all-to-one communication requirement</li>
+<li><strong>Statistical computation</strong>: Mean, variance, correlation calculations</li>
+</ul>
+<p><strong><code>block.prefix_sum()</code> optimal scenarios:</strong></p>
+<ul>
+<li><strong>Parallel partitioning</strong>: Stream compaction, histogram binning</li>
+<li><strong>Write position calculation</strong>: Parallel output generation</li>
+<li><strong>Parallel algorithms</strong>: Sorting, searching, data reorganization</li>
+</ul>
+<p><strong><code>block.broadcast()</code> optimal scenarios:</strong></p>
+<ul>
+<li><strong>Parameter distribution</strong>: Sharing computed values to all threads</li>
+<li><strong>Configuration propagation</strong>: Mode flags, scaling factors, thresholds</li>
+<li><strong>Coordinated processing</strong>: When all threads need the same computed parameter</li>
+</ul>
+<h3 id="composition-benefits"><a class="header" href="#composition-benefits"><strong>Composition benefits:</strong></a></h3>
+<pre><code>Individual operations: Good performance, limited scope
+Combined operations:   Excellent performance, comprehensive algorithms
+
+Example combinations seen in real applications:
+• block.sum() + block.broadcast():       Normalization algorithms
+• block.prefix_sum() + block.sum():      Advanced partitioning
+• All three together:                    Complex parallel algorithms
+• With traditional patterns:             Hybrid optimization strategies
+</code></pre>
+<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
+<p>Once you’ve learned about the complete block operations trilogy, you’re ready for:</p>
+<ul>
+<li><strong>Multi-block algorithms</strong>: Coordinating operations across multiple thread blocks</li>
+<li><strong>Advanced parallel patterns</strong>: Combining block operations for complex algorithms</li>
+<li><strong>Memory hierarchy optimization</strong>: Efficient data movement patterns</li>
+<li><strong>Algorithm design</strong>: Structuring parallel algorithms using block operation building blocks</li>
+<li><strong>Performance optimization</strong>: Choosing optimal block sizes and operation combinations</li>
+</ul>
+<p>💡 <strong>Key Takeaway</strong>: The block operations trilogy (<code>sum</code>, <code>prefix_sum</code>, <code>broadcast</code>) provides complete communication primitives for block-level parallel programming. By composing these operations, you can implement sophisticated parallel algorithms with clean, maintainable code that leverages GPU hardware optimizations. Mean normalization demonstrates how these operations work together to solve real computational problems efficiently.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-28-async-memory-operations--copy-overlap"><a class="header" href="#puzzle-28-async-memory-operations--copy-overlap">Puzzle 28: Async Memory Operations &amp; Copy Overlap</a></h1>
 <p><strong>The GPU Memory Bottleneck:</strong> Most real-world GPU algorithms hit a frustrating wall - they’re not limited by compute power, but by <strong>memory bandwidth</strong>. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.</p>
 <p>Consider this common scenario in GPU programming:</p>
@@ -17786,7 +19270,7 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 <li><strong>Image processing</strong>: Streaming large datasets through memory hierarchies</li>
 <li><strong>Any memory-bound algorithm</strong>: Converting waiting time into productive work</li>
 </ul>
-<h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
+<h2 id="prerequisites-6"><a class="header" href="#prerequisites-6">Prerequisites</a></h2>
 <p>Before diving in, ensure you have solid foundation in:</p>
 <p><strong>Essential GPU programming concepts:</strong></p>
 <ul>
@@ -17885,7 +19369,7 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 <p>This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.</p>
 <h2 id="async-copy-overlap-with-1d-convolution"><a class="header" href="#async-copy-overlap-with-1d-convolution">Async copy overlap with 1D convolution</a></h2>
 <p><strong>Building on <a href="puzzle_28/../puzzle_13/puzzle_13.html">Puzzle 13</a>:</strong> This puzzle revisits the 1D convolution from Puzzle 13, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we’ll use hardware acceleration to overlap expensive DRAM transfers with useful work.</p>
-<h3 id="configuration-35"><a class="header" href="#configuration-35">Configuration</a></h3>
+<h3 id="configuration-38"><a class="header" href="#configuration-38">Configuration</a></h3>
 <ul>
 <li>Vector size: <code>VECTOR_SIZE = 16384</code> (16K elements across multiple blocks)</li>
 <li>Tile size: <code>CONV_TILE_SIZE = 256</code> (processing tile size)</li>
@@ -17921,7 +19405,7 @@ async_copy_wait_all()  # Wait only when both operations complete
 <li><strong>Optimal coalescing</strong>: Thread layouts ensure efficient DRAM access patterns</li>
 <li><strong>Resource utilization</strong>: Compute units stay busy instead of waiting idle</li>
 </ul>
-<h3 id="code-to-complete-45"><a class="header" href="#code-to-complete-45">Code to complete</a></h3>
+<h3 id="code-to-complete-48"><a class="header" href="#code-to-complete-48">Code to complete</a></h3>
 <p>Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 16’s matmul implementation.</p>
 <p><strong>Mathematical operation:</strong> Compute 1D convolution across large vector using async copy for efficiency:
 \[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
@@ -18027,7 +19511,7 @@ fn async_copy_overlap_convolution[
 </code></pre>
   </div>
 </div>
-<h3 id="solution-46"><a class="header" href="#solution-46">Solution</a></h3>
+<h3 id="solution-49"><a class="header" href="#solution-49">Solution</a></h3>
 <details class="solution-details">
 <summary><strong>Complete Solution with Detailed Explanation</strong></summary>
 <p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
@@ -18207,7 +19691,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
 </blockquote>
-<h2 id="overview-50"><a class="header" href="#overview-50">Overview</a></h2>
+<h2 id="overview-51"><a class="header" href="#overview-51">Overview</a></h2>
 <p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
@@ -18217,7 +19701,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li><strong>Optimize synchronization overhead</strong> while maintaining correctness guarantees</li>
 </ul>
 <p><strong>Architectural progression:</strong> These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.</p>
-<h2 id="key-concepts-45"><a class="header" href="#key-concepts-45">Key concepts</a></h2>
+<h2 id="key-concepts-48"><a class="header" href="#key-concepts-48">Key concepts</a></h2>
 <p><strong>Thread coordination paradigms:</strong></p>
 <ul>
 <li><strong>Simple parallelism</strong>: All threads execute identical operations (previous puzzles)</li>
@@ -18237,7 +19721,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different memory spaces</li>
 <li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative algorithms</li>
 </ul>
-<h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
+<h2 id="configuration-39"><a class="header" href="#configuration-39">Configuration</a></h2>
 <p><strong>System architecture:</strong></p>
 <ul>
 <li><strong>Block size</strong>: <code>TPB = 256</code> threads per block for optimal occupancy</li>
@@ -18279,7 +19763,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <li>Iterative algorithm coordination with explicit memory barriers</li>
 </ul>
 <p><strong>Real-world applications</strong>: Iterative solvers (Jacobi, Gauss-Seidel), cellular automata, simulation time-stepping</p>
-<h2 id="getting-started-6"><a class="header" href="#getting-started-6">Getting started</a></h2>
+<h2 id="getting-started-7"><a class="header" href="#getting-started-7">Getting started</a></h2>
 <p><strong>Recommended approach:</strong></p>
 <ol>
 <li><strong>Start with <a href="puzzle_29/barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
@@ -18296,7 +19780,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
 <p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
-<h2 id="overview-51"><a class="header" href="#overview-51">Overview</a></h2>
+<h2 id="overview-52"><a class="header" href="#overview-52">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
 <p><strong>Note:</strong> <em>You have specialized thread roles: Stage 1 (threads 0-127) loads and preprocesses data, Stage 2 (threads 128-255) applies blur operations, and Stage 3 (all threads) performs final smoothing.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>producer-consumer pipeline</strong> where different thread groups execute completely different algorithms within a single GPU block. Unlike traditional GPU programming where all threads execute the same algorithm on different data, this approach divides threads by <strong>functional specialization</strong>.</p>
@@ -18329,7 +19813,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 </ul>
 <p><strong>Synchronization Points:</strong></p>
 <p>\[\text{barrier}_1 \Rightarrow P[i] \text{ complete} \Rightarrow \text{barrier}_2 \Rightarrow B[i] \text{ complete} \Rightarrow \text{barrier}_3 \Rightarrow F[i] \text{ complete}\]</p>
-<h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
+<h2 id="key-concepts-49"><a class="header" href="#key-concepts-49">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing thread role specialization within a single GPU block</li>
@@ -18344,7 +19828,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 <li><strong>This puzzle:</strong> Different thread groups execute different algorithms, barriers coordinate between different algorithms</li>
 </ul>
 <p><strong>Thread specialization architecture:</strong> Unlike data parallelism where threads differ only in their data indices, this puzzle implements <strong>algorithmic parallelism</strong> where threads execute fundamentally different code paths based on their role in the pipeline.</p>
-<h2 id="configuration-37"><a class="header" href="#configuration-37">Configuration</a></h2>
+<h2 id="configuration-40"><a class="header" href="#configuration-40">Configuration</a></h2>
 <p><strong>System parameters:</strong></p>
 <ul>
 <li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
@@ -18379,7 +19863,7 @@ By completing this chapter, you’ll have the foundation to design and implement
 </ul>
 </li>
 </ul>
-<h2 id="code-to-complete-46"><a class="header" href="#code-to-complete-46">Code to complete</a></h2>
+<h2 id="code-to-complete-49"><a class="header" href="#code-to-complete-49">Code to complete</a></h2>
 <pre><code class="language-mojo">
 alias TPB = 256  # Threads per block for pipeline stages
 alias SIZE = 1024  # Image size (1D for simplicity)
@@ -18507,7 +19991,7 @@ Input sample: 0.0 1.01 2.02
 Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 </code></pre>
-<h2 id="solution-47"><a class="header" href="#solution-47">Solution</a></h2>
+<h2 id="solution-50"><a class="header" href="#solution-50">Solution</a></h2>
 <p>The key insight is recognizing this as a <strong>pipeline architecture problem</strong> with thread role specialization:</p>
 <ol>
 <li><strong>Design stage-specific thread groups</strong>: Divide threads by function, not just by data</li>
@@ -18645,7 +20129,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 </ul>
 <p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU computing applications like iterative solvers, simulation frameworks, and high-performance image processing pipelines.</p>
 </blockquote>
-<h2 id="overview-52"><a class="header" href="#overview-52">Overview</a></h2>
+<h2 id="overview-53"><a class="header" href="#overview-53">Overview</a></h2>
 <p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.</p>
 <p><strong>Note:</strong> <em>You have alternating buffer roles: <code>buffer_A</code> and <code>buffer_B</code> swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>double-buffering pattern</strong> where two shared memory buffers alternate roles as read and write targets across multiple iterations. Unlike simple stencil operations that process data once, this approach performs iterative refinement with careful memory barrier coordination to prevent race conditions during buffer transitions.</p>
@@ -18672,7 +20156,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 \text{buffer_A}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 0 \\
 \text{buffer_B}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 1
 \end{cases}\]</p>
-<h2 id="key-concepts-47"><a class="header" href="#key-concepts-47">Key concepts</a></h2>
+<h2 id="key-concepts-50"><a class="header" href="#key-concepts-50">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing double-buffering patterns for iterative algorithms</li>
@@ -18687,7 +20171,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
 </ul>
 <p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this puzzle uses <strong>explicit memory barriers</strong> that provide fine-grained control over when memory operations complete, essential for complex memory access patterns.</p>
-<h2 id="configuration-38"><a class="header" href="#configuration-38">Configuration</a></h2>
+<h2 id="configuration-41"><a class="header" href="#configuration-41">Configuration</a></h2>
 <p><strong>System parameters:</strong></p>
 <ul>
 <li><strong>Image size</strong>: <code>SIZE = 1024</code> elements (1D for simplicity)</li>
@@ -18734,7 +20218,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <li><strong>Global memory write</strong>: Copy final results to output array</li>
 <li><strong>Completion barrier</strong>: Ensure all writes finish before block termination</li>
 </ul>
-<h2 id="code-to-complete-47"><a class="header" href="#code-to-complete-47">Code to complete</a></h2>
+<h2 id="code-to-complete-50"><a class="header" href="#code-to-complete-50">Code to complete</a></h2>
 <pre><code class="language-mojo">
 # Double-buffered stencil configuration
 alias STENCIL_ITERATIONS = 3
@@ -18892,7 +20376,7 @@ Input sample: 1.0 1.0 1.0
 GPU output sample: 1.0 1.0 1.0
 ✅ Double-buffered stencil test PASSED!
 </code></pre>
-<h2 id="solution-48"><a class="header" href="#solution-48">Solution</a></h2>
+<h2 id="solution-51"><a class="header" href="#solution-51">Solution</a></h2>
 <p>The key insight is recognizing this as a <strong>double-buffering architecture problem</strong> with explicit memory barrier coordination:</p>
 <ol>
 <li><strong>Design alternating buffer roles</strong>: Swap read/write responsibilities each iteration</li>
