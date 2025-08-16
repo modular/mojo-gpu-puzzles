@@ -349,8 +349,16 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
 2. **Asynchronous memory operations**
 
    ```mojo
-   copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-   copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+   copy_dram_to_sram_async[
+      thread_layout = load_a_layout,
+      num_threads = NUM_THREADS,
+      block_dim_count = BLOCK_DIM_COUNT
+   ](a_shared,a_tile)
+   copy_dram_to_sram_async[
+      thread_layout = load_b_layout,
+      num_threads = NUM_THREADS,
+      block_dim_count = BLOCK_DIM_COUNT
+   ](b_shared, b_tile)
    async_copy_wait_all()
    ```
 
@@ -358,7 +366,11 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
    - Use dedicated copy engines that bypass registers and enable compute-memory overlap via [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
-   - **Important**: Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass
+   - **Important**: 
+      - Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass
+      - `copy_dram_to_sram_async` assumes that you are using a 1d thread block (`block_dim.y == block_dim.z == 1`) and all the threads from a thread block participate in the copy unless you specify otherwise.  This behaviour in overridden by specifying:
+         - `block_dim_count`: the dimensionality of the thread block (`2` for the 2d thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`)
+         - `num_threads`: the number of threads in the thread block (`TPB*TPB == 9`)
 
 3. **Optimized memory access layouts**
 
