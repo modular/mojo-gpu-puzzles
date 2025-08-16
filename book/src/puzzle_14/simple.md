@@ -176,11 +176,11 @@ Result:      [0    1    3    6    10   15   21   28]
 
 ### Final Write to Output
 ```txt
-Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
-global_i:     0    1    2    3    4    5    6    7
+Threads:       T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+global_i:      0    1    2    3    4    5    6    7
 output:       [0    1    3    6    10   15   21   28]
-              ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
-              T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
+               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
+               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 ```
 
 ### Key Implementation Details

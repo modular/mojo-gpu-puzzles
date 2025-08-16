@@ -29,7 +29,7 @@ For example, given an input sequence \\([3, 1, 4, 1, 5, 9]\\), the prefix sum wo
 Mathematically, for a sequence \\([x_0, x_1, ..., x_n]\\), the prefix sum produces:
 \\[ [x_0, x_0+x_1, x_0+x_1+x_2, ..., \sum_{i=0}^n x_i] \\]
 
-While a sequential algorithm would need \\(O(n)\\) steps, our parallel approach will use a clever two-phase algorithm that completes in \\(O(\log n)\\) steps! Here's a visualization of this process:
+While a sequential algorithm would need \\(O(n)\\) steps, our parallel approach will use a clever two-phase algorithm that completes in \\(O(\log n)\\) steps!
 
 This puzzle is split into two parts to help you master the concept:
 

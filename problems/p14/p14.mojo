@@ -33,8 +33,6 @@ fn prefix_sum_simple[
 alias SIZE_2 = 15
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
@@ -73,15 +71,10 @@ def main():
             )
 
         use_simple = argv()[1] == "--simple"
-
         size = SIZE if use_simple else SIZE_2
         num_blocks = (size + TPB - 1) // TPB
 
-        if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
-            raise Error("Extended buffer too small for the number of blocks")
-
-        buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
 
         with a.map_to_host() as a_host:
@@ -103,15 +96,13 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         else:
-            var out_tensor = LayoutTensor[mut=False, dtype, extended_layout](
+            var out_tensor = LayoutTensor[mut=False, dtype, layout](
                 out.unsafe_ptr()
             )
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase[extended_layout, extended_layout]
-            ](
+            ctx.enqueue_function[prefix_sum_local_phase[layout, layout]](
                 out_tensor,
                 a_tensor,
                 size,
@@ -125,7 +116,7 @@ def main():
             ctx.synchronize()
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[prefix_sum_block_sum_phase[extended_layout]](
+            ctx.enqueue_function[prefix_sum_block_sum_phase[layout]](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -143,12 +134,6 @@ def main():
                 expected[i] = expected[i - 1] + a_host[i]
 
         with out.map_to_host() as out_host:
-            if not use_simple:
-                print(
-                    "Note: we print the extended buffer here, but we only need"
-                    " to print the first `size` elements"
-                )
-
             print("out:", out_host)
             print("expected:", expected)
             # Here we need to use the size of the original array, not the extended one

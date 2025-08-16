@@ -35,7 +35,7 @@ The main function will handle the necessary host-side synchronization between th
 The key to this puzzle is understanding that [barrier](https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/) only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:
 
 ```mojo
-{{#include ../../../solutions/p14/p14.mojo:prefix_sum_complete_block_level_sync}}
+{{#include ../../../problems/p14/p14.mojo:prefix_sum_complete_block_level_sync}}
 ```
 
 <details>
@@ -105,14 +105,14 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-uv run poe p14 --complete
+uv run poe p14 --block-boundary
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete
+pixi run p14 --block-boundary
 ```
 
   </div>
@@ -151,15 +151,6 @@ Input array:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 Block 0 processes: [0, 1, 2, 3, 4, 5, 6, 7]
 Block 1 processes: [8, 9, 10, 11, 12, 13, 14] (7 valid elements)
 ```
-
-We extend the output buffer to include space for block sums:
-
-```
-Extended buffer: [data values (15 elements)] + [block sums (2 elements)]
-                 [0...14] + [block0_sum, block1_sum]
-```
-
-The size of this extended buffer is: `EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17`
 
 ## Phase 1 kernel: Local prefix sums
 
@@ -258,10 +249,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
    output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
    ```
 
-4. **Store block sum in auxiliary space** (only last thread):
-   ```
-   output[15] = 28  // at position size + block_idx.x = 15 + 0
-   ```
+   Notice how the last element (`output[7]` at position `block_dim.x * block_idx.x + TPB - 1 = 8 * 0 + 8 - 1 = 7`) is also the sum of the block.
 
 ### Step-by-step execution for Block 1
 
@@ -283,19 +271,11 @@ This prevents race conditions that could occur when multiple threads simultaneou
    output[8...14] = [8, 17, 27, 38, 50, 63, 77]  // Only 7 valid outputs
    ```
 
-4. **Store block sum in auxiliary space** (only last thread in block):
-   ```
-   output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
-   ```
-   Note: Even though Thread 7 doesn't load valid input data, it still participates in the prefix sum computation within the block. The `shared[7]` position gets updated during the parallel reduction iterations, but since it started uninitialized, the final value is unpredictable. However, this doesn't affect correctness because Block 1 is the last block, so this block sum is never used in Phase 2.
-
 After Phase 1, the output buffer contains:
 ```
-[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
-                                                        ^   ^
-                                                Block sums stored here
+[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77]
+                         ^  Block sums stored here  ^
 ```
-Note: The last block sum (???) is unpredictable since it's based on uninitialized memory, but this doesn't affect the final result.
 
 ## Host-device synchronization: When it's actually needed
 
@@ -333,8 +313,8 @@ The `ctx.synchronize()` call serves its traditional purpose:
 
 2. **Block 1**: Each thread adds Block 0's sum to its element:
    ```
-   prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
-   output[global_i] += prev_block_sum
+   # output[block_dim.x * 0 + TPB - 1] = output[TPB - 1] = output[7] = 28
+   output[global_i] += output[TPB - 1]
    ```
 
    Block 1 values are transformed:

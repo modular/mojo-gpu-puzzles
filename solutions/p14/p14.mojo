@@ -53,8 +53,6 @@ fn prefix_sum_simple[
 alias SIZE_2 = 15
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 # ANCHOR: prefix_sum_complete_solution
 
@@ -110,15 +108,6 @@ fn prefix_sum_local_phase[
     if global_i < size:
         output[global_i] = shared[local_i]
 
-    # Store block sums in auxiliary space
-    # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
-    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
-    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
-    #                                                           ↑  ↑
-    #                                                     Block sums here
-    if local_i == TPB - 1:
-        output[size + block_idx.x] = shared[local_i]
-
 
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
@@ -132,10 +121,9 @@ fn prefix_sum_block_sum_phase[
     #   Before: [8,17,27,38,50,63,77]
     #   After: [36,45,55,66,78,91,105]
     # Final result combines both blocks:
-    # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
+    # [0,1,3,6,10,15,21,28,36,45,55,66,78,91,105]
     if block_idx.x > 0 and global_i < size:
-        prev_block_sum = output[size + block_idx.x - 1]
-        output[global_i] += prev_block_sum
+        output[global_i] += output[TPB - 1]
 
 
 # ANCHOR_END: prefix_sum_complete_solution
@@ -147,11 +135,7 @@ def main():
         size = SIZE if use_simple else SIZE_2
         num_blocks = (size + TPB - 1) // TPB
 
-        if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
-            raise Error("Extended buffer too small for the number of blocks")
-
-        buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
 
         with a.map_to_host() as a_host:
@@ -173,15 +157,13 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         else:
-            var out_tensor = LayoutTensor[mut=False, dtype, extended_layout](
+            var out_tensor = LayoutTensor[mut=False, dtype, layout](
                 out.unsafe_ptr()
             )
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase[extended_layout, extended_layout]
-            ](
+            ctx.enqueue_function[prefix_sum_local_phase[layout, layout]](
                 out_tensor,
                 a_tensor,
                 size,
@@ -190,7 +172,7 @@ def main():
             )
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[prefix_sum_block_sum_phase[extended_layout]](
+            ctx.enqueue_function[prefix_sum_block_sum_phase[layout]](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -208,12 +190,6 @@ def main():
                 expected[i] = expected[i - 1] + a_host[i]
 
         with out.map_to_host() as out_host:
-            if not use_simple:
-                print(
-                    "Note: we print the extended buffer here, but we only need"
-                    " to print the first `size` elements"
-                )
-
             print("out:", out_host)
             print("expected:", expected)
             # Here we need to use the size of the original array, not the extended one
