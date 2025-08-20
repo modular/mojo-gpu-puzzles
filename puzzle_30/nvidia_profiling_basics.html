@@ -1,0 +1,853 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 NVIDIA Profiling Basics - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-nvidia-profiling-basics"><a class="header" href="#-nvidia-profiling-basics">📚 NVIDIA Profiling Basics</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>You’ve learned GPU programming fundamentals and advanced patterns. Part II taught you debugging techniques for <strong>correctness</strong> using <code>compute-sanitizer</code> and <code>cuda-gdb</code>, while other parts covered different GPU features like warp programming, memory systems, and block-level operations. Your kernels work correctly - but are they <strong>fast</strong>?</p>
+<blockquote>
+<p>This tutorial follows NVIDIA’s recommended profiling methodology from the <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling">CUDA Best Practices Guide</a>.</p>
+</blockquote>
+<p><strong>Key Insight</strong>: A correct kernel can still be orders of magnitude slower than optimal. Profiling bridges the gap between working code and high-performance code.</p>
+<h2 id="the-profiling-toolkit"><a class="header" href="#the-profiling-toolkit">The profiling toolkit</a></h2>
+<p>Since you have <code>cuda-toolkit</code> via pixi, you have access to NVIDIA’s professional profiling suite:</p>
+<h3 id="nsight-systems-nsys---the-big-picture-tool"><a class="header" href="#nsight-systems-nsys---the-big-picture-tool">NSight Systems (<code>nsys</code>) - the “big picture” tool</a></h3>
+<p><strong>Purpose</strong>: System-wide performance analysis (<a href="https://docs.nvidia.com/nsight-systems/">NSight Systems Documentation</a>)</p>
+<ul>
+<li>Timeline view of CPU-GPU interaction</li>
+<li>Memory transfer bottlenecks</li>
+<li>Kernel launch overhead</li>
+<li>Multi-GPU coordination</li>
+<li>API call tracing</li>
+</ul>
+<p><strong>Available interfaces</strong>: Command-line (<code>nsys</code>) and GUI (<code>nsys-ui</code>)</p>
+<p><strong>Use when</strong>:</p>
+<ul>
+<li>Understanding overall application flow</li>
+<li>Identifying CPU-GPU synchronization issues</li>
+<li>Analyzing memory transfer patterns</li>
+<li>Finding kernel launch bottlenecks</li>
+</ul>
+<pre><code class="language-bash"># See the help
+pixi run nsys --help
+
+# Basic system-wide profiling
+pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
+
+# Interactive analysis
+pixi run nsys stats --force-export=true timeline.nsys-rep
+</code></pre>
+<h3 id="nsight-compute-ncu---the-kernel-deep-dive-tool"><a class="header" href="#nsight-compute-ncu---the-kernel-deep-dive-tool">NSight Compute (<code>ncu</code>) - the “kernel deep-dive” tool</a></h3>
+<p><strong>Purpose</strong>: Detailed single-kernel performance analysis (<a href="https://docs.nvidia.com/nsight-compute/">NSight Compute Documentation</a>)</p>
+<ul>
+<li>Roofline model analysis</li>
+<li>Memory hierarchy utilization</li>
+<li>Warp execution efficiency</li>
+<li>Register/shared memory usage</li>
+<li>Compute unit utilization</li>
+</ul>
+<p><strong>Available interfaces</strong>: Command-line (<code>ncu</code>) and GUI (<code>ncu-ui</code>)</p>
+<p><strong>Use when</strong>:</p>
+<ul>
+<li>Optimizing specific kernel performance</li>
+<li>Understanding memory access patterns</li>
+<li>Analyzing compute vs memory bound kernels</li>
+<li>Identifying warp divergence issues</li>
+</ul>
+<pre><code class="language-bash"># See the help
+pixi run ncu --help
+
+# Detailed kernel profiling
+pixi run ncu --set full --output kernel_profile mojo your_program.mojo
+
+# Focus on specific kernels
+pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
+</code></pre>
+<h2 id="tool-selection-decision-tree"><a class="header" href="#tool-selection-decision-tree">Tool selection decision tree</a></h2>
+<pre><code>Performance Problem
+        |
+        v
+Know which kernel?
+    |           |
+   No          Yes
+    |           |
+    v           v
+NSight    Kernel-specific issue?
+Systems       |           |
+    |        No          Yes
+    v         |           |
+Timeline      |           v
+Analysis &lt;----+     NSight Compute
+                          |
+                          v
+                   Kernel Deep-Dive
+</code></pre>
+<p><strong>Quick Decision Guide</strong>:</p>
+<ul>
+<li><strong>Start with NSight Systems (<code>nsys</code>)</strong> if you’re unsure where the bottleneck is</li>
+<li><strong>Use NSight Compute (<code>ncu</code>)</strong> when you know exactly which kernel to optimize</li>
+<li><strong>Use both</strong> for comprehensive analysis (common workflow)</li>
+</ul>
+<h2 id="hands-on-system-wide-profiling-with-nsight-systems"><a class="header" href="#hands-on-system-wide-profiling-with-nsight-systems">Hands-on: system-wide profiling with NSight Systems</a></h2>
+<p>Let’s profile the Matrix Multiplication implementations from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> to understand performance differences.</p>
+<blockquote>
+<p><strong>GUI Note</strong>: The NSight Systems and Compute GUIs (<code>nsys-ui</code>, <code>ncu-ui</code>) require a display and OpenGL support. On headless servers or remote systems without X11 forwarding, use the command-line versions (<code>nsys</code>, <code>ncu</code>) with text-based analysis via <code>nsys stats</code> and <code>ncu --import --page details</code>. You can also transfer <code>.nsys-rep</code> and <code>.ncu-rep</code> files to local machines for GUI analysis.</p>
+</blockquote>
+<h3 id="step-1-prepare-your-code-for-profiling"><a class="header" href="#step-1-prepare-your-code-for-profiling">Step 1: Prepare your code for profiling</a></h3>
+<p><strong>Critical</strong>: For accurate profiling, build with full debug information while keeping optimizations enabled:</p>
+<pre><code class="language-bash">pixi shell -e cuda
+# Build with full debug info (for comprehensive source mapping) with optimizations enabled
+mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
+
+# Test the optimized build
+./solutions/p16/p16_optimized --naive
+</code></pre>
+<p><strong>Why this matters</strong>:</p>
+<ul>
+<li><strong>Full debug info</strong>: Provides complete symbol tables, variable names, and source line mapping for profilers</li>
+<li><strong>Comprehensive analysis</strong>: Enables NSight tools to correlate performance data with specific code locations</li>
+<li><strong>Optimizations enabled</strong>: Ensures realistic performance measurements that match production builds</li>
+</ul>
+<h3 id="step-2-capture-system-wide-profile"><a class="header" href="#step-2-capture-system-wide-profile">Step 2: Capture system-wide profile</a></h3>
+<pre><code class="language-bash"># Profile the optimized build with comprehensive tracing
+nsys profile \
+  --trace=cuda,nvtx \
+  --output=matmul_naive \
+  --force-overwrite=true \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+<p><strong>Command breakdown</strong>:</p>
+<ul>
+<li><code>--trace=cuda,nvtx</code>: Capture CUDA API calls and custom annotations</li>
+<li><code>--output=matmul_naive</code>: Save profile as <code>matmul_naive.nsys-rep</code></li>
+<li><code>--force-overwrite=true</code>: Replace existing profiles</li>
+<li>Final argument: Your Mojo program</li>
+</ul>
+<h3 id="step-3-analyze-the-timeline"><a class="header" href="#step-3-analyze-the-timeline">Step 3: Analyze the timeline</a></h3>
+<pre><code class="language-bash"># Generate text-based statistics
+nsys stats --force-export=true matmul_naive.nsys-rep
+
+# Key metrics to look for:
+# - GPU utilization percentage
+# - Memory transfer times
+# - Kernel execution times
+# - CPU-GPU synchronization gaps
+</code></pre>
+<p><strong>What you’ll see</strong> (actual output from a 2×2 matrix multiplication):</p>
+<pre><code class="language-txt">** CUDA API Summary (cuda_api_sum):
+ Time (%)  Total Time (ns)  Num Calls  Avg (ns)   Med (ns)  Min (ns)  Max (ns)  StdDev (ns)          Name
+ --------  ---------------  ---------  ---------  --------  --------  --------  -----------  --------------------
+     81.9          8617962          3  2872654.0    2460.0      1040   8614462    4972551.6  cuMemAllocAsync
+     15.1          1587808          4   396952.0    5965.5      3810   1572067     783412.3  cuMemAllocHost_v2
+      0.6            67152          1    67152.0   67152.0     67152     67152          0.0  cuModuleLoadDataEx
+      0.4            44961          1    44961.0   44961.0     44961     44961          0.0  cuLaunchKernelEx
+
+** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                    Name
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  ----------------------------------------
+    100.0             1920          1    1920.0    1920.0      1920      1920          0.0  p16_naive_matmul_Layout_Int6A6AcB6A6AsA6A6A
+
+** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     49.4             4224      3    1408.0    1440.0      1312      1472         84.7  [CUDA memcpy Device-to-Host]
+     36.0             3072      4     768.0     528.0       416      1600        561.0  [CUDA memset]
+     14.6             1248      3     416.0     416.0       416       416          0.0  [CUDA memcpy Host-to-Device]
+</code></pre>
+<p><strong>Key Performance Insights</strong>:</p>
+<ul>
+<li><strong>Memory allocation dominates</strong>: 81.9% of total time spent on <code>cuMemAllocAsync</code></li>
+<li><strong>Kernel is lightning fast</strong>: Only 1,920 ns (0.000001920 seconds) execution time</li>
+<li><strong>Memory transfer breakdown</strong>: 49.4% Device→Host, 36.0% memset, 14.6% Host→Device</li>
+<li><strong>Tiny data sizes</strong>: All memory operations are &lt; 0.001 MB (4 float32 values = 16 bytes)</li>
+</ul>
+<h3 id="step-4-compare-implementations"><a class="header" href="#step-4-compare-implementations">Step 4: Compare implementations</a></h3>
+<p>Profile different versions and compare:</p>
+<pre><code class="language-bash"># Make sure you've in pixi shell still `pixi run -e cuda`
+
+# Profile shared memory version
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_shared ./solutions/p16/p16_optimized --single-block
+
+# Profile tiled version
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_tiled ./solutions/p16/p16_optimized --tiled
+
+# Profile idiomatic tiled version
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_idiomatic_tiled ./solutions/p16/p16_optimized --idiomatic-tiled
+
+# Analyze each implementation separately (nsys stats processes one file at a time)
+nsys stats --force-export=true matmul_shared.nsys-rep
+nsys stats --force-export=true matmul_tiled.nsys-rep
+nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep
+</code></pre>
+<p><strong>How to compare the results</strong>:</p>
+<ol>
+<li><strong>Look at GPU Kernel Summary</strong> - Compare execution times between implementations</li>
+<li><strong>Check Memory Operations</strong> - See if shared memory reduces global memory traffic</li>
+<li><strong>Compare API overhead</strong> - All should have similar memory allocation patterns</li>
+</ol>
+<p><strong>Manual comparison workflow</strong>:</p>
+<pre><code class="language-bash"># Run each analysis and save output for comparison
+nsys stats --force-export=true matmul_naive.nsys-rep &gt; naive_stats.txt
+nsys stats --force-export=true matmul_shared.nsys-rep &gt; shared_stats.txt
+nsys stats --force-export=true matmul_tiled.nsys-rep &gt; tiled_stats.txt
+nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep &gt; idiomatic_tiled_stats.txt
+</code></pre>
+<p><strong>Fair Comparison Results</strong> (actual output from profiling):</p>
+<h3 id="comparison-1-2-x-2-matrices"><a class="header" href="#comparison-1-2-x-2-matrices">Comparison 1: 2 x 2 matrices</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Implementation</th><th>Memory Allocation</th><th>Kernel Execution</th><th>Performance</th></tr></thead><tbody>
+<tr><td><strong>Naive</strong></td><td>81.9% cuMemAllocAsync</td><td>✅ 1,920 ns</td><td>Baseline</td></tr>
+<tr><td><strong>Shared</strong> (<code>--single-block</code>)</td><td>81.8% cuMemAllocAsync</td><td>✅ 1,984 ns</td><td><strong>+3.3% slower</strong></td></tr>
+</tbody></table>
+</div>
+<h3 id="comparison-2-9-x-9-matrices"><a class="header" href="#comparison-2-9-x-9-matrices">Comparison 2: 9 x 9 matrices</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Implementation</th><th>Memory Allocation</th><th>Kernel Execution</th><th>Performance</th></tr></thead><tbody>
+<tr><td><strong>Tiled</strong> (manual)</td><td>81.1% cuMemAllocAsync</td><td>✅ 2,048 ns</td><td>Baseline</td></tr>
+<tr><td><strong>Idiomatic Tiled</strong></td><td>81.6% cuMemAllocAsync</td><td>✅ 2,368 ns</td><td><strong>+15.6% slower</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key Insights from Fair Comparisons</strong>:</p>
+<p><strong>Both Matrix Sizes Are Tiny for GPU Work!</strong>:</p>
+<ul>
+<li><strong>2×2 matrices</strong>: 4 elements - completely overhead-dominated</li>
+<li><strong>9×9 matrices</strong>: 81 elements - still completely overhead-dominated</li>
+<li><strong>Real GPU workloads</strong>: Thousands to millions of elements per dimension</li>
+</ul>
+<p><strong>What These Results Actually Show</strong>:</p>
+<ul>
+<li><strong>All variants dominated by memory allocation</strong> (&gt;81% of time)</li>
+<li><strong>Kernel execution is irrelevant</strong> compared to setup costs</li>
+<li><strong>“Optimizations” can hurt</strong>: Shared memory adds 3.3% overhead, async_copy adds 15.6%</li>
+<li><strong>The real lesson</strong>: For tiny workloads, algorithm choice doesn’t matter - overhead dominates everything</li>
+</ul>
+<p><strong>Why This Happens</strong>:</p>
+<ul>
+<li>GPU setup cost (memory allocation, kernel launch) is fixed regardless of problem size</li>
+<li>For tiny problems, this fixed cost dwarfs computation time</li>
+<li>Optimizations designed for large problems become overhead for small ones</li>
+</ul>
+<p><strong>Real-World Profiling Lessons</strong>:</p>
+<ul>
+<li><strong>Problem size context matters</strong>: Both 2×2 and 9×9 are tiny for GPUs</li>
+<li><strong>Fixed costs dominate small problems</strong>: Memory allocation, kernel launch overhead</li>
+<li><strong>“Optimizations” can hurt tiny workloads</strong>: Shared memory, async operations add overhead</li>
+<li><strong>Don’t optimize tiny problems</strong>: Focus on algorithms that scale to real workloads</li>
+<li><strong>Always benchmark</strong>: Assumptions about “better” code are often wrong</li>
+</ul>
+<p><strong>Understanding Small Kernel Profiling</strong>:
+This 2×2 matrix example demonstrates a <strong>classic small-kernel pattern</strong>:</p>
+<ul>
+<li>The actual computation (matrix multiply) is extremely fast (1,920 ns)</li>
+<li>Memory setup overhead dominates the total time (97%+ of execution)</li>
+<li>This is why <strong>real-world GPU optimization</strong> focuses on:
+<ul>
+<li><strong>Batching operations</strong> to amortize setup costs</li>
+<li><strong>Memory reuse</strong> to reduce allocation overhead</li>
+<li><strong>Larger problem sizes</strong> where compute becomes the bottleneck</li>
+</ul>
+</li>
+</ul>
+<h2 id="hands-on-kernel-deep-dive-with-nsight-compute"><a class="header" href="#hands-on-kernel-deep-dive-with-nsight-compute">Hands-on: kernel deep-dive with NSight Compute</a></h2>
+<p>Now let’s dive deep into a specific kernel’s performance characteristics.</p>
+<h3 id="step-1-profile-a-specific-kernel"><a class="header" href="#step-1-profile-a-specific-kernel">Step 1: Profile a specific kernel</a></h3>
+<pre><code class="language-bash"># Make sure you're in an active shell
+pixi shell -e cuda
+
+# Profile the naive MatMul kernel in detail (using our optimized build)
+ncu \
+  --set full \
+  -o kernel_analysis \
+  --force-overwrite \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+<blockquote>
+<p><strong>Common Issue: Permission Error</strong></p>
+<p>If you get <code>ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters</code>, try these &gt; solutions:</p>
+<pre><code class="language-bash"># Add NVIDIA driver option (safer than rmmod)
+echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc/modprobe.d/nvidia-kernel-common.conf
+
+# Set kernel parameter
+sudo sysctl -w kernel.perf_event_paranoid=0
+
+# Make permanent
+echo 'kernel.perf_event_paranoid=0' | sudo tee -a /etc/sysctl.conf
+
+# Reboot required for driver changes to take effect
+sudo reboot
+
+# Then run the ncu command again
+ncu \
+  --set full \
+  -o kernel_analysis \
+  --force-overwrite \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+</blockquote>
+<h3 id="step-2-analyze-key-metrics"><a class="header" href="#step-2-analyze-key-metrics">Step 2: Analyze key metrics</a></h3>
+<pre><code class="language-bash"># Generate detailed report (correct syntax)
+ncu --import kernel_analysis.ncu-rep --page details
+</code></pre>
+<p><strong>Real NSight Compute Output</strong> (from your 2×2 naive MatMul):</p>
+<pre><code class="language-txt">GPU Speed Of Light Throughput
+----------------------- ----------- ------------
+DRAM Frequency              Ghz         6.10
+SM Frequency                Ghz         1.30
+Elapsed Cycles            cycle         3733
+Memory Throughput             %         1.02
+DRAM Throughput               %         0.19
+Duration                     us         2.88
+Compute (SM) Throughput       %         0.00
+----------------------- ----------- ------------
+
+Launch Statistics
+-------------------------------- --------------- ---------------
+Block Size                                                     9
+Grid Size                                                      1
+Threads                           thread               9
+Waves Per SM                                                0.00
+-------------------------------- --------------- ---------------
+
+Occupancy
+------------------------------- ----------- ------------
+Theoretical Occupancy                 %        33.33
+Achieved Occupancy                    %         2.09
+------------------------------- ----------- ------------
+</code></pre>
+<p><strong>Critical Insights from Real Data</strong>:</p>
+<h4 id="performance-analysis---the-brutal-truth"><a class="header" href="#performance-analysis---the-brutal-truth">Performance analysis - the brutal truth!</a></h4>
+<ul>
+<li><strong>Compute Throughput: 0.00%</strong> - GPU is completely idle computationally</li>
+<li><strong>Memory Throughput: 1.02%</strong> - Barely touching memory bandwidth</li>
+<li><strong>Achieved Occupancy: 2.09%</strong> - Using only 2% of GPU capability</li>
+<li><strong>Grid Size: 1 block</strong> - Completely underutilizing 80 multiprocessors!</li>
+</ul>
+<h4 id="why-performance-is-so-poor"><a class="header" href="#why-performance-is-so-poor">Why performance is so poor</a></h4>
+<ul>
+<li><strong>Tiny problem size</strong>: 2×2 matrix = 4 elements total</li>
+<li><strong>Poor launch configuration</strong>: 9 threads in 1 block (should be multiples of 32)</li>
+<li><strong>Massive underutilization</strong>: 0.00 waves per SM (need thousands for efficiency)</li>
+</ul>
+<h4 id="key-optimization-recommendations-from-nsight-compute"><a class="header" href="#key-optimization-recommendations-from-nsight-compute">Key optimization recommendations from NSight Compute</a></h4>
+<ul>
+<li><strong>“Est. Speedup: 98.75%”</strong> - Increase grid size to use all 80 SMs</li>
+<li><strong>“Est. Speedup: 71.88%”</strong> - Use thread blocks as multiples of 32</li>
+<li><strong>“Kernel grid is too small”</strong> - Need much larger problems for GPU efficiency</li>
+</ul>
+<h3 id="step-3-the-reality-check"><a class="header" href="#step-3-the-reality-check">Step 3: The reality check</a></h3>
+<p><strong>What This Profiling Data Teaches Us</strong>:</p>
+<ol>
+<li><strong>Tiny problems are GPU poison</strong>: 2×2 matrices completely waste GPU resources</li>
+<li><strong>Launch configuration matters</strong>: Wrong thread/block sizes kill performance</li>
+<li><strong>Scale matters more than algorithm</strong>: No optimization can fix a fundamentally tiny problem</li>
+<li><strong>NSight Compute is honest</strong>: It tells us when our kernel performance is poor</li>
+</ol>
+<p><strong>The Real Lesson</strong>:</p>
+<ul>
+<li><strong>Don’t optimize toy problems</strong> - they’re not representative of real GPU workloads</li>
+<li><strong>Focus on realistic workloads</strong> - 1000×1000+ matrices where optimizations actually matter</li>
+<li><strong>Use profiling to guide optimization</strong> - but only on problems worth optimizing</li>
+</ul>
+<p><strong>For our tiny 2×2 example</strong>: All the sophisticated algorithms (shared memory, tiling) just add overhead to an already overhead-dominated workload.</p>
+<h2 id="reading-profiler-output-like-a-performance-detective"><a class="header" href="#reading-profiler-output-like-a-performance-detective">Reading profiler output like a performance detective</a></h2>
+<h3 id="common-performance-patterns"><a class="header" href="#common-performance-patterns">Common performance patterns</a></h3>
+<h4 id="pattern-1-memory-bound-kernel"><a class="header" href="#pattern-1-memory-bound-kernel">Pattern 1: Memory-bound kernel</a></h4>
+<p><strong>NSight Systems shows</strong>: Long memory transfer times
+<strong>NSight Compute shows</strong>: High memory throughput, low compute utilization
+<strong>Solution</strong>: Optimize memory access patterns, use shared memory</p>
+<h4 id="pattern-2-low-occupancy"><a class="header" href="#pattern-2-low-occupancy">Pattern 2: Low occupancy</a></h4>
+<p><strong>NSight Systems shows</strong>: Short kernel execution with gaps
+<strong>NSight Compute shows</strong>: Low achieved occupancy
+<strong>Solution</strong>: Reduce register usage, optimize block size</p>
+<h4 id="pattern-3-warp-divergence"><a class="header" href="#pattern-3-warp-divergence">Pattern 3: Warp divergence</a></h4>
+<p><strong>NSight Systems shows</strong>: Irregular kernel execution patterns
+<strong>NSight Compute shows</strong>: Low warp execution efficiency
+<strong>Solution</strong>: Minimize conditional branches, restructure algorithms</p>
+<h3 id="profiling-detective-workflow"><a class="header" href="#profiling-detective-workflow">Profiling detective workflow</a></h3>
+<pre><code>Performance Issue
+        |
+        v
+NSight Systems: Big Picture
+        |
+        v
+GPU Well Utilized?
+    |           |
+   No          Yes
+    |           |
+    v           v
+Fix CPU-GPU    NSight Compute: Kernel Detail
+Pipeline            |
+                    v
+            Memory or Compute Bound?
+                |       |       |
+             Memory  Compute  Neither
+                |       |       |
+                v       v       v
+           Optimize  Optimize  Check
+           Memory    Arithmetic Occupancy
+           Access
+</code></pre>
+<h2 id="profiling-best-practices"><a class="header" href="#profiling-best-practices">Profiling best practices</a></h2>
+<p>For comprehensive profiling guidelines, refer to the <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics">Best Practices Guide - Performance Metrics</a>.</p>
+<h3 id="dos"><a class="header" href="#dos">Do’s</a></h3>
+<ol>
+<li><strong>Profile representative workloads</strong>: Use realistic data sizes and patterns</li>
+<li><strong>Build with full debug info</strong>: Use <code>--debug-level=full</code> for comprehensive profiling data and source mapping with optimizations</li>
+<li><strong>Warm up the GPU</strong>: Run kernels multiple times, profile later iterations</li>
+<li><strong>Compare alternatives</strong>: Always profile multiple implementations</li>
+<li><strong>Focus on hotspots</strong>: Optimize the kernels that take the most time</li>
+</ol>
+<h3 id="donts"><a class="header" href="#donts">Don’ts</a></h3>
+<ol>
+<li><strong>Don’t profile without debug info</strong>: You won’t be able to map performance back to source code (<code>mojo build --help</code>)</li>
+<li><strong>Don’t profile single runs</strong>: GPU performance can vary between runs</li>
+<li><strong>Don’t ignore memory transfers</strong>: CPU-GPU transfers often dominate</li>
+<li><strong>Don’t optimize prematurely</strong>: Profile first, then optimize</li>
+</ol>
+<h3 id="common-pitfalls-and-solutions"><a class="header" href="#common-pitfalls-and-solutions">Common pitfalls and solutions</a></h3>
+<h4 id="pitfall-1-cold-start-effects"><a class="header" href="#pitfall-1-cold-start-effects">Pitfall 1: Cold start effects</a></h4>
+<pre><code class="language-bash"># Wrong: Profile first run
+nsys profile mojo your_program.mojo
+
+# Right: Warm up, then profile
+nsys profile --delay=5 mojo your_program.mojo  # Let GPU warm up
+</code></pre>
+<h4 id="pitfall-2-wrong-build-configuration"><a class="header" href="#pitfall-2-wrong-build-configuration">Pitfall 2: Wrong build configuration</a></h4>
+<pre><code class="language-bash"># Wrong: Full debug build (disables optimizations) i.e. `--no-optimization`
+mojo build -O0 your_program.mojo -o your_program
+
+# Wrong: No debug info (can't map to source)
+mojo build your_program.mojo -o your_program
+
+# Right: Optimized build with full debug info for profiling
+mojo build --debug-level=full your_program.mojo -o optimized_program
+nsys profile ./optimized_program
+</code></pre>
+<h4 id="pitfall-3-ignoring-memory-transfers"><a class="header" href="#pitfall-3-ignoring-memory-transfers">Pitfall 3: Ignoring memory transfers</a></h4>
+<pre><code class="language-txt"># Look for this pattern in NSight Systems:
+CPU -&gt; GPU transfer: 50ms
+Kernel execution: 2ms
+GPU -&gt; CPU transfer: 48ms
+# Total: 100ms (kernel is only 2%!)
+</code></pre>
+<p><strong>Solution</strong>: Overlap transfers with compute, reduce transfer frequency (covered in Part IX)</p>
+<h4 id="pitfall-4-single-kernel-focus"><a class="header" href="#pitfall-4-single-kernel-focus">Pitfall 4: Single kernel focus</a></h4>
+<pre><code class="language-bash"># Wrong: Only profile the "slow" kernel
+ncu --kernel-name regex:slow_kernel program
+
+# Right: Profile the whole application first
+nsys profile mojo program.mojo  # Find real bottlenecks
+</code></pre>
+<h2 id="best-practices-and-advanced-options"><a class="header" href="#best-practices-and-advanced-options">Best practices and advanced options</a></h2>
+<h3 id="advanced-nsight-systems-profiling"><a class="header" href="#advanced-nsight-systems-profiling">Advanced NSight Systems profiling</a></h3>
+<p>For comprehensive system-wide analysis, use these advanced <code>nsys</code> flags:</p>
+<pre><code class="language-bash"># Production-grade profiling command
+nsys profile \
+  --gpu-metrics-devices=all \
+  --trace=cuda,osrt,nvtx \
+  --trace-fork-before-exec=true \
+  --cuda-memory-usage=true \
+  --cuda-um-cpu-page-faults=true \
+  --cuda-um-gpu-page-faults=true \
+  --opengl-gpu-workload=false \
+  --delay=2 \
+  --duration=30 \
+  --sample=cpu \
+  --cpuctxsw=process-tree \
+  --output=comprehensive_profile \
+  --force-overwrite=true \
+  ./your_program
+</code></pre>
+<p><strong>Flag explanations</strong>:</p>
+<ul>
+<li><code>--gpu-metrics-devices=all</code>: Collect GPU metrics from all devices</li>
+<li><code>--trace=cuda,osrt,nvtx</code>: Comprehensive API tracing</li>
+<li><code>--cuda-memory-usage=true</code>: Track memory allocation/deallocation</li>
+<li><code>--cuda-um-cpu/gpu-page-faults=true</code>: Monitor Unified Memory page faults</li>
+<li><code>--delay=2</code>: Wait 2 seconds before profiling (avoid cold start)</li>
+<li><code>--duration=30</code>: Profile for 30 seconds max</li>
+<li><code>--sample=cpu</code>: Include CPU sampling for hotspot analysis</li>
+<li><code>--cpuctxsw=process-tree</code>: Track CPU context switches</li>
+</ul>
+<h3 id="advanced-nsight-compute-profiling"><a class="header" href="#advanced-nsight-compute-profiling">Advanced NSight Compute profiling</a></h3>
+<p>For detailed kernel analysis with comprehensive metrics:</p>
+<pre><code class="language-bash"># Full kernel analysis with all metric sets
+ncu \
+  --set full \
+  --import-source=on \
+  --kernel-id=:::1 \
+  --launch-skip=0 \
+  --launch-count=1 \
+  --target-processes=all \
+  --replay-mode=kernel \
+  --cache-control=all \
+  --clock-control=base \
+  --apply-rules=yes \
+  --check-exit-code=yes \
+  --export=detailed_analysis \
+  --force-overwrite \
+  ./your_program
+
+# Focus on specific performance aspects
+ncu \
+  --set=@roofline \
+  --section=InstructionStats \
+  --section=LaunchStats \
+  --section=Occupancy \
+  --section=SpeedOfLight \
+  --section=WarpStateStats \
+  --metrics=sm__cycles_elapsed.avg,dram__throughput.avg.pct_of_peak_sustained_elapsed \
+  --kernel-name regex:your_kernel_.* \
+  --export=targeted_analysis \
+  ./your_program
+</code></pre>
+<p><strong>Key NSight Compute flags</strong>:</p>
+<ul>
+<li><code>--set full</code>: Collect all available metrics (comprehensive but slow)</li>
+<li><code>--set @roofline</code>: Optimized set for roofline analysis</li>
+<li><code>--import-source=on</code>: Map results back to source code</li>
+<li><code>--replay-mode=kernel</code>: Replay kernels for accurate measurements</li>
+<li><code>--cache-control=all</code>: Control GPU caches for consistent results</li>
+<li><code>--clock-control=base</code>: Lock clocks to base frequencies</li>
+<li><code>--section=SpeedOfLight</code>: Include Speed of Light analysis</li>
+<li><code>--metrics=...</code>: Collect specific metrics only</li>
+<li><code>--kernel-name regex:pattern</code>: Target kernels using regex patterns (not <code>--kernel-regex</code>)</li>
+</ul>
+<h3 id="profiling-workflow-best-practices"><a class="header" href="#profiling-workflow-best-practices">Profiling workflow best practices</a></h3>
+<h4 id="1-progressive-profiling-strategy"><a class="header" href="#1-progressive-profiling-strategy">1. Progressive profiling strategy</a></h4>
+<pre><code class="language-bash"># Step 1: Quick overview (fast)
+nsys profile --trace=cuda --duration=10 --output=quick_look ./program
+
+# Step 2: Detailed system analysis (medium)
+nsys profile --trace=cuda,osrt,nvtx --cuda-memory-usage=true --output=detailed ./program
+
+# Step 3: Kernel deep-dive (slow but comprehensive)
+ncu --set=@roofline --kernel-name regex:hotspot_kernel ./program
+</code></pre>
+<h4 id="2-multi-run-analysis-for-reliability"><a class="header" href="#2-multi-run-analysis-for-reliability">2. Multi-run analysis for reliability</a></h4>
+<pre><code class="language-bash"># Profile multiple runs and compare
+for i in {1..5}; do
+  nsys profile --output=run_${i} ./program
+  nsys stats run_${i}.nsys-rep &gt; stats_${i}.txt
+done
+
+# Compare results
+diff stats_1.txt stats_2.txt
+</code></pre>
+<h4 id="3-targeted-kernel-profiling"><a class="header" href="#3-targeted-kernel-profiling">3. Targeted kernel profiling</a></h4>
+<pre><code class="language-bash"># First, identify hotspot kernels
+nsys profile --trace=cuda,nvtx --output=overview ./program
+nsys stats overview.nsys-rep | grep -A 10 "GPU Kernel Summary"
+
+# Then profile specific kernels
+ncu --kernel-name="identified_hotspot_kernel" --set full ./program
+</code></pre>
+<h3 id="environment-and-build-best-practices"><a class="header" href="#environment-and-build-best-practices">Environment and build best practices</a></h3>
+<h4 id="optimal-build-configuration"><a class="header" href="#optimal-build-configuration">Optimal build configuration</a></h4>
+<pre><code class="language-bash"># For profiling: optimized with full debug info
+mojo build --debug-level=full --optimization-level=3 program.mojo -o program_profile
+
+# Verify build settings
+mojo build --help | grep -E "(debug|optimization)"
+</code></pre>
+<h4 id="profiling-environment-setup"><a class="header" href="#profiling-environment-setup">Profiling environment setup</a></h4>
+<pre><code class="language-bash"># Disable GPU boost for consistent results
+sudo nvidia-smi -ac 1215,1410  # Lock memory and GPU clocks
+
+# Set deterministic behavior
+export CUDA_LAUNCH_BLOCKING=1  # Synchronous launches for accurate timing
+
+# Increase driver limits for profiling
+echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc/modprobe.d/nvidia-kernel-common.conf
+</code></pre>
+<h4 id="memory-and-performance-isolation"><a class="header" href="#memory-and-performance-isolation">Memory and performance isolation</a></h4>
+<pre><code class="language-bash"># Clear GPU memory before profiling
+nvidia-smi --gpu-reset
+
+# Disable other GPU processes
+sudo fuser -v /dev/nvidia*  # Check what's using GPU
+sudo pkill -f cuda  # Kill CUDA processes if needed
+
+# Run with high priority
+sudo nice -n -20 nsys profile ./program
+</code></pre>
+<h3 id="analysis-and-reporting-best-practices"><a class="header" href="#analysis-and-reporting-best-practices">Analysis and reporting best practices</a></h3>
+<h4 id="comprehensive-report-generation"><a class="header" href="#comprehensive-report-generation">Comprehensive report generation</a></h4>
+<pre><code class="language-bash"># Generate multiple report formats
+nsys stats --report=cuda_api_sum,cuda_gpu_kern_sum,cuda_gpu_mem_time_sum --format=csv --output=. profile.nsys-rep
+
+# Export for external analysis
+nsys export --type=sqlite profile.nsys-rep
+nsys export --type=json profile.nsys-rep
+
+# Generate comparison reports
+nsys stats --report=cuda_gpu_kern_sum baseline.nsys-rep &gt; baseline_kernels.txt
+nsys stats --report=cuda_gpu_kern_sum optimized.nsys-rep &gt; optimized_kernels.txt
+diff -u baseline_kernels.txt optimized_kernels.txt
+</code></pre>
+<h4 id="performance-regression-testing"><a class="header" href="#performance-regression-testing">Performance regression testing</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+# Automated profiling script for CI/CD
+BASELINE_TIME=$(nsys stats baseline.nsys-rep | grep "Total Time" | awk '{print $3}')
+CURRENT_TIME=$(nsys stats current.nsys-rep | grep "Total Time" | awk '{print $3}')
+
+REGRESSION_THRESHOLD=1.10  # 10% slowdown threshold
+if (( $(echo "$CURRENT_TIME &gt; $BASELINE_TIME * $REGRESSION_THRESHOLD" | bc -l) )); then
+    echo "Performance regression detected: ${CURRENT_TIME}ns vs ${BASELINE_TIME}ns"
+    exit 1
+fi
+</code></pre>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<p>Now that you understand profiling fundamentals:</p>
+<ol>
+<li><strong>Practice with your existing kernels</strong>: Profile puzzles you’ve already solved</li>
+<li><strong>Prepare for optimization</strong>: Puzzle 31 will use these insights for occupancy optimization</li>
+<li><strong>Understand the tools</strong>: Experiment with different NSight Systems and NSight Compute options</li>
+</ol>
+<p><strong>Remember</strong>: Profiling is not just about finding slow code - it’s about understanding your program’s behavior and making informed optimization decisions.</p>
+<p>For additional profiling resources, see:</p>
+<ul>
+<li><a href="https://docs.nvidia.com/cuda/profiler-users-guide/">NVIDIA Profiler User’s Guide</a></li>
+<li><a href="https://docs.nvidia.com/nsight-systems/UserGuide/">NSight Systems User Guide</a></li>
+<li><a href="https://docs.nvidia.com/nsight-compute/NsightComputeCli/">NSight Compute CLI User Guide</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_30/puzzle_30.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_30/profile_kernels.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_30/puzzle_30.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_30/profile_kernels.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
