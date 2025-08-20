@@ -235,10 +235,10 @@ mojo problems/p30/p30.mojo --benchmark
 </ul>
 <h2 id="step-3-system-wide-investigation-nsight-systems"><a class="header" href="#step-3-system-wide-investigation-nsight-systems">Step 3: System-wide investigation (NSight Systems)</a></h2>
 <p>Profile each kernel to see the big picture:</p>
-<pre><code class="language-bash"># Profile each kernel individually using the optimized build
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+<pre><code class="language-bash"># Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
 # Analyze the results
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep &gt; ./problems/p30/kernel1_profile.txt
@@ -254,9 +254,9 @@ nsys stats --force-export=true ./problems/p30/kernel3_profile.nsys-rep &gt; ./pr
 <h2 id="step-4-kernel-deep-dive-nsight-compute"><a class="header" href="#step-4-kernel-deep-dive-nsight-compute">Step 4: Kernel deep-dive (NSight Compute)</a></h2>
 <p>Once you identify the slow kernel, analyze it with NSight Compute:</p>
 <pre><code class="language-bash"># Deep-dive into memory patterns for each kernel using the optimized build
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
 
 # View the results
 ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details

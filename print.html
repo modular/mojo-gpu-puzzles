@@ -8017,8 +8017,9 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 <pre><code class="language-mojo">from gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
-alias NUM_THREADS = TPB*TPB
+alias NUM_THREADS = TPB * TPB
 alias BLOCK_DIM_COUNT = 2
+
 
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
@@ -8052,14 +8053,14 @@ fn matmul_idiomatic_tiled[
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
-            thread_layout = load_a_layout,
-            num_threads = NUM_THREADS,
-            block_dim_count = BLOCK_DIM_COUNT
-        ](a_shared,a_tile)
+            thread_layout=load_a_layout,
+            num_threads=NUM_THREADS,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](a_shared, a_tile)
         copy_dram_to_sram_async[
-            thread_layout = load_b_layout,
-            num_threads = NUM_THREADS,
-            block_dim_count = BLOCK_DIM_COUNT
+            thread_layout=load_b_layout,
+            num_threads=NUM_THREADS,
+            block_dim_count=BLOCK_DIM_COUNT,
         ](b_shared, b_tile)
 
         # Wait for all async copies to complete
@@ -21321,10 +21322,10 @@ mojo problems/p30/p30.mojo --benchmark
 </ul>
 <h2 id="step-3-system-wide-investigation-nsight-systems"><a class="header" href="#step-3-system-wide-investigation-nsight-systems">Step 3: System-wide investigation (NSight Systems)</a></h2>
 <p>Profile each kernel to see the big picture:</p>
-<pre><code class="language-bash"># Profile each kernel individually using the optimized build
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
-nsys profile --trace=cuda,osrt,nvtx --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+<pre><code class="language-bash"># Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
 # Analyze the results
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep &gt; ./problems/p30/kernel1_profile.txt
@@ -21340,9 +21341,9 @@ nsys stats --force-export=true ./problems/p30/kernel3_profile.nsys-rep &gt; ./pr
 <h2 id="step-4-kernel-deep-dive-nsight-compute"><a class="header" href="#step-4-kernel-deep-dive-nsight-compute">Step 4: Kernel deep-dive (NSight Compute)</a></h2>
 <p>Once you identify the slow kernel, analyze it with NSight Compute:</p>
 <pre><code class="language-bash"># Deep-dive into memory patterns for each kernel using the optimized build
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
-ncu --set=@roofline --section=MemoryWorkloadAnalysis -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
 
 # View the results
 ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
