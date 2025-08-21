@@ -151,8 +151,8 @@ fn matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
+    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
 
     var acc: output.element_type = 0
 
