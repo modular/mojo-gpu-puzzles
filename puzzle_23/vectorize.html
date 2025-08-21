@@ -237,7 +237,7 @@
     @parameter
     @always_inline
     fn process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int
+        num_threads_per_tile: Int, rank: Int, alignment: Int = alignof[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
@@ -430,7 +430,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     @parameter
     @always_inline
     fn process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int
+        num_threads_per_tile: Int, rank: Int, alignment: Int = alignof[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         tile_start = tile_id * tile_size

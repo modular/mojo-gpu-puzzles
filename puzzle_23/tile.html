@@ -232,7 +232,7 @@ fn tiled_elementwise_add[
     @parameter
     @always_inline
     fn process_tiles[
-        simd_width: Int, rank: Int
+        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)

@@ -227,7 +227,7 @@ fn elementwise_add[
     @parameter
     @always_inline
     fn add[
-        simd_width: Int, rank: Int
+        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         idx = indices[0]
         print("idx:", idx)
