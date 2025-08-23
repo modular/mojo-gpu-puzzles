@@ -17,7 +17,9 @@ fn add_10_2d(
 ):
     row = thread_idx.y
     col = thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    if row < size and col < size:
+        # check thread bounds since (3, 3) threads are available per block and input is (2, 2)
+        output[row * size + col] = a[row * size + col] + 10.0
 
 
 # ANCHOR_END: add_10_2d
