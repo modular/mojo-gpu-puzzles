@@ -15,8 +15,14 @@ fn add_10_blocks(
     a: UnsafePointer[Scalar[dtype]],
     size: Int,
 ):
+    # maps each thread to a unique global position in order to process contiguous data chunks
+    # block 0: [0 1 2]
+    # block 1: [3 4 5]
+    # block 2: [6 7 8]
+    # data: [0 1 2 3 4 5 6 7 8]
     i = block_dim.x * block_idx.x + thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    if i < size:
+        output[i] = a[i] + 10.0
 
 
 # ANCHOR_END: add_10_blocks
