@@ -32,7 +32,10 @@ fn add_10_shared_layout_tensor[
 
     barrier()
 
-    # FILL ME IN (roughly 2 lines)
+    # LayoutTensor handles memory layout but thread sync w/ barrier() is still necessary when using shared memory
+    # LayoutTensor also provides: type safety, layout management, and memory alignment handling
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10.0
 
 
 # ANCHOR_END: add_10_shared_layout_tensor

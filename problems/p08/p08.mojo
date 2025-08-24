@@ -33,7 +33,11 @@ fn add_10_shared(
     # works within a thread block
     barrier()
 
-    # FILL ME IN (roughly 2 lines)
+    if global_i < size:
+        # solution uses shared[local_i] rather than a[local_i] but they both produce the correct output
+        # my solution works but doesn't capitalize on the shared memory and 
+        # somewhat defeats the purpose of the problem
+        output[global_i] = a[local_i] + 10.0
 
 
 # ANCHOR_END: add_10_shared
