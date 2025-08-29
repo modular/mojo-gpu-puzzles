@@ -12,6 +12,7 @@ channels = ["nvidia"]
 [feature.cuda.dependencies]
 cuda-toolkit = "12.*" # for compute-sanitizer etc.
 cuda-gdb = "12.*"     # for GPU kernel debugging
+nsight-compute = "*"  # interactive kernel profiling
 
 [feature.cuda.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" }
@@ -140,5 +141,9 @@ p28 = "mojo problems/p28/p28.mojo"
 
 p29 = "mojo problems/p29/p29.mojo"
 
+p30 = "mojo problems/p30/p30.mojo"
+
 generate-animations = { cmd = "echo 'All animations generated!'", depends-on = ["viz01", "viz02", "viz03", "viz04", "viz05", "viz06", "viz07", "viz08", "viz11", "viz12", "viz13", "viz14", "viz15", "viz16", "rooflineviz", "thread_indexing"] }
 clean-animations = "find book/src -type d -name media | xargs rm -rf"
+clean-profiles = "bash -c 'find . -maxdepth 1 -type f \\( -name \"*.sqlite\" -o -name \"*.txt\" -o -name \"*.nsys-rep\" -o -name \"*.ncu-rep\" \\) -delete && find problems -type f \\( -name \"*.sqlite\" -o -name \"*.txt\" -o -name \"*.nsys-rep\" -o -name \"*.ncu-rep\" \\) -delete'"
+clean-all = { cmd = "cleanup is done!", depends-on = ["clean-animations", "clean-profiles"] }

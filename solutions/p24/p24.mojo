@@ -6,7 +6,7 @@ from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from utils import IndexList
-from sys import argv, simdwidthof, sizeof
+from sys import argv, simdwidthof, sizeof, alignof
 from testing import assert_equal
 from benchmark import (
     Bench,
@@ -105,7 +105,7 @@ fn functional_warp_dot_product[
     @parameter
     @always_inline
     fn compute_dot_product[
-        simd_width: Int, rank: Int
+        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
 

@@ -415,35 +415,33 @@ Testing SIZE=65536 x WARP_SIZE, BLOCKS=65536 (Massive Scale)
 Running traditional_65536x
 Running simple_warp_65536x
 Running functional_warp_65536x
--------------------------------------------------------
 | name                   | met (ms)           | iters |
--------------------------------------------------------
-| traditional_1x         | 3.5565388994708993 | 378   |
-| simple_warp_1x         | 3.1609036200000005 | 100   |
-| functional_warp_1x     | 3.22122741         | 100   |
-| traditional_4x         | 3.1741644200000003 | 100   |
-| simple_warp_4x         | 4.6268518          | 100   |
-| functional_warp_4x     | 3.18364685         | 100   |
-| traditional_32x        | 3.19311859         | 100   |
-| simple_warp_32x        | 3.18385162         | 100   |
-| functional_warp_32x    | 3.18260223         | 100   |
-| traditional_256x       | 4.704542839999999  | 100   |
-| simple_warp_256x       | 3.599057930294906  | 373   |
-| functional_warp_256x   | 3.21388549         | 100   |
-| traditional_2048x      | 3.31929595         | 100   |
-| simple_warp_2048x      | 4.80178161         | 100   |
-| functional_warp_2048x  | 3.734744261111111  | 360   |
-| traditional_16384x     | 6.39709167         | 100   |
-| simple_warp_16384x     | 7.8748059          | 100   |
-| functional_warp_16384x | 7.848806150000001  | 100   |
-| traditional_65536x     | 25.155625274509806 | 51    |
-| simple_warp_65536x     | 25.10668252830189  | 53    |
-| functional_warp_65536x | 25.053512849056602 | 53    |
--------------------------------------------------------
+| ---------------------- | ------------------ | ----- |
+| traditional_1x         | 1.0263419180000002 | 1000  |
+| simple_warp_1x         | 1.025756103        | 1000  |
+| functional_warp_1x     | 1.027618774        | 1000  |
+| traditional_4x         | 1.026372558        | 1000  |
+| simple_warp_4x         | 1.0274108880000001 | 1000  |
+| functional_warp_4x     | 1.0272440180000002 | 1000  |
+| traditional_32x        | 1.029869628        | 1000  |
+| simple_warp_32x        | 1.029203002        | 1000  |
+| functional_warp_32x    | 1.0293903800000002 | 1000  |
+| traditional_256x       | 1.055470581        | 1000  |
+| simple_warp_256x       | 1.0549002680000001 | 1000  |
+| functional_warp_256x   | 1.054106567        | 1000  |
+| traditional_2048x      | 1.170297851        | 1000  |
+| simple_warp_2048x      | 1.1691909169999999 | 1000  |
+| functional_warp_2048x  | 1.166839843        | 1000  |
+| traditional_16384x     | 6.470711037837837  | 185   |
+| simple_warp_16384x     | 6.482257572972973  | 185   |
+| functional_warp_16384x | 6.414636946524065  | 187   |
+| traditional_65536x     | 22.48350437735849  | 53    |
+| simple_warp_65536x     | 22.561115754716983 | 53    |
+| functional_warp_65536x | 22.399149188679246 | 53    |
 
 Benchmarks completed!
 
-🚀 WARP OPERATIONS PERFORMANCE ANALYSIS:
+WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
    - 1 x WARP_SIZE: Single warp baseline
    - 4 x WARP_SIZE: Few warps, warp overhead visible

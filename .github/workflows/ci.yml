@@ -38,9 +38,9 @@ jobs:
             ~/.cache/modular
           key: ${{ runner.os }}-modular-${{ hashFiles('**/pixi.toml') }}
 
-      - uses: prefix-dev/setup-pixi@v0.8.8
+      - uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          pixi-version: v0.47.0
+          pixi-version: v0.53.0
           cache: false
           post-cleanup: false
 
