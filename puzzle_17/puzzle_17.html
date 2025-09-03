@@ -293,7 +293,7 @@ struct Conv1DCustomOp:
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
         alias in_layout = input_tensor.layout
-        alias output_layout = output_tensor.layout
+        alias out_layout = output_tensor.layout
         alias conv_layout = kernel_tensor.layout
 
         @parameter

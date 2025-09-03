@@ -8363,7 +8363,7 @@ struct Conv1DCustomOp:
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
         alias in_layout = input_tensor.layout
-        alias output_layout = output_tensor.layout
+        alias out_layout = output_tensor.layout
         alias conv_layout = kernel_tensor.layout
 
         @parameter
@@ -12866,7 +12866,7 @@ fn tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = output.tile[tile_size](tile_id)
+        output_tile = output.tile[tile_size](tile_id)
         a_tile = a.tile[tile_size](tile_id)
         b_tile = b.tile[tile_size](tile_id)
 
