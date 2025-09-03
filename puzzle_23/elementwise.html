@@ -213,7 +213,7 @@
 alias rank = 1
 alias layout = Layout.row_major(SIZE)
 alias dtype = DType.float32
-alias SIMD_WIDTH = simdwidthof[dtype, target = get_gpu_target()]()
+alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 
 
 fn elementwise_add[
@@ -227,7 +227,7 @@ fn elementwise_add[
     @parameter
     @always_inline
     fn add[
-        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
+        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         idx = indices[0]
         print("idx:", idx)
@@ -335,7 +335,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     @parameter
     @always_inline
     fn add[
-        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
+        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         idx = indices[0]
         # Note: This is thread-local SIMD - each thread processes its own vector of data
@@ -449,7 +449,7 @@ Result: Optimal memory controller utilization
 </ul>
 <h3 id="6-scaling-and-adaptability"><a class="header" href="#6-scaling-and-adaptability">6. <strong>Scaling and adaptability</strong></a></h3>
 <p><strong>Automatic Hardware Adaptation:</strong></p>
-<pre><code class="language-mojo">alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
+<pre><code class="language-mojo">alias SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
 </code></pre>
 <ul>
 <li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware (e.g., 4 for some cards, 8 for RTX 4090, 16 for A100)</li>

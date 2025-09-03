@@ -215,7 +215,7 @@
 alias BLOCKS_PER_GRID = (1, 1)
 alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
 alias dtype = DType.float32
-alias SIMD_WIDTH = simdwidthof[dtype]()
+alias SIMD_WIDTH = simd_width_of[dtype]()
 alias in_layout = Layout.row_major(SIZE)
 alias out_layout = Layout.row_major(1)
 
@@ -432,7 +432,7 @@ All lanes receive → total = 10416.0 (broadcast result)
     @parameter
     @always_inline
     fn compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
+        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         idx = indices[0]
         print("idx:", idx)
@@ -531,7 +531,7 @@ expected: 10416.0
     @parameter
     @always_inline
     fn compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
+        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         idx = indices[0]
 
