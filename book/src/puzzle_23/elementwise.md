@@ -264,7 +264,7 @@ Memory bandwidth >>> Compute capability for simple operations
 
 **Automatic Hardware Adaptation:**
 ```mojo
-alias SIMD_WIDTH = simdwidthof[dtype, target = _get_gpu_target()]()
+alias SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
 ```
 
 - **GPU-specific optimization**: SIMD width adapts to hardware (e.g., 4 for some cards, 8 for RTX 4090, 16 for A100)

@@ -6,7 +6,7 @@ from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from utils import IndexList
-from sys import argv, simdwidthof, sizeof, alignof
+from sys import argv, simd_width_of, size_of, align_of
 from testing import assert_equal
 from benchmark import (
     Bench,
@@ -25,7 +25,7 @@ alias SIZE = WARP_SIZE
 alias BLOCKS_PER_GRID = (1, 1)
 alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # optimal choice for warp kernel
 alias dtype = DType.float32
-alias SIMD_WIDTH = simdwidthof[dtype]()
+alias SIMD_WIDTH = simd_width_of[dtype]()
 alias in_layout = Layout.row_major(SIZE)
 alias out_layout = Layout.row_major(1)
 
@@ -96,7 +96,7 @@ fn functional_warp_dot_product[
     @parameter
     @always_inline
     fn compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = alignof[dtype]()
+        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
         print("idx:", idx)

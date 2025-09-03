@@ -2,7 +2,7 @@ from memory import UnsafePointer, stack_allocation
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
-from sys import sizeof
+from sys import size_of
 from testing import assert_equal
 
 # ANCHOR: dot_product

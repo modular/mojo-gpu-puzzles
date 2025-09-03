@@ -3,7 +3,7 @@ from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
-from sys import sizeof, argv
+from sys import size_of, argv
 from testing import assert_equal
 
 alias THREADS_PER_BLOCK = 256

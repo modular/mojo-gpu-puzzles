@@ -12,7 +12,7 @@ from gpu.memory import async_copy_wait_all
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import sizeof, argv, info
+from sys import size_of, argv, info
 from testing import assert_true, assert_almost_equal
 
 # ANCHOR: multi_stage_pipeline

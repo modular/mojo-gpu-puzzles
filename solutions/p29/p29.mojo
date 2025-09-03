@@ -8,7 +8,7 @@ from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import sizeof, argv, info
+from sys import size_of, argv, info
 from testing import assert_true, assert_almost_equal
 
 alias TPB = 256  # Threads per block for pipeline stages
