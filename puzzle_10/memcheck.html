@@ -217,7 +217,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </code></pre>
 <p>✅ <strong>Test PASSED!</strong> The output matches expected results perfectly. Case closed, right?</p>
 <p><strong>Wrong!</strong> Let’s see what <code>compute-sanitizer</code> reveals:</p>
-<pre><code class="language-bash">pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+<pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
 out shape: 2 x 2
@@ -339,7 +339,7 @@ Running memory bug example (bounds checking issue)...
 <p>The fix is simple: <strong>always validate thread indices against data dimensions</strong> before accessing memory.</p>
 <h3 id="verification-with-compute-sanitizer"><a class="header" href="#verification-with-compute-sanitizer">Verification with compute-sanitizer</a></h3>
 <pre><code class="language-bash"># Fix the bounds checking in your copy of p10.mojo, then run:
-pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
 out shape: 2 x 2
@@ -366,7 +366,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <li><strong>Test with different grid/block configurations</strong> to catch undefined behavior (UB) that manifests inconsistently</li>
 </ol>
 <h3 id="compute-sanitizer-best-practices"><a class="header" href="#compute-sanitizer-best-practices">Compute-sanitizer best practices</a></h3>
-<pre><code class="language-bash">pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
+<pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
 <p><strong>Note</strong>: You may see Mojo runtime warnings in the sanitizer output. Focus on the <code>========= Invalid</code> and <code>========= ERROR SUMMARY</code> lines for actual memory violations.</p>
 
