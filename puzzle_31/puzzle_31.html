@@ -1,0 +1,783 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 31: Occupancy Optimization - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="puzzle-31-gpu-occupancy-optimization"><a class="header" href="#puzzle-31-gpu-occupancy-optimization">Puzzle 31: GPU Occupancy Optimization</a></h1>
+<h2 id="why-this-puzzle-matters"><a class="header" href="#why-this-puzzle-matters">Why This Puzzle Matters</a></h2>
+<p><strong>Building on Puzzle 30:</strong> You’ve just learned GPU profiling tools and discovered how memory access patterns can create dramatic performance differences. Now you’re ready for the next level: <strong>resource optimization</strong>.</p>
+<p><strong>The Learning Journey:</strong></p>
+<ul>
+<li><strong>Puzzle 30</strong> taught you to <strong>diagnose</strong> performance problems using NSight profiling (<code>nsys</code> and <code>ncu</code>)</li>
+<li><strong>Puzzle 31</strong> teaches you to <strong>predict and control</strong> performance through resource management</li>
+<li><strong>Together</strong>, they give you the complete toolkit for GPU optimization</li>
+</ul>
+<p><strong>What You’ll Discover:</strong>
+GPU performance isn’t just about algorithmic efficiency - it’s about <strong>how your code uses limited hardware resources</strong>. Every GPU has finite registers, shared memory, and execution units. Understanding <strong>occupancy</strong> - <em>the ratio of active warps to maximum possible warps per SM</em> - is crucial for:</p>
+<ul>
+<li><strong>Latency hiding</strong>: Keeping the GPU busy while waiting for memory</li>
+<li><strong>Resource allocation</strong>: Balancing registers, shared memory, and thread blocks</li>
+<li><strong>Performance prediction</strong>: Understanding bottlenecks before they happen</li>
+<li><strong>Optimization strategy</strong>: Knowing when to focus on occupancy vs other factors</li>
+</ul>
+<p><strong>Why This Matters Beyond GPUs:</strong>
+The principles you learn here apply to any parallel computing system where resources are shared among many execution units - from CPUs with hyperthreading to distributed computing clusters.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p><strong>GPU Occupancy</strong> is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.</p>
+<p>This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
+<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
+alias THREADS_PER_BLOCK = (1024, 1)
+alias BLOCKS_PER_GRID = (SIZE // 1024, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+alias ALPHA = Float32(2.5)  # SAXPY coefficient
+
+
+fn minimal_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[mut=True, dtype, layout],
+    x: LayoutTensor[mut=False, dtype, layout],
+    alpha: Float32,
+    size: Int,
+):
+    """Minimal SAXPY kernel - simple and register-light for high occupancy."""
+    i = block_dim.x * block_idx.x + thread_idx.x
+    if i &lt; size:
+        # Direct computation: y[i] = alpha * x[i] + y[i]
+        # Uses minimal registers (~8), no shared memory
+        y[i] = alpha * x[i] + y[i]
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
+<pre><code class="language-mojo">fn sophisticated_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[mut=True, dtype, layout],
+    x: LayoutTensor[mut=False, dtype, layout],
+    alpha: Float32,
+    size: Int,
+):
+    """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
+    """
+    # Maximum shared memory allocation (close to 48KB limit)
+    shared_cache = tb[dtype]().row_major[1024 * 12]().shared().alloc()  # 48KB
+
+    i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    if i &lt; size:
+        # REAL computational work that can't be optimized away - affects final result
+        base_x = x[i]
+        base_y = y[i]
+
+        # Simulate "precision enhancement" - multiple small adjustments that add up
+        # Each computation affects the final result so compiler can't eliminate them
+        # But artificially increases register pressure
+        precision_x1 = base_x * 1.0001
+        precision_x2 = precision_x1 * 0.9999
+        precision_x3 = precision_x2 * 1.000001
+        precision_x4 = precision_x3 * 0.999999
+
+        precision_y1 = base_y * 1.000005
+        precision_y2 = precision_y1 * 0.999995
+        precision_y3 = precision_y2 * 1.0000001
+        precision_y4 = precision_y3 * 0.9999999
+
+        # Multiple alpha computations for "stability" - should equal alpha
+        alpha1 = alpha * 1.00001 * 0.99999
+        alpha2 = alpha1 * 1.000001 * 0.999999
+        alpha3 = alpha2 * 1.0000001 * 0.9999999
+        alpha4 = alpha3 * 1.00000001 * 0.99999999
+
+        # Complex polynomial "optimization" - creates register pressure
+        x_power2 = precision_x4 * precision_x4
+        x_power3 = x_power2 * precision_x4
+        x_power4 = x_power3 * precision_x4
+        x_power5 = x_power4 * precision_x4
+        x_power6 = x_power5 * precision_x4
+        x_power7 = x_power6 * precision_x4
+        x_power8 = x_power7 * precision_x4
+
+        # "Advanced" mathematical series that contributes tiny amount to result
+        series_term1 = x_power2 * 0.0000001  # x^2/10M
+        series_term2 = x_power4 * 0.00000001  # x^4/100M
+        series_term3 = x_power6 * 0.000000001  # x^6/1B
+        series_term4 = x_power8 * 0.0000000001  # x^8/10B
+        series_correction = (
+            series_term1 - series_term2 + series_term3 - series_term4
+        )
+
+        # Over-engineered shared memory usage with multiple caching strategies
+        if local_i &lt; 1024:
+            shared_cache[local_i] = precision_x4
+            shared_cache[local_i + 1024] = precision_y4
+            shared_cache[local_i + 2048] = alpha4
+            shared_cache[local_i + 3072] = series_correction
+        barrier()
+
+        # Load from shared memory for "optimization"
+        cached_x = shared_cache[local_i] if local_i &lt; 1024 else precision_x4
+        cached_y = (
+            shared_cache[local_i + 1024] if local_i &lt; 1024 else precision_y4
+        )
+        cached_alpha = (
+            shared_cache[local_i + 2048] if local_i &lt; 1024 else alpha4
+        )
+        cached_correction = (
+            shared_cache[local_i + 3072] if local_i
+            &lt; 1024 else series_correction
+        )
+
+        # Final "high precision" computation - all work contributes to result
+        high_precision_result = (
+            cached_alpha * cached_x + cached_y + cached_correction
+        )
+
+        # Over-engineered result with massive resource usage but mathematically ~= alpha*x + y
+        y[i] = high_precision_result
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
+<pre><code class="language-mojo">fn balanced_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[mut=True, dtype, layout],
+    x: LayoutTensor[mut=False, dtype, layout],
+    alpha: Float32,
+    size: Int,
+):
+    """Balanced SAXPY kernel - efficient optimization with moderate resources.
+    """
+    # Reasonable shared memory usage for effective caching (16KB)
+    shared_cache = (
+        tb[dtype]().row_major[1024 * 4]().shared().alloc()
+    )  # 16KB total
+
+    i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    if i &lt; size:
+        # Moderate computational work that contributes to result
+        base_x = x[i]
+        base_y = y[i]
+
+        # Light precision enhancement - less than sophisticated kernel
+        enhanced_x = base_x * 1.00001 * 0.99999
+        enhanced_y = base_y * 1.00001 * 0.99999
+        stable_alpha = alpha * 1.000001 * 0.999999
+
+        # Moderate computational optimization
+        x_squared = enhanced_x * enhanced_x
+        optimization_hint = x_squared * 0.000001
+
+        # Efficient shared memory caching - only what we actually need
+        if local_i &lt; 1024:
+            shared_cache[local_i] = enhanced_x
+            shared_cache[local_i + 1024] = enhanced_y
+        barrier()
+
+        # Use cached values efficiently
+        cached_x = shared_cache[local_i] if local_i &lt; 1024 else enhanced_x
+        cached_y = (
+            shared_cache[local_i + 1024] if local_i &lt; 1024 else enhanced_y
+        )
+
+        # Balanced computation - moderate work, good efficiency
+        result = stable_alpha * cached_x + cached_y + optimization_hint
+
+        # Balanced result with moderate resource usage (~15 registers, 16KB shared)
+        y[i] = result
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
+<h2 id="your-task"><a class="header" href="#your-task">Your task</a></h2>
+<p>Use profiling tools to investigate three kernels and answer analysis questions about occupancy optimization. The kernels compute identical results but use resources very differently - your job is to discover why performance and occupancy behave counterintuitively!</p>
+<blockquote>
+<p>The specific numerical results shown in this puzzle are based on <strong>NVIDIA A10G (Ampere 8.6)</strong> hardware. Your results will vary depending on your GPU architecture (Pascal, Turing, Ampere, Ada, Hopper, etc.), but the <strong>fundamental concepts, methodology, and insights remain universally applicable</strong> across all modern NVIDIA GPUs. Use <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
+</blockquote>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>NVIDIA GPU with CUDA toolkit</li>
+<li>NSight Compute from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
+</ul>
+<blockquote>
+<p><strong>⚠️ GPU compatibility note:</strong>
+The default configuration uses aggressive settings that may fail on older or lower-capability GPUs:</p>
+<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
+alias THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
+alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
+</code></pre>
+<p><strong>If you encounter launch failures, reduce these values in <code>problems/p31/p31.mojo</code>:</strong></p>
+<ul>
+<li><strong>For older GPUs (Compute Capability &lt; 3.0):</strong> Use <code>THREADS_PER_BLOCK = (512, 1)</code> and <code>SIZE = 16 * 1024 * 1024</code></li>
+<li><strong>For limited memory GPUs (&lt; 2GB):</strong> Use <code>SIZE = 8 * 1024 * 1024</code> or <code>SIZE = 4 * 1024 * 1024</code></li>
+<li><strong>For grid dimension limits:</strong> The <code>BLOCKS_PER_GRID</code> will automatically adjust with <code>SIZE</code></li>
+</ul>
+</blockquote>
+<p><strong>Occupancy Formula:</strong></p>
+<pre><code>Theoretical Occupancy = min(
+    Registers Per SM / (Registers Per Thread × Threads Per Block),
+    Shared Memory Per SM / Shared Memory Per Block,
+    Max Blocks Per SM
+) × Threads Per Block / Max Threads Per SM
+</code></pre>
+<h2 id="the-investigation"><a class="header" href="#the-investigation">The Investigation</a></h2>
+<h3 id="step-1-test-the-kernels"><a class="header" href="#step-1-test-the-kernels">Step 1: Test the kernels</a></h3>
+<pre><code class="language-bash">pixi shell -e cuda
+mojo problems/p31/p31.mojo --all
+</code></pre>
+<p>All three should produce identical results. The mystery: why do they have different performance?</p>
+<h3 id="step-2-benchmark-performance"><a class="header" href="#step-2-benchmark-performance">Step 2: Benchmark performance</a></h3>
+<pre><code class="language-bash">mojo problems/p31/p31.mojo --benchmark
+</code></pre>
+<p>All three should produce identical results. The mystery: why do they have different performance?</p>
+<h3 id="step-3-build-for-profiling"><a class="header" href="#step-3-build-for-profiling">Step 3: Build for profiling</a></h3>
+<pre><code class="language-bash">mojo build --debug-level=full problems/p31/p31.mojo -o problems/p31/p31_profiler
+</code></pre>
+<h3 id="step-4-profile-resource-usage"><a class="header" href="#step-4-profile-resource-usage">Step 4: Profile resource usage</a></h3>
+<pre><code class="language-bash"># Profile each kernel's resource usage
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --minimal
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --sophisticated
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
+</code></pre>
+<p>Record the resource usage for occupancy analysis.</p>
+<h3 id="step-5-calculate-theoretical-occupancy"><a class="header" href="#step-5-calculate-theoretical-occupancy">Step 5: Calculate theoretical occupancy</a></h3>
+<p>First, identify your GPU architecture and detailed specs:</p>
+<pre><code class="language-bash">pixi run gpu-specs
+</code></pre>
+<p><strong>Note</strong>: <code>gpu-specs</code> shows <strong>all architectural details</strong> derived from your GPU hardware - no lookup tables needed!</p>
+<p><strong>Common Architecture Specs (Reference):</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Architecture</th><th>Compute Cap</th><th>Registers/SM</th><th>Shared Mem/SM</th><th>Max Threads/SM</th><th>Max Blocks/SM</th></tr></thead><tbody>
+<tr><td><strong>Hopper (H100)</strong></td><td>9.0</td><td>65,536</td><td>228KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Ada (RTX 40xx)</strong></td><td>8.9</td><td>65,536</td><td>128KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Ampere (RTX 30xx, A100, A10G)</strong></td><td>8.0, 8.6</td><td>65,536</td><td>164KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Turing (RTX 20xx)</strong></td><td>7.5</td><td>65,536</td><td>96KB</td><td>1,024</td><td>16</td></tr>
+<tr><td><strong>Pascal (GTX 10xx)</strong></td><td>6.1</td><td>65,536</td><td>96KB</td><td>2,048</td><td>32</td></tr>
+</tbody></table>
+</div>
+<p><strong>📚 Official Documentation:</strong></p>
+<ul>
+<li><a href="https://developer.nvidia.com/cuda-gpus">NVIDIA CUDA Compute Capability Table</a></li>
+<li><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities">CUDA Programming Guide - Compute Capabilities</a></li>
+<li><a href="https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/">Hopper Architecture In-Depth</a></li>
+<li><a href="https://developer.nvidia.com/ampere-architecture">Ampere Architecture Whitepaper</a></li>
+</ul>
+<p><strong>⚠️ Note:</strong> These are theoretical maximums. Actual occupancy may be lower due to hardware scheduling constraints, driver overhead, and other factors.</p>
+<p>Using your GPU specs and the occupancy formula:</p>
+<ul>
+<li><strong>Threads Per Block:</strong> 1024 (from our kernel)</li>
+</ul>
+<p>Use the occupancy formula and your hardware specifications to predict each kernel’s theoretical occupancy.</p>
+<h3 id="step-6-measure-actual-occupancy"><a class="header" href="#step-6-measure-actual-occupancy">Step 6: Measure actual occupancy</a></h3>
+<pre><code class="language-bash"># Measure actual occupancy for each kernel
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --minimal
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --sophisticated
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --balanced
+</code></pre>
+<p>Compare the actual measured occupancy with your theoretical calculations - this is where the mystery reveals itself!</p>
+<h2 id="key-insights"><a class="header" href="#key-insights">Key Insights</a></h2>
+<p>💡 <strong>Occupancy Threshold:</strong> Once you have sufficient occupancy for latency hiding (~25-50%), additional occupancy provides diminishing returns.</p>
+<p>💡 <strong>Memory Bound vs Compute Bound:</strong> SAXPY is memory-bound. Memory bandwidth often matters more than occupancy for memory-bound kernels.</p>
+<p>💡 <strong>Resource Efficiency:</strong> Modern GPUs can handle moderate register pressure (20-40 registers/thread) without dramatic occupancy loss.</p>
+<h2 id="your-task-answer-the-following-questions"><a class="header" href="#your-task-answer-the-following-questions">Your task: Answer the following questions</a></h2>
+<p><strong>After completing the investigation steps above, answer these analysis questions to solve the occupancy mystery:</strong></p>
+<p><strong>Performance Analysis (Step 2):</strong></p>
+<ol>
+<li>Which kernel is fastest? Which is slowest? Record the timing differences.</li>
+</ol>
+<p><strong>Resource Profiling (Step 4):</strong></p>
+<ol start="2">
+<li>Record for each kernel: Registers Per Thread, Shared Memory Per Block, Warps Per SM</li>
+</ol>
+<p><strong>Theoretical Calculations (Step 5):</strong></p>
+<ol start="3">
+<li>Calculate theoretical occupancy for each kernel using your GPU specs and the occupancy formula. Which should be highest/lowest?</li>
+</ol>
+<p><strong>Measured Occupancy (Step 6):</strong></p>
+<ol start="4">
+<li>How do the measured occupancy values compare to your calculations?</li>
+</ol>
+<p><strong>The Occupancy Mystery:</strong></p>
+<ol start="5">
+<li>Why do all three kernels achieve similar occupancy (~64-66% results may vary depending on gpu architecture) despite dramatically different resource usage?</li>
+<li>Why is performance nearly identical (&lt;2% difference) when resource usage varies so dramatically (19 vs 40 registers, 0KB vs 49KB shared memory)?</li>
+<li>What does this reveal about the relationship between theoretical occupancy calculations and real-world GPU behavior?</li>
+<li>For this SAXPY workload, what is the actual performance bottleneck if it’s not occupancy?</li>
+</ol>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<p><strong>Your detective toolkit:</strong></p>
+<ul>
+<li><strong>NSight Compute (<code>ncu</code>)</strong> - Measure occupancy and resource usage</li>
+<li><strong>GPU architecture specs</strong> - Calculate theoretical limits using <code>pixi run gpu-specs</code></li>
+<li><strong>Occupancy formula</strong> - Predict resource bottlenecks</li>
+<li><strong>Performance benchmarks</strong> - Validate theoretical analysis</li>
+</ul>
+<p><strong>Key optimization principles:</strong></p>
+<ul>
+<li><strong>Calculate before optimizing:</strong> Use the occupancy formula to predict resource limits before writing code</li>
+<li><strong>Measure to validate:</strong> Theoretical calculations don’t account for compiler optimizations and hardware details</li>
+<li><strong>Consider workload characteristics:</strong> Memory-bound workloads need less occupancy than compute-bound operations</li>
+<li><strong>Don’t optimize for maximum occupancy:</strong> Optimize for sufficient occupancy + other performance factors</li>
+<li><strong>Think in terms of thresholds:</strong> 25-50% occupancy is often sufficient for latency hiding</li>
+<li><strong>Profile resource usage:</strong> Use NSight Compute to understand actual register and shared memory consumption</li>
+</ul>
+<p><strong>Investigation approach:</strong></p>
+<ol>
+<li><strong>Start with benchmarking</strong> - See the performance differences first</li>
+<li><strong>Profile with NSight Compute</strong> - Get actual resource usage and occupancy data</li>
+<li><strong>Calculate theoretical occupancy</strong> - Use your GPU specs and the occupancy formula</li>
+<li><strong>Compare theory vs reality</strong> - This is where the mystery reveals itself!</li>
+<li><strong>Think about workload characteristics</strong> - Why might theory not match practice?</li>
+</ol>
+</div>
+</details>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary><strong>Complete Solution with Enhanced Explanation</strong></summary>
+<p>This occupancy detective case demonstrates how resource usage affects GPU performance and reveals the complex relationship between theoretical occupancy and actual performance.</p>
+<blockquote>
+<p>The specific calculations below are for <strong>NVIDIA A10G (Ampere 8.6)</strong> - the GPU used for testing. Your results will vary based on your GPU architecture, but the methodology and insights apply universally. Use <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
+</blockquote>
+<h2 id="profiling-evidence-from-resource-analysis"><a class="header" href="#profiling-evidence-from-resource-analysis"><strong>Profiling evidence from resource analysis</strong></a></h2>
+<p><strong>NSight Compute Resource Analysis:</strong></p>
+<p><strong>Actual Profiling Results (NVIDIA A10G - your results will vary by GPU):</strong></p>
+<ul>
+<li><strong>Minimal:</strong> 19 registers, ~0KB shared → <strong>63.87%</strong> occupancy, <strong>327.7ms</strong></li>
+<li><strong>Balanced:</strong> 25 registers, 16.4KB shared → <strong>65.44%</strong> occupancy, <strong>329.4ms</strong></li>
+<li><strong>Sophisticated:</strong> 40 registers, 49.2KB shared → <strong>65.61%</strong> occupancy, <strong>330.9ms</strong></li>
+</ul>
+<p><strong>Performance Evidence from Benchmarking:</strong></p>
+<ul>
+<li><strong>All kernels perform nearly identically</strong> (~327-331ms, &lt;2% difference)</li>
+<li><strong>All achieve similar occupancy</strong> (~64-66%) despite huge resource differences</li>
+<li><strong>Memory bandwidth becomes the limiting factor</strong> for all kernels</li>
+</ul>
+<h2 id="occupancy-calculations-revealed"><a class="header" href="#occupancy-calculations-revealed"><strong>Occupancy calculations revealed</strong></a></h2>
+<p><strong>Theoretical Occupancy Analysis (NVIDIA A10G, Ampere 8.6):</strong></p>
+<p><strong>GPU Specifications (from <code>pixi run gpu-specs</code>):</strong></p>
+<ul>
+<li><strong>Registers Per SM:</strong> 65,536</li>
+<li><strong>Shared Memory Per SM:</strong> 164KB (architectural maximum)</li>
+<li><strong>Max Threads Per SM:</strong> 1,536 (hardware limit on A10G)</li>
+<li><strong>Threads Per Block:</strong> 1,024 (our configuration)</li>
+<li><strong>Max Blocks Per SM:</strong> 32</li>
+</ul>
+<p><strong>Minimal Kernel Calculation:</strong></p>
+<pre><code>Register Limit = 65,536 / (19 × 1,024) = 3.36 blocks per SM
+Shared Memory Limit = 164KB / 0KB = ∞ blocks per SM
+Hardware Block Limit = 32 blocks per SM
+
+Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
+Actual Blocks = min(3, ∞, 1) = 1 block per SM
+Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>Balanced Kernel Calculation:</strong></p>
+<pre><code>Register Limit = 65,536 / (25 × 1,024) = 2.56 blocks per SM
+Shared Memory Limit = 164KB / 16.4KB = 10 blocks per SM
+Hardware Block Limit = 32 blocks per SM
+
+Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
+Actual Blocks = min(2, 10, 1) = 1 block per SM
+Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>Sophisticated Kernel Calculation:</strong></p>
+<pre><code>Register Limit = 65,536 / (40 × 1,024) = 1.64 blocks per SM
+Shared Memory Limit = 164KB / 49.2KB = 3.33 blocks per SM
+Hardware Block Limit = 32 blocks per SM
+
+Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
+Actual Blocks = min(1, 3, 1) = 1 block per SM
+Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>Key Discovery: Theory Matches Reality!</strong></p>
+<ul>
+<li><strong>Theoretical</strong>: All kernels ~66.7% (limited by A10G’s thread capacity)</li>
+<li><strong>Actual Measured</strong>: All ~64-66% (very close match!)</li>
+</ul>
+<p>This reveals that <strong>A10G’s thread limit dominates</strong> - you can only fit 1 block of 1,024 threads per SM when the maximum is 1,536 threads. The small difference (66.7% theoretical vs ~65% actual) comes from hardware scheduling overhead and driver limitations.</p>
+<h2 id="why-theory-closely-matches-reality"><a class="header" href="#why-theory-closely-matches-reality"><strong>Why theory closely matches reality</strong></a></h2>
+<p><strong>Why the small gap between theoretical (66.7%) and actual (~65%) occupancy:</strong></p>
+<ol>
+<li><strong>Hardware Scheduling Overhead</strong>: Real warp schedulers have practical limitations beyond theoretical calculations</li>
+<li><strong>CUDA Runtime Reservations</strong>: Driver and runtime overhead reduce available SM resources slightly</li>
+<li><strong>Memory Controller Pressure</strong>: A10G’s memory subsystem creates slight scheduling constraints</li>
+<li><strong>Power and Thermal Management</strong>: Dynamic frequency scaling affects peak performance</li>
+<li><strong>Instruction Cache Effects</strong>: Real kernels have instruction fetch overhead not captured in occupancy calculations</li>
+</ol>
+<p><strong>Key Insight</strong>: The close match (66.7% theoretical vs ~65% actual) shows that <strong>A10G’s thread limit truly dominates</strong> all three kernels, regardless of their register and shared memory differences. This is an excellent example of identifying the real bottleneck!</p>
+<h2 id="the-occupancy-mystery-explained"><a class="header" href="#the-occupancy-mystery-explained"><strong>The occupancy mystery explained</strong></a></h2>
+<p><strong>The Real Mystery Revealed:</strong></p>
+<ul>
+<li><strong>All kernels achieve nearly identical occupancy</strong> (~64-66%) despite dramatic resource differences</li>
+<li><strong>Performance is essentially identical</strong> (&lt;2% variation) across all kernels</li>
+<li><strong>Theory correctly predicts occupancy</strong> (66.7% theoretical ≈ 65% actual)</li>
+<li><strong>The mystery isn’t occupancy mismatch</strong> - it’s why identical occupancy and performance despite huge resource differences!</li>
+</ul>
+<p><strong>Why Identical Performance Despite Different Resource Usage:</strong></p>
+<p><strong>SAXPY Workload Characteristics:</strong></p>
+<ul>
+<li><strong>Memory-bound operation:</strong> Each thread does minimal computation (<code>y[i] = alpha * x[i] + y[i]</code>)</li>
+<li><strong>High memory traffic:</strong> Reading 2 values, writing 1 value per thread</li>
+<li><strong>Low arithmetic intensity:</strong> Only 2 FLOPS per 12 bytes of memory traffic</li>
+</ul>
+<p><strong>Memory Bandwidth Analysis (A10G):</strong></p>
+<pre><code>Single Kernel Pass Analysis:
+- Input arrays: 32M × 4 bytes × 2 arrays = 256MB read
+- Output array: 32M × 4 bytes × 1 array = 128MB write
+- Total per kernel: 384MB memory traffic
+
+Peak Bandwidth (A10G): 600 GB/s
+Single-pass time: 384MB / 600 GB/s ≈ 0.64ms theoretical minimum
+Benchmark time: ~328ms (includes multiple iterations + overhead)
+</code></pre>
+<p><strong>The Real Performance Factors:</strong></p>
+<ol>
+<li><strong>Memory Bandwidth Utilization</strong>: All kernels saturate available memory bandwidth</li>
+<li><strong>Computational Overhead</strong>: Sophisticated kernel does extra work (register pressure effects)</li>
+<li><strong>Shared Memory Benefits</strong>: Balanced kernel gets some caching advantages</li>
+<li><strong>Compiler Optimizations</strong>: Modern compilers minimize register usage when possible</li>
+</ol>
+<h2 id="understanding-the-occupancy-threshold-concept"><a class="header" href="#understanding-the-occupancy-threshold-concept"><strong>Understanding the occupancy threshold concept</strong></a></h2>
+<p><strong>Critical Insight: Occupancy is About “Sufficient” Not “Maximum”</strong></p>
+<p><strong>Latency Hiding Requirements:</strong></p>
+<ul>
+<li><strong>Memory latency:</strong> ~500-800 cycles on modern GPUs</li>
+<li><strong>Warp scheduling:</strong> GPU needs enough warps to hide this latency</li>
+<li><strong>Sufficient threshold:</strong> Usually 25-50% occupancy provides effective latency hiding</li>
+</ul>
+<p><strong>Why Higher Occupancy Doesn’t Always Help:</strong></p>
+<p><strong>Resource Competition:</strong></p>
+<ul>
+<li>More active threads compete for same memory bandwidth</li>
+<li>Cache pressure increases with more concurrent accesses</li>
+<li>Register/shared memory pressure can hurt individual thread performance</li>
+</ul>
+<p><strong>Workload-Specific Optimization:</strong></p>
+<ul>
+<li><strong>Compute-bound:</strong> Higher occupancy helps hide ALU pipeline latency</li>
+<li><strong>Memory-bound:</strong> Memory bandwidth limits performance regardless of occupancy</li>
+<li><strong>Mixed workloads:</strong> Balance occupancy with other optimization factors</li>
+</ul>
+<h2 id="real-world-occupancy-optimization-principles"><a class="header" href="#real-world-occupancy-optimization-principles"><strong>Real-world occupancy optimization principles</strong></a></h2>
+<p><strong>Systematic Occupancy Analysis Approach:</strong></p>
+<p><strong>Phase 1: Calculate Theoretical Limits</strong></p>
+<pre><code class="language-bash"># Find your GPU specs
+pixi run gpu-specs
+</code></pre>
+<p><strong>Phase 2: Profile Actual Usage</strong></p>
+<pre><code class="language-bash"># Measure resource consumption
+ncu --set=@occupancy --section=LaunchStats your_kernel
+
+# Measure achieved occupancy
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
+</code></pre>
+<p><strong>Phase 3: Performance Validation</strong></p>
+<pre><code class="language-bash"># Always validate with actual performance measurements
+ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
+</code></pre>
+<p><strong>Evidence-to-Decision Framework:</strong></p>
+<pre><code>OCCUPANCY ANALYSIS → OPTIMIZATION STRATEGY:
+
+High occupancy (&gt;70%) + Good performance:
+→ Occupancy is sufficient, focus on other bottlenecks
+
+Low occupancy (&lt;30%) + Poor performance:
+→ Increase occupancy through resource optimization
+
+Good occupancy (50-70%) + Poor performance:
+→ Look for memory bandwidth, cache, or computational bottlenecks
+
+Low occupancy (&lt;30%) + Good performance:
+→ Workload doesn't need high occupancy (memory-bound)
+</code></pre>
+<h2 id="practical-occupancy-optimization-techniques"><a class="header" href="#practical-occupancy-optimization-techniques"><strong>Practical occupancy optimization techniques</strong></a></h2>
+<p><strong>Register Optimization:</strong></p>
+<ul>
+<li><strong>Use appropriate data types</strong>: <code>float32</code> vs <code>float64</code>, <code>int32</code> vs <code>int64</code></li>
+<li><strong>Minimize intermediate variables</strong>: Let compiler optimize temporary storage</li>
+<li><strong>Loop unrolling consideration</strong>: Balance occupancy vs instruction-level parallelism</li>
+</ul>
+<p><strong>Shared Memory Optimization:</strong></p>
+<ul>
+<li><strong>Calculate required sizes</strong>: Avoid over-allocation</li>
+<li><strong>Consider tiling strategies</strong>: Balance occupancy vs data reuse</li>
+<li><strong>Bank conflict avoidance</strong>: Design access patterns for conflict-free access</li>
+</ul>
+<p><strong>Block Size Tuning:</strong></p>
+<ul>
+<li><strong>Test multiple configurations</strong>: 256, 512, 1024 threads per block</li>
+<li><strong>Consider warp utilization</strong>: Avoid partial warps when possible</li>
+<li><strong>Balance occupancy vs resource usage</strong>: Larger blocks may hit resource limits</li>
+</ul>
+<h2 id="key-takeaways-from-a10g-mystery-to-universal-principles"><a class="header" href="#key-takeaways-from-a10g-mystery-to-universal-principles"><strong>Key takeaways: From A10G mystery to universal principles</strong></a></h2>
+<p>This A10G occupancy investigation reveals a clear progression of insights that apply to all GPU optimization:</p>
+<p><strong>The A10G Discovery Chain:</strong></p>
+<ol>
+<li><strong>Thread limits dominated everything</strong> - Despite 19 vs 40 registers and 0KB vs 49KB shared memory differences, all kernels hit the same 1-block-per-SM limit due to A10G’s 1,536-thread capacity</li>
+<li><strong>Theory matched reality closely</strong> - 66.7% theoretical vs ~65% measured occupancy shows our calculations work when we identify the right bottleneck</li>
+<li><strong>Memory bandwidth ruled performance</strong> - With identical 66.7% occupancy, SAXPY’s memory-bound nature (600 GB/s saturated) explained identical performance despite resource differences</li>
+</ol>
+<p><strong>Universal GPU Optimization Principles:</strong></p>
+<p><strong>Identify the Real Bottleneck:</strong></p>
+<ul>
+<li>Calculate occupancy limits from <strong>all resources</strong>: registers, shared memory, AND thread capacity</li>
+<li>The most restrictive limit wins - don’t assume it’s always registers or shared memory</li>
+<li>Memory-bound workloads (like SAXPY) are limited by bandwidth, not occupancy, once you have sufficient threads for latency hiding</li>
+</ul>
+<p><strong>When Occupancy Matters vs When It Doesn’t:</strong></p>
+<ul>
+<li><strong>High occupancy critical</strong>: Compute-intensive kernels (GEMM, scientific simulations) that need latency hiding for ALU pipeline stalls</li>
+<li><strong>Occupancy less critical</strong>: Memory-bound operations (BLAS Level 1, memory copies) where bandwidth saturation occurs before occupancy becomes limiting</li>
+<li><strong>Sweet spot</strong>: 60-70% occupancy often sufficient for latency hiding - beyond that, focus on the real bottleneck</li>
+</ul>
+<p><strong>Practical Optimization Workflow:</strong></p>
+<ol>
+<li><strong>Profile first</strong> (<code>ncu --set=@occupancy</code>) - measure actual resource usage and occupancy</li>
+<li><strong>Calculate theoretical limits</strong> using your GPU’s specs (<code>pixi run gpu-specs</code>)</li>
+<li><strong>Identify the dominant constraint</strong> - registers, shared memory, thread capacity, or memory bandwidth</li>
+<li><strong>Optimize the bottleneck</strong> - don’t waste time on non-limiting resources</li>
+<li><strong>Validate with end-to-end performance</strong> - occupancy is a means to performance, not the goal</li>
+</ol>
+<p>The A10G case perfectly demonstrates why <strong>systematic bottleneck analysis beats intuition</strong> - the sophisticated kernel’s high register pressure was irrelevant because thread capacity dominated, and identical occupancy plus memory bandwidth saturation explained the performance mystery completely.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_30/profile_kernels.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_30/profile_kernels.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
