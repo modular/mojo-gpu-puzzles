@@ -1,0 +1,364 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 Understanding Shared Memory Banks - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-understanding-shared-memory-banks"><a class="header" href="#-understanding-shared-memory-banks">📚 Understanding Shared Memory Banks</a></h1>
+<h2 id="building-on-what-youve-learned"><a class="header" href="#building-on-what-youve-learned">Building on what you’ve learned</a></h2>
+<p>You’ve come a long way in your GPU optimization journey. In <a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, you discovered how shared memory provides fast, block-local storage that dramatically outperforms global memory. <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> showed you how matrix multiplication kernels use shared memory to cache data tiles, reducing expensive global memory accesses.</p>
+<p>But there’s a hidden performance trap lurking in shared memory that can serialize your parallel operations: <strong>bank conflicts</strong>.</p>
+<p><strong>The performance mystery:</strong> You can write two kernels that access shared memory in seemingly identical ways - both use the same amount of data, both have perfect occupancy, both avoid race conditions. Yet one runs 32× slower than the other. The culprit? How threads access shared memory banks.</p>
+<h2 id="what-are-shared-memory-banks"><a class="header" href="#what-are-shared-memory-banks">What are shared memory banks?</a></h2>
+<p>Think of shared memory as a collection of 32 independent memory units called <strong>banks</strong>, each capable of serving one memory request per clock cycle. This banking system exists for a fundamental reason: <strong>hardware parallelism</strong>.</p>
+<p>When a warp of 32 threads needs to access shared memory simultaneously, the GPU can serve all 32 requests in parallel, <strong>if each thread accesses a different bank</strong>. When multiple threads try to access the same bank, the hardware must <strong>serialize</strong> these accesses, turning what should be a 1-cycle operation into multiple cycles.</p>
+<h3 id="bank-address-mapping"><a class="header" href="#bank-address-mapping">Bank address mapping</a></h3>
+<p>Each 4-byte word in shared memory belongs to a specific bank according to this formula:</p>
+<pre><code>bank_id = (byte_address / 4) % 32
+</code></pre>
+<p>Here’s how the first 128 bytes of shared memory map to banks:</p>
+<div class="table-wrapper"><table><thead><tr><th>Address Range</th><th>Bank ID</th><th>Example <code>float32</code> Elements</th></tr></thead><tbody>
+<tr><td>0-3 bytes</td><td>Bank 0</td><td><code>shared[0]</code></td></tr>
+<tr><td>4-7 bytes</td><td>Bank 1</td><td><code>shared[1]</code></td></tr>
+<tr><td>8-11 bytes</td><td>Bank 2</td><td><code>shared[2]</code></td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+<tr><td>124-127 bytes</td><td>Bank 31</td><td><code>shared[31]</code></td></tr>
+<tr><td>128-131 bytes</td><td>Bank 0</td><td><code>shared[32]</code></td></tr>
+<tr><td>132-135 bytes</td><td>Bank 1</td><td><code>shared[33]</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Key insight:</strong> The banking pattern repeats every 32 elements for <code>float32</code> arrays, which perfectly matches the 32-thread warp size. This is not a coincidence - it’s designed for optimal parallel access.</p>
+<h2 id="types-of-bank-conflicts"><a class="header" href="#types-of-bank-conflicts">Types of bank conflicts</a></h2>
+<h3 id="no-conflict-the-ideal-case"><a class="header" href="#no-conflict-the-ideal-case">No conflict: the ideal case</a></h3>
+<p>When each thread in a warp accesses a different bank, all 32 accesses complete in 1 cycle:</p>
+<pre><code class="language-mojo"># Perfect case: each thread accesses a different bank
+shared[thread_idx.x]  # Thread 0→Bank 0, Thread 1→Bank 1, ..., Thread 31→Bank 31
+</code></pre>
+<p><strong>Result:</strong> 32 parallel accesses, 1 cycle total</p>
+<h3 id="n-way-bank-conflicts"><a class="header" href="#n-way-bank-conflicts">N-way bank conflicts</a></h3>
+<p>When N threads access different addresses in the same bank, the hardware serializes these accesses:</p>
+<pre><code class="language-mojo"># 2-way conflict: stride-2 access pattern
+shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; Thread 1,17→Bank 1; etc.
+</code></pre>
+<p><strong>Result:</strong> 2 accesses per bank, 2 cycles total (50% efficiency)</p>
+<pre><code class="language-mojo"># Worst case: all threads access different addresses in Bank 0
+shared[thread_idx.x * 32]  # All threads→Bank 0
+</code></pre>
+<p><strong>Result:</strong> 32 serialized accesses, 32 cycles total (3% efficiency)</p>
+<h3 id="the-broadcast-exception"><a class="header" href="#the-broadcast-exception">The broadcast exception</a></h3>
+<p>There’s one important exception to the conflict rule: <strong>broadcast access</strong>. When all threads read the <strong>same address</strong>, the hardware optimizes this into a single memory access:</p>
+<pre><code class="language-mojo"># Broadcast: all threads read the same value
+constant = shared[0]  # All threads read shared[0]
+</code></pre>
+<p><strong>Result:</strong> 1 access broadcasts to 32 threads, 1 cycle total</p>
+<p>This optimization exists because broadcasting is a common pattern (loading constants, reduction operations), and the hardware can duplicate a single value to all threads without additional memory bandwidth.</p>
+<h2 id="why-bank-conflicts-matter"><a class="header" href="#why-bank-conflicts-matter">Why bank conflicts matter</a></h2>
+<h3 id="performance-impact"><a class="header" href="#performance-impact">Performance impact</a></h3>
+<p>Bank conflicts directly multiply your shared memory access time:</p>
+<div class="table-wrapper"><table><thead><tr><th>Conflict Type</th><th>Access Time</th><th>Efficiency</th><th>Performance Impact</th></tr></thead><tbody>
+<tr><td>No conflict</td><td>1 cycle</td><td>100%</td><td>Baseline</td></tr>
+<tr><td>2-way conflict</td><td>2 cycles</td><td>50%</td><td>2× slower</td></tr>
+<tr><td>4-way conflict</td><td>4 cycles</td><td>25%</td><td>4× slower</td></tr>
+<tr><td>32-way conflict</td><td>32 cycles</td><td>3%</td><td><strong>32× slower</strong></td></tr>
+</tbody></table>
+</div>
+<h3 id="real-world-context"><a class="header" href="#real-world-context">Real-world context</a></h3>
+<p>From <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you learned that memory access patterns can create dramatic performance differences. Bank conflicts are another example of this principle operating at the shared memory level.</p>
+<p>Just as global memory coalescing affects DRAM bandwidth utilization, bank conflicts affect shared memory throughput. The difference is scale: global memory latency is hundreds of cycles, while shared memory conflicts add only a few cycles per access. However, in compute-intensive kernels that heavily use shared memory, these “few cycles” accumulate quickly.</p>
+<h3 id="connection-to-warp-execution"><a class="header" href="#connection-to-warp-execution">Connection to warp execution</a></h3>
+<p>Remember from <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a> that warps execute in SIMT (Single Instruction, Multiple Thread) fashion. When a warp encounters a bank conflict, <strong>all 32 threads must wait</strong> for the serialized memory accesses to complete. This waiting time affects the entire warp’s progress, not just the conflicting threads.</p>
+<p>This connects to the occupancy concepts from <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>: bank conflicts can prevent warps from hiding memory latency effectively, reducing the practical benefit of high occupancy.</p>
+<h2 id="detecting-bank-conflicts"><a class="header" href="#detecting-bank-conflicts">Detecting bank conflicts</a></h2>
+<h3 id="visual-pattern-recognition"><a class="header" href="#visual-pattern-recognition">Visual pattern recognition</a></h3>
+<p>You can often predict bank conflicts by analyzing access patterns:</p>
+<p><strong>Sequential access (no conflicts):</strong></p>
+<pre><code class="language-mojo"># Thread ID:  0  1  2  3  ...  31
+# Address:    0  4  8 12  ... 124
+# Bank:       0  1  2  3  ...  31  ✅ All different banks
+</code></pre>
+<p><strong>Stride-2 access (2-way conflicts):</strong></p>
+<pre><code class="language-mojo"># Thread ID:  0  1  2  3  ...  15 16 17 18 ... 31
+# Address:    0  8 16 24  ... 120  4 12 20 ... 124
+# Bank:       0  2  4  6  ...  30  1  3  5 ...  31
+# Conflict:   Banks 0,2,4... have 2 threads each  ❌
+</code></pre>
+<p><strong>Stride-32 access (32-way conflicts):</strong></p>
+<pre><code class="language-mojo"># Thread ID:  0   1   2   3  ...  31
+# Address:    0  128 256 384 ... 3968
+# Bank:       0   0   0   0  ...   0  ❌ All threads→Bank 0
+</code></pre>
+<h3 id="profiling-with-nsight-compute-ncu"><a class="header" href="#profiling-with-nsight-compute-ncu">Profiling with NSight Compute (<code>ncu</code>)</a></h3>
+<p>Building on the profiling methodology from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you can measure bank conflicts quantitatively:</p>
+<pre><code class="language-bash"># Key metrics for shared memory bank conflicts
+ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st your_kernel
+
+# Additional context metrics
+ncu --metrics=smsp__sass_average_branch_targets_threads_uniform.pct your_kernel
+ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
+</code></pre>
+<p>The <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code> and <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> metrics directly count the number of bank conflicts for load and store operations during kernel execution. Combined with the number of shared memory accesses, these give you the conflict ratio - a critical performance indicator.</p>
+<h2 id="when-bank-conflicts-matter-most"><a class="header" href="#when-bank-conflicts-matter-most">When bank conflicts matter most</a></h2>
+<h3 id="compute-intensive-kernels"><a class="header" href="#compute-intensive-kernels">Compute-intensive kernels</a></h3>
+<p>Bank conflicts have the greatest impact on kernels where:</p>
+<ul>
+<li>Shared memory is accessed frequently within tight loops</li>
+<li>Computational work per shared memory access is minimal</li>
+<li>The kernel is compute-bound rather than memory-bound</li>
+</ul>
+<p><strong>Example scenarios:</strong></p>
+<ul>
+<li>Matrix multiplication inner loops (like the tiled versions in <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>)</li>
+<li>Stencil computations with shared memory caching</li>
+<li>Parallel reduction operations</li>
+</ul>
+<h3 id="memory-bound-vs-compute-bound-trade-offs"><a class="header" href="#memory-bound-vs-compute-bound-trade-offs">Memory-bound vs compute-bound trade-offs</a></h3>
+<p>Just as <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a> showed that occupancy matters less for memory-bound workloads, bank conflicts matter less when your kernel is bottlenecked by global memory bandwidth or arithmetic intensity is very low.</p>
+<p>However, many kernels that use shared memory do so precisely <strong>because</strong> they want to shift from memory-bound to compute-bound execution. In these cases, bank conflicts can prevent you from achieving the performance gains that motivated using shared memory in the first place.</p>
+<h2 id="the-path-forward"><a class="header" href="#the-path-forward">The path forward</a></h2>
+<p>Understanding shared memory banking gives you the foundation to:</p>
+<ol>
+<li><strong>Predict performance</strong> before writing code by analyzing access patterns</li>
+<li><strong>Diagnose slowdowns</strong> using systematic profiling approaches</li>
+<li><strong>Design conflict-free algorithms</strong> that maintain high shared memory throughput</li>
+<li><strong>Make informed trade-offs</strong> between algorithm complexity and memory efficiency</li>
+</ol>
+<p>In the next section, you’ll apply this knowledge through hands-on exercises that demonstrate common conflict patterns and their solutions - turning theoretical understanding into practical optimization skills.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_32/puzzle_32.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_32/conflict_free_patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_32/puzzle_32.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_32/conflict_free_patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

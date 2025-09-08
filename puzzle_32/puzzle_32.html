@@ -1,0 +1,335 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 32: Bank Conflicts - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="puzzle-32-bank-conflicts"><a class="header" href="#puzzle-32-bank-conflicts">Puzzle 32: Bank Conflicts</a></h1>
+<h2 id="why-this-puzzle-matters"><a class="header" href="#why-this-puzzle-matters">Why this puzzle matters</a></h2>
+<p><strong>Completing the performance trilogy:</strong> You’ve learned GPU profiling tools in <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a> and understood occupancy optimization in <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>. Now you’re ready for the final piece of the performance optimization puzzle: <strong>shared memory efficiency</strong>.</p>
+<p><strong>The hidden performance trap:</strong> You can write GPU kernels with perfect occupancy, optimal global memory coalescing, and identical mathematical operations - yet still experience dramatic performance differences due to <strong>how threads access shared memory</strong>. Bank conflicts represent one of the most subtle but impactful performance pitfalls in GPU programming.</p>
+<p><strong>The learning journey:</strong></p>
+<ul>
+<li><strong>Puzzle 30</strong> taught you to <strong>measure and diagnose</strong> performance with NSight profiling</li>
+<li><strong>Puzzle 31</strong> taught you to <strong>predict and control</strong> resource usage through occupancy analysis</li>
+<li><strong>Puzzle 32</strong> teaches you to <strong>optimize shared memory access patterns</strong> for maximum efficiency</li>
+</ul>
+<p><strong>Why this matters beyond GPU programming:</strong> The principles of memory banking, conflict detection, and systematic access pattern optimization apply across many parallel computing systems - from CPU cache hierarchies to distributed memory architectures.</p>
+<blockquote>
+<p><strong>Note: This puzzle is specific to NVIDIA GPUs</strong></p>
+<p>Bank conflict analysis uses NVIDIA’s 32-bank shared memory architecture and NSight Compute profiling tools. While the optimization principles apply broadly, the specific techniques and measurements are NVIDIA CUDA-focused.</p>
+</blockquote>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p><strong>Shared memory bank conflicts</strong> occur when multiple threads in a warp simultaneously access different addresses within the same memory bank, forcing the hardware to serialize these accesses. This can transform what should be a single-cycle memory operation into multiple cycles of serialized access.</p>
+<p><strong>What you’ll discover:</strong></p>
+<ul>
+<li>How GPU shared memory banking works at the hardware level</li>
+<li>Why identical kernels can have vastly different shared memory efficiency</li>
+<li>How to predict and measure bank conflicts before they impact performance</li>
+<li>Professional optimization strategies for designing conflict-free algorithms</li>
+</ul>
+<p><strong>The detective methodology:</strong> This puzzle follows the same evidence-based approach as previous performance puzzles - you’ll use profiling tools to uncover hidden inefficiencies, then apply systematic optimization principles to eliminate them.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p><strong>Shared memory architecture fundamentals:</strong></p>
+<ul>
+<li><strong>32-bank design</strong>: NVIDIA GPUs organize shared memory into 32 independent banks</li>
+<li><strong>Conflict types</strong>: No conflict (optimal), N-way conflicts (serialized), broadcast (optimized)</li>
+<li><strong>Access pattern mathematics</strong>: Bank assignment formulas and conflict prediction</li>
+<li><strong>Performance impact</strong>: From optimal 1-cycle access to worst-case 32-cycle serialization</li>
+</ul>
+<p><strong>Professional optimization skills:</strong></p>
+<ul>
+<li><strong>Pattern analysis</strong>: Mathematical prediction of banking behavior</li>
+<li><strong>Profiling methodology</strong>: NSight Compute metrics for conflict measurement</li>
+<li><strong>Design principles</strong>: Conflict-free algorithm patterns and prevention strategies</li>
+<li><strong>Performance validation</strong>: Evidence-based optimization using systematic measurement</li>
+</ul>
+<h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
+<p>This puzzle contains two complementary sections that build your expertise progressively:</p>
+<h3 id="-understanding-shared-memory-banks"><a class="header" href="#-understanding-shared-memory-banks"><strong><a href="./shared_memory_bank.html">📚 Understanding Shared Memory Banks</a></strong></a></h3>
+<p>Master the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.</p>
+<p><strong>You’ll learn:</strong></p>
+<ul>
+<li>How NVIDIA’s 32-bank architecture enables parallel access</li>
+<li>The mathematics of bank assignment and conflict prediction</li>
+<li>Types of conflicts and their performance implications</li>
+<li>Connection to previous concepts (warp execution, occupancy, profiling)</li>
+</ul>
+<p><strong>Key insight:</strong> Understanding the hardware enables you to predict performance before writing code.</p>
+<h3 id="conflict-free-patterns"><a class="header" href="#conflict-free-patterns"><strong><a href="./conflict_free_patterns.html">Conflict-Free Patterns</a></strong></a></h3>
+<p>Apply your banking knowledge to solve a performance mystery using professional profiling techniques.</p>
+<p><strong>The detective challenge:</strong> Two kernels compute identical results but have dramatically different shared memory access efficiency. Use NSight Compute to uncover why one kernel experiences systematic bank conflicts while the other achieves optimal performance.</p>
+<p><strong>Skills developed:</strong> Pattern analysis, conflict measurement, systematic optimization, and evidence-based performance improvement.</p>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
+<p><strong>Learning path:</strong></p>
+<ol>
+<li><strong><a href="./shared_memory_bank.html">Understanding Shared Memory Banks</a></strong> - Build theoretical foundation</li>
+<li><strong><a href="./conflict_free_patterns.html">Conflict-Free Patterns</a></strong> - Apply detective skills to real optimization</li>
+</ol>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>GPU profiling experience from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
+<li>Resource optimization understanding from <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a></li>
+<li>Shared memory programming experience from <a href="../puzzle_08/puzzle_08.html">Puzzle 8</a> and <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a></li>
+</ul>
+<p><strong>Hardware requirements:</strong></p>
+<ul>
+<li>NVIDIA GPU with CUDA toolkit</li>
+<li>NSight Compute profiling tools</li>
+<li>The dependencies such as profiling are managed by <code>pixi</code></li>
+<li><a href="https://docs.modular.com/max/packages/#gpu-compatibility">Compatible GPU architecture</a></li>
+</ul>
+<h2 id="the-optimization-impact"><a class="header" href="#the-optimization-impact">The optimization impact</a></h2>
+<p><strong>When bank conflicts matter most:</strong></p>
+<ul>
+<li><strong>Matrix multiplication</strong> with shared memory tiling</li>
+<li><strong>Stencil computations</strong> using shared memory caching</li>
+<li><strong>Parallel reductions</strong> with stride-based memory patterns</li>
+</ul>
+<p><strong>Professional development value:</strong></p>
+<ul>
+<li><strong>Systematic optimization</strong>: Evidence-based performance improvement methodology</li>
+<li><strong>Hardware awareness</strong>: Understanding how software maps to hardware constraints</li>
+<li><strong>Pattern recognition</strong>: Identifying problematic access patterns in algorithm design</li>
+</ul>
+<p><strong>Learning outcome:</strong> Complete your GPU performance optimization toolkit with the ability to design, measure, and optimize shared memory access patterns - the final piece for professional-level GPU programming expertise.</p>
+<p>This puzzle demonstrates that <strong>optimal GPU performance requires understanding hardware at multiple levels</strong> - from global memory coalescing through occupancy management to shared memory banking efficiency.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_31/puzzle_31.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_32/shared_memory_bank.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_31/puzzle_31.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_32/shared_memory_bank.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

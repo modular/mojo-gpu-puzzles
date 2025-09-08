@@ -1,0 +1,617 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Conflict-Free Patterns - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="conflict-free-patterns"><a class="header" href="#conflict-free-patterns">Conflict-Free Patterns</a></h1>
+<blockquote>
+<p><strong>Note: This section is specific to NVIDIA GPUs</strong></p>
+<p>Bank conflict analysis and profiling techniques covered here apply specifically to NVIDIA GPUs. The profiling commands use NSight Compute tools that are part of the NVIDIA CUDA toolkit.</p>
+</blockquote>
+<h2 id="building-on-your-profiling-skills"><a class="header" href="#building-on-your-profiling-skills">Building on your profiling skills</a></h2>
+<p>You’ve learned GPU profiling fundamentals in <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a> and understood resource optimization in <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>. Now you’re ready to apply those detective skills to a new performance mystery: <strong>shared memory bank conflicts</strong>.</p>
+<p><strong>The detective challenge:</strong> You have two GPU kernels that perform identical mathematical operations (<code>(input + 10) * 2</code>). Both produce exactly the same results. Both use the same amount of shared memory. Both have identical occupancy. Yet one experiences systematic performance degradation due to <strong>how</strong> it accesses shared memory.</p>
+<p><strong>Your mission:</strong> Use the profiling methodology you’ve learned to uncover this hidden performance trap and understand when bank conflicts matter in real-world GPU programming.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Shared memory bank conflicts occur when multiple threads in a warp simultaneously access different addresses within the same memory bank. This detective case explores two kernels with contrasting access patterns:</p>
+<pre><code class="language-mojo">alias SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
+alias TPB = 256  # Threads per block - divisible by 32 (warp size)
+alias THREADS_PER_BLOCK = (TPB, 1)
+alias BLOCKS_PER_GRID = (SIZE // TPB, 1)
+alias dtype = DType.float32
+alias layout = Layout.row_major(SIZE)
+
+
+fn no_conflict_kernel[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Perfect shared memory access - no bank conflicts.
+
+    Each thread accesses a different bank: thread_idx.x maps to bank thread_idx.x % 32.
+    This achieves optimal shared memory bandwidth utilization.
+    """
+
+    # Shared memory buffer - each thread loads one element
+    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Load from global memory to shared memory - no conflicts
+    if global_i &lt; size:
+        shared_buf[local_i] = (
+            input[global_i] + 10.0
+        )  # Add 10 as simple operation
+
+    barrier()  # Synchronize shared memory writes
+
+    # Read back from shared memory and write to output - no conflicts
+    if global_i &lt; size:
+        output[global_i] = shared_buf[local_i] * 2.0  # Multiply by 2
+
+    barrier()  # Ensure completion
+
+
+</code></pre>
+<pre><code class="language-mojo">fn two_way_conflict_kernel[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Stride-2 shared memory access - creates 2-way bank conflicts.
+
+    Threads 0,16 → Bank 0, Threads 1,17 → Bank 1, etc.
+    Each bank serves 2 threads, doubling access time.
+    """
+
+    # Shared memory buffer - stride-2 access pattern creates conflicts
+    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # CONFLICT: stride-2 access creates 2-way bank conflicts
+    conflict_index = (local_i * 2) % TPB
+
+    # Load with bank conflicts
+    if global_i &lt; size:
+        shared_buf[conflict_index] = (
+            input[global_i] + 10.0
+        )  # Same operation as no-conflict
+
+    barrier()  # Synchronize shared memory writes
+
+    # Read back with same conflicts
+    if global_i &lt; size:
+        output[global_i] = (
+            shared_buf[conflict_index] * 2.0
+        )  # Same operation as no-conflict
+
+    barrier()  # Ensure completion
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p32/p32.mojo" class="filename">View full file: problems/p32/p32.mojo</a></p>
+<p><strong>The mystery:</strong> These kernels compute identical results but have dramatically different shared memory access efficiency. Your job is to discover why using systematic profiling analysis.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>NVIDIA GPU with CUDA toolkit and NSight Compute from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
+<li>Understanding of shared memory banking concepts from the <a href="./shared_memory_bank.html">previous section</a></li>
+</ul>
+<p><strong>Kernel specifications:</strong></p>
+<pre><code class="language-mojo">alias SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
+alias TPB = 256            # 256 threads per block (8 warps)
+alias BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
+</code></pre>
+<p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.</p>
+<h2 id="the-investigation"><a class="header" href="#the-investigation">The investigation</a></h2>
+<h3 id="step-1-verify-correctness"><a class="header" href="#step-1-verify-correctness">Step 1: Verify correctness</a></h3>
+<pre><code class="language-bash">pixi shell -e cuda
+mojo problems/p32/p32.mojo --test
+</code></pre>
+<p>Both kernels should produce identical results. This confirms that bank conflicts affect <strong>performance</strong> but not <strong>correctness</strong>.</p>
+<h3 id="step-2-benchmark-performance-baseline"><a class="header" href="#step-2-benchmark-performance-baseline">Step 2: Benchmark performance baseline</a></h3>
+<pre><code class="language-bash">mojo problems/p32/p32.mojo --benchmark
+</code></pre>
+<p>Record the execution times. You may notice similar performance due to the workload being dominated by global memory access, but bank conflicts will be revealed through profiling metrics.</p>
+<h3 id="step-3-build-for-profiling"><a class="header" href="#step-3-build-for-profiling">Step 3: Build for profiling</a></h3>
+<pre><code class="language-bash">mojo build --debug-level=full problems/p32/p32.mojo -o problems/p32/p32_profiler
+</code></pre>
+<h3 id="step-4-profile-bank-conflicts"><a class="header" href="#step-4-profile-bank-conflicts">Step 4: Profile bank conflicts</a></h3>
+<p>Use NSight Compute to measure shared memory bank conflicts quantitatively:</p>
+<pre><code class="language-bash"># Profile no-conflict kernel
+ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st problems/p32/p32_profiler --no-conflict
+
+</code></pre>
+<p>and</p>
+<pre><code class="language-bash"># Profile two-way conflict kernel
+ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st problems/p32/p32_profiler --two-way
+</code></pre>
+<p><strong>Key metrics to record:</strong></p>
+<ul>
+<li><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum</code> - Load conflicts</li>
+<li><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum</code> - Store conflicts</li>
+</ul>
+<h3 id="step-5-analyze-access-patterns"><a class="header" href="#step-5-analyze-access-patterns">Step 5: Analyze access patterns</a></h3>
+<p>Based on your profiling results, analyze the mathematical access patterns:</p>
+<p><strong>No-conflict kernel access pattern:</strong></p>
+<pre><code class="language-mojo"># Thread mapping: thread_idx.x directly maps to shared memory index
+shared_buf[thread_idx.x]  # Thread 0→Index 0, Thread 1→Index 1, etc.
+# Bank mapping: Index % 32 = Bank ID
+# Result: Thread 0→Bank 0, Thread 1→Bank 1, ..., Thread 31→Bank 31
+</code></pre>
+<p><strong>Two-way conflict kernel access pattern:</strong></p>
+<pre><code class="language-mojo"># Thread mapping with stride-2 modulo operation
+shared_buf[(thread_idx.x * 2) % TPB]
+# For threads 0-31: Index 0,2,4,6,...,62, then wraps to 64,66,...,126, then 0,2,4...
+# Bank mapping examples:
+# Thread 0  → Index 0   → Bank 0
+# Thread 16 → Index 32  → Bank 0  (conflict!)
+# Thread 1  → Index 2   → Bank 2
+# Thread 17 → Index 34  → Bank 2  (conflict!)
+</code></pre>
+<h2 id="your-task-solve-the-bank-conflict-mystery"><a class="header" href="#your-task-solve-the-bank-conflict-mystery">Your task: solve the bank conflict mystery</a></h2>
+<p><strong>After completing the investigation steps above, answer these analysis questions:</strong></p>
+<h3 id="performance-analysis-steps-1-2"><a class="header" href="#performance-analysis-steps-1-2">Performance analysis (Steps 1-2):</a></h3>
+<ol>
+<li>Do both kernels produce identical mathematical results?</li>
+<li>What are the execution time differences (if any) between the kernels?</li>
+<li>Why might performance be similar despite different access patterns?</li>
+</ol>
+<h3 id="bank-conflict-profiling-step-4"><a class="header" href="#bank-conflict-profiling-step-4">Bank conflict profiling (Step 4):</a></h3>
+<ol start="4">
+<li>How many bank conflicts does the no-conflict kernel generate for loads and stores?</li>
+<li>How many bank conflicts does the two-way conflict kernel generate for loads and stores?</li>
+<li>What is the total conflict count difference between the kernels?</li>
+</ol>
+<h3 id="access-pattern-analysis-step-5"><a class="header" href="#access-pattern-analysis-step-5">Access pattern analysis (Step 5):</a></h3>
+<ol start="7">
+<li>In the no-conflict kernel, which bank does Thread 0 access? Thread 31?</li>
+<li>In the two-way conflict kernel, which threads access Bank 0? Which access Bank 2?</li>
+<li>How many threads compete for the same bank in the conflict kernel?</li>
+</ol>
+<h3 id="the-bank-conflict-detective-work"><a class="header" href="#the-bank-conflict-detective-work">The bank conflict detective work:</a></h3>
+<ol start="10">
+<li>Why does the two-way conflict kernel show measurable conflicts while the no-conflict kernel shows zero?</li>
+<li>How does the stride-2 access pattern <code>(thread_idx.x * 2) % TPB</code> create systematic conflicts?</li>
+<li>Why do bank conflicts matter more in compute-intensive kernels than memory-bound kernels?</li>
+</ol>
+<h3 id="real-world-implications"><a class="header" href="#real-world-implications">Real-world implications:</a></h3>
+<ol start="13">
+<li>When would you expect bank conflicts to significantly impact application performance?</li>
+<li>How can you predict bank conflict patterns before implementing shared memory algorithms?</li>
+<li>What design principles help avoid bank conflicts in matrix operations and stencil computations?</li>
+</ol>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<p><strong>Bank conflict detective toolkit:</strong></p>
+<ul>
+<li><strong>NSight Compute metrics</strong> - Quantify conflicts with precise measurements</li>
+<li><strong>Access pattern visualization</strong> - Map thread indices to banks systematically</li>
+<li><strong>Mathematical analysis</strong> - Use modulo arithmetic to predict conflicts</li>
+<li><strong>Workload characteristics</strong> - Understand when conflicts matter vs when they don’t</li>
+</ul>
+<p><strong>Key investigation principles:</strong></p>
+<ul>
+<li><strong>Measure systematically:</strong> Use profiling tools rather than guessing about conflicts</li>
+<li><strong>Visualize access patterns:</strong> Draw thread-to-bank mappings for complex algorithms</li>
+<li><strong>Consider workload context:</strong> Bank conflicts matter most in compute-intensive shared memory algorithms</li>
+<li><strong>Think prevention:</strong> Design algorithms with conflict-free access patterns from the start</li>
+</ul>
+<p><strong>Access pattern analysis approach:</strong></p>
+<ol>
+<li><strong>Map threads to indices:</strong> Understand the mathematical address calculation</li>
+<li><strong>Calculate bank assignments:</strong> Use the formula <code>bank_id = (address / 4) % 32</code></li>
+<li><strong>Identify conflicts:</strong> Look for multiple threads accessing the same bank</li>
+<li><strong>Validate with profiling:</strong> Confirm theoretical analysis with NSight Compute measurements</li>
+</ol>
+<p><strong>Common conflict-free patterns:</strong></p>
+<ul>
+<li><strong>Sequential access:</strong> <code>shared[thread_idx.x]</code> - each thread different bank</li>
+<li><strong>Broadcast access:</strong> <code>shared[0]</code> for all threads - hardware optimization</li>
+<li><strong>Power-of-2 strides:</strong> Stride-32 often maps cleanly to banking patterns</li>
+<li><strong>Padded arrays:</strong> Add padding to shift problematic access patterns</li>
+</ul>
+</div>
+</details>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary><strong>Complete Solution with Bank Conflict Analysis</strong></summary>
+<p>This bank conflict detective case demonstrates how shared memory access patterns affect GPU performance and reveals the importance of systematic profiling for optimization.</p>
+<h2 id="investigation-results-from-profiling"><a class="header" href="#investigation-results-from-profiling"><strong>Investigation results from profiling</strong></a></h2>
+<p><strong>Step 1: Correctness Verification</strong>
+Both kernels produce identical mathematical results:</p>
+<pre><code>✅ No-conflict kernel: PASSED
+✅ Two-way conflict kernel: PASSED
+✅ Both kernels produce identical results
+</code></pre>
+<p><strong>Step 2: Performance Baseline</strong>
+Benchmark results show similar execution times:</p>
+<pre><code>| name             | met (ms)           | iters |
+| ---------------- | ------------------ | ----- |
+| no_conflict      | 2.1930616745886655 | 547   |
+| two_way_conflict | 2.1978922967032966 | 546   |
+</code></pre>
+<p><strong>Key insight:</strong> Performance is nearly identical (~2.19ms vs ~2.20ms) because this workload is <strong>global memory bound</strong> rather than shared memory bound. Bank conflicts become visible through profiling metrics rather than execution time.</p>
+<h2 id="bank-conflict-profiling-evidence"><a class="header" href="#bank-conflict-profiling-evidence"><strong>Bank conflict profiling evidence</strong></a></h2>
+<p><strong>No-Conflict Kernel (Optimal Access Pattern):</strong></p>
+<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
+l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    0
+</code></pre>
+<p><strong>Result:</strong> Zero conflicts for both loads and stores - perfect shared memory efficiency.</p>
+<p><strong>Two-Way Conflict Kernel (Problematic Access Pattern):</strong></p>
+<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    256
+l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    256
+</code></pre>
+<p><strong>Result:</strong> 256 conflicts each for loads and stores - clear evidence of systematic banking problems.</p>
+<p><strong>Total conflict difference:</strong> 512 conflicts (256 + 256) demonstrate measurable shared memory inefficiency.</p>
+<h2 id="access-pattern-mathematical-analysis"><a class="header" href="#access-pattern-mathematical-analysis"><strong>Access pattern mathematical analysis</strong></a></h2>
+<h3 id="no-conflict-kernel-access-pattern"><a class="header" href="#no-conflict-kernel-access-pattern">No-conflict kernel access pattern</a></h3>
+<p><strong>Thread-to-index mapping:</strong></p>
+<pre><code class="language-mojo">shared_buf[thread_idx.x]
+</code></pre>
+<p><strong>Bank assignment analysis:</strong></p>
+<pre><code>Thread 0  → Index 0   → Bank 0 % 32 = 0
+Thread 1  → Index 1   → Bank 1 % 32 = 1
+Thread 2  → Index 2   → Bank 2 % 32 = 2
+...
+Thread 31 → Index 31  → Bank 31 % 32 = 31
+</code></pre>
+<p><strong>Result:</strong> Perfect bank distribution - each thread accesses a different bank within each warp, enabling parallel access.</p>
+<h3 id="two-way-conflict-kernel-access-pattern"><a class="header" href="#two-way-conflict-kernel-access-pattern">Two-way conflict kernel access pattern</a></h3>
+<p><strong>Thread-to-index mapping:</strong></p>
+<pre><code class="language-mojo">shared_buf[(thread_idx.x * 2) % TPB]  # TPB = 256
+</code></pre>
+<p><strong>Bank assignment analysis for first warp (threads 0-31):</strong></p>
+<pre><code>Thread 0  → Index (0*2)%256 = 0   → Bank 0
+Thread 1  → Index (1*2)%256 = 2   → Bank 2
+Thread 2  → Index (2*2)%256 = 4   → Bank 4
+...
+Thread 16 → Index (16*2)%256 = 32 → Bank 0  ← CONFLICT with Thread 0
+Thread 17 → Index (17*2)%256 = 34 → Bank 2  ← CONFLICT with Thread 1
+Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← CONFLICT with Thread 2
+...
+</code></pre>
+<p><strong>Conflict pattern:</strong> Each bank serves exactly 2 threads, creating systematic 2-way conflicts across all 32 banks.</p>
+<p><strong>Mathematical explanation:</strong> The stride-2 pattern with modulo 256 creates a repeating access pattern where:</p>
+<ul>
+<li>Threads 0-15 access banks 0,2,4,…,30</li>
+<li>Threads 16-31 access the <strong>same banks</strong> 0,2,4,…,30</li>
+<li>Each bank collision requires hardware serialization</li>
+</ul>
+<h2 id="why-this-matters-workload-context-analysis"><a class="header" href="#why-this-matters-workload-context-analysis"><strong>Why this matters: workload context analysis</strong></a></h2>
+<h3 id="memory-bound-vs-compute-bound-implications"><a class="header" href="#memory-bound-vs-compute-bound-implications">Memory-bound vs compute-bound implications</a></h3>
+<p><strong>This workload characteristics:</strong></p>
+<ul>
+<li><strong>Global memory dominant:</strong> Each thread performs minimal computation relative to memory transfer</li>
+<li><strong>Shared memory secondary:</strong> Bank conflicts add overhead but don’t dominate total execution time</li>
+<li><strong>Identical performance:</strong> Global memory bandwidth saturation masks shared memory inefficiency</li>
+</ul>
+<p><strong>When bank conflicts matter most:</strong></p>
+<ol>
+<li><strong>Compute-intensive shared memory algorithms</strong> - Matrix multiplication, stencil computations, FFT</li>
+<li><strong>Tight computational loops</strong> - Repeated shared memory access within inner loops</li>
+<li><strong>High arithmetic intensity</strong> - Significant computation per memory access</li>
+<li><strong>Large shared memory working sets</strong> - Algorithms that heavily utilize shared memory caching</li>
+</ol>
+<h3 id="real-world-performance-implications"><a class="header" href="#real-world-performance-implications">Real-world performance implications</a></h3>
+<p><strong>Applications where bank conflicts significantly impact performance:</strong></p>
+<p><strong>Matrix Multiplication:</strong></p>
+<pre><code class="language-mojo"># Problematic: All threads in warp access same column
+for k in range(tile_size):
+    acc += a_shared[local_row, k] * b_shared[k, local_col]  # b_shared[k, 0] conflicts
+</code></pre>
+<p><strong>Stencil Computations:</strong></p>
+<pre><code class="language-mojo"># Problematic: Stride access in boundary handling
+shared_buf[thread_idx.x * stride]  # Creates systematic conflicts
+</code></pre>
+<p><strong>Parallel Reductions:</strong></p>
+<pre><code class="language-mojo"># Problematic: Power-of-2 stride patterns
+if thread_idx.x &lt; stride:
+    shared_buf[thread_idx.x] += shared_buf[thread_idx.x + stride]  # Conflict potential
+</code></pre>
+<h2 id="conflict-free-design-principles"><a class="header" href="#conflict-free-design-principles"><strong>Conflict-free design principles</strong></a></h2>
+<h3 id="prevention-strategies"><a class="header" href="#prevention-strategies">Prevention strategies</a></h3>
+<p><strong>1. Sequential access patterns:</strong></p>
+<pre><code class="language-mojo">shared[thread_idx.x]  # Optimal - each thread different bank
+</code></pre>
+<p><strong>2. Broadcast optimization:</strong></p>
+<pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
+</code></pre>
+<p><strong>3. Padding techniques:</strong></p>
+<pre><code class="language-mojo">shared = tb[dtype]().row_major[TPB + 1]().shared().alloc()  # Shift access patterns
+</code></pre>
+<p><strong>4. Access pattern analysis:</strong></p>
+<ul>
+<li>Calculate bank assignments before implementation</li>
+<li>Use modulo arithmetic: <code>bank_id = (address_bytes / 4) % 32</code></li>
+<li>Visualize thread-to-bank mappings for complex algorithms</li>
+</ul>
+<h3 id="systematic-optimization-workflow"><a class="header" href="#systematic-optimization-workflow">Systematic optimization workflow</a></h3>
+<p><strong>Design Phase:</strong></p>
+<ol>
+<li><strong>Plan access patterns</strong> - Sketch thread-to-memory mappings</li>
+<li><strong>Calculate bank assignments</strong> - Use mathematical analysis</li>
+<li><strong>Predict conflicts</strong> - Identify problematic access patterns</li>
+<li><strong>Design alternatives</strong> - Consider padding, transpose, or algorithm changes</li>
+</ol>
+<p><strong>Implementation Phase:</strong></p>
+<ol>
+<li><strong>Profile systematically</strong> - Use NSight Compute conflict metrics</li>
+<li><strong>Measure impact</strong> - Compare conflict counts across implementations</li>
+<li><strong>Validate performance</strong> - Ensure optimizations improve end-to-end performance</li>
+<li><strong>Document patterns</strong> - Record successful conflict-free algorithms for reuse</li>
+</ol>
+<h2 id="key-takeaways-from-detective-work-to-optimization-expertise"><a class="header" href="#key-takeaways-from-detective-work-to-optimization-expertise"><strong>Key takeaways: from detective work to optimization expertise</strong></a></h2>
+<p><strong>The Bank Conflict Investigation revealed:</strong></p>
+<ol>
+<li><strong>Measurement trumps intuition</strong> - Profiling tools reveal conflicts invisible to performance timing</li>
+<li><strong>Pattern analysis works</strong> - Mathematical prediction accurately matched NSight Compute results</li>
+<li><strong>Context matters</strong> - Bank conflicts matter most in compute-intensive shared memory workloads</li>
+<li><strong>Prevention beats fixing</strong> - Designing conflict-free patterns easier than retrofitting optimizations</li>
+</ol>
+<p><strong>Universal shared memory optimization principles:</strong></p>
+<p><strong>When to worry about bank conflicts:</strong></p>
+<ul>
+<li><strong>High-computation kernels</strong> using shared memory for data reuse</li>
+<li><strong>Iterative algorithms</strong> with repeated shared memory access in tight loops</li>
+<li><strong>Performance-critical code</strong> where every cycle matters</li>
+<li><strong>Memory-intensive operations</strong> that are compute-bound rather than bandwidth-bound</li>
+</ul>
+<p><strong>When bank conflicts are less critical:</strong></p>
+<ul>
+<li><strong>Memory-bound workloads</strong> where global memory dominates performance</li>
+<li><strong>Simple caching scenarios</strong> with minimal shared memory reuse</li>
+<li><strong>One-time access patterns</strong> without repeated conflict-prone operations</li>
+</ul>
+<p><strong>Professional development methodology:</strong></p>
+<ol>
+<li><strong>Profile before optimizing</strong> - Measure conflicts quantitatively with NSight Compute</li>
+<li><strong>Understand access mathematics</strong> - Use bank assignment formulas to predict problems</li>
+<li><strong>Design systematically</strong> - Consider banking in algorithm design, not as afterthought</li>
+<li><strong>Validate optimizations</strong> - Confirm that conflict reduction improves actual performance</li>
+</ol>
+<p>This detective case demonstrates that <strong>systematic profiling reveals optimization opportunities invisible to performance timing alone</strong> - bank conflicts are a perfect example of where measurement-driven optimization beats guesswork.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_32/shared_memory_bank.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_32/shared_memory_bank.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
