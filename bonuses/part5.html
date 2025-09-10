@@ -1,0 +1,339 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🎯 Performance Bonus Challenge - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-performance-bonus-challenge"><a class="header" href="#-performance-bonus-challenge">🎯 Performance Bonus Challenge</a></h1>
+<h2 id="the-discovery"><a class="header" href="#the-discovery">The discovery</a></h2>
+<p>You’ve just completed <a href="../puzzle_33/puzzle_33.html">Puzzle 33</a> and implemented actual Tensor Core matrix multiplication using Mojo’s <code>TensorCore</code> API. The implementation works correctly, passes all accuracy tests, and uses real hardware-accelerated matrix operations. But when you profile it against the simple idiomatic tiled version from <a href="../puzzle_16/tiled.html">Puzzle 16</a> …</p>
+<p><strong>The “specialized hardware” is orders of magnitude slower!</strong></p>
+<h3 id="what-went-wrong"><a class="header" href="#what-went-wrong">What went wrong?</a></h3>
+<p>Your profiling with (NVIDIA only) <code>ncu</code> revealed the brutal truth (if you need a refresher on profiling techniques, see <a href="../puzzle_10/puzzle_10.html">Puzzle 10’s memory error detection</a> and <a href="../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a>):</p>
+<p><strong>Tensor Core version (the disappointment):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~13.9 ms</li>
+<li><strong>Memory bound</strong>: 72.5% DRAM throughput (should be compute-bound!)</li>
+<li><strong>Poor occupancy</strong>: 26.3% (wasted hardware)</li>
+<li><strong>Cache disaster</strong>: 29.7% L2 hit rate</li>
+<li><strong>Register pressure</strong>: 68 registers per thread</li>
+<li><strong>Shared memory conflicts</strong>: Bank conflicts destroying performance</li>
+</ul>
+<p><strong>Tiled version (the winner):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~1.62 ms (8.6x faster!)</li>
+<li><strong>Compute bound</strong>: 1.7% DRAM throughput (as expected)</li>
+<li><strong>Excellent occupancy</strong>: 66.7%</li>
+<li><strong>Cache friendly</strong>: 96.9% L2 hit rate</li>
+<li><strong>Efficient</strong>: 38 registers per thread</li>
+<li><strong>Clean memory</strong>: No significant bank conflicts</li>
+</ul>
+<h3 id="the-harsh-reality"><a class="header" href="#the-harsh-reality">The harsh reality</a></h3>
+<p>This is a common story in GPU optimization: <strong>raw hardware capability ≠ actual performance</strong>. Tensor Cores are incredibly powerful, but they’re also incredibly demanding:</p>
+<ul>
+<li><strong>Memory wall</strong>: They’re so fast they expose every memory bottleneck</li>
+<li><strong>Resource hungry</strong>: High register usage kills occupancy</li>
+<li><strong>Access sensitive</strong>: Poor memory patterns destroy cache behavior</li>
+<li><strong>Configuration critical</strong>: Launch parameters must be perfectly tuned</li>
+</ul>
+<h3 id="your-mission-fix-the-tensor-core-performance"><a class="header" href="#your-mission-fix-the-tensor-core-performance">Your mission: Fix the tensor core performance</a></h3>
+<p><strong>The challenge:</strong> Transform your memory-bound, low-occupancy Tensor Core implementation into something that actually beats the simple tiled version.</p>
+<p><strong>What you need to beat:</strong></p>
+<ul>
+<li><strong>Target duration</strong>: &lt; 1.62 ms</li>
+<li><strong>Occupancy</strong>: &gt; 26.3% baseline</li>
+<li><strong>DRAM pressure</strong>: &lt; 72.5% baseline</li>
+<li><strong>Cache performance</strong>: &gt; 29.7% L2 hit rate baseline</li>
+</ul>
+<p><strong>Optimization strategies to explore:</strong></p>
+<ol>
+<li>
+<p><strong>Register pressure reduction</strong></p>
+<ul>
+<li>Use smaller accumulator tiles</li>
+<li>Minimize intermediate storage</li>
+<li>Consider mixed-precision to reduce register footprint</li>
+<li>Review <a href="../puzzle_16/tiled.html">Puzzle 16’s tiled approach</a> for efficient accumulation patterns</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory pattern optimization</strong></p>
+<ul>
+<li>Add shared memory padding to eliminate bank conflicts (see <a href="../puzzle_16/shared_memory.html">shared memory concepts</a>)</li>
+<li>Optimize <code>copy_dram_to_sram_async</code> layouts</li>
+<li>Improve coalescing patterns (memory access fundamentals from <a href="../puzzle_01/puzzle_01.html">early puzzles</a>)</li>
+</ul>
+</li>
+<li>
+<p><strong>Occupancy improvements</strong></p>
+<ul>
+<li>Tune block sizes for better warp utilization</li>
+<li>Balance shared memory vs register usage</li>
+<li>Optimize warp-to-SM mapping</li>
+<li>Apply thread coordination lessons from <a href="../puzzle_11/puzzle_11.html">Puzzle 11-20 series</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Cache optimization</strong></p>
+<ul>
+<li>Improve data reuse patterns</li>
+<li>Optimize tile sizes for cache hierarchy</li>
+<li>Consider data layout transformations</li>
+<li>Build on memory hierarchy concepts from <a href="../puzzle_05/puzzle_05.html">puzzle progression</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Advanced techniques</strong></p>
+<ul>
+<li>Implement double buffering to overlap memory and compute</li>
+<li>Use software pipelining</li>
+<li>Explore async execution patterns</li>
+<li>Apply advanced coordination from <a href="../puzzle_10/puzzle_10.html">sanitization puzzles</a></li>
+</ul>
+</li>
+</ol>
+<h3 id="success-criteria"><a class="header" href="#success-criteria">Success criteria</a></h3>
+<ul>
+<li><strong>Correctness</strong>: All accuracy tests still pass</li>
+<li><strong>Performance</strong>: Tensor Core duration &lt; 1.62 ms</li>
+<li><strong>Efficiency</strong>: Higher occupancy (&gt;26.3%)</li>
+<li><strong>Memory</strong>: Lower DRAM pressure (&lt;72.5%)</li>
+<li><strong>Cache</strong>: Better hit rates (&gt;29.7% L2)</li>
+</ul>
+<h3 id="the-deeper-lesson"><a class="header" href="#the-deeper-lesson">The deeper lesson</a></h3>
+<p>This bonus challenge teaches the most important lesson in GPU optimization: <strong>understanding bottlenecks matters more than using the latest APIs</strong>.</p>
+<p>The goal isn’t just to make Tensor Cores faster - it’s to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.</p>
+<p>Master this challenge, and you’ll have the skills to optimize any GPU workload, regardless of the hardware features available.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_33/puzzle_33.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_33/puzzle_33.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

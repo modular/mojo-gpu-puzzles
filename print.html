@@ -282,8 +282,8 @@ if thread_id &lt; data_size:
 <tr><td>Warp programming</td><td>✅ <strong>Available</strong></td><td>Part VII (24-26)</td></tr>
 <tr><td>Block-level programming</td><td>✅ <strong>Available</strong></td><td>Part VIII (27)</td></tr>
 <tr><td>Advanced memory operations</td><td>✅ <strong>Available</strong></td><td>Part IX (28-29)</td></tr>
-<tr><td>Performance analysis</td><td>📋 <strong>Coming Soon</strong></td><td>Part X (30-32)</td></tr>
-<tr><td>Modern GPU features</td><td>📋 <strong>Coming Soon</strong></td><td>Part XI (33-35)</td></tr>
+<tr><td>Performance analysis</td><td>✅ <strong>Available</strong></td><td>Part X (30-32)</td></tr>
+<tr><td>Modern GPU features</td><td>🚧 <strong>WIP</strong></td><td>Part XI (33-35)</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
@@ -348,13 +348,13 @@ if thread_id &lt; data_size:
 <li>Learn memory fences and synchronization primitives</li>
 <li>Master prefetching and cache optimization strategies</li>
 </ul>
-<p><strong>Part X: Performance Analysis &amp; Optimization (Puzzles 30-32) 📋</strong></p>
+<p><strong>Part X: Performance Analysis &amp; Optimization (Puzzles 30-32) ✅</strong></p>
 <ul>
 <li>Profile GPU kernels and identify bottlenecks</li>
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p><strong>Part XI: Advanced GPU Features (Puzzles 33-35) 📋</strong></p>
+<p>**Part XI: Advanced GPU Features (Puzzles 33-35) 🚧 **</p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Implement GPU-based random number generation</li>
@@ -22781,6 +22781,803 @@ if thread_idx.x &lt; stride:
 </ol>
 <p>This detective case demonstrates that <strong>systematic profiling reveals optimization opportunities invisible to performance timing alone</strong> - bank conflicts are a perfect example of where measurement-driven optimization beats guesswork.</p>
 </details>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-33-tensor-core-operations"><a class="header" href="#puzzle-33-tensor-core-operations">Puzzle 33: Tensor Core Operations</a></h1>
+<h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<p>Welcome to the final frontier of GPU matrix multiplication optimization! In this puzzle, we’ll explore <strong>Tensor Cores</strong> - specialized hardware units designed to accelerate mixed-precision matrix operations at unprecedented speeds.</p>
+<p>Building on everything we’ve learned so far, especially from <a href="puzzle_33/../puzzle_16/puzzle_16.html">Puzzle 16’s idiomatic tiled matrix multiplication</a>, we’ll see how modern GPUs provide dedicated silicon to make matrix operations blazingly fast.</p>
+<h2 id="what-are-tensor-cores"><a class="header" href="#what-are-tensor-cores">What are tensor cores?</a></h2>
+<p>Tensor Cores (also known as Matrix Cores on AMD hardware) are specialized processing units that can perform mixed-precision matrix-matrix operations in a single instruction. These units are available on modern GPU architectures:</p>
+<ul>
+<li><strong>NVIDIA</strong>: Tensor Cores (Volta, Turing, Ampere, Hopper)</li>
+<li><strong>AMD</strong>: Matrix Cores (CDNA/CDNA2/CDNA3 architectures)</li>
+</ul>
+<p>Think of them as hardware-accelerated GEMM (General Matrix Multiply) engines built directly into the GPU.</p>
+<h3 id="key-characteristics"><a class="header" href="#key-characteristics">Key characteristics:</a></h3>
+<ul>
+<li><strong>Warp-level operations</strong>: Each instruction operates on data from an entire warp (32 threads on NVIDIA, 32 or 64 on AMD)</li>
+<li><strong>Fixed tile sizes</strong>: Operations work on specific matrix fragment sizes (e.g., 16×8×8 for FP32)</li>
+<li><strong>Mixed precision</strong>: Can mix input and output precisions for optimal performance</li>
+<li><strong>Massive throughput</strong>: Can achieve 10-100x speedup over regular compute cores for matrix operations</li>
+</ul>
+<h2 id="from-tiled-to-tensor-cores"><a class="header" href="#from-tiled-to-tensor-cores">From tiled to tensor cores</a></h2>
+<p>Let’s trace our journey from basic matrix multiplication to Tensor Cores:</p>
+<ol>
+<li><strong>Puzzle 16</strong>: We learned idiomatic tiled matrix multiplication using shared memory</li>
+<li><strong>Shared memory optimization</strong>: We used <code>copy_dram_to_sram_async</code> for efficient memory transfers</li>
+<li><strong>Thread cooperation</strong>: We coordinated warps using barriers and async operations</li>
+<li><strong>Now</strong>: We’ll use specialized hardware (Tensor Cores) to accelerate the core computation</li>
+</ol>
+<h2 id="the-tensor-core-programming-model"><a class="header" href="#the-tensor-core-programming-model">The tensor core programming model</a></h2>
+<p>Tensor Cores expose a different programming paradigm:</p>
+<h3 id="traditional-compute-core-approach"><a class="header" href="#traditional-compute-core-approach">Traditional compute core approach:</a></h3>
+<pre><code class="language-mojo"># Each thread computes one element
+acc += a_shared[local_row, k] * b_shared[k, local_col]
+</code></pre>
+<h3 id="tensor-core-approach"><a class="header" href="#tensor-core-approach">Tensor core approach:</a></h3>
+<pre><code class="language-mojo"># Entire warp cooperates on matrix fragments
+a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
+b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
+c_reg = mma_op.load_c(C_mma_tile)           # Load 16×8 accumulator
+d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)  # D = A×B + C
+mma_op.store_d(C_mma_tile, d_reg)           # Store result
+</code></pre>
+<h2 id="tensor-core-api-in-mojo"><a class="header" href="#tensor-core-api-in-mojo">Tensor core API in Mojo</a></h2>
+<p>Mojo provides a clean interface to Tensor Cores through the <a href="https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/"><code>TensorCore</code></a> type:</p>
+<pre><code class="language-mojo">from layout.tensor_core import TensorCore
+
+# Create a Tensor Core operator for specific tile sizes
+mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+
+# Core operations:
+# - load_a(): Load matrix A fragment from shared memory
+# - load_b(): Load matrix B fragment from shared memory
+# - load_c(): Load matrix C fragment (accumulator)
+# - mma_op(): Perform D = A×B + C operation
+# - store_d(): Store result fragment to memory
+</code></pre>
+<p><strong>Advanced features:</strong> The TensorCore API also supports quantized operations, different swizzle patterns for memory access optimization, and mixed-precision arithmetic. For complete documentation of all supported shapes, data types, and methods, see the <a href="https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
+<h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes:</a></h3>
+<p>The TensorCore API supports different shapes and data types depending on the GPU hardware:</p>
+<p><strong>NVIDIA GPUs:</strong></p>
+<ul>
+<li><strong>float32</strong>: 16×8×8 or 16×8×4</li>
+<li><strong>half-precision</strong>: 16×8×16</li>
+<li><strong>float8</strong>: 16×8×32</li>
+</ul>
+<p><strong>AMD GPUs:</strong></p>
+<ul>
+<li><strong>float32</strong>: 16×16×4</li>
+<li><strong>half-precision</strong>: 16×16×16 or 32×32×8</li>
+</ul>
+<p><strong>This puzzle uses FP32 with 16×8×8 fragments:</strong></p>
+<ul>
+<li><strong>MMA_M = 16</strong>: Matrix A height (and output height)</li>
+<li><strong>MMA_N = 8</strong>: Matrix B width (and output width)</li>
+<li><strong>MMA_K = 8</strong>: Inner dimension (A width = B height)</li>
+</ul>
+<p><strong>What is MMA?</strong> MMA stands for “Mixed-precision Matrix-Multiply-Accumulate” - the fundamental operation that Tensor Cores perform. Each MMA instruction computes: <code>D = A × B + C</code> where A, B, C, and D are matrix fragments.</p>
+<p><strong>Fragment visualization:</strong></p>
+<pre><code class="language-txt">A fragment (16×8)  ×  B fragment (8×8)  +  C fragment (16×8)  =  D fragment (16×8)
+
+    16 rows             8 rows               16 rows              16 rows
+    8 cols              8 cols               8 cols               8 cols
+      |                   |                    |                    |
+   [A data]         ×   [B data]         +   [C data]         =  [D result]
+</code></pre>
+<p>This means each Tensor Core instruction computes a 16×8 output tile by multiplying a 16×8 tile from A with an 8×8 tile from B, then adding it to the existing 16×8 accumulator.</p>
+<h2 id="warp-organization-for-tensor-cores"><a class="header" href="#warp-organization-for-tensor-cores">Warp organization for tensor cores</a></h2>
+<p><strong>What is a warp?</strong> A warp is a group of threads (32 on NVIDIA, 32 or 64 on AMD) that execute instructions together in lockstep. Tensor Cores require all threads in a warp to cooperate on a single matrix operation.</p>
+<p><strong>Why warp-level?</strong> Unlike regular operations where each thread works independently, Tensor Cores need the entire warp to collectively load matrix fragments, perform the MMA operation, and store results.</p>
+<p>Since Tensor Cores operate at warp-level, we need to organize our threads differently:</p>
+<pre><code class="language-mojo"># Calculate warp coordinates within the block
+warp_id = thread_idx.x // WARP_SIZE
+warps_in_n = BN // WN  # Number of warps along N dimension
+warps_in_m = BM // WM  # Number of warps along M dimension
+warp_y = warp_id // warps_in_n  # Warp's row
+warp_x = warp_id % warps_in_n   # Warp's column
+
+# Each warp handles a WM×WN tile of the output
+C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+</code></pre>
+<p><strong>Warp organization example</strong> (with BM=128, BN=64, WM=32, WN=32):</p>
+<pre><code class="language-txt">Block (128×64) contains 8 warps arranged as:
+
+    32 cols    32 cols
+     |          |
+[  Warp 0  ][  Warp 1  ]  ← 32 rows each
+[  Warp 2  ][  Warp 3  ]  ← 32 rows each
+[  Warp 4  ][  Warp 5  ]  ← 32 rows each
+[  Warp 6  ][  Warp 7  ]  ← 32 rows each
+
+Total: 4×2 = 8 warps, each handling 32×32 output region
+</code></pre>
+<h2 id="memory-hierarchy-with-tensor-cores"><a class="header" href="#memory-hierarchy-with-tensor-cores">Memory hierarchy with tensor cores</a></h2>
+<p>Tensor Cores add another layer to our memory optimization:</p>
+<ol>
+<li><strong>Global Memory</strong> → <strong>Shared Memory</strong>: Use <code>copy_dram_to_sram_async</code> (from Puzzle 16)</li>
+<li><strong>Shared Memory</strong> → <strong>Register Fragments</strong>: Use <code>mma_op.load_a/load_b</code></li>
+<li><strong>Computation</strong>: Use <code>mma_op.mma_op</code> on register fragments</li>
+<li><strong>Register Fragments</strong> → <strong>Global Memory</strong>: Use <code>mma_op.store_d</code></li>
+</ol>
+<h2 id="the-challenge-1"><a class="header" href="#the-challenge-1">The challenge</a></h2>
+<p>Your task is to complete the <code>tensor_core_matrix_multiplication</code> function. The skeleton builds on the tiled approach but uses actual Tensor Core hardware operations.</p>
+<h3 id="key-requirements"><a class="header" href="#key-requirements">Key requirements:</a></h3>
+<ol>
+<li><strong>Use the actual Tensor Core API</strong>: Don’t simulate - use real <code>mma_op.load_a()</code>, <code>mma_op.mma_op()</code>, etc.</li>
+<li><strong>Maintain correctness</strong>: Your result must match the CPU reference implementation</li>
+<li><strong>Proper warp coordination</strong>: Handle multiple warps per block correctly (works on both NVIDIA and AMD)</li>
+<li><strong>Memory efficiency</strong>: Use the same async copy patterns from Puzzle 16</li>
+<li><strong>Cross-platform compatibility</strong>: Ensure tiling parameters are multiples of <code>WARP_SIZE</code></li>
+</ol>
+<h2 id="configuration-45"><a class="header" href="#configuration-45">Configuration</a></h2>
+<ul>
+<li>Matrix size: \(\text{SIZE} = 1024\)</li>
+<li>Block tiling: \(\text{BM} = 128, \text{BN} = 64, \text{BK} = 32\)</li>
+<li>Warp tiling: \(\text{WM} = 32, \text{WN} = 32\) (multiples of <code>WARP_SIZE</code>)</li>
+<li>MMA fragments: \(16 \times 8 \times 8\) for FP32</li>
+<li>Threads per block: \(8 \times \text{WARP_SIZE}\) (8 warps per block)</li>
+<li>Grid dimensions: Covers full matrix with block tiles</li>
+</ul>
+<p>Layout configuration:</p>
+<ul>
+<li>Input A: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Input B: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Output C: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>Shared Memory: Block-sized tiles with async copy operations</li>
+</ul>
+<h2 id="the-challenge-2"><a class="header" href="#the-challenge-2">The challenge</a></h2>
+<p>In this puzzle, you’ll transform the idiomatic tiled matrix multiplication from Puzzle 16 into a Tensor Core implementation. Let’s break this down step by step:</p>
+<h3 id="step-1-understanding-your-tiled-baseline"><a class="header" href="#step-1-understanding-your-tiled-baseline">Step 1: Understanding your tiled baseline</a></h3>
+<p>The puzzle provides a complete idiomatic tiled implementation as your reference:</p>
+<pre><code class="language-mojo">fn matmul_idiomatic_tiled[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    a: LayoutTensor[mut=False, dtype, layout],
+    b: LayoutTensor[mut=False, dtype, layout],
+):
+    # Use block_dim to get actual tile size dynamically
+    var tile_size_x = block_dim.x
+    var tile_size_y = block_dim.y
+
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+    tiled_row = block_idx.y * tile_size_y + local_row
+    tiled_col = block_idx.x * tile_size_x + local_col
+
+    # Get the tile of the output matrix that this thread block is responsible for
+    out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
+    a_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
+    b_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
+
+    var acc: output.element_type = 0
+
+    alias load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    alias load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    # Note: Both matrices stored in same orientation for correct matrix multiplication
+    # Transposed loading would be useful if B were pre-transposed in global memory
+
+    for idx in range(size // TILE_SIZE):  # Iterate over K tiles
+        # Get tiles from A and B matrices
+        a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
+        b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
+
+        # Asynchronously copy tiles to shared memory with consistent orientation
+        copy_dram_to_sram_async[
+            thread_layout=load_a_layout,
+            num_threads = TILE_SIZE * TILE_SIZE,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](a_shared, a_tile)
+        copy_dram_to_sram_async[
+            thread_layout=load_b_layout,
+            num_threads = TILE_SIZE * TILE_SIZE,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](b_shared, b_tile)
+
+        async_copy_wait_all()
+        barrier()
+
+        # Compute partial matrix multiplication for this tile
+        for k in range(TILE_SIZE):
+            if (
+                local_row &lt; TILE_SIZE
+                and local_col &lt; TILE_SIZE
+                and k &lt; TILE_SIZE
+            ):
+                acc += a_shared[local_row, k] * b_shared[k, local_col]
+
+        barrier()
+
+    # Write final result to output tile
+    if tiled_row &lt; size and tiled_col &lt; size:
+        out_tile[local_row, local_col] = acc
+
+
+</code></pre>
+<p><strong>What this baseline does:</strong></p>
+<ul>
+<li><strong>Correctness</strong>: This implementation works perfectly and passes all tests</li>
+<li><strong>Thread cooperation</strong>: Uses <code>copy_dram_to_sram_async</code> for efficient memory transfers</li>
+<li><strong>Shared memory</strong>: Coordinates threads with barriers and async operations</li>
+<li><strong>Tiled computation</strong>: Each thread computes one output element using shared memory tiles</li>
+</ul>
+<h3 id="step-2-your-tensor-core-mission"><a class="header" href="#step-2-your-tensor-core-mission">Step 2: Your tensor core mission</a></h3>
+<p>Transform the above approach using specialized hardware acceleration:</p>
+<ul>
+<li><strong>From:</strong> Thread-level computation → <strong>To:</strong> Warp-level matrix fragments</li>
+<li><strong>From:</strong> Standard FP32 arithmetic → <strong>To:</strong> Hardware-accelerated GEMM operations</li>
+<li><strong>From:</strong> Individual element results → <strong>To:</strong> 16×8 matrix fragment results</li>
+</ul>
+<h3 id="step-3-configuration-understanding"><a class="header" href="#step-3-configuration-understanding">Step 3: Configuration understanding</a></h3>
+<p>The tensor core version uses different tiling parameters optimized for hardware:</p>
+<ul>
+<li><strong>Block tiling</strong>: <code>BM=128, BN=64, BK=32</code> (larger blocks for better occupancy)</li>
+<li><strong>Warp tiling</strong>: <code>WM=32, WN=32</code> (each warp handles a 32×32 output region)</li>
+<li><strong>MMA fragments</strong>: <code>16×8×8</code> (hardware-defined matrix fragment sizes)</li>
+<li><strong>Warps per block</strong>: 8 warps (organized as 4×2 in the BM×BN block)</li>
+</ul>
+<p><strong>Why these specific sizes?</strong></p>
+<ul>
+<li><strong>BM=128, BN=64</strong>: Larger than tiled version (32×32) to better utilize Tensor Cores</li>
+<li><strong>WM=WN=32</strong>: Multiple of WARP_SIZE and contains 2×4=8 MMA fragments (32÷16=2, 32÷8=4)</li>
+<li><strong>MMA 16×8×8</strong>: Fixed by hardware - this is what the Tensor Cores physically compute</li>
+<li><strong>8 warps</strong>: BM÷WM × BN÷WN = 128÷32 × 64÷32 = 4×2 = 8 warps per block</li>
+</ul>
+<p><strong>How warps map to MMA fragments:</strong></p>
+<pre><code class="language-txt">Each 32×32 warp tile contains multiple 16×8 MMA fragments:
+
+    16 cols   16 cols
+     |         |
+[ MMA 0,0 ][ MMA 0,1 ]  ← 8 rows each (32÷8=4 fragments down)
+[ MMA 1,0 ][ MMA 1,1 ]  ← 8 rows each
+[ MMA 2,0 ][ MMA 2,1 ]  ← 8 rows each
+[ MMA 3,0 ][ MMA 3,1 ]  ← 8 rows each
+
+2 fragments across (32÷16=2) × 4 fragments down (32÷8=4) = 8 MMA operations per warp per K-tile
+</code></pre>
+<h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
+<pre><code class="language-mojo"># Block and warp tiling sizes
+alias BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
+alias BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
+alias BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
+alias WM = WARP_SIZE  # Warp tile M
+alias WN = WARP_SIZE  # Warp tile N
+
+# MMA tile sizes for tensor cores
+alias MMA_M = 16
+alias MMA_N = 8
+alias MMA_K = 8
+
+alias THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
+# grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
+alias BLOCKS_PER_GRID_TENSOR_CORE = (
+    (SIZE + BN - 1) // BN,
+    (SIZE + BM - 1) // BM,
+)
+
+
+fn tensor_core_matrix_multiplication[
+    dtype: DType,
+    layout_a: Layout,
+    layout_b: Layout,
+    layout_c: Layout,
+    BM: Int,
+    BN: Int,
+    BK: Int,
+    WM: Int,
+    WN: Int,
+    MMA_M: Int,
+    MMA_N: Int,
+    MMA_K: Int,
+](
+    A: LayoutTensor[mut=False, dtype, layout_a],
+    B: LayoutTensor[mut=False, dtype, layout_b],
+    C: LayoutTensor[mut=True, dtype, layout_c],
+):
+    alias M = C.shape[0]()
+    alias N = C.shape[1]()
+    alias K = A.shape[1]()
+
+    warp_id = thread_idx.x // WARP_SIZE
+    warps_in_n = BN // WN
+    warps_in_m = BM // WM
+    warp_y = warp_id // warps_in_n
+    warp_x = warp_id % warps_in_n
+
+    warp_is_active = warp_y &lt; warps_in_m
+
+    C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
+    C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+
+    mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+
+    # Shared SRAM tiles (no padding to stay under shared memory limit)
+    A_sram_tile = tb[A.dtype]().row_major[BM, BK]().shared().alloc()
+    B_sram_tile = tb[B.dtype]().row_major[BK, BN]().shared().alloc()
+
+    # One per-warp accumulator tile of shape [WM, WN]
+    C_warp_accum = tb[C.dtype]().row_major[WM, WN]().local().alloc()
+
+    # Zero initialize accumulator (only for active warps)
+    if warp_is_active:
+
+        @parameter
+        for i in range(WM):
+
+            @parameter
+            for j in range(WN):
+                C_warp_accum[i, j] = 0.0
+
+    # Sweep across K in BK chunks (single-buffered)
+    for k_i in range(K // BK):
+        barrier()
+
+        A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
+        B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
+
+        copy_dram_to_sram_async[
+            thread_layout = Layout.row_major(4, 8),
+            num_threads=256,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
+        copy_dram_to_sram_async[
+            thread_layout = Layout.row_major(4, 8),
+            num_threads=256,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
+
+        async_copy_wait_all()
+        barrier()
+
+        if warp_is_active:
+            A_warp_tile = A_sram_tile.tile[WM, BK](warp_y, 0)
+            B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
+
+            @parameter
+            for mma_k in range(BK // MMA_K):
+
+                @parameter
+                for mma_m in range(WM // MMA_M):
+
+                    @parameter
+                    for mma_n in range(WN // MMA_N):
+                        # FILL IN (roughly 8 lines)
+                        ...
+
+    # Store the final per-warp accumulation to the output warp tile
+    if warp_is_active:
+
+        @parameter
+        for mma_m in range(WM // MMA_M):
+
+            @parameter
+            for mma_n in range(WN // MMA_N):
+                var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
+                Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
+                frag = mma_op.load_c(Acc_mma_tile)
+                mma_op.store_d(C_mma_tile, frag)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p33/p33.mojo" class="filename">View full file: problems/p33/p33.mojo</a></p>
+<p><strong>Your task</strong>: Complete the missing section (marked with <code># FILL IN (roughly 8 lines)</code>) inside the triple nested loops.</p>
+<p><strong>What you need to understand:</strong></p>
+<ul>
+<li>The skeleton handles all memory management, warp organization, and synchronization</li>
+<li>You only need to implement the core Tensor Core computation</li>
+<li>The loops iterate over MMA fragments: <code>mma_k</code>, <code>mma_m</code>, <code>mma_n</code></li>
+<li>Each iteration processes one 16×8×8 matrix fragment</li>
+</ul>
+<p><strong>Understanding the triple nested loops:</strong></p>
+<pre><code class="language-mojo">@parameter
+for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
+    @parameter
+    for mma_m in range(WM // MMA_M): # 32÷16 = 2 iterations (M dimension)
+        @parameter
+        for mma_n in range(WN // MMA_N): # 32÷8 = 4 iterations (N dimension)
+            # YOUR CODE HERE: Process one 16×8×8 MMA fragment
+</code></pre>
+<p><strong>What each loop does:</strong></p>
+<ul>
+<li><code>mma_k</code>: Iterates through K-slices of the current K-tile (4 slices of 8 elements each)</li>
+<li><code>mma_m</code>: Iterates through M-slices of the warp’s output (2 slices of 16 rows each)</li>
+<li><code>mma_n</code>: Iterates through N-slices of the warp’s output (4 slices of 8 columns each)</li>
+<li><strong>Total</strong>: 4×2×4 = 32 MMA operations per warp per K-tile</li>
+</ul>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<p>Think about the Tensor Core workflow - you need to:</p>
+<ol>
+<li>
+<p><strong>Get the right matrix fragments</strong>:</p>
+<ul>
+<li>From the warp tiles (<code>A_warp_tile</code>, <code>B_warp_tile</code>, <code>C_warp_accum</code>), extract the specific MMA-sized fragments</li>
+<li>Use the loop indices (<code>mma_m</code>, <code>mma_k</code>, <code>mma_n</code>) to get the correct tile coordinates</li>
+<li>Remember: A needs [MMA_M, MMA_K], B needs [MMA_K, MMA_N], C needs [MMA_M, MMA_N]</li>
+</ul>
+</li>
+<li>
+<p><strong>Load fragments into Tensor Core registers</strong>:</p>
+<ul>
+<li>The <code>mma_op</code> object has methods to load each matrix type</li>
+<li>Each load method takes a tile and returns register fragments</li>
+<li>Think: <code>load_a()</code>, <code>load_b()</code>, <code>load_c()</code> - what do they each take?</li>
+</ul>
+</li>
+<li>
+<p><strong>Perform the hardware operation and store</strong>:</p>
+<ul>
+<li>Use the MMA operation to compute the result</li>
+<li>Store the result back to the accumulator tile</li>
+<li>The operation follows the pattern: result = A × B + C</li>
+</ul>
+</li>
+</ol>
+<p><strong>Key insight</strong>: You’re replacing 128 individual multiply-add operations with a single hardware instruction!</p>
+<p><strong>Debugging tip</strong>: If you get dimension errors, double-check your tile indexing - the order of <code>mma_m</code>, <code>mma_k</code>, <code>mma_n</code> matters for getting the right fragments.</p>
+</div>
+</details>
+<h2 id="running-the-code-36"><a class="header" href="#running-the-code-36">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p33 --test
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p33 --test
+</code></pre>
+  </div>
+</div>
+<p>Your output will show accuracy test results once completed:</p>
+<pre><code class="language-txt">=== Running All Accuracy Tests ===
+--- Test 1: Tensor Core vs CPU Reference ---
+✅ TENSOR CORE ACCURACY TEST PASSED!
+--- Test 2: Idiomatic Tiled vs CPU Reference ---
+✅ IDIOMATIC TILED ACCURACY TEST PASSED!
+ALL TESTS PASSED!
+</code></pre>
+<h2 id="solution-55"><a class="header" href="#solution-55">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn tensor_core_matrix_multiplication[
+    dtype: DType,
+    layout_a: Layout,
+    layout_b: Layout,
+    layout_c: Layout,
+    BM: Int,
+    BN: Int,
+    BK: Int,
+    WM: Int,
+    WN: Int,
+    MMA_M: Int,
+    MMA_N: Int,
+    MMA_K: Int,
+](
+    A: LayoutTensor[mut=False, dtype, layout_a],
+    B: LayoutTensor[mut=False, dtype, layout_b],
+    C: LayoutTensor[mut=True, dtype, layout_c],
+):
+    alias M = C.shape[0]()
+    alias N = C.shape[1]()
+    alias K = A.shape[1]()
+
+    warp_id = thread_idx.x // WARP_SIZE
+    warps_in_n = BN // WN
+    warps_in_m = BM // WM
+    warp_y = warp_id // warps_in_n
+    warp_x = warp_id % warps_in_n
+
+    warp_is_active = warp_y &lt; warps_in_m
+
+    C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
+    C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+
+    mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+
+    # Shared SRAM tiles (no padding to stay under shared memory limit)
+    A_sram_tile = tb[A.dtype]().row_major[BM, BK]().shared().alloc()
+    B_sram_tile = tb[B.dtype]().row_major[BK, BN]().shared().alloc()
+
+    # One per-warp accumulator tile of shape [WM, WN]
+    C_warp_accum = tb[C.dtype]().row_major[WM, WN]().local().alloc()
+
+    # Zero initialize accumulator (only for active warps)
+    if warp_is_active:
+
+        @parameter
+        for i in range(WM):
+
+            @parameter
+            for j in range(WN):
+                C_warp_accum[i, j] = 0.0
+
+    # (Removed shared C accumulator to reduce shared usage)
+
+    # Sweep across K in BK chunks (single-buffered)
+    for k_i in range(K // BK):
+        barrier()
+
+        A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
+        B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
+
+        copy_dram_to_sram_async[
+            thread_layout = Layout.row_major(4, 8),
+            num_threads=256,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
+        copy_dram_to_sram_async[
+            thread_layout = Layout.row_major(4, 8),
+            num_threads=256,
+            block_dim_count=BLOCK_DIM_COUNT,
+        ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
+
+        async_copy_wait_all()
+        barrier()
+
+        if warp_is_active:
+            A_warp_tile = A_sram_tile.tile[WM, BK](warp_y, 0)
+            B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
+
+            @parameter
+            for mma_k in range(BK // MMA_K):
+
+                @parameter
+                for mma_m in range(WM // MMA_M):
+
+                    @parameter
+                    for mma_n in range(WN // MMA_N):
+                        A_mma_tile = A_warp_tile.tile[MMA_M, MMA_K](
+                            mma_m, mma_k
+                        )
+                        B_mma_tile = B_warp_tile.tile[MMA_K, MMA_N](
+                            mma_k, mma_n
+                        )
+                        C_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](
+                            mma_m, mma_n
+                        )
+
+                        a_reg = mma_op.load_a(A_mma_tile)
+                        b_reg = mma_op.load_b(B_mma_tile)
+                        c_reg = mma_op.load_c(C_mma_tile)
+                        d_reg = mma_op.mma_op(a_reg, b_reg, c_reg)
+                        mma_op.store_d(C_mma_tile, d_reg)
+
+    # Store the final per-warp accumulation to the output warp tile
+    if warp_is_active:
+
+        @parameter
+        for mma_m in range(WM // MMA_M):
+
+            @parameter
+            for mma_n in range(WN // MMA_N):
+                var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
+                Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
+                frag = mma_op.load_c(Acc_mma_tile)
+                mma_op.store_d(C_mma_tile, frag)
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates the Tensor Core programming model:</p>
+<ol>
+<li>
+<p><strong>Warp organization</strong></p>
+<ul>
+<li>Calculates warp coordinates within the block using <code>warp_id = thread_idx.x // WARP_SIZE</code></li>
+<li>Maps warps to output tiles: each warp handles a <code>WM×WN</code> region</li>
+<li>Uses <code>warp_is_active</code> guards to handle blocks with fewer than expected warps</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory hierarchy optimization</strong></p>
+<ul>
+<li><strong>Global → Shared</strong>: Uses <code>copy_dram_to_sram_async</code> for efficient block-level transfers</li>
+<li><strong>Shared → Registers</strong>: Uses <code>mma_op.load_a/load_b</code> for warp-level fragment loading</li>
+<li><strong>Register computation</strong>: Uses <code>mma_op.mma_op</code> for hardware-accelerated matrix operations</li>
+<li><strong>Registers → Global</strong>: Uses <code>mma_op.store_d</code> for efficient result storage</li>
+</ul>
+</li>
+<li>
+<p><strong>Tensor Core operations</strong></p>
+<ul>
+<li><code>load_a(A_mma_tile)</code>: Loads 16×8 matrix A fragment into registers</li>
+<li><code>load_b(B_mma_tile)</code>: Loads 8×8 matrix B fragment into registers</li>
+<li><code>load_c(C_mma_tile)</code>: Loads 16×8 accumulator fragment</li>
+<li><code>mma_op(a_reg, b_reg, c_reg)</code>: Computes D = A×B + C using specialized hardware</li>
+<li><code>store_d(C_mma_tile, d_reg)</code>: Stores 16×8 result fragment</li>
+</ul>
+</li>
+<li>
+<p><strong>Cross-platform compatibility</strong></p>
+<ul>
+<li>All tiling parameters are multiples of <code>WARP_SIZE</code> (32 on NVIDIA, 64 on AMD)</li>
+<li>Mojo abstracts hardware differences through the <code>TensorCore</code> interface</li>
+<li>Same code works on both NVIDIA Tensor Cores and AMD Matrix Cores</li>
+</ul>
+</li>
+</ol>
+<p>The key insight is that Tensor Cores operate on entire matrix fragments at the warp level, rather than individual elements at the thread level. This enables massive parallelism and specialized hardware acceleration.</p>
+</div>
+</details>
+<h2 id="performance-analysis-are-we-done"><a class="header" href="#performance-analysis-are-we-done">Performance analysis: Are we done?</a></h2>
+<p>Now let’s see if Tensor Cores deliver their promised performance advantage over the idiomatic tiled approach.</p>
+<h3 id="building-for-profiling"><a class="header" href="#building-for-profiling">Building for profiling</a></h3>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run mojo build problems/p33/p33.mojo -o problems/p33/p33_profiler
+</code></pre>
+  </div>
+</div>
+<h3 id="profiling-with-nvidia-nsight-compute-nvidia-only"><a class="header" href="#profiling-with-nvidia-nsight-compute-nvidia-only">Profiling with NVIDIA Nsight Compute (NVIDIA only)</a></h3>
+<p>First, enter the CUDA environment for <code>ncu</code> access:</p>
+<pre><code class="language-bash"># Enter CUDA environment
+pixi shell -e cuda
+
+# Profile tensor core version
+ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,smsp__inst_executed_pipe_tensor_op_hmma.sum ./problems/p33p33_profiler --tensor-core
+
+# Profile tiled version for comparison
+ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed ./problems/p33p33_profiler --tiled
+</code></pre>
+<h3 id="key-metrics-to-compare"><a class="header" href="#key-metrics-to-compare">Key metrics to compare</a></h3>
+<p><strong>Performance metrics:</strong></p>
+<ul>
+<li><strong>Duration</strong>: Total kernel execution time (lower is better)</li>
+<li><strong>SM Active %</strong>: Streaming multiprocessor utilization (higher is better)</li>
+<li><strong>DRAM Throughput</strong>: Memory bandwidth utilization (shows if memory-bound)</li>
+<li><strong>Tensor Op Instructions</strong>: Number of actual tensor core operations (tensor core only)</li>
+</ul>
+<p><strong>What the results typically show:</strong></p>
+<p><strong>Tensor Core version (slower):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~13.9 ms (much slower!)</li>
+<li><strong>SM Active</strong>: 83.7% (good utilization)</li>
+<li><strong>DRAM Throughput</strong>: 72.5% (memory-bound!)</li>
+<li><strong>Occupancy</strong>: 26.3% (poor - limited by registers)</li>
+<li><strong>Tensor Op Instructions</strong>: 1,048,576 (confirms tensor cores are working)</li>
+</ul>
+<p><strong>Tiled version (faster):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~1.62 ms (8.6× faster!)</li>
+<li><strong>SM Active</strong>: 98.0% (excellent utilization)</li>
+<li><strong>DRAM Throughput</strong>: 1.7% (compute-bound, as expected)</li>
+<li><strong>Occupancy</strong>: 66.7% (much better)</li>
+<li><strong>L2 Hit Rate</strong>: 96.9% vs 29.7% (much better cache locality)</li>
+</ul>
+<p><strong>Why is Tensor Core slower?</strong></p>
+<ul>
+<li><strong>Memory bottleneck</strong>: 72% DRAM usage shows it’s memory-bound, not compute-bound</li>
+<li><strong>Poor occupancy</strong>: 26% vs 67% - high register usage (68 vs 38 per thread) limits concurrent warps</li>
+<li><strong>Cache misses</strong>: 29% L2 hit rate vs 97% shows poor memory locality</li>
+<li><strong>Shared memory conflicts</strong>: Bank conflicts from unoptimized access patterns</li>
+<li><strong>Launch configuration</strong>: Suboptimal block/warp organization for this problem size</li>
+</ul>
+<h2 id="the-performance-reality"><a class="header" href="#the-performance-reality">The performance reality</a></h2>
+<p>As you can see from the profiling results, the “specialized hardware” isn’t automatically faster! The Tensor Core version is significantly slower (~8.6×) than the simple tiled approach. This is a common reality in GPU optimization - raw hardware capability doesn’t guarantee better performance.</p>
+<p><strong>Key insights:</strong></p>
+<ul>
+<li><strong>Memory bottleneck</strong>: 72% DRAM usage shows tensor cores are memory-bound, not compute-bound</li>
+<li><strong>Poor occupancy</strong>: 26% vs 67% due to high register usage limits concurrent warps</li>
+<li><strong>Cache misses</strong>: 29% vs 97% L2 hit rate shows poor memory locality</li>
+<li><strong>Resource waste</strong>: Shared memory bank conflicts and suboptimal launch configuration</li>
+</ul>
+<p><strong>The lesson</strong>: Understanding performance bottlenecks and systematic optimization matter more than using the “latest and greatest” APIs. Hardware features are tools that require careful tuning, not magic bullets.</p>
+<h2 id="next-step"><a class="header" href="#next-step">Next step:</a></h2>
+<p>Ready for a rewarding GPU optimization challenge? Head to the <a href="puzzle_33/../bonuses/part5.html">🎯 Performance Bonus Challenge</a> to learn how to transform your memory-bound Tensor Core implementation into something that actually beats the simple tiled version!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-performance-bonus-challenge"><a class="header" href="#-performance-bonus-challenge">🎯 Performance Bonus Challenge</a></h1>
+<h2 id="the-discovery"><a class="header" href="#the-discovery">The discovery</a></h2>
+<p>You’ve just completed <a href="bonuses/../puzzle_33/puzzle_33.html">Puzzle 33</a> and implemented actual Tensor Core matrix multiplication using Mojo’s <code>TensorCore</code> API. The implementation works correctly, passes all accuracy tests, and uses real hardware-accelerated matrix operations. But when you profile it against the simple idiomatic tiled version from <a href="bonuses/../puzzle_16/tiled.html">Puzzle 16</a> …</p>
+<p><strong>The “specialized hardware” is orders of magnitude slower!</strong></p>
+<h3 id="what-went-wrong"><a class="header" href="#what-went-wrong">What went wrong?</a></h3>
+<p>Your profiling with (NVIDIA only) <code>ncu</code> revealed the brutal truth (if you need a refresher on profiling techniques, see <a href="bonuses/../puzzle_10/puzzle_10.html">Puzzle 10’s memory error detection</a> and <a href="bonuses/../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a>):</p>
+<p><strong>Tensor Core version (the disappointment):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~13.9 ms</li>
+<li><strong>Memory bound</strong>: 72.5% DRAM throughput (should be compute-bound!)</li>
+<li><strong>Poor occupancy</strong>: 26.3% (wasted hardware)</li>
+<li><strong>Cache disaster</strong>: 29.7% L2 hit rate</li>
+<li><strong>Register pressure</strong>: 68 registers per thread</li>
+<li><strong>Shared memory conflicts</strong>: Bank conflicts destroying performance</li>
+</ul>
+<p><strong>Tiled version (the winner):</strong></p>
+<ul>
+<li><strong>Duration</strong>: ~1.62 ms (8.6x faster!)</li>
+<li><strong>Compute bound</strong>: 1.7% DRAM throughput (as expected)</li>
+<li><strong>Excellent occupancy</strong>: 66.7%</li>
+<li><strong>Cache friendly</strong>: 96.9% L2 hit rate</li>
+<li><strong>Efficient</strong>: 38 registers per thread</li>
+<li><strong>Clean memory</strong>: No significant bank conflicts</li>
+</ul>
+<h3 id="the-harsh-reality"><a class="header" href="#the-harsh-reality">The harsh reality</a></h3>
+<p>This is a common story in GPU optimization: <strong>raw hardware capability ≠ actual performance</strong>. Tensor Cores are incredibly powerful, but they’re also incredibly demanding:</p>
+<ul>
+<li><strong>Memory wall</strong>: They’re so fast they expose every memory bottleneck</li>
+<li><strong>Resource hungry</strong>: High register usage kills occupancy</li>
+<li><strong>Access sensitive</strong>: Poor memory patterns destroy cache behavior</li>
+<li><strong>Configuration critical</strong>: Launch parameters must be perfectly tuned</li>
+</ul>
+<h3 id="your-mission-fix-the-tensor-core-performance"><a class="header" href="#your-mission-fix-the-tensor-core-performance">Your mission: Fix the tensor core performance</a></h3>
+<p><strong>The challenge:</strong> Transform your memory-bound, low-occupancy Tensor Core implementation into something that actually beats the simple tiled version.</p>
+<p><strong>What you need to beat:</strong></p>
+<ul>
+<li><strong>Target duration</strong>: &lt; 1.62 ms</li>
+<li><strong>Occupancy</strong>: &gt; 26.3% baseline</li>
+<li><strong>DRAM pressure</strong>: &lt; 72.5% baseline</li>
+<li><strong>Cache performance</strong>: &gt; 29.7% L2 hit rate baseline</li>
+</ul>
+<p><strong>Optimization strategies to explore:</strong></p>
+<ol>
+<li>
+<p><strong>Register pressure reduction</strong></p>
+<ul>
+<li>Use smaller accumulator tiles</li>
+<li>Minimize intermediate storage</li>
+<li>Consider mixed-precision to reduce register footprint</li>
+<li>Review <a href="bonuses/../puzzle_16/tiled.html">Puzzle 16’s tiled approach</a> for efficient accumulation patterns</li>
+</ul>
+</li>
+<li>
+<p><strong>Memory pattern optimization</strong></p>
+<ul>
+<li>Add shared memory padding to eliminate bank conflicts (see <a href="bonuses/../puzzle_16/shared_memory.html">shared memory concepts</a>)</li>
+<li>Optimize <code>copy_dram_to_sram_async</code> layouts</li>
+<li>Improve coalescing patterns (memory access fundamentals from <a href="bonuses/../puzzle_01/puzzle_01.html">early puzzles</a>)</li>
+</ul>
+</li>
+<li>
+<p><strong>Occupancy improvements</strong></p>
+<ul>
+<li>Tune block sizes for better warp utilization</li>
+<li>Balance shared memory vs register usage</li>
+<li>Optimize warp-to-SM mapping</li>
+<li>Apply thread coordination lessons from <a href="bonuses/../puzzle_11/puzzle_11.html">Puzzle 11-20 series</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Cache optimization</strong></p>
+<ul>
+<li>Improve data reuse patterns</li>
+<li>Optimize tile sizes for cache hierarchy</li>
+<li>Consider data layout transformations</li>
+<li>Build on memory hierarchy concepts from <a href="bonuses/../puzzle_05/puzzle_05.html">puzzle progression</a></li>
+</ul>
+</li>
+<li>
+<p><strong>Advanced techniques</strong></p>
+<ul>
+<li>Implement double buffering to overlap memory and compute</li>
+<li>Use software pipelining</li>
+<li>Explore async execution patterns</li>
+<li>Apply advanced coordination from <a href="bonuses/../puzzle_10/puzzle_10.html">sanitization puzzles</a></li>
+</ul>
+</li>
+</ol>
+<h3 id="success-criteria"><a class="header" href="#success-criteria">Success criteria</a></h3>
+<ul>
+<li><strong>Correctness</strong>: All accuracy tests still pass</li>
+<li><strong>Performance</strong>: Tensor Core duration &lt; 1.62 ms</li>
+<li><strong>Efficiency</strong>: Higher occupancy (&gt;26.3%)</li>
+<li><strong>Memory</strong>: Lower DRAM pressure (&lt;72.5%)</li>
+<li><strong>Cache</strong>: Better hit rates (&gt;29.7% L2)</li>
+</ul>
+<h3 id="the-deeper-lesson"><a class="header" href="#the-deeper-lesson">The deeper lesson</a></h3>
+<p>This bonus challenge teaches the most important lesson in GPU optimization: <strong>understanding bottlenecks matters more than using the latest APIs</strong>.</p>
+<p>The goal isn’t just to make Tensor Cores faster - it’s to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.</p>
+<p>Master this challenge, and you’ll have the skills to optimize any GPU workload, regardless of the hardware features available.</p>
 
                     </main>
 
