@@ -4,15 +4,15 @@ from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
+from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
-
-alias SIZE = 128
-alias TPB = 128
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
+ 
+alias SIZE = 128 # This must be equal to INPUT_SIZE in p18.py
 alias layout = Layout.row_major(SIZE)
-
+alias GRID_DIM_X = 1
+# Tree-based reduction require the number of threads to be the next power of two >= SIZE for correctness.
+alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 # ANCHOR: softmax_gpu_kernel_solution
 fn softmax_gpu_kernel[
@@ -23,47 +23,46 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
     # do not influence the result (max(min_finite, x) == x for any x).
-    var thread_max: Scalar[dtype] = min_finite[dtype]()
+    var val: Scalar[dtype] = min_finite[dtype]()
     if global_i < input_size:
-        thread_max = rebind[Scalar[dtype]](input[global_i])
-    shared_max[local_i] = thread_max
+        val = rebind[Scalar[dtype]](input[global_i])
+    shared_max[global_i] = val
 
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = TPB // 2
+    stride = BLOCK_DIM_X // 2
     while stride > 0:
-        if local_i < stride:
-            shared_max[local_i] = max(
-                shared_max[local_i], shared_max[local_i + stride]
+        if global_i < stride:
+            shared_max[global_i] = max(
+                shared_max[global_i], shared_max[global_i + stride]
             )
         barrier()
         stride = stride // 2
 
     block_max = shared_max[0]
 
-    # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to 0.0,
+    # Initialize out-of-bounds (shared_max[global_i], global_i >= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
     # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
     if global_i < input_size:
-        exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    shared_sum[local_i] = exp_val
+        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    shared_sum[global_i] = exp_val
     barrier()
 
     # Parallel reduction for sum similar to reduction we saw before
-    stride = TPB // 2
+    stride = BLOCK_DIM_X // 2
     while stride > 0:
-        if local_i < stride:
-            shared_sum[local_i] += shared_sum[local_i + stride]
+        if global_i < stride:
+            shared_sum[global_i] += shared_sum[global_i + stride]
         barrier()
         stride = stride // 2
 
@@ -127,8 +126,6 @@ struct SoftmaxCustomOp:
             LayoutTensor[dtype, layout, MutableAnyOrigin]
         ](input.to_layout_tensor())
 
-        alias layout = input_tensor.layout
-
         @parameter
         if target == "gpu":
             gpu_ctx = ctx.get_device_context()
@@ -150,8 +147,8 @@ struct SoftmaxCustomOp:
             ](
                 output_tensor,
                 input_tensor,
-                grid_dim=BLOCKS_PER_GRID,
-                block_dim=(TPB, 1),
+                grid_dim=1,
+                block_dim=BLOCK_DIM_X,
             )
 
         elif target == "cpu":

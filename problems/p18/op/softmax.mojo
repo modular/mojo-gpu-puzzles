@@ -6,15 +6,15 @@ from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
+from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
 
-alias SIZE = 128
-alias TPB = 128
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
+alias SIZE = 128 # This must be equal to INPUT_SIZE in p18.py
 alias layout = Layout.row_major(SIZE)
-
+alias GRID_DIM_X = 1
+# Tree-based reduction require the number of threads to be the next power of two >= SIZE for correctness.
+alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 fn softmax_gpu_kernel[
     layout: Layout,
@@ -70,7 +70,6 @@ struct SoftmaxCustomOp:
         var input_tensor = rebind[
             LayoutTensor[dtype, layout, MutableAnyOrigin]
         ](input.to_layout_tensor())
-        alias layout = input_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -93,8 +92,8 @@ struct SoftmaxCustomOp:
             ](
                 output_tensor,
                 input_tensor,
-                grid_dim=BLOCKS_PER_GRID,
-                block_dim=(TPB, 1),
+                grid_dim=GRID_DIM_X,
+                block_dim=BLOCK_DIM_X,
             )
 
         elif target == "cpu":

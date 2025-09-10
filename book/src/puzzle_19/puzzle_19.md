@@ -2,16 +2,16 @@
 
 ## Overview
 
-In this puzzle, we'll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly [transformers](https://arxiv.org/abs/1706.03762), that allows models to focus on relevant parts of the input when making predictions.
+In this puzzle, we'll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly [transformers](https://arxiv.org/abs/1706.03762), that allows models to focus on relevant parts of the input when making predictions.
 
 Mathematically, the attention function is defined as:
 
 $$\\Large \\text{Attention}(Q, K, V) = \\text{softmax}(Q \\cdot K^T) \\cdot V$$
 
 Where:
-- \\(Q\\) is the **query vector** of shape \\((d,)\\) - represents what we're looking for
-- \\(K\\) is the **key matrix** of shape \\((\text{seq\_len}, d)\\) - represents what's available to match against
-- \\(V\\) is the **value matrix** of shape \\((\text{seq\_len}, d)\\) - represents the information to retrieve
+- \\(Q\\) is the **query vector** of shape \\((d,)~\\) - represents what we're looking for
+- \\(K\\) is the **key matrix** of shape \\((\text{seq\_len}, d)~\\) - represents what's available to match against
+- \\(V\\) is the **value matrix** of shape \\((\text{seq\_len}, d)~\\) - represents the information to retrieve
 - The output is a **weighted combination** vector of shape \\((d,)\\)
 
 The computation involves three main steps:
@@ -70,9 +70,9 @@ Our GPU implementation **reuses and combines optimized kernels from previous puz
 
 ## Configuration
 
-- **Sequence length**: \\(\text{SEQ\_LEN} = 16\\) - number of key/value vectors in our sequence
-- **Model dimension**: \\(\text{D} = 16\\) - dimensionality of each vector (query, keys, values)
-- **Threads per block**: \\(\text{TPB} = 16\\) - matches SEQ_LEN for optimal softmax performance
+- **Sequence length**: \\(\text{SEQ\_LEN} = 16~\\) - number of key/value vectors in our sequence
+- **Model dimension**: \\(\text{D} = 16~\\) - dimensionality of each vector (query, keys, values)
+- **Threads per block**: Individually optimized for each kernel
 - **Grid dimensions**: Computed dynamically to handle different matrix sizes efficiently
 - **Shared memory**: Utilized in transpose, matmul, and softmax kernels for performance
 
@@ -272,9 +272,9 @@ The attention operation follows the canonical mathematical definition:
 $$\\Large \\text{Attention}(Q, K, V) = \\text{softmax}(Q \\cdot K^T) \\cdot V$$
 
 **Breaking down the math**:
-- \\(Q \cdot K^T\\): Query-key similarity scores of shape: \\((1, \text{seq\_len})\\)
-- \\(\text{softmax}(\cdot)\\): Normalize scores to probabilities of shape: \\((1, \text{seq\_len})\\)
-- \\(\text{weights} \cdot V\\): Weighted combination of values of shape: \\((1, d)\\)
+- \\(Q \cdot K^T~\\): Query-key similarity scores of shape: \\((1, \text{seq\_len})\\)
+- \\(\text{softmax}(\cdot)~\\): Normalize scores to probabilities of shape: \\((1, \text{seq\_len})\\)
+- \\(\text{weights} \cdot V~\\): Weighted combination of values of shape: \\((1, d)\\)
 
 This involves several computational steps that we optimize using GPU kernels from previous puzzles.
 
@@ -320,7 +320,7 @@ weights = scores_2d.reshape[layout_scores]()
 
 The implementation achieves **maximum memory efficiency** through:
 - **Zero-copy reshaping**: Reinterpreting tensor shapes without moving data in memory
-- **Intelligent buffer reuse**: The same `scores_weights_buf` serves dual purposes as both scores \\((1,\\text{seq\\_len})\\) and weights \\((\\text{seq\\_len},)\\)
+- **Intelligent buffer reuse**: The same `scores_weights_buf` serves dual purposes as both scores \\((1,\\text{seq_len})\\) and weights \\((\\text{seq_len},)\\)
 - **Minimal allocations**: Only 2 temporary buffers power the entire attention operation
 - **Memory coalescing**: All operations maintain optimal memory access patterns
 

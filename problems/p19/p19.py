@@ -192,8 +192,8 @@ def test_individual_operations():
 
 
 if __name__ == "__main__":
-    SEQ_LEN = 16  # Number of key/value vectors
-    D = 16  # Dimension of each vector
+    SEQ_LEN = 16  # Number of key/value vectors, must be equal to SEQ_LEN in attention.mojo
+    D = 16  # Dimension of each vector, must be equal to D in attention.mojo
 
     cpu_session = InferenceSession(devices=[CPU()])
     gpu_session = InferenceSession(devices=[Accelerator()])

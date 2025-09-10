@@ -28,8 +28,8 @@ Our GPU implementation uses parallel reduction for both finding the maximum valu
 
 ## Configuration
 
-- Vector size: \\(\\text{SIZE} = 128\\)
-- Threads per block: \\(\\text{TPB} = 128\\)
+- Vector size: `SIZE = 128`
+- Threads per block: `BLOCK_DIM_X = 1 << log2_ceil(SIZE)`. Tree-based reduction requires `BLOCK_DIM_X` to be the next power of two `>= SIZE` for correctness.
 - Grid dimensions: \\(1 \times 1\\) block
 - Shared memory: Two shared variables for max and sum
 
@@ -238,32 +238,28 @@ The kernel is parameterized with:
 
 #### Shared memory allocation
 ```mojo
-shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
-shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
+shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
 ```
 The kernel allocates two shared memory buffers:
 - `shared_max`: For parallel maximum finding reduction
 - `shared_sum`: For parallel sum computation
-- Both use `TPB` (Threads Per Block = 128) as their size
+- Both use `BLOCK_DIM_X = 128` as their size
 - Shared memory provides fast access for all threads within a block
 
 #### Thread indexing
 ```mojo
-global_i = block_dim.x * block_idx.x + thread_idx.x
-local_i = thread_idx.x
+global_i = thread_idx.x
 ```
-Each thread computes:
-- `global_i`: Its global index in the entire computation space
-- `local_i`: Its local index within the current thread block
-This mapping ensures each thread processes exactly one input element.
+This implementation of softmax operates on a single 1d thread block. i.e. The global and local index are the same.
 
 #### Maximum-finding phase
 ```mojo
-var thread_max: Scalar[dtype] = min_finite[dtype]()
+var val: Scalar[dtype] = min_finite[dtype]()
 if global_i < input_size:
-    thread_max = rebind[Scalar[dtype]](input[global_i])
+    val = rebind[Scalar[dtype]](input[global_i])
 
-shared_max[local_i] = thread_max
+shared_max[local_i] = val
 barrier()
 ```
 This initializes each thread with:
@@ -274,7 +270,7 @@ This initializes each thread with:
 
 #### Parallel max reduction
 ```mojo
-stride = TPB // 2
+stride = BLOCK_DIM_X // 2
 while stride > 0:
     if local_i < stride:
         shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
@@ -282,12 +278,12 @@ while stride > 0:
     stride = stride // 2
 ```
 This implements a parallel tree-reduction pattern:
-1. Start with `stride = 64` (half of `TPB`)
+1. Start with `stride = 64` (half of `BLOCK_DIM_X`)
 2. Each active thread compares two values separated by the stride
 3. Store the maximum in the lower index
 4. Synchronize all threads with a barrier
 5. Halve the stride and repeat
-6. After \\(\log_2(TPB)\\) steps, shared_max[0] contains the global maximum
+6. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_max[0]` contains the global maximum
 
 This logarithmic reduction is significantly faster than a linear scan on large inputs.
 
@@ -297,7 +293,7 @@ block_max = shared_max[0]
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i < input_size:
-    exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+    exp_val = rebind[Scalar[dtype]](exp(val - block_max))
 ```
 Each thread:
 1. Reads the global maximum from shared memory
@@ -310,7 +306,7 @@ Each thread:
 shared_sum[local_i] = exp_val
 barrier()
 
-stride = TPB // 2
+stride = BLOCK_DIM_X // 2
 while stride > 0:
     if local_i < stride:
         shared_sum[local_i] += shared_sum[local_i + stride]
@@ -321,7 +317,7 @@ The second reduction phase:
 1. Stores all exponential values in shared memory
 2. Uses the same tree-based reduction pattern as for max
 3. But performs addition instead of maximum comparison
-4. After \\(\log_2(TPB)\\) steps, `shared_sum[0]` contains the total sum of all exponentials
+4. After \\(\log_2(BLOCK\\_DIM\\_X)~\\) steps, `shared_sum[0]` contains the total sum of all exponentials
 
 #### Final normalization
 ```mojo
@@ -340,8 +336,8 @@ Each thread:
 
 The implementation has excellent performance characteristics:
 - **Complexity**: \\(O(\log n)\\) for both max and sum calculations vs \\(O(n)\\) in a sequential approach
-- **Memory efficiency**: Uses only \\(2 \times TPB\\) elements of shared memory
-- **Work efficiency**: Each thread performs approximately \\(2 \times \log_2(n)\\) operations
+- **Memory efficiency**: Uses only \\(2 \times BLOCK\\_DIM\\_X~\\) elements of shared memory
+- **Work efficiency**: Each thread performs approximately \\(2 \times \log_2(BLOCK\\_DIM\\_X)~\\) operations
 - **Load balancing**: Each thread handles the same amount of work
 - **Synchronization**: Uses minimal barriers, only where necessary
 - **Memory access**: Coalesced global memory access pattern for optimal bandwidth

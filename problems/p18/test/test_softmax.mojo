@@ -2,14 +2,14 @@ from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from testing import assert_almost_equal
+from bit import log2_ceil
 
 from op import softmax_gpu_kernel, softmax_cpu_kernel
 
 alias SIZE = 128
-alias TPB = 128
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
 alias layout = Layout.row_major(SIZE)
+alias GRID_DIM_X = 1
+alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 alias dtype = DType.float32
 
 
@@ -51,8 +51,8 @@ def test_softmax():
         ctx.enqueue_function[softmax_gpu_kernel[layout, SIZE, dtype]](
             output_tensor,
             input_tensor,
-            grid_dim=BLOCKS_PER_GRID,
-            block_dim=THREADS_PER_BLOCK,
+            grid_dim=GRID_DIM_X,
+            block_dim=BLOCK_DIM_X,
         )
 
         ctx.synchronize()

@@ -4,6 +4,7 @@ from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
+from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 import compiler
 from runtime.asyncrt import DeviceContextPtr
@@ -11,10 +12,10 @@ from tensor import InputTensor, OutputTensor
 from gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
-alias SEQ_LEN = 16
-alias D = 16
-alias TPB = SEQ_LEN
-
+alias SEQ_LEN = 16 # This must be equal to SEQ_LEN in p19.py
+alias D = 16 # This must be equal to D in p19.py
+alias SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
+alias TPB = 16
 
 # Tiled matrix multiplication from p14 - adapted for attention
 fn matmul_idiomatic_tiled[
@@ -90,60 +91,60 @@ fn transpose_kernel[
 # Apply softmax to attention scores taken from p16
 fn softmax_gpu_kernel[
     layout: Layout,
-    seq_len: Int,
+    input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    scores: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
 ):
-    """Apply softmax to attention scores - exact p16 pattern."""
-    shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    shared_max = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
+    shared_sum = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
+    global_i = thread_idx.x
 
-    var thread_max: Scalar[dtype] = min_finite[dtype]()
-    if global_i < seq_len:
-        thread_max = rebind[Scalar[dtype]](scores[global_i])
+    # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
+    # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
+    # do not influence the result (max(min_finite, x) == x for any x).
+    var val: Scalar[dtype] = min_finite[dtype]()
+    if global_i < input_size:
+        val = rebind[Scalar[dtype]](input[global_i])
+    shared_max[global_i] = val
 
-    shared_max[local_i] = thread_max
     barrier()
 
-    # Parallel reduction to find max
-    stride = TPB // 2
+    # Parallel reduction to find max similar to reduction we saw before
+    stride = SOFTMAX_BLOCK_DIM_X // 2
     while stride > 0:
-        if local_i < stride:
-            shared_max[local_i] = max(
-                shared_max[local_i], shared_max[local_i + stride]
+        if global_i < stride:
+            shared_max[global_i] = max(
+                shared_max[global_i], shared_max[global_i + stride]
             )
         barrier()
         stride = stride // 2
 
     block_max = shared_max[0]
 
+    # Initialize out-of-bounds (shared_max[global_i], global_i >= input_size) shared memory addresses to 0.0,
+    # ensuring that if these elements are accessed in the parallel sum reduction below they
+    # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
-    if global_i < seq_len:
-        exp_val = rebind[Scalar[dtype]](exp(scores[global_i] - block_max))
-        output[global_i] = exp_val
-
-    shared_sum[local_i] = exp_val
+    if global_i < input_size:
+        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    shared_sum[global_i] = exp_val
     barrier()
 
-    # Parallel reduction for sum
-    stride = TPB // 2
+    # Parallel reduction for sum similar to reduction we saw before
+    stride = SOFTMAX_BLOCK_DIM_X // 2
     while stride > 0:
-        if local_i < stride:
-            shared_sum[local_i] = (
-                shared_sum[local_i] + shared_sum[local_i + stride]
-            )
+        if global_i < stride:
+            shared_sum[global_i] += shared_sum[global_i + stride]
         barrier()
         stride = stride // 2
 
     block_sum = shared_sum[0]
 
     # Normalize by sum
-    if global_i < seq_len:
-        output[global_i] = output[global_i] / block_sum
+    if global_i < input_size:
+        output[global_i] = exp_val / block_sum
 
 
 # CPU implementation for vector attention
@@ -254,6 +255,8 @@ struct AttentionCustomOp:
                 (seq_len + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,
             )
+            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
+            alias softmax_blocks_per_grid = 1
             alias result_blocks_per_grid = (
                 (d + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,

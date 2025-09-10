@@ -44,7 +44,7 @@ def softmax(
 
 
 if __name__ == "__main__":
-    INPUT_SIZE = 128
+    INPUT_SIZE = 128 # This must be equal to SIZE in softmax.mojo
     cpu_session = InferenceSession(devices=[CPU()])
     gpu_session = InferenceSession(devices=[Accelerator()])
     input_array = np.random.randn(INPUT_SIZE).astype(np.float32)
