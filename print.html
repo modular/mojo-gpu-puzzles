@@ -8626,8 +8626,8 @@ with Graph(
 </ul>
 <h2 id="configuration-17"><a class="header" href="#configuration-17">Configuration</a></h2>
 <ul>
-<li>Vector size: \(\text{SIZE} = 128\)</li>
-<li>Threads per block: \(\text{TPB} = 128\)</li>
+<li>Vector size: <code>SIZE = 128</code></li>
+<li>Threads per block: <code>BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)</code>. Tree-based reduction requires <code>BLOCK_DIM_X</code> to be the next power of two <code>&gt;= SIZE</code> for correctness.</li>
 <li>Grid dimensions: \(1 \times 1\) block</li>
 <li>Shared memory: Two shared variables for max and sum</li>
 </ul>
@@ -8659,15 +8659,15 @@ from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
 from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
+from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
 
-alias SIZE = 128
-alias TPB = 128
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
+alias SIZE = 128 # This must be equal to INPUT_SIZE in p18.py
 alias layout = Layout.row_major(SIZE)
-
+alias GRID_DIM_X = 1
+# Tree-based reduction require the number of threads to be the next power of two &gt;= SIZE for correctness.
+alias BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
 
 fn softmax_gpu_kernel[
     layout: Layout,
@@ -8843,47 +8843,46 @@ Sum of all probabilities on GPU: 1.0
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
     # do not influence the result (max(min_finite, x) == x for any x).
-    var thread_max: Scalar[dtype] = min_finite[dtype]()
+    var val: Scalar[dtype] = min_finite[dtype]()
     if global_i &lt; input_size:
-        thread_max = rebind[Scalar[dtype]](input[global_i])
-    shared_max[local_i] = thread_max
+        val = rebind[Scalar[dtype]](input[global_i])
+    shared_max[global_i] = val
 
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = TPB // 2
+    stride = BLOCK_DIM_X // 2
     while stride &gt; 0:
-        if local_i &lt; stride:
-            shared_max[local_i] = max(
-                shared_max[local_i], shared_max[local_i + stride]
+        if global_i &lt; stride:
+            shared_max[global_i] = max(
+                shared_max[global_i], shared_max[global_i + stride]
             )
         barrier()
         stride = stride // 2
 
     block_max = shared_max[0]
 
-    # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to 0.0,
+    # Initialize out-of-bounds (shared_max[global_i], global_i &gt;= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
     # do not influence the result (adding 0.0 does not change the sum).
     var exp_val: Scalar[dtype] = 0.0
     if global_i &lt; input_size:
-        exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
-    shared_sum[local_i] = exp_val
+        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    shared_sum[global_i] = exp_val
     barrier()
 
     # Parallel reduction for sum similar to reduction we saw before
-    stride = TPB // 2
+    stride = BLOCK_DIM_X // 2
     while stride &gt; 0:
-        if local_i &lt; stride:
-            shared_sum[local_i] += shared_sum[local_i + stride]
+        if global_i &lt; stride:
+            shared_sum[global_i] += shared_sum[global_i + stride]
         barrier()
         stride = stride // 2
 
@@ -8916,32 +8915,26 @@ Our GPU implementation implements the numerically stable softmax algorithm with 
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[TPB]().shared().alloc()
-shared_sum = tb[dtype]().row_major[TPB]().shared().alloc()
+<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>
 <li><code>shared_max</code>: For parallel maximum finding reduction</li>
 <li><code>shared_sum</code>: For parallel sum computation</li>
-<li>Both use <code>TPB</code> (Threads Per Block = 128) as their size</li>
+<li>Both use <code>BLOCK_DIM_X = 128</code> as their size</li>
 <li>Shared memory provides fast access for all threads within a block</li>
 </ul>
 <h4 id="thread-indexing"><a class="header" href="#thread-indexing">Thread indexing</a></h4>
-<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x
-local_i = thread_idx.x
+<pre><code class="language-mojo">global_i = thread_idx.x
 </code></pre>
-<p>Each thread computes:</p>
-<ul>
-<li><code>global_i</code>: Its global index in the entire computation space</li>
-<li><code>local_i</code>: Its local index within the current thread block
-This mapping ensures each thread processes exactly one input element.</li>
-</ul>
+<p>This implementation of softmax operates on a single 1d thread block. i.e. The global and local index are the same.</p>
 <h4 id="maximum-finding-phase"><a class="header" href="#maximum-finding-phase">Maximum-finding phase</a></h4>
-<pre><code class="language-mojo">var thread_max: Scalar[dtype] = min_finite[dtype]()
+<pre><code class="language-mojo">var val: Scalar[dtype] = min_finite[dtype]()
 if global_i &lt; input_size:
-    thread_max = rebind[Scalar[dtype]](input[global_i])
+    val = rebind[Scalar[dtype]](input[global_i])
 
-shared_max[local_i] = thread_max
+shared_max[local_i] = val
 barrier()
 </code></pre>
 <p>This initializes each thread with:</p>
@@ -8952,7 +8945,7 @@ barrier()
 <li>A barrier synchronization to ensure all threads complete memory writes</li>
 </ul>
 <h4 id="parallel-max-reduction"><a class="header" href="#parallel-max-reduction">Parallel max reduction</a></h4>
-<pre><code class="language-mojo">stride = TPB // 2
+<pre><code class="language-mojo">stride = BLOCK_DIM_X // 2
 while stride &gt; 0:
     if local_i &lt; stride:
         shared_max[local_i] = max(shared_max[local_i], shared_max[local_i + stride])
@@ -8961,12 +8954,12 @@ while stride &gt; 0:
 </code></pre>
 <p>This implements a parallel tree-reduction pattern:</p>
 <ol>
-<li>Start with <code>stride = 64</code> (half of <code>TPB</code>)</li>
+<li>Start with <code>stride = 64</code> (half of <code>BLOCK_DIM_X</code>)</li>
 <li>Each active thread compares two values separated by the stride</li>
 <li>Store the maximum in the lower index</li>
 <li>Synchronize all threads with a barrier</li>
 <li>Halve the stride and repeat</li>
-<li>After \(\log_2(TPB)\) steps, shared_max[0] contains the global maximum</li>
+<li>After \(\log_2(BLOCK\_DIM\_X)~\) steps, <code>shared_max[0]</code> contains the global maximum</li>
 </ol>
 <p>This logarithmic reduction is significantly faster than a linear scan on large inputs.</p>
 <h4 id="exponentiation-with-numerical-stability"><a class="header" href="#exponentiation-with-numerical-stability">Exponentiation with numerical stability</a></h4>
@@ -8974,7 +8967,7 @@ while stride &gt; 0:
 
 var exp_val: Scalar[dtype] = 0.0
 if global_i &lt; input_size:
-    exp_val = rebind[Scalar[dtype]](exp(input[global_i] - block_max))
+    exp_val = rebind[Scalar[dtype]](exp(val - block_max))
 </code></pre>
 <p>Each thread:</p>
 <ol>
@@ -8987,7 +8980,7 @@ if global_i &lt; input_size:
 <pre><code class="language-mojo">shared_sum[local_i] = exp_val
 barrier()
 
-stride = TPB // 2
+stride = BLOCK_DIM_X // 2
 while stride &gt; 0:
     if local_i &lt; stride:
         shared_sum[local_i] += shared_sum[local_i + stride]
@@ -8999,7 +8992,7 @@ while stride &gt; 0:
 <li>Stores all exponential values in shared memory</li>
 <li>Uses the same tree-based reduction pattern as for max</li>
 <li>But performs addition instead of maximum comparison</li>
-<li>After \(\log_2(TPB)\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
+<li>After \(\log_2(BLOCK\_DIM\_X)~\) steps, <code>shared_sum[0]</code> contains the total sum of all exponentials</li>
 </ol>
 <h4 id="final-normalization"><a class="header" href="#final-normalization">Final normalization</a></h4>
 <pre><code class="language-mojo">block_sum = shared_sum[0]
@@ -9018,8 +9011,8 @@ if global_i &lt; input_size:
 <p>The implementation has excellent performance characteristics:</p>
 <ul>
 <li><strong>Complexity</strong>: \(O(\log n)\) for both max and sum calculations vs \(O(n)\) in a sequential approach</li>
-<li><strong>Memory efficiency</strong>: Uses only \(2 \times TPB\) elements of shared memory</li>
-<li><strong>Work efficiency</strong>: Each thread performs approximately \(2 \times \log_2(n)\) operations</li>
+<li><strong>Memory efficiency</strong>: Uses only \(2 \times BLOCK\_DIM\_X~\) elements of shared memory</li>
+<li><strong>Work efficiency</strong>: Each thread performs approximately \(2 \times \log_2(BLOCK\_DIM\_X)~\) operations</li>
 <li><strong>Load balancing</strong>: Each thread handles the same amount of work</li>
 <li><strong>Synchronization</strong>: Uses minimal barriers, only where necessary</li>
 <li><strong>Memory access</strong>: Coalesced global memory access pattern for optimal bandwidth</li>
@@ -9191,14 +9184,14 @@ The Python integration creates a seamless bridge between NumPy arrays and our op
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
 <h2 id="overview-36"><a class="header" href="#overview-36">Overview</a></h2>
-<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
+<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p>Where:</p>
 <ul>
-<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)\) - represents what we’re looking for</li>
-<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)\) - represents what’s available to match against</li>
-<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)\) - represents the information to retrieve</li>
+<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)~\) - represents what we’re looking for</li>
+<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)~\) - represents what’s available to match against</li>
+<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)~\) - represents the information to retrieve</li>
 <li>The output is a <strong>weighted combination</strong> vector of shape \((d,)\)</li>
 </ul>
 <p>The computation involves three main steps:</p>
@@ -9264,9 +9257,9 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </ul>
 <h2 id="configuration-18"><a class="header" href="#configuration-18">Configuration</a></h2>
 <ul>
-<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16\) - number of key/value vectors in our sequence</li>
-<li><strong>Model dimension</strong>: \(\text{D} = 16\) - dimensionality of each vector (query, keys, values)</li>
-<li><strong>Threads per block</strong>: \(\text{TPB} = 16\) - matches SEQ_LEN for optimal softmax performance</li>
+<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16~\) - number of key/value vectors in our sequence</li>
+<li><strong>Model dimension</strong>: \(\text{D} = 16~\) - dimensionality of each vector (query, keys, values)</li>
+<li><strong>Threads per block</strong>: Individually optimized for each kernel</li>
 <li><strong>Grid dimensions</strong>: Computed dynamically to handle different matrix sizes efficiently</li>
 <li><strong>Shared memory</strong>: Utilized in transpose, matmul, and softmax kernels for performance</li>
 </ul>
@@ -9368,6 +9361,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
                 (seq_len + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,
             )
+            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
+            alias softmax_blocks_per_grid = 1
             alias result_blocks_per_grid = (
                 (d + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,
@@ -9528,9 +9523,9 @@ Output vector norms:
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p><strong>Breaking down the math</strong>:</p>
 <ul>
-<li>\(Q \cdot K^T\): Query-key similarity scores of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{softmax}(\cdot)\): Normalize scores to probabilities of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{weights} \cdot V\): Weighted combination of values of shape: \((1, d)\)</li>
+<li>\(Q \cdot K^T~\): Query-key similarity scores of shape: \((1, \text{seq_len})\)</li>
+<li>\(\text{softmax}(\cdot)~\): Normalize scores to probabilities of shape: \((1, \text{seq_len})\)</li>
+<li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1, d)\)</li>
 </ul>
 <p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
 <h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation:</a></h3>
@@ -9621,8 +9616,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             ](
                 weights,
                 weights,
-                grid_dim=(1, 1),
-                block_dim=(seq_len, 1),
+                grid_dim=softmax_blocks_per_grid,
+                block_dim=softmax_threads,
             )
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
@@ -9653,7 +9648,7 @@ weights = scores_2d.reshape[layout_scores]()
 <p>The implementation achieves <strong>maximum memory efficiency</strong> through:</p>
 <ul>
 <li><strong>Zero-copy reshaping</strong>: Reinterpreting tensor shapes without moving data in memory</li>
-<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual purposes as both scores \((1,\text{seq\_len})\) and weights \((\text{seq\_len},)\)</li>
+<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual purposes as both scores \((1,\text{seq_len})\) and weights \((\text{seq_len},)\)</li>
 <li><strong>Minimal allocations</strong>: Only 2 temporary buffers power the entire attention operation</li>
 <li><strong>Memory coalescing</strong>: All operations maintain optimal memory access patterns</li>
 </ul>

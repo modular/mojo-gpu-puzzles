@@ -188,14 +188,14 @@
                     <main>
                         <h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, poplularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
+<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p>Where:</p>
 <ul>
-<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)\) - represents what we’re looking for</li>
-<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)\) - represents what’s available to match against</li>
-<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)\) - represents the information to retrieve</li>
+<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)~\) - represents what we’re looking for</li>
+<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)~\) - represents what’s available to match against</li>
+<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)~\) - represents the information to retrieve</li>
 <li>The output is a <strong>weighted combination</strong> vector of shape \((d,)\)</li>
 </ul>
 <p>The computation involves three main steps:</p>
@@ -261,9 +261,9 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
-<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16\) - number of key/value vectors in our sequence</li>
-<li><strong>Model dimension</strong>: \(\text{D} = 16\) - dimensionality of each vector (query, keys, values)</li>
-<li><strong>Threads per block</strong>: \(\text{TPB} = 16\) - matches SEQ_LEN for optimal softmax performance</li>
+<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16~\) - number of key/value vectors in our sequence</li>
+<li><strong>Model dimension</strong>: \(\text{D} = 16~\) - dimensionality of each vector (query, keys, values)</li>
+<li><strong>Threads per block</strong>: Individually optimized for each kernel</li>
 <li><strong>Grid dimensions</strong>: Computed dynamically to handle different matrix sizes efficiently</li>
 <li><strong>Shared memory</strong>: Utilized in transpose, matmul, and softmax kernels for performance</li>
 </ul>
@@ -365,6 +365,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
                 (seq_len + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,
             )
+            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
+            alias softmax_blocks_per_grid = 1
             alias result_blocks_per_grid = (
                 (d + TPB - 1) // TPB,
                 (1 + TPB - 1) // TPB,
@@ -525,9 +527,9 @@ Output vector norms:
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p><strong>Breaking down the math</strong>:</p>
 <ul>
-<li>\(Q \cdot K^T\): Query-key similarity scores of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{softmax}(\cdot)\): Normalize scores to probabilities of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{weights} \cdot V\): Weighted combination of values of shape: \((1, d)\)</li>
+<li>\(Q \cdot K^T~\): Query-key similarity scores of shape: \((1, \text{seq_len})\)</li>
+<li>\(\text{softmax}(\cdot)~\): Normalize scores to probabilities of shape: \((1, \text{seq_len})\)</li>
+<li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1, d)\)</li>
 </ul>
 <p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
 <h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation:</a></h3>
@@ -618,8 +620,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             ](
                 weights,
                 weights,
-                grid_dim=(1, 1),
-                block_dim=(seq_len, 1),
+                grid_dim=softmax_blocks_per_grid,
+                block_dim=softmax_threads,
             )
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
@@ -650,7 +652,7 @@ weights = scores_2d.reshape[layout_scores]()
 <p>The implementation achieves <strong>maximum memory efficiency</strong> through:</p>
 <ul>
 <li><strong>Zero-copy reshaping</strong>: Reinterpreting tensor shapes without moving data in memory</li>
-<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual purposes as both scores \((1,\text{seq\_len})\) and weights \((\text{seq\_len},)\)</li>
+<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual purposes as both scores \((1,\text{seq_len})\) and weights \((\text{seq_len},)\)</li>
 <li><strong>Minimal allocations</strong>: Only 2 temporary buffers power the entire attention operation</li>
 <li><strong>Memory coalescing</strong>: All operations maintain optimal memory access patterns</li>
 </ul>
