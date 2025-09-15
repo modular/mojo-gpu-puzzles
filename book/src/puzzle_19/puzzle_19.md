@@ -49,14 +49,14 @@ Step 2: softmax(Scores) → Weights(1,16)  [sum = 1.0]
 Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 ```
 
-**Key insight**: We reshape the query vector \\(Q\\) from shape \\((16,)\\) to \\((1,16)\\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 16!
+**Key insight**: We reshape the query vector \\(Q\\) from shape \\((16,)\\) to \\((1,16)\\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 18!
 
 Our GPU implementation **reuses and combines optimized kernels from previous puzzles**:
 - **[Tiled matrix multiplication from Puzzle 16](../puzzle_16/puzzle_16.md)** for efficient \\(Q \cdot K^T\\) and \\(\text{weights} \cdot V\\) operations
 - **Shared memory transpose** for computing \\(K^T\\) efficiently
 - **[Parallel softmax from Puzzle 18](../puzzle_18/puzzle_18.md)** for numerically stable attention weight computation
 
-> **🔄 Kernel Reuse Strategy**: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the `matmul_idiomatic_tiled` from Puzzle 14 and `softmax_kernel` from Puzzle 16, showcasing the power of modular GPU kernel design.
+> **🔄 Kernel Reuse Strategy**: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the `matmul_idiomatic_tiled` from Puzzle 16 and `softmax_kernel` from Puzzle 18, showcasing the power of modular GPU kernel design.
 
 ## Key concepts
 

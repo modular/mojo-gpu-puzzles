@@ -14,46 +14,64 @@ from layout.layout_tensor import copy_dram_to_sram_async
 
 alias SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 alias D = 16  # This must be equal to D in p19.py
+alias MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
+alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
+alias MATMUL_BLOCK_DIM_COUNT = 2
 alias SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
 alias TPB = 16
 
-
-# Tiled matrix multiplication from p14 - adapted for attention
+# Tiled matrix multiplication (from p16), updated to:
+# 1) Support different layouts for input (a, b) and output LayoutTensors.
+# 2) Handle cases where the inner dimension is not a multiple of MATMUL_BLOCK_DIM_XY.
+# 3) Explicitly check for out-of-bounds elements.
+# The approach still tiles all three LayoutTensors (a, b, and output) into identical square tiles
+# of size (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) with each thread loading one element
+# from a and b, and writing one element to output.
 fn matmul_idiomatic_tiled[
-    layout: Layout,
+    a_layout: Layout,
+    b_layout: Layout,
+    out_layout: Layout,
     rows: Int,
     cols: Int,
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=False, dtype, out_layout, MutableAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
 ):
-    """Idiomatic tiled matrix multiplication from p14."""
+    """Updated idiomatic tiled matrix multiplication from p16."""
     local_row = thread_idx.y
     local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
+    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)
-    alias load_b_layout = Layout.row_major(TPB, 1)
+    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
 
-    for idx in range((inner + TPB - 1) // TPB):
+    @parameter
+    for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](block_idx.y, idx)
-        b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
 
-        # Asynchronously copy tiles to shared memory
-        copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+        # Asynchronously copy tiles to shared memory with consistent orientation
+        copy_dram_to_sram_async[
+            thread_layout=load_a_layout,
+            num_threads=MATMUL_NUM_THREADS,
+            block_dim_count=MATMUL_BLOCK_DIM_COUNT,
+        ](a_shared, a_tile)
+        copy_dram_to_sram_async[
+            thread_layout=load_b_layout,
+            num_threads=MATMUL_NUM_THREADS,
+            block_dim_count=MATMUL_BLOCK_DIM_COUNT,
+        ](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -61,8 +79,10 @@ fn matmul_idiomatic_tiled[
 
         # Compute partial matrix multiplication for this tile
         @parameter
-        for k in range(TPB):
-            acc += a_shared[local_row, k] * b_shared[k, local_col]
+        for k in range(MATMUL_BLOCK_DIM_XY):
+            if(tiled_row < rows and tiled_col < cols): # Only perform calculation for valid outputs
+                if(k < a_tile.dim(1)): # Only perform calculation on valid inputs
+                    acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
 
@@ -252,17 +272,15 @@ struct AttentionCustomOp:
             # Result as (1, d)
             alias layout_result_2d = Layout.row_major(1, d)
 
-            alias scores_blocks_per_grid = (
-                (seq_len + TPB - 1) // TPB,
-                (1 + TPB - 1) // TPB,
-            )
+            # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
+            alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
+            # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len) ) with one thread per output
+            alias scores_blocks_per_grid = (seq_len + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
             alias softmax_threads = SOFTMAX_BLOCK_DIM_X
             alias softmax_blocks_per_grid = 1
-            alias result_blocks_per_grid = (
-                (d + TPB - 1) // TPB,
-                (1 + TPB - 1) // TPB,
-            )
-            alias matmul_threads_per_block = (TPB, TPB)
+            # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d) ) with one thread per output
+            alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias transpose_threads_per_block = (TPB, TPB)
             alias transpose_blocks_per_grid = (
                 (seq_len + TPB - 1) // TPB,
                 (d + TPB - 1) // TPB,

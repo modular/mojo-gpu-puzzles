@@ -10,48 +10,60 @@ from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 from utils import StaticTuple
 
+alias MATMUL_BLOCK_DIM_XY = 16 # Square blocks for a, b and output
+alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
+alias MATMUL_BLOCK_DIM_COUNT = 2
 alias TPB = 16
 alias dtype = DType.float32
 
 
 # ANCHOR: matmul_idiomatic_tiled
-# Idiomatic tiled matmul from p14.mojo - adapted for [batch*seq, hidden] @ [hidden, output] -> [batch*seq, output]
+# Idiomatic tiled matmul from p19.mojo
 fn matmul_idiomatic_tiled[
     a_layout: Layout,
     b_layout: Layout,
     out_layout: Layout,
     rows: Int,
     cols: Int,
-    inner_dim: Int,
+    inner: Int,
+    dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
-    b: LayoutTensor[mut=False, dtype, b_layout],
+    output: LayoutTensor[mut=False, dtype, out_layout, MutableAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
 ):
-    """Idiomatic tiled matmul following p14.mojo exactly."""
-    local_row = thread_idx.x
-    local_col = thread_idx.y
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    """Idiomatic tiled matrix multiplication from p19."""
+    local_row = thread_idx.y
+    local_col = thread_idx.x
+    tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.x, block_idx.y)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc().fill(0)
-
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
+    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)
-    alias load_b_layout = Layout.row_major(TPB, 1)
+    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
 
-    for idx in range((inner_dim + TPB - 1) // TPB):
+    @parameter
+    for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](block_idx.x, idx)
-        b_tile = b.tile[TPB, TPB](idx, block_idx.y)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
 
-        # Asynchronously copy tiles to shared memory
-        copy_dram_to_sram_async[thread_layout=load_a_layout](a_shared, a_tile)
-        copy_dram_to_sram_async[thread_layout=load_b_layout](b_shared, b_tile)
+        # Asynchronously copy tiles to shared memory with consistent orientation
+        copy_dram_to_sram_async[
+            thread_layout=load_a_layout,
+            num_threads=MATMUL_NUM_THREADS,
+            block_dim_count=MATMUL_BLOCK_DIM_COUNT,
+        ](a_shared, a_tile)
+        copy_dram_to_sram_async[
+            thread_layout=load_b_layout,
+            num_threads=MATMUL_NUM_THREADS,
+            block_dim_count=MATMUL_BLOCK_DIM_COUNT,
+        ](b_shared, b_tile)
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -59,8 +71,10 @@ fn matmul_idiomatic_tiled[
 
         # Compute partial matrix multiplication for this tile
         @parameter
-        for k in range(TPB):
-            acc += a_shared[local_row, k] * b_shared[k, local_col]
+        for k in range(MATMUL_BLOCK_DIM_XY):
+            if(tiled_row < rows and tiled_col < cols): # Only perform calculation for valid outputs
+                if(k < a_tile.dim(1)): # Only perform calculation on valid inputs
+                    acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
 
