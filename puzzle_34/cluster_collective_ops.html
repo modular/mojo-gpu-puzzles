@@ -1,0 +1,526 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>☸️ Cluster-Wide Collective Operations - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations">☸️ Cluster-Wide Collective Operations</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum</code></a> pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
+<p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.</p>
+<p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
+<h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
+<p>Single blocks (as learned in <a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>) are limited by their thread count and <a href="../puzzle_08/puzzle_08.html">shared memory capacity from Puzzle 8</a>. For <strong>large datasets</strong> requiring global statistics (mean, variance, sum) beyond <a href="../puzzle_27/block_sum.html">single-block reductions</a>, we need <strong>cluster-wide collective operations</strong>.</p>
+<p><strong>Your task</strong>: Implement a cluster-wide sum reduction where:</p>
+<ol>
+<li>Each block performs local reduction (like <a href="../puzzle_27/block_sum.html"><code>block.sum()</code> from Puzzle 27</a>)</li>
+<li>Blocks coordinate to combine their partial results using <a href="../puzzle_29/barrier.html">synchronization from Puzzle 29</a></li>
+<li>One elected thread computes the final global sum using <a href="../puzzle_24/warp_sum.html">warp election patterns</a></li>
+</ol>
+<h3 id="problem-specification"><a class="header" href="#problem-specification">Problem specification</a></h3>
+<p><strong>Algorithmic Flow:</strong></p>
+<p><strong>Phase 1 - Local Reduction (within each block):</strong>
+\[R_i = \sum_{j=0}^{TPB-1} input[i \times TPB + j] \quad \text{for block } i\]</p>
+<p><strong>Phase 2 - Global Aggregation (across cluster):</strong>
+\[\text{Global Sum} = \sum_{i=0}^{\text{CLUSTER_SIZE}-1} R_i\]</p>
+<p><strong>Coordination Requirements:</strong></p>
+<ol>
+<li><strong>Local reduction</strong>: Each block computes partial sum using tree reduction</li>
+<li><strong>Cluster sync</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> ensures all partial results are ready</li>
+<li><strong>Final aggregation</strong>: One elected thread combines all partial results</li>
+</ol>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements</li>
+<li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
+<li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks per cluster <code>(4, 1)</code></li>
+<li><strong>Data Type</strong>: <code>DType.float32</code></li>
+<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(1)</code></li>
+<li><strong>Temporary Storage</strong>: <code>Layout.row_major(CLUSTER_SIZE)</code> for partial results</li>
+</ul>
+<p><strong>Expected Result</strong>: Sum of sequence <code>0, 0.01, 0.02, ..., 10.23</code> = <strong>523,776</strong></p>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="local-reduction-pattern"><a class="header" href="#local-reduction-pattern"><strong>Local reduction pattern</strong></a></h3>
+<ul>
+<li>Use <a href="../puzzle_27/block_sum.html">tree reduction pattern from Puzzle 27’s block sum</a></li>
+<li>Start with stride = <code>tpb // 2</code> and halve each iteration (classic <a href="../puzzle_12/puzzle_12.html">reduction from Puzzle 12</a>)</li>
+<li>Only threads with <code>local_i &lt; stride</code> participate in each step</li>
+<li>Use <code>barrier()</code> between reduction steps (from <a href="../puzzle_29/barrier.html">barrier concepts in Puzzle 29</a>)</li>
+</ul>
+<h3 id="cluster-coordination-strategy"><a class="header" href="#cluster-coordination-strategy"><strong>Cluster coordination strategy</strong></a></h3>
+<ul>
+<li>Store partial results in <code>temp_storage[block_id]</code> for reliable indexing</li>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster synchronization (stronger than arrive/wait)</li>
+<li>Only one thread should perform the final global aggregation</li>
+</ul>
+<h3 id="election-pattern-for-efficiency"><a class="header" href="#election-pattern-for-efficiency"><strong>Election pattern for efficiency</strong></a></h3>
+<ul>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> within the first block (<code>my_block_rank == 0</code>) (pattern from <a href="../puzzle_24/warp_sum.html">warp programming</a>)</li>
+<li>This ensures only one thread performs the final sum to avoid redundancy</li>
+<li>The elected thread reads all partial results from <code>temp_storage</code> (similar to <a href="../puzzle_08/puzzle_08.html">shared memory access from Puzzle 8</a>)</li>
+</ul>
+<h3 id="memory-access-patterns"><a class="header" href="#memory-access-patterns"><strong>Memory access patterns</strong></a></h3>
+<ul>
+<li>Each thread reads <code>input[global_i]</code> with bounds checking (from <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+<li>Store intermediate results in <a href="../puzzle_08/puzzle_08.html">shared memory for intra-block reduction</a></li>
+<li>Store partial results in <code>temp_storage[block_id]</code> for inter-block communication</li>
+<li>Final result goes to <code>output[0]</code> (single-writer pattern from <a href="../puzzle_27/block_sum.html">block coordination</a>)</li>
+</ul>
+</div>
+</details>
+<h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
+</ul>
+<h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
+<p>Recall the <strong>tree reduction pattern</strong> from <a href="../puzzle_27/puzzle_27.html">Puzzle 27’s traditional dot product</a>:</p>
+<pre><code>Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
+Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
+Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
+Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
+...
+Stride 1:   [T0] += [T1] → Final result at T0
+</code></pre>
+<p><strong>Now extend this pattern to cluster scale</strong> where each block produces one partial result, then combine across blocks.</p>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p34 --reduction
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --reduction
+</code></pre>
+  </div>
+</div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Testing Cluster-Wide Reduction
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Expected sum: 523776.0
+Cluster reduction result: 523776.0
+Expected: 523776.0
+Error: 0.0
+✅ Passed: Cluster reduction accuracy test
+✅ Cluster-wide collective operations tests passed!
+</code></pre>
+<p><strong>Success Criteria:</strong></p>
+<ul>
+<li><strong>Perfect accuracy</strong>: Result exactly matches expected sum (523,776)</li>
+<li><strong>Cluster coordination</strong>: All 4 blocks contribute their partial sums</li>
+<li><strong>Efficient final reduction</strong>: Single elected thread computes final result</li>
+</ul>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary>Click to reveal solution</summary>
+<pre><code class="language-mojo">fn cluster_collective_operations[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    size: Int,
+):
+    """Cluster-wide collective operations using real cluster APIs."""
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    # Each thread accumulates its data
+    var my_value: Float32 = 0.0
+    if global_i &lt; size:
+        my_value = input[global_i][0]
+
+    # Block-level reduction using shared memory
+    shared_mem = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_mem[local_i] = my_value
+    barrier()
+
+    # Tree reduction within block
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride and local_i + stride &lt; tpb:
+            shared_mem[local_i] += shared_mem[local_i + stride]
+        barrier()
+        stride = stride // 2
+
+    # FIX: Store block result using block_idx for reliable indexing
+    if local_i == 0:
+        temp_storage[block_id] = shared_mem[0]
+
+    # Use cluster_sync() for full cluster synchronization
+    cluster_sync()
+
+    # Final cluster reduction (elect one thread to do the final work)
+    if elect_one_sync() and my_block_rank == 0:
+        var total: Float32 = 0.0
+        for i in range(CLUSTER_SIZE):
+            total += temp_storage[i][0]
+        output[0] = total
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>The cluster collective operations solution demonstrates the classic distributed computing pattern: local reduction → global coordination → final aggregation:</strong></p>
+<h2 id="phase-1-local-block-reduction-traditional-tree-reduction"><a class="header" href="#phase-1-local-block-reduction-traditional-tree-reduction"><strong>Phase 1: Local block reduction (traditional tree reduction)</strong></a></h2>
+<p><strong>Data loading and initialization:</strong></p>
+<pre><code class="language-mojo">var my_value: Float32 = 0.0
+if global_i &lt; size:
+    my_value = input[global_i][0]  # Load with bounds checking
+shared_mem[local_i] = my_value     # Store in shared memory
+barrier()                          # Ensure all threads complete loading
+</code></pre>
+<p><strong>Tree reduction algorithm:</strong></p>
+<pre><code class="language-mojo">var stride = tpb // 2  # Start with half the threads (128)
+while stride &gt; 0:
+    if local_i &lt; stride and local_i + stride &lt; tpb:
+        shared_mem[local_i] += shared_mem[local_i + stride]
+    barrier()          # Synchronize after each reduction step
+    stride = stride // 2
+</code></pre>
+<p><strong>Tree reduction visualization (TPB=256):</strong></p>
+<pre><code>Step 1: stride=128  [T0]+=T128, [T1]+=T129, ..., [T127]+=T255
+Step 2: stride=64   [T0]+=T64,  [T1]+=T65,  ..., [T63]+=T127
+Step 3: stride=32   [T0]+=T32,  [T1]+=T33,  ..., [T31]+=T63
+Step 4: stride=16   [T0]+=T16,  [T1]+=T17,  ..., [T15]+=T31
+Step 5: stride=8    [T0]+=T8,   [T1]+=T9,   ..., [T7]+=T15
+Step 6: stride=4    [T0]+=T4,   [T1]+=T5,   [T2]+=T6,  [T3]+=T7
+Step 7: stride=2    [T0]+=T2,   [T1]+=T3
+Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
+</code></pre>
+<p><strong>Partial result storage:</strong></p>
+<ul>
+<li>Only thread 0 writes: <code>temp_storage[block_id] = shared_mem[0]</code></li>
+<li>Each block stores its sum at <code>temp_storage[0]</code>, <code>temp_storage[1]</code>, <code>temp_storage[2]</code>, <code>temp_storage[3]</code></li>
+</ul>
+<h2 id="phase-2-cluster-synchronization"><a class="header" href="#phase-2-cluster-synchronization"><strong>Phase 2: Cluster synchronization</strong></a></h2>
+<p><strong>Full cluster barrier:</strong></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> provides <strong>stronger guarantees</strong> than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li>Ensures <strong>all blocks complete their local reductions</strong> before any block proceeds</li>
+<li>Hardware-accelerated synchronization across all blocks in the cluster</li>
+</ul>
+<h2 id="phase-3-final-global-aggregation"><a class="header" href="#phase-3-final-global-aggregation"><strong>Phase 3: Final global aggregation</strong></a></h2>
+<p><strong>Thread election for efficiency:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync() and my_block_rank == 0:
+    var total: Float32 = 0.0
+    for i in range(CLUSTER_SIZE):
+        total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
+    output[0] = total
+</code></pre>
+<p><strong>Why this election strategy?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Hardware primitive that selects exactly one thread per warp</li>
+<li><strong><code>my_block_rank == 0</code></strong>: Only elect from the first block to ensure single writer</li>
+<li><strong>Result</strong>: Only ONE thread across the entire cluster performs the final summation</li>
+<li><strong>Efficiency</strong>: Avoids redundant computation across all 1024 threads</li>
+</ul>
+<h2 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h2>
+<p><strong>Three-level reduction hierarchy:</strong></p>
+<ol>
+<li><strong>Thread → Warp</strong>: Individual threads contribute to warp-level partial sums</li>
+<li><strong>Warp → Block</strong>: Tree reduction combines warps into single block result (256 → 1)</li>
+<li><strong>Block → Cluster</strong>: Simple loop combines block results into final sum (4 → 1)</li>
+</ol>
+<p><strong>Memory access patterns:</strong></p>
+<ul>
+<li><strong>Input</strong>: Each element read exactly once (<code>input[global_i]</code>)</li>
+<li><strong>Shared memory</strong>: High-speed workspace for intra-block tree reduction</li>
+<li><strong>Temp storage</strong>: Low-overhead inter-block communication (only 4 values)</li>
+<li><strong>Output</strong>: Single global result written once</li>
+</ul>
+<p><strong>Synchronization guarantees:</strong></p>
+<ul>
+<li><strong><code>barrier()</code></strong>: Ensures all threads in block complete each tree reduction step</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>Global barrier</strong> - all blocks reach same execution point</li>
+<li><strong>Single writer</strong>: Election prevents race conditions on final output</li>
+</ul>
+<p><strong>Algorithm complexity analysis:</strong></p>
+<ul>
+<li><strong>Tree reduction</strong>: O(log₂ TPB) = O(log₂ 256) = 8 steps per block</li>
+<li><strong>Cluster coordination</strong>: O(1) synchronization overhead</li>
+<li><strong>Final aggregation</strong>: O(CLUSTER_SIZE) = O(4) simple additions</li>
+<li><strong>Total</strong>: Logarithmic within blocks, linear across blocks</li>
+</ul>
+<p><strong>Scalability characteristics:</strong></p>
+<ul>
+<li><strong>Block level</strong>: Scales to thousands of threads with logarithmic complexity</li>
+<li><strong>Cluster level</strong>: Scales to dozens of blocks with linear complexity</li>
+<li><strong>Memory</strong>: Temp storage requirements scale linearly with cluster size</li>
+<li><strong>Communication</strong>: Minimal inter-block data movement (one value per block)</li>
+</ul>
+</div>
+</details>
+<h2 id="understanding-the-collective-pattern"><a class="header" href="#understanding-the-collective-pattern">Understanding the collective pattern</a></h2>
+<p>This puzzle demonstrates the classic <strong>two-phase reduction pattern</strong> used in distributed computing:</p>
+<ol>
+<li><strong>Local aggregation</strong>: Each processing unit (block) reduces its data portion</li>
+<li><strong>Global coordination</strong>: Processing units synchronize and exchange results</li>
+<li><strong>Final reduction</strong>: One elected unit combines all partial results</li>
+</ol>
+<p><strong>Comparison to single-block approaches:</strong></p>
+<ul>
+<li><strong>Traditional <code>block.sum()</code></strong>: Works within 256 threads maximum</li>
+<li><strong>Cluster collective</strong>: Scales to 1000+ threads across multiple blocks</li>
+<li><strong>Same accuracy</strong>: Both produce identical mathematical results</li>
+<li><strong>Different scale</strong>: Cluster approach handles larger datasets</li>
+</ul>
+<p><strong>Performance benefits</strong>:</p>
+<ul>
+<li><strong>Larger datasets</strong>: Process arrays that exceed single-block capacity</li>
+<li><strong>Better utilization</strong>: Use more GPU compute units simultaneously</li>
+<li><strong>Scalable patterns</strong>: Foundation for complex multi-stage algorithms</li>
+</ul>
+<p><strong>Next step</strong>: Ready for the ultimate challenge? Continue to <strong><a href="./advanced_cluster_patterns.html">Advanced Cluster Algorithms</a></strong> to learn hierarchical <a href="../puzzle_24/warp_sum.html">warp programming</a>+<a href="../puzzle_27/block_sum.html">block coordination</a>+cluster synchronization, building on <a href="../puzzle_30/profile_kernels.html">performance optimization techniques</a>!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_34/cluster_coordination_basics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_34/advanced_cluster_patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_34/cluster_coordination_basics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_34/advanced_cluster_patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>

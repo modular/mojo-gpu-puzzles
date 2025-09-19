@@ -8663,11 +8663,12 @@ from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
 
-alias SIZE = 128 # This must be equal to INPUT_SIZE in p18.py
+alias SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
 alias layout = Layout.row_major(SIZE)
 alias GRID_DIM_X = 1
 # Tree-based reduction require the number of threads to be the next power of two &gt;= SIZE for correctness.
 alias BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
+
 
 fn softmax_gpu_kernel[
     layout: Layout,
@@ -23573,6 +23574,946 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 <p>This bonus challenge teaches the most important lesson in GPU optimization: <strong>understanding bottlenecks matters more than using the latest APIs</strong>.</p>
 <p>The goal isn’t just to make Tensor Cores faster - it’s to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.</p>
 <p>Master this challenge, and you’ll have the skills to optimize any GPU workload, regardless of the hardware features available.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-34-gpu-cluster-programming-sm90"><a class="header" href="#puzzle-34-gpu-cluster-programming-sm90">Puzzle 34: GPU Cluster Programming (SM90+)</a></h1>
+<h2 id="introduction-1"><a class="header" href="#introduction-1">Introduction</a></h2>
+<blockquote>
+<p><strong>Hardware requirement: ⚠️ NVIDIA SM90+ Only</strong></p>
+<p>This puzzle requires <strong>NVIDIA Hopper architecture</strong> (H100, H200) or newer GPUs with SM90+ compute capability. The cluster programming APIs are hardware-accelerated and will raise errors on unsupported hardware. If you’re unsure about the underlying architecture, run <code>pixi run gpu-specs</code> and must have at least <code>Compute Cap: 9.0</code> (see <a href="puzzle_34/../puzzle_30/nvidia_profiling_basics.html">GPU profiling basics</a> for hardware identification)</p>
+</blockquote>
+<p>Building on your journey from <strong><a href="puzzle_34/../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></strong> through <strong><a href="puzzle_34/../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></strong>, you’ll now learn <strong>cluster-level programming</strong> - coordinating multiple thread blocks to solve problems that exceed single-block capabilities.</p>
+<h2 id="what-are-thread-block-clusters"><a class="header" href="#what-are-thread-block-clusters">What are thread block clusters?</a></h2>
+<p>Thread Block Clusters are a revolutionary SM90+ feature that enable <strong>multiple thread blocks to cooperate</strong> on a single computational task with hardware-accelerated synchronization and communication primitives.</p>
+<p><strong>Key capabilities:</strong></p>
+<ul>
+<li><strong>Inter-block synchronization</strong>: Coordinate multiple blocks with <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait</code></a></li>
+<li><strong>Block identification</strong>: Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a> for unique block coordination</li>
+<li><strong>Efficient coordination</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync</code></a> for optimized warp-level cooperation</li>
+<li><strong>Advanced patterns</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_mask_base"><code>cluster_mask_base</code></a> for selective block coordination</li>
+</ul>
+<h2 id="the-cluster-programming-model"><a class="header" href="#the-cluster-programming-model">The cluster programming model</a></h2>
+<h3 id="traditional-gpu-programming-hierarchy"><a class="header" href="#traditional-gpu-programming-hierarchy">Traditional GPU programming hierarchy:</a></h3>
+<pre><code>Grid (Multiple Blocks)
+├── Block (Multiple Warps) - barrier() synchronization
+    ├── Warp (32 Threads) - SIMT lockstep execution
+    │   ├── Lane 0  ─┐
+    │   ├── Lane 1   │ All execute same instruction
+    │   ├── Lane 2   │ at same time (SIMT)
+    │   │   ...      │ warp.sum(), warp.broadcast()
+    │   └── Lane 31 ─┘
+        └── Thread (SIMD operations within each thread)
+</code></pre>
+<h3 id="new-cluster-programming-hierarchy"><a class="header" href="#new-cluster-programming-hierarchy"><strong>New: Cluster programming hierarchy:</strong></a></h3>
+<pre><code>Grid (Multiple Clusters)
+├── 🆕 Cluster (Multiple Blocks) - cluster_sync(), cluster_arrive()
+    ├── Block (Multiple Warps) - barrier() synchronization
+        ├── Warp (32 Threads) - SIMT lockstep execution
+        │   ├── Lane 0  ─┐
+        │   ├── Lane 1   │ All execute same instruction
+        │   ├── Lane 2   │ at same time (SIMT)
+        │   │   ...      │ warp.sum(), warp.broadcast()
+        │   └── Lane 31 ─┘
+            └── Thread (SIMD operations within each thread)
+</code></pre>
+<p><strong>Execution Model Details:</strong></p>
+<ul>
+<li><strong>Thread Level</strong>: <a href="puzzle_34/../puzzle_23/gpu-thread-vs-simd.html">SIMD operations</a> within individual threads</li>
+<li><strong>Warp Level</strong>: <a href="puzzle_34/../puzzle_24/warp_simt.html">SIMT execution</a> - 32 threads in lockstep coordination</li>
+<li><strong>Block Level</strong>: <a href="puzzle_34/../puzzle_27/puzzle_27.html">Multi-warp coordination</a> with shared memory and barriers</li>
+<li><strong>🆕 Cluster Level</strong>: Multi-block coordination with SM90+ cluster APIs</li>
+</ul>
+<h2 id="learning-progression-1"><a class="header" href="#learning-progression-1">Learning progression</a></h2>
+<p>This puzzle follows a carefully designed <strong>3-part progression</strong> that builds your cluster programming expertise:</p>
+<h3 id="-multi-block-coordination-basics"><a class="header" href="#-multi-block-coordination-basics"><strong><a href="puzzle_34/./cluster_coordination_basics.html">🔰 Multi-Block Coordination Basics</a></strong></a></h3>
+<p><strong>Focus</strong>: Understanding fundamental cluster synchronization patterns</p>
+<p>Learn how multiple thread blocks coordinate their execution using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> for basic inter-block communication and data distribution.</p>
+<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
+<hr />
+<h3 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations"><strong><a href="puzzle_34/./cluster_collective_ops.html">📊 Cluster-Wide Collective Operations</a></strong></a></h3>
+<p><strong>Focus</strong>: Extending block-level patterns to cluster scale</p>
+<p>Learn cluster-wide reductions and collective operations that extend familiar <code>block.sum()</code> concepts to coordinate across multiple thread blocks for large-scale computations.</p>
+<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient cluster coordination</p>
+<hr />
+<h3 id="-advanced-cluster-algorithms"><a class="header" href="#-advanced-cluster-algorithms"><strong><a href="puzzle_34/./advanced_cluster_patterns.html">🚀 Advanced Cluster Algorithms</a></strong></a></h3>
+<p><strong>Focus</strong>: Production-ready multi-level coordination patterns</p>
+<p>Implement sophisticated algorithms combining warp-level, block-level, and cluster-level coordination for maximum GPU utilization and complex computational workflows.</p>
+<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a>, <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a>, advanced coordination patterns</p>
+<h2 id="why-cluster-programming-matters"><a class="header" href="#why-cluster-programming-matters">Why cluster programming matters</a></h2>
+<p><strong>Problem Scale</strong>: Modern AI and scientific workloads often require computations that exceed single thread block capabilities:</p>
+<ul>
+<li><strong>Large matrix operations</strong> requiring inter-block coordination (like <a href="puzzle_34/../puzzle_16/puzzle_16.html">matrix multiplication from Puzzle 16</a>)</li>
+<li><strong>Multi-stage algorithms</strong> with <a href="puzzle_34/../puzzle_29/barrier.html">producer-consumer dependencies from Puzzle 29</a></li>
+<li><strong>Global statistics</strong> across datasets larger than <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory from Puzzle 8</a></li>
+<li><strong>Advanced stencil computations</strong> requiring neighbor block communication</li>
+</ul>
+<p><strong>Hardware Evolution</strong>: As GPUs gain more compute units (see <a href="puzzle_34/../puzzle_30/nvidia_profiling_basics.html">GPU architecture profiling in Puzzle 30</a>), <strong>cluster programming becomes essential</strong> for utilizing next-generation hardware efficiently.</p>
+<h2 id="educational-value-1"><a class="header" href="#educational-value-1">Educational value</a></h2>
+<p>By completing this puzzle, you’ll have learned the complete <strong>GPU programming hierarchy</strong>:</p>
+<ul>
+<li><strong>Thread-level</strong>: <a href="puzzle_34/../puzzle_23/gpu-thread-vs-simd.html">Individual computation units with SIMD operations</a></li>
+<li><strong><a href="puzzle_34/../puzzle_24/puzzle_24.html">Warp-level</a></strong>: <a href="puzzle_34/../puzzle_24/warp_simt.html">32-thread SIMT coordination</a> (Puzzles 24-26)</li>
+<li><strong><a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level</a></strong>: <a href="puzzle_34/../puzzle_27/block_sum.html">Multi-warp coordination with shared memory</a> (Puzzle 27)</li>
+<li><strong>🆕 Cluster-level</strong>: Multi-block coordination (Puzzle 34)</li>
+<li><strong>Grid-level</strong>: Independent block execution across <a href="puzzle_34/../puzzle_30/profile_kernels.html">multiple streaming multiprocessors</a></li>
+</ul>
+<p>This progression prepares you for <strong>next-generation GPU programming</strong> and <strong>large-scale parallel computing</strong> challenges, building on the <a href="puzzle_34/../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>.</p>
+<h2 id="getting-started-11"><a class="header" href="#getting-started-11">Getting started</a></h2>
+<p><strong>Prerequisites</strong>:</p>
+<ul>
+<li>Complete understanding of <a href="puzzle_34/../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></li>
+<li>Experience with <a href="puzzle_34/../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></li>
+<li>Familiarity with GPU memory hierarchy from <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory concepts (Puzzle 8)</a></li>
+<li>Understanding of <a href="puzzle_34/../puzzle_29/puzzle_29.html">GPU synchronization from barriers (Puzzle 29)</a></li>
+<li>Access to NVIDIA SM90+ hardware or compatible environment</li>
+</ul>
+<p><strong>Recommended approach</strong>: Follow the 3-part progression sequentially, as each part builds essential concepts for the next level of complexity.</p>
+<p><strong>Hardware note</strong>: If running on non-SM90+ hardware, the puzzles serve as <strong>educational examples</strong> of cluster programming concepts and API usage patterns.</p>
+<p>Ready to learn the future of GPU programming? Start with <strong><a href="puzzle_34/./cluster_coordination_basics.html">Multi-Block Coordination Basics</a></strong> to learn fundamental cluster synchronization patterns!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="multi-block-coordination-basics"><a class="header" href="#multi-block-coordination-basics">Multi-Block Coordination Basics</a></h1>
+<h2 id="overview-60"><a class="header" href="#overview-60">Overview</a></h2>
+<p>Welcome to your first <strong>cluster programming challenge</strong>! This section introduces the fundamental building blocks of inter-block coordination using SM90+ cluster APIs.</p>
+<p><strong>The Challenge</strong>: Implement a multi-block histogram algorithm where <strong>4 thread blocks coordinate</strong> to process different ranges of data and store results in a shared output array.</p>
+<p><strong>Key Learning</strong>: Learn the essential cluster synchronization pattern: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> → process → <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a>, extending the synchronization concepts from <a href="puzzle_34/../puzzle_29/barrier.html">barrier() in Puzzle 29</a>.</p>
+<h2 id="the-problem-multi-block-histogram-binning"><a class="header" href="#the-problem-multi-block-histogram-binning">The problem: multi-block histogram binning</a></h2>
+<p>Traditional single-block algorithms like those in <a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27</a> can only process data that fits within one block’s thread capacity (e.g., 256 threads). For larger datasets exceeding <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory capacity from Puzzle 8</a>, we need <strong>multiple blocks to cooperate</strong>.</p>
+<p><strong>Your task</strong>: Implement a histogram where each of 4 blocks processes a different data range, scales values by its unique block rank, and coordinates with other blocks using <a href="puzzle_34/../puzzle_29/barrier.html">synchronization patterns from Puzzle 29</a> to ensure all processing completes before any block reads the final results.</p>
+<h3 id="problem-specification"><a class="header" href="#problem-specification">Problem specification</a></h3>
+<p><strong>Multi-Block Data Distribution:</strong></p>
+<ul>
+<li><strong>Block 0</strong>: Processes elements 0-255, scales by 1</li>
+<li><strong>Block 1</strong>: Processes elements 256-511, scales by 2</li>
+<li><strong>Block 2</strong>: Processes elements 512-767, scales by 3</li>
+<li><strong>Block 3</strong>: Processes elements 768-1023, scales by 4</li>
+</ul>
+<p><strong>Coordination Requirements:</strong></p>
+<ol>
+<li>Each block must signal completion using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></li>
+<li>All blocks must wait for others using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li>Final output shows each block’s processed sum in a 4-element array</li>
+</ol>
+<h2 id="configuration-46"><a class="header" href="#configuration-46">Configuration</a></h2>
+<ul>
+<li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements (1D array)</li>
+<li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
+<li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks per cluster <code>(4, 1)</code></li>
+<li><strong>Data Type</strong>: <code>DType.float32</code></li>
+<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+</ul>
+<p><strong>Thread Block Distribution:</strong></p>
+<ul>
+<li>Block 0: threads 0-255 → elements 0-255</li>
+<li>Block 1: threads 0-255 → elements 256-511</li>
+<li>Block 2: threads 0-255 → elements 512-767</li>
+<li>Block 3: threads 0-255 → elements 768-1023</li>
+</ul>
+<h2 id="code-to-complete-51"><a class="header" href="#code-to-complete-51">Code to complete</a></h2>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="block-identification-patterns"><a class="header" href="#block-identification-patterns"><strong>Block identification patterns</strong></a></h3>
+<ul>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a> to get the cluster rank (0-3)</li>
+<li>Use <code>Int(block_idx.x)</code> for reliable block indexing in grid launch</li>
+<li>Scale data processing by block position for distinct results</li>
+</ul>
+<h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
+<ul>
+<li>Allocate shared memory using <code>tb[dtype]().row_major[tpb]().shared().alloc()</code> (see <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
+<li>Process input data scaled by <code>block_id + 1</code> to create distinct scaling per block</li>
+<li>Use bounds checking when accessing input data (pattern from <a href="puzzle_34/../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+</ul>
+<h3 id="cluster-synchronization-pattern"><a class="header" href="#cluster-synchronization-pattern"><strong>Cluster synchronization pattern</strong></a></h3>
+<ol>
+<li><strong>Process</strong>: Each block works on its portion of data</li>
+<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> announces processing completion</li>
+<li><strong>Compute</strong>: Block-local operations (reduction, aggregation)</li>
+<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before proceeding</li>
+</ol>
+<h3 id="thread-coordination-within-blocks"><a class="header" href="#thread-coordination-within-blocks"><strong>Thread coordination within blocks</strong></a></h3>
+<ul>
+<li>Use <code>barrier()</code> for intra-block synchronization before cluster operations (from <a href="puzzle_34/../puzzle_29/barrier.html">barrier concepts in Puzzle 29</a>)</li>
+<li>Only thread 0 should write the final block result (single-writer pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">block programming</a>)</li>
+<li>Store results at <code>output[block_id]</code> for reliable indexing</li>
+</ul>
+</div>
+</details>
+<h2 id="running-the-code-37"><a class="header" href="#running-the-code-37">Running the code</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p34 --coordination
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --coordination
+</code></pre>
+  </div>
+</div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Testing Multi-Block Coordination
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Block coordination results:
+  Block 0 : 127.5
+  Block 1 : 255.0
+  Block 2 : 382.5
+  Block 3 : 510.0
+✅ Multi-block coordination tests passed!
+</code></pre>
+<p><strong>Success Criteria:</strong></p>
+<ul>
+<li>All 4 blocks produce <strong>non-zero results</strong></li>
+<li>Results show <strong>scaling pattern</strong>: Block 1 &gt; Block 0, Block 2 &gt; Block 1, etc.</li>
+<li>No race conditions or coordination failures</li>
+</ul>
+<h2 id="solution-56"><a class="header" href="#solution-56">Solution</a></h2>
+<details class="solution-details">
+<summary>Click to reveal solution</summary>
+<pre><code class="language-mojo">fn cluster_coordination_basics[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Real cluster coordination using SM90+ cluster APIs."""
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # DIAGNOSTIC: Check what's happening with cluster ranks
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+
+    # FIX: Use block_idx.x for data distribution instead of cluster rank
+    # Each block should process different portions of the data
+    var data_scale = Float32(
+        block_id + 1
+    )  # Use block_idx instead of cluster rank
+
+    # Phase 1: Each block processes its portion
+    if global_i &lt; size:
+        shared_data[local_i] = input[global_i] * data_scale
+    else:
+        shared_data[local_i] = 0.0
+
+    barrier()
+
+    # Phase 2: Use cluster_arrive() for inter-block coordination
+    cluster_arrive()  # Signal this block has completed processing
+
+    # Block-level aggregation (only thread 0)
+    if local_i == 0:
+        var block_sum: Float32 = 0.0
+        for i in range(tpb):
+            block_sum += shared_data[i][0]
+        # FIX: Store result at block_idx position (guaranteed unique per block)
+        output[block_id] = block_sum
+
+    # Wait for all blocks in cluster to complete
+    cluster_wait()
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>The cluster coordination solution demonstrates the fundamental multi-block synchronization pattern using a carefully orchestrated two-phase approach:</strong></p>
+<h2 id="phase-1-independent-block-processing"><a class="header" href="#phase-1-independent-block-processing"><strong>Phase 1: Independent block processing</strong></a></h2>
+<p><strong>Thread and block identification:</strong></p>
+<pre><code class="language-mojo">global_i = block_dim.x * block_idx.x + thread_idx.x  # Global thread index
+local_i = thread_idx.x                               # Local thread index within block
+my_block_rank = Int(block_rank_in_cluster())         # Cluster rank (0-3)
+block_id = Int(block_idx.x)                          # Block index for reliable addressing
+</code></pre>
+<p><strong>Shared memory allocation and data processing:</strong></p>
+<ul>
+<li>Each block allocates its own shared memory workspace: <code>tb[dtype]().row_major[tpb]().shared().alloc()</code></li>
+<li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block processes data differently
+<ul>
+<li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0</li>
+</ul>
+</li>
+<li><strong>Bounds checking</strong>: <code>if global_i &lt; size:</code> prevents out-of-bounds memory access</li>
+<li><strong>Data processing</strong>: <code>shared_data[local_i] = input[global_i] * data_scale</code> scales input data per block</li>
+</ul>
+<p><strong>Intra-block synchronization:</strong></p>
+<ul>
+<li><code>barrier()</code> ensures all threads within each block complete data loading before proceeding</li>
+<li>This prevents race conditions between data loading and subsequent cluster coordination</li>
+</ul>
+<h2 id="phase-2-cluster-coordination"><a class="header" href="#phase-2-cluster-coordination"><strong>Phase 2: Cluster coordination</strong></a></h2>
+<p><strong>Inter-block signaling:</strong></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> signals that this block has completed its local processing phase</li>
+<li>This is a <strong>non-blocking</strong> operation that registers completion with the cluster hardware</li>
+</ul>
+<p><strong>Local aggregation (Thread 0 only):</strong></p>
+<pre><code class="language-mojo">if local_i == 0:
+    var block_sum: Float32 = 0.0
+    for i in range(tpb):
+        block_sum += shared_data[i][0]  # Sum all elements in shared memory
+    output[block_id] = block_sum        # Store result at unique block position
+</code></pre>
+<ul>
+<li>Only thread 0 performs the sum to avoid race conditions</li>
+<li>Results stored at <code>output[block_id]</code> ensures each block writes to unique location</li>
+</ul>
+<p><strong>Final synchronization:</strong></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> blocks until ALL blocks in the cluster have completed their work</li>
+<li>This ensures deterministic completion order across the entire cluster</li>
+</ul>
+<h2 id="key-technical-insights-3"><a class="header" href="#key-technical-insights-3"><strong>Key technical insights</strong></a></h2>
+<p><strong>Why use <code>block_id</code> instead of <code>my_block_rank</code>?</strong></p>
+<ul>
+<li><code>block_idx.x</code> provides reliable grid-launch indexing (0, 1, 2, 3)</li>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a> may behave differently depending on cluster configuration</li>
+<li>Using <code>block_id</code> guarantees each block gets unique data portions and output positions</li>
+</ul>
+<p><strong>Memory access pattern:</strong></p>
+<ul>
+<li><strong>Global memory</strong>: Each thread reads <code>input[global_i]</code> exactly once</li>
+<li><strong>Shared memory</strong>: Used for intra-block communication and aggregation</li>
+<li><strong>Output memory</strong>: Each block writes to <code>output[block_id]</code> exactly once</li>
+</ul>
+<p><strong>Synchronization hierarchy:</strong></p>
+<ol>
+<li><strong><code>barrier()</code></strong>: Synchronizes threads within each block (intra-block)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signals completion to other blocks (inter-block, non-blocking)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Waits for all blocks to complete (inter-block, blocking)</li>
+</ol>
+<p><strong>Performance characteristics:</strong></p>
+<ul>
+<li><strong>Compute complexity</strong>: O(TPB) per block for local sum, O(1) for cluster coordination</li>
+<li><strong>Memory bandwidth</strong>: Each input element read once, minimal inter-block communication</li>
+<li><strong>Scalability</strong>: Pattern scales to larger cluster sizes with minimal overhead</li>
+</ul>
+</div>
+</details>
+<h2 id="understanding-the-pattern"><a class="header" href="#understanding-the-pattern">Understanding the pattern</a></h2>
+<p>The essential cluster coordination pattern follows a simple but powerful structure:</p>
+<ol>
+<li><strong>Phase 1</strong>: Each block processes its assigned data portion independently</li>
+<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> announces completion of processing</li>
+<li><strong>Phase 2</strong>: Blocks can safely perform operations that depend on other blocks’ results</li>
+<li><strong>Synchronize</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks finish before proceeding</li>
+</ol>
+<p><strong>Next step</strong>: Ready for more advanced coordination? Continue to <strong><a href="puzzle_34/./cluster_collective_ops.html">Cluster-Wide Collective Operations</a></strong> to learn how to extend <a href="puzzle_34/../puzzle_27/block_sum.html"><code>block.sum()</code> patterns from Puzzle 27</a> to cluster scale, building on <a href="puzzle_34/../puzzle_24/warp_sum.html">warp-level reductions from Puzzle 24</a>!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-cluster-wide-collective-operations-1"><a class="header" href="#-cluster-wide-collective-operations-1">☸️ Cluster-Wide Collective Operations</a></h1>
+<h2 id="overview-61"><a class="header" href="#overview-61">Overview</a></h2>
+<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum</code></a> pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
+<p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.</p>
+<p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
+<h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
+<p>Single blocks (as learned in <a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27</a>) are limited by their thread count and <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory capacity from Puzzle 8</a>. For <strong>large datasets</strong> requiring global statistics (mean, variance, sum) beyond <a href="puzzle_34/../puzzle_27/block_sum.html">single-block reductions</a>, we need <strong>cluster-wide collective operations</strong>.</p>
+<p><strong>Your task</strong>: Implement a cluster-wide sum reduction where:</p>
+<ol>
+<li>Each block performs local reduction (like <a href="puzzle_34/../puzzle_27/block_sum.html"><code>block.sum()</code> from Puzzle 27</a>)</li>
+<li>Blocks coordinate to combine their partial results using <a href="puzzle_34/../puzzle_29/barrier.html">synchronization from Puzzle 29</a></li>
+<li>One elected thread computes the final global sum using <a href="puzzle_34/../puzzle_24/warp_sum.html">warp election patterns</a></li>
+</ol>
+<h3 id="problem-specification-1"><a class="header" href="#problem-specification-1">Problem specification</a></h3>
+<p><strong>Algorithmic Flow:</strong></p>
+<p><strong>Phase 1 - Local Reduction (within each block):</strong>
+\[R_i = \sum_{j=0}^{TPB-1} input[i \times TPB + j] \quad \text{for block } i\]</p>
+<p><strong>Phase 2 - Global Aggregation (across cluster):</strong>
+\[\text{Global Sum} = \sum_{i=0}^{\text{CLUSTER_SIZE}-1} R_i\]</p>
+<p><strong>Coordination Requirements:</strong></p>
+<ol>
+<li><strong>Local reduction</strong>: Each block computes partial sum using tree reduction</li>
+<li><strong>Cluster sync</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> ensures all partial results are ready</li>
+<li><strong>Final aggregation</strong>: One elected thread combines all partial results</li>
+</ol>
+<h2 id="configuration-47"><a class="header" href="#configuration-47">Configuration</a></h2>
+<ul>
+<li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements</li>
+<li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
+<li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks per cluster <code>(4, 1)</code></li>
+<li><strong>Data Type</strong>: <code>DType.float32</code></li>
+<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(1)</code></li>
+<li><strong>Temporary Storage</strong>: <code>Layout.row_major(CLUSTER_SIZE)</code> for partial results</li>
+</ul>
+<p><strong>Expected Result</strong>: Sum of sequence <code>0, 0.01, 0.02, ..., 10.23</code> = <strong>523,776</strong></p>
+<h2 id="code-to-complete-52"><a class="header" href="#code-to-complete-52">Code to complete</a></h2>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="local-reduction-pattern"><a class="header" href="#local-reduction-pattern"><strong>Local reduction pattern</strong></a></h3>
+<ul>
+<li>Use <a href="puzzle_34/../puzzle_27/block_sum.html">tree reduction pattern from Puzzle 27’s block sum</a></li>
+<li>Start with stride = <code>tpb // 2</code> and halve each iteration (classic <a href="puzzle_34/../puzzle_12/puzzle_12.html">reduction from Puzzle 12</a>)</li>
+<li>Only threads with <code>local_i &lt; stride</code> participate in each step</li>
+<li>Use <code>barrier()</code> between reduction steps (from <a href="puzzle_34/../puzzle_29/barrier.html">barrier concepts in Puzzle 29</a>)</li>
+</ul>
+<h3 id="cluster-coordination-strategy"><a class="header" href="#cluster-coordination-strategy"><strong>Cluster coordination strategy</strong></a></h3>
+<ul>
+<li>Store partial results in <code>temp_storage[block_id]</code> for reliable indexing</li>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster synchronization (stronger than arrive/wait)</li>
+<li>Only one thread should perform the final global aggregation</li>
+</ul>
+<h3 id="election-pattern-for-efficiency"><a class="header" href="#election-pattern-for-efficiency"><strong>Election pattern for efficiency</strong></a></h3>
+<ul>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> within the first block (<code>my_block_rank == 0</code>) (pattern from <a href="puzzle_34/../puzzle_24/warp_sum.html">warp programming</a>)</li>
+<li>This ensures only one thread performs the final sum to avoid redundancy</li>
+<li>The elected thread reads all partial results from <code>temp_storage</code> (similar to <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory access from Puzzle 8</a>)</li>
+</ul>
+<h3 id="memory-access-patterns"><a class="header" href="#memory-access-patterns"><strong>Memory access patterns</strong></a></h3>
+<ul>
+<li>Each thread reads <code>input[global_i]</code> with bounds checking (from <a href="puzzle_34/../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+<li>Store intermediate results in <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory for intra-block reduction</a></li>
+<li>Store partial results in <code>temp_storage[block_id]</code> for inter-block communication</li>
+<li>Final result goes to <code>output[0]</code> (single-writer pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">block coordination</a>)</li>
+</ul>
+</div>
+</details>
+<h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
+</ul>
+<h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
+<p>Recall the <strong>tree reduction pattern</strong> from <a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27’s traditional dot product</a>:</p>
+<pre><code>Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
+Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
+Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
+Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
+...
+Stride 1:   [T0] += [T1] → Final result at T0
+</code></pre>
+<p><strong>Now extend this pattern to cluster scale</strong> where each block produces one partial result, then combine across blocks.</p>
+<h2 id="running-the-code-38"><a class="header" href="#running-the-code-38">Running the code</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p34 --reduction
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --reduction
+</code></pre>
+  </div>
+</div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Testing Cluster-Wide Reduction
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Expected sum: 523776.0
+Cluster reduction result: 523776.0
+Expected: 523776.0
+Error: 0.0
+✅ Passed: Cluster reduction accuracy test
+✅ Cluster-wide collective operations tests passed!
+</code></pre>
+<p><strong>Success Criteria:</strong></p>
+<ul>
+<li><strong>Perfect accuracy</strong>: Result exactly matches expected sum (523,776)</li>
+<li><strong>Cluster coordination</strong>: All 4 blocks contribute their partial sums</li>
+<li><strong>Efficient final reduction</strong>: Single elected thread computes final result</li>
+</ul>
+<h2 id="solution-57"><a class="header" href="#solution-57">Solution</a></h2>
+<details class="solution-details">
+<summary>Click to reveal solution</summary>
+<pre><code class="language-mojo">fn cluster_collective_operations[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    size: Int,
+):
+    """Cluster-wide collective operations using real cluster APIs."""
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    # Each thread accumulates its data
+    var my_value: Float32 = 0.0
+    if global_i &lt; size:
+        my_value = input[global_i][0]
+
+    # Block-level reduction using shared memory
+    shared_mem = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_mem[local_i] = my_value
+    barrier()
+
+    # Tree reduction within block
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride and local_i + stride &lt; tpb:
+            shared_mem[local_i] += shared_mem[local_i + stride]
+        barrier()
+        stride = stride // 2
+
+    # FIX: Store block result using block_idx for reliable indexing
+    if local_i == 0:
+        temp_storage[block_id] = shared_mem[0]
+
+    # Use cluster_sync() for full cluster synchronization
+    cluster_sync()
+
+    # Final cluster reduction (elect one thread to do the final work)
+    if elect_one_sync() and my_block_rank == 0:
+        var total: Float32 = 0.0
+        for i in range(CLUSTER_SIZE):
+            total += temp_storage[i][0]
+        output[0] = total
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>The cluster collective operations solution demonstrates the classic distributed computing pattern: local reduction → global coordination → final aggregation:</strong></p>
+<h2 id="phase-1-local-block-reduction-traditional-tree-reduction"><a class="header" href="#phase-1-local-block-reduction-traditional-tree-reduction"><strong>Phase 1: Local block reduction (traditional tree reduction)</strong></a></h2>
+<p><strong>Data loading and initialization:</strong></p>
+<pre><code class="language-mojo">var my_value: Float32 = 0.0
+if global_i &lt; size:
+    my_value = input[global_i][0]  # Load with bounds checking
+shared_mem[local_i] = my_value     # Store in shared memory
+barrier()                          # Ensure all threads complete loading
+</code></pre>
+<p><strong>Tree reduction algorithm:</strong></p>
+<pre><code class="language-mojo">var stride = tpb // 2  # Start with half the threads (128)
+while stride &gt; 0:
+    if local_i &lt; stride and local_i + stride &lt; tpb:
+        shared_mem[local_i] += shared_mem[local_i + stride]
+    barrier()          # Synchronize after each reduction step
+    stride = stride // 2
+</code></pre>
+<p><strong>Tree reduction visualization (TPB=256):</strong></p>
+<pre><code>Step 1: stride=128  [T0]+=T128, [T1]+=T129, ..., [T127]+=T255
+Step 2: stride=64   [T0]+=T64,  [T1]+=T65,  ..., [T63]+=T127
+Step 3: stride=32   [T0]+=T32,  [T1]+=T33,  ..., [T31]+=T63
+Step 4: stride=16   [T0]+=T16,  [T1]+=T17,  ..., [T15]+=T31
+Step 5: stride=8    [T0]+=T8,   [T1]+=T9,   ..., [T7]+=T15
+Step 6: stride=4    [T0]+=T4,   [T1]+=T5,   [T2]+=T6,  [T3]+=T7
+Step 7: stride=2    [T0]+=T2,   [T1]+=T3
+Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
+</code></pre>
+<p><strong>Partial result storage:</strong></p>
+<ul>
+<li>Only thread 0 writes: <code>temp_storage[block_id] = shared_mem[0]</code></li>
+<li>Each block stores its sum at <code>temp_storage[0]</code>, <code>temp_storage[1]</code>, <code>temp_storage[2]</code>, <code>temp_storage[3]</code></li>
+</ul>
+<h2 id="phase-2-cluster-synchronization"><a class="header" href="#phase-2-cluster-synchronization"><strong>Phase 2: Cluster synchronization</strong></a></h2>
+<p><strong>Full cluster barrier:</strong></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> provides <strong>stronger guarantees</strong> than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li>Ensures <strong>all blocks complete their local reductions</strong> before any block proceeds</li>
+<li>Hardware-accelerated synchronization across all blocks in the cluster</li>
+</ul>
+<h2 id="phase-3-final-global-aggregation"><a class="header" href="#phase-3-final-global-aggregation"><strong>Phase 3: Final global aggregation</strong></a></h2>
+<p><strong>Thread election for efficiency:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync() and my_block_rank == 0:
+    var total: Float32 = 0.0
+    for i in range(CLUSTER_SIZE):
+        total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
+    output[0] = total
+</code></pre>
+<p><strong>Why this election strategy?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Hardware primitive that selects exactly one thread per warp</li>
+<li><strong><code>my_block_rank == 0</code></strong>: Only elect from the first block to ensure single writer</li>
+<li><strong>Result</strong>: Only ONE thread across the entire cluster performs the final summation</li>
+<li><strong>Efficiency</strong>: Avoids redundant computation across all 1024 threads</li>
+</ul>
+<h2 id="key-technical-insights-4"><a class="header" href="#key-technical-insights-4"><strong>Key technical insights</strong></a></h2>
+<p><strong>Three-level reduction hierarchy:</strong></p>
+<ol>
+<li><strong>Thread → Warp</strong>: Individual threads contribute to warp-level partial sums</li>
+<li><strong>Warp → Block</strong>: Tree reduction combines warps into single block result (256 → 1)</li>
+<li><strong>Block → Cluster</strong>: Simple loop combines block results into final sum (4 → 1)</li>
+</ol>
+<p><strong>Memory access patterns:</strong></p>
+<ul>
+<li><strong>Input</strong>: Each element read exactly once (<code>input[global_i]</code>)</li>
+<li><strong>Shared memory</strong>: High-speed workspace for intra-block tree reduction</li>
+<li><strong>Temp storage</strong>: Low-overhead inter-block communication (only 4 values)</li>
+<li><strong>Output</strong>: Single global result written once</li>
+</ul>
+<p><strong>Synchronization guarantees:</strong></p>
+<ul>
+<li><strong><code>barrier()</code></strong>: Ensures all threads in block complete each tree reduction step</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>Global barrier</strong> - all blocks reach same execution point</li>
+<li><strong>Single writer</strong>: Election prevents race conditions on final output</li>
+</ul>
+<p><strong>Algorithm complexity analysis:</strong></p>
+<ul>
+<li><strong>Tree reduction</strong>: O(log₂ TPB) = O(log₂ 256) = 8 steps per block</li>
+<li><strong>Cluster coordination</strong>: O(1) synchronization overhead</li>
+<li><strong>Final aggregation</strong>: O(CLUSTER_SIZE) = O(4) simple additions</li>
+<li><strong>Total</strong>: Logarithmic within blocks, linear across blocks</li>
+</ul>
+<p><strong>Scalability characteristics:</strong></p>
+<ul>
+<li><strong>Block level</strong>: Scales to thousands of threads with logarithmic complexity</li>
+<li><strong>Cluster level</strong>: Scales to dozens of blocks with linear complexity</li>
+<li><strong>Memory</strong>: Temp storage requirements scale linearly with cluster size</li>
+<li><strong>Communication</strong>: Minimal inter-block data movement (one value per block)</li>
+</ul>
+</div>
+</details>
+<h2 id="understanding-the-collective-pattern"><a class="header" href="#understanding-the-collective-pattern">Understanding the collective pattern</a></h2>
+<p>This puzzle demonstrates the classic <strong>two-phase reduction pattern</strong> used in distributed computing:</p>
+<ol>
+<li><strong>Local aggregation</strong>: Each processing unit (block) reduces its data portion</li>
+<li><strong>Global coordination</strong>: Processing units synchronize and exchange results</li>
+<li><strong>Final reduction</strong>: One elected unit combines all partial results</li>
+</ol>
+<p><strong>Comparison to single-block approaches:</strong></p>
+<ul>
+<li><strong>Traditional <code>block.sum()</code></strong>: Works within 256 threads maximum</li>
+<li><strong>Cluster collective</strong>: Scales to 1000+ threads across multiple blocks</li>
+<li><strong>Same accuracy</strong>: Both produce identical mathematical results</li>
+<li><strong>Different scale</strong>: Cluster approach handles larger datasets</li>
+</ul>
+<p><strong>Performance benefits</strong>:</p>
+<ul>
+<li><strong>Larger datasets</strong>: Process arrays that exceed single-block capacity</li>
+<li><strong>Better utilization</strong>: Use more GPU compute units simultaneously</li>
+<li><strong>Scalable patterns</strong>: Foundation for complex multi-stage algorithms</li>
+</ul>
+<p><strong>Next step</strong>: Ready for the ultimate challenge? Continue to <strong><a href="puzzle_34/./advanced_cluster_patterns.html">Advanced Cluster Algorithms</a></strong> to learn hierarchical <a href="puzzle_34/../puzzle_24/warp_sum.html">warp programming</a>+<a href="puzzle_34/../puzzle_27/block_sum.html">block coordination</a>+cluster synchronization, building on <a href="puzzle_34/../puzzle_30/profile_kernels.html">performance optimization techniques</a>!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-advanced-cluster-algorithms-1"><a class="header" href="#-advanced-cluster-algorithms-1">🧠 Advanced Cluster Algorithms</a></h1>
+<h2 id="overview-62"><a class="header" href="#overview-62">Overview</a></h2>
+<p>This final challenge combines <strong>all levels of GPU programming hierarchy</strong> from <a href="puzzle_34/../puzzle_24/puzzle_24.html">warp-level (Puzzles 24-26)</a>, <a href="puzzle_34/../puzzle_27/puzzle_27.html">block-level (Puzzle 27)</a>, and cluster coordination - to implement a sophisticated multi-level algorithm that maximizes GPU utilization.</p>
+<p><strong>The Challenge</strong>: Implement a hierarchical cluster algorithm using <strong>warp-level optimization</strong> (<code>elect_one_sync()</code>), <strong>block-level aggregation</strong>, and <strong>cluster-level coordination</strong> in a single unified pattern.</p>
+<p><strong>Key Learning</strong>: Learn the complete GPU programming stack with production-ready coordination patterns used in advanced computational workloads.</p>
+<h2 id="the-problem-multi-level-data-processing-pipeline"><a class="header" href="#the-problem-multi-level-data-processing-pipeline">The problem: multi-level data processing pipeline</a></h2>
+<p>Real-world GPU algorithms often require <strong>hierarchical coordination</strong> where different levels of the GPU hierarchy (<a href="puzzle_34/../puzzle_24/warp_simt.html">warps from Puzzle 24</a>, <a href="puzzle_34/../puzzle_27/block_sum.html">blocks from Puzzle 27</a>, clusters) perform specialized roles in a coordinated computation pipeline, extending <a href="puzzle_34/../puzzle_29/barrier.html">multi-stage processing from Puzzle 29</a>.</p>
+<p><strong>Your task</strong>: Implement a multi-stage algorithm where:</p>
+<ol>
+<li><strong><a href="puzzle_34/../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient intra-warp coordination (from <a href="puzzle_34/../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li><strong><a href="puzzle_34/../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
+<li><strong>Cluster-level</strong>: Coordinate between blocks using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="puzzle_34/../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
+</ol>
+<h3 id="algorithm-specification"><a class="header" href="#algorithm-specification">Algorithm specification</a></h3>
+<p><strong>Multi-Stage Processing Pipeline:</strong></p>
+<ol>
+<li><strong>Stage 1 (<a href="puzzle_34/../puzzle_24/puzzle_24.html">Warp-level</a>)</strong>: Each warp elects one thread to sum 32 consecutive elements</li>
+<li><strong>Stage 2 (<a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp sums within each block</li>
+<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+</ol>
+<p><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing
+<strong>Output</strong>: 4 block results showing hierarchical processing effects</p>
+<h2 id="configuration-48"><a class="header" href="#configuration-48">Configuration</a></h2>
+<ul>
+<li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements</li>
+<li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
+<li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks <code>(4, 1)</code></li>
+<li><strong>Warp Size</strong>: <code>WARP_SIZE = 32</code> threads per warp (NVIDIA standard)</li>
+<li><strong>Warps per Block</strong>: <code>TPB / WARP_SIZE = 8</code> warps</li>
+<li><strong>Data Type</strong>: <code>DType.float32</code></li>
+<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+</ul>
+<p><strong>Processing Distribution:</strong></p>
+<ul>
+<li><strong>Block 0</strong>: 256 threads → 8 warps → elements 0-255</li>
+<li><strong>Block 1</strong>: 256 threads → 8 warps → elements 256-511</li>
+<li><strong>Block 2</strong>: 256 threads → 8 warps → elements 512-767</li>
+<li><strong>Block 3</strong>: 256 threads → 8 warps → elements 768-1023</li>
+</ul>
+<h2 id="code-to-complete-53"><a class="header" href="#code-to-complete-53">Code to complete</a></h2>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="warp-level-optimization-patterns"><a class="header" href="#warp-level-optimization-patterns"><strong>Warp-level optimization patterns</strong></a></h3>
+<ul>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> to select one thread per warp for computation (from <a href="puzzle_34/../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
+<li>The elected thread should process 32 consecutive elements (leveraging <a href="puzzle_34/../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li>Compute warp start with <code>(local_i // 32) * 32</code> to find warp boundaries (lane indexing from <a href="puzzle_34/../puzzle_24/puzzle_24.html">warp concepts</a>)</li>
+<li>Store warp results back in <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory at elected thread’s position</a></li>
+</ul>
+<h3 id="block-level-aggregation-strategy"><a class="header" href="#block-level-aggregation-strategy"><strong>Block-level aggregation strategy</strong></a></h3>
+<ul>
+<li>After warp processing, aggregate across all warp results (extending <a href="puzzle_34/../puzzle_27/block_sum.html">block coordination from Puzzle 27</a>)</li>
+<li>Read from elected positions: indices 0, 32, 64, 96, 128, 160, 192, 224</li>
+<li>Use loop <code>for i in range(0, tpb, 32)</code> to iterate through warp leaders (pattern from <a href="puzzle_34/../puzzle_12/puzzle_12.html">reduction algorithms</a>)</li>
+<li>Only thread 0 should compute the final block total (single-writer pattern from <a href="puzzle_34/../puzzle_29/barrier.html">barrier coordination</a>)</li>
+</ul>
+<h3 id="cluster-coordination-flow"><a class="header" href="#cluster-coordination-flow"><strong>Cluster coordination flow</strong></a></h3>
+<ol>
+<li><strong>Process</strong>: Each block processes its data with hierarchical warp optimization</li>
+<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> indicates completion of local processing</li>
+<li><strong>Store</strong>: Thread 0 writes the block result to output</li>
+<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before termination</li>
+</ol>
+<h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
+<ul>
+<li>Scale input by <code>Float32(block_id + 1)</code> to create distinct block patterns</li>
+<li>Always check <code>global_i &lt; size</code> before reading input (from <a href="puzzle_34/../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+<li>Use <code>barrier()</code> between processing phases within blocks (from <a href="puzzle_34/../puzzle_29/barrier.html">synchronization patterns</a>)</li>
+<li>Handle warp boundary conditions carefully in loops (considerations from <a href="puzzle_34/../puzzle_24/warp_simt.html">warp programming</a>)</li>
+</ul>
+</div>
+</details>
+<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced Cluster APIs</a></h2>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Wait for all blocks to reach synchronization point</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Get unique block identifier within cluster</li>
+</ul>
+<h2 id="hierarchical-coordination-pattern"><a class="header" href="#hierarchical-coordination-pattern">Hierarchical coordination pattern</a></h2>
+<p>This puzzle demonstrates <strong>three-level coordination hierarchy</strong>:</p>
+<h3 id="level-1-warp-coordination-puzzle-24"><a class="header" href="#level-1-warp-coordination-puzzle-24"><strong>Level 1: Warp Coordination</strong> (<a href="puzzle_34/../puzzle_24/puzzle_24.html">Puzzle 24</a>)</a></h3>
+<pre><code>Warp (32 threads) → elect_one_sync() → 1 elected thread → processes 32 elements
+</code></pre>
+<h3 id="level-2-block-coordination-puzzle-27"><a class="header" href="#level-2-block-coordination-puzzle-27"><strong>Level 2: Block Coordination</strong> (<a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27</a>)</a></h3>
+<pre><code>Block (8 warps) → aggregate warp results → 1 block total
+</code></pre>
+<h3 id="level-3-cluster-coordination-this-puzzle"><a class="header" href="#level-3-cluster-coordination-this-puzzle"><strong>Level 3: Cluster Coordination</strong> (This puzzle)</a></h3>
+<pre><code>Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
+</code></pre>
+<p><strong>Combined Effect:</strong> 1024 threads → 32 warp leaders → 4 block results → coordinated cluster completion</p>
+<h2 id="running-the-code-39"><a class="header" href="#running-the-code-39">Running the code</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p34 --advanced
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --advanced
+</code></pre>
+  </div>
+</div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Testing Advanced Cluster Algorithms
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Advanced cluster algorithm results:
+  Block 0 : 122.799995
+  Block 1 : 247.04001
+  Block 2 : 372.72
+  Block 3 : 499.83997
+✅ Advanced cluster patterns tests passed!
+</code></pre>
+<p><strong>Success Criteria:</strong></p>
+<ul>
+<li><strong>Hierarchical scaling</strong>: Results show multi-level coordination effects</li>
+<li><strong>Warp optimization</strong>: <code>elect_one_sync()</code> reduces redundant computation</li>
+<li><strong>Cluster coordination</strong>: All blocks complete processing successfully</li>
+<li><strong>Performance pattern</strong>: Higher block IDs produce proportionally larger results</li>
+</ul>
+<h2 id="solution-58"><a class="header" href="#solution-58">Solution</a></h2>
+<details class="solution-details">
+<summary>Click to reveal solution</summary>
+<pre><code class="language-mojo">fn advanced_cluster_patterns[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Advanced cluster programming using cluster masks and relaxed synchronization.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+
+    # Compute cluster mask for advanced coordination
+    # base_mask = cluster_mask_base()  # Requires cluster_shape parameter
+
+    # FIX: Process data with block_idx-based scaling for guaranteed uniqueness
+    var data_scale = Float32(block_id + 1)
+    if global_i &lt; size:
+        shared_data[local_i] = input[global_i] * data_scale
+    else:
+        shared_data[local_i] = 0.0
+
+    barrier()
+
+    # Advanced pattern: Use elect_one_sync for efficient coordination
+    if elect_one_sync():  # Only one thread per warp does this work
+        var warp_sum: Float32 = 0.0
+        var warp_start = (local_i // 32) * 32  # Get warp start index
+        for i in range(32):  # Sum across warp
+            if warp_start + i &lt; tpb:
+                warp_sum += shared_data[warp_start + i][0]
+        shared_data[local_i] = warp_sum
+
+    barrier()
+
+    # Use cluster_arrive for staged synchronization in sm90+
+    cluster_arrive()
+
+    # Only first thread in each block stores result
+    if local_i == 0:
+        var block_total: Float32 = 0.0
+        for i in range(0, tpb, 32):  # Sum warp results
+            if i &lt; tpb:
+                block_total += shared_data[i][0]
+        output[block_id] = block_total
+
+    # Wait for all blocks to complete their calculations in sm90+
+    cluster_wait()
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>The advanced cluster patterns solution demonstrates a sophisticated three-level hierarchical optimization that combines warp, block, and cluster coordination for maximum GPU utilization:</strong></p>
+<h2 id="level-1-warp-level-optimization-thread-election"><a class="header" href="#level-1-warp-level-optimization-thread-election"><strong>Level 1: Warp-Level Optimization (Thread Election)</strong></a></h2>
+<p><strong>Data preparation and scaling:</strong></p>
+<pre><code class="language-mojo">var data_scale = Float32(block_id + 1)  # Block-specific scaling factor
+if global_i &lt; size:
+    shared_data[local_i] = input[global_i] * data_scale
+else:
+    shared_data[local_i] = 0.0  # Zero-pad for out-of-bounds
+barrier()  # Ensure all threads complete data loading
+</code></pre>
+<p><strong>Warp-level thread election:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync():  # Hardware elects exactly 1 thread per warp
+    var warp_sum: Float32 = 0.0
+    var warp_start = (local_i // 32) * 32  # Calculate warp boundary
+    for i in range(32):  # Process entire warp's data
+        if warp_start + i &lt; tpb:
+            warp_sum += shared_data[warp_start + i][0]
+    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+</code></pre>
+<p><strong>Warp boundary calculation explained:</strong></p>
+<ul>
+<li><strong>Thread 37</strong> (in warp 1): <code>warp_start = (37 // 32) * 32 = 1 * 32 = 32</code></li>
+<li><strong>Thread 67</strong> (in warp 2): <code>warp_start = (67 // 32) * 32 = 2 * 32 = 64</code></li>
+<li><strong>Thread 199</strong> (in warp 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
+</ul>
+<p><strong>Election pattern visualization (TPB=256, 8 warps):</strong></p>
+<pre><code>Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
+Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
+Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
+Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
+Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
+Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
+Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
+Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+</code></pre>
+<h2 id="level-2-block-level-aggregation-warp-leader-coordination"><a class="header" href="#level-2-block-level-aggregation-warp-leader-coordination"><strong>Level 2: Block-level aggregation (Warp Leader Coordination)</strong></a></h2>
+<p><strong>Inter-warp synchronization:</strong></p>
+<pre><code class="language-mojo">barrier()  # Ensure all warps complete their elected computations
+</code></pre>
+<p><strong>Warp leader aggregation (Thread 0 only):</strong></p>
+<pre><code class="language-mojo">if local_i == 0:
+    var block_total: Float32 = 0.0
+    for i in range(0, tpb, 32):  # Iterate through warp leader positions
+        if i &lt; tpb:
+            block_total += shared_data[i][0]  # Sum warp results
+    output[block_id] = block_total
+</code></pre>
+<p><strong>Memory access pattern:</strong></p>
+<ul>
+<li>Thread 0 reads from: <code>shared_data[0]</code>, <code>shared_data[32]</code>, <code>shared_data[64]</code>, <code>shared_data[96]</code>, <code>shared_data[128]</code>, <code>shared_data[160]</code>, <code>shared_data[192]</code>, <code>shared_data[224]</code></li>
+<li>These positions contain the warp sums computed by elected threads</li>
+<li>Result: 8 warp sums → 1 block total</li>
+</ul>
+<h2 id="level-3-cluster-level-staged-synchronization"><a class="header" href="#level-3-cluster-level-staged-synchronization"><strong>Level 3: Cluster-level staged synchronization</strong></a></h2>
+<p><strong>Staged synchronization approach:</strong></p>
+<pre><code class="language-mojo">cluster_arrive()  # Non-blocking: signal this block's completion
+# ... Thread 0 computes and stores block result ...
+cluster_wait()    # Blocking: wait for all blocks to complete
+</code></pre>
+<p><strong>Why staged synchronization?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> called <strong>before</strong> final computation allows overlapping work</li>
+<li>Block can compute its result while other blocks are still processing</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> ensures deterministic completion order</li>
+<li>More efficient than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for independent block computations</li>
+</ul>
+<h2 id="advanced-pattern-characteristics"><a class="header" href="#advanced-pattern-characteristics"><strong>Advanced pattern characteristics</strong></a></h2>
+<p><strong>Hierarchical computation reduction:</strong></p>
+<ol>
+<li><strong>256 threads</strong> → <strong>8 elected threads</strong> (32x reduction per block)</li>
+<li><strong>8 warp sums</strong> → <strong>1 block total</strong> (8x reduction per block)</li>
+<li><strong>4 blocks</strong> → <strong>staged completion</strong> (synchronized termination)</li>
+<li><strong>Total efficiency</strong>: 256x reduction in redundant computation per block</li>
+</ol>
+<p><strong>Memory access optimization:</strong></p>
+<ul>
+<li><strong>Level 1</strong>: Coalesced reads from <code>input[global_i]</code>, scaled writes to shared memory</li>
+<li><strong>Level 2</strong>: Elected threads perform warp-level aggregation (8 computations vs 256)</li>
+<li><strong>Level 3</strong>: Thread 0 performs block-level aggregation (1 computation vs 8)</li>
+<li><strong>Result</strong>: Minimized memory bandwidth usage through hierarchical reduction</li>
+</ul>
+<p><strong>Synchronization hierarchy:</strong></p>
+<ol>
+<li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and warp processing)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Inter-block signaling (non-blocking, enables work overlap)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Inter-block synchronization (blocking, ensures completion order)</li>
+</ol>
+<p><strong>Why this is “advanced”:</strong></p>
+<ul>
+<li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming techniques</li>
+<li><strong>Hardware efficiency</strong>: Leverages <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for optimal warp utilization</li>
+<li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible synchronization</li>
+<li><strong>Production-ready</strong>: Demonstrates patterns used in real-world GPU libraries</li>
+</ul>
+<p><strong>Real-world performance benefits:</strong></p>
+<ul>
+<li><strong>Reduced memory pressure</strong>: Fewer threads accessing shared memory simultaneously</li>
+<li><strong>Better warp utilization</strong>: Elected threads perform focused computation</li>
+<li><strong>Scalable coordination</strong>: Staged synchronization handles larger cluster sizes</li>
+<li><strong>Algorithm flexibility</strong>: Foundation for complex multi-stage processing pipelines</li>
+</ul>
+<p><strong>Complexity analysis:</strong></p>
+<ul>
+<li><strong>Warp level</strong>: O(32) operations per elected thread = O(256) total per block</li>
+<li><strong>Block level</strong>: O(8) aggregation operations per block</li>
+<li><strong>Cluster level</strong>: O(1) synchronization overhead per block</li>
+<li><strong>Total</strong>: Linear complexity with massive parallelization benefits</li>
+</ul>
+</div>
+</details>
+<h2 id="the-complete-gpu-hierarchy"><a class="header" href="#the-complete-gpu-hierarchy">The complete GPU hierarchy</a></h2>
+<p>Congratulations! By completing this puzzle, you’ve learned <strong>the complete GPU programming stack</strong>:</p>
+<p>✅ <strong>Thread-level programming</strong>: Individual execution units
+✅ <strong><a href="puzzle_34/../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT coordination
+✅ <strong><a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level programming</a></strong>: Multi-warp coordination and shared memory
+✅ <strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs
+✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization primitives
+✅ <strong>Scale algorithms beyond single-block limitations</strong> using cluster APIs
+✅ <strong>Implement hierarchical algorithms</strong> combining warp + block + cluster coordination
+✅ <strong>Utilize next-generation GPU hardware</strong> with SM90+ cluster programming</p>
+<h2 id="real-world-applications-2"><a class="header" href="#real-world-applications-2">Real-world applications</a></h2>
+<p>The hierarchical coordination patterns from this puzzle are fundamental to:</p>
+<p><strong>High-Performance Computing:</strong></p>
+<ul>
+<li><strong>Multi-grid solvers</strong>: Different levels handle different resolution grids</li>
+<li><strong>Domain decomposition</strong>: Hierarchical coordination across problem subdomains</li>
+<li><strong>Parallel iterative methods</strong>: Warp-level local operations, cluster-level global communication</li>
+</ul>
+<p><strong>Deep Learning:</strong></p>
+<ul>
+<li><strong>Model parallelism</strong>: Different blocks process different model components</li>
+<li><strong>Pipeline parallelism</strong>: Staged processing across multiple transformer layers</li>
+<li><strong>Gradient aggregation</strong>: Hierarchical reduction across distributed training nodes</li>
+</ul>
+<p><strong>Graphics and Visualization:</strong></p>
+<ul>
+<li><strong>Multi-pass rendering</strong>: Staged processing for complex visual effects</li>
+<li><strong>Hierarchical culling</strong>: Different levels cull at different granularities</li>
+<li><strong>Parallel geometry processing</strong>: Coordinated transformation pipelines</li>
+</ul>
+<h2 id="next-steps-11"><a class="header" href="#next-steps-11">Next steps</a></h2>
+<p>You’ve now learned the <strong>cutting-edge GPU programming techniques</strong> available on modern hardware!</p>
+<p><strong>Ready for more challenges?</strong> Explore other advanced GPU programming topics, revisit <a href="puzzle_34/../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>, apply <a href="puzzle_34/../puzzle_30/nvidia_profiling_basics.html">profiling methodologies from NVIDIA tools</a>, or build upon these cluster programming patterns for your own computational workloads!</p>
 
                     </main>
 

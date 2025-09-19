@@ -1,0 +1,569 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🧠 Advanced Cluster Algorithms - Mojo 🔥 GPU Puzzles</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                    <button class="secondary-btn log-in">Log in</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-advanced-cluster-algorithms"><a class="header" href="#-advanced-cluster-algorithms">🧠 Advanced Cluster Algorithms</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>This final challenge combines <strong>all levels of GPU programming hierarchy</strong> from <a href="../puzzle_24/puzzle_24.html">warp-level (Puzzles 24-26)</a>, <a href="../puzzle_27/puzzle_27.html">block-level (Puzzle 27)</a>, and cluster coordination - to implement a sophisticated multi-level algorithm that maximizes GPU utilization.</p>
+<p><strong>The Challenge</strong>: Implement a hierarchical cluster algorithm using <strong>warp-level optimization</strong> (<code>elect_one_sync()</code>), <strong>block-level aggregation</strong>, and <strong>cluster-level coordination</strong> in a single unified pattern.</p>
+<p><strong>Key Learning</strong>: Learn the complete GPU programming stack with production-ready coordination patterns used in advanced computational workloads.</p>
+<h2 id="the-problem-multi-level-data-processing-pipeline"><a class="header" href="#the-problem-multi-level-data-processing-pipeline">The problem: multi-level data processing pipeline</a></h2>
+<p>Real-world GPU algorithms often require <strong>hierarchical coordination</strong> where different levels of the GPU hierarchy (<a href="../puzzle_24/warp_simt.html">warps from Puzzle 24</a>, <a href="../puzzle_27/block_sum.html">blocks from Puzzle 27</a>, clusters) perform specialized roles in a coordinated computation pipeline, extending <a href="../puzzle_29/barrier.html">multi-stage processing from Puzzle 29</a>.</p>
+<p><strong>Your task</strong>: Implement a multi-stage algorithm where:</p>
+<ol>
+<li><strong><a href="../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient intra-warp coordination (from <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li><strong><a href="../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using <a href="../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
+<li><strong>Cluster-level</strong>: Coordinate between blocks using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
+</ol>
+<h3 id="algorithm-specification"><a class="header" href="#algorithm-specification">Algorithm specification</a></h3>
+<p><strong>Multi-Stage Processing Pipeline:</strong></p>
+<ol>
+<li><strong>Stage 1 (<a href="../puzzle_24/puzzle_24.html">Warp-level</a>)</strong>: Each warp elects one thread to sum 32 consecutive elements</li>
+<li><strong>Stage 2 (<a href="../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp sums within each block</li>
+<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+</ol>
+<p><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing
+<strong>Output</strong>: 4 block results showing hierarchical processing effects</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li><strong>Problem Size</strong>: <code>SIZE = 1024</code> elements</li>
+<li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
+<li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks <code>(4, 1)</code></li>
+<li><strong>Warp Size</strong>: <code>WARP_SIZE = 32</code> threads per warp (NVIDIA standard)</li>
+<li><strong>Warps per Block</strong>: <code>TPB / WARP_SIZE = 8</code> warps</li>
+<li><strong>Data Type</strong>: <code>DType.float32</code></li>
+<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+</ul>
+<p><strong>Processing Distribution:</strong></p>
+<ul>
+<li><strong>Block 0</strong>: 256 threads → 8 warps → elements 0-255</li>
+<li><strong>Block 1</strong>: 256 threads → 8 warps → elements 256-511</li>
+<li><strong>Block 2</strong>: 256 threads → 8 warps → elements 512-767</li>
+<li><strong>Block 3</strong>: 256 threads → 8 warps → elements 768-1023</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<h3 id="warp-level-optimization-patterns"><a class="header" href="#warp-level-optimization-patterns"><strong>Warp-level optimization patterns</strong></a></h3>
+<ul>
+<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> to select one thread per warp for computation (from <a href="../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
+<li>The elected thread should process 32 consecutive elements (leveraging <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li>Compute warp start with <code>(local_i // 32) * 32</code> to find warp boundaries (lane indexing from <a href="../puzzle_24/puzzle_24.html">warp concepts</a>)</li>
+<li>Store warp results back in <a href="../puzzle_08/puzzle_08.html">shared memory at elected thread’s position</a></li>
+</ul>
+<h3 id="block-level-aggregation-strategy"><a class="header" href="#block-level-aggregation-strategy"><strong>Block-level aggregation strategy</strong></a></h3>
+<ul>
+<li>After warp processing, aggregate across all warp results (extending <a href="../puzzle_27/block_sum.html">block coordination from Puzzle 27</a>)</li>
+<li>Read from elected positions: indices 0, 32, 64, 96, 128, 160, 192, 224</li>
+<li>Use loop <code>for i in range(0, tpb, 32)</code> to iterate through warp leaders (pattern from <a href="../puzzle_12/puzzle_12.html">reduction algorithms</a>)</li>
+<li>Only thread 0 should compute the final block total (single-writer pattern from <a href="../puzzle_29/barrier.html">barrier coordination</a>)</li>
+</ul>
+<h3 id="cluster-coordination-flow"><a class="header" href="#cluster-coordination-flow"><strong>Cluster coordination flow</strong></a></h3>
+<ol>
+<li><strong>Process</strong>: Each block processes its data with hierarchical warp optimization</li>
+<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> indicates completion of local processing</li>
+<li><strong>Store</strong>: Thread 0 writes the block result to output</li>
+<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before termination</li>
+</ol>
+<h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
+<ul>
+<li>Scale input by <code>Float32(block_id + 1)</code> to create distinct block patterns</li>
+<li>Always check <code>global_i &lt; size</code> before reading input (from <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+<li>Use <code>barrier()</code> between processing phases within blocks (from <a href="../puzzle_29/barrier.html">synchronization patterns</a>)</li>
+<li>Handle warp boundary conditions carefully in loops (considerations from <a href="../puzzle_24/warp_simt.html">warp programming</a>)</li>
+</ul>
+</div>
+</details>
+<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced Cluster APIs</a></h2>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Wait for all blocks to reach synchronization point</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Get unique block identifier within cluster</li>
+</ul>
+<h2 id="hierarchical-coordination-pattern"><a class="header" href="#hierarchical-coordination-pattern">Hierarchical coordination pattern</a></h2>
+<p>This puzzle demonstrates <strong>three-level coordination hierarchy</strong>:</p>
+<h3 id="level-1-warp-coordination-puzzle-24"><a class="header" href="#level-1-warp-coordination-puzzle-24"><strong>Level 1: Warp Coordination</strong> (<a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>)</a></h3>
+<pre><code>Warp (32 threads) → elect_one_sync() → 1 elected thread → processes 32 elements
+</code></pre>
+<h3 id="level-2-block-coordination-puzzle-27"><a class="header" href="#level-2-block-coordination-puzzle-27"><strong>Level 2: Block Coordination</strong> (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>)</a></h3>
+<pre><code>Block (8 warps) → aggregate warp results → 1 block total
+</code></pre>
+<h3 id="level-3-cluster-coordination-this-puzzle"><a class="header" href="#level-3-cluster-coordination-this-puzzle"><strong>Level 3: Cluster Coordination</strong> (This puzzle)</a></h3>
+<pre><code>Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
+</code></pre>
+<p><strong>Combined Effect:</strong> 1024 threads → 32 warp leaders → 4 block results → coordinated cluster completion</p>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">uv</button>
+    <button class="tab-button">pixi</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run p34 --advanced
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --advanced
+</code></pre>
+  </div>
+</div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Testing Advanced Cluster Algorithms
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Advanced cluster algorithm results:
+  Block 0 : 122.799995
+  Block 1 : 247.04001
+  Block 2 : 372.72
+  Block 3 : 499.83997
+✅ Advanced cluster patterns tests passed!
+</code></pre>
+<p><strong>Success Criteria:</strong></p>
+<ul>
+<li><strong>Hierarchical scaling</strong>: Results show multi-level coordination effects</li>
+<li><strong>Warp optimization</strong>: <code>elect_one_sync()</code> reduces redundant computation</li>
+<li><strong>Cluster coordination</strong>: All blocks complete processing successfully</li>
+<li><strong>Performance pattern</strong>: Higher block IDs produce proportionally larger results</li>
+</ul>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary>Click to reveal solution</summary>
+<pre><code class="language-mojo">fn advanced_cluster_patterns[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Advanced cluster programming using cluster masks and relaxed synchronization.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+
+    # Compute cluster mask for advanced coordination
+    # base_mask = cluster_mask_base()  # Requires cluster_shape parameter
+
+    # FIX: Process data with block_idx-based scaling for guaranteed uniqueness
+    var data_scale = Float32(block_id + 1)
+    if global_i &lt; size:
+        shared_data[local_i] = input[global_i] * data_scale
+    else:
+        shared_data[local_i] = 0.0
+
+    barrier()
+
+    # Advanced pattern: Use elect_one_sync for efficient coordination
+    if elect_one_sync():  # Only one thread per warp does this work
+        var warp_sum: Float32 = 0.0
+        var warp_start = (local_i // 32) * 32  # Get warp start index
+        for i in range(32):  # Sum across warp
+            if warp_start + i &lt; tpb:
+                warp_sum += shared_data[warp_start + i][0]
+        shared_data[local_i] = warp_sum
+
+    barrier()
+
+    # Use cluster_arrive for staged synchronization in sm90+
+    cluster_arrive()
+
+    # Only first thread in each block stores result
+    if local_i == 0:
+        var block_total: Float32 = 0.0
+        for i in range(0, tpb, 32):  # Sum warp results
+            if i &lt; tpb:
+                block_total += shared_data[i][0]
+        output[block_id] = block_total
+
+    # Wait for all blocks to complete their calculations in sm90+
+    cluster_wait()
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>The advanced cluster patterns solution demonstrates a sophisticated three-level hierarchical optimization that combines warp, block, and cluster coordination for maximum GPU utilization:</strong></p>
+<h2 id="level-1-warp-level-optimization-thread-election"><a class="header" href="#level-1-warp-level-optimization-thread-election"><strong>Level 1: Warp-Level Optimization (Thread Election)</strong></a></h2>
+<p><strong>Data preparation and scaling:</strong></p>
+<pre><code class="language-mojo">var data_scale = Float32(block_id + 1)  # Block-specific scaling factor
+if global_i &lt; size:
+    shared_data[local_i] = input[global_i] * data_scale
+else:
+    shared_data[local_i] = 0.0  # Zero-pad for out-of-bounds
+barrier()  # Ensure all threads complete data loading
+</code></pre>
+<p><strong>Warp-level thread election:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync():  # Hardware elects exactly 1 thread per warp
+    var warp_sum: Float32 = 0.0
+    var warp_start = (local_i // 32) * 32  # Calculate warp boundary
+    for i in range(32):  # Process entire warp's data
+        if warp_start + i &lt; tpb:
+            warp_sum += shared_data[warp_start + i][0]
+    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+</code></pre>
+<p><strong>Warp boundary calculation explained:</strong></p>
+<ul>
+<li><strong>Thread 37</strong> (in warp 1): <code>warp_start = (37 // 32) * 32 = 1 * 32 = 32</code></li>
+<li><strong>Thread 67</strong> (in warp 2): <code>warp_start = (67 // 32) * 32 = 2 * 32 = 64</code></li>
+<li><strong>Thread 199</strong> (in warp 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
+</ul>
+<p><strong>Election pattern visualization (TPB=256, 8 warps):</strong></p>
+<pre><code>Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
+Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
+Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
+Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
+Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
+Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
+Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
+Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+</code></pre>
+<h2 id="level-2-block-level-aggregation-warp-leader-coordination"><a class="header" href="#level-2-block-level-aggregation-warp-leader-coordination"><strong>Level 2: Block-level aggregation (Warp Leader Coordination)</strong></a></h2>
+<p><strong>Inter-warp synchronization:</strong></p>
+<pre><code class="language-mojo">barrier()  # Ensure all warps complete their elected computations
+</code></pre>
+<p><strong>Warp leader aggregation (Thread 0 only):</strong></p>
+<pre><code class="language-mojo">if local_i == 0:
+    var block_total: Float32 = 0.0
+    for i in range(0, tpb, 32):  # Iterate through warp leader positions
+        if i &lt; tpb:
+            block_total += shared_data[i][0]  # Sum warp results
+    output[block_id] = block_total
+</code></pre>
+<p><strong>Memory access pattern:</strong></p>
+<ul>
+<li>Thread 0 reads from: <code>shared_data[0]</code>, <code>shared_data[32]</code>, <code>shared_data[64]</code>, <code>shared_data[96]</code>, <code>shared_data[128]</code>, <code>shared_data[160]</code>, <code>shared_data[192]</code>, <code>shared_data[224]</code></li>
+<li>These positions contain the warp sums computed by elected threads</li>
+<li>Result: 8 warp sums → 1 block total</li>
+</ul>
+<h2 id="level-3-cluster-level-staged-synchronization"><a class="header" href="#level-3-cluster-level-staged-synchronization"><strong>Level 3: Cluster-level staged synchronization</strong></a></h2>
+<p><strong>Staged synchronization approach:</strong></p>
+<pre><code class="language-mojo">cluster_arrive()  # Non-blocking: signal this block's completion
+# ... Thread 0 computes and stores block result ...
+cluster_wait()    # Blocking: wait for all blocks to complete
+</code></pre>
+<p><strong>Why staged synchronization?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> called <strong>before</strong> final computation allows overlapping work</li>
+<li>Block can compute its result while other blocks are still processing</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> ensures deterministic completion order</li>
+<li>More efficient than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for independent block computations</li>
+</ul>
+<h2 id="advanced-pattern-characteristics"><a class="header" href="#advanced-pattern-characteristics"><strong>Advanced pattern characteristics</strong></a></h2>
+<p><strong>Hierarchical computation reduction:</strong></p>
+<ol>
+<li><strong>256 threads</strong> → <strong>8 elected threads</strong> (32x reduction per block)</li>
+<li><strong>8 warp sums</strong> → <strong>1 block total</strong> (8x reduction per block)</li>
+<li><strong>4 blocks</strong> → <strong>staged completion</strong> (synchronized termination)</li>
+<li><strong>Total efficiency</strong>: 256x reduction in redundant computation per block</li>
+</ol>
+<p><strong>Memory access optimization:</strong></p>
+<ul>
+<li><strong>Level 1</strong>: Coalesced reads from <code>input[global_i]</code>, scaled writes to shared memory</li>
+<li><strong>Level 2</strong>: Elected threads perform warp-level aggregation (8 computations vs 256)</li>
+<li><strong>Level 3</strong>: Thread 0 performs block-level aggregation (1 computation vs 8)</li>
+<li><strong>Result</strong>: Minimized memory bandwidth usage through hierarchical reduction</li>
+</ul>
+<p><strong>Synchronization hierarchy:</strong></p>
+<ol>
+<li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and warp processing)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Inter-block signaling (non-blocking, enables work overlap)</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Inter-block synchronization (blocking, ensures completion order)</li>
+</ol>
+<p><strong>Why this is “advanced”:</strong></p>
+<ul>
+<li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming techniques</li>
+<li><strong>Hardware efficiency</strong>: Leverages <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for optimal warp utilization</li>
+<li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible synchronization</li>
+<li><strong>Production-ready</strong>: Demonstrates patterns used in real-world GPU libraries</li>
+</ul>
+<p><strong>Real-world performance benefits:</strong></p>
+<ul>
+<li><strong>Reduced memory pressure</strong>: Fewer threads accessing shared memory simultaneously</li>
+<li><strong>Better warp utilization</strong>: Elected threads perform focused computation</li>
+<li><strong>Scalable coordination</strong>: Staged synchronization handles larger cluster sizes</li>
+<li><strong>Algorithm flexibility</strong>: Foundation for complex multi-stage processing pipelines</li>
+</ul>
+<p><strong>Complexity analysis:</strong></p>
+<ul>
+<li><strong>Warp level</strong>: O(32) operations per elected thread = O(256) total per block</li>
+<li><strong>Block level</strong>: O(8) aggregation operations per block</li>
+<li><strong>Cluster level</strong>: O(1) synchronization overhead per block</li>
+<li><strong>Total</strong>: Linear complexity with massive parallelization benefits</li>
+</ul>
+</div>
+</details>
+<h2 id="the-complete-gpu-hierarchy"><a class="header" href="#the-complete-gpu-hierarchy">The complete GPU hierarchy</a></h2>
+<p>Congratulations! By completing this puzzle, you’ve learned <strong>the complete GPU programming stack</strong>:</p>
+<p>✅ <strong>Thread-level programming</strong>: Individual execution units
+✅ <strong><a href="../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT coordination
+✅ <strong><a href="../puzzle_27/puzzle_27.html">Block-level programming</a></strong>: Multi-warp coordination and shared memory
+✅ <strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs
+✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization primitives
+✅ <strong>Scale algorithms beyond single-block limitations</strong> using cluster APIs
+✅ <strong>Implement hierarchical algorithms</strong> combining warp + block + cluster coordination
+✅ <strong>Utilize next-generation GPU hardware</strong> with SM90+ cluster programming</p>
+<h2 id="real-world-applications"><a class="header" href="#real-world-applications">Real-world applications</a></h2>
+<p>The hierarchical coordination patterns from this puzzle are fundamental to:</p>
+<p><strong>High-Performance Computing:</strong></p>
+<ul>
+<li><strong>Multi-grid solvers</strong>: Different levels handle different resolution grids</li>
+<li><strong>Domain decomposition</strong>: Hierarchical coordination across problem subdomains</li>
+<li><strong>Parallel iterative methods</strong>: Warp-level local operations, cluster-level global communication</li>
+</ul>
+<p><strong>Deep Learning:</strong></p>
+<ul>
+<li><strong>Model parallelism</strong>: Different blocks process different model components</li>
+<li><strong>Pipeline parallelism</strong>: Staged processing across multiple transformer layers</li>
+<li><strong>Gradient aggregation</strong>: Hierarchical reduction across distributed training nodes</li>
+</ul>
+<p><strong>Graphics and Visualization:</strong></p>
+<ul>
+<li><strong>Multi-pass rendering</strong>: Staged processing for complex visual effects</li>
+<li><strong>Hierarchical culling</strong>: Different levels cull at different granularities</li>
+<li><strong>Parallel geometry processing</strong>: Coordinated transformation pipelines</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
+<p>You’ve now learned the <strong>cutting-edge GPU programming techniques</strong> available on modern hardware!</p>
+<p><strong>Ready for more challenges?</strong> Explore other advanced GPU programming topics, revisit <a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>, apply <a href="../puzzle_30/nvidia_profiling_basics.html">profiling methodologies from NVIDIA tools</a>, or build upon these cluster programming patterns for your own computational workloads!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_34/cluster_collective_ops.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_34/cluster_collective_ops.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
+        <script src="../theme/tabs.js"></script>
+
+
+    </div>
+    </body>
+</html>
