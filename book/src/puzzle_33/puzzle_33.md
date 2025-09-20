@@ -15,7 +15,8 @@ Tensor Cores (also known as Matrix Cores on AMD hardware) are specialized proces
 
 Think of them as hardware-accelerated GEMM (General Matrix Multiply) engines built directly into the GPU.
 
-### Key characteristics:
+### Key characteristics
+
 - **Warp-level operations**: Each instruction operates on data from an entire warp (32 threads on NVIDIA, 32 or 64 on AMD)
 - **Fixed tile sizes**: Operations work on specific matrix fragment sizes (e.g., 16×8×8 for FP32)
 - **Mixed precision**: Can mix input and output precisions for optimal performance
@@ -34,13 +35,15 @@ Let's trace our journey from basic matrix multiplication to Tensor Cores:
 
 Tensor Cores expose a different programming paradigm:
 
-### Traditional compute core approach:
+### Traditional compute core approach
+
 ```mojo
 # Each thread computes one element
 acc += a_shared[local_row, k] * b_shared[k, local_col]
 ```
 
-### Tensor core approach:
+### Tensor core approach
+
 ```mojo
 # Entire warp cooperates on matrix fragments
 a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
@@ -70,19 +73,23 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
 **Advanced features:** The TensorCore API also supports quantized operations, different swizzle patterns for memory access optimization, and mixed-precision arithmetic. For complete documentation of all supported shapes, data types, and methods, see the [official TensorCore API reference](https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/).
 
-### Matrix fragment sizes:
+### Matrix fragment sizes
+
 The TensorCore API supports different shapes and data types depending on the GPU hardware:
 
 **NVIDIA GPUs:**
+
 - **float32**: 16×8×8 or 16×8×4
 - **half-precision**: 16×8×16
 - **float8**: 16×8×32
 
 **AMD GPUs:**
+
 - **float32**: 16×16×4
 - **half-precision**: 16×16×16 or 32×32×8
 
 **This puzzle uses FP32 with 16×8×8 fragments:**
+
 - **MMA_M = 16**: Matrix A height (and output height)
 - **MMA_N = 8**: Matrix B width (and output width)
 - **MMA_K = 8**: Inner dimension (A width = B height)
@@ -90,6 +97,7 @@ The TensorCore API supports different shapes and data types depending on the GPU
 **What is MMA?** MMA stands for "Mixed-precision Matrix-Multiply-Accumulate" - the fundamental operation that Tensor Cores perform. Each MMA instruction computes: `D = A × B + C` where A, B, C, and D are matrix fragments.
 
 **Fragment visualization:**
+
 ```txt
 A fragment (16×8)  ×  B fragment (8×8)  +  C fragment (16×8)  =  D fragment (16×8)
 
@@ -122,6 +130,7 @@ C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 ```
 
 **Warp organization example** (with BM=128, BN=64, WM=32, WN=32):
+
 ```txt
 Block (128×64) contains 8 warps arranged as:
 
@@ -148,7 +157,7 @@ Tensor Cores add another layer to our memory optimization:
 
 Your task is to complete the `tensor_core_matrix_multiplication` function. The skeleton builds on the tiled approach but uses actual Tensor Core hardware operations.
 
-### Key requirements:
+### Key requirements
 
 1. **Use the actual Tensor Core API**: Don't simulate - use real `mma_op.load_a()`, `mma_op.mma_op()`, etc.
 2. **Maintain correctness**: Your result must match the CPU reference implementation
@@ -166,6 +175,7 @@ Your task is to complete the `tensor_core_matrix_multiplication` function. The s
 - Grid dimensions: Covers full matrix with block tiles
 
 Layout configuration:
+
 - Input A: `Layout.row_major(SIZE, SIZE)`
 - Input B: `Layout.row_major(SIZE, SIZE)`
 - Output C: `Layout.row_major(SIZE, SIZE)`
@@ -184,11 +194,11 @@ The puzzle provides a complete idiomatic tiled implementation as your reference:
 ```
 
 **What this baseline does:**
+
 - **Correctness**: This implementation works perfectly and passes all tests
 - **Thread cooperation**: Uses `copy_dram_to_sram_async` for efficient memory transfers
 - **Shared memory**: Coordinates threads with barriers and async operations
 - **Tiled computation**: Each thread computes one output element using shared memory tiles
-
 
 ### Step 2: Your tensor core mission
 
@@ -208,12 +218,14 @@ The tensor core version uses different tiling parameters optimized for hardware:
 - **Warps per block**: 8 warps (organized as 4×2 in the BM×BN block)
 
 **Why these specific sizes?**
+
 - **BM=128, BN=64**: Larger than tiled version (32×32) to better utilize Tensor Cores
 - **WM=WN=32**: Multiple of WARP_SIZE and contains 2×4=8 MMA fragments (32÷16=2, 32÷8=4)
 - **MMA 16×8×8**: Fixed by hardware - this is what the Tensor Cores physically compute
 - **8 warps**: BM÷WM × BN÷WN = 128÷32 × 64÷32 = 4×2 = 8 warps per block
 
 **How warps map to MMA fragments:**
+
 ```txt
 Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 
@@ -238,12 +250,14 @@ Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 **Your task**: Complete the missing section (marked with `# FILL IN (roughly 8 lines)`) inside the triple nested loops.
 
 **What you need to understand:**
+
 - The skeleton handles all memory management, warp organization, and synchronization
 - You only need to implement the core Tensor Core computation
 - The loops iterate over MMA fragments: `mma_k`, `mma_m`, `mma_n`
 - Each iteration processes one 16×8×8 matrix fragment
 
 **Understanding the triple nested loops:**
+
 ```mojo
 @parameter
 for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
@@ -255,6 +269,7 @@ for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
 ```
 
 **What each loop does:**
+
 - `mma_k`: Iterates through K-slices of the current K-tile (4 slices of 8 elements each)
 - `mma_m`: Iterates through M-slices of the warp's output (2 slices of 16 rows each)
 - `mma_n`: Iterates through N-slices of the warp's output (4 slices of 8 columns each)
@@ -314,8 +329,8 @@ pixi run p33 --test
   </div>
 </div>
 
-
 Your output will show accuracy test results once completed:
+
 ```txt
 === Running All Accuracy Tests ===
 --- Test 1: Tensor Core vs CPU Reference ---
@@ -399,7 +414,7 @@ First, enter the CUDA environment for `ncu` access:
 
 ```bash
 # Enter CUDA environment
-pixi shell -e cuda
+pixi shell -e nvidia
 
 # Profile tensor core version
 ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,smsp__inst_executed_pipe_tensor_op_hmma.sum ./problems/p33p33_profiler --tensor-core
@@ -408,10 +423,10 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed ./problems/p33p33_profiler --tiled
 ```
 
-
 ### Key metrics to compare
 
 **Performance metrics:**
+
 - **Duration**: Total kernel execution time (lower is better)
 - **SM Active %**: Streaming multiprocessor utilization (higher is better)
 - **DRAM Throughput**: Memory bandwidth utilization (shows if memory-bound)
@@ -420,6 +435,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 **What the results typically show:**
 
 **Tensor Core version (slower):**
+
 - **Duration**: ~13.9 ms (much slower!)
 - **SM Active**: 83.7% (good utilization)
 - **DRAM Throughput**: 72.5% (memory-bound!)
@@ -427,6 +443,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 - **Tensor Op Instructions**: 1,048,576 (confirms tensor cores are working)
 
 **Tiled version (faster):**
+
 - **Duration**: ~1.62 ms (8.6× faster!)
 - **SM Active**: 98.0% (excellent utilization)
 - **DRAM Throughput**: 1.7% (compute-bound, as expected)
@@ -434,6 +451,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 - **L2 Hit Rate**: 96.9% vs 29.7% (much better cache locality)
 
 **Why is Tensor Core slower?**
+
 - **Memory bottleneck**: 72% DRAM usage shows it's memory-bound, not compute-bound
 - **Poor occupancy**: 26% vs 67% - high register usage (68 vs 38 per thread) limits concurrent warps
 - **Cache misses**: 29% L2 hit rate vs 97% shows poor memory locality
@@ -445,6 +463,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 As you can see from the profiling results, the "specialized hardware" isn't automatically faster! The Tensor Core version is significantly slower (~8.6×) than the simple tiled approach. This is a common reality in GPU optimization - raw hardware capability doesn't guarantee better performance.
 
 **Key insights:**
+
 - **Memory bottleneck**: 72% DRAM usage shows tensor cores are memory-bound, not compute-bound
 - **Poor occupancy**: 26% vs 67% due to high register usage limits concurrent warps
 - **Cache misses**: 29% vs 97% L2 hit rate shows poor memory locality
@@ -452,6 +471,6 @@ As you can see from the profiling results, the "specialized hardware" isn't auto
 
 **The lesson**: Understanding performance bottlenecks and systematic optimization matter more than using the "latest and greatest" APIs. Hardware features are tools that require careful tuning, not magic bullets.
 
-## Next step:
+## Next step
 
 Ready for a rewarding GPU optimization challenge? Head to the [🎯 Performance Bonus Challenge](../bonuses/part5.md) to learn how to transform your memory-bound Tensor Core implementation into something that actually beats the simple tiled version!

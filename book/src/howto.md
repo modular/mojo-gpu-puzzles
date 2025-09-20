@@ -20,6 +20,23 @@ All puzzles are designed to be run with the provided testing framework that veri
 
 You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles.
 
+#### macOS Apple Sillicon (Early preview)
+
+For `osx-arm64` users, you'll need:
+
+- **macOS 15.0 or later** for optimal compatibility
+- **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
+
+If `xcrun -sdk macosx metal` outputs `cannot execite tool 'metal' due to missing Metal toolchain` proceed by running
+
+```bash
+xcodebuild -downloadComponent MetalToolchain
+```
+
+and then `xcrun -sdk macosx metal`, should give you the `no input files error`.
+
+> **Note**: Currently the puzzles 1-8 and 11-15 are working on macOS. We're working to enable more. Please stay tuned!
+
 ### Setting up your environment
 
 1. [Clone the GitHub repository](https://github.com/modular/mojo-gpu-puzzles) and navigate to the repository:
@@ -32,7 +49,7 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 2. Install a package manager to run the Mojo🔥 programs:
 
-    #### **(Hightly recommended) Option 1**: [pixi](https://pixi.sh/latest/#installation)
+   #### **(Hightly recommended) Option 1**: [pixi](https://pixi.sh/latest/#installation)
 
     `pixi` is the **recommended option** for this project because:
     - Easy access to Modular's MAX/Mojo packages
@@ -42,28 +59,33 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
     **Note: A few puzzles only work with `pixi`.**
 
     **Install:**
+
     ```bash
     curl -fsSL https://pixi.sh/install.sh | sh
     ```
 
     **Update:**
+
     ```bash
     pixi self-update
     ```
 
-    #### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+   #### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
     **Install:**
+
     ```bash
     curl -fsSL https://astral.sh/uv/install.sh | sh
     ```
 
     **Update:**
+
     ```bash
     uv self update
     ```
 
     **Create a virtual environment:**
+
     ```bash
     uv venv && source .venv/bin/activate
     ```
@@ -92,6 +114,7 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
     </div>
 
 For example, to run puzzle 01:
+
 - `pixi run p01` or
 - `uv run poe p01`
 

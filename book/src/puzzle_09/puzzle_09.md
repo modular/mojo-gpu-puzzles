@@ -1,5 +1,7 @@
 # Puzzle 9: GPU Debugging Workflow
 
+> ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.
+
 ## The moment every GPU programmer faces
 
 You've learned to write GPU kernels, work with shared memory, and coordinate thousands of parallel threads. Your code compiles perfectly. You run it with confidence, expecting beautiful results, and then...
@@ -106,6 +108,7 @@ GPU debugging requires a different mindset than traditional programming. You bec
 - **The tools are specialized** - CUDA-GDB, thread navigation, GPU memory inspection
 
 But like any good detective, you'll learn to:
+
 - **Follow the clues systematically** - Error messages, crash patterns, thread states
 - **Form hypotheses** - What could cause this specific behavior?
 - **Test theories** - Use debugging commands to verify or disprove ideas
@@ -114,11 +117,13 @@ But like any good detective, you'll learn to:
 ## Prerequisites and expectations
 
 **What you need to know**:
+
 - GPU programming concepts from Puzzles 1-8 (thread indexing, memory management, barriers)
 - Basic command-line comfort (you'll use terminal-based debugging tools)
 - Patience and systematic thinking (GPU debugging requires methodical investigation)
 
 **What you'll gain**:
+
 - **Professional debugging skills** used in GPU development teams
 - **Deep parallel computing understanding** that comes from seeing execution at the thread level
 - **Problem-solving confidence** for the most challenging GPU programming scenarios

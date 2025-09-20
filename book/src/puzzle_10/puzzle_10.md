@@ -1,5 +1,7 @@
 # Puzzle 10: Memory Error Detection & Race Conditions with Sanitizers
 
+> ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.
+
 ## The moment every GPU developer dreads
 
 You've written what looks like perfect GPU code. Your algorithm is sound, your memory management seems correct, and your thread coordination appears flawless. You run your tests with confidence and...
@@ -23,11 +25,13 @@ Welcome to the insidious world of **silent GPU bugs** - errors that hide in the 
 Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are **experts at hiding**:
 
 **Silent corruption patterns:**
+
 - **Memory violations that don't crash**: Out-of-bounds access to "lucky" memory locations
 - **Race conditions that work "most of the time"**: Timing-dependent bugs that appear random
 - **Thread coordination failures**: Deadlocks that only trigger under specific load conditions
 
 **Massive scale amplification:**
+
 - **One thread's bug affects thousands**: A single memory violation can corrupt entire warps
 - **Race conditions multiply exponentially**: More threads = more opportunities for corruption
 - **Hardware variations mask problems**: Same bug behaves differently across GPU architectures
@@ -106,6 +110,7 @@ GPU sanitization requires you to become a **parallel program detective** investi
 - **The tools are specialized** - Sanitizers that see what normal debugging can't
 
 But like any good detective, you'll learn to:
+
 - **Follow invisible clues** - Memory access patterns, thread timing, synchronization points
 - **Think in parallel** - Consider how thousands of threads interact simultaneously
 - **Prevent future crimes** - Build sanitization into your development workflow
@@ -114,12 +119,14 @@ But like any good detective, you'll learn to:
 ## Prerequisites and expectations
 
 **What you need to know**:
+
 - GPU programming concepts from Puzzles 1-8 (memory management, thread coordination, barriers)
 - **[Compatible NVIDIA GPU hardware](https://docs.modular.com/max/faq#gpu-requirements)**
 - Environment setup with `pixi` package manager for accessing `compute-sanitizer`
 - **Prior puzzles**: Familiarity with [Puzzle 4](../puzzle_04/introduction_layout_tensor.md) and [Puzzle 8](../puzzle_08/layout_tensor.md) are recommended
 
 **What you'll gain**:
+
 - **Production-ready debugging skills** used by professional GPU development teams
 - **Silent bug detection skills** that prevent costly production failures
 - **Parallel debugging confidence** for the most challenging concurrency scenarios

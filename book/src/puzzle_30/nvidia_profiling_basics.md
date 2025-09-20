@@ -15,6 +15,7 @@ Since you have `cuda-toolkit` via pixi, you have access to NVIDIA's professional
 ### NSight Systems (`nsys`) - the "big picture" tool
 
 **Purpose**: System-wide performance analysis ([NSight Systems Documentation](https://docs.nvidia.com/nsight-systems/))
+
 - Timeline view of CPU-GPU interaction
 - Memory transfer bottlenecks
 - Kernel launch overhead
@@ -24,6 +25,7 @@ Since you have `cuda-toolkit` via pixi, you have access to NVIDIA's professional
 **Available interfaces**: Command-line (`nsys`) and GUI (`nsys-ui`)
 
 **Use when**:
+
 - Understanding overall application flow
 - Identifying CPU-GPU synchronization issues
 - Analyzing memory transfer patterns
@@ -43,6 +45,7 @@ pixi run nsys stats --force-export=true timeline.nsys-rep
 ### NSight Compute (`ncu`) - the "kernel deep-dive" tool
 
 **Purpose**: Detailed single-kernel performance analysis ([NSight Compute Documentation](https://docs.nvidia.com/nsight-compute/))
+
 - Roofline model analysis
 - Memory hierarchy utilization
 - Warp execution efficiency
@@ -52,6 +55,7 @@ pixi run nsys stats --force-export=true timeline.nsys-rep
 **Available interfaces**: Command-line (`ncu`) and GUI (`ncu-ui`)
 
 **Use when**:
+
 - Optimizing specific kernel performance
 - Understanding memory access patterns
 - Analyzing compute vs memory bound kernels
@@ -91,6 +95,7 @@ Analysis <----+     NSight Compute
 ```
 
 **Quick Decision Guide**:
+
 - **Start with NSight Systems (`nsys`)** if you're unsure where the bottleneck is
 - **Use NSight Compute (`ncu`)** when you know exactly which kernel to optimize
 - **Use both** for comprehensive analysis (common workflow)
@@ -106,7 +111,7 @@ Let's profile the Matrix Multiplication implementations from [Puzzle 16](../puzz
 **Critical**: For accurate profiling, build with full debug information while keeping optimizations enabled:
 
 ```bash
-pixi shell -e cuda
+pixi shell -e nvidia
 # Build with full debug info (for comprehensive source mapping) with optimizations enabled
 mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
 
@@ -115,6 +120,7 @@ mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimi
 ```
 
 **Why this matters**:
+
 - **Full debug info**: Provides complete symbol tables, variable names, and source line mapping for profilers
 - **Comprehensive analysis**: Enables NSight tools to correlate performance data with specific code locations
 - **Optimizations enabled**: Ensures realistic performance measurements that match production builds
@@ -131,6 +137,7 @@ nsys profile \
 ```
 
 **Command breakdown**:
+
 - `--trace=cuda,nvtx`: Capture CUDA API calls and custom annotations
 - `--output=matmul_naive`: Save profile as `matmul_naive.nsys-rep`
 - `--force-overwrite=true`: Replace existing profiles
@@ -174,6 +181,7 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 ```
 
 **Key Performance Insights**:
+
 - **Memory allocation dominates**: 81.9% of total time spent on `cuMemAllocAsync`
 - **Kernel is lightning fast**: Only 1,920 ns (0.000001920 seconds) execution time
 - **Memory transfer breakdown**: 49.4% Device→Host, 36.0% memset, 14.6% Host→Device
@@ -184,7 +192,7 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 Profile different versions and compare:
 
 ```bash
-# Make sure you've in pixi shell still `pixi run -e cuda`
+# Make sure you've in pixi shell still `pixi run -e nvidia`
 
 # Profile shared memory version
 nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_shared ./solutions/p16/p16_optimized --single-block
@@ -202,11 +210,13 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep
 ```
 
 **How to compare the results**:
+
 1. **Look at GPU Kernel Summary** - Compare execution times between implementations
 2. **Check Memory Operations** - See if shared memory reduces global memory traffic
 3. **Compare API overhead** - All should have similar memory allocation patterns
 
 **Manual comparison workflow**:
+
 ```bash
 # Run each analysis and save output for comparison
 nsys stats --force-export=true matmul_naive.nsys-rep > naive_stats.txt
@@ -218,12 +228,14 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 **Fair Comparison Results** (actual output from profiling):
 
 ### Comparison 1: 2 x 2 matrices
+
 | Implementation | Memory Allocation | Kernel Execution | Performance |
 |----------------|------------------|------------------|-------------|
 | **Naive**      | 81.9% cuMemAllocAsync | ✅ 1,920 ns | Baseline |
 | **Shared** (`--single-block`) | 81.8% cuMemAllocAsync | ✅ 1,984 ns | **+3.3% slower** |
 
 ### Comparison 2: 9 x 9 matrices
+
 | Implementation | Memory Allocation | Kernel Execution | Performance |
 |----------------|------------------|------------------|-------------|
 | **Tiled** (manual) | 81.1% cuMemAllocAsync | ✅ 2,048 ns | Baseline |
@@ -232,22 +244,26 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 **Key Insights from Fair Comparisons**:
 
 **Both Matrix Sizes Are Tiny for GPU Work!**:
+
 - **2×2 matrices**: 4 elements - completely overhead-dominated
 - **9×9 matrices**: 81 elements - still completely overhead-dominated
 - **Real GPU workloads**: Thousands to millions of elements per dimension
 
 **What These Results Actually Show**:
+
 - **All variants dominated by memory allocation** (>81% of time)
 - **Kernel execution is irrelevant** compared to setup costs
 - **"Optimizations" can hurt**: Shared memory adds 3.3% overhead, async_copy adds 15.6%
 - **The real lesson**: For tiny workloads, algorithm choice doesn't matter - overhead dominates everything
 
 **Why This Happens**:
+
 - GPU setup cost (memory allocation, kernel launch) is fixed regardless of problem size
 - For tiny problems, this fixed cost dwarfs computation time
 - Optimizations designed for large problems become overhead for small ones
 
 **Real-World Profiling Lessons**:
+
 - **Problem size context matters**: Both 2×2 and 9×9 are tiny for GPUs
 - **Fixed costs dominate small problems**: Memory allocation, kernel launch overhead
 - **"Optimizations" can hurt tiny workloads**: Shared memory, async operations add overhead
@@ -256,6 +272,7 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 
 **Understanding Small Kernel Profiling**:
 This 2×2 matrix example demonstrates a **classic small-kernel pattern**:
+
 - The actual computation (matrix multiply) is extremely fast (1,920 ns)
 - Memory setup overhead dominates the total time (97%+ of execution)
 - This is why **real-world GPU optimization** focuses on:
@@ -271,7 +288,7 @@ Now let's dive deep into a specific kernel's performance characteristics.
 
 ```bash
 # Make sure you're in an active shell
-pixi shell -e cuda
+pixi shell -e nvidia
 
 # Profile the naive MatMul kernel in detail (using our optimized build)
 ncu \
@@ -344,18 +361,21 @@ Achieved Occupancy                    %         2.09
 
 **Critical Insights from Real Data**:
 
-#### Performance analysis - the brutal truth!
+#### Performance analysis - the brutal truth
+
 - **Compute Throughput: 0.00%** - GPU is completely idle computationally
 - **Memory Throughput: 1.02%** - Barely touching memory bandwidth
 - **Achieved Occupancy: 2.09%** - Using only 2% of GPU capability
 - **Grid Size: 1 block** - Completely underutilizing 80 multiprocessors!
 
 #### Why performance is so poor
+
 - **Tiny problem size**: 2×2 matrix = 4 elements total
 - **Poor launch configuration**: 9 threads in 1 block (should be multiples of 32)
 - **Massive underutilization**: 0.00 waves per SM (need thousands for efficiency)
 
 #### Key optimization recommendations from NSight Compute
+
 - **"Est. Speedup: 98.75%"** - Increase grid size to use all 80 SMs
 - **"Est. Speedup: 71.88%"** - Use thread blocks as multiples of 32
 - **"Kernel grid is too small"** - Need much larger problems for GPU efficiency
@@ -370,6 +390,7 @@ Achieved Occupancy                    %         2.09
 4. **NSight Compute is honest**: It tells us when our kernel performance is poor
 
 **The Real Lesson**:
+
 - **Don't optimize toy problems** - they're not representative of real GPU workloads
 - **Focus on realistic workloads** - 1000×1000+ matrices where optimizations actually matter
 - **Use profiling to guide optimization** - but only on problems worth optimizing
@@ -381,16 +402,19 @@ Achieved Occupancy                    %         2.09
 ### Common performance patterns
 
 #### Pattern 1: Memory-bound kernel
+
 **NSight Systems shows**: Long memory transfer times
 **NSight Compute shows**: High memory throughput, low compute utilization
 **Solution**: Optimize memory access patterns, use shared memory
 
 #### Pattern 2: Low occupancy
+
 **NSight Systems shows**: Short kernel execution with gaps
 **NSight Compute shows**: Low achieved occupancy
 **Solution**: Reduce register usage, optimize block size
 
 #### Pattern 3: Warp divergence
+
 **NSight Systems shows**: Irregular kernel execution patterns
 **NSight Compute shows**: Low warp execution efficiency
 **Solution**: Minimize conditional branches, restructure algorithms
@@ -468,6 +492,7 @@ nsys profile ./optimized_program
 ```
 
 #### Pitfall 3: Ignoring memory transfers
+
 ```txt
 # Look for this pattern in NSight Systems:
 CPU -> GPU transfer: 50ms
@@ -475,9 +500,11 @@ Kernel execution: 2ms
 GPU -> CPU transfer: 48ms
 # Total: 100ms (kernel is only 2%!)
 ```
+
 **Solution**: Overlap transfers with compute, reduce transfer frequency (covered in Part IX)
 
 #### Pitfall 4: Single kernel focus
+
 ```bash
 # Wrong: Only profile the "slow" kernel
 ncu --kernel-name regex:slow_kernel program
@@ -512,6 +539,7 @@ nsys profile \
 ```
 
 **Flag explanations**:
+
 - `--gpu-metrics-devices=all`: Collect GPU metrics from all devices
 - `--trace=cuda,osrt,nvtx`: Comprehensive API tracing
 - `--cuda-memory-usage=true`: Track memory allocation/deallocation
@@ -558,6 +586,7 @@ ncu \
 ```
 
 **Key NSight Compute flags**:
+
 - `--set full`: Collect all available metrics (comprehensive but slow)
 - `--set @roofline`: Optimized set for roofline analysis
 - `--import-source=on`: Map results back to source code
@@ -571,6 +600,7 @@ ncu \
 ### Profiling workflow best practices
 
 #### 1. Progressive profiling strategy
+
 ```bash
 # Step 1: Quick overview (fast)
 nsys profile --trace=cuda --duration=10 --output=quick_look ./program
@@ -583,6 +613,7 @@ ncu --set=@roofline --kernel-name regex:hotspot_kernel ./program
 ```
 
 #### 2. Multi-run analysis for reliability
+
 ```bash
 # Profile multiple runs and compare
 for i in {1..5}; do
@@ -595,6 +626,7 @@ diff stats_1.txt stats_2.txt
 ```
 
 #### 3. Targeted kernel profiling
+
 ```bash
 # First, identify hotspot kernels
 nsys profile --trace=cuda,nvtx --output=overview ./program
@@ -607,6 +639,7 @@ ncu --kernel-name="identified_hotspot_kernel" --set full ./program
 ### Environment and build best practices
 
 #### Optimal build configuration
+
 ```bash
 # For profiling: optimized with full debug info
 mojo build --debug-level=full --optimization-level=3 program.mojo -o program_profile
@@ -630,6 +663,7 @@ echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc
 ```
 
 #### Memory and performance isolation
+
 ```bash
 # Clear GPU memory before profiling
 nvidia-smi --gpu-reset
@@ -645,6 +679,7 @@ sudo nice -n -20 nsys profile ./program
 ### Analysis and reporting best practices
 
 #### Comprehensive report generation
+
 ```bash
 # Generate multiple report formats
 nsys stats --report=cuda_api_sum,cuda_gpu_kern_sum,cuda_gpu_mem_time_sum --format=csv --output=. profile.nsys-rep
@@ -660,6 +695,7 @@ diff -u baseline_kernels.txt optimized_kernels.txt
 ```
 
 #### Performance regression testing
+
 ```bash
 #!/bin/bash
 # Automated profiling script for CI/CD
@@ -684,6 +720,7 @@ Now that you understand profiling fundamentals:
 **Remember**: Profiling is not just about finding slow code - it's about understanding your program's behavior and making informed optimization decisions.
 
 For additional profiling resources, see:
+
 - [NVIDIA Profiler User's Guide](https://docs.nvidia.com/cuda/profiler-users-guide/)
 - [NSight Systems User Guide](https://docs.nvidia.com/nsight-systems/UserGuide/)
 - [NSight Compute CLI User Guide](https://docs.nvidia.com/nsight-compute/NsightComputeCli/)

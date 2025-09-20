@@ -14,6 +14,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 ## Key concepts
 
 In this debugging challenge, you'll learn about:
+
 - **Systematic debugging**: Using error messages as clues to find root causes
 - **Error analysis**: Reading crash messages and stack traces
 - **Hypothesis formation**: Making educated guesses about the problem
@@ -30,10 +31,11 @@ Given the kernel and without looking at the complete code
 firsthand experience, run the following command in your terminal (`pixi` only):
 
 ```bash
-pixi run p09 --first-case
+pixi run -e nvidia p09 --first-case
 ```
 
 You'll see output like when the program crashes with this error:
+
 ```txt
 CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
 [24326:24326:20250801,180816.333593:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)
@@ -66,7 +68,7 @@ Please file a bug report.
 Start with:
 
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 ```
 
 <details>
@@ -93,11 +95,13 @@ pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-c
 ## Step-by-Step Investigation with CUDA-GDB
 
 ### Launch the Debugger
+
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 ```
 
 ### Examine the Breakpoint Information
+
 When CUDA-GDB stops, it immediately shows valuable clues:
 
 ```
@@ -108,10 +112,12 @@ CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
 ```
 
 **🔍 First Clue**: The function signature shows `(result=0x302000000, input=0x0)`
+
 - `result` has a valid GPU memory address
 - `input` is `0x0` - this is a null pointer!
 
 ### Systematic Variable Inspection
+
 ```
 (cuda-gdb) next
 32          result[i] = input[i] + 10.0
@@ -124,11 +130,13 @@ $3 = (!pop.scalar<f32> * @register) 0x0
 ```
 
 **🔍 Evidence Gathering**:
+
 - ✅ Thread index `i=0` is valid
 - ✅ Result pointer `0x302000000` is a proper GPU address
 - ❌ Input pointer `0x0` is null
 
 ### Confirm the Problem
+
 ```
 (cuda-gdb) print input[i]
 Cannot access memory at address 0x0
@@ -139,11 +147,13 @@ Cannot access memory at address 0x0
 ## Root Cause Analysis
 
 **The Problem**: Now if we look at the [code](../../../problems/p09/p09.mojo) for `--first-crash`, we see that the host code creates a null pointer instead of allocating proper GPU memory:
+
 ```mojo
 input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
 ```
 
 **Why This Crashes**:
+
 1. `UnsafePointer[Scalar[dtype]]()` creates an uninitialized pointer (null)
 2. This null pointer gets passed to the GPU kernel
 3. When kernel tries `input[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
@@ -163,10 +173,12 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 ## Key Debugging Lessons
 
 **Pattern Recognition**:
+
 - `0x0` addresses are always null pointers
 - Valid GPU addresses are large hex numbers (e.g., `0x302000000`)
 
 **Debugging Strategy**:
+
 1. **Read crash messages** - They often hint at the problem type
 2. **Check function parameters** - CUDA-GDB shows them at breakpoint entry
 3. **Inspect all pointers** - Compare addresses to identify null/invalid ones
@@ -181,21 +193,24 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 ## Next Steps: From Crashes to Silent Bugs
 
 **You've learned crash debugging!** You can now:
-- ✅ **Systematically investigate GPU crashes** using error messages as clues
-- ✅ **Identify null pointer bugs** through pointer address inspection
-- ✅ **Use CUDA-GDB effectively** for memory-related debugging
+
+- **Systematically investigate GPU crashes** using error messages as clues
+- **Identify null pointer bugs** through pointer address inspection
+- **Use CUDA-GDB effectively** for memory-related debugging
 
 ### Your Next Challenge: [Detective Work: Second Case](./second_case.md)
 
 **But what if your program doesn't crash?** What if it runs perfectly but produces **wrong results**?
 
 The [Second Case](./second_case.md) presents a completely different debugging challenge:
-- ❌ **No crash messages** to guide you
-- ❌ **No obvious pointer problems** to investigate
-- ❌ **No stack traces** pointing to the issue
-- ✅ **Just wrong results** that need systematic investigation
+
+- **No crash messages** to guide you
+- **No obvious pointer problems** to investigate
+- **No stack traces** pointing to the issue
+- **Just wrong results** that need systematic investigation
 
 **New skills you'll develop:**
+
 - **Logic bug detection** - Finding algorithmic errors without crashes
 - **Pattern analysis** - Using incorrect output to trace back to root causes
 - **Execution flow debugging** - When variable inspection fails due to optimizations

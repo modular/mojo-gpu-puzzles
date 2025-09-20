@@ -2,28 +2,31 @@
 authors = ["Modular <hello@modular.com>"]
 channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
 name = "mojo-gpu-puzzles"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 version = "0.0.0"
 
-[feature.cuda]
+[feature.nvidia]
 system-requirements = { cuda = "12" }
 channels = ["nvidia"]
 
-[feature.cuda.dependencies]
+[feature.nvidia.target.linux-64.dependencies]
 cuda-toolkit = "12.*" # for compute-sanitizer etc.
 cuda-gdb = "12.*"     # for GPU kernel debugging
 nsight-compute = "*"  # interactive kernel profiling
 
-[feature.cuda.pypi-dependencies]
+[feature.nvidia.target.linux-64.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" }
 nvidia-ml-py = "*"
 
-[feature.rocm]
+[feature.amd]
 system-requirements = {}
 
-[feature.rocm.pypi-dependencies]
+[feature.amd.target.linux-64.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/rocm6.3" }
 pytorch-triton-rocm = {version = "*", index = "https://download.pytorch.org/whl/rocm6.3" }
+
+[feature.apple]
+system-requirements = { macos = "15.0" }
 
 [dependencies]
 python = "==3.12"
@@ -34,11 +37,11 @@ manim = ">=0.18.1,<0.19"
 mdbook = ">=0.4.48,<0.5"
 pre-commit = ">=4.2.0,<5"
 
-
 [environments]
-cuda = { features = ["cuda"], solve-group = "cuda" }
-rocm = { features = ["rocm"], solve-group = "rocm" }
-default = { features = ["cuda"] }
+nvidia = { features = ["nvidia"], solve-group = "nvidia" }
+amd = { features = ["amd"], solve-group = "amd" }
+apple = { features = ["apple"], solve-group = "apple" }
+default = { features = ["nvidia"] }
 
 [tasks]
 install-pre-commit = "pre-commit install"
@@ -153,9 +156,12 @@ p33 = "mojo problems/p33/p33.mojo"
 
 p34 = "mojo problems/p34/p34.mojo"
 
-# GPU information and profiling utilities
+# NVIDIA GPU information and profiling utilities
 gpu-info = { cmd = "nvidia-smi --query-gpu=name,compute_cap,memory.total,driver_version --format=csv", description = "Get basic GPU information" }
 gpu-specs = { cmd = "python3 scripts/gpu_specs.py", description = "Get complete GPU architectural specifications" }
+
+# macOS
+check-macos = { cmd = "sw_vers -productVersion | awk -F. '{if($1<15) {print \"Error: macOS 15+ required, found \" $0; exit 1}}'", description = "Ensure macOS 15+" }
 
 generate-animations = { cmd = "echo 'All animations generated!'", depends-on = ["viz01", "viz02", "viz03", "viz04", "viz05", "viz06", "viz07", "viz08", "viz11", "viz12", "viz13", "viz14", "viz15", "viz16", "rooflineviz", "thread_indexing"] }
 clean-animations = "find book/src -type d -name media | xargs rm -rf"
