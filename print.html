@@ -283,7 +283,7 @@ if thread_id &lt; data_size:
 <tr><td>Block-level programming</td><td>✅ <strong>Available</strong></td><td>Part VIII (27)</td></tr>
 <tr><td>Advanced memory operations</td><td>✅ <strong>Available</strong></td><td>Part IX (28-29)</td></tr>
 <tr><td>Performance analysis</td><td>✅ <strong>Available</strong></td><td>Part X (30-32)</td></tr>
-<tr><td>Modern GPU features</td><td>🚧 <strong>WIP</strong></td><td>Part XI (33-35)</td></tr>
+<tr><td>Modern GPU features</td><td>✅ <strong>Available</strong></td><td>Part XI (33-34)</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
@@ -354,11 +354,10 @@ if thread_id &lt; data_size:
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p>**Part XI: Advanced GPU Features (Puzzles 33-35) 🚧 **</p>
+<p><strong>Part XI: Advanced GPU Features (Puzzles 33-34) ✅</strong></p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
-<li>Implement GPU-based random number generation</li>
-<li>Master advanced synchronization patterns</li>
+<li>Learn cluster programming in modern GPUs</li>
 </ul>
 <p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This gives you both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
 <h2 id="-prizes-and-rewards-"><a class="header" href="#-prizes-and-rewards-">🏆 Prizes and Rewards 🎉</a></h2>
@@ -396,12 +395,12 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
-<h4 id="recommended-option-1-pixi"><a class="header" href="#recommended-option-1-pixi"><strong>(Recommended) Option 1</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+<h4 id="hightly-recommended-option-1-pixi"><a class="header" href="#hightly-recommended-option-1-pixi"><strong>(Hightly recommended) Option 1</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
 <p><code>pixi</code> is the <strong>recommended option</strong> for this project because:</p>
 <ul>
-<li>✅ Easy access to Modular’s MAX/Mojo packages</li>
-<li>✅ Handles CUDA toolkit and GPU dependencies</li>
-<li>✅ Full conda + PyPI ecosystem support</li>
+<li>Easy access to Modular’s MAX/Mojo packages</li>
+<li>Handles GPU dependencies</li>
+<li>Full conda + PyPI ecosystem support</li>
 </ul>
 <p><strong>Note: A few puzzles only work with <code>pixi</code>.</strong></p>
 <p><strong>Install:</strong></p>
@@ -1755,7 +1754,7 @@ fn add_10_blocks_2d(
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
-expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
+expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 </code></pre>
 <h2 id="solution-8"><a class="header" href="#solution-8">Solution</a></h2>
 <details class="solution-details">
@@ -1909,7 +1908,7 @@ fn add_10_blocks_2d[
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
-expected: HostBuffer([11.0, 11.0, 11.0, ... , 11.0])
+expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 </code></pre>
 <h2 id="solution-9"><a class="header" href="#solution-9">Solution</a></h2>
 <details class="solution-details">
@@ -9784,7 +9783,9 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 from max.torch import CustomOpLibrary
 
 
-def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
+def conv1d_pytorch(
+    input_tensor: torch.Tensor, kernel_tensor: torch.Tensor
+) -&gt; torch.Tensor:
     """
     1D convolution using our custom PyTorch operation.
 
@@ -9800,11 +9801,17 @@ def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt
 
     # Call our custom conv1d operation with explicit output tensor
     # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    conv1d = ops.conv1d[
+        {
+            "input_size": input_tensor.shape[0],
+            "conv_size": kernel_tensor.shape[0],
+        }
+    ]
 
     # FILL IN with 1 line of code
 
     return output_tensor
+
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
@@ -9848,7 +9855,12 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 <p>The solution requires calling the compiled custom operation with the proper arguments:</p>
 <pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
     # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    conv1d = ops.conv1d[
+        {
+            "input_size": input_tensor.shape[0],
+            "conv_size": kernel_tensor.shape[0],
+        }
+    ]
     torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 </code></pre>
 <div class="solution-explanation">

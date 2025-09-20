@@ -208,7 +208,9 @@
 from max.torch import CustomOpLibrary
 
 
-def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt; torch.Tensor:
+def conv1d_pytorch(
+    input_tensor: torch.Tensor, kernel_tensor: torch.Tensor
+) -&gt; torch.Tensor:
     """
     1D convolution using our custom PyTorch operation.
 
@@ -224,11 +226,17 @@ def conv1d_pytorch(input_tensor: torch.Tensor, kernel_tensor: torch.Tensor) -&gt
 
     # Call our custom conv1d operation with explicit output tensor
     # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    conv1d = ops.conv1d[
+        {
+            "input_size": input_tensor.shape[0],
+            "conv_size": kernel_tensor.shape[0],
+        }
+    ]
 
     # FILL IN with 1 line of code
 
     return output_tensor
+
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a></p>
@@ -272,7 +280,12 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 <p>The solution requires calling the compiled custom operation with the proper arguments:</p>
 <pre><code class="language-python">    # Call our custom conv1d operation with explicit output tensor
     # The Mojo signature expects: (out, input, kernel)
-    conv1d = ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
+    conv1d = ops.conv1d[
+        {
+            "input_size": input_tensor.shape[0],
+            "conv_size": kernel_tensor.shape[0],
+        }
+    ]
     torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 </code></pre>
 <div class="solution-explanation">
