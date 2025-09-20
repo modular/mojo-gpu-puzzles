@@ -115,11 +115,11 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 
 **Transpose Kernel Implementation Guide:**
 
-1. **Shared Memory Setup**: Use `tb[dtype]().row_major[TPB, TPB]().shared().alloc()` to create a TPB×TPB shared memory tile for efficient data exchange between threads
+1. **Shared Memory Setup**: Use `tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()` to create a square `TRANSPOSE_BLOCK_DIM_XY` × `TRANSPOSE_BLOCK_DIM_XY` shared memory tile for efficient data exchange between threads
 
 2. **Thread Indexing**: Map threads to matrix elements:
    - `local_row = thread_idx.y`, `local_col = thread_idx.x` (position within the block)
-   - `global_row = block_idx.y * TPB + local_row` (position in the full matrix)
+   - `global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row` (position in the full matrix)
 
 3. **Two-Phase Operation**:
    - **Phase 1**: Load data from global memory into shared memory with normal indexing
@@ -129,7 +129,7 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 
 5. **Transpose Magic**: The transpose happens through swapped indexing: `shared_tile[local_col, local_row]` instead of `shared_tile[local_row, local_col]`
 
-6. **Boundary Handling**: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don't perfectly divide by TPB
+6. **Boundary Handling**: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don't perfectly divide by `TRANSPOSE_BLOCK_DIM_XY` x `TRANSPOSE_BLOCK_DIM_XY`
 
 7. **Memory Coalescing**: This pattern ensures both reads and writes are coalesced for optimal memory bandwidth utilization
 </div>

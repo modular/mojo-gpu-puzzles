@@ -14,11 +14,12 @@ from layout.layout_tensor import copy_dram_to_sram_async
 
 alias SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 alias D = 16  # This must be equal to D in p19.py
+
+alias TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
 alias MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
 alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
 alias MATMUL_BLOCK_DIM_COUNT = 2
 alias SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
-alias TPB = 16
 
 # Tiled matrix multiplication (from p16), updated to:
 # 1) Support different layouts for input (a, b) and output LayoutTensors.
@@ -272,6 +273,13 @@ struct AttentionCustomOp:
             # Result as (1, d)
             alias layout_result_2d = Layout.row_major(1, d)
 
+            # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
+            alias transpose_threads_per_block = (TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY)
+            # Tile over the K (seq_len, d) matrix
+            alias transpose_blocks_per_grid = (
+                (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
+                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+            )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
             alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len) ) with one thread per output
@@ -280,11 +288,6 @@ struct AttentionCustomOp:
             alias softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d) ) with one thread per output
             alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-            alias transpose_threads_per_block = (TPB, TPB)
-            alias transpose_blocks_per_grid = (
-                (seq_len + TPB - 1) // TPB,
-                (d + TPB - 1) // TPB,
-            )
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
             k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
