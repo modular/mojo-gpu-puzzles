@@ -239,7 +239,7 @@ Step 2: softmax(Scores) → Weights(1,16)  [sum = 1.0]
          ↓
 Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
-<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to \((1,16)\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 16!</p>
+<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to \((1,16)\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 18!</p>
 <p>Our GPU implementation <strong>reuses and combines optimized kernels from previous puzzles</strong>:</p>
 <ul>
 <li><strong><a href="../puzzle_16/puzzle_16.html">Tiled matrix multiplication from Puzzle 16</a></strong> for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
@@ -247,7 +247,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <li><strong><a href="../puzzle_18/puzzle_18.html">Parallel softmax from Puzzle 18</a></strong> for numerically stable attention weight computation</li>
 </ul>
 <blockquote>
-<p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the <code>matmul_idiomatic_tiled</code> from Puzzle 14 and <code>softmax_kernel</code> from Puzzle 16, showcasing the power of modular GPU kernel design.</p>
+<p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the <code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_kernel</code> from Puzzle 18, showcasing the power of modular GPU kernel design.</p>
 </blockquote>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
@@ -361,17 +361,15 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             # Result as (1, d)
             alias layout_result_2d = Layout.row_major(1, d)
 
-            alias scores_blocks_per_grid = (
-                (seq_len + TPB - 1) // TPB,
-                (1 + TPB - 1) // TPB,
-            )
+            # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
+            alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
+            # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
+            alias scores_blocks_per_grid = (seq_len + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
             alias softmax_threads = SOFTMAX_BLOCK_DIM_X
             alias softmax_blocks_per_grid = 1
-            alias result_blocks_per_grid = (
-                (d + TPB - 1) // TPB,
-                (1 + TPB - 1) // TPB,
-            )
-            alias matmul_threads_per_block = (TPB, TPB)
+            # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
+            alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias transpose_threads_per_block = (TPB, TPB)
             alias transpose_blocks_per_grid = (
                 (seq_len + TPB - 1) // TPB,
                 (d + TPB - 1) // TPB,
@@ -592,7 +590,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
-                block_dim=matmul_threads_per_block,
+                block_dim=transpose_threads_per_block,
             )
 
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
@@ -602,7 +600,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 mut=True, dtype, layout_scores_2d, MutableAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_q_2d, 1, seq_len, d, dtype]
+                matmul_idiomatic_tiled[layout_q_2d, layout_k_t, layout_scores_2d, 1, seq_len, d, dtype]
             ](
                 scores_2d,
                 q_2d,
@@ -631,7 +629,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_weights_2d, 1, d, seq_len, dtype]
+                matmul_idiomatic_tiled[layout_weights_2d, layout_v, layout_result_2d, 1, d, seq_len, dtype]
             ](
                 result_2d,
                 weights_2d,
