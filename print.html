@@ -9311,13 +9311,13 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>tb[dtype]().row_major[TPB, TPB]().shared().alloc()</code> to create a TPB×TPB shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use <code>tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>
 <ul>
 <li><code>local_row = thread_idx.y</code>, <code>local_col = thread_idx.x</code> (position within the block)</li>
-<li><code>global_row = block_idx.y * TPB + local_row</code> (position in the full matrix)</li>
+<li><code>global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row</code> (position in the full matrix)</li>
 </ul>
 </li>
 <li>
@@ -9334,7 +9334,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Magic</strong>: The transpose happens through swapped indexing: <code>shared_tile[local_col, local_row]</code> instead of <code>shared_tile[local_row, local_col]</code></p>
 </li>
 <li>
-<p><strong>Boundary Handling</strong>: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don’t perfectly divide by TPB</p>
+<p><strong>Boundary Handling</strong>: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don’t perfectly divide by <code>TRANSPOSE_BLOCK_DIM_XY</code> x <code>TRANSPOSE_BLOCK_DIM_XY</code></p>
 </li>
 <li>
 <p><strong>Memory Coalescing</strong>: This pattern ensures both reads and writes are coalesced for optimal memory bandwidth utilization</p>
@@ -9357,6 +9357,13 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             # Result as (1, d)
             alias layout_result_2d = Layout.row_major(1, d)
 
+            # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
+            alias transpose_threads_per_block = (TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY)
+            # Tile over the K (seq_len, d) matrix
+            alias transpose_blocks_per_grid = (
+                (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
+                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+            )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
             alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
@@ -9365,11 +9372,6 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             alias softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
             alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-            alias transpose_threads_per_block = (TPB, TPB)
-            alias transpose_blocks_per_grid = (
-                (seq_len + TPB - 1) // TPB,
-                (d + TPB - 1) // TPB,
-            )
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
             k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
@@ -9538,23 +9540,21 @@ Output vector norms:
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    shared_tile = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
 
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    global_row = block_idx.y * TPB + local_row
-    global_col = block_idx.x * TPB + local_col
+    global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
-    else:
-        shared_tile[local_row, local_col] = 0.0
 
     barrier()
 
-    out_row = block_idx.x * TPB + local_row
-    out_col = block_idx.y * TPB + local_col
+    out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -11025,30 +11025,29 @@ fn matmul_idiomatic_tiled[
     layout_out: Layout,
     rows: Int,
     cols: Int,
+    dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out],
-    input: LayoutTensor[mut=False, dtype, layout_in],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
 
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    global_row = block_idx.y * TPB + local_row
-    global_col = block_idx.x * TPB + local_col
+    global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
-        shared_tile[local_row, local_col] = input[global_row, global_col]
-    else:
-        shared_tile[local_row, local_col] = 0.0
+        shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = block_idx.x * TPB + local_row
-    out_col = block_idx.y * TPB + local_col
+    out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
