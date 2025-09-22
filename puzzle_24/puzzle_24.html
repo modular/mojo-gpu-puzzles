@@ -188,7 +188,7 @@
                     <main>
                         <h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll learn the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
@@ -213,7 +213,7 @@
 <li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
 <h3 id="warp-operations-available-in-mojo"><a class="header" href="#warp-operations-available-in-mojo"><strong>Warp operations available in Mojo</strong></a></h3>
-<p>Master the core warp primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core warp primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
 <li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
@@ -262,7 +262,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
 <p><strong>→ <a href="./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
 <p>Understand the hardware foundation that makes warp operations possible.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Single Instruction, Multiple Thread (SIMT) execution model</li>
 <li>Warp divergence and convergence patterns</li>
@@ -272,8 +272,8 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
 <h3 id="2-warp-sum-fundamentals"><a class="header" href="#2-warp-sum-fundamentals"><strong>2. Warp sum fundamentals</strong></a></h3>
 <p><strong>→ <a href="./warp_sum.html">warp.sum() Essentials</a></strong></p>
-<p>Master the most important warp operation through dot product implementation.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn the most important warp operation through dot product implementation.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Replacing shared memory + barriers with <code>sum()</code></li>
 <li>Cross-GPU architecture compatibility (<code>WARP_SIZE</code>)</li>
@@ -289,7 +289,7 @@ if lane_id() == 0:
 <h3 id="3-when-to-use-warp-programming"><a class="header" href="#3-when-to-use-warp-programming"><strong>3. When to use warp programming</strong></a></h3>
 <p><strong>→ <a href="./warp_extra.html">When to Use Warp Programming</a></strong></p>
 <p>Learn the decision framework for choosing warp operations over alternatives.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Problem characteristics that favor warp operations</li>
 <li>Performance scaling patterns with warp count</li>
@@ -297,7 +297,7 @@ if lane_id() == 0:
 <li>Warp operation selection guidelines</li>
 </ul>
 <p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
-<h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
+<h2 id="key-concepts-to-learn"><a class="header" href="#key-concepts-to-learn">Key concepts to learn</a></h2>
 <h3 id="hardware-software-alignment"><a class="header" href="#hardware-software-alignment"><strong>Hardware-software alignment</strong></a></h3>
 <p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
 <ul>

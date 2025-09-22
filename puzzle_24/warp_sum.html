@@ -190,7 +190,7 @@
 <p>Implement the dot product we saw in <a href="../puzzle_12/puzzle_12.html">puzzle 12</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
 <li><strong>SIMT execution model</strong> and lane synchronization</li>
@@ -688,7 +688,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 </ul>
 <p><strong>Note:</strong> Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, <code>WARP_SIZE</code>). The key insight is observing the relative performance trends rather than absolute timings.</p>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
-<p>Once you’ve mastered warp sum operations, you’re ready for:</p>
+<p>Once you’ve learned warp sum operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
 <li><strong>Advanced warp operations</strong>: <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code> for complex communication patterns</li>

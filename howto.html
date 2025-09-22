@@ -199,6 +199,8 @@
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
+<p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
 <h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
@@ -214,7 +216,17 @@
 <blockquote>
 <p><strong>Note</strong>: Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
 </blockquote>
-<h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
+<h3 id="programming-knowledge"><a class="header" href="#programming-knowledge">Programming knowledge</a></h3>
+<p>Basic knowledge of:</p>
+<ul>
+<li>Programming fundamentals (variables, loops, conditionals, functions)</li>
+<li>Parallel computing concepts (threads, synchronization, race conditions)</li>
+<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language basics parts and <a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
+<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU programming fundamentals</a> is helpful!</li>
+</ul>
+<p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
+<p>Let’s begin our journey into the exciting world of GPU computing with Mojo🔥!</p>
+<h2 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h2>
 <ol>
 <li>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</p>
@@ -225,14 +237,16 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
-<h4 id="hightly-recommended-option-1-pixi"><a class="header" href="#hightly-recommended-option-1-pixi"><strong>(Hightly recommended) Option 1</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+<h4 id="option-1-hightly-recommended-pixi"><a class="header" href="#option-1-hightly-recommended-pixi"><strong>Option 1 (Hightly recommended)</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
 <p><code>pixi</code> is the <strong>recommended option</strong> for this project because:</p>
 <ul>
 <li>Easy access to Modular’s MAX/Mojo packages</li>
 <li>Handles GPU dependencies</li>
 <li>Full conda + PyPI ecosystem support</li>
 </ul>
-<p><strong>Note: A few puzzles only work with <code>pixi</code>.</strong></p>
+<blockquote>
+<p><strong>Note: Some puzzles only work with <code>pixi</code></strong></p>
+</blockquote>
 <p><strong>Install:</strong></p>
 <pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
 </code></pre>
@@ -273,17 +287,92 @@ cd mojo-gpu-puzzles
 <li><code>pixi run p01</code> or</li>
 <li><code>uv run poe p01</code></li>
 </ul>
-<h3 id="knowledge-prerequisites"><a class="header" href="#knowledge-prerequisites">Knowledge prerequisites</a></h3>
-<p>Basic knowledge of:</p>
+<h2 id="gpu-support-matrix"><a class="header" href="#gpu-support-matrix">GPU support matrix</a></h2>
+<p>The following table shows GPU platform compatibility for each puzzle. Different puzzles require different GPU features and vendor-specific tools.</p>
+<div class="table-wrapper"><table><thead><tr><th>Puzzle</th><th>NVIDIA GPU</th><th>AMD GPU</th><th>Apple GPU</th><th>Notes</th></tr></thead><tbody>
+<tr><td><strong>Part I: GPU Fundamentals</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>1 - Map</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>2 - Zip</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>3 - Guard</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>4 - Map 2D</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>5 - Broadcast</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>6 - Blocks</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>7 - Shared Memory</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>8 - Stencil</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td><strong>Part II: Debugging</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>9 - GPU Debugger</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA-specific debugging tools</td></tr>
+<tr><td>10 - Sanitizer</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA-specific debugging tools</td></tr>
+<tr><td><strong>Part III: GPU Algorithms</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>11 - Reduction</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>12 - Scan</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>13 - Pool</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>14 - Conv</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>15 - Matmul</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory patterns</td></tr>
+<tr><td><strong>Part IV: MAX Graph</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>18 - Softmax</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>19 - Attention</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td><strong>Part V: PyTorch Integration</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>20 - Torch Bridge</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td>21 - Autograd</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td>22 - Fusion</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td><strong>Part VI: Functional Patterns</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>23 - Functional</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced Mojo patterns</td></tr>
+<tr><td><strong>Part VII: Warp Programming</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>24 - Warp Sum</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td>25 - Warp Communication</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td>26 - Advanced Warp</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td><strong>Part VIII: Block Programming</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>❌</td><td>Block-level patterns</td></tr>
+<tr><td><strong>Part IX: Memory Systems</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory operations</td></tr>
+<tr><td>29 - Barriers</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced synchronization</td></tr>
+<tr><td><strong>Part X: Performance Analysis</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>30 - Profiling</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools (NSight)</td></tr>
+<tr><td>31 - Occupancy</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools</td></tr>
+<tr><td>32 - Bank Conflicts</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools</td></tr>
+<tr><td><strong>Part XI: Modern GPU Features</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>33 - Tensor Cores</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA Tensor Core specific</td></tr>
+<tr><td>34 - Cluster</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA cluster programming</td></tr>
+</tbody></table>
+</div>
+<h3 id="legend"><a class="header" href="#legend">Legend</a></h3>
 <ul>
-<li>Programming fundamentals (variables, loops, conditionals, functions)</li>
-<li>Parallel computing concepts (threads, synchronization, race conditions)</li>
-<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language basics parts and <a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
-<li><a href="https://docs.modular.com/mojo/manual/gpu/basics">A tour of GPU basics in Mojo</a> is helpful</li>
+<li>✅ <strong>Supported</strong>: Puzzle works on this platform</li>
+<li>❌ <strong>Not Supported</strong>: Puzzle requires platform-specific features</li>
 </ul>
-<p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
-<p>Let’s begin our journey into the exciting world of GPU computing with Mojo 🔥!</p>
-<h3 id="development"><a class="header" href="#development">Development</a></h3>
+<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform Notes</a></h3>
+<p><strong>NVIDIA GPUs (Complete Support)</strong></p>
+<ul>
+<li>All puzzles (1-34) work on NVIDIA GPUs with CUDA support</li>
+<li>Requires CUDA toolkit and compatible drivers</li>
+<li>Best learning experience with access to all features</li>
+</ul>
+<p><strong>AMD GPUs (Extensive Support)</strong></p>
+<ul>
+<li>Most puzzles (1-8, 11-29) work with ROCm support</li>
+<li>Missing only: Debugging tools (9-10), profiling (30-32), Tensor Cores (33-34)</li>
+<li>Excellent for learning GPU programming including advanced algorithms and memory patterns</li>
+</ul>
+<p><strong>Apple GPUs (Basic Support)</strong></p>
+<ul>
+<li>Only fundamental puzzles (1-8, 11-15) supported</li>
+<li>Missing: All advanced features, debugging, profiling tools</li>
+<li>Suitable for learning basic GPU programming patterns</li>
+</ul>
+<blockquote>
+<p><strong>Future Support</strong>: We’re actively working to expand tooling and platform support for AMD and Apple GPUs. Missing features like debugging tools, profiling capabilities, and advanced GPU operations are planned for future releases. Check back for updates as we continue to broaden cross-platform compatibility.</p>
+</blockquote>
+<h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
+<ul>
+<li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
+<li><strong>Comprehensive Learning</strong>: AMD GPUs excellent for most content (27 of 34 puzzles)</li>
+<li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
+<li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
+<li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>
+</ul>
+<h2 id="development"><a class="header" href="#development">Development</a></h2>
 <p>Please see details in the <a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>.</p>
 <h2 id="join-the-community"><a class="header" href="#join-the-community">Join the community</a></h2>
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
@@ -307,7 +396,7 @@ cd mojo-gpu-puzzles
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="puzzle_01/puzzle_01.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="reward.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -321,7 +410,7 @@ cd mojo-gpu-puzzles
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="puzzle_01/puzzle_01.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="reward.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

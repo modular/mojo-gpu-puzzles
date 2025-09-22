@@ -216,10 +216,11 @@
 <p><em>“For the things we have to learn before we can do them, we learn by doing them.”</em>
 Aristotle, (Nicomachean Ethics)</p>
 </blockquote>
-<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to mastering GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥 — the innovative programming language that combines Pythonic syntax with systems-level performance. GPU programming remains one of the most powerful skills in modern computing, driving advances in artificial intelligence, scientific simulation, and high-performance computing.</p>
-<p>This book takes a unique approach to teaching GPU programming: learning by solving increasingly challenging puzzles. Rather than traditional textbook learning, you’ll immediately start writing real GPU code and seeing the results.</p>
-<p>The Part I and III of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive CUDA learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while expanding on advanced topics with Mojo-specific optimizations.</p>
-<h2 id="why-mojo--for-gpu-programming"><a class="header" href="#why-mojo--for-gpu-programming">Why Mojo 🔥 for GPU Programming?</a></h2>
+<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to understanding GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥, the innovative programming language that combines Pythonic syntax with systems-level performance.</p>
+<h2 id="why-gpu-programming"><a class="header" href="#why-gpu-programming">Why GPU programming?</a></h2>
+<p>In today’s computational landscape, GPU programming has become essential infrastructure for solving humanity’s most challenging problems. The explosive growth of artificial intelligence, from large language models processing billions of parameters to computer vision systems analyzing real-time video streams, relies fundamentally on GPU acceleration. Scientific breakthroughs in climate modeling, drug discovery, and quantum simulation depend on the massive parallel processing power that only GPUs can provide. Financial institutions use GPU computing for real-time risk analysis and algorithmic trading, while autonomous vehicles process sensor data through GPU-accelerated neural networks to make split-second decisions.</p>
+<p>The economic impact is equally compelling. Organizations that effectively harness GPU computing gain significant competitive advantages: faster time-to-market for AI products, reduced computational costs through efficient resource utilization, and the ability to tackle previously impossible computational challenges. As we enter an era where computational capability directly translates to business value, GPU programming skills have become a strategic differentiator for engineers, researchers, and organizations alike.</p>
+<h2 id="why-mojo-for-gpu-programming"><a class="header" href="#why-mojo-for-gpu-programming">Why Mojo🔥 for GPU programming?</a></h2>
 <p>The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.</p>
 <p>Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:</p>
 <ul>
@@ -233,12 +234,28 @@ Aristotle, (Nicomachean Ethics)</p>
 <li><strong>Lower Barrier to Entry</strong> enabling more programmers to harness GPU power effectively</li>
 </ul>
 <blockquote>
-<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong>
+<p><strong>Mojo🔥 aims to fuel innovation by democratizing GPU programming.</strong>
 <strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
 </blockquote>
-<h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU Programming Mindset</a></h2>
+<h2 id="why-learn-through-puzzles"><a class="header" href="#why-learn-through-puzzles">Why learn through puzzles?</a></h2>
+<p>Traditional GPU programming tutorials often overwhelm learners with complex theory before they write their first kernel. This book flips that approach: you’ll start solving puzzles immediately, building intuition through hands-on experience.</p>
+<p><strong>The puzzle-based learning advantage:</strong></p>
+<ul>
+<li><strong>Immediate feedback</strong>: See your code running on real GPU hardware from day one</li>
+<li><strong>Progressive complexity</strong>: Each puzzle builds naturally on previous concepts</li>
+<li><strong>Practical focus</strong>: Learn by solving real computational problems, not abstract examples</li>
+<li><strong>Debugging skills</strong>: Develop troubleshooting abilities through trial and refinement</li>
+<li><strong>Retention</strong>: Active problem-solving creates stronger memory connections than passive reading</li>
+</ul>
+<p>Rather than memorizing GPU programming rules, you’ll discover them through exploration. Each “aha!” moment comes from your own experimentation, making the knowledge stick.</p>
+<blockquote>
+<p><strong>Acknowledgement</strong>: The Part I and III of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive
+NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while
+expanding on advanced topics with Mojo-specific optimizations.</p>
+</blockquote>
+<h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU programming mindset</a></h2>
 <p>Effective GPU programming requires a fundamental shift in how we think about computation. Here are some key mental models that will guide your journey:</p>
-<h3 id="from-sequential-to-parallel-eliminating-loops-with-threads"><a class="header" href="#from-sequential-to-parallel-eliminating-loops-with-threads">From Sequential to Parallel: Eliminating Loops with Threads</a></h3>
+<h3 id="from-sequential-to-parallel-eliminating-loops-with-threads"><a class="header" href="#from-sequential-to-parallel-eliminating-loops-with-threads">From sequential to parallel: Eliminating loops with threads</a></h3>
 <p>In traditional CPU programming, we process data sequentially through loops:</p>
 <pre><code class="language-python"># CPU approach
 for i in range(data_size):
@@ -251,7 +268,7 @@ if thread_id &lt; data_size:
     result[thread_id] = process(data[thread_id])
 </code></pre>
 <p>Each thread becomes responsible for computing a single element, eliminating the need for explicit loops. This mental shift—from “stepping through data” to “blanketing data with compute”—is central to GPU programming.</p>
-<h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a Mesh of Compute Over Data</a></h3>
+<h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a mesh of compute over data</a></h3>
 <p>Imagine your data as a grid, and GPU threads as another grid that overlays it. Your task is to design this “compute mesh” to efficiently cover your data:</p>
 <ul>
 <li><strong>Threads</strong>: Individual compute units that process single data elements</li>
@@ -259,7 +276,7 @@ if thread_id &lt; data_size:
 <li><strong>Grid</strong>: The entire collection of blocks that covers your dataset</li>
 </ul>
 <p>The art of GPU programming lies in crafting this mesh to maximize parallelism while respecting memory and synchronization constraints.</p>
-<h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data Movement vs. Computation</a></h3>
+<h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data movement vs. computation</a></h3>
 <p>In GPU programming, data movement is often more expensive than computation:</p>
 <ul>
 <li>Moving data between CPU and GPU is slow</li>
@@ -268,9 +285,9 @@ if thread_id &lt; data_size:
 </ul>
 <p>This inverts another common assumption in programming: computation is no longer the bottleneck—data movement is.</p>
 <p>Through the puzzles in this book, you’ll develop an intuitive understanding of these principles, transforming how you approach computational problems.</p>
-<h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What You Will Learn</a></h2>
-<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By mastering both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
-<h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your Current Learning Path</a></h3>
+<h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What you will learn</a></h2>
+<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By learning both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
+<h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your current learning path</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
 <tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
 <tr><td>Debugging GPU Programs</td><td>✅ <strong>Available</strong></td><td>Part II (9-10)</td></tr>
@@ -285,89 +302,84 @@ if thread_id &lt; data_size:
 <tr><td>Modern GPU features</td><td>✅ <strong>Available</strong></td><td>Part XI (33-34)</td></tr>
 </tbody></table>
 </div>
-<h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
-<p><strong>Part I: GPU Fundamentals (Puzzles 1-8) ✅</strong></p>
+<h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed learning objectives</a></h3>
+<p><strong>Part I: GPU fundamentals (Puzzles 1-8) ✅</strong></p>
 <ul>
-<li>Master thread indexing and block organization</li>
+<li>Learn thread indexing and block organization</li>
 <li>Understand memory access patterns and guards</li>
 <li>Work with both raw pointers and LayoutTensor abstractions</li>
 <li>Learn shared memory basics for inter-thread communication</li>
 </ul>
-<p><strong>Part II: Debugging GPU Programs (Puzzles 9-10) ✅</strong></p>
+<p><strong>Part II: Debugging GPU programs (Puzzles 9-10) ✅</strong></p>
 <ul>
-<li>Master GPU debugger and debugging techniques</li>
+<li>Learn GPU debugger and debugging techniques</li>
 <li>Learn to use sanitizers for catching memory errors and race conditions</li>
 <li>Develop systematic approaches to identifying and fixing GPU bugs</li>
 <li>Build confidence for tackling complex GPU programming challenges</li>
 </ul>
-<p><strong>Part III: GPU Algorithms (Puzzles 11-16) ✅</strong></p>
+<p><strong>Part III: GPU algorithms (Puzzles 11-16) ✅</strong></p>
 <ul>
 <li>Implement parallel reductions and pooling operations</li>
 <li>Build efficient convolution kernels</li>
-<li>Master prefix sum (scan) algorithms</li>
+<li>Learn prefix sum (scan) algorithms</li>
 <li>Optimize matrix multiplication with tiling strategies</li>
 </ul>
-<p><strong>Part IV: MAX Graph Integration (Puzzles 17-19) ✅</strong></p>
+<p><strong>Part IV: MAX Graph integration (Puzzles 17-19) ✅</strong></p>
 <ul>
 <li>Create custom MAX Graph operations</li>
 <li>Interface GPU kernels with Python code</li>
 <li>Build production-ready operations like softmax and attention</li>
 </ul>
-<p><strong>Part V: PyTorch Integration (Puzzles 20-22) ✅</strong></p>
+<p><strong>Part V: PyTorch integration (Puzzles 20-22) ✅</strong></p>
 <ul>
 <li>Bridge Mojo GPU kernels with PyTorch tensors</li>
 <li>Use CustomOpLibrary for seamless tensor marshalling</li>
 <li>Integrate with torch.compile for optimized execution</li>
-<li>Master kernel fusion and custom backward passes</li>
+<li>Learn kernel fusion and custom backward passes</li>
 </ul>
-<p><strong>Part VI: Mojo Functional Patterns &amp; Benchmarking (Puzzle 23) ✅</strong></p>
+<p><strong>Part VI: Mojo functional patterns &amp; benchmarking (Puzzle 23) ✅</strong></p>
 <ul>
-<li>Master functional patterns: elementwise, tiled processing, vectorization</li>
+<li>Learn functional patterns: elementwise, tiled processing, vectorization</li>
 <li>Learn systematic performance optimization and trade-offs</li>
 <li>Develop quantitative benchmarking skills for performance analysis</li>
 <li>Understand GPU threading vs SIMD execution hierarchies</li>
 </ul>
-<p><strong>Part VII: Warp-Level Programming (Puzzles 24-26) ✅</strong></p>
+<p><strong>Part VII: Warp-level programming (Puzzles 24-26) ✅</strong></p>
 <ul>
-<li>Master warp fundamentals and SIMT execution models</li>
+<li>Learn warp fundamentals and SIMT execution models</li>
 <li>Learn essential warp operations: sum, shuffle_down, broadcast</li>
 <li>Implement advanced patterns with shuffle_xor and prefix_sum</li>
 <li>Combine warp programming with functional patterns effectively</li>
 </ul>
-<p><strong>Part VIII: Block-Level Programming (Puzzle 27) ✅</strong></p>
+<p><strong>Part VIII: Block-level programming (Puzzle 27) ✅</strong></p>
 <ul>
-<li>Master block-wide reductions with <code>block.sum()</code> and <code>block.max()</code></li>
+<li>Learn block-wide reductions with <code>block.sum()</code> and <code>block.max()</code></li>
 <li>Learn block-level prefix sum patterns and communication</li>
 <li>Implement efficient block.broadcast() for intra-block coordination</li>
 </ul>
-<p><strong>Part IX: Advanced Memory Systems (Puzzles 28-29) ✅</strong></p>
+<p><strong>Part IX: Advanced memory systems (Puzzles 28-29) ✅</strong></p>
 <ul>
 <li>Achieve optimal memory coalescing patterns</li>
 <li>Use async memory operations for overlapping compute with latency hiding</li>
 <li>Learn memory fences and synchronization primitives</li>
-<li>Master prefetching and cache optimization strategies</li>
+<li>Learn prefetching and cache optimization strategies</li>
 </ul>
-<p><strong>Part X: Performance Analysis &amp; Optimization (Puzzles 30-32) ✅</strong></p>
+<p><strong>Part X: Performance analysis &amp; optimization (Puzzles 30-32) ✅</strong></p>
 <ul>
 <li>Profile GPU kernels and identify bottlenecks</li>
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p><strong>Part XI: Advanced GPU Features (Puzzles 33-34) ✅</strong></p>
+<p><strong>Part XI: Advanced GPU features (Puzzles 33-34) ✅</strong></p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Learn cluster programming in modern GPUs</li>
 </ul>
 <p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This gives you both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
-<h2 id="-prizes-and-rewards-"><a class="header" href="#-prizes-and-rewards-">🏆 Prizes and Rewards 🎉</a></h2>
-<p>Have you completed the available puzzles? We’re giving away free sticker packs to celebrate your achievement!</p>
-<p>To claim your free stickers:</p>
-<ol>
-<li>Fork the GitHub repository <a href="https://github.com/modular/mojo-gpu-puzzles">https://github.com/modular/mojo-gpu-puzzles</a></li>
-<li>Add your solutions to the available puzzles</li>
-<li>Submit your solutions through <a href="https://forms.gle/bchQpB3GanHMNY3x9">this form</a> and we’ll send you exclusive Modular stickers!</li>
-</ol>
-<p><em>Note: More puzzles are being added regularly - complete the currently available ones to claim your reward!</em></p>
+<h2 id="ready-to-get-started"><a class="header" href="#ready-to-get-started">Ready to get started?</a></h2>
+<p>Now that you understand why GPU programming matters, why Mojo is the right tool, and how puzzle-based learning works, you’re ready to begin your journey.</p>
+<p><strong>Next step</strong>: Head to <a href="howto.html">How to Use This Book</a> for setup instructions, system requirements, and guidance on running your first puzzle.</p>
+<p>Let’s start building your GPU programming skills! 🚀</p>
 
                     </main>
 

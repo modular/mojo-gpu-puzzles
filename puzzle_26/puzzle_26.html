@@ -213,7 +213,7 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 <li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
 </ul>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
-<p>Master the sophisticated communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the sophisticated communication primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: XOR-based butterfly communication for tree algorithms</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: Hardware-accelerated parallel scan operations</li>
@@ -264,8 +264,8 @@ output[global_i] = scan_result
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
 <h3 id="1-butterfly-communication-with-shuffle_xor"><a class="header" href="#1-butterfly-communication-with-shuffle_xor"><strong>1. Butterfly communication with shuffle_xor</strong></a></h3>
 <p><strong>→ <a href="./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
-<p>Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>shuffle_xor()</code> for creating butterfly network topologies</li>
 <li>Implementing \(O(\log n)\) parallel reductions with tree communication</li>
@@ -282,8 +282,8 @@ while offset &gt; 0:
 </code></pre>
 <h3 id="2-hardware-accelerated-parallel-scan-with-prefix_sum"><a class="header" href="#2-hardware-accelerated-parallel-scan-with-prefix_sum"><strong>2. Hardware-accelerated parallel scan with prefix_sum</strong></a></h3>
 <p><strong>→ <a href="./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
-<p>Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>prefix_sum()</code> for hardware-accelerated cumulative operations</li>
 <li>Implementing stream compaction and parallel partitioning</li>
@@ -332,7 +332,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 <p>Ready to harness advanced GPU warp-level communication? Start with butterfly network operations to understand tree-based communication, then progress to hardware-accelerated parallel scan for optimal algorithm performance.</p>
 <p>💡 <strong>Success tip</strong>: Think of advanced warp operations as <strong>hardware-accelerated parallel algorithm building blocks</strong>. These primitives replace entire categories of complex shared memory algorithms with single, optimized function calls.</p>
 <p><strong>Learning objective</strong>: By the end of Puzzle 24, you’ll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to learn butterfly communication, then advance to <strong><a href="./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
 
                     </main>
 

@@ -217,10 +217,11 @@
 <p><em>“For the things we have to learn before we can do them, we learn by doing them.”</em>
 Aristotle, (Nicomachean Ethics)</p>
 </blockquote>
-<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to mastering GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥 — the innovative programming language that combines Pythonic syntax with systems-level performance. GPU programming remains one of the most powerful skills in modern computing, driving advances in artificial intelligence, scientific simulation, and high-performance computing.</p>
-<p>This book takes a unique approach to teaching GPU programming: learning by solving increasingly challenging puzzles. Rather than traditional textbook learning, you’ll immediately start writing real GPU code and seeing the results.</p>
-<p>The Part I and III of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive CUDA learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while expanding on advanced topics with Mojo-specific optimizations.</p>
-<h2 id="why-mojo--for-gpu-programming"><a class="header" href="#why-mojo--for-gpu-programming">Why Mojo 🔥 for GPU Programming?</a></h2>
+<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to understanding GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥, the innovative programming language that combines Pythonic syntax with systems-level performance.</p>
+<h2 id="why-gpu-programming"><a class="header" href="#why-gpu-programming">Why GPU programming?</a></h2>
+<p>In today’s computational landscape, GPU programming has become essential infrastructure for solving humanity’s most challenging problems. The explosive growth of artificial intelligence, from large language models processing billions of parameters to computer vision systems analyzing real-time video streams, relies fundamentally on GPU acceleration. Scientific breakthroughs in climate modeling, drug discovery, and quantum simulation depend on the massive parallel processing power that only GPUs can provide. Financial institutions use GPU computing for real-time risk analysis and algorithmic trading, while autonomous vehicles process sensor data through GPU-accelerated neural networks to make split-second decisions.</p>
+<p>The economic impact is equally compelling. Organizations that effectively harness GPU computing gain significant competitive advantages: faster time-to-market for AI products, reduced computational costs through efficient resource utilization, and the ability to tackle previously impossible computational challenges. As we enter an era where computational capability directly translates to business value, GPU programming skills have become a strategic differentiator for engineers, researchers, and organizations alike.</p>
+<h2 id="why-mojo-for-gpu-programming"><a class="header" href="#why-mojo-for-gpu-programming">Why Mojo🔥 for GPU programming?</a></h2>
 <p>The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.</p>
 <p>Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:</p>
 <ul>
@@ -234,12 +235,28 @@ Aristotle, (Nicomachean Ethics)</p>
 <li><strong>Lower Barrier to Entry</strong> enabling more programmers to harness GPU power effectively</li>
 </ul>
 <blockquote>
-<p><strong>Mojo 🔥 aims to fuel innovation by democratizing GPU programming.</strong>
+<p><strong>Mojo🔥 aims to fuel innovation by democratizing GPU programming.</strong>
 <strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
 </blockquote>
-<h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU Programming Mindset</a></h2>
+<h2 id="why-learn-through-puzzles"><a class="header" href="#why-learn-through-puzzles">Why learn through puzzles?</a></h2>
+<p>Traditional GPU programming tutorials often overwhelm learners with complex theory before they write their first kernel. This book flips that approach: you’ll start solving puzzles immediately, building intuition through hands-on experience.</p>
+<p><strong>The puzzle-based learning advantage:</strong></p>
+<ul>
+<li><strong>Immediate feedback</strong>: See your code running on real GPU hardware from day one</li>
+<li><strong>Progressive complexity</strong>: Each puzzle builds naturally on previous concepts</li>
+<li><strong>Practical focus</strong>: Learn by solving real computational problems, not abstract examples</li>
+<li><strong>Debugging skills</strong>: Develop troubleshooting abilities through trial and refinement</li>
+<li><strong>Retention</strong>: Active problem-solving creates stronger memory connections than passive reading</li>
+</ul>
+<p>Rather than memorizing GPU programming rules, you’ll discover them through exploration. Each “aha!” moment comes from your own experimentation, making the knowledge stick.</p>
+<blockquote>
+<p><strong>Acknowledgement</strong>: The Part I and III of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive
+NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while
+expanding on advanced topics with Mojo-specific optimizations.</p>
+</blockquote>
+<h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU programming mindset</a></h2>
 <p>Effective GPU programming requires a fundamental shift in how we think about computation. Here are some key mental models that will guide your journey:</p>
-<h3 id="from-sequential-to-parallel-eliminating-loops-with-threads"><a class="header" href="#from-sequential-to-parallel-eliminating-loops-with-threads">From Sequential to Parallel: Eliminating Loops with Threads</a></h3>
+<h3 id="from-sequential-to-parallel-eliminating-loops-with-threads"><a class="header" href="#from-sequential-to-parallel-eliminating-loops-with-threads">From sequential to parallel: Eliminating loops with threads</a></h3>
 <p>In traditional CPU programming, we process data sequentially through loops:</p>
 <pre><code class="language-python"># CPU approach
 for i in range(data_size):
@@ -252,7 +269,7 @@ if thread_id &lt; data_size:
     result[thread_id] = process(data[thread_id])
 </code></pre>
 <p>Each thread becomes responsible for computing a single element, eliminating the need for explicit loops. This mental shift—from “stepping through data” to “blanketing data with compute”—is central to GPU programming.</p>
-<h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a Mesh of Compute Over Data</a></h3>
+<h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a mesh of compute over data</a></h3>
 <p>Imagine your data as a grid, and GPU threads as another grid that overlays it. Your task is to design this “compute mesh” to efficiently cover your data:</p>
 <ul>
 <li><strong>Threads</strong>: Individual compute units that process single data elements</li>
@@ -260,7 +277,7 @@ if thread_id &lt; data_size:
 <li><strong>Grid</strong>: The entire collection of blocks that covers your dataset</li>
 </ul>
 <p>The art of GPU programming lies in crafting this mesh to maximize parallelism while respecting memory and synchronization constraints.</p>
-<h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data Movement vs. Computation</a></h3>
+<h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data movement vs. computation</a></h3>
 <p>In GPU programming, data movement is often more expensive than computation:</p>
 <ul>
 <li>Moving data between CPU and GPU is slow</li>
@@ -269,9 +286,9 @@ if thread_id &lt; data_size:
 </ul>
 <p>This inverts another common assumption in programming: computation is no longer the bottleneck—data movement is.</p>
 <p>Through the puzzles in this book, you’ll develop an intuitive understanding of these principles, transforming how you approach computational problems.</p>
-<h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What You Will Learn</a></h2>
-<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By mastering both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
-<h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your Current Learning Path</a></h3>
+<h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What you will learn</a></h2>
+<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By learning both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
+<h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your current learning path</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
 <tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
 <tr><td>Debugging GPU Programs</td><td>✅ <strong>Available</strong></td><td>Part II (9-10)</td></tr>
@@ -286,89 +303,84 @@ if thread_id &lt; data_size:
 <tr><td>Modern GPU features</td><td>✅ <strong>Available</strong></td><td>Part XI (33-34)</td></tr>
 </tbody></table>
 </div>
-<h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed Learning Objectives</a></h3>
-<p><strong>Part I: GPU Fundamentals (Puzzles 1-8) ✅</strong></p>
+<h3 id="detailed-learning-objectives"><a class="header" href="#detailed-learning-objectives">Detailed learning objectives</a></h3>
+<p><strong>Part I: GPU fundamentals (Puzzles 1-8) ✅</strong></p>
 <ul>
-<li>Master thread indexing and block organization</li>
+<li>Learn thread indexing and block organization</li>
 <li>Understand memory access patterns and guards</li>
 <li>Work with both raw pointers and LayoutTensor abstractions</li>
 <li>Learn shared memory basics for inter-thread communication</li>
 </ul>
-<p><strong>Part II: Debugging GPU Programs (Puzzles 9-10) ✅</strong></p>
+<p><strong>Part II: Debugging GPU programs (Puzzles 9-10) ✅</strong></p>
 <ul>
-<li>Master GPU debugger and debugging techniques</li>
+<li>Learn GPU debugger and debugging techniques</li>
 <li>Learn to use sanitizers for catching memory errors and race conditions</li>
 <li>Develop systematic approaches to identifying and fixing GPU bugs</li>
 <li>Build confidence for tackling complex GPU programming challenges</li>
 </ul>
-<p><strong>Part III: GPU Algorithms (Puzzles 11-16) ✅</strong></p>
+<p><strong>Part III: GPU algorithms (Puzzles 11-16) ✅</strong></p>
 <ul>
 <li>Implement parallel reductions and pooling operations</li>
 <li>Build efficient convolution kernels</li>
-<li>Master prefix sum (scan) algorithms</li>
+<li>Learn prefix sum (scan) algorithms</li>
 <li>Optimize matrix multiplication with tiling strategies</li>
 </ul>
-<p><strong>Part IV: MAX Graph Integration (Puzzles 17-19) ✅</strong></p>
+<p><strong>Part IV: MAX Graph integration (Puzzles 17-19) ✅</strong></p>
 <ul>
 <li>Create custom MAX Graph operations</li>
 <li>Interface GPU kernels with Python code</li>
 <li>Build production-ready operations like softmax and attention</li>
 </ul>
-<p><strong>Part V: PyTorch Integration (Puzzles 20-22) ✅</strong></p>
+<p><strong>Part V: PyTorch integration (Puzzles 20-22) ✅</strong></p>
 <ul>
 <li>Bridge Mojo GPU kernels with PyTorch tensors</li>
 <li>Use CustomOpLibrary for seamless tensor marshalling</li>
 <li>Integrate with torch.compile for optimized execution</li>
-<li>Master kernel fusion and custom backward passes</li>
+<li>Learn kernel fusion and custom backward passes</li>
 </ul>
-<p><strong>Part VI: Mojo Functional Patterns &amp; Benchmarking (Puzzle 23) ✅</strong></p>
+<p><strong>Part VI: Mojo functional patterns &amp; benchmarking (Puzzle 23) ✅</strong></p>
 <ul>
-<li>Master functional patterns: elementwise, tiled processing, vectorization</li>
+<li>Learn functional patterns: elementwise, tiled processing, vectorization</li>
 <li>Learn systematic performance optimization and trade-offs</li>
 <li>Develop quantitative benchmarking skills for performance analysis</li>
 <li>Understand GPU threading vs SIMD execution hierarchies</li>
 </ul>
-<p><strong>Part VII: Warp-Level Programming (Puzzles 24-26) ✅</strong></p>
+<p><strong>Part VII: Warp-level programming (Puzzles 24-26) ✅</strong></p>
 <ul>
-<li>Master warp fundamentals and SIMT execution models</li>
+<li>Learn warp fundamentals and SIMT execution models</li>
 <li>Learn essential warp operations: sum, shuffle_down, broadcast</li>
 <li>Implement advanced patterns with shuffle_xor and prefix_sum</li>
 <li>Combine warp programming with functional patterns effectively</li>
 </ul>
-<p><strong>Part VIII: Block-Level Programming (Puzzle 27) ✅</strong></p>
+<p><strong>Part VIII: Block-level programming (Puzzle 27) ✅</strong></p>
 <ul>
-<li>Master block-wide reductions with <code>block.sum()</code> and <code>block.max()</code></li>
+<li>Learn block-wide reductions with <code>block.sum()</code> and <code>block.max()</code></li>
 <li>Learn block-level prefix sum patterns and communication</li>
 <li>Implement efficient block.broadcast() for intra-block coordination</li>
 </ul>
-<p><strong>Part IX: Advanced Memory Systems (Puzzles 28-29) ✅</strong></p>
+<p><strong>Part IX: Advanced memory systems (Puzzles 28-29) ✅</strong></p>
 <ul>
 <li>Achieve optimal memory coalescing patterns</li>
 <li>Use async memory operations for overlapping compute with latency hiding</li>
 <li>Learn memory fences and synchronization primitives</li>
-<li>Master prefetching and cache optimization strategies</li>
+<li>Learn prefetching and cache optimization strategies</li>
 </ul>
-<p><strong>Part X: Performance Analysis &amp; Optimization (Puzzles 30-32) ✅</strong></p>
+<p><strong>Part X: Performance analysis &amp; optimization (Puzzles 30-32) ✅</strong></p>
 <ul>
 <li>Profile GPU kernels and identify bottlenecks</li>
 <li>Optimize occupancy and resource utilization</li>
 <li>Eliminate shared memory bank conflicts</li>
 </ul>
-<p><strong>Part XI: Advanced GPU Features (Puzzles 33-34) ✅</strong></p>
+<p><strong>Part XI: Advanced GPU features (Puzzles 33-34) ✅</strong></p>
 <ul>
 <li>Program tensor cores for AI workloads</li>
 <li>Learn cluster programming in modern GPUs</li>
 </ul>
 <p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This gives you both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
-<h2 id="-prizes-and-rewards-"><a class="header" href="#-prizes-and-rewards-">🏆 Prizes and Rewards 🎉</a></h2>
-<p>Have you completed the available puzzles? We’re giving away free sticker packs to celebrate your achievement!</p>
-<p>To claim your free stickers:</p>
-<ol>
-<li>Fork the GitHub repository <a href="https://github.com/modular/mojo-gpu-puzzles">https://github.com/modular/mojo-gpu-puzzles</a></li>
-<li>Add your solutions to the available puzzles</li>
-<li>Submit your solutions through <a href="https://forms.gle/bchQpB3GanHMNY3x9">this form</a> and we’ll send you exclusive Modular stickers!</li>
-</ol>
-<p><em>Note: More puzzles are being added regularly - complete the currently available ones to claim your reward!</em></p>
+<h2 id="ready-to-get-started"><a class="header" href="#ready-to-get-started">Ready to get started?</a></h2>
+<p>Now that you understand why GPU programming matters, why Mojo is the right tool, and how puzzle-based learning works, you’re ready to begin your journey.</p>
+<p><strong>Next step</strong>: Head to <a href="howto.html">How to Use This Book</a> for setup instructions, system requirements, and guidance on running your first puzzle.</p>
+<p>Let’s start building your GPU programming skills! 🚀</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="how-to-use-this-book"><a class="header" href="#how-to-use-this-book">How to Use This Book</a></h2>
 <p>Each puzzle follows a consistent format designed to progressively build your skills:</p>
 <ul>
@@ -382,6 +394,8 @@ if thread_id &lt; data_size:
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
+<p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
 <h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
@@ -397,7 +411,17 @@ if thread_id &lt; data_size:
 <blockquote>
 <p><strong>Note</strong>: Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
 </blockquote>
-<h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
+<h3 id="programming-knowledge"><a class="header" href="#programming-knowledge">Programming knowledge</a></h3>
+<p>Basic knowledge of:</p>
+<ul>
+<li>Programming fundamentals (variables, loops, conditionals, functions)</li>
+<li>Parallel computing concepts (threads, synchronization, race conditions)</li>
+<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language basics parts and <a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
+<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU programming fundamentals</a> is helpful!</li>
+</ul>
+<p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
+<p>Let’s begin our journey into the exciting world of GPU computing with Mojo🔥!</p>
+<h2 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h2>
 <ol>
 <li>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</p>
@@ -408,14 +432,16 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
-<h4 id="hightly-recommended-option-1-pixi"><a class="header" href="#hightly-recommended-option-1-pixi"><strong>(Hightly recommended) Option 1</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+<h4 id="option-1-hightly-recommended-pixi"><a class="header" href="#option-1-hightly-recommended-pixi"><strong>Option 1 (Hightly recommended)</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
 <p><code>pixi</code> is the <strong>recommended option</strong> for this project because:</p>
 <ul>
 <li>Easy access to Modular’s MAX/Mojo packages</li>
 <li>Handles GPU dependencies</li>
 <li>Full conda + PyPI ecosystem support</li>
 </ul>
-<p><strong>Note: A few puzzles only work with <code>pixi</code>.</strong></p>
+<blockquote>
+<p><strong>Note: Some puzzles only work with <code>pixi</code></strong></p>
+</blockquote>
 <p><strong>Install:</strong></p>
 <pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
 </code></pre>
@@ -456,17 +482,92 @@ cd mojo-gpu-puzzles
 <li><code>pixi run p01</code> or</li>
 <li><code>uv run poe p01</code></li>
 </ul>
-<h3 id="knowledge-prerequisites"><a class="header" href="#knowledge-prerequisites">Knowledge prerequisites</a></h3>
-<p>Basic knowledge of:</p>
+<h2 id="gpu-support-matrix"><a class="header" href="#gpu-support-matrix">GPU support matrix</a></h2>
+<p>The following table shows GPU platform compatibility for each puzzle. Different puzzles require different GPU features and vendor-specific tools.</p>
+<div class="table-wrapper"><table><thead><tr><th>Puzzle</th><th>NVIDIA GPU</th><th>AMD GPU</th><th>Apple GPU</th><th>Notes</th></tr></thead><tbody>
+<tr><td><strong>Part I: GPU Fundamentals</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>1 - Map</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>2 - Zip</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>3 - Guard</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>4 - Map 2D</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>5 - Broadcast</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>6 - Blocks</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>7 - Shared Memory</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>8 - Stencil</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td><strong>Part II: Debugging</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>9 - GPU Debugger</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA-specific debugging tools</td></tr>
+<tr><td>10 - Sanitizer</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA-specific debugging tools</td></tr>
+<tr><td><strong>Part III: GPU Algorithms</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>11 - Reduction</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>12 - Scan</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>13 - Pool</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>14 - Conv</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>15 - Matmul</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
+<tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory patterns</td></tr>
+<tr><td><strong>Part IV: MAX Graph</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>18 - Softmax</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>19 - Attention</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td><strong>Part V: PyTorch Integration</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>20 - Torch Bridge</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td>21 - Autograd</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td>22 - Fusion</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
+<tr><td><strong>Part VI: Functional Patterns</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>23 - Functional</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced Mojo patterns</td></tr>
+<tr><td><strong>Part VII: Warp Programming</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>24 - Warp Sum</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td>25 - Warp Communication</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td>26 - Advanced Warp</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td><strong>Part VIII: Block Programming</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>❌</td><td>Block-level patterns</td></tr>
+<tr><td><strong>Part IX: Memory Systems</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory operations</td></tr>
+<tr><td>29 - Barriers</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced synchronization</td></tr>
+<tr><td><strong>Part X: Performance Analysis</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>30 - Profiling</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools (NSight)</td></tr>
+<tr><td>31 - Occupancy</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools</td></tr>
+<tr><td>32 - Bank Conflicts</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools</td></tr>
+<tr><td><strong>Part XI: Modern GPU Features</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>33 - Tensor Cores</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA Tensor Core specific</td></tr>
+<tr><td>34 - Cluster</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA cluster programming</td></tr>
+</tbody></table>
+</div>
+<h3 id="legend"><a class="header" href="#legend">Legend</a></h3>
 <ul>
-<li>Programming fundamentals (variables, loops, conditionals, functions)</li>
-<li>Parallel computing concepts (threads, synchronization, race conditions)</li>
-<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language basics parts and <a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
-<li><a href="https://docs.modular.com/mojo/manual/gpu/basics">A tour of GPU basics in Mojo</a> is helpful</li>
+<li>✅ <strong>Supported</strong>: Puzzle works on this platform</li>
+<li>❌ <strong>Not Supported</strong>: Puzzle requires platform-specific features</li>
 </ul>
-<p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
-<p>Let’s begin our journey into the exciting world of GPU computing with Mojo 🔥!</p>
-<h3 id="development"><a class="header" href="#development">Development</a></h3>
+<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform Notes</a></h3>
+<p><strong>NVIDIA GPUs (Complete Support)</strong></p>
+<ul>
+<li>All puzzles (1-34) work on NVIDIA GPUs with CUDA support</li>
+<li>Requires CUDA toolkit and compatible drivers</li>
+<li>Best learning experience with access to all features</li>
+</ul>
+<p><strong>AMD GPUs (Extensive Support)</strong></p>
+<ul>
+<li>Most puzzles (1-8, 11-29) work with ROCm support</li>
+<li>Missing only: Debugging tools (9-10), profiling (30-32), Tensor Cores (33-34)</li>
+<li>Excellent for learning GPU programming including advanced algorithms and memory patterns</li>
+</ul>
+<p><strong>Apple GPUs (Basic Support)</strong></p>
+<ul>
+<li>Only fundamental puzzles (1-8, 11-15) supported</li>
+<li>Missing: All advanced features, debugging, profiling tools</li>
+<li>Suitable for learning basic GPU programming patterns</li>
+</ul>
+<blockquote>
+<p><strong>Future Support</strong>: We’re actively working to expand tooling and platform support for AMD and Apple GPUs. Missing features like debugging tools, profiling capabilities, and advanced GPU operations are planned for future releases. Check back for updates as we continue to broaden cross-platform compatibility.</p>
+</blockquote>
+<h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
+<ul>
+<li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
+<li><strong>Comprehensive Learning</strong>: AMD GPUs excellent for most content (27 of 34 puzzles)</li>
+<li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
+<li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
+<li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>
+</ul>
+<h2 id="development"><a class="header" href="#development">Development</a></h2>
 <p>Please see details in the <a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>.</p>
 <h2 id="join-the-community"><a class="header" href="#join-the-community">Join the community</a></h2>
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
@@ -481,6 +582,15 @@ cd mojo-gpu-puzzles
   </a>
 </p>
 <p>Join our vibrant community to discuss GPU programming, share solutions, and get help!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="-claim-your-rewards"><a class="header" href="#-claim-your-rewards">🏆 Claim Your Rewards</a></h1>
+<p>Have you completed the available puzzles? We’re giving away free sticker packs to celebrate your achievement!</p>
+<p>To claim your free stickers:</p>
+<ol>
+<li>Fork the GitHub repository <a href="https://github.com/modular/mojo-gpu-puzzles">https://github.com/modular/mojo-gpu-puzzles</a></li>
+<li>Add your solutions to the available puzzles</li>
+<li>Submit your solutions through <a href="https://forms.gle/bchQpB3GanHMNY3x9">this form</a> and we’ll send you exclusive Modular stickers!</li>
+</ol>
+<p>Currently, we can ship stickers to addresses within <strong>North America</strong>. If you’re located elsewhere, please still submit your solutions – we’re working on expanding our shipping reach and would love to recognize your achievements when possible.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-1-map"><a class="header" href="#puzzle-1-map">Puzzle 1: Map</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>GPU programming is all about parallelism. In this puzzle, each thread will process a single element of the input array independently.
@@ -1103,7 +1213,7 @@ result = mma_op.mma_op(a_reg, b_reg, c_reg)
 <li>Implement efficient tiling strategies</li>
 <li>Leverage vectorized operations</li>
 <li>Utilize hardware accelerators</li>
-<li>Master memory access patterns</li>
+<li>Learn memory access patterns</li>
 </ul>
 <p>Each concept builds on the last, gradually taking you from basic tensor operations to advanced GPU programming. Ready to begin? Let’s start with the fundamentals!</p>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
@@ -6150,7 +6260,7 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <p>Mathematically, for a sequence \([x_0, x_1, …, x_n]\), the prefix sum produces:
 \[ [x_0, x_0+x_1, x_0+x_1+x_2, …, \sum_{i=0}^n x_i] \]</p>
 <p>While a sequential algorithm would need \(O(n)\) steps, our parallel approach will use a clever two-phase algorithm that completes in \(O(\log n)\) steps! Here’s a visualization of this process:</p>
-<p>This puzzle is split into two parts to help you master the concept:</p>
+<p>This puzzle is split into two parts to help you learn the concept:</p>
 <ul>
 <li>
 <p><a href="puzzle_14/./simple.html">Simple Version</a>
@@ -10779,7 +10889,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Learn fundamental kernel fusion techniques</li>
 <li>See the same operations implemented with different strategies</li>
 <li>Understand performance implications of fusion</li>
-<li>Master memory access patterns for optimal performance</li>
+<li>Learn memory access patterns for optimal performance</li>
 </ul>
 <h3 id="backward-pass-implementation"><a class="header" href="#backward-pass-implementation"><strong><a href="puzzle_22/./backward_pass.html">Backward pass implementation</a></strong></a></h3>
 <p>Deep dive into autograd integration and gradient computation.</p>
@@ -10818,7 +10928,7 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Eliminating intermediate memory allocations</li>
 </ul>
 <h2 id="key-concepts-33"><a class="header" href="#key-concepts-33">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Kernel fusion techniques</strong> for combining multiple operations</li>
 <li><strong>Memory bandwidth optimization</strong> through fused operations</li>
@@ -11319,10 +11429,17 @@ seq_idx = block_idx.y
 hidden_idx = thread_idx.x
 </code></pre>
 <ul>
-<li>Each thread block handles one sequence position in the batch</li>
-<li>Grid dimensions: <code>[batch_size, seq_len]</code></li>
-<li>Each thread processes one element in the hidden dimension</li>
-<li>Early return if indices are out of bounds:
+<li>
+<p>Each thread block handles one sequence position in the batch</p>
+</li>
+<li>
+<p>Grid dimensions: <code>[batch_size, seq_len]</code></p>
+</li>
+<li>
+<p>Each thread processes one element in the hidden dimension</p>
+</li>
+<li>
+<p>Early return if indices are out of bounds:</p>
 <pre><code class="language-mojo">if (batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or hidden_idx &gt;= hidden_dim):
     return
 </code></pre>
@@ -11341,10 +11458,17 @@ for h in range(hidden_dim):
     sq_sum += rebind[Scalar[dtype]](val * val)
 </code></pre>
 <ul>
-<li>Compute sum and squared sum in a single pass</li>
-<li>Use <code>@parameter</code> for compile-time loop unrolling</li>
-<li>Proper type casting with <code>rebind[Scalar[dtype]]</code></li>
-<li>Calculate mean and variance:
+<li>
+<p>Compute sum and squared sum in a single pass</p>
+</li>
+<li>
+<p>Use <code>@parameter</code> for compile-time loop unrolling</p>
+</li>
+<li>
+<p>Proper type casting with <code>rebind[Scalar[dtype]]</code></p>
+</li>
+<li>
+<p>Calculate mean and variance:</p>
 <pre><code class="language-mojo">mean_val = sum_val / hidden_dim
 var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
 inv_std = 1.0 / sqrt(var_val + 1e-5)
@@ -12414,7 +12538,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-23-gpu-functional-programming-patterns"><a class="header" href="#puzzle-23-gpu-functional-programming-patterns">Puzzle 23: GPU Functional Programming Patterns</a></h1>
 <h2 id="overview-42"><a class="header" href="#overview-42">Overview</a></h2>
-<p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
+<p>Welcome to <strong>Part V: Mojo Functional Patterns</strong>! This section introduces you to Mojo’s revolutionary approach to GPU programming through <strong>functional patterns</strong> that abstract away low-level complexity while delivering exceptional performance. You’ll learn the art of writing clean, efficient parallel code that scales across thousands of GPU threads.</p>
 <p><strong>What you’ll achieve:</strong> Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.</p>
 <p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
@@ -12439,7 +12563,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 </ul>
 <p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII</a></strong>.</p>
 <h3 id="four-fundamental-patterns"><a class="header" href="#four-fundamental-patterns"><strong>Four fundamental patterns</strong></a></h3>
-<p>Master the complete spectrum of GPU functional programming:</p>
+<p>Learn the complete spectrum of GPU functional programming:</p>
 <ol>
 <li><strong>Elementwise</strong>: Maximum parallelism with automatic SIMD vectorization</li>
 <li><strong>Tiled</strong>: Memory-efficient processing with cache optimization</li>
@@ -12474,7 +12598,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <h3 id="1-elementwise-operations"><a class="header" href="#1-elementwise-operations"><strong>1. Elementwise operations</strong></a></h3>
 <p><strong>→ <a href="puzzle_23/./elementwise.html">Elementwise - Basic GPU Functional Operations</a></strong></p>
 <p>Start with the foundation: automatic thread management and SIMD vectorization.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Functional GPU programming with <code>elementwise</code></li>
 <li>Automatic SIMD vectorization within GPU threads</li>
@@ -12487,7 +12611,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <h3 id="2-tiled-processing"><a class="header" href="#2-tiled-processing"><strong>2. Tiled processing</strong></a></h3>
 <p><strong>→ <a href="puzzle_23/./tile.html">Tile - Memory-Efficient Tiled Processing</a></strong></p>
 <p>Build on elementwise with memory-optimized tiling patterns.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Tile-based memory organization for cache optimization</li>
 <li>Sequential SIMD processing within tiles</li>
@@ -12498,7 +12622,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <h3 id="3-advanced-vectorization"><a class="header" href="#3-advanced-vectorization"><strong>3. Advanced vectorization</strong></a></h3>
 <p><strong>→ <a href="puzzle_23/./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
 <p>Explore manual control and automatic vectorization strategies.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Manual SIMD operations with explicit index management</li>
 <li>Mojo’s vectorize function for safe, automatic vectorization</li>
@@ -12513,7 +12637,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <h3 id="-4-threading-vs-simd-concepts"><a class="header" href="#-4-threading-vs-simd-concepts">🧠 <strong>4. Threading vs SIMD concepts</strong></a></h3>
 <p><strong>→ <a href="puzzle_23/./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
 <p>Understand the fundamental relationship between parallelism levels.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>GPU threading hierarchy and hardware mapping</li>
 <li>SIMD operations within GPU threads</li>
@@ -12524,7 +12648,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <h3 id="-5-performance-benchmarking-in-mojo"><a class="header" href="#-5-performance-benchmarking-in-mojo">📊 <strong>5. Performance benchmarking in Mojo</strong></a></h3>
 <p><strong>→ <a href="puzzle_23/./benchmarking.html">Benchmarking in Mojo</a></strong></p>
 <p>Learn to measure, analyze, and optimize GPU performance scientifically.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Mojo’s built-in benchmarking framework</li>
 <li>GPU-specific timing and synchronization challenges</li>
@@ -12541,7 +12665,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
 <h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
 <li><strong>Automatic SIMD vectorization</strong> within GPU threads</li>
@@ -12846,7 +12970,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 </div>
 </details>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
-<p>Once you’ve mastered elementwise operations, you’re ready for:</p>
+<p>Once you’ve learned elementwise operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_23/./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
 <li><strong><a href="puzzle_23/./vectorize.html">Vectorization</a></strong>: Fine-grained SIMD control</li>
@@ -12861,7 +12985,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>Implement the same vector addition operation using Mojo’s tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.</p>
 <p><strong>Key insight:</strong> <em>Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</em></p>
 <h2 id="key-concepts-36"><a class="header" href="#key-concepts-36">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Tile-based memory organization</strong> for cache optimization</li>
 <li><strong>Sequential SIMD processing</strong> within tiles</li>
@@ -13193,7 +13317,7 @@ Tiled:       Moderate parallelism, localized memory access
 <p>Both approaches build on tiling concepts but with different trade-offs between control, safety, and performance optimization.</p>
 <p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance requirements and complexity levels.</em></p>
 <h2 id="key-concepts-37"><a class="header" href="#key-concepts-37">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Manual SIMD operations</strong> with explicit index management</li>
 <li><strong>Mojo’s vectorize function</strong> for safe, automatic vectorization</li>
@@ -13806,7 +13930,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
 <h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
-<p>After mastering <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
+<p>After learning <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
 </blockquote>
@@ -14051,7 +14175,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Total cost optimization</strong>: Balance development time vs runtime performance</li>
 </ul>
 <h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next steps</a></h2>
-<p>With benchmarking mastery:</p>
+<p>With benchmarking skills:</p>
 <ul>
 <li><strong>Profile real applications</strong>: Apply these patterns to actual workloads</li>
 <li><strong>Advanced GPU patterns</strong>: Explore reductions, convolutions, and matrix operations</li>
@@ -14078,7 +14202,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <p><strong>Coming up next</strong>: <a href="puzzle_23/../puzzle_24/puzzle_24.html">Part VII: Warp-Level Programming</a> - starting with a dramatic reimplementation of Puzzle 14’s prefix sum.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
 <h2 id="overview-47"><a class="header" href="#overview-47">Overview</a></h2>
-<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll learn the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
 <p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
 <p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn-1"><a class="header" href="#what-youll-learn-1">What you’ll learn</a></h2>
@@ -14103,7 +14227,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
 <h3 id="warp-operations-available-in-mojo"><a class="header" href="#warp-operations-available-in-mojo"><strong>Warp operations available in Mojo</strong></a></h3>
-<p>Master the core warp primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core warp primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
 <li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
@@ -14152,7 +14276,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <h3 id="1-simt-execution-model"><a class="header" href="#1-simt-execution-model"><strong>1. SIMT execution model</strong></a></h3>
 <p><strong>→ <a href="puzzle_24/./warp_simt.html">Warp Lanes &amp; SIMT Execution</a></strong></p>
 <p>Understand the hardware foundation that makes warp operations possible.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Single Instruction, Multiple Thread (SIMT) execution model</li>
 <li>Warp divergence and convergence patterns</li>
@@ -14162,8 +14286,8 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <p><strong>Key insight:</strong> Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.</p>
 <h3 id="2-warp-sum-fundamentals"><a class="header" href="#2-warp-sum-fundamentals"><strong>2. Warp sum fundamentals</strong></a></h3>
 <p><strong>→ <a href="puzzle_24/./warp_sum.html">warp.sum() Essentials</a></strong></p>
-<p>Master the most important warp operation through dot product implementation.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn the most important warp operation through dot product implementation.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Replacing shared memory + barriers with <code>sum()</code></li>
 <li>Cross-GPU architecture compatibility (<code>WARP_SIZE</code>)</li>
@@ -14179,7 +14303,7 @@ if lane_id() == 0:
 <h3 id="3-when-to-use-warp-programming"><a class="header" href="#3-when-to-use-warp-programming"><strong>3. When to use warp programming</strong></a></h3>
 <p><strong>→ <a href="puzzle_24/./warp_extra.html">When to Use Warp Programming</a></strong></p>
 <p>Learn the decision framework for choosing warp operations over alternatives.</p>
-<p><strong>What you’ll master:</strong></p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Problem characteristics that favor warp operations</li>
 <li>Performance scaling patterns with warp count</li>
@@ -14187,7 +14311,7 @@ if lane_id() == 0:
 <li>Warp operation selection guidelines</li>
 </ul>
 <p><strong>Decision framework:</strong> When reduction operations become the bottleneck, warp primitives often provide the breakthrough.</p>
-<h2 id="key-concepts-to-master"><a class="header" href="#key-concepts-to-master">Key concepts to master</a></h2>
+<h2 id="key-concepts-to-learn"><a class="header" href="#key-concepts-to-learn">Key concepts to learn</a></h2>
 <h3 id="hardware-software-alignment"><a class="header" href="#hardware-software-alignment"><strong>Hardware-software alignment</strong></a></h3>
 <p>Understanding how Mojo’s warp operations map to GPU hardware:</p>
 <ul>
@@ -14519,7 +14643,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <p>Implement the dot product we saw in <a href="puzzle_24/../puzzle_12/puzzle_12.html">puzzle 12</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
 <h2 id="key-concepts-38"><a class="header" href="#key-concepts-38">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Warp-level reductions</strong> with <code>warp.sum()</code></li>
 <li><strong>SIMT execution model</strong> and lane synchronization</li>
@@ -15017,7 +15141,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 </ul>
 <p><strong>Note:</strong> Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, <code>WARP_SIZE</code>). The key insight is observing the relative performance trends rather than absolute timings.</p>
 <h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
-<p>Once you’ve mastered warp sum operations, you’re ready for:</p>
+<p>Once you’ve learned warp sum operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_24/./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
 <li><strong>Advanced warp operations</strong>: <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code> for complex communication patterns</li>
@@ -15140,7 +15264,7 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
-<p>Master the core communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core communication primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: Get value from lane at higher index (neighbor access)</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast"><code>broadcast(value)</code></a></strong>: Share lane 0’s value with all other lanes (one-to-many)</li>
@@ -15190,8 +15314,8 @@ else:
 <h2 id="learning-path-4"><a class="header" href="#learning-path-4">Learning path</a></h2>
 <h3 id="1-neighbor-communication-with-shuffle_down"><a class="header" href="#1-neighbor-communication-with-shuffle_down"><strong>1. Neighbor communication with shuffle_down</strong></a></h3>
 <p><strong>→ <a href="puzzle_25/./warp_shuffle_down.html">Warp Shuffle Down</a></strong></p>
-<p>Master neighbor-based communication patterns for stencil operations and finite differences.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn neighbor-based communication patterns for stencil operations and finite differences.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>shuffle_down()</code> for accessing adjacent lane data</li>
 <li>Implementing finite differences and moving averages</li>
@@ -15206,8 +15330,8 @@ if lane &lt; WARP_SIZE - 1:
 </code></pre>
 <h3 id="2-collective-coordination-with-broadcast"><a class="header" href="#2-collective-coordination-with-broadcast"><strong>2. Collective coordination with broadcast</strong></a></h3>
 <p><strong>→ <a href="puzzle_25/./warp_broadcast.html">Warp Broadcast</a></strong></p>
-<p>Master one-to-many communication patterns for block-level coordination and collective decision-making.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn one-to-many communication patterns for block-level coordination and collective decision-making.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>broadcast()</code> for sharing computed values across lanes</li>
 <li>Implementing block-level statistics and collective decisions</li>
@@ -15250,7 +15374,7 @@ result = use_shared_value(shared_value, local_data)
 <p>Ready to harness GPU warp-level communication? Start with neighbor-based shuffle operations to understand the foundation, then progress to collective broadcast patterns for advanced coordination.</p>
 <p>💡 <strong>Success tip</strong>: Think of warp communication as <strong>hardware-accelerated message passing</strong> between threads in the same warp. This mental model will guide you toward efficient communication patterns that leverage the GPU’s SIMT architecture.</p>
 <p><strong>Learning objective</strong>: By the end of Puzzle 25, you’ll recognize when warp communication can replace complex shared memory patterns, enabling you to write simpler, faster neighbor-based and coordination algorithms.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_25/./warp_shuffle_down.html">Warp Shuffle Down Operations</a></strong> to master neighbor communication, then advance to <strong><a href="puzzle_25/./warp_broadcast.html">Warp Broadcast Operations</a></strong> for collective coordination patterns!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_25/./warp_shuffle_down.html">Warp Shuffle Down Operations</a></strong> to learn neighbor communication, then advance to <strong><a href="puzzle_25/./warp_broadcast.html">Warp Broadcast Operations</a></strong> for collective coordination patterns!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpshuffle_down-one-to-one-communication"><a class="header" href="#warpshuffle_down-one-to-one-communication"><code>warp.shuffle_down()</code> One-to-One Communication</a></h1>
 <p>For warp-level neighbor communication we can use <code>shuffle_down()</code> to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down">shuffle_down()</a> operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations.</em></p>
@@ -15258,7 +15382,7 @@ result = use_shared_value(shared_value, local_data)
 <p><strong>What are stencil operations?</strong> <a href="https://en.wikipedia.org/wiki/Iterative_Stencil_Loops">Stencil</a> operations are computations where each output element depends on a fixed pattern of neighboring input elements. Common examples include finite differences (derivatives), convolutions, and moving averages. The “stencil” refers to the pattern of neighbor access - like a 3-point stencil that reads <code>[i-1, i, i+1]</code> or a 5-point stencil that reads <code>[i-2, i-1, i, i+1, i+2]</code>.</p>
 </blockquote>
 <h2 id="key-concepts-40"><a class="header" href="#key-concepts-40">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Warp-level data shuffling</strong> with <code>shuffle_down()</code></li>
 <li><strong>Neighbor access patterns</strong> for stencil computations</li>
@@ -15741,7 +15865,7 @@ if lane &lt; WARP_SIZE - offset:
 <p><strong>What are broadcast operations?</strong> Broadcast operations are communication patterns where one thread computes a value and shares it with all other threads in a group. This is essential for coordination tasks like computing block-level statistics, making collective decisions, or sharing configuration parameters across all threads in a warp.</p>
 </blockquote>
 <h2 id="key-concepts-41"><a class="header" href="#key-concepts-41">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Warp-level broadcasting</strong> with <code>broadcast()</code></li>
 <li><strong>One-to-many communication</strong> patterns</li>
@@ -16475,7 +16599,7 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 <li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
 </ul>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
-<p>Master the sophisticated communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the sophisticated communication primitives from <code>gpu.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: XOR-based butterfly communication for tree algorithms</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: Hardware-accelerated parallel scan operations</li>
@@ -16526,8 +16650,8 @@ output[global_i] = scan_result
 <h2 id="learning-path-5"><a class="header" href="#learning-path-5">Learning path</a></h2>
 <h3 id="1-butterfly-communication-with-shuffle_xor"><a class="header" href="#1-butterfly-communication-with-shuffle_xor"><strong>1. Butterfly communication with shuffle_xor</strong></a></h3>
 <p><strong>→ <a href="puzzle_26/./warp_shuffle_xor.html">Warp Shuffle XOR</a></strong></p>
-<p>Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>shuffle_xor()</code> for creating butterfly network topologies</li>
 <li>Implementing \(O(\log n)\) parallel reductions with tree communication</li>
@@ -16544,8 +16668,8 @@ while offset &gt; 0:
 </code></pre>
 <h3 id="2-hardware-accelerated-parallel-scan-with-prefix_sum"><a class="header" href="#2-hardware-accelerated-parallel-scan-with-prefix_sum"><strong>2. Hardware-accelerated parallel scan with prefix_sum</strong></a></h3>
 <p><strong>→ <a href="puzzle_26/./warp_prefix_sum.html">Warp Prefix Sum</a></strong></p>
-<p>Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
-<p><strong>What you’ll master:</strong></p>
+<p>Learn hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.</p>
+<p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Using <code>prefix_sum()</code> for hardware-accelerated cumulative operations</li>
 <li>Implementing stream compaction and parallel partitioning</li>
@@ -16594,7 +16718,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 <p>Ready to harness advanced GPU warp-level communication? Start with butterfly network operations to understand tree-based communication, then progress to hardware-accelerated parallel scan for optimal algorithm performance.</p>
 <p>💡 <strong>Success tip</strong>: Think of advanced warp operations as <strong>hardware-accelerated parallel algorithm building blocks</strong>. These primitives replace entire categories of complex shared memory algorithms with single, optimized function calls.</p>
 <p><strong>Learning objective</strong>: By the end of Puzzle 24, you’ll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.</p>
-<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_26/./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to master butterfly communication, then advance to <strong><a href="puzzle_26/./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
+<p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_26/./warp_shuffle_xor.html">Warp Shuffle XOR Operations</a></strong> to learn butterfly communication, then advance to <strong><a href="puzzle_26/./warp_prefix_sum.html">Warp Prefix Sum Operations</a></strong> for hardware-accelerated parallel scan patterns!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="warpshuffle_xor-butterfly-communication"><a class="header" href="#warpshuffle_xor-butterfly-communication"><code>warp.shuffle_xor()</code> Butterfly Communication</a></h1>
 <p>For warp-level butterfly communication we can use <code>shuffle_xor()</code> to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor">shuffle_xor()</a> operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \(O(\log n)\) complexity relative to warp size.</em></p>
@@ -16602,7 +16726,7 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 <p><strong>What are butterfly networks?</strong> <a href="https://en.wikipedia.org/wiki/Butterfly_network">Butterfly networks</a> are communication topologies where threads exchange data based on XOR patterns of their indices. The name comes from the visual pattern when drawn - connections that look like butterfly wings. These networks are fundamental to parallel algorithms like FFT, bitonic sort, and parallel reductions because they enable \(O(\log n)\) communication complexity.</p>
 </blockquote>
 <h2 id="key-concepts-43"><a class="header" href="#key-concepts-43">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>XOR-based communication patterns</strong> with <code>shuffle_xor()</code></li>
 <li><strong>Butterfly network topologies</strong> for parallel algorithms</li>
@@ -17249,7 +17373,7 @@ while offset &gt; 0:
 </div>
 </details>
 <h2 id="summary-4"><a class="header" href="#summary-4">Summary</a></h2>
-<p>The <code>shuffle_xor()</code> primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you’ve mastered:</p>
+<p>The <code>shuffle_xor()</code> primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you’ve learned:</p>
 <h3 id="core-butterfly-patterns"><a class="header" href="#core-butterfly-patterns"><strong>Core Butterfly Patterns</strong></a></h3>
 <ol>
 <li>
@@ -17315,7 +17439,7 @@ while offset &gt; 0:
 <p><strong>What is parallel scan?</strong> <a href="https://en.wikipedia.org/wiki/Prefix_sum">Parallel scan (prefix sum)</a> is a fundamental parallel primitive that computes cumulative operations across data elements. For addition, it transforms <code>[a, b, c, d]</code> into <code>[a, a+b, a+b+c, a+b+c+d]</code>. This operation is essential for parallel algorithms like stream compaction, quicksort partitioning, and parallel sorting.</p>
 </blockquote>
 <h2 id="key-concepts-44"><a class="header" href="#key-concepts-44">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Hardware-optimized parallel scan</strong> with <code>prefix_sum()</code></li>
 <li><strong>Inclusive vs exclusive prefix sum</strong> patterns</li>
@@ -17774,7 +17898,7 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot)
 </div>
 </details>
 <h2 id="summary-5"><a class="header" href="#summary-5">Summary</a></h2>
-<p>The <code>prefix_sum()</code> primitive enables hardware-accelerated parallel scan operations that replace complex multi-phase algorithms with single function calls. Through these two problems, you’ve mastered:</p>
+<p>The <code>prefix_sum()</code> primitive enables hardware-accelerated parallel scan operations that replace complex multi-phase algorithms with single function calls. Through these two problems, you’ve learned:</p>
 <h3 id="core-prefix-sum-patterns"><a class="header" href="#core-prefix-sum-patterns"><strong>Core Prefix Sum Patterns</strong></a></h3>
 <ol>
 <li>
@@ -19212,9 +19336,9 @@ Mean normalization is the perfect educational example of this fundamental patter
 <ol>
 <li><strong>Manual coordination</strong> (<a href="puzzle_27/../puzzle_12/layout_tensor.html">Puzzle 12</a>): Understand parallel fundamentals</li>
 <li><strong>Warp primitives</strong> (<a href="puzzle_27/../puzzle_24/warp_sum.html">Puzzle 24</a>): Learn hardware-accelerated patterns</li>
-<li><strong>Block reduction</strong> (<a href="puzzle_27/./block_sum.html"><code>block.sum()</code></a>): Master all→one communication</li>
-<li><strong>Block scan</strong> (<a href="puzzle_27/./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): Master all→each communication</li>
-<li><strong>Block broadcast</strong> (<code>block.broadcast()</code>): Master one→all communication</li>
+<li><strong>Block reduction</strong> (<a href="puzzle_27/./block_sum.html"><code>block.sum()</code></a>): Learn all→one communication</li>
+<li><strong>Block scan</strong> (<a href="puzzle_27/./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): Learn all→each communication</li>
+<li><strong>Block broadcast</strong> (<code>block.broadcast()</code>): Learn one→all communication</li>
 </ol>
 <p><strong>The complete picture:</strong> Block operations provide the fundamental communication building blocks for sophisticated parallel algorithms, replacing complex manual coordination with clean, composable primitives.</p>
 <h2 id="performance-insights-and-technical-analysis"><a class="header" href="#performance-insights-and-technical-analysis">Performance insights and technical analysis</a></h2>
@@ -19837,7 +19961,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <p><strong>Recommended approach:</strong></p>
 <ol>
 <li><strong>Start with <a href="puzzle_29/barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
-<li><strong>Progress to <a href="puzzle_29/memory_barrier.html">Memory Barriers</a></strong>: Master fine-grained synchronization control</li>
+<li><strong>Progress to <a href="puzzle_29/memory_barrier.html">Memory Barriers</a></strong>: Learn fine-grained synchronization control</li>
 <li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput applications</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
@@ -19848,7 +19972,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </ul>
 <p><strong>Learning outcomes:</strong>
 By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
-<p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> for advanced memory barrier mastery.</p>
+<p><strong>Ready to dive in?</strong> Start with <strong><a href="puzzle_29/barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="puzzle_29/memory_barrier.html">Double-Buffered Stencil Computation</a></strong> to explore advanced memory barrier techniques.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="multi-stage-pipeline-coordination-1"><a class="header" href="#multi-stage-pipeline-coordination-1">Multi-Stage Pipeline Coordination</a></h1>
 <h2 id="overview-52"><a class="header" href="#overview-52">Overview</a></h2>
 <p>Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.</p>
@@ -20636,7 +20760,7 @@ else:
 <p>GPU performance profiling transforms correct code into high-performance code through systematic analysis. This chapter explores professional profiling tools and detective methodologies used in production GPU development.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
-<li><strong>Master profiling tool selection</strong> and understand when to use NSight Systems vs NSight Compute</li>
+<li><strong>Learn profiling tool selection</strong> and understand when to use NSight Systems vs NSight Compute</li>
 <li><strong>Develop performance detective skills</strong> using real profiler output to identify bottlenecks</li>
 <li><strong>Discover counter-intuitive insights</strong> about GPU memory systems and caching behavior</li>
 <li><strong>Learn evidence-based optimization</strong> based on profiler data rather than assumptions</li>
@@ -20670,7 +20794,7 @@ else:
 <h2 id="puzzle-structure-1"><a class="header" href="#puzzle-structure-1">Puzzle structure</a></h2>
 <p>This chapter contains two interconnected components that build upon each other:</p>
 <h3 id="nvidia-profiling-basics-tutorial"><a class="header" href="#nvidia-profiling-basics-tutorial"><strong><a href="puzzle_30/nvidia_profiling_basics.html">NVIDIA Profiling Basics Tutorial</a></strong></a></h3>
-<p>Master the essential NVIDIA profiling ecosystem through hands-on examples with actual profiler output.</p>
+<p>Learn the essential NVIDIA profiling ecosystem through hands-on examples with actual profiler output.</p>
 <p><strong>You’ll learn:</strong></p>
 <ul>
 <li>NSight Systems for system-wide timeline analysis and bottleneck identification</li>
@@ -20684,7 +20808,7 @@ else:
 <h2 id="getting-started-8"><a class="header" href="#getting-started-8">Getting started</a></h2>
 <p><strong>Learning path:</strong></p>
 <ol>
-<li><strong><a href="puzzle_30/nvidia_profiling_basics.html">Profiling Basics Tutorial</a></strong> - Master NSight Systems and NSight Compute</li>
+<li><strong><a href="puzzle_30/nvidia_profiling_basics.html">Profiling Basics Tutorial</a></strong> - Learn NSight Systems and NSight Compute</li>
 <li><strong><a href="puzzle_30/profile_kernels.html">Cache Hit Paradox Detective Case</a></strong> - Apply skills to solve performance mysteries</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
@@ -21329,7 +21453,7 @@ fi
 <li><strong>Identify the performance culprit</strong> - Which kernel is catastrophically slow?</li>
 <li><strong>Uncover the cache paradox</strong> - Why do high cache hits indicate poor performance?</li>
 <li><strong>Decode memory access patterns</strong> - What makes identical operations behave so differently?</li>
-<li><strong>Master profiling methodology</strong> - Use NSight tools to gather evidence, not guesses</li>
+<li><strong>Learn profiling methodology</strong> - Use NSight tools to gather evidence, not guesses</li>
 </ol>
 <p><strong>Why this matters:</strong> This puzzle reveals a fundamental GPU performance principle that challenges CPU-based intuition. The skills you develop here apply to real-world GPU optimization where memory access patterns often matter more than algorithmic complexity.</p>
 <p><strong>The twist:</strong> We approach this <strong>without looking at the source code first</strong> - using only profiling tools as your guide, just like debugging production performance issues. After we obtained the profiling results, we look at the code for further analysis.</p>
@@ -22275,7 +22399,7 @@ Low occupancy (&lt;30%) + Good performance:
 <h2 id="puzzle-structure-2"><a class="header" href="#puzzle-structure-2">Puzzle structure</a></h2>
 <p>This puzzle contains two complementary sections that build your expertise progressively:</p>
 <h3 id="-understanding-shared-memory-banks"><a class="header" href="#-understanding-shared-memory-banks"><strong><a href="puzzle_32/./shared_memory_bank.html">📚 Understanding Shared Memory Banks</a></strong></a></h3>
-<p>Master the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.</p>
+<p>Learn the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.</p>
 <p><strong>You’ll learn:</strong></p>
 <ul>
 <li>How NVIDIA’s 32-bank architecture enables parallel access</li>

@@ -201,7 +201,7 @@
 <li>Eliminating intermediate memory allocations</li>
 </ul>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll master:</p>
+<p>In this puzzle, you’ll learn:</p>
 <ul>
 <li><strong>Kernel fusion techniques</strong> for combining multiple operations</li>
 <li><strong>Memory bandwidth optimization</strong> through fused operations</li>
@@ -702,10 +702,17 @@ seq_idx = block_idx.y
 hidden_idx = thread_idx.x
 </code></pre>
 <ul>
-<li>Each thread block handles one sequence position in the batch</li>
-<li>Grid dimensions: <code>[batch_size, seq_len]</code></li>
-<li>Each thread processes one element in the hidden dimension</li>
-<li>Early return if indices are out of bounds:
+<li>
+<p>Each thread block handles one sequence position in the batch</p>
+</li>
+<li>
+<p>Grid dimensions: <code>[batch_size, seq_len]</code></p>
+</li>
+<li>
+<p>Each thread processes one element in the hidden dimension</p>
+</li>
+<li>
+<p>Early return if indices are out of bounds:</p>
 <pre><code class="language-mojo">if (batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or hidden_idx &gt;= hidden_dim):
     return
 </code></pre>
@@ -724,10 +731,17 @@ for h in range(hidden_dim):
     sq_sum += rebind[Scalar[dtype]](val * val)
 </code></pre>
 <ul>
-<li>Compute sum and squared sum in a single pass</li>
-<li>Use <code>@parameter</code> for compile-time loop unrolling</li>
-<li>Proper type casting with <code>rebind[Scalar[dtype]]</code></li>
-<li>Calculate mean and variance:
+<li>
+<p>Compute sum and squared sum in a single pass</p>
+</li>
+<li>
+<p>Use <code>@parameter</code> for compile-time loop unrolling</p>
+</li>
+<li>
+<p>Proper type casting with <code>rebind[Scalar[dtype]]</code></p>
+</li>
+<li>
+<p>Calculate mean and variance:</p>
 <pre><code class="language-mojo">mean_val = sum_val / hidden_dim
 var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
 inv_std = 1.0 / sqrt(var_val + 1e-5)
