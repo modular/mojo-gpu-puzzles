@@ -71,7 +71,6 @@ p17 = [
 ]
 
 p18-package = "mojo package problems/p18/op -o problems/p18/op.mojopkg"
-# FIXME: currently broken for the uv path with the mojo dep changes but is ok with pixi through conda
 p18-test-kernels = { cmd = "mojo test problems/p18", deps = ["p18-package"] }
 p18 = { cmd = "python problems/p18/p18.py", deps = ["p18-package"] }
 
@@ -109,3 +108,6 @@ p32 = "mojo problems/p32/p32.mojo"
 p33 = "mojo problems/p33/p33.mojo"
 
 p34 = "mojo problems/p34/p34.mojo"
+
+# GPU specs
+gpu-specs = { cmd = "python scripts/gpu_specs.py" }

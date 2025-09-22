@@ -158,7 +158,9 @@ p34 = "mojo problems/p34/p34.mojo"
 
 # NVIDIA GPU information and profiling utilities
 gpu-info = { cmd = "nvidia-smi --query-gpu=name,compute_cap,memory.total,driver_version --format=csv", description = "Get basic GPU information" }
-gpu-specs = { cmd = "python3 scripts/gpu_specs.py", description = "Get complete GPU architectural specifications" }
+
+# GPU specs
+gpu-specs = { cmd = "python3 scripts/gpu_specs.py", description = "Get complete GPU architectural specifications (NVIDIA/AMD/Apple Silicon)" }
 
 # macOS
 check-macos = { cmd = "sw_vers -productVersion | awk -F. '{if($1<15) {print \"Error: macOS 15+ required, found \" $0; exit 1}}'", description = "Ensure macOS 15+" }
