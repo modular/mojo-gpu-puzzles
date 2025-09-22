@@ -11,6 +11,7 @@ You've just completed [Puzzle 33](../puzzle_33/puzzle_33.md) and implemented act
 Your profiling with (NVIDIA only) `ncu` revealed the brutal truth (if you need a refresher on profiling techniques, see [Puzzle 10's memory error detection](../puzzle_10/puzzle_10.md) and [Puzzle 30's GPU profiling](../puzzle_30/puzzle_30.md)):
 
 **Tensor Core version (the disappointment):**
+
 - **Duration**: ~13.9 ms
 - **Memory bound**: 72.5% DRAM throughput (should be compute-bound!)
 - **Poor occupancy**: 26.3% (wasted hardware)
@@ -19,6 +20,7 @@ Your profiling with (NVIDIA only) `ncu` revealed the brutal truth (if you need a
 - **Shared memory conflicts**: Bank conflicts destroying performance
 
 **Tiled version (the winner):**
+
 - **Duration**: ~1.62 ms (8.6x faster!)
 - **Compute bound**: 1.7% DRAM throughput (as expected)
 - **Excellent occupancy**: 66.7%
@@ -40,6 +42,7 @@ This is a common story in GPU optimization: **raw hardware capability ≠ actual
 **The challenge:** Transform your memory-bound, low-occupancy Tensor Core implementation into something that actually beats the simple tiled version.
 
 **What you need to beat:**
+
 - **Target duration**: < 1.62 ms
 - **Occupancy**: > 26.3% baseline
 - **DRAM pressure**: < 72.5% baseline

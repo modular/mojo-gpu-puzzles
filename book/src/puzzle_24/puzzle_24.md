@@ -2,7 +2,7 @@
 
 ## Overview
 
-Welcome to **Part VI: GPU Warp Programming**! This section introduces you to GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll master the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
+Welcome to **Part VI: GPU Warp Programming**! This section introduces you to GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll learn the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
 
 **What you'll achieve:** Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.
 
@@ -11,6 +11,7 @@ Welcome to **Part VI: GPU Warp Programming**! This section introduces you to GPU
 ## What you'll learn
 
 ### **GPU warp execution model**
+
 Understand the fundamental hardware unit of GPU parallelism:
 
 ```
@@ -27,13 +28,15 @@ GPU Block (e.g., 256 threads)
 ```
 
 **Hardware reality:**
+
 - **32 threads per warp** on NVIDIA GPUs (`WARP_SIZE=32`)
 - **32 or 64 threads per warp** on AMD GPUs (`WARP_SIZE=32 or 64`)
 - **Lockstep execution**: All threads in a warp execute the same instruction simultaneously
 - **Zero synchronization cost**: Warp operations happen instantly within each warp
 
 ### **Warp operations available in Mojo**
-Master the core warp primitives from `gpu.warp`:
+
+Learn the core warp primitives from `gpu.warp`:
 
 1. **`sum(value)`**: Sum all values across warp lanes
 2. **`shuffle_idx(value, lane)`**: Get value from specific lane
@@ -42,6 +45,7 @@ Master the core warp primitives from `gpu.warp`:
 5. **`lane_id()`**: Get current thread's lane number (0-31 or 0-63)
 
 ### **Performance transformation example**
+
 ```mojo
 # Complex pattern we have seen earlier (from p12.mojo):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
@@ -65,7 +69,9 @@ total = sum(partial_product)  # No barriers, no race conditions!
 ```
 
 ### **When warp operations excel**
+
 Learn the performance characteristics:
+
 ```
 Problem Scale         Traditional    Warp Operations
 Single warp (32)      Fast          Fastest (no barriers)
@@ -77,6 +83,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 ## Prerequisites
 
 Before diving into warp programming, ensure you're comfortable with:
+
 - **Part V functional patterns**: Elementwise, tiled, and vectorized approaches
 - **GPU thread hierarchy**: Understanding blocks, warps, and threads
 - **LayoutTensor operations**: Loading, storing, and tensor manipulation
@@ -85,11 +92,13 @@ Before diving into warp programming, ensure you're comfortable with:
 ## Learning path
 
 ### **1. SIMT execution model**
+
 **→ [Warp Lanes & SIMT Execution](./warp_simt.md)**
 
 Understand the hardware foundation that makes warp operations possible.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Single Instruction, Multiple Thread (SIMT) execution model
 - Warp divergence and convergence patterns
 - Lane synchronization within warps
@@ -98,17 +107,20 @@ Understand the hardware foundation that makes warp operations possible.
 **Key insight:** Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.
 
 ### **2. Warp sum fundamentals**
+
 **→ [warp.sum() Essentials](./warp_sum.md)**
 
-Master the most important warp operation through dot product implementation.
+Learn the most important warp operation through dot product implementation.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Replacing shared memory + barriers with `sum()`
 - Cross-GPU architecture compatibility (`WARP_SIZE`)
 - Kernel vs functional programming patterns with warps
 - Performance comparison with traditional approaches
 
 **Key pattern:**
+
 ```mojo
 partial_result = compute_per_lane_value()
 total = sum(partial_result)  # Magic happens here!
@@ -117,11 +129,13 @@ if lane_id() == 0:
 ```
 
 ### **3. When to use warp programming**
+
 **→ [When to Use Warp Programming](./warp_extra.md)**
 
 Learn the decision framework for choosing warp operations over alternatives.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Problem characteristics that favor warp operations
 - Performance scaling patterns with warp count
 - Memory bandwidth vs computation trade-offs
@@ -129,22 +143,28 @@ Learn the decision framework for choosing warp operations over alternatives.
 
 **Decision framework:** When reduction operations become the bottleneck, warp primitives often provide the breakthrough.
 
-## Key concepts to master
+## Key concepts to learn
 
 ### **Hardware-software alignment**
+
 Understanding how Mojo's warp operations map to GPU hardware:
+
 - **SIMT execution**: All lanes execute same instruction simultaneously
 - **Built-in synchronization**: No explicit barriers needed within warps
 - **Cross-architecture support**: `WARP_SIZE` handles NVIDIA vs AMD differences
 
 ### **Pattern transformation**
+
 Converting complex parallel patterns to warp primitives:
+
 - **Tree reduction** → `sum()`
 - **Prefix computation** → `prefix_sum()`
 - **Data shuffling** → `shuffle_idx()`, `shuffle_down()`
 
 ### **Performance characteristics**
+
 Recognizing when warp operations provide advantages:
+
 - **Small to medium problems**: Eliminates barrier overhead
 - **Large problems**: Reduces memory traffic and improves cache utilization
 - **Regular patterns**: Warp operations excel with predictable access patterns

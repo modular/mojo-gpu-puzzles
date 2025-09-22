@@ -2,7 +2,7 @@
 
 ## Overview
 
-Welcome to **Part V: Mojo Functional Patterns**! This section introduces you to Mojo's revolutionary approach to GPU programming through **functional patterns** that abstract away low-level complexity while delivering exceptional performance. You'll master the art of writing clean, efficient parallel code that scales across thousands of GPU threads.
+Welcome to **Part V: Mojo Functional Patterns**! This section introduces you to Mojo's revolutionary approach to GPU programming through **functional patterns** that abstract away low-level complexity while delivering exceptional performance. You'll learn the art of writing clean, efficient parallel code that scales across thousands of GPU threads.
 
 **What you'll achieve:** Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.
 
@@ -11,6 +11,7 @@ Welcome to **Part V: Mojo Functional Patterns**! This section introduces you to 
 ## What you'll learn
 
 ### **GPU execution hierarchy**
+
 Understand the fundamental relationship between GPU threads and SIMD operations:
 
 ```
@@ -26,6 +27,7 @@ GPU Device
 ```
 
 **What Mojo abstracts for you:**
+
 - Grid/Block configuration automatically calculated
 - Warp management handled transparently
 - Thread scheduling optimized automatically
@@ -34,7 +36,8 @@ GPU Device
 💡 **Note**: While this Part focuses on functional patterns, **warp-level programming** and advanced GPU memory management will be covered in detail in **[Part VII](../puzzle_24/puzzle_24.md)**.
 
 ### **Four fundamental patterns**
-Master the complete spectrum of GPU functional programming:
+
+Learn the complete spectrum of GPU functional programming:
 
 1. **Elementwise**: Maximum parallelism with automatic SIMD vectorization
 2. **Tiled**: Memory-efficient processing with cache optimization
@@ -42,6 +45,7 @@ Master the complete spectrum of GPU functional programming:
 4. **Mojo vectorize**: Safe, automatic vectorization with bounds checking
 
 ### **Performance patterns you'll recognize**
+
 ```
 Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
 
@@ -52,7 +56,9 @@ Mojo vectorize:  32 threads  × 8 SIMD ops  = Automatic safety
 ```
 
 ### 📊 **Real performance insights**
+
 Learn to interpret empirical benchmark results:
+
 ```
 Benchmark Results (SIZE=1,048,576):
 elementwise:        11.34ms  ← Maximum parallelism wins at scale
@@ -64,6 +70,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 ## Prerequisites
 
 Before diving into functional patterns, ensure you're comfortable with:
+
 - **Basic GPU concepts**: Memory hierarchy, thread execution, SIMD operations
 - **Mojo fundamentals**: Parameter functions, compile-time specialization, capturing semantics
 - **LayoutTensor operations**: Loading, storing, and tensor manipulation
@@ -72,27 +79,32 @@ Before diving into functional patterns, ensure you're comfortable with:
 ## Learning path
 
 ### **1. Elementwise operations**
+
 **→ [Elementwise - Basic GPU Functional Operations](./elementwise.md)**
 
 Start with the foundation: automatic thread management and SIMD vectorization.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Functional GPU programming with `elementwise`
 - Automatic SIMD vectorization within GPU threads
 - LayoutTensor operations for safe memory access
 - Capturing semantics in nested functions
 
 **Key pattern:**
+
 ```mojo
 elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 ```
 
 ### **2. Tiled processing**
+
 **→ [Tile - Memory-Efficient Tiled Processing](./tile.md)**
 
 Build on elementwise with memory-optimized tiling patterns.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Tile-based memory organization for cache optimization
 - Sequential SIMD processing within tiles
 - Memory locality principles and cache-friendly access patterns
@@ -101,26 +113,31 @@ Build on elementwise with memory-optimized tiling patterns.
 **Key insight:** Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.
 
 ### **3. Advanced vectorization**
+
 **→ [Vectorization - Fine-Grained SIMD Control](./vectorize.md)**
 
 Explore manual control and automatic vectorization strategies.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Manual SIMD operations with explicit index management
 - Mojo's vectorize function for safe, automatic vectorization
 - Chunk-based memory organization for optimal SIMD alignment
 - Performance trade-offs between manual control and safety
 
 **Two approaches:**
+
 - **Manual**: Direct control, maximum performance, complex indexing
 - **Mojo vectorize**: Automatic optimization, built-in safety, clean code
 
 ### 🧠 **4. Threading vs SIMD concepts**
+
 **→ [GPU Threading vs SIMD - Understanding the Execution Hierarchy](./gpu-thread-vs-simd.md)**
 
 Understand the fundamental relationship between parallelism levels.
 
-**What you'll master:**
+**What you'll learn:**
+
 - GPU threading hierarchy and hardware mapping
 - SIMD operations within GPU threads
 - Pattern comparison and thread-to-work mapping
@@ -134,7 +151,8 @@ Understand the fundamental relationship between parallelism levels.
 
 Learn to measure, analyze, and optimize GPU performance scientifically.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Mojo's built-in benchmarking framework
 - GPU-specific timing and synchronization challenges
 - Parameterized benchmark functions with compile-time specialization

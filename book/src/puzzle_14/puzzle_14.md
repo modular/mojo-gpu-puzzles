@@ -1,6 +1,7 @@
 # Puzzle 14: Prefix Sum
 
 ## Overview
+
 Prefix sum (also known as _scan_) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!
 
 Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
@@ -12,6 +13,7 @@ Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and store
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Parallel algorithms with logarithmic complexity
 - Shared memory coordination patterns
 - Multi-phase computation strategies
@@ -19,6 +21,7 @@ In this puzzle, you'll learn about:
 The key insight is understanding how to transform a sequential operation into an efficient parallel algorithm using shared memory.
 
 For example, given an input sequence \\([3, 1, 4, 1, 5, 9]\\), the prefix sum would produce:
+
 - \\([3]\\) (just the first element)
 - \\([3, 4]\\) (3 + 1)
 - \\([3, 4, 8]\\) (previous sum + 4)
@@ -31,7 +34,7 @@ Mathematically, for a sequence \\([x_0, x_1, ..., x_n]\\), the prefix sum produc
 
 While a sequential algorithm would need \\(O(n)\\) steps, our parallel approach will use a clever two-phase algorithm that completes in \\(O(\log n)\\) steps! Here's a visualization of this process:
 
-This puzzle is split into two parts to help you master the concept:
+This puzzle is split into two parts to help you learn the concept:
 
 - [Simple Version](./simple.md)
   Start with a single block implementation where all data fits in shared memory. This helps understand the core parallel algorithm.

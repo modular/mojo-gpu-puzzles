@@ -8,6 +8,7 @@ In this puzzle, we explore the performance benefits of kernel fusion by implemen
 2. **Fused kernel**: Combines LayerNorm and Linear operations into a single GPU kernel
 
 This comparison demonstrates how kernel fusion can significantly improve performance by:
+
 - Reducing memory bandwidth usage
 - Minimizing kernel launch overhead
 - Improving cache utilization
@@ -15,7 +16,8 @@ This comparison demonstrates how kernel fusion can significantly improve perform
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **Kernel fusion techniques** for combining multiple operations
 - **Memory bandwidth optimization** through fused operations
 - **Performance benchmarking** of different kernel implementations
@@ -127,6 +129,7 @@ LayerNorm performs several crucial functions in deep neural networks:
 The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:
 
 #### Matrix multiplication kernel
+
 From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:
 
 ```mojo
@@ -134,6 +137,7 @@ From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix multiplic
 ```
 
 #### Transpose kernel
+
 For efficient memory access patterns, we use a transpose kernel with shared memory tiling:
 
 ```mojo
@@ -141,6 +145,7 @@ For efficient memory access patterns, we use a transpose kernel with shared memo
 ```
 
 #### Bias addition kernel
+
 A simple elementwise addition kernel for adding the bias term:
 
 ```mojo
@@ -150,6 +155,7 @@ A simple elementwise addition kernel for adding the bias term:
 #### LayerNorm kernel
 
 Now complete this kernel to implement the LayerNorm operation. You'll need to:
+
 1. Compute mean \\(\mu\\) and variance \\(\sigma^2\\) for each sequence position
 2. Normalize the input using these statistics
 3. Apply the scale \\(\gamma\\) and shift \\(\beta\\) parameters
@@ -159,11 +165,13 @@ Now complete this kernel to implement the LayerNorm operation. You'll need to:
 ```
 
 **Implementation steps:**
+
 1. First, compute mean and variance using parallel reduction
 2. Then normalize the input using these statistics
 3. Finally, apply the scale and shift parameters
 
 **Characteristics of unfused approach:**
+
 - Multiple kernel launches (LayerNorm → MatMul → Bias)
 - Intermediate tensor allocations between operations
 - More memory bandwidth usage due to separate passes
@@ -194,6 +202,7 @@ Now complete this kernel to implement the LayerNorm operation. You'll need to:
    - Compute mean and variance in a single pass
    - Reuse computed statistics for all elements in sequence
    - Avoid unnecessary memory barriers
+
 </div>
 </details>
 
@@ -223,6 +232,7 @@ pixi run p22 --unfused
 </div>
 
 Your output will look like this:
+
 ```txt
 Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
 ✅ Loaded Mojo operations library
@@ -285,21 +295,25 @@ UNFUSED Algorithm Test Completed!
 The unfused implementation follows a straightforward approach where each thread handles one element of the output tensor. Let's break down the key components:
 
 1. **Thread and Block Organization**:
+
    ```mojo
    batch_idx = block_idx.x
    seq_idx = block_idx.y
    hidden_idx = thread_idx.x
    ```
+
    - Each thread block handles one sequence position in the batch
    - Grid dimensions: `[batch_size, seq_len]`
    - Each thread processes one element in the hidden dimension
    - Early return if indices are out of bounds:
+
      ```mojo
      if (batch_idx >= batch_size or seq_idx >= seq_len or hidden_idx >= hidden_dim):
          return
      ```
 
 2. **Statistics Computation**:
+
    ```mojo
    var sum_val: Scalar[dtype] = 0
    var sq_sum: Scalar[dtype] = 0
@@ -310,10 +324,12 @@ The unfused implementation follows a straightforward approach where each thread 
        sum_val += rebind[Scalar[dtype]](val)
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
+
    - Compute sum and squared sum in a single pass
    - Use `@parameter` for compile-time loop unrolling
    - Proper type casting with `rebind[Scalar[dtype]]`
    - Calculate mean and variance:
+
      ```mojo
      mean_val = sum_val / hidden_dim
      var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
@@ -321,6 +337,7 @@ The unfused implementation follows a straightforward approach where each thread 
      ```
 
 3. **Normalization and Scaling**:
+
    ```mojo
    input_val = input[batch_idx, seq_idx, hidden_idx]
    normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
@@ -328,6 +345,7 @@ The unfused implementation follows a straightforward approach where each thread 
    ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
    output[batch_idx, seq_idx, hidden_idx] = normalized
    ```
+
    - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
    - Scale with learnable parameter `γ` (ln_weight)
    - Add learnable bias `β` (ln_bias)
@@ -368,10 +386,12 @@ The unfused implementation follows a straightforward approach where each thread 
      - Multiple kernel launches required
 
 This implementation is correct but not optimal for performance, as shown in the benchmark results where it's slightly slower than the CPU version. The fused implementation will address these performance limitations by:
+
 - Computing statistics once per sequence
 - Reusing normalized values
 - Reducing memory traffic
 - Eliminating intermediate tensor allocations
+
 </div>
 </details>
 
@@ -384,6 +404,7 @@ The fused kernel combines LayerNorm and Linear operations into a single GPU kern
 ```
 
 **Key optimizations:**
+
 - Single kernel launch instead of two
 - Shared memory for intermediate results
 - Coalesced memory access patterns
@@ -414,6 +435,7 @@ The fused kernel combines LayerNorm and Linear operations into a single GPU kern
    - Avoid redundant computation of statistics
    - Minimize memory traffic by fusing operations
    - Use proper type casting with `rebind[Scalar[dtype]]`
+
 </div>
 </details>
 
@@ -443,6 +465,7 @@ pixi run p22 --fused
 </div>
 
 Your output will look like this:
+
 ```txt
 Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
 ✅ Loaded Mojo operations library

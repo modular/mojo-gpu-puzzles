@@ -1,10 +1,13 @@
 # Summary
 
 # Getting Started
+
 - [🔥 Introduction](./introduction.md)
 - [🧭 Puzzles Usage Guide](./howto.md)
+- [🏆 Claim Your Rewards](./reward.md)
 
 # Part I: GPU Fundamentals
+
 - [Puzzle 1: Map](./puzzle_01/puzzle_01.md)
   - [🔰 Raw Memory Approach](./puzzle_01/raw.md)
   - [💡 Preview: Modern Approach with LayoutTensor](./puzzle_01/layout_tensor_preview.md)
@@ -26,6 +29,7 @@
   - [📐 LayoutTensor Version](./puzzle_08/layout_tensor.md)
 
 # Part II: 🐞 Debugging GPU Programs
+
 - [Puzzle 9: GPU Debugging Workflow](./puzzle_09/puzzle_09.md)
   - [📚 Mojo GPU Debugging Essentials](./puzzle_09/essentials.md)
   - [🧐 Detective Work: First Case](./puzzle_09/first_case.md)
@@ -36,6 +40,7 @@
   - [🏁 Debug Race Condition](./puzzle_10/racecheck.md)
 
 # Part III: 🧮 GPU Algorithms
+
 - [Puzzle 11: Pooling](./puzzle_11/puzzle_11.md)
   - [🔰 Raw Memory Approach](./puzzle_11/raw.md)
   - [📐 LayoutTensor Version](./puzzle_11/layout_tensor.md)
@@ -50,18 +55,20 @@
   - [⭐ Complete Version](./puzzle_14/complete.md)
 - [Puzzle 15: Axis Sum](./puzzle_15/puzzle_15.md)
 - [Puzzle 16: Matrix Multiplication (MatMul)](./puzzle_16/puzzle_16.md)
-    - [🔰 Naïve Version with Global Memory](./puzzle_16/naïve.md)
-    - [📚 Learn about Roofline Model](./puzzle_16/roofline.md)
-    - [🤝 Shared Memory Version](./puzzle_16/shared_memory.md)
-    - [📐 Tiled Version](./puzzle_16/tiled.md)
+  - [🔰 Naïve Version with Global Memory](./puzzle_16/naïve.md)
+  - [📚 Learn about Roofline Model](./puzzle_16/roofline.md)
+  - [🤝 Shared Memory Version](./puzzle_16/shared_memory.md)
+  - [📐 Tiled Version](./puzzle_16/tiled.md)
 
 # Part IV: 🐍 Interfacing with Python via MAX Graph Custom Ops
+
 - [Puzzle 17: 1D Convolution Op](./puzzle_17/puzzle_17.md)
 - [Puzzle 18: Softmax Op](./puzzle_18/puzzle_18.md)
 - [Puzzle 19: Attention Op](./puzzle_19/puzzle_19.md)
 - [🎯 Bonus Challenges](./bonuses/part4.md)
 
 # Part V: 🔥 PyTorch Custom Ops Integration
+
 - [Puzzle 20: 1D Convolution Op](./puzzle_20/puzzle_20.md)
 - [Puzzle 21: Embedding Op](./puzzle_21/puzzle_21.md)
   - [🔰 Coaleasced vs non-Coaleasced Kernel](./puzzle_21/simple_embedding_kernel.md)
@@ -71,6 +78,7 @@
   - [⛓️ Autograd Integration & Backward Pass](./puzzle_22/backward_pass.md)
 
 # Part VI: 🌊 Mojo Functional Patterns and Benchmarking
+
 - [Puzzle 23: GPU Functional Programming Patterns](./puzzle_23/puzzle_23.md)
   - [elementwise - Basic GPU Functional Operations](./puzzle_23/elementwise.md)
   - [tile - Memory-Efficient Tiled Processing](./puzzle_23/tile.md)
@@ -79,6 +87,7 @@
   - [📊 Benchmarking in Mojo](./puzzle_23/benchmarking.md)
 
 # Part VII: ⚡ Warp-Level Programming
+
 - [Puzzle 24: Warp Fundamentals](./puzzle_24/puzzle_24.md)
   - [🧠 Warp lanes & SIMT execution](./puzzle_24/warp_simt.md)
   - [🔰 warp.sum() Essentials](./puzzle_24/warp_sum.md)
@@ -91,18 +100,21 @@
   - [🔢 warp.prefix_sum() Scan Operations](./puzzle_26/warp_prefix_sum.md)
 
 # Part VIII: 🧱 Block-Level Programming
+
 - [Puzzle 27: Block-Wide Patterns](./puzzle_27/puzzle_27.md)
   - [🔰 block.sum() Essentials](./puzzle_27/block_sum.md)
   - [📈 block.prefix_sum() Parallel Histogram Binning](./puzzle_27/block_prefix_sum.md)
   - [📡 block.broadcast() Vector Normalization](./puzzle_27/block_broadcast.md)
 
 # Part IX: 🧠 Advanced Memory Systems
+
 - [Puzzle 28: Async Memory Operations & Copy Overlap](./puzzle_28/puzzle_28.md)
 - [Puzzle 29: GPU Synchronization Primitives](./puzzle_29/puzzle_29.md)
   - [📶 Multi-Stage Pipeline Coordination](./puzzle_29/barrier.md)
   - [Double-Buffered Stencil Computation](./puzzle_29/memory_barrier.md)
 
 # Part X: 📊 Performance Analysis & Optimization
+
 - [Puzzle 30: GPU Profiling](./puzzle_30/puzzle_30.md)
   - [📚 NVIDIA Profiling Basics](./puzzle_30/nvidia_profiling_basics.md)
   - [🕵 The Cache Hit Paradox](./puzzle_30/profile_kernels.md)
@@ -112,6 +124,7 @@
   - [Conflict-Free Patterns](./puzzle_32/conflict_free_patterns.md)
 
 # Part XI: 🚀 Advanced GPU Features
+
 - [Puzzle 33: Tensor Core Operations](./puzzle_33/puzzle_33.md)
   - [🎯 Performance Bonus Challenge](./bonuses/part5.md)
 - [Puzzle 34: GPU Cluster Programming (SM90+)](./puzzle_34/puzzle_34.md)

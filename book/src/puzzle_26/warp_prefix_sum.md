@@ -8,7 +8,8 @@ For warp-level parallel scan operations we can use `prefix_sum()` to replace com
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **Hardware-optimized parallel scan** with `prefix_sum()`
 - **Inclusive vs exclusive prefix sum** patterns
 - **Warp-level stream compaction** for data reorganization
@@ -36,6 +37,7 @@ Traditional prefix sum requires complex multi-phase shared memory algorithms. In
 ```
 
 **Problems with traditional approach:**
+
 - **Memory overhead**: Requires shared memory allocation
 - **Multiple barriers**: Complex multi-phase synchronization
 - **Complex indexing**: Manual stride calculation and boundary checking
@@ -51,6 +53,7 @@ output[global_i] = scan_result
 ```
 
 **Benefits of prefix_sum:**
+
 - **Zero memory overhead**: Hardware-accelerated computation
 - **No synchronization**: Single atomic operation
 - **Hardware optimized**: Leverages specialized scan units
@@ -81,6 +84,7 @@ This transforms input data `[1, 2, 3, 4, 5, ...]` into cumulative sums `[1, 3, 6
 The `prefix_sum()` function has an important template parameter that controls the scan type.
 
 **Key questions:**
+
 - What's the difference between inclusive and exclusive prefix sum?
 - Which parameter controls this behavior?
 - For inclusive scan, what should each lane output?
@@ -92,6 +96,7 @@ The `prefix_sum()` function has an important template parameter that controls th
 This hardware primitive only works within a single warp. Consider the implications.
 
 **Think about:**
+
 - What happens if you have multiple warps?
 - Why is this limitation important to understand?
 - How would you extend this to multi-warp scenarios?
@@ -101,6 +106,7 @@ This hardware primitive only works within a single warp. Consider the implicatio
 The `prefix_sum` function may require specific data types for optimal performance.
 
 **Consider:**
+
 - What data type does your input use?
 - Does `prefix_sum` expect a specific scalar type?
 - How do you handle type conversions if needed?
@@ -131,6 +137,7 @@ pixi run p26 --prefix-sum
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE:  32
@@ -153,6 +160,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 This solution demonstrates how `prefix_sum()` replaces complex multi-phase algorithms with a single hardware-optimized function call.
 
 **Algorithm breakdown:**
+
 ```mojo
 if global_i < size:
     current_val = input[global_i]
@@ -167,6 +175,7 @@ if global_i < size:
 ```
 
 **SIMT execution deep dive:**
+
 ```
 Input: [1, 2, 3, 4, 5, 6, 7, 8, ...]
 
@@ -198,6 +207,7 @@ Cycle 3: Store results
 \\[\\Large \\text{output}[i] = \\sum_{j=0}^{i} \\text{input}[j]\\]
 
 **Comparison with Puzzle 14's approach:**
+
 - **[Puzzle 14](../puzzle_14/puzzle_14.md)**: ~30 lines of shared memory + multiple barriers + complex indexing
 - **Warp primitive**: 1 function call with hardware acceleration
 - **Performance**: Same \\(O(\\log n)\\) complexity, but implemented in specialized hardware
@@ -206,12 +216,14 @@ Cycle 3: Store results
 **Evolution from Puzzle 12:** This demonstrates the power of modern GPU architectures - what required careful manual implementation in Puzzle 12 is now a single hardware-accelerated primitive. The warp-level `prefix_sum()` gives you the same algorithmic benefits with zero implementation complexity.
 
 **Why prefix_sum is superior:**
+
 1. **Hardware acceleration**: Dedicated scan units on modern GPUs
 2. **Zero memory overhead**: No shared memory allocation required
 3. **Automatic synchronization**: No explicit barriers needed
 4. **Perfect scaling**: Works optimally for any `WARP_SIZE`
 
 **Performance characteristics:**
+
 - **Latency**: ~1-2 cycles (hardware scan units)
 - **Bandwidth**: Zero memory traffic (register-only operation)
 - **Parallelism**: All `WARP_SIZE` lanes participate simultaneously
@@ -238,6 +250,7 @@ Implement single-warp parallel partitioning using BOTH `shuffle_xor` AND `prefix
 \\[\\Large \\text{output} = [\\text{elements} < \\text{pivot}] \\,|\\, [\\text{elements} \\geq \\text{pivot}]\\]
 
 **Advanced algorithm:** This combines two sophisticated warp primitives:
+
 1. **`shuffle_xor()`**: Butterfly pattern for warp-level reduction (count left elements)
 2. **`prefix_sum()`**: Exclusive scan for position calculation within partitions
 
@@ -257,6 +270,7 @@ This demonstrates the power of combining multiple warp primitives for complex pa
 This algorithm requires several coordinated phases. Think about the logical steps needed for partitioning.
 
 **Key phases to consider:**
+
 - How do you identify which elements belong to which partition?
 - How do you calculate positions within each partition?
 - How do you determine the total size of the left partition?
@@ -267,6 +281,7 @@ This algorithm requires several coordinated phases. Think about the logical step
 You need to create boolean predicates to identify partition membership.
 
 **Think about:**
+
 - How do you represent "this element belongs to the left partition"?
 - How do you represent "this element belongs to the right partition"?
 - What data type should you use for predicates that work with `prefix_sum`?
@@ -276,6 +291,7 @@ You need to create boolean predicates to identify partition membership.
 This algorithm uses both warp primitives for different purposes.
 
 **Consider:**
+
 - What is `shuffle_xor` used for in this context?
 - What is `prefix_sum` used for in this context?
 - How do these two operations work together?
@@ -285,6 +301,7 @@ This algorithm uses both warp primitives for different purposes.
 The trickiest part is calculating where each element should be written in the output.
 
 **Key insights:**
+
 - Left partition elements: What determines their final position?
 - Right partition elements: How do you offset them correctly?
 - How do you combine local positions with partition boundaries?
@@ -315,6 +332,7 @@ pixi run p26 --partition
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE:  32
@@ -338,6 +356,7 @@ pivot: 5.0
 This solution demonstrates advanced coordination between multiple warp primitives to implement sophisticated parallel algorithms.
 
 **Complete algorithm analysis:**
+
 ```mojo
 if global_i < size:
     current_val = input[global_i]
@@ -369,6 +388,7 @@ if global_i < size:
 ```
 
 **Multi-phase execution trace (8-lane example, pivot=5, values [3,7,1,8,2,9,4,6]):**
+
 ```
 Initial state:
   Lane 0: current_val=3 (< 5)  Lane 1: current_val=7 (>= 5)
@@ -419,12 +439,14 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot)
 \\end{align}\\]
 
 **Why this multi-primitive approach works:**
+
 1. **Predicate creation**: Identifies partition membership for each element
 2. **Exclusive prefix sum**: Calculates relative positions within each partition
 3. **Butterfly reduction**: Computes partition boundary (total left count)
 4. **Coordinated write**: Combines local positions with global partition structure
 
 **Algorithm complexity:**
+
 - **Phase 1**: \\(O(1)\\) - Predicate creation
 - **Phase 2**: \\(O(\\log n)\\) - Hardware-accelerated prefix sum
 - **Phase 3**: \\(O(\\log n)\\) - Butterfly reduction with `shuffle_xor`
@@ -432,12 +454,14 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot)
 - **Total**: \\(O(\\log n)\\) with excellent constants
 
 **Performance characteristics:**
+
 - **Communication steps**: \\(2 \\times \\log_2(\\text{WARP\_SIZE})\\) (prefix sum + butterfly reduction)
 - **Memory efficiency**: Zero shared memory, all register-based
 - **Parallelism**: All lanes active throughout algorithm
 - **Scalability**: Works for any `WARP_SIZE` (32, 64, etc.)
 
 **Practical applications:** This pattern is fundamental to:
+
 - **Quicksort partitioning**: Core step in parallel sorting algorithms
 - **Stream compaction**: Removing null/invalid elements from data streams
 - **Parallel filtering**: Separating data based on complex predicates
@@ -448,7 +472,7 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot)
 
 ## Summary
 
-The `prefix_sum()` primitive enables hardware-accelerated parallel scan operations that replace complex multi-phase algorithms with single function calls. Through these two problems, you've mastered:
+The `prefix_sum()` primitive enables hardware-accelerated parallel scan operations that replace complex multi-phase algorithms with single function calls. Through these two problems, you've learned:
 
 ### **Core Prefix Sum Patterns**
 
@@ -465,11 +489,13 @@ The `prefix_sum()` primitive enables hardware-accelerated parallel scan operatio
 ### **Key Algorithmic Insights**
 
 **Hardware Acceleration Benefits:**
+
 - `prefix_sum()` leverages dedicated scan units on modern GPUs
 - Zero shared memory overhead compared to traditional approaches
 - Automatic synchronization without explicit barriers
 
 **Multi-Primitive Coordination:**
+
 ```mojo
 # Phase 1: Create predicates for partition membership
 predicate = 1.0 if condition else 0.0
@@ -485,6 +511,7 @@ final_pos = local_pos + partition_offset
 ```
 
 **Performance Advantages:**
+
 - **Hardware optimization**: Specialized scan units vs software implementation
 - **Memory efficiency**: Register-only operations vs shared memory allocation
 - **Scalable complexity**: \\(O(\\log n)\\) with hardware acceleration
@@ -493,6 +520,7 @@ final_pos = local_pos + partition_offset
 ### **Practical Applications**
 
 These prefix sum patterns are fundamental to:
+
 - **Parallel scan operations**: Cumulative sums, products, min/max scans
 - **Stream compaction**: Parallel filtering and data reorganization
 - **Quicksort partitioning**: Core parallel sorting algorithm building block

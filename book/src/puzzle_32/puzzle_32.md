@@ -7,6 +7,7 @@
 **The hidden performance trap:** You can write GPU kernels with perfect occupancy, optimal global memory coalescing, and identical mathematical operations - yet still experience dramatic performance differences due to **how threads access shared memory**. Bank conflicts represent one of the most subtle but impactful performance pitfalls in GPU programming.
 
 **The learning journey:**
+
 - **Puzzle 30** taught you to **measure and diagnose** performance with NSight profiling
 - **Puzzle 31** taught you to **predict and control** resource usage through occupancy analysis
 - **Puzzle 32** teaches you to **optimize shared memory access patterns** for maximum efficiency
@@ -22,6 +23,7 @@
 **Shared memory bank conflicts** occur when multiple threads in a warp simultaneously access different addresses within the same memory bank, forcing the hardware to serialize these accesses. This can transform what should be a single-cycle memory operation into multiple cycles of serialized access.
 
 **What you'll discover:**
+
 - How GPU shared memory banking works at the hardware level
 - Why identical kernels can have vastly different shared memory efficiency
 - How to predict and measure bank conflicts before they impact performance
@@ -32,12 +34,14 @@
 ## Key concepts
 
 **Shared memory architecture fundamentals:**
+
 - **32-bank design**: NVIDIA GPUs organize shared memory into 32 independent banks
 - **Conflict types**: No conflict (optimal), N-way conflicts (serialized), broadcast (optimized)
 - **Access pattern mathematics**: Bank assignment formulas and conflict prediction
 - **Performance impact**: From optimal 1-cycle access to worst-case 32-cycle serialization
 
 **Professional optimization skills:**
+
 - **Pattern analysis**: Mathematical prediction of banking behavior
 - **Profiling methodology**: NSight Compute metrics for conflict measurement
 - **Design principles**: Conflict-free algorithm patterns and prevention strategies
@@ -49,9 +53,10 @@ This puzzle contains two complementary sections that build your expertise progre
 
 ### **[📚 Understanding Shared Memory Banks](./shared_memory_bank.md)**
 
-Master the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.
+Learn the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.
 
 **You'll learn:**
+
 - How NVIDIA's 32-bank architecture enables parallel access
 - The mathematics of bank assignment and conflict prediction
 - Types of conflicts and their performance implications
@@ -70,15 +75,18 @@ Apply your banking knowledge to solve a performance mystery using professional p
 ## Getting started
 
 **Learning path:**
+
 1. **[Understanding Shared Memory Banks](./shared_memory_bank.md)** - Build theoretical foundation
 2. **[Conflict-Free Patterns](./conflict_free_patterns.md)** - Apply detective skills to real optimization
 
 **Prerequisites:**
+
 - GPU profiling experience from [Puzzle 30](../puzzle_30/puzzle_30.md)
 - Resource optimization understanding from [Puzzle 31](../puzzle_31/puzzle_31.md)
 - Shared memory programming experience from [Puzzle 8](../puzzle_08/puzzle_08.md) and [Puzzle 16](../puzzle_16/puzzle_16.md)
 
 **Hardware requirements:**
+
 - NVIDIA GPU with CUDA toolkit
 - NSight Compute profiling tools
 - The dependencies such as profiling are managed by `pixi`
@@ -87,11 +95,13 @@ Apply your banking knowledge to solve a performance mystery using professional p
 ## The optimization impact
 
 **When bank conflicts matter most:**
+
 - **Matrix multiplication** with shared memory tiling
 - **Stencil computations** using shared memory caching
 - **Parallel reductions** with stride-based memory patterns
 
 **Professional development value:**
+
 - **Systematic optimization**: Evidence-based performance improvement methodology
 - **Hardware awareness**: Understanding how software maps to hardware constraints
 - **Pattern recognition**: Identifying problematic access patterns in algorithm design

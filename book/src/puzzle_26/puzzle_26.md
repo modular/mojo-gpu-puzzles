@@ -11,6 +11,7 @@ Welcome to **Puzzle 26: Advanced Warp Communication Primitives**! This puzzle in
 ## What you'll learn
 
 ### **Advanced warp communication model**
+
 Understand sophisticated communication patterns within GPU warps:
 
 ```
@@ -27,13 +28,15 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 ```
 
 **Hardware reality:**
+
 - **Butterfly networks**: XOR-based communication creates optimal tree topologies
 - **Dedicated scan units**: Hardware-accelerated parallel prefix operations
 - **Logarithmic complexity**: \\(O(\\log n)\\) algorithms replace \\(O(n)\\) sequential patterns
 - **Single-cycle operations**: Complex reductions happen in specialized hardware
 
 ### **Advanced warp operations in Mojo**
-Master the sophisticated communication primitives from `gpu.warp`:
+
+Learn the sophisticated communication primitives from `gpu.warp`:
 
 1. **[`shuffle_xor(value, mask)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor)**: XOR-based butterfly communication for tree algorithms
 2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum)**: Hardware-accelerated parallel scan operations
@@ -42,6 +45,7 @@ Master the sophisticated communication primitives from `gpu.warp`:
 > **Note:** These primitives enable sophisticated parallel algorithms like parallel reductions, stream compaction, quicksort partitioning, and FFT operations that would otherwise require dozens of lines of shared memory coordination code.
 
 ### **Performance transformation example**
+
 ```mojo
 # Complex parallel reduction (traditional approach - from Puzzle 14):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
@@ -65,6 +69,7 @@ output[global_i] = scan_result
 ```
 
 ### **When advanced warp operations excel**
+
 Learn the performance characteristics:
 
 | Algorithm Pattern | Traditional | Advanced Warp Operations |
@@ -78,6 +83,7 @@ Learn the performance characteristics:
 ## Prerequisites
 
 Before diving into advanced warp communication, ensure you're comfortable with:
+
 - **Part VII warp fundamentals**: Understanding SIMT execution and basic warp operations (see [Puzzle 24](../puzzle_24/puzzle_24.md) and [Puzzle 25](../puzzle_25/puzzle_25.md))
 - **Parallel algorithm theory**: Tree reductions, parallel scan, and butterfly networks
 - **GPU memory hierarchy**: Shared memory patterns and synchronization (see [Puzzle 14](../puzzle_14/puzzle_14.md))
@@ -86,17 +92,20 @@ Before diving into advanced warp communication, ensure you're comfortable with:
 ## Learning path
 
 ### **1. Butterfly communication with shuffle_xor**
+
 **→ [Warp Shuffle XOR](./warp_shuffle_xor.md)**
 
-Master XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.
+Learn XOR-based butterfly communication patterns for efficient tree algorithms and parallel reductions.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Using `shuffle_xor()` for creating butterfly network topologies
 - Implementing \\(O(\\log n)\\) parallel reductions with tree communication
 - Understanding XOR-based lane pairing and communication patterns
 - Advanced conditional butterfly operations for multi-value reductions
 
 **Key pattern:**
+
 ```mojo
 max_val = input[global_i]
 offset = WARP_SIZE // 2
@@ -107,17 +116,20 @@ while offset > 0:
 ```
 
 ### **2. Hardware-accelerated parallel scan with prefix_sum**
+
 **→ [Warp Prefix Sum](./warp_prefix_sum.md)**
 
-Master hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.
+Learn hardware-optimized parallel scan operations that replace complex multi-phase algorithms with single function calls.
 
-**What you'll master:**
+**What you'll learn:**
+
 - Using `prefix_sum()` for hardware-accelerated cumulative operations
 - Implementing stream compaction and parallel partitioning
 - Combining `prefix_sum` with `shuffle_xor` for advanced coordination
 - Understanding inclusive vs exclusive scan patterns
 
 **Key pattern:**
+
 ```mojo
 current_val = input[global_i]
 scan_result = prefix_sum[exclusive=False](current_val)
@@ -127,28 +139,36 @@ output[global_i] = scan_result  # Hardware-optimized cumulative sum
 ## Key concepts
 
 ### **Butterfly network communication**
+
 Understanding XOR-based communication topologies:
+
 - **XOR pairing**: `lane_id ⊕ mask` creates symmetric communication pairs
 - **Tree reduction**: Logarithmic complexity through hierarchical data exchange
 - **Parallel coordination**: All lanes participate simultaneously in reduction
 - **Dynamic algorithms**: Works for any power-of-2 `WARP_SIZE` (32, 64, etc.)
 
 ### **Hardware-accelerated parallel scan**
+
 Recognizing dedicated scan unit capabilities:
+
 - **Prefix sum operations**: Cumulative operations with hardware acceleration
 - **Stream compaction**: Parallel filtering and data reorganization
 - **Single-function simplicity**: Complex algorithms become single calls
 - **Zero synchronization**: Hardware handles all coordination internally
 
 ### **Algorithm complexity transformation**
+
 Converting traditional patterns to advanced warp operations:
+
 - **Sequential reductions** (\\(O(n)\\)) → **Butterfly reductions** (\\(O(\\log n)\\))
 - **Multi-phase scan algorithms** → **Single hardware prefix_sum**
 - **Complex shared memory patterns** → **Register-only operations**
 - **Explicit synchronization** → **Hardware-managed coordination**
 
 ### **Advanced coordination patterns**
+
 Combining multiple primitives for sophisticated algorithms:
+
 - **Dual reductions**: Simultaneous min/max tracking with butterfly patterns
 - **Parallel partitioning**: `shuffle_xor` + `prefix_sum` for quicksort-style operations
 - **Conditional operations**: Lane-based output selection with global coordination
@@ -162,4 +182,4 @@ Ready to harness advanced GPU warp-level communication? Start with butterfly net
 
 **Learning objective**: By the end of Puzzle 24, you'll recognize when advanced warp primitives can replace complex multi-phase algorithms, enabling you to write dramatically simpler and faster tree-based reductions, parallel scans, and coordination patterns.
 
-**Ready to begin?** Start with **[Warp Shuffle XOR Operations](./warp_shuffle_xor.md)** to master butterfly communication, then advance to **[Warp Prefix Sum Operations](./warp_prefix_sum.md)** for hardware-accelerated parallel scan patterns!
+**Ready to begin?** Start with **[Warp Shuffle XOR Operations](./warp_shuffle_xor.md)** to learn butterfly communication, then advance to **[Warp Prefix Sum Operations](./warp_prefix_sum.md)** for hardware-accelerated parallel scan patterns!

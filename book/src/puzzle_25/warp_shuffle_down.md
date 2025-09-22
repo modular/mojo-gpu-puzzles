@@ -8,7 +8,8 @@ For warp-level neighbor communication we can use `shuffle_down()` to access data
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **Warp-level data shuffling** with `shuffle_down()`
 - **Neighbor access patterns** for stencil computations
 - **Boundary handling** at warp edges
@@ -42,6 +43,7 @@ if global_i < size - 1:
 ```
 
 **Problems with traditional approach:**
+
 - **Bounds checking**: Must manually verify array bounds
 - **Memory access**: Requires separate memory loads
 - **Synchronization**: May need barriers for shared memory patterns
@@ -58,6 +60,7 @@ if lane < WARP_SIZE - 1:
 ```
 
 **Benefits of shuffle_down:**
+
 - **Zero memory overhead**: No additional memory accesses
 - **Automatic bounds**: Hardware handles warp boundaries
 - **No synchronization**: SIMT execution guarantees correctness
@@ -88,6 +91,7 @@ This transforms input data `[0, 1, 4, 9, 16, 25, ...]` (squares: `i * i`) into d
 The `shuffle_down(value, offset)` operation allows each lane to receive data from a lane at a higher index. Study how this can give you access to neighboring elements without explicit memory loads.
 
 **What `shuffle_down(val, 1)` does:**
+
 - Lane 0 gets value from Lane 1
 - Lane 1 gets value from Lane 2
 - ...
@@ -146,6 +150,7 @@ pixi run p25 --neighbor
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE:  32
@@ -168,6 +173,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 This solution demonstrates how `shuffle_down()` transforms traditional array indexing into efficient warp-level communication.
 
 **Algorithm breakdown:**
+
 ```mojo
 if global_i < size:
     current_val = input[global_i]           # Each lane reads its element
@@ -180,6 +186,7 @@ if global_i < size:
 ```
 
 **SIMT execution deep dive:**
+
 ```
 Cycle 1: All lanes load their values simultaneously
   Lane 0: current_val = input[0] = 0
@@ -211,12 +218,14 @@ For our quadratic input \\(f(i) = i^2\\):
 \\[\\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\\]
 
 **Why shuffle_down is superior:**
+
 1. **Memory efficiency**: Traditional approach requires `input[global_i + 1]` load, potentially causing cache misses
 2. **Bounds safety**: No risk of out-of-bounds access; hardware handles warp boundaries
 3. **SIMT optimization**: Single instruction processes all lanes simultaneously
 4. **Register communication**: Data moves between registers, not through memory hierarchy
 
 **Performance characteristics:**
+
 - **Latency**: 1 cycle (vs 100+ cycles for memory access)
 - **Bandwidth**: 0 bytes (vs 4 bytes per thread for traditional)
 - **Parallelism**: All 32 lanes process simultaneously
@@ -240,6 +249,7 @@ Implement a 3-point moving average using multiple `shuffle_down` operations.
 \\[\\Large \\text{output}[i] = \\frac{1}{3}\\left(\\text{input}[i] + \\text{input}[i+1] + \\text{input}[i+2]\\right)\\]
 
 **Boundary handling:** The algorithm gracefully degrades at warp boundaries:
+
 - **Full 3-point window**: \\(\\text{output}[i] = \\frac{1}{3}\\sum_{k=0}^{2} \\text{input}[i+k]\\) when all neighbors available
 - **2-point window**: \\(\\text{output}[i] = \\frac{1}{2}\\sum_{k=0}^{1} \\text{input}[i+k]\\) when only next neighbor available
 - **1-point window**: \\(\\text{output}[i] = \\text{input}[i]\\) when no neighbors available
@@ -260,11 +270,13 @@ This demonstrates how `shuffle_down()` enables efficient stencil operations with
 This puzzle requires accessing multiple neighbors simultaneously. You'll need to use shuffle operations with different offsets.
 
 **Key questions:**
+
 - How can you get both `input[i+1]` and `input[i+2]` using shuffle operations?
 - What's the relationship between shuffle offset and neighbor distance?
 - Can you perform multiple shuffles on the same source value?
 
 **Visualization concept:**
+
 ```
 Your lane needs:  current_val, next_val, next_next_val
 Shuffle offsets:  0 (direct),  1,        2
@@ -277,16 +289,19 @@ Shuffle offsets:  0 (direct),  1,        2
 Unlike the simple neighbor difference, this puzzle has multiple boundary scenarios because you need access to 2 neighbors.
 
 **Boundary scenarios to consider:**
+
 - **Full window:** Lane can access both neighbors → use all 3 values
 - **Partial window:** Lane can access 1 neighbor → use 2 values
 - **No window:** Lane can't access any neighbors → use 1 value
 
 **Critical thinking:**
+
 - Which lanes fall into each category?
 - How should you weight the averages when you have fewer values?
 - What boundary conditions should you check?
 
 **Pattern to consider:**
+
 ```
 if (can_access_both_neighbors):
     # 3-point average
@@ -301,11 +316,13 @@ else:
 This puzzle uses multiple blocks, each processing a different section of the data.
 
 **Important considerations:**
+
 - Each block has its own warp with lanes 0 to WARP_SIZE-1
 - Boundary conditions apply within each warp independently
 - Lane numbering resets for each block
 
 **Questions to think about:**
+
 - Does your boundary logic work correctly for both Block 0 and Block 1?
 - Are you checking both lane boundaries AND global array boundaries?
 - How does `global_i` relate to `lane_id()` in different blocks?
@@ -338,6 +355,7 @@ pixi run p25 --average
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE_2:  64
@@ -360,6 +378,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 This solution demonstrates advanced multi-offset shuffling for complex stencil operations.
 
 **Complete algorithm analysis:**
+
 ```mojo
 if global_i < size:
     # Step 1: Acquire all needed data via multiple shuffles
@@ -380,6 +399,7 @@ if global_i < size:
 ```
 
 **Multi-offset execution trace (`WARP_SIZE = 32`):**
+
 ```
 Initial state (Block 0, elements 0-31):
   Lane 0: current_val = input[0] = 1
@@ -415,11 +435,13 @@ Computation phase:
 \\[\\Large h[i] = \\sum_{k=0}^{K(i)-1} w_k^{(i)} \\cdot f[i+k]\\]
 
 Where the kernel adapts based on position:
+
 - **Interior points**: \\(K(i) = 3\\), \\(\\mathbf{w}^{(i)} = [\\frac{1}{3}, \\frac{1}{3}, \\frac{1}{3}]\\)
 - **Near boundary**: \\(K(i) = 2\\), \\(\\mathbf{w}^{(i)} = [\\frac{1}{2}, \\frac{1}{2}]\\)
 - **At boundary**: \\(K(i) = 1\\), \\(\\mathbf{w}^{(i)} = [1]\\)
 
 **Multi-block coordination:** With `SIZE_2 = 64` and 2 blocks:
+
 ```
 Block 0 (global indices 0-31):
   Lane boundaries apply to global indices 29, 30, 31
@@ -430,6 +452,7 @@ Block 1 (global indices 32-63):
 ```
 
 **Performance optimizations:**
+
 1. **Parallel data acquisition**: Both shuffle operations execute simultaneously
 2. **Conditional branching**: GPU handles divergent lanes efficiently via predication
 3. **Memory coalescing**: Sequential global memory access pattern optimal for GPU
@@ -452,6 +475,7 @@ if lane < WARP_SIZE - offset:
 ```
 
 **Key benefits:**
+
 - **Hardware efficiency**: Register-to-register communication
 - **Boundary safety**: Automatic warp limit handling
 - **SIMT optimization**: Single instruction, all lanes parallel

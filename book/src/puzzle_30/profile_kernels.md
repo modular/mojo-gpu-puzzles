@@ -26,7 +26,7 @@ output[i] = a[i] + b[i]  // Simple arithmetic - what could go wrong?
 1. **Identify the performance culprit** - Which kernel is catastrophically slow?
 2. **Uncover the cache paradox** - Why do high cache hits indicate poor performance?
 3. **Decode memory access patterns** - What makes identical operations behave so differently?
-4. **Master profiling methodology** - Use NSight tools to gather evidence, not guesses
+4. **Learn profiling methodology** - Use NSight tools to gather evidence, not guesses
 
 **Why this matters:** This puzzle reveals a fundamental GPU performance principle that challenges CPU-based intuition. The skills you develop here apply to real-world GPU optimization where memory access patterns often matter more than algorithmic complexity.
 

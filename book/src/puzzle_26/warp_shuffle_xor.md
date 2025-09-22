@@ -8,7 +8,8 @@ For warp-level butterfly communication we can use `shuffle_xor()` to create soph
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **XOR-based communication patterns** with `shuffle_xor()`
 - **Butterfly network topologies** for parallel algorithms
 - **Tree-based parallel reductions** with \\(O(\\log n)\\) complexity
@@ -47,6 +48,7 @@ if partner < WARP_SIZE:
 ```
 
 **Problems with traditional approach:**
+
 - **Memory overhead**: Requires shared memory allocation
 - **Synchronization**: Needs explicit barriers
 - **Complex logic**: Manual partner calculation and bounds checking
@@ -62,6 +64,7 @@ output[global_i] = swapped_val
 ```
 
 **Benefits of shuffle_xor:**
+
 - **Zero memory overhead**: Direct register-to-register communication
 - **No synchronization**: SIMT execution guarantees correctness
 - **Hardware optimized**: Single instruction for all lanes
@@ -92,6 +95,7 @@ This transforms input data `[0, 1, 2, 3, 4, 5, 6, 7, ...]` into pairs `[1, 0, 3,
 The `shuffle_xor(value, mask)` operation allows each lane to exchange data with a lane whose ID differs by the XOR mask. Think about what happens when you XOR a lane ID with different mask values.
 
 **Key question to explore:**
+
 - What partner does lane 0 get when you XOR with mask 1?
 - What partner does lane 1 get when you XOR with mask 1?
 - Do you see a pattern forming?
@@ -103,6 +107,7 @@ The `shuffle_xor(value, mask)` operation allows each lane to exchange data with 
 Think about the binary representation of lane IDs and what happens when you flip the least significant bit.
 
 **Questions to consider:**
+
 - What happens to even-numbered lanes when you XOR with 1?
 - What happens to odd-numbered lanes when you XOR with 1?
 - Why does this create perfect pairs?
@@ -139,6 +144,7 @@ pixi run p26 --pair-swap
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE:  32
@@ -161,6 +167,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 This solution demonstrates how `shuffle_xor()` creates perfect pair exchanges through XOR communication patterns.
 
 **Algorithm breakdown:**
+
 ```mojo
 if global_i < size:
     current_val = input[global_i]              # Each lane reads its element
@@ -171,6 +178,7 @@ if global_i < size:
 ```
 
 **SIMT execution deep dive:**
+
 ```
 Cycle 1: All lanes load their values simultaneously
   Lane 0: current_val = input[0] = 0
@@ -204,12 +212,14 @@ i - 1 & \\text{if } i \\bmod 2 = 1
 \\end{cases}\\]
 
 **Why shuffle_xor is superior:**
+
 1. **Perfect symmetry**: Every lane participates in exactly one pair
 2. **No coordination**: All pairs exchange simultaneously
 3. **Hardware optimized**: Single instruction for entire warp
 4. **Butterfly foundation**: Building block for complex parallel algorithms
 
 **Performance characteristics:**
+
 - **Latency**: 1 cycle (hardware register exchange)
 - **Bandwidth**: 0 bytes (no memory traffic)
 - **Parallelism**: All WARP_SIZE lanes exchange simultaneously
@@ -234,6 +244,7 @@ Implement parallel maximum reduction using butterfly `shuffle_xor` with decreasi
 \\[\\Large \\text{max\_result} = \\max_{i=0}^{\\small\\text{WARP\_SIZE}-1} \\text{input}[i]\\]
 
 **Butterfly reduction pattern:** Use XOR offsets starting from `WARP_SIZE/2` down to `1` to create a binary tree where each step halves the active communication range:
+
 - **Step 1**: Compare with lanes `WARP_SIZE/2` positions away (covers full warp)
 - **Step 2**: Compare with lanes `WARP_SIZE/4` positions away (covers remaining range)
 - **Step 3**: Compare with lanes `WARP_SIZE/8` positions away
@@ -255,6 +266,7 @@ After \\(\\log_2(\\text{WARP\_SIZE})\\) steps, all lanes have the global maximum
 The butterfly reduction creates a binary tree communication pattern. Think about how you can systematically reduce the problem size at each step.
 
 **Key questions:**
+
 - What should be your starting offset to cover the maximum range?
 - How should the offset change between steps?
 - When should you stop the reduction?
@@ -266,6 +278,7 @@ The butterfly reduction creates a binary tree communication pattern. Think about
 XOR creates non-overlapping communication pairs at each step. Consider why this is important for parallel reductions.
 
 **Think about:**
+
 - How does XOR with different offsets create different communication patterns?
 - Why don't lanes interfere with each other at the same step?
 - What makes XOR particularly well-suited for tree reductions?
@@ -275,21 +288,25 @@ XOR creates non-overlapping communication pairs at each step. Consider why this 
 Each lane needs to progressively build up knowledge of the maximum value in its "region".
 
 **Algorithm structure:**
+
 - Start with your own value
 - At each step, compare with a neighbor's value
 - Keep the maximum and continue
 
 **Key insight**: After each step, your "region of knowledge" doubles in size.
+
 - After final step: Each lane knows global maximum
 
 ### 4. **Why this pattern works**
 
 The butterfly reduction guarantees that after \\(\\log_2(\\text{WARP\\_SIZE})\\) steps:
+
 - **Every lane** has seen **every other lane's** value indirectly
 - **No redundant communication**: Each pair exchanges exactly once per step
 - **Optimal complexity**: \\(O(\\log n)\\) steps instead of \\(O(n)\\) sequential comparison
 
 **Trace example** (4 lanes, values [3, 1, 7, 2]):
+
 ```
 Initial: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
 
@@ -334,6 +351,7 @@ pixi run p26 --parallel-max
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE:  32
@@ -356,6 +374,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 This solution demonstrates how `shuffle_xor()` creates efficient parallel reduction trees with \\(O(\\log n)\\) complexity.
 
 **Complete algorithm analysis:**
+
 ```mojo
 if global_i < size:
     max_val = input[global_i]  # Start with local value
@@ -370,6 +389,7 @@ if global_i < size:
 ```
 
 **Butterfly execution trace (8-lane example, values [0,2,4,6,8,10,12,1000]):**
+
 ```
 Initial state:
   Lane 0: max_val = 0,    Lane 1: max_val = 2
@@ -404,12 +424,14 @@ Final result: All lanes have max_val = 1000
 Where \\(\\oplus\\) is the `max` operation and the butterfly pattern ensures optimal \\(O(\\log n)\\) complexity.
 
 **Why butterfly reduction is superior:**
+
 1. **Logarithmic complexity**: \\(O(\\log n)\\) vs \\(O(n)\\) for sequential reduction
 2. **Perfect load balancing**: Every lane participates equally at each step
 3. **No memory bottlenecks**: Pure register-to-register communication
 4. **Hardware optimized**: Maps directly to GPU butterfly networks
 
 **Performance characteristics:**
+
 - **Steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) (e.g., 5 for 32-thread, 6 for 64-thread warp)
 - **Latency per step**: 1 cycle (register exchange + comparison)
 - **Total latency**: \\(\\log_2(\\text{WARP\_SIZE})\\) cycles vs \\((\\text{WARP\_SIZE}-1)\\) cycles for sequential
@@ -452,6 +474,7 @@ Implement conditional butterfly reduction where even lanes store the maximum and
 This puzzle requires tracking TWO different values simultaneously through the butterfly tree. Think about how you can run multiple reductions in parallel.
 
 **Key questions:**
+
 - How can you maintain both maximum and minimum values during the reduction?
 - Can you use the same butterfly pattern for both operations?
 - What variables do you need to track?
@@ -461,6 +484,7 @@ This puzzle requires tracking TWO different values simultaneously through the bu
 After completing the butterfly reduction, you need to output different values based on lane parity.
 
 **Consider:**
+
 - How do you determine if a lane is even or odd?
 - Which lanes should output the maximum vs minimum?
 - How do you access the lane ID?
@@ -470,6 +494,7 @@ After completing the butterfly reduction, you need to output different values ba
 The challenge is efficiently computing both min and max in parallel using the same butterfly communication pattern.
 
 **Think about:**
+
 - Do you need separate shuffle operations for min and max?
 - Can you reuse the same neighbor values for both operations?
 - How do you ensure both reductions complete correctly?
@@ -479,6 +504,7 @@ The challenge is efficiently computing both min and max in parallel using the sa
 This puzzle uses multiple blocks. Consider how this affects the reduction scope.
 
 **Important considerations:**
+
 - What's the scope of each butterfly reduction?
 - How does the block structure affect lane numbering?
 - Are you computing global or per-block min/max values?
@@ -509,6 +535,7 @@ pixi run p26 --conditional-max
 </div>
 
 Expected output when solved:
+
 ```txt
 WARP_SIZE:  32
 SIZE_2:  64
@@ -531,6 +558,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 This solution demonstrates advanced butterfly reduction with dual tracking and conditional output.
 
 **Complete algorithm analysis:**
+
 ```mojo
 if global_i < size:
     current_val = input[global_i]
@@ -555,6 +583,7 @@ if global_i < size:
 ```
 
 **Dual reduction execution trace (4-lane example, values [3, 1, 7, 2]):**
+
 ```
 Initial state:
   Lane 0: current_val=3, min_val=3
@@ -578,6 +607,7 @@ Final result: All lanes have current_val=7 (global max) and min_val=1 (global mi
 ```
 
 **Dynamic algorithm** (works for any WARP_SIZE):
+
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
@@ -598,12 +628,14 @@ while offset > 0:
 \\end{align}\\]
 
 **Why dual butterfly reduction works:**
+
 1. **Independent reductions**: Max and min reductions are mathematically independent
 2. **Parallel execution**: Both can use the same butterfly communication pattern
 3. **Shared communication**: Same shuffle operations serve both reductions
 4. **Conditional output**: Lane parity determines which result to output
 
 **Performance characteristics:**
+
 - **Communication steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) (same as single reduction)
 - **Computation per step**: 2 operations (max + min) vs 1 for single reduction
 - **Memory efficiency**: 2 registers per thread vs complex shared memory approaches
@@ -614,7 +646,7 @@ while offset > 0:
 
 ## Summary
 
-The `shuffle_xor()` primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you've mastered:
+The `shuffle_xor()` primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you've learned:
 
 ### **Core Butterfly Patterns**
 
@@ -636,11 +668,13 @@ The `shuffle_xor()` primitive enables powerful butterfly communication patterns 
 ### **Key Algorithmic Insights**
 
 **XOR Communication Properties:**
+
 - `shuffle_xor(value, mask)` creates symmetric, non-overlapping pairs
 - Each mask creates a unique communication topology
 - Butterfly networks emerge naturally from binary XOR patterns
 
 **Dynamic Algorithm Design:**
+
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
@@ -650,6 +684,7 @@ while offset > 0:
 ```
 
 **Performance Advantages:**
+
 - **Hardware optimization**: Direct register-to-register communication
 - **No synchronization**: SIMT execution guarantees correctness
 - **Scalable complexity**: \\(O(\\log n)\\) for any WARP_SIZE (32, 64, etc.)
@@ -658,6 +693,7 @@ while offset > 0:
 ### **Practical Applications**
 
 These butterfly patterns are fundamental to:
+
 - **Parallel reductions**: Sum, max, min, logical operations
 - **Prefix/scan operations**: Cumulative sums, parallel sorting
 - **FFT algorithms**: Signal processing and convolution

@@ -6,7 +6,8 @@ Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **Warp-level reductions** with `warp.sum()`
 - **SIMT execution model** and lane synchronization
 - **Cross-architecture compatibility** with `WARP_SIZE`
@@ -35,6 +36,7 @@ Recall the complex approach from [solutions/p12/p12.mojo](../../../solutions/p12
 ```
 
 **What makes this complex:**
+
 - **Shared memory allocation**: Manual memory management within blocks
 - **Explicit barriers**: `barrier()` calls to synchronize threads
 - **Tree reduction**: Complex loop with stride-based indexing
@@ -92,11 +94,13 @@ fn simple_warp_dot_product[...](output, a, b):
 ```
 
 **Pattern to follow:**
+
 1. Compute partial product for this thread's element
 2. Use `warp_sum()` to combine across all warp lanes
 3. Lane 0 writes the final result
 
 ### 2. **Computing partial products**
+
 ```mojo
 var partial_product: Scalar[dtype] = 0
 if global_i < size:
@@ -108,17 +112,20 @@ if global_i < size:
 **Bounds checking:** Essential because not all threads may have valid data to process.
 
 ### 3. **Warp reduction magic**
+
 ```mojo
 total = warp_sum(partial_product)
 ```
 
 **What `warp_sum()` does:**
+
 - Takes each lane's `partial_product` value
 - Sums them across all lanes in the warp (hardware-accelerated)
 - Returns the same total to **all lanes** (not just lane 0)
 - Requires **zero explicit synchronization** (SIMT handles it)
 
 ### 4. **Writing the result**
+
 ```mojo
 if lane_id() == 0:
     output[0] = total
@@ -154,6 +161,7 @@ pixi run p24 --kernel
 </div>
 
 Expected output when solved:
+
 ```txt
 SIZE: 32
 WARP_SIZE: 32
@@ -179,6 +187,7 @@ expected: 10416.0
 The simple warp kernel demonstrates the fundamental transformation from complex synchronization to hardware-accelerated primitives:
 
 **What disappeared from the traditional approach:**
+
 - **15+ lines → 6 lines**: Dramatic code reduction
 - **Shared memory allocation**: Zero memory management required
 - **3+ barrier() calls**: Zero explicit synchronization
@@ -186,6 +195,7 @@ The simple warp kernel demonstrates the fundamental transformation from complex 
 - **Stride-based indexing**: Eliminated entirely
 
 **SIMT execution model:**
+
 ```
 Warp lanes (SIMT execution):
 Lane 0: partial_product = a[0] * b[0]    = 0.0
@@ -200,6 +210,7 @@ All lanes receive → total = 10416.0 (broadcast result)
 ```
 
 **Why this works without barriers:**
+
 1. **SIMT execution**: All lanes execute each instruction simultaneously
 2. **Hardware synchronization**: When `warp_sum()` begins, all lanes have computed their `partial_product`
 3. **Built-in communication**: GPU hardware handles the reduction operation
@@ -234,11 +245,13 @@ fn compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) cap
 ```
 
 **Functional pattern differences:**
+
 - Uses `elementwise` to launch exactly `WARP_SIZE` threads
 - Each thread processes one element based on `idx`
 - Same warp operations, different launch mechanism
 
 ### 2. **Computing partial products**
+
 ```mojo
 var partial_product: Scalar[dtype] = 0.0
 if idx < size:
@@ -254,6 +267,7 @@ else:
 **Bounds handling:** Set `partial_product = 0.0` for out-of-bounds threads so they don't contribute to the sum.
 
 ### 3. **Warp operations and storing**
+
 ```mojo
 total = warp_sum(partial_product)
 
@@ -266,6 +280,7 @@ if lane_id() == 0:
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in functional approach.
 
 ### 4. **Available functions from imports**
+
 ```mojo
 from gpu import lane_id
 from gpu.warp import sum as warp_sum, WARP_SIZE
@@ -302,6 +317,7 @@ pixi run p24 --functional
 </div>
 
 Expected output when solved:
+
 ```txt
 SIZE: 32
 WARP_SIZE: 32
@@ -327,22 +343,26 @@ expected: 10416.0
 The functional warp approach showcases modern Mojo programming patterns with warp operations:
 
 **Functional approach characteristics:**
+
 ```mojo
 elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
 ```
 
 **Benefits:**
+
 - **Type safety**: Compile-time tensor layout checking
 - **Composability**: Easy integration with other functional operations
 - **Modern patterns**: Leverages Mojo's functional programming features
 - **Automatic optimization**: Compiler can apply high-level optimizations
 
 **Key differences from kernel approach:**
+
 - **Launch mechanism**: Uses `elementwise` instead of `enqueue_function`
 - **Memory access**: Uses `.load[1]()` and `.store[1]()` patterns
 - **Integration**: Seamlessly works with other functional operations
 
 **Same warp benefits:**
+
 - **Zero synchronization**: `warp_sum()` works identically
 - **Hardware acceleration**: Same performance as kernel approach
 - **Cross-architecture**: `WARP_SIZE` adapts automatically
@@ -376,6 +396,7 @@ pixi run p24 --benchmark
 </div>
 
 Here's example output from a complete benchmark run:
+
 ```
 SIZE: 32
 WARP_SIZE: 32
@@ -459,6 +480,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 ```
 
 **Performance insights from this example:**
+
 - **Small scales (1x-4x)**: Warp operations show modest improvements (~10-15% faster)
 - **Medium scale (32x-256x)**: Functional approach often performs best
 - **Large scales (16K-65K)**: All approaches converge as memory bandwidth dominates
@@ -466,11 +488,9 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 
 **Note:** Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, `WARP_SIZE`). The key insight is observing the relative performance trends rather than absolute timings.
 
-
-
 ## Next Steps
 
-Once you've mastered warp sum operations, you're ready for:
+Once you've learned warp sum operations, you're ready for:
 
 - **[When to Use Warp Programming](./warp_extra.md)**: Strategic decision framework for warp vs traditional approaches
 - **Advanced warp operations**: `shuffle_idx()`, `shuffle_down()`, `prefix_sum()` for complex communication patterns

@@ -13,7 +13,8 @@ Both approaches build on tiling concepts but with different trade-offs between c
 
 ## Key concepts
 
-In this puzzle, you'll master:
+In this puzzle, you'll learn:
+
 - **Manual SIMD operations** with explicit index management
 - **Mojo's vectorize function** for safe, automatic vectorization
 - **Chunk-based memory organization** for optimal SIMD alignment
@@ -40,6 +41,7 @@ But with sophisticated vectorization strategies for maximum performance.
 ```mojo
 {{#include ../../../problems/p23/p23.mojo:manual_vectorized_tiled_elementwise_add}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a>
 
 <details>
@@ -48,25 +50,32 @@ But with sophisticated vectorization strategies for maximum performance.
 <div class="solution-tips">
 
 ### 1. **Understanding chunk organization**
+
 ```mojo
 alias chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
 ```
+
 Each tile now contains multiple SIMD groups, not just sequential elements.
 
 ### 2. **Global index calculation**
+
 ```mojo
 global_start = tile_id * chunk_size + i * simd_width
 ```
+
 This calculates the exact global position for each SIMD vector within the chunk.
 
 ### 3. **Direct tensor access**
+
 ```mojo
 a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
 output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 ```
+
 Note: Access the original tensors, not the tile views.
 
 ### 4. **Key characteristics**
+
 - More control, more complexity, global tensor access
 - Perfect SIMD alignment with hardware
 - Manual bounds checking required
@@ -141,6 +150,7 @@ alias chunk_size = tile_size * simd_width  # 32 * 4 = 128
 ```
 
 **Chunk organization visualization (TILE_SIZE=32, SIMD_WIDTH=4):**
+
 ```
 Original array: [0, 1, 2, 3, ..., 1023]
 
@@ -152,6 +162,7 @@ Chunk 7 (thread 7): [896:1024] ← Final 128 elements
 ```
 
 **Processing within one chunk:**
+
 ```mojo
 @parameter
 for i in range(tile_size):  # i = 0, 1, 2, ..., 31
@@ -161,6 +172,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 ```
 
 **Performance characteristics:**
+
 - **Thread count**: 8 threads (1024 ÷ 128 = 8)
 - **Work per thread**: 128 elements (32 SIMD operations of 4 elements each)
 - **Memory pattern**: Large chunks with perfect SIMD alignment
@@ -168,12 +180,14 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 - **Safety**: Manual bounds checking required
 
 **Key advantages:**
+
 - **Predictable indexing**: Exact control over memory access patterns
 - **Optimal alignment**: SIMD operations perfectly aligned to hardware
 - **Maximum throughput**: No overhead from safety checks
 - **Hardware optimization**: Direct mapping to GPU SIMD units
 
 **Key challenges:**
+
 - **Index complexity**: Manual calculation of global positions
 - **Bounds responsibility**: Must handle edge cases explicitly
 - **Debugging difficulty**: More complex to verify correctness
@@ -188,6 +202,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 ```mojo
 {{#include ../../../problems/p23/p23.mojo:vectorize_within_tiles_elementwise_add}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a>
 
 <details>
@@ -196,14 +211,17 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 <div class="solution-tips">
 
 ### 1. **Tile boundary calculation**
+
 ```mojo
 tile_start = tile_id * tile_size
 tile_end = min(tile_start + tile_size, size)
 actual_tile_size = tile_end - tile_start
 ```
+
 Handle cases where the last tile might be smaller than `tile_size`.
 
 ### 2. **Vectorized function pattern**
+
 ```mojo
 @parameter
 fn vectorized_add[width: Int](i: Int):
@@ -211,15 +229,19 @@ fn vectorized_add[width: Int](i: Int):
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
 ```
+
 The `width` parameter is automatically determined by the vectorize function.
 
 ### 3. **Calling vectorize**
+
 ```mojo
 vectorize[vectorized_add, simd_width](actual_tile_size)
 ```
+
 This automatically handles the vectorization loop with the provided SIMD width.
 
 ### 4. **Key characteristics**
+
 - Automatic remainder handling, built-in safety, tile-based access
 - Takes explicit SIMD width parameter
 - Built-in bounds checking and automatic remainder element processing
@@ -297,6 +319,7 @@ actual_tile_size = tile_end - tile_start
 ```
 
 **Automatic vectorization mechanism:**
+
 ```mojo
 @parameter
 fn vectorized_add[width: Int](i: Int):
@@ -306,12 +329,14 @@ fn vectorized_add[width: Int](i: Int):
 ```
 
 **How vectorize works:**
+
 - **Automatic chunking**: Divides `actual_tile_size` into chunks of your provided `simd_width`
 - **Remainder handling**: Automatically processes leftover elements with smaller widths
 - **Bounds safety**: Automatically prevents buffer overruns
 - **Loop management**: Handles the vectorization loop automatically
 
 **Execution visualization (TILE_SIZE=32, SIMD_WIDTH=4):**
+
 ```
 Tile 0 processing:
   vectorize call 0: processes elements [0:4]   with SIMD_WIDTH=4
@@ -322,6 +347,7 @@ Tile 0 processing:
 ```
 
 **Performance characteristics:**
+
 - **Thread count**: 32 threads (1024 ÷ 32 = 32)
 - **Work per thread**: 32 elements (automatic SIMD chunking)
 - **Memory pattern**: Smaller tiles with automatic vectorization
@@ -336,6 +362,7 @@ Tile 0 processing:
 ### When to use each approach
 
 **Choose manual vectorization when:**
+
 - **Maximum performance** is critical
 - You have **predictable, aligned data** patterns
 - **Expert-level control** over memory access is needed
@@ -343,6 +370,7 @@ Tile 0 processing:
 - **Hardware-specific optimization** is required
 
 **Choose Mojo vectorize when:**
+
 - **Development speed** and safety are priorities
 - Working with **irregular or dynamic data sizes**
 - You want **automatic remainder handling** instead of manual edge case management
@@ -352,29 +380,35 @@ Tile 0 processing:
 ### Advanced optimization insights
 
 **Memory bandwidth utilization:**
+
 ```
 Manual:    8 threads × 32 SIMD ops = 256 total SIMD operations
 Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 ```
+
 Both achieve similar total throughput but with different parallelism strategies.
 
 **Cache behavior:**
+
 - **Manual**: Large chunks may exceed L1 cache, but perfect sequential access
 - **Vectorize**: Smaller tiles fit better in cache, with automatic remainder handling
 
 **Hardware mapping:**
+
 - **Manual**: Direct control over warp utilization and SIMD unit mapping
 - **Vectorize**: Simplified vectorization with automatic loop and remainder management
 
 ### Best practices summary
 
 **Manual vectorization best practices:**
+
 - Always validate index calculations carefully
 - Use compile-time constants for `chunk_size` when possible
 - Profile memory access patterns for cache optimization
 - Consider alignment requirements for optimal SIMD performance
 
 **Mojo vectorize best practices:**
+
 - Choose appropriate SIMD width for your data and hardware
 - Focus on algorithm clarity over micro-optimizations
 - Use nested parameter functions for clean vectorization logic

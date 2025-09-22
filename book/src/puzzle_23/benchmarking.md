@@ -2,7 +2,7 @@
 
 ## Overview
 
-After mastering **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. This guide explains how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
+After learning **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. This guide explains how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
 
 > **Key insight:** _Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware._
 
@@ -110,6 +110,7 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 ```
 
 **Key phases:**
+
 1. **Setup**: Buffer allocation and data initialization
 2. **Computation**: The actual algorithm being benchmarked
 3. **Prevent optimization**: Critical for accurate measurement
@@ -151,16 +152,19 @@ The benchmark suite tests three scenarios to reveal performance characteristics:
 ### Performance characteristics by problem size
 
 **Small problems (SIZE=16):**
+
 - Launch overhead dominates (~0.064ms baseline)
 - Thread count differences don't matter
 - Tiled/vectorize show slightly lower overhead
 
 **Medium problems (SIZE=128):**
+
 - Still overhead-dominated (~0.063ms for all)
 - Performance differences nearly disappear
 - Transitional behavior between overhead and computation
 
 **Large problems (SIZE=1M):**
+
 - Real algorithmic differences emerge
 - Memory bandwidth becomes primary factor
 - Clear performance ranking appears
@@ -183,23 +187,27 @@ Based on empirical benchmark results across different hardware:
 > **For simple memory-bound operations:** Maximum parallelism (elementwise) outperforms complex memory optimizations at scale.
 
 **Why elementwise wins:**
+
 - **262,144 threads** provide excellent latency hiding
 - **Simple memory patterns** achieve good coalescing
 - **Minimal overhead** per thread
 - **Scales naturally** with GPU core count
 
 **Why tiled and vectorize are competitive:**
+
 - **Balanced approach** between parallelism and memory locality
 - **Automatic optimization** (vectorize) performs nearly as well as manual tiling
 - **Good thread utilization** without excessive complexity
 
 **Why manual vectorization struggles:**
+
 - **Only 256 threads** limit parallelism
 - **Complex indexing** adds computational overhead
 - **Cache pressure** from large chunks per thread
 - **Diminishing returns** for simple arithmetic
 
 **Framework intelligence:**
+
 - Automatic iteration count adjustment (91-100 iterations)
 - Statistical reliability across different execution times
 - Handles thermal throttling and system variation
@@ -222,12 +230,14 @@ Based on empirical benchmark results across different hardware:
 **Choose patterns based on empirical evidence:**
 
 **For production workloads:**
+
 - **Large datasets (>100K elements)**: Elementwise typically optimal
 - **Small/startup datasets (<1K elements)**: Tiled or vectorize for lower overhead
 - **Development speed priority**: Mojo vectorize for automatic optimization
 - **Avoid manual vectorization**: Complexity rarely pays off for simple operations
 
 **Performance optimization workflow:**
+
 1. **Profile first**: Measure before optimizing
 2. **Test at scale**: Small problems mislead about real performance
 3. **Consider total cost**: Include development and maintenance effort
@@ -261,6 +271,7 @@ Your results will vary based on:
 ## Best practices summary
 
 **Benchmarking workflow:**
+
 1. **Warm up GPU** before critical measurements
 2. **Run multiple iterations** for statistical significance
 3. **Test multiple problem sizes** to understand scaling
@@ -268,6 +279,7 @@ Your results will vary based on:
 5. **Compare like with like** (same problem size, same hardware)
 
 **Performance decision framework:**
+
 - **Start simple**: Begin with elementwise for memory-bound operations
 - **Measure don't guess**: Theoretical analysis guides, empirical data decides
 - **Scale matters**: Small problem performance doesn't predict large problem behavior
@@ -275,7 +287,7 @@ Your results will vary based on:
 
 ## Next steps
 
-With benchmarking mastery:
+With benchmarking skills:
 
 - **Profile real applications**: Apply these patterns to actual workloads
 - **Advanced GPU patterns**: Explore reductions, convolutions, and matrix operations
@@ -289,13 +301,16 @@ With benchmarking mastery:
 The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require **direct thread communication**:
 
 ### **Algorithms that benefit from warp programming:**
+
 - **Reductions**: Sum, max, min operations across thread groups
 - **Prefix operations**: Cumulative sums, running maximums
 - **Data shuffling**: Reorganizing data between threads
 - **Cooperative algorithms**: Where threads must coordinate closely
 
 ### **Performance preview:**
+
 In Part VI, we'll revisit several algorithms from Part II and show how warp operations can:
+
 - **Simplify code**: Replace complex shared memory patterns with single function calls
 - **Improve performance**: Eliminate barriers and reduce memory traffic
 - **Enable new algorithms**: Unlock patterns impossible with pure functional approaches
