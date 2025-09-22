@@ -2,10 +2,11 @@
 authors = ["Modular <hello@modular.com>"]
 channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
 name = "mojo-gpu-puzzles"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 version = "0.0.0"
 
 [feature.cuda]
+platforms = ["linux-64"]
 system-requirements = { cuda = "12" }
 channels = ["nvidia"]
 
@@ -19,11 +20,16 @@ torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" 
 nvidia-ml-py = "*"
 
 [feature.rocm]
+platforms = ["linux-64"]
 system-requirements = {}
 
 [feature.rocm.pypi-dependencies]
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/rocm6.3" }
 pytorch-triton-rocm = {version = "*", index = "https://download.pytorch.org/whl/rocm6.3" }
+
+[feature.macos]
+platforms = ["osx-arm64"]
+system-requirements = { macos = "15.0" }
 
 [dependencies]
 python = "==3.12"
@@ -38,6 +44,7 @@ pre-commit = ">=4.2.0,<5"
 [environments]
 cuda = { features = ["cuda"], solve-group = "cuda" }
 rocm = { features = ["rocm"], solve-group = "rocm" }
+macos = { features = ["macos"], solve-group = "macos" }
 default = { features = ["cuda"] }
 
 [tasks]
