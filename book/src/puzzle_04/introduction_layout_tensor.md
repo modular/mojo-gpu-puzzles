@@ -167,20 +167,36 @@ When we run this code with:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe layout_tensor_intro
+pixi run layout_tensor_intro
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run layout_tensor_intro
+pixi run layout_tensor_intro -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run layout_tensor_intro -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe layout_tensor_intro
 ```
 
   </div>

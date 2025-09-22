@@ -5,6 +5,7 @@
 > We're now entering Part IV of our GPU puzzle journey: **Interfacing with Python via MAX Graph Custom Ops**.
 >
 > In previous puzzles, we've learned how to write efficient GPU kernels in Mojo. Now we'll explore how to:
+>
 > - Package these kernels as custom operations that can be called from Python
 > - Integrate with the MAX Graph system for accelerated machine learning
 > - Bridge the gap between high-level Python APIs and low-level GPU code
@@ -29,6 +30,7 @@ The key aspects of this puzzle include:
 4. **Cross-language data flow**: Managing data types and memory between Python and GPU
 
 This custom operation will:
+
 - Accept [NumPy](https://numpy.org/doc/stable/) arrays as input from Python
 - Transfer this data to the GPU
 - Execute our optimized convolution kernel
@@ -43,27 +45,35 @@ To complete this puzzle, you only need to fill one line to call the `conv1d_kern
 ```mojo
 {{#include ../../../problems/p17/op/conv1d.mojo:conv1d_custom_op}}
 ```
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p17/op/conv1d.mojo" class="filename">View full file: problems/p17/op/conv1d.mojo</a>
 
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p17/op/conv1d.mojo" class="filename">View full file: problems/p17/op/conv1d.mojo</a>
 
 You can run the puzzle with:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p17
+pixi run p17
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p17
+pixi run p17 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p17
 ```
 
   </div>
@@ -83,7 +93,6 @@ Verification passed: Custom kernel results match NumPy calculation
 
 This indicates that your custom MAX Graph operation correctly implements the 1D convolution algorithm.
 
-
 ## Solution
 
 <details class="solution-details">
@@ -96,6 +105,7 @@ The solution is:
 ```mojo
 {{#include ../../../solutions/p17/op/conv1d.mojo:conv1d_custom_op_solution}}
 ```
+
 <div class="solution-explanation">
 This single line does several important things:
 
@@ -132,9 +142,10 @@ Let's break down how this works in the larger context:
    - Results are transferred back to CPU with `result.to(CPU())`
    - NumPy verification compares our results with the expected output
 
-### Key Components in Detail
+### Key components in detail
 
 1. **Custom Op Structure**:
+
    ```mojo
    @compiler.register("conv1d")
    struct Conv1DCustomOp:
@@ -147,27 +158,32 @@ Let's break down how this works in the larger context:
        ) raises:
            # Implementation
    ```
+
    - `target` indicates the device type ("gpu" or "cpu")
    - `input_size` and `conv_size` are parameters passed from Python
    - Tensor types ensure correct shape and type checking
    - Return type is `raises` for proper error handling
 
 2. **Tensor Conversion**:
+
    ```mojo
    output_tensor = output.to_layout_tensor()
    input_tensor = input.to_layout_tensor()
    kernel_tensor = kernel.to_layout_tensor()
    ```
+
    - MAX Graph tensors are converted to Mojo LayoutTensors
    - This allows our kernel to work with them directly
    - The layouts are extracted for compile-time optimization
 
 3. **Device Context Usage**:
+
    ```mojo
    gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # Zero output buffer
    gpu_ctx.enqueue_function[...](...) # Schedule kernel
    ```
+
    - Device context manages GPU resources
    - Memory operations ensure correct buffer state
    - Function enqueueing schedules our kernel for execution
@@ -180,8 +196,8 @@ This solution demonstrates the complete flow from Python data through MAX Graph 
 
 > Check out the follow tutorials for more details:
 >
-> * [Get started with MAX Graph in Python](https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/)
-> * [MAX Graph custom op for GPUs](https://docs.modular.com/max/tutorials/build-custom-ops/)
+> - [Get started with MAX Graph in Python](https://docs.modular.com/max/tutorials/get-started-with-max-graph-in-python/)
+> - [MAX Graph custom op for GPUs](https://docs.modular.com/max/tutorials/build-custom-ops/)
 
 ### Custom op registration
 
@@ -201,6 +217,7 @@ struct Conv1DCustomOp:
 ```
 
 Key components of the registration:
+
 - The **name** passed to the decorator (`"conv1d"`) is what Python code will use to call this operation
 - The **struct** must have an `execute` method with the correct signature
 - **OutputTensor** and **InputTensor** types define the interface for Python data
@@ -215,6 +232,7 @@ mojo package op -o op.mojopkg
 ```
 
 This command:
+
 1. Compiles the Mojo code into a deployable package
 2. Creates the necessary metadata for MAX Graph to understand the operation
 3. Produces a binary artifact (`op.mojopkg`) that can be loaded by Python
@@ -252,6 +270,7 @@ with Graph(
 ```
 
 The key elements are:
+
 1. Specifying the path to our custom operations with `custom_extensions`
 2. Calling `ops.custom` with the registered operation name
 3. Passing input values and parameters that match our operation's signature

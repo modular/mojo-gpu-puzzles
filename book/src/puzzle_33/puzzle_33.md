@@ -310,20 +310,20 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p33 --test
+pixi run p33 --test
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p33 --test
+uv run poe p33 --test
 ```
 
   </div>

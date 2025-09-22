@@ -1,12 +1,12 @@
 # Elementwise - Basic GPU Functional Operations
 
-Implement a kernel that adds two vectors element-wise using Mojo's functional `elementwise` pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.
+This puzzle implements vector addition using Mojo's functional `elementwise` pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.
 
 **Key insight:** _The [elementwise](https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/) function automatically handles thread management, SIMD vectorization, and memory coalescing for you._
 
 ## Key concepts
 
-In this puzzle, you'll learn:
+This puzzle covers:
 
 - **Functional GPU programming** with `elementwise`
 - **Automatic SIMD vectorization** within GPU threads
@@ -17,7 +17,7 @@ In this puzzle, you'll learn:
 The mathematical operation is simple element-wise addition:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
 
-But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.
+The implementation covers fundamental patterns applicable to all GPU functional programming in Mojo.
 
 ## Configuration
 
@@ -123,20 +123,28 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p23 --elementwise
+pixi run p23 --elementwise
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p23 --elementwise
+pixi run p23 --elementwise -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p23 --elementwise
 ```
 
   </div>
@@ -169,7 +177,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 <div class="solution-explanation">
 
-The elementwise functional pattern in Mojo demonstrates several fundamental concepts for modern GPU programming:
+The elementwise functional pattern in Mojo introduces several fundamental concepts for modern GPU programming:
 
 ### 1. **Functional abstraction philosophy**
 
@@ -209,7 +217,7 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
 
 **Parameter Analysis:**
 
-- **`@parameter`**: This decorator enables **compile-time specialization**. The function is generated separately for each unique `simd_width` and `rank`, allowing aggressive optimization.
+- **`@parameter`**: This decorator provides **compile-time specialization**. The function is generated separately for each unique `simd_width` and `rank`, allowing aggressive optimization.
 - **`@always_inline`**: Critical for GPU performance - eliminates function call overhead by embedding the code directly into the kernel.
 - **`capturing`**: Enables **lexical scoping** - the inner function can access variables from the outer scope without explicit parameter passing.
 - **`IndexList[rank]`**: Provides **dimension-agnostic indexing** - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.
@@ -347,7 +355,7 @@ This pattern represents the future of GPU programming - high-level abstractions 
 </div>
 </details>
 
-## Next Steps
+## Next steps
 
 Once you've learned elementwise operations, you're ready for:
 
@@ -356,4 +364,4 @@ Once you've learned elementwise operations, you're ready for:
 - **[🧠 GPU Threading vs SIMD](./gpu-thread-vs-simd.md)**: Understanding the execution hierarchy
 - **[📊 Benchmarking](./benchmarking.md)**: Performance analysis and optimization
 
-💡 **Key Takeaway**: The `elementwise` pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.
+💡 **Key Takeaway**: The `elementwise` pattern shows how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.

@@ -1,13 +1,15 @@
 # Puzzle 15: Axis Sum
 
 ## Overview
+
 Implement a kernel that computes a sum over each row of 2D matrix `a` and stores it in `output` using LayoutTensor.
 
 ![Axis Sum visualization](./media/videos/720p30/puzzle_15_viz.gif)
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Parallel reduction along matrix dimensions using LayoutTensor
 - Using block coordinates for data partitioning
 - Efficient shared memory reduction patterns
@@ -16,6 +18,7 @@ In this puzzle, you'll learn about:
 The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging LayoutTensor's dimensional indexing.
 
 ## Configuration
+
 - Matrix dimensions: \\(\\text{BATCH} \\times \\text{SIZE} = 4 \\times 6\\)
 - Threads per block: \\(\\text{TPB} = 8\\)
 - Grid dimensions: \\(1 \\times \\text{BATCH}\\)
@@ -37,6 +40,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 ```mojo
 {{#include ../../../problems/p15/p15.mojo:axis_sum}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p15/p15.mojo" class="filename">View full file: problems/p15/p15.mojo</a>
 
 <details>
@@ -48,6 +52,7 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 2. Load elements: `cache[local_i] = a[batch * size + local_i]`
 3. Perform parallel reduction with halving stride
 4. Thread 0 writes final sum to `output[batch]`
+
 </div>
 </details>
 
@@ -57,15 +62,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p15
-```
-
   </div>
   <div class="tab-content">
 
@@ -74,9 +74,31 @@ pixi run p15
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p15 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p15 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p15
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: DeviceBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
@@ -95,7 +117,8 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 
 The solution implements a parallel row-wise sum reduction for a 2D matrix using LayoutTensor. Here's a comprehensive breakdown:
 
-### Matrix Layout and Block Mapping
+### Matrix layout and block mapping
+
 ```txt
 Input Matrix (4×6) with LayoutTensor:                Block Assignment:
 [[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
@@ -104,9 +127,10 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
  [ a[3,0]  a[3,1]  a[3,2]  a[3,3]  a[3,4]  a[3,5] ] → Block(0,3)
 ```
 
-### Parallel Reduction Process
+### Parallel reduction process
 
 1. **Initial Data Loading**:
+
    ```txt
    Block(0,0): cache = [a[0,0] a[0,1] a[0,2] a[0,3] a[0,4] a[0,5] * *]  // * = padding
    Block(0,1): cache = [a[1,0] a[1,1] a[1,2] a[1,3] a[1,4] a[1,5] * *]
@@ -115,6 +139,7 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    ```
 
 2. **Reduction Steps** (for Block 0,0):
+
    ```txt
    Initial:  [0  1  2  3  4  5  *  *]
    Stride 4: [4  5  6  7  4  5  *  *]
@@ -122,7 +147,7 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    Stride 1: [15 12 6  7  4  5  *  *]
    ```
 
-### Key Implementation Features:
+### Key implementation features
 
 1. **Layout Configuration**:
    - Input: row-major layout (BATCH × SIZE)
@@ -135,6 +160,7 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    - LayoutTensor 2D indexing for output: `output[batch, 0]`
 
 3. **Parallel Reduction Logic**:
+
    ```mojo
    stride = TPB // 2
    while stride > 0:
@@ -145,6 +171,7 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    ```
 
    **Note**: This implementation has a potential race condition where threads simultaneously read from and write to shared memory during the same iteration. A safer approach would separate the read and write phases:
+
    ```mojo
    stride = TPB // 2
    while stride > 0:
@@ -159,12 +186,13 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    ```
 
 4. **Output Writing**:
+
    ```mojo
    if local_i == 0:
        output[batch, 0] = cache[0]  --> One result per batch
    ```
 
-### Performance Optimizations:
+### Performance optimizations
 
 1. **Memory Efficiency**:
    - Coalesced memory access through LayoutTensor
@@ -182,7 +210,8 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    - No inter-block communication needed
    - **Race condition consideration**: The current implementation may have read-write hazards during parallel reduction that could be resolved with explicit read-write phase separation
 
-### Complexity Analysis:
+### Complexity analysis
+
 - Time: \\(O(\log n)\\) per row, where n is row length
 - Space: \\(O(TPB)\\) shared memory per block
 - Total parallel time: \\(O(\log n)\\) with sufficient threads

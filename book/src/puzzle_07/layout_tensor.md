@@ -9,6 +9,7 @@ Implement a kernel that adds 10 to each position of 2D LayoutTensor `a` and stor
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Using `LayoutTensor` with multiple blocks
 - Handling large matrices with 2D block organization
 - Combining block indexing with `LayoutTensor` access
@@ -29,6 +30,7 @@ The key insight is that `LayoutTensor` simplifies 2D indexing while still requir
 ```mojo
 {{#include ../../../problems/p07/p07_layout_tensor.mojo:add_10_blocks_2d_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07_layout_tensor.mojo" class="filename">View full file: problems/p07/p07_layout_tensor.mojo</a>
 
 <details>
@@ -39,6 +41,7 @@ The key insight is that `LayoutTensor` simplifies 2D indexing while still requir
 1. Calculate global indices: `row = block_dim.y * block_idx.y + thread_idx.y`, `col = block_dim.x * block_idx.x + thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard: think about how to add 10 to 2D LayoutTensor
+
 </div>
 </details>
 
@@ -48,15 +51,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p07_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -65,9 +63,31 @@ pixi run p07_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p07_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p07_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p07_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
@@ -90,6 +110,7 @@ This solution demonstrates how LayoutTensor simplifies 2D block-based processing
    - Global row: `block_dim.y * block_idx.y + thread_idx.y`
    - Global col: `block_dim.x * block_idx.x + thread_idx.x`
    - Maps thread grid to tensor elements:
+
      ```txt
      5×5 tensor with 3×3 blocks:
 
@@ -103,12 +124,14 @@ This solution demonstrates how LayoutTensor simplifies 2D block-based processing
      [(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
      [  *     *     *  ] [  *     *      *  ]
      ```
+
      (* = thread exists but outside tensor bounds)
 
 2. **LayoutTensor benefits**
    - Natural 2D indexing: `tensor[row, col]` instead of manual offset calculation
    - Automatic memory layout optimization
    - Example access pattern:
+
      ```txt
      Raw memory:         LayoutTensor:
      row * size + col    tensor[row, col]

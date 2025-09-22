@@ -1,6 +1,7 @@
 # Puzzle 3: Guards
 
 ## Overview
+
 Implement a kernel that adds 10 to each position of vector `a` and stores it in vector `output`.
 
 **Note**: _You have more threads than positions. This means you need to protect against out-of-bounds memory access._
@@ -9,17 +10,20 @@ Implement a kernel that adds 10 to each position of vector `a` and stores it in 
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Handling thread/data size mismatches
 - Preventing out-of-bounds memory access
 - Using conditional execution in GPU kernels
 - Safe memory access patterns
 
-### Mathematical Description
+### Mathematical description
+
 For each thread \\(i\\):
 \\[\Large \text{if}\\ i < \text{size}: output[i] = a[i] + 10\\]
 
-### Memory Safety Pattern
+### Memory safety pattern
+
 ```txt
 Thread 0 (i=0):  if 0 < size:  output[0] = a[0] + 10  ✓ Valid
 Thread 1 (i=1):  if 1 < size:  output[1] = a[1] + 10  ✓ Valid
@@ -30,6 +34,7 @@ Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
 ```
 
 💡 **Note**: Boundary checking becomes increasingly complex with:
+
 - Multi-dimensional arrays
 - Different array shapes
 - Complex access patterns
@@ -39,6 +44,7 @@ Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
 ```mojo
 {{#include ../../../problems/p03/p03.mojo:add_10_guard}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p03/p03.mojo" class="filename">View full file: problems/p03/p03.mojo</a>
 
 <details>
@@ -49,6 +55,7 @@ Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
 1. Store `thread_idx.x` in `i`
 2. Add guard: `if i < size`
 3. Inside guard: `output[i] = a[i] + 10.0`
+
 </div>
 </details>
 
@@ -58,15 +65,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p03
-```
-
   </div>
   <div class="tab-content">
 
@@ -75,9 +77,31 @@ pixi run p03
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p03 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p03 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p03
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -95,20 +119,24 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <div class="solution-explanation">
 
 This solution:
+
 - Gets thread index with `i = thread_idx.x`
 - Guards against out-of-bounds access with `if i < size`
 - Inside guard: adds 10 to input value
+
 </div>
 </details>
 
 ### Looking ahead
 
 While simple boundary checks work here, consider these challenges:
+
 - What about 2D/3D array boundaries?
 - How to handle different shapes efficiently?
 - What if we need padding or edge handling?
 
 Example of growing complexity:
+
 ```mojo
 # Current: 1D bounds check
 if i < size: ...

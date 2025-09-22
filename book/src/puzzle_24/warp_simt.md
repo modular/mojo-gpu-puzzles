@@ -7,6 +7,7 @@
 A **warp** is a group of 32 (or 64) GPU threads that execute **the same instruction at the same time** on different data. Think of it as a **synchronized vector unit** where each thread acts like a "lane" in a vector processor.
 
 **Simple example:**
+
 ```mojo
 from gpu.warp import sum
 # All 32 threads in the warp execute this simultaneously:
@@ -37,6 +38,7 @@ __m256 result = _mm256_add_ps(a, b);   // Add 8 pairs simultaneously
 ```
 
 **CPU SIMD approach (Mojo):**
+
 ```mojo
 # SIMD in Mojo is first class citizen type so if a, b are of type SIMD then
 # addition 8 floats in parallel
@@ -44,6 +46,7 @@ var result = a + b # Add 8 pairs simultaneously
 ```
 
 **GPU SIMT approach (Mojo):**
+
 ```mojo
 # Thread-based code that becomes vector operations
 from gpu.warp import sum
@@ -56,17 +59,20 @@ var total = sum(partial)               # Hardware coordinates the sum
 ### Core concepts that make warps powerful
 
 **1. Lane identity:** Each thread has a "lane ID" (0 to 31) that's essentially free to access
+
 ```mojo
 var my_lane = lane_id()  # Just reading a hardware register
 ```
 
 **2. Implicit synchronization:** No barriers needed within a warp
+
 ```mojo
 # This just works - all threads automatically synchronized
 var sum = sum(my_contribution)
 ```
 
 **3. Efficient communication:** Threads can share data without memory
+
 ```mojo
 # Get value from lane 0 to all other lanes
 var broadcasted = shuffle_idx(my_value, 0)
@@ -92,7 +98,7 @@ GPU Device
 
 **Warp programming operates at the "Warp level"** - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like `sum()` that would otherwise require complex shared memory coordination.
 
-This mental model helps you recognize when problems map naturally to warp operations versus requiring traditional shared memory approaches.
+This mental model supports recognizing when problems map naturally to warp operations versus requiring traditional shared memory approaches.
 
 ## The hardware foundation of warp programming
 
@@ -116,6 +122,7 @@ Understanding **Single Instruction, Multiple Thread (SIMT)** execution is crucia
 | **Data** | Independent data sets | Different data, same operation |
 
 **GPU Warp Execution Pattern:**
+
 - **Instruction**: Same for all 32 lanes: `add r1, r2`
 - **Lane 0**: Operates on `Data0` → `Result0`
 - **Lane 1**: Operates on `Data1` → `Result1`
@@ -192,12 +199,14 @@ else:
 | **4** | Convergence | All 32 lanes | None | 100% | Normal speed resumed |
 
 **Example breakdown:**
+
 - **Step 2**: Only even lanes execute `compute_even()` while odd lanes wait
 - **Step 3**: Only odd lanes execute `compute_odd()` while even lanes wait
 - **Total time**: `time(compute_even) + time(compute_odd)` (sequential execution)
 - **Without divergence**: `max(time(compute_even), time(compute_odd))` (parallel execution)
 
 **Performance impact:**
+
 1. **Divergence**: Warp splits execution - some lanes active, others wait
 2. **Serial execution**: Different paths run sequentially, not in parallel
 3. **Convergence**: All lanes reunite and continue together
@@ -208,22 +217,27 @@ else:
 ### Warp efficiency patterns
 
 **✅ EXCELLENT: Uniform execution (100% efficiency)**
+
 ```mojo
 # All lanes do the same work - no divergence
 var partial = a[global_i] * b[global_i]
 var total = sum(partial)
 ```
+
 *Performance: All 32 lanes active simultaneously*
 
 **⚠️ ACCEPTABLE: Predictable divergence (~95% efficiency)**
+
 ```mojo
 # Divergence based on lane_id() - hardware optimized
 if lane_id() == 0:
     output[block_idx] = sum(partial)
 ```
+
 *Performance: Brief single-lane operation, predictable pattern*
 
 **🔶 CAUTION: Structured divergence (~50-75% efficiency)**
+
 ```mojo
 # Regular patterns can be optimized by compiler
 if (global_i / 4) % 2 == 0:
@@ -231,9 +245,11 @@ if (global_i / 4) % 2 == 0:
 else:
     result = method_b()
 ```
+
 *Performance: Predictable groups, some optimization possible*
 
 **❌ AVOID: Data-dependent divergence (~25-50% efficiency)**
+
 ```mojo
 # Different lanes may take different paths based on data
 if input[global_i] > threshold:  # Unpredictable branching
@@ -241,9 +257,11 @@ if input[global_i] > threshold:  # Unpredictable branching
 else:
     result = simple_computation()
 ```
+
 *Performance: Random divergence kills warp efficiency*
 
 **💀 TERRIBLE: Nested data-dependent divergence (~10-25% efficiency)**
+
 ```mojo
 # Multiple levels of unpredictable branching
 if input[global_i] > threshold1:
@@ -254,6 +272,7 @@ if input[global_i] > threshold1:
 else:
     result = simple()
 ```
+
 *Performance: Warp efficiency destroyed*
 
 ## Cross-architecture compatibility
@@ -269,29 +288,34 @@ from gpu.warp import WARP_SIZE
 ```
 
 **Why this matters:**
+
 - **Memory patterns**: Coalesced access depends on warp size
 - **Algorithm design**: Reduction trees must account for warp size
 - **Performance scaling**: Twice as many lanes per warp on AMD
 
 ### Writing portable warp code
 
-### Architecture Adaptation Strategies
+### Architecture adaptation strategies
 
 **✅ PORTABLE: Always use `WARP_SIZE`**
+
 ```mojo
 alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
 alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 ```
+
 *Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)*
 
 **❌ BROKEN: Never hardcode warp size**
+
 ```mojo
 alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
 alias REDUCTION_SIZE = 32           # Wrong on AMD!
 ```
+
 *Result: Suboptimal on AMD, potential correctness issues*
 
-### Real Hardware Impact
+### Real hardware impact
 
 | GPU Architecture | WARP_SIZE | Memory per Warp | Reduction Steps | Lane Pattern |
 |------------------|-----------|-----------------|-----------------|--------------|
@@ -299,6 +323,7 @@ alias REDUCTION_SIZE = 32           # Wrong on AMD!
 | **AMD CDNA** | 64 | 256 bytes (4×64) | 6 steps: 64→32→16→8→4→2→1 | Lanes 0-63 |
 
 **Performance implications of 64 vs 32:**
+
 - **CDNA advantage**: 2× memory bandwidth per warp
 - **CDNA advantage**: 2× computation per warp
 - **NVIDIA/RDNA advantage**: More warps per block (better occupancy)
@@ -306,9 +331,10 @@ alias REDUCTION_SIZE = 32           # Wrong on AMD!
 
 ## Memory access patterns with warps
 
-### Coalesced Memory Access Patterns
+### Coalesced memory access patterns
 
 **✅ PERFECT: Coalesced access (100% bandwidth utilization)**
+
 ```mojo
 # Adjacent lanes → adjacent memory addresses
 var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
@@ -324,6 +350,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 | | 32 separate transactions | 64 separate transactions | Mostly idle bus | **32× slower** |
 
 **Example addresses:**
+
 - **Coalesced**: Lane 0→0, Lane 1→4, Lane 2→8, Lane 3→12, ...
 - **Scattered**: Lane 0→1000, Lane 1→52, Lane 2→997, Lane 3→8, ...
 
@@ -334,6 +361,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 Assume that a GPU shared memory is divided into 32 independent **banks** that can be accessed simultaneously. A **bank conflict** occurs when multiple threads in a warp try to access different addresses within the same bank at the same time. When this happens, the hardware must **serialize** these accesses, turning what should be a single-cycle operation into multiple cycles.
 
 **Key concepts:**
+
 - **No conflict**: Each thread accesses a different bank → All accesses happen simultaneously (1 cycle)
 - **Bank conflict**: Multiple threads access the same bank → Accesses happen sequentially (N cycles for N threads)
 - **Broadcast**: All threads access the same address → Hardware optimizes this to 1 cycle
@@ -376,7 +404,6 @@ Assume that a GPU shared memory is divided into 32 independent **banks** that ca
 | **Memory traffic** | High | Minimal |
 | **Synchronization cost** | Expensive | Free |
 | **Code complexity** | High | Low |
-
 
 ## Next steps
 

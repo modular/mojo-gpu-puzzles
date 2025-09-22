@@ -47,20 +47,28 @@ This works, but it's verbose, error-prone, and requires deep understanding of GP
 **Test the traditional approach:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p24 --traditional
+pixi run p24 --traditional
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p24 --traditional
+pixi run p24 --traditional -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p24 --traditional
 ```
 
   </div>
@@ -488,7 +496,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 
 **Note:** Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, `WARP_SIZE`). The key insight is observing the relative performance trends rather than absolute timings.
 
-## Next Steps
+## Next steps
 
 Once you've learned warp sum operations, you're ready for:
 

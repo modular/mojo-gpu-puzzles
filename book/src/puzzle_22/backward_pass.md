@@ -3,6 +3,7 @@
 ## Overview
 
 In this puzzle, we explore the backward pass implementation of the fused LayerNorm + Linear operation. The backward pass computes gradients with respect to:
+
 - Input tensor
 - LayerNorm scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters
 - Linear layer weight matrix and bias
@@ -20,6 +21,7 @@ The mathematical operations we're implementing are:
 3. Chain Rule for Fused Operation:
 \\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}} \frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial x} \\]
 where:
+
 - \\(y_{norm}\\) is the LayerNorm output
 - \\(y_{linear}\\) is the Linear layer output
 - The chain rule ensures proper gradient flow through both operations
@@ -65,6 +67,7 @@ where:
 ## Implementation (challenging)
 
 The fused backward kernel combines LayerNorm and Linear backward operations into a single GPU kernel. This is a challenging implementation that requires careful handling of:
+
 - [Atomic operations](https://docs.modular.com/mojo/stdlib/os/atomic/Atomic/) for gradient accumulation
 - Numerical stability in gradient computations
 - Memory access patterns for efficient GPU utilization
@@ -75,6 +78,7 @@ The fused backward kernel combines LayerNorm and Linear backward operations into
 ```
 
 **Key optimizations:**
+
 - Single kernel launch for all gradient computations
 - Atomic operations for safe gradient accumulation
 - Coalesced memory access patterns
@@ -105,6 +109,7 @@ The fused backward kernel combines LayerNorm and Linear backward operations into
    - Minimize memory traffic
    - Use proper type casting
    - Ensure proper alignment
+
 </div>
 </details>
 
@@ -114,15 +119,9 @@ To test your fused backward implementation, run:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p22 --backward
-```
-
   </div>
   <div class="tab-content">
 
@@ -131,9 +130,24 @@ pixi run p22 --backward
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p22 --backward -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p22 --backward
+```
+
+  </div>
 </div>
 
 Your output will look like this:
+
 ```txt
 Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
 ✅ Loaded Mojo operations library
@@ -269,6 +283,7 @@ The fused backward implementation combines operations efficiently:
    - Integration with PyTorch's autograd system
 
 This implementation achieves better performance than the unfused version by:
+
 - Reducing memory bandwidth usage through kernel fusion
 - Minimizing kernel launch overhead
 - Optimizing memory access patterns
@@ -294,6 +309,7 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 ```
 
 These optimizations are particularly important for the backward pass because:
+
 - Small tensor operations benefit from compilation caching
 - Dynamic shapes are common in backward passes
 - Error handling needs to be robust for gradient computation
@@ -302,6 +318,7 @@ These optimizations are particularly important for the backward pass because:
 - Compilation overhead can significantly impact training time
 
 The backward pass is compiled with `reduce-overhead` mode to minimize the compilation overhead while maintaining correctness. This is especially important because:
+
 - Backward passes are called frequently during training
 - Gradient computation needs to be numerically stable
 - Memory access patterns need to be optimized
@@ -313,41 +330,50 @@ The backward pass is compiled with `reduce-overhead` mode to minimize the compil
 The backward pass gradient for LayerNorm is derived through careful application of the chain rule. Here's the step-by-step derivation:
 
 ### Forward pass operations
+
 - Mean: \\(\mu = \frac{1}{H} \sum_{i=1}^{H} x_i\\)
 - Variance: \\(\sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2\\)
 - Normalized value: \\(\hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}}\\)
 - Final output: \\(y = \gamma \odot \hat{x} + \beta\\)
 
 ### Chain rule application
+
 To compute \\(\frac{\partial L}{\partial x}\\), we apply the chain rule:
 \\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\\]
 
 ### Gradient components
 
 #### Output to normalized value
+
 - \\(\frac{\partial y}{\partial \hat{x}} = \gamma\\) (element-wise multiplication)
 
 #### Normalized value to input
+
 The gradient \\(\frac{\partial \hat{x}}{\partial x}\\) has three components:
+
 - Direct effect through numerator: \\(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\\)
 - Indirect effect through mean: \\(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 + \epsilon}}\\)
 - Indirect effect through variance: \\(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x - \mu)\\)
 
 ### Combining terms
+
 The gradient through the normalization term can be simplified to:
 \\[\Large \frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
 
 ### Final gradient expression
+
 Combining all terms:
 \\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\\]
 
 ### Key insights
+
 - The chain rule accounts for all paths through which x affects the output
 - The normalization term \\(\sqrt{\sigma^2 + \epsilon}\\) appears in both numerator and denominator
 - The mean and variance terms create additional paths for gradient flow
 - The final expression combines all effects into a single efficient computation
 
 ### Implementation considerations
+
 - The gradient properly accounts for the scaling effect of \\(\gamma\\)
 - The normalization effect of mean and variance is preserved
 - The numerical stability term \\(\epsilon\\) is maintained

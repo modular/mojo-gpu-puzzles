@@ -130,20 +130,28 @@ lane = lane_id()  # Returns 0 to WARP_SIZE-1
 **Test the neighbor difference:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p25 --neighbor
+pixi run p25 --neighbor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p25 --neighbor
+pixi run p25 --neighbor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p25 --neighbor
 ```
 
   </div>
@@ -335,20 +343,28 @@ This puzzle uses multiple blocks, each processing a different section of the dat
 **Test the moving average:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p25 --average
+pixi run p25 --average
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p25 --average
+pixi run p25 --average -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p25 --average
 ```
 
   </div>

@@ -117,20 +117,28 @@ The `prefix_sum` function may require specific data types for optimal performanc
 **Test the warp inclusive prefix sum:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p26 --prefix-sum
+pixi run p26 --prefix-sum
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p26 --prefix-sum
+pixi run p26 --prefix-sum -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p26 --prefix-sum
 ```
 
   </div>

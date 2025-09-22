@@ -16,12 +16,14 @@ In this puzzle, you'll learn about:
 The key insight is how LayoutTensor simplifies shared memory management while maintaining efficient window-based operations.
 
 ## Configuration
+
 - Array size: `SIZE = 8` elements
 - Threads per block: `TPB = 8`
 - Window size: 3 elements
 - Shared memory: `TPB` elements
 
 Notes:
+
 - **Tensor builder**: Use `LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()`
 - **Window access**: Natural indexing for 3-element windows
 - **Edge handling**: Special cases for first two positions
@@ -32,6 +34,7 @@ Notes:
 ```mojo
 {{#include ../../../problems/p11/p11_layout_tensor.mojo:pooling_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p11/p11_layout_tensor.mojo" class="filename">View full file: problems/p11/p11_layout_tensor.mojo</a>
 
 <details>
@@ -44,6 +47,7 @@ Notes:
 3. Handle special cases for first two elements
 4. Use shared memory for window operations
 5. Guard against out-of-bounds access
+
 </div>
 </details>
 
@@ -53,15 +57,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p11_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -70,9 +69,31 @@ pixi run p11_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p11_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p11_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p11_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
@@ -93,35 +114,45 @@ The solution implements a sliding window sum using LayoutTensor with these key s
 
 1. **Shared memory setup**
    - Tensor builder creates block-local storage:
+
      ```txt
      shared = tb[dtype]().row_major[TPB]().shared().alloc()
      ```
+
    - Each thread loads one element:
+
      ```txt
      Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
      Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
      ```
+
    - `barrier()` ensures all data is loaded
 
 2. **Boundary cases**
    - Position 0: Single element
+
      ```txt
      output[0] = shared[0] = 0.0
      ```
+
    - Position 1: Sum of first two elements
+
      ```txt
      output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
      ```
 
 3. **Main window operation**
    - For positions 2 and beyond:
+
      ```txt
      Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
      Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
      Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
      ...
      ```
+
    - Natural indexing with LayoutTensor:
+
      ```txt
      # Sliding window of 3 elements
      window_sum = shared[i-2] + shared[i-1] + shared[i]
@@ -137,14 +168,17 @@ The solution implements a sliding window sum using LayoutTensor with these key s
      - Type safety throughout
 
 This approach combines the performance of shared memory with LayoutTensor's safety and ergonomics:
+
 - Minimizes global memory access
 - Simplifies window operations
 - Handles boundaries cleanly
 - Maintains coalesced access patterns
 
 The final output shows the cumulative window sums:
+
 ```txt
 [0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
 ```
+
 </div>
 </details>

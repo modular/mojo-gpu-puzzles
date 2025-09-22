@@ -134,19 +134,19 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 
 Use your profiling evidence to answer these questions by looking at the kernel code <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>:
 
-### Performance Analysis
+### Performance analysis
 
 1. **Which kernel achieves the highest Memory Throughput?** (Look at Gbyte/s values)
 2. **Which kernel has the lowest Max Bandwidth utilization?** (Compare percentages)
 3. **What's the performance gap in memory throughput?** (Factor difference between fastest and slowest)
 
-### The Cache Paradox
+### The cache paradox
 
 4. **Which kernel has the highest L1/TEX Hit Rate?**
 5. **Which kernel has the highest L2 Hit Rate?**
 6. **🤯 Why does the kernel with the BEST cache hit rates perform the WORST?**
 
-### Memory Access Detective Work
+### Memory access detective work
 
 7. **Can high cache hit rates actually indicate a performance problem?**
 8. **What memory access pattern would cause high cache hits but low throughput?**

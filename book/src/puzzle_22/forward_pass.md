@@ -212,20 +212,28 @@ To test your unfused implementation, run:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p22 --unfused
+pixi run p22 --unfused
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p22 --unfused
+pixi run p22 --unfused -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p22 --unfused
 ```
 
   </div>
@@ -445,20 +453,28 @@ To test your fused implementation, run:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p22 --fused
+pixi run p22 --fused
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p22 --fused
+pixi run p22 --fused -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p22 --fused
 ```
 
   </div>

@@ -6,7 +6,8 @@ Implement a kernel that computes the dot-product of 1D LayoutTensor `a` and 1D L
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Similar to the [puzzle 8](../puzzle_08/layout_tensor.md) and [puzzle 11](../puzzle_11/layout_tensor.md), implementing parallel reduction with LayoutTensor
 - Managing shared memory using `LayoutTensorBuilder`
 - Coordinating threads for collective operations
@@ -23,6 +24,7 @@ The key insight is how LayoutTensor simplifies memory management while maintaini
 - Shared memory: `TPB` elements
 
 Notes:
+
 - **Tensor builder**: Use `LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()`
 - **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
@@ -33,6 +35,7 @@ Notes:
 ```mojo
 {{#include ../../../problems/p12/p12_layout_tensor.mojo:dot_product_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_layout_tensor.mojo" class="filename">View full file: problems/p12/p12_layout_tensor.mojo</a>
 
 <details>
@@ -44,6 +47,7 @@ Notes:
 2. Store `a[global_i] * b[global_i]` in `shared[local_i]`
 3. Use parallel reduction pattern with `barrier()`
 4. Let thread 0 write final result to `output[0]`
+
 </div>
 </details>
 
@@ -53,15 +57,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p12_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -70,9 +69,31 @@ pixi run p12_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p12_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p12_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p12_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
@@ -92,12 +113,15 @@ expected: HostBuffer([140.0])
 The solution implements a parallel reduction for dot product using LayoutTensor. Here's the detailed breakdown:
 
 ### Phase 1: Element-wise Multiplication
+
 Each thread performs one multiplication with natural indexing:
+
 ```mojo
 shared[local_i] = a[global_i] * b[global_i]
 ```
 
 ### Phase 2: Parallel Reduction
+
 Tree-based reduction with layout-aware operations:
 
 ```txt
@@ -114,7 +138,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 ```
 
-### Key Implementation Features:
+### Key implementation features
 
 1. **Memory Management**:
    - Clean shared memory allocation with tensor builder
@@ -128,6 +152,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
    - Safe thread coordination
 
 3. **Reduction Logic**:
+
    ```mojo
    stride = TPB // 2
    while stride > 0:
@@ -144,12 +169,13 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
    - Efficient shared memory usage
 
 The LayoutTensor version maintains the same efficient parallel reduction while providing:
+
 - Better type safety
 - Cleaner memory management
 - Layout awareness
 - Natural indexing syntax
 
-### Barrier Synchronization Importance
+### Barrier synchronization importance
 
 The `barrier()` between reduction steps is critical for correctness. Here's why:
 
@@ -171,6 +197,7 @@ Without barrier:
 ```
 
 With `barrier()`:
+
 ```text
 Step 1 (stride = 4):
 All threads write their sums:
@@ -184,12 +211,14 @@ Thread 1: shared[1] = 26 + 58 = 84
 ```
 
 The `barrier()` ensures:
+
 1. All writes from current step complete
 2. All threads see updated values
 3. No thread starts next iteration early
 4. Consistent shared memory state
 
 Without these synchronization points, we could get:
+
 - Memory race conditions
 - Threads reading stale values
 - Non-deterministic results

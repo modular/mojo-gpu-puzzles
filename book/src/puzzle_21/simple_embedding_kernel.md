@@ -7,11 +7,13 @@ In this puzzle, you'll implement two different GPU kernels for embedding operati
 This kernel uses a simple 1D grid where each thread processes exactly one output element. The key insight is that consecutive threads will access consecutive memory locations, leading to optimal memory coalescing.
 
 **Thread organization:**
+
 - **Grid configuration**: `[total_elements // 256]` blocks, `256` threads per block
 - **Thread mapping**: Each thread handles one `(batch, seq, embed)` position
 - **Memory pattern**: Consecutive threads access consecutive embedding dimensions
 
 **What you need to implement:**
+
 1. Calculate the global thread index from block and thread indices
 2. Convert the flat index to 3D coordinates `(batch_idx, seq_idx, embed_idx)`
 3. Look up the token index from the indices tensor
@@ -24,8 +26,8 @@ You need to complete the missing parts in both embedding kernels:
 ```mojo
 {{#include ../../../problems/p21/op/embedding.mojo:embedding_kernel_coalesced}}
 ```
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a>
 
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -38,6 +40,7 @@ You need to complete the missing parts in both embedding kernels:
 - Always check bounds: `if global_idx >= total_elements: return`
 - Handle invalid token indices by setting output to 0
 - The embedding lookup is: `output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]`
+
 </div>
 </details>
 
@@ -46,11 +49,13 @@ You need to complete the missing parts in both embedding kernels:
 This kernel uses a 2D grid where the X dimension spans `(batch × seq)` positions and the Y dimension spans embedding dimensions. This can lead to non-coalesced memory access patterns.
 
 **Thread organization:**
+
 - **Grid configuration**: `[batch x seq // 16, embed_dim // 16]` blocks, `16 x 16` threads per block
 - **Thread mapping**: `thread_idx.x` maps to batch/sequence, `thread_idx.y` maps to embedding dimension
 - **Memory pattern**: Threads in a warp may access scattered memory locations
 
 **What you need to implement:**
+
 1. Calculate both X and Y coordinates from the 2D grid
 2. Convert the X coordinate to separate batch and sequence indices
 3. Use the Y coordinate directly as the embedding dimension
@@ -63,8 +68,8 @@ You need to complete the missing parts in both embedding kernels:
 ```mojo
 {{#include ../../../problems/p21/op/embedding.mojo:embedding_kernel_2d}}
 ```
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a>
 
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p21/op/embedding.mojo" class="filename">View full file: problems/p21/op/embedding.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -77,6 +82,7 @@ You need to complete the missing parts in both embedding kernels:
 - Remember to check bounds for both dimensions: `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
 - The token lookup is the same as 1D, but you're only handling one embedding dimension per thread
 - This kernel processes one embedding dimension per thread instead of entire vectors
+
 </div>
 </details>
 
@@ -165,20 +171,28 @@ You can run the puzzle with:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p21
+pixi run p21
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p21
+pixi run p21 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p21
 ```
 
   </div>
@@ -219,11 +233,13 @@ Key Learning Points:
 The solution involves implementing the coordinate transformations and memory operations for both kernels:
 
 ## 1D Coalesced Kernel
+
 ```mojo
 {{#include ../../../solutions/p21/op/embedding.mojo:embedding_kernel_coalesced_solution}}
 ```
 
 ## 2D Non-Coalesced Kernel
+
 ```mojo
 {{#include ../../../solutions/p21/op/embedding.mojo:embedding_kernel_2d_solution}}
 ```
@@ -249,11 +265,13 @@ Both solutions implement the same embedding lookup logic but with different thre
 ### Performance implications
 
 The 1D kernel typically performs better because:
+
 - **Memory coalescing**: Consecutive threads access consecutive memory addresses
 - **Simple indexing**: Lower computational overhead for coordinate calculations
 - **Better cache utilization**: Predictable memory access patterns
 
 The 2D kernel may perform worse due to:
+
 - **Scattered memory accesses**: Threads within a warp may access different embedding vectors
 - **Complex grid configuration**: 16×16 blocks may not align optimally with memory layout
 - **Warp divergence**: Different threads may follow different execution paths

@@ -5,10 +5,11 @@
 Building on your [crash debugging skills from the First Case](./first_case.md), you'll now face a completely different challenge: a **logic bug** that produces incorrect results without crashing.
 
 **The debugging shift:**
+
 - **First Case**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
 - **Second Case**: No crashes, no error messages - just subtly wrong results that require detective work
 
-This intermediate-level debugging challenge teaches you to investigate **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
+This intermediate-level debugging challenge covers investigating **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
 
 **Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you've run `pixi run setup-cuda-gdb` or similar symlink is available
 
@@ -20,6 +21,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 ## Key concepts
 
 In this debugging challenge, you'll learn about:
+
 - **LayoutTensor debugging**: Investigating structured data access patterns
 - **Logic bug detection**: Finding algorithmic errors that don't crash
 - **Loop boundary analysis**: Understanding iteration count problems
@@ -40,6 +42,7 @@ pixi run p09 --second-case
 ```
 
 You'll see output like this - **no crash, but wrong results**:
+
 ```txt
 This program computes sliding window sums for each position...
 
@@ -57,6 +60,7 @@ Check the window indexing logic...
 **Challenge**: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?
 
 **Think about:**
+
 - What pattern do you see in the wrong results?
 - How would you investigate a loop that might not be running correctly?
 - What debugging strategy works when you can't inspect variables directly?
@@ -110,12 +114,14 @@ pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-
 ### Phase 1: Launch and initial analysis
 
 #### Step 1: Start the debugger
+
 ```bash
 pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 ```
 
 #### Step 2: analyze the symptoms first
-Before diving into the debugger, let's examine what we know:
+
+Before diving into the debugger, examine what we know:
 
 ```txt
 Actual result: [0.0, 1.0, 3.0, 5.0]
@@ -123,6 +129,7 @@ Expected: [1.0, 3.0, 6.0, 5.0]
 ```
 
 **🔍 Pattern Recognition**:
+
 - Thread 0: Got 0.0, Expected 1.0 → Missing 1.0
 - Thread 1: Got 1.0, Expected 3.0 → Missing 2.0
 - Thread 2: Got 3.0, Expected 6.0 → Missing 3.0
@@ -133,6 +140,7 @@ Expected: [1.0, 3.0, 6.0, 5.0]
 ### Phase 2: Entering the kernel
 
 #### Step 3: Observe the breakpoint entry
+
 Based on the real debugging session, here's what happens:
 
 ```bash
@@ -153,6 +161,7 @@ CUDA thread hit application kernel entry function breakpoint, p09_process_slidin
 ```
 
 #### Step 4: Navigate to the main logic
+
 ```bash
 (cuda-gdb) n
 29          output: LayoutTensor[mut=True, dtype, vector_layout],
@@ -163,22 +172,26 @@ CUDA thread hit application kernel entry function breakpoint, p09_process_slidin
 ```
 
 #### Step 5: Test variable accessibility - crucial discovery
+
 ```bash
 (cuda-gdb) p thread_id
 $1 = 0
 ```
+
 **✅ Good**: Thread ID is accessible.
 
 ```bash
 (cuda-gdb) p window_sum
 Cannot access memory at address 0x0
 ```
+
 **❌ Problem**: `window_sum` is not accessible.
 
 ```bash
 (cuda-gdb) p input[0]
 Attempt to take address of value not located in memory.
 ```
+
 **❌ Problem**: Direct LayoutTensor indexing doesn't work.
 
 ```bash
@@ -187,11 +200,13 @@ $2 = {0}
 (cuda-gdb) p input.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 ```
+
 **🎯 BREAKTHROUGH**: `input.ptr[0]@4` shows the full input array! This is how we can inspect LayoutTensor data.
 
 ### Phase 3: The critical loop investigation
 
 #### Step 6: Set up loop monitoring
+
 ```bash
 (cuda-gdb) b 39
 Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
@@ -207,6 +222,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 **🔍 We're now inside the loop body. Let's count iterations manually.**
 
 #### Step 7: First loop iteration (offset = 0)
+
 ```bash
 (cuda-gdb) n
 40              if 0 <= idx < SIZE:
@@ -217,6 +233,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 **First iteration complete**: Loop went from line 39 → 40 → back to 38. The loop continues.
 
 #### Step 8: Second loop iteration (offset = 1)
+
 ```bash
 (cuda-gdb) n
 
@@ -237,6 +254,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 **Second iteration complete**: This time it went through the if-block (lines 41-42).
 
 #### Step 9: testing for third iteration
+
 ```bash
 (cuda-gdb) n
 44          output[thread_id] = window_sum
@@ -247,6 +265,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 **Conclusion**: The loop ran exactly **2 iterations** and then exited.
 
 #### Step 10: Complete kernel execution and context loss
+
 ```bash
 (cuda-gdb) n
 28      fn process_sliding_window(
@@ -264,6 +283,7 @@ No symbol "offset" in current context.
 ### Phase 4: Root cause analysis
 
 #### Step 11: Algorithm analysis from observed execution
+
 From our debugging session, we observed:
 
 1. **Loop Iterations**: Only 2 iterations (offset = 0, offset = 1)
@@ -271,30 +291,36 @@ From our debugging session, we observed:
 3. **Missing**: The third iteration (offset = 2)
 
 Looking at what each thread should compute:
+
 - **Thread 0**: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0
 - **Thread 1**: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0
 - **Thread 2**: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0
 - **Thread 3**: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0
 
 #### Step 12: Trace the actual execution for thread 0
+
 With only 2 iterations (offset = 0, 1):
 
 **Iteration 1 (offset = 0)**:
+
 - `idx = thread_id + offset - 1 = 0 + 0 - 1 = -1`
 - `if 0 <= idx < SIZE:` → `if 0 <= -1 < 4:` → **False**
 - Skip the sum operation
 
 **Iteration 2 (offset = 1)**:
+
 - `idx = thread_id + offset - 1 = 0 + 1 - 1 = 0`
 - `if 0 <= idx < SIZE:` → `if 0 <= 0 < 4:` → **True**
 - `window_sum += input[0]` → `window_sum += 0`
 
 **Missing Iteration 3 (offset = 2)**:
+
 - `idx = thread_id + offset - 1 = 0 + 2 - 1 = 1`
 - `if 0 <= idx < SIZE:` → `if 0 <= 1 < 4:` → **True**
 - `window_sum += input[1]` → `window_sum += 1` ← **THIS NEVER HAPPENS**
 
 **Result**: Thread 0 gets `window_sum = 0` instead of `window_sum = 0 + 1 = 1`
+
 ### Phase 5: Bug confirmation
 
 Looking at the problem code, we find:
@@ -315,18 +341,21 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 ## Key debugging lessons
 
 **When Variables Are Inaccessible**:
+
 1. **Focus on execution flow** - Count breakpoint hits and loop iterations
 2. **Use mathematical reasoning** - Work out what should happen vs what does happen
 3. **Pattern analysis** - Let the wrong results guide your investigation
 4. **Cross-validation** - Test your hypothesis against multiple data points
 
 **Professional GPU Debugging Reality**:
+
 - **Variable inspection often fails** due to compiler optimizations
 - **Execution flow analysis** is more reliable than data inspection
 - **Host output patterns** provide crucial debugging clues
 - **Source code reasoning** complements limited debugger capabilities
 
 **LayoutTensor Debugging**:
+
 - Even with LayoutTensor abstractions, underlying algorithmic bugs still manifest
 - Focus on the algorithm logic rather than trying to inspect tensor contents
 - Use systematic reasoning to trace what each thread should vs actually accesses
@@ -336,30 +365,34 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 </div>
 </details>
 
-## Next Steps: From Logic Bugs to Coordination Deadlocks
+## Next steps: from logic bugs to coordination deadlocks
 
 **You've learned logic bug debugging!** You can now:
+
 - ✅ **Investigate algorithmic errors** without crashes or obvious symptoms
 - ✅ **Use pattern analysis** to trace wrong results back to root causes
 - ✅ **Debug with limited variable access** using execution flow analysis
 - ✅ **Apply mathematical reasoning** when debugger tools have limitations
 
-### Your Final Challenge: [Detective Work: Third Case](./third_case.md)
+### Your final challenge: [Detective Work: Third Case](./third_case.md)
 
 **But what if your program doesn't crash AND doesn't finish?** What if it just **hangs forever**?
 
 The [Third Case](./third_case.md) presents the ultimate debugging challenge:
+
 - ❌ **No crash messages** (like First Case)
 - ❌ **No wrong results** (like Second Case)
 - ❌ **No completion at all** - just infinite hanging
 - ✅ **Silent deadlock** requiring advanced thread coordination analysis
 
 **New skills you'll develop:**
+
 - **Barrier deadlock detection** - Finding coordination failures in parallel threads
 - **Multi-thread state analysis** - Examining all threads simultaneously
 - **Synchronization debugging** - Understanding thread cooperation breakdowns
 
 **The debugging evolution:**
+
 1. **First Case**: Follow crash signals → Find memory bugs
 2. **Second Case**: Analyze result patterns → Find logic bugs
 3. **Third Case**: Investigate thread states → Find coordination bugs

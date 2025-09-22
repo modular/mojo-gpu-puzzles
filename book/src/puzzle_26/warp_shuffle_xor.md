@@ -124,20 +124,28 @@ Unlike `shuffle_down()`, `shuffle_xor()` operations stay within warp boundaries.
 **Test the butterfly pair swap:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p26 --pair-swap
+pixi run p26 --pair-swap
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p26 --pair-swap
+pixi run p26 --pair-swap -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p26 --pair-swap
 ```
 
   </div>
@@ -331,20 +339,28 @@ Result: All lanes have global maximum = 7
 **Test the butterfly parallel maximum:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p26 --parallel-max
+pixi run p26 --parallel-max
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p26 --parallel-max
+pixi run p26 --parallel-max -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p26 --parallel-max
 ```
 
   </div>
@@ -515,20 +531,28 @@ This puzzle uses multiple blocks. Consider how this affects the reduction scope.
 **Test the butterfly conditional maximum:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p26 --conditional-max
+pixi run p26 --conditional-max
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p26 --conditional-max
+pixi run p26 --conditional-max -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p26 --conditional-max
 ```
 
   </div>

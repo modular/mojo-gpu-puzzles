@@ -2,7 +2,7 @@
 
 ## Overview
 
-In this puzzle, you'll face a GPU program that crashes and the task is to find the issue without looking at the code and only through `(cuda-gdb)`. Run the debugger and be a detective!
+This puzzle presents a crashing GPU program where your task is to identify the issue using only `(cuda-gdb)` debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!
 
 **Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) to understand CUDA-GDB setup and basic debugging commands. Make sure you've run `pixi run setup-cuda-gdb` or similar symlink is available
 
@@ -61,7 +61,7 @@ mojo crashed!
 Please file a bug report.
 ```
 
-## Your Task: Detective Work
+## Your task: detective work
 
 **Challenge**: Without looking at the code yet, what would be your debugging strategy to investigate this crash?
 
@@ -116,7 +116,7 @@ CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
 - `result` has a valid GPU memory address
 - `input` is `0x0` - this is a null pointer!
 
-### Systematic Variable Inspection
+### Systematic variable inspection
 
 ```
 (cuda-gdb) next
@@ -129,7 +129,7 @@ $2 = (!pop.scalar<f32> * @register) 0x302000000
 $3 = (!pop.scalar<f32> * @register) 0x0
 ```
 
-**🔍 Evidence Gathering**:
+**Evidence Gathering**:
 
 - ✅ Thread index `i=0` is valid
 - ✅ Result pointer `0x302000000` is a proper GPU address
@@ -142,9 +142,9 @@ $3 = (!pop.scalar<f32> * @register) 0x0
 Cannot access memory at address 0x0
 ```
 
-**💥 Smoking Gun**: Cannot access memory at null address - this confirms the crash cause!
+**Smoking Gun**: Cannot access memory at null address - this confirms the crash cause!
 
-## Root Cause Analysis
+## Root cause analysis
 
 **The Problem**: Now if we look at the [code](../../../problems/p09/p09.mojo) for `--first-crash`, we see that the host code creates a null pointer instead of allocating proper GPU memory:
 
@@ -158,7 +158,7 @@ input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
 2. This null pointer gets passed to the GPU kernel
 3. When kernel tries `input[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
 
-## The Fix
+## The fix
 
 Replace null pointer creation with proper buffer allocation:
 
@@ -170,7 +170,7 @@ input_ptr = UnsafePointer[Scalar[dtype]]()
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 ```
 
-## Key Debugging Lessons
+## Key debugging lessons
 
 **Pattern Recognition**:
 
@@ -190,7 +190,7 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 </div>
 </details>
 
-## Next Steps: From Crashes to Silent Bugs
+## Next steps: from crashes to silent bugs
 
 **You've learned crash debugging!** You can now:
 
@@ -198,7 +198,7 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 - **Identify null pointer bugs** through pointer address inspection
 - **Use CUDA-GDB effectively** for memory-related debugging
 
-### Your Next Challenge: [Detective Work: Second Case](./second_case.md)
+### Your next challenge: [Detective Work: Second Case](./second_case.md)
 
 **But what if your program doesn't crash?** What if it runs perfectly but produces **wrong results**?
 

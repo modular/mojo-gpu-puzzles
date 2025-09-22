@@ -11,6 +11,7 @@ Implement a kernel that adds together each position of vector `a` and vector `b`
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Processing multiple input arrays in parallel
 - Element-wise operations with multiple inputs
 - Thread-to-data mapping across arrays
@@ -34,6 +35,7 @@ Thread 2:  a[2] + b[2] → output[2]
 ```mojo
 {{#include ../../../problems/p02/p02.mojo:add}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p02/p02.mojo" class="filename">View full file: problems/p02/p02.mojo</a>
 
 <details>
@@ -44,6 +46,7 @@ Thread 2:  a[2] + b[2] → output[2]
 1. Store `thread_idx.x` in `i`
 2. Add `a[i]` and `b[i]`
 3. Store result in `output[i]`
+
 </div>
 </details>
 
@@ -53,15 +56,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p02
-```
-
   </div>
   <div class="tab-content">
 
@@ -70,9 +68,31 @@ pixi run p02
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p02 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p02 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p02
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
@@ -90,14 +110,17 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <div class="solution-explanation">
 
 This solution:
+
 - Gets thread index with `i = thread_idx.x`
 - Adds values from both arrays: `output[i] = a[i] + b[i]`
+
 </div>
 </details>
 
 ### Looking ahead
 
 While this direct indexing works for simple element-wise operations, consider:
+
 - What if arrays have different layouts?
 - What if we need to broadcast one array to another?
 - How to ensure coalesced access across multiple arrays?

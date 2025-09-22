@@ -6,7 +6,8 @@ Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` an
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Implementing sliding window operations on GPUs
 - Managing data dependencies across threads
 - Using shared memory for overlapping regions
@@ -14,6 +15,7 @@ In this puzzle, you'll learn about:
 The key insight is understanding how to efficiently access overlapping elements while maintaining correct boundary conditions.
 
 ## Configuration
+
 - Input array size: `SIZE = 6` elements
 - Kernel size: `CONV = 3` elements
 - Threads per block: `TPB = 8`
@@ -21,6 +23,7 @@ The key insight is understanding how to efficiently access overlapping elements 
 - Shared memory: Two arrays of size `SIZE` and `CONV`
 
 Notes:
+
 - **Data loading**: Each thread loads one element from input and kernel
 - **Memory pattern**: Shared arrays for input and convolution kernel
 - **Thread sync**: Coordination before computation
@@ -30,6 +33,7 @@ Notes:
 ```mojo
 {{#include ../../../problems/p13/p13.mojo:conv_1d_simple}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a>
 
 <details>
@@ -42,6 +46,7 @@ Notes:
 3. Call `barrier()` after loading
 4. Sum products within bounds: `if local_i + j < SIZE`
 5. Write result if `global_i < SIZE`
+
 </div>
 </details>
 
@@ -51,15 +56,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p13 --simple
-```
-
   </div>
   <div class="tab-content">
 
@@ -68,9 +68,31 @@ pixi run p13 --simple
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p13 --simple -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p13 --simple -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p13 --simple
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
@@ -89,21 +111,24 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 The solution implements a 1D convolution using shared memory for efficient access to overlapping elements. Here's a detailed breakdown:
 
-### Memory Layout
+### Memory layout
+
 ```txt
 Input array a:   [0  1  2  3  4  5]
 Kernel b:        [0  1  2]
 ```
 
-### Computation Steps
+### Computation steps
 
 1. **Data Loading**:
+
    ```txt
    shared_a: [0  1  2  3  4  5]  // Input array
    shared_b: [0  1  2]           // Convolution kernel
    ```
 
 2. **Convolution Process** for each position i:
+
    ```txt
    output[0] = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] = 0*0 + 1*1 + 2*2 = 5
    output[1] = a[1]*b[0] + a[2]*b[1] + a[3]*b[2] = 1*0 + 2*1 + 3*2 = 8
@@ -113,10 +138,11 @@ Kernel b:        [0  1  2]
    output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
    ```
 
-### Implementation Details
+### Implementation details
 
 1. **Thread Participation and Efficiency Considerations**:
    - The inefficient approach without proper thread guard:
+
      ```mojo
      # Inefficient version - all threads compute even when results won't be used
      local_sum = Scalar[dtype](0)
@@ -129,6 +155,7 @@ Kernel b:        [0  1  2]
      ```
 
    - The efficient and correct implementation:
+
      ```mojo
      if global_i < SIZE:
          var local_sum: output.element_type = 0  # Using var allows type inference

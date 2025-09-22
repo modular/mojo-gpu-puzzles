@@ -7,7 +7,8 @@ This is the most straightforward implementation where each thread computes one e
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - 2D thread organization for matrix operations
 - Global memory access patterns
 - Matrix indexing in row-major layout
@@ -22,6 +23,7 @@ The key insight is understanding how to map 2D thread indices to matrix elements
 - Grid dimensions: \\(1 \\times 1\\)
 
 Layout configuration:
+
 - Input A: `Layout.row_major(SIZE, SIZE)`
 - Input B: `Layout.row_major(SIZE, SIZE)`
 - Output: `Layout.row_major(SIZE, SIZE)`
@@ -31,6 +33,7 @@ Layout configuration:
 ```mojo
 {{#include ../../../problems/p16/p16.mojo:naive_matmul}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a>
 
 <details>
@@ -42,6 +45,7 @@ Layout configuration:
 2. Check if indices are within `size`
 3. Accumulate products in a local variable
 4. Write final sum to correct output position
+
 </div>
 </details>
 
@@ -51,15 +55,9 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p16 --naive
-```
-
   </div>
   <div class="tab-content">
 
@@ -68,9 +66,24 @@ pixi run p16 --naive
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p16 --naive -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p16 --naive
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
@@ -87,18 +100,20 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-The naive matrix multiplication using LayoutTensor demonstrates the basic approach:
+The naive matrix multiplication using LayoutTensor follows this basic approach:
 
-### Matrix Layout (2×2 example)
+### Matrix layout (2×2 example)
+
 ```txt
 Matrix A:          Matrix B:                   Output C:
 [a[0,0] a[0,1]]    [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
 [a[1,0] a[1,1]]    [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
 ```
 
-### Implementation Details:
+### Implementation details
 
 1. **Thread mapping**:
+
    ```mojo
    row = block_dim.y * block_idx.y + thread_idx.y
    col = block_dim.x * block_idx.x + thread_idx.x
@@ -110,6 +125,7 @@ Matrix A:          Matrix B:                   Output C:
    - Output writing: `output[row, col]`
 
 3. **Computation flow**:
+
    ```mojo
    # Use var for mutable accumulator with tensor's element type
    var acc: output.element_type = 0
@@ -120,7 +136,7 @@ Matrix A:          Matrix B:                   Output C:
        acc += a[row, k] * b[k, col]
    ```
 
-### Key language features:
+### Key language features
 
 1. **Variable declaration**:
    - The use of `var` in `var acc: output.element_type = 0` allows for type inference with `output.element_type` ensures type compatibility with the output tensor
@@ -131,7 +147,7 @@ Matrix A:          Matrix B:                   Output C:
    - Improves performance for small, known matrix sizes
    - Enables better instruction scheduling
 
-### Performance characteristics:
+### Performance characteristics
 
 1. **Memory access**:
    - Each thread makes `2 x SIZE` global memory reads

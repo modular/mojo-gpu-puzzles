@@ -1,14 +1,16 @@
-## Why Consider LayoutTensor?
+## Why consider LayoutTensor?
 
 Looking at our traditional implementation above, you might notice some potential issues:
 
 ### Current approach
+
 ```mojo
 i = thread_idx.x
 output[i] = a[i] + 10.0
 ```
 
 This works for 1D arrays, but what happens when we need to:
+
 - Handle 2D or 3D data?
 - Deal with different memory layouts?
 - Ensure coalesced memory access?
@@ -16,6 +18,7 @@ This works for 1D arrays, but what happens when we need to:
 ### Preview of future challenges
 
 As we progress through the puzzles, array indexing will become more complex:
+
 ```mojo
 # 2D indexing coming in later puzzles
 idx = row * WIDTH + col
@@ -38,6 +41,7 @@ output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 ```
 
 We'll learn about LayoutTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:
+
 - Basic thread indexing
 - Simple memory access patterns
 - One-to-one mapping of threads to data

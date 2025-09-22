@@ -180,20 +180,28 @@ The beauty is that each block operation follows consistent patterns!
 **Test the block.broadcast() approach:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run p27 --normalize
+pixi run p27 --normalize
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p27 --normalize
+pixi run p27 --normalize -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p27 --normalize
 ```
 
   </div>
@@ -550,7 +558,7 @@ Example combinations seen in real applications:
 • With traditional patterns:             Hybrid optimization strategies
 ```
 
-## Next Steps
+## Next steps
 
 Once you've learned about the complete block operations trilogy, you're ready for:
 

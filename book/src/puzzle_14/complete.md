@@ -30,6 +30,7 @@ The main function will handle the necessary host-side synchronization between th
 ```mojo
 {{#include ../../../problems/p14/p14.mojo:prefix_sum_complete}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a>
 
 The key to this puzzle is understanding that [barrier](https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/) only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:
@@ -84,6 +85,7 @@ Since blocks can't directly communicate, you need somewhere to store block sums:
 ### 5. Debugging Strategy
 
 If you encounter issues, try visualizing the intermediate state after the first phase:
+
 ```
 After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
 ```
@@ -99,15 +101,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p14 --complete
-```
-
   </div>
   <div class="tab-content">
 
@@ -116,9 +113,31 @@ pixi run p14 --complete
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p14 --complete -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p14 --complete -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p14 --complete
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
@@ -163,9 +182,10 @@ The size of this extended buffer is: `EXTENDED_SIZE = SIZE_2 + num_blocks = 15 +
 
 ## Phase 1 kernel: Local prefix sums
 
-### Race Condition Prevention in Local Phase
+### Race condition prevention in local phase
 
 The local phase uses the same explicit synchronization pattern as the simple version to prevent read-write hazards:
+
 - **Read Phase**: All threads first read the values they need into a local variable `current_val`
 - **Synchronization**: `barrier()` ensures all reads complete before any writes begin
 - **Write Phase**: All threads then safely write their computed values back to shared memory
@@ -175,6 +195,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
 ### Step-by-step execution for Block 0
 
 1. **Load values into shared memory**:
+
    ```
    shared = [0, 1, 2, 3, 4, 5, 6, 7]
    ```
@@ -184,6 +205,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
    **Iteration 1** (offset=1):
 
    **Read Phase**: Each active thread reads the value it needs:
+
    ```
    T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
    T₂ reads shared[1] = 1    T₆ reads shared[5] = 5
@@ -194,6 +216,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
    **Synchronization**: `barrier()` ensures all reads complete
 
    **Write Phase**: Each thread adds its read value:
+
    ```
    shared[0] = 0              (unchanged)
    shared[1] = 1 + 0 = 1
@@ -204,11 +227,13 @@ This prevents race conditions that could occur when multiple threads simultaneou
    shared[6] = 6 + 5 = 11
    shared[7] = 7 + 6 = 13
    ```
+
    After barrier: `shared = [0, 1, 3, 5, 7, 9, 11, 13]`
 
    **Iteration 2** (offset=2):
 
    **Read Phase**: Each active thread reads the value it needs:
+
    ```
    T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
    T₃ reads shared[1] = 1    T₆ reads shared[4] = 7
@@ -218,6 +243,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
    **Synchronization**: `barrier()` ensures all reads complete
 
    **Write Phase**: Each thread adds its read value:
+
    ```
    shared[0] = 0              (unchanged)
    shared[1] = 1              (unchanged)
@@ -228,11 +254,13 @@ This prevents race conditions that could occur when multiple threads simultaneou
    shared[6] = 11 + 7 = 18
    shared[7] = 13 + 9 = 22
    ```
+
    After barrier: `shared = [0, 1, 3, 6, 10, 14, 18, 22]`
 
    **Iteration 3** (offset=4):
 
    **Read Phase**: Each active thread reads the value it needs:
+
    ```
    T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
    T₅ reads shared[1] = 1    T₇ reads shared[3] = 6
@@ -241,6 +269,7 @@ This prevents race conditions that could occur when multiple threads simultaneou
    **Synchronization**: `barrier()` ensures all reads complete
 
    **Write Phase**: Each thread adds its read value:
+
    ```
    shared[0] = 0              (unchanged)
    shared[1] = 1              (unchanged)
@@ -251,14 +280,17 @@ This prevents race conditions that could occur when multiple threads simultaneou
    shared[6] = 18 + 3 = 21
    shared[7] = 22 + 6 = 28
    ```
+
    After barrier: `shared = [0, 1, 3, 6, 10, 15, 21, 28]`
 
 3. **Write local results back to global memory**:
+
    ```
    output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
    ```
 
 4. **Store block sum in auxiliary space** (only last thread):
+
    ```
    output[15] = 28  // at position size + block_idx.x = 15 + 0
    ```
@@ -266,35 +298,43 @@ This prevents race conditions that could occur when multiple threads simultaneou
 ### Step-by-step execution for Block 1
 
 1. **Load values into shared memory**:
+
    ```
    shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
    ```
+
    Note: Thread 7 doesn't load anything since `global_i = 15 >= SIZE_2`, leaving `shared[7]` uninitialized. This is safe because Thread 7 won't participate in the final output.
 
 2. **Iterations of parallel reduction** (\\(\log_2(TPB) = 3\\) iterations):
 
    Only the first 7 threads participate in meaningful computation. After all three iterations:
+
    ```
    shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
    ```
 
 3. **Write local results back to global memory**:
+
    ```
    output[8...14] = [8, 17, 27, 38, 50, 63, 77]  // Only 7 valid outputs
    ```
 
 4. **Store block sum in auxiliary space** (only last thread in block):
+
    ```
    output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
    ```
+
    Note: Even though Thread 7 doesn't load valid input data, it still participates in the prefix sum computation within the block. The `shared[7]` position gets updated during the parallel reduction iterations, but since it started uninitialized, the final value is unpredictable. However, this doesn't affect correctness because Block 1 is the last block, so this block sum is never used in Phase 2.
 
 After Phase 1, the output buffer contains:
+
 ```
 [0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
                                                         ^   ^
                                                 Block sums stored here
 ```
+
 Note: The last block sum (???) is unpredictable since it's based on uninitialized memory, but this doesn't affect the final result.
 
 ## Host-device synchronization: When it's actually needed
@@ -322,6 +362,7 @@ with out.map_to_host() as out_host:  # Now safe to read GPU results
 ```
 
 The `ctx.synchronize()` call serves its traditional purpose:
+
 - **Host-device synchronization**: Ensures the host waits for all GPU work to complete before accessing results
 - **Memory safety**: Prevents reading GPU memory before computations finish
 
@@ -332,12 +373,14 @@ The `ctx.synchronize()` call serves its traditional purpose:
 1. **Block 0**: No changes needed (it's already correct).
 
 2. **Block 1**: Each thread adds Block 0's sum to its element:
+
    ```
    prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
    output[global_i] += prev_block_sum
    ```
 
    Block 1 values are transformed:
+
    ```
    Before: [8, 17, 27, 38, 50, 63, 77]
    After:  [36, 45, 55, 66, 78, 91, 105]
@@ -348,6 +391,7 @@ The `ctx.synchronize()` call serves its traditional purpose:
 ### Key implementation details
 
 **Local phase synchronization pattern**: Each iteration within a block follows a strict read → sync → write pattern:
+
 1. `var current_val: out.element_type = 0` - Initialize local variable
 2. `current_val = shared[local_i - offset]` - Read phase (if conditions met)
 3. `barrier()` - Explicit synchronization to prevent race conditions
@@ -355,6 +399,7 @@ The `ctx.synchronize()` call serves its traditional purpose:
 5. `barrier()` - Standard synchronization before next iteration
 
 **Cross-block synchronization**: The algorithm uses two levels of synchronization:
+
 - **Intra-block**: `barrier()` synchronizes threads within each block during local prefix sum computation
 - **Inter-block**: `ctx.synchronize()` synchronizes between kernel launches to ensure Phase 1 completes before Phase 2 begins
 

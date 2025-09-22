@@ -39,11 +39,13 @@ In this puzzle, you'll transform a memory-bound 1D convolution from [Puzzle 13](
 Before diving in, ensure you have solid foundation in:
 
 **Essential GPU programming concepts:**
+
 - **Shared memory programming** ([Puzzle 8](../puzzle_08/puzzle_08.md), [Puzzle 16](../puzzle_16/puzzle_16.md)) - You'll extend matmul patterns
 - **Memory coalescing** ([Puzzle 21](../puzzle_21/puzzle_21.md)) - Critical for optimal async transfers
 - **Tiled processing** ([Puzzle 23](../puzzle_23/puzzle_23.md)) - The foundation for this optimization
 
 **Hardware understanding:**
+
 - GPU memory hierarchy (DRAM → Shared Memory → Registers)
 - Thread block organization and synchronization
 - Basic understanding of memory latency vs. bandwidth
@@ -53,9 +55,11 @@ Before diving in, ensure you have solid foundation in:
 > **⚠️ Hardware compatibility note:** This puzzle uses async copy operations (`copy_dram_to_sram_async`, `async_copy_wait_all`) that may require modern GPU architectures. If you encounter compilation errors related to `.async` modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.
 >
 > **Check your GPU compute capability:**
+>
 > ```bash
 > nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
 > ```
+>
 > - **SM_70 and above** (e.g., V100, T4, A10G, RTX 20+ series): Basic async copy supported
 > - **SM_80 and above** (e.g., A100, RTX 30+ series): Full async copy features
 > - **SM_90 and above** (e.g., H100, RTX 40+ series): Advanced TMA operations supported
@@ -65,12 +69,14 @@ Before diving in, ensure you have solid foundation in:
 By the end of this puzzle, you'll have hands-on experience with:
 
 ### **Core techniques**
+
 - **Async copy primitives**: Launch background DRAM→SRAM transfers
 - **Latency hiding**: Overlap expensive memory operations with useful computation
 - **Thread layout optimization**: Match memory access patterns to hardware
 - **Pipeline programming**: Structure algorithms for maximum memory utilization
 
 ### **Key APIs you'll focus**
+
 Building on the async copy operations introduced in [Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling), you'll now focus specifically on their memory optimization potential:
 
 - **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**: Launch background DRAM→SRAM transfers using dedicated copy engines
@@ -79,7 +85,9 @@ Building on the async copy operations introduced in [Puzzle 16's idiomatic matmu
 **What's different from Puzzle 16?** While Puzzle 16 used async copy for clean tile loading in matmul, this puzzle focuses specifically on **latency hiding** - structuring algorithms to overlap expensive memory operations with useful computation work.
 
 ### **Performance impact**
+
 These techniques can provide **significant speedups** for memory-bound algorithms by:
+
 - **Hiding DRAM latency**: Convert idle waiting into productive computation time
 - **Maximizing bandwidth**: Optimal memory access patterns prevent cache misses
 - **Pipeline efficiency**: Keep compute units busy while memory transfers happen in parallel
@@ -113,6 +121,7 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 ```
 
 **Key characteristics:**
+
 - **Halo size**: Typically `KERNEL_SIZE // 2` elements on each side
 - **Purpose**: Enable correct stencil computation at tile boundaries
 - **Content**: Copies of data from neighboring tiles or boundary conditions
@@ -121,17 +130,20 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 ### Halo region in convolution
 
 For a 5-point convolution kernel \\([k_0, k_1, k_2, k_3, k_4]\\):
+
 - **Center element**: \\(k_2\\) aligns with the current processing element
 - **Left neighbors**: \\(k_0, k_1\\) require 2 elements to the left
 - **Right neighbors**: \\(k_3, k_4\\) require 2 elements to the right
 - **Halo size**: `HALO_SIZE = 5 // 2 = 2` elements on each side
 
 **Without halo regions:**
+
 - Tile boundary elements cannot perform full convolution
 - Results in incorrect output or complex boundary handling logic
 - Performance suffers from scattered memory access patterns
 
 **With halo regions:**
+
 - All tile elements can perform full convolution using local data
 - Simplified, efficient computation with predictable memory access
 - Better cache utilization and memory coalescing
@@ -177,6 +189,7 @@ async_copy_wait_all()  # Wait only when both operations complete
 ```
 
 **Why async copy works so well:**
+
 - **Dedicated copy engines**: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in [Puzzle 16](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling))
 - **Latency hiding**: Memory transfers happen while GPU threads execute other operations
 - **Optimal coalescing**: Thread layouts ensure efficient DRAM access patterns
@@ -190,6 +203,7 @@ Implement 1D convolution that uses async copy operations to overlap memory trans
 \\[\\text{output}[i] = \\sum_{k=0}^{\\text{KERNEL_SIZE}-1} \\text{input}[i+k-\\text{HALO_SIZE}] \\times \\text{kernel}[k]\\]
 
 **Async copy algorithm:**
+
 1. **Async tile loading:** Launch background DRAM→SRAM transfer for input data
 2. **Overlapped operations:** Load small kernel data while input transfers
 3. **Synchronization:** Wait for transfers, then compute using shared memory
@@ -197,6 +211,7 @@ Implement 1D convolution that uses async copy operations to overlap memory trans
 ```mojo
 {{#include ../../../problems/p28/p28.mojo:async_copy_overlap_convolution}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p28/p28.mojo" class="filename">View full file: problems/p28/p28.mojo</a>
 
 <details>
@@ -209,11 +224,13 @@ Implement 1D convolution that uses async copy operations to overlap memory trans
 Async copy operations initiate background transfers while your block continues executing other code.
 
 **Key questions to explore:**
+
 - What data needs to be transferred from DRAM to shared memory?
 - Which operations can execute while the transfer happens in the background?
 - How does the hardware coordinate multiple concurrent operations?
 
 **Thread layout considerations:**
+
 - Your block has `(THREADS_PER_BLOCK_ASYNC, 1) = (256, 1)` threads
 - The tile has `CONV_TILE_SIZE = 256` elements
 - What layout pattern ensures optimal memory coalescing?
@@ -223,11 +240,13 @@ Async copy operations initiate background transfers while your block continues e
 The goal is to hide memory latency behind useful computation.
 
 **Analysis approach:**
+
 - What operations must happen sequentially vs. in parallel?
 - Which data transfers are large (expensive) vs. small (cheap)?
 - How can you structure the algorithm to maximize parallel execution?
 
 **Memory hierarchy considerations:**
+
 - Large input tile: 256 elements × 4 bytes = 1KB transfer
 - Small kernel: 5 elements × 4 bytes = 20 bytes
 - Which transfer benefits most from async optimization?
@@ -237,11 +256,13 @@ The goal is to hide memory latency behind useful computation.
 Proper synchronization ensures correctness without sacrificing performance.
 
 **Timing analysis:**
+
 - When does each operation actually need its data to be ready?
 - What's the minimum synchronization required for correctness?
 - How do you avoid unnecessary stalls while maintaining data dependencies?
 
 **Race condition prevention:**
+
 - What happens if computation starts before transfers complete?
 - How do memory fences and barriers coordinate different memory operations?
 
@@ -251,20 +272,28 @@ Proper synchronization ensures correctness without sacrificing performance.
 **Test the async copy overlap:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p28
+pixi run p28
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p28
+pixi run p28 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p28
 ```
 
   </div>
@@ -284,6 +313,7 @@ The async copy overlap solution demonstrates how to hide memory latency by overl
 #### **Phase-by-phase breakdown**
 
 **Phase 1: Async Copy Launch**
+
 ```mojo
 # Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
@@ -298,6 +328,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 - **Async Copy Launch**: `copy_dram_to_sram_async` initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.
 
 **Phase 2: Overlapped Operation**
+
 ```mojo
 # Phase 2: Load kernel synchronously (small data)
 if local_i < KERNEL_SIZE:
@@ -309,6 +340,7 @@ if local_i < KERNEL_SIZE:
 - **Size-Based Strategy**: Large transfers (input tile) use async copy; small transfers (kernel) use synchronous loading. This balances complexity with performance benefit.
 
 **Phase 3: Synchronization**
+
 ```mojo
 # Phase 3: Wait for async copy to complete
 async_copy_wait_all()  # Always wait since we always do async copy
@@ -320,6 +352,7 @@ barrier()  # Sync all threads
 - **Thread Synchronization**: `barrier()` ensures all threads see the completed transfer before proceeding to computation.
 
 **Phase 4: Computation**
+
 ```mojo
 # Phase 4: Compute convolution
 global_i = block_idx.x * CONV_TILE_SIZE + local_i
@@ -350,6 +383,7 @@ if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
 #### **Performance analysis**
 
 **Without Async Copy (Synchronous):**
+
 ```
 Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
            = Large_DRAM_transfer + Small_DRAM_transfer + convolution
@@ -357,6 +391,7 @@ Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
 ```
 
 **With Async Copy (Overlapped):**
+
 ```
 Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
            = MAX(Major_latency, Minor_latency) + computation_work

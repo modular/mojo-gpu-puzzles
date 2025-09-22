@@ -2,7 +2,7 @@
 
 ## Overview
 
-After learning **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. This guide explains how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
+After learning **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. Here's how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
 
 > **Key insight:** _Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware._
 
@@ -12,20 +12,28 @@ To execute the comprehensive benchmark suite:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p23 --benchmark
+pixi run p23 --benchmark
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p23 --benchmark
+pixi run p23 --benchmark -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p23 --benchmark
 ```
 
   </div>
@@ -296,7 +304,7 @@ With benchmarking skills:
 
 💡 **Key takeaway**: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.
 
-## Looking Ahead: When you need more control
+## Looking ahead: when you need more control
 
 The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require **direct thread communication**:
 

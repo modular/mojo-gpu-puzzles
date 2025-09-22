@@ -4,8 +4,8 @@ Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` an
 
 **Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
 
-
 ## Configuration
+
 - Input array size: `SIZE_2 = 15` elements
 - Kernel size: `CONV_2 = 4` elements
 - Threads per block: `TPB = 8`
@@ -13,6 +13,7 @@ Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` an
 - Shared memory: `TPB + CONV_2 - 1` elements for input
 
 Notes:
+
 - **Extended loading**: Account for boundary overlap
 - **Block edges**: Handle data across block boundaries
 - **Memory layout**: Efficient shared memory usage
@@ -23,6 +24,7 @@ Notes:
 ```mojo
 {{#include ../../../problems/p13/p13.mojo:conv_1d_block_boundary}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p13/p13.mojo" class="filename">View full file: problems/p13/p13.mojo</a>
 
 <details>
@@ -45,15 +47,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p13 --block-boundary
-```
-
   </div>
   <div class="tab-content">
 
@@ -62,9 +59,31 @@ pixi run p13 --block-boundary
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p13 --block-boundary -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p13 --block-boundary -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p13 --block-boundary
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0, 74.0, 80.0, 41.0, 14.0, 0.0])
@@ -84,6 +103,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 The solution handles block boundary cases in 1D convolution using extended shared memory. Here's a detailed analysis:
 
 ### Memory layout and sizing
+
 ```txt
 Test Configuration:
 - Full array size: SIZE_2 = 15 elements
@@ -102,14 +122,17 @@ Size calculation:
 ### Implementation details
 
 1. **Shared Memory Allocation**:
+
    ```mojo
    # First: account for padding needed for convolution window
    shared_a = tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()
    shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
    ```
+
    This allocation pattern ensures we have enough space for both the block's data and the overlap region.
 
 2. **Data Loading Strategy**:
+
    ```mojo
    # Main block data
    if global_i < SIZE_2:
@@ -125,20 +148,24 @@ Size calculation:
            # which is an undefined behavior
            shared_a[TPB + local_i] = 0
    ```
+
    - Only threads with `local_i < CONV_2 - 1` load boundary data
    - Prevents unnecessary thread divergence
    - Maintains memory coalescing for main data load
    - Explicitly zeroes out-of-bounds elements to avoid undefined behavior
 
 3. **Kernel Loading**:
+
    ```mojo
    if local_i < b_size:
        shared_b[local_i] = b[local_i]
    ```
+
    - Single load per thread
    - Bounded by kernel size
 
 4. **Convolution Computation**:
+
    ```mojo
    if global_i < SIZE_2:
        var local_sum: output.element_type = 0
@@ -147,6 +174,7 @@ Size calculation:
            if global_i + j < SIZE_2:
                local_sum += shared_a[local_i + j] * shared_b[j]
    ```
+
    - Uses `@parameter` for compile-time loop unrolling
    - Proper type inference with `output.element_type`
    - Semantically correct bounds check: only compute convolution for valid input positions
@@ -154,6 +182,7 @@ Size calculation:
 ### Memory access pattern analysis
 
 1. **Block 0 Access Pattern**:
+
    ```txt
    Thread 0: [0 1 2 3] × [0 1 2 3]
    Thread 1: [1 2 3 4] × [0 1 2 3]
@@ -163,6 +192,7 @@ Size calculation:
    ```
 
 2. **Block 1 Access Pattern**:
+
    ```txt
    Thread 0: [8 9 10 11] × [0 1 2 3]
    Thread 1: [9 10 11 12] × [0 1 2 3]
@@ -192,19 +222,21 @@ Size calculation:
    - Semantically correct boundary checking using `global_i + j < SIZE_2` instead of shared memory bounds
    - Proper handling of edge cases without over-computation
 
-### Boundary Condition Improvement
+### Boundary condition improvement
 
-The solution uses `if global_i + j < SIZE_2:` rather than checking shared memory bounds. This approach is:
+The solution uses `if global_i + j < SIZE_2:` rather than checking shared memory bounds. This pattern is:
 
 - **Mathematically correct**: Only computes convolution where input data actually exists
 - **More efficient**: Avoids unnecessary computations for positions beyond the input array
 - **Safer**: Prevents reliance on zero-padding behavior in shared memory
 
 This implementation achieves efficient cross-block convolution while maintaining:
+
 - Memory safety through proper bounds checking
 - High performance through optimized memory access
 - Clean code structure using LayoutTensor abstractions
 - Minimal synchronization overhead
 - Mathematically sound boundary handling
+
 </div>
 </details>

@@ -1,22 +1,23 @@
 # block.prefix_sum() Parallel Histogram Binning
 
-Implement parallel histogram binning using block-level [block.prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum) operations to demonstrate advanced parallel filtering and extraction algorithms. Each thread will determine which bin its element belongs to, then use `block.prefix_sum()` to compute write positions for extracting elements of a specific bin, showcasing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.
+This puzzle implements parallel histogram binning using block-level [block.prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum) operations for advanced parallel filtering and extraction. Each thread determines its element's target bin, then applies `block.prefix_sum()` to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.
 
-**Key insight:** _The [block.prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum) operation enables parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block._
+**Key insight:** _The [block.prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum) operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block._
 
 ## Key concepts
 
-In this puzzle, you'll learn:
+This puzzle covers:
+
 - **Block-level prefix sum** with `block.prefix_sum()`
 - **Parallel filtering and extraction** using cumulative computations
 - **Advanced parallel partitioning** algorithms
 - **Histogram binning** with block-wide coordination
 - **Exclusive vs inclusive** prefix sum patterns
 
-The algorithm demonstrates histogram construction by extracting elements belonging to specific value ranges (bins):
+The algorithm constructs histograms by extracting elements belonging to specific value ranges (bins):
 \\[\Large \text{Bin}_k = \\{x_i : k/N \leq x_i < (k+1)/N\\}\\]
 
-Each thread computes which bin its element belongs to, then `block.prefix_sum()` coordinates parallel extraction.
+Each thread determines its element's bin assignment, with `block.prefix_sum()` coordinating parallel extraction.
 
 ## Configuration
 
@@ -41,6 +42,7 @@ for element in data:
 ```
 
 **Problems with naive GPU parallelization:**
+
 - **Race conditions**: Multiple threads writing to same bin simultaneously
 - **Uncoalesced memory**: Threads access different memory locations
 - **Load imbalance**: Some bins may have many more elements than others
@@ -70,12 +72,14 @@ Implement parallel histogram binning using `block.prefix_sum()` for extraction:
 ### 1. **Core algorithm structure (adapt from previous puzzles)**
 
 Just like `block_sum_dot_product`, you need these key variables:
+
 ```mojo
 global_i = block_dim.x * block_idx.x + thread_idx.x
 local_i = thread_idx.x
 ```
 
 Your function will have **5 main steps** (about 15-20 lines total):
+
 1. Load element and determine its bin
 2. Create binary predicate for target bin
 3. Run `block.prefix_sum()` on the predicate
@@ -85,6 +89,7 @@ Your function will have **5 main steps** (about 15-20 lines total):
 ### 2. **Bin calculation (use `math.floor`)**
 
 To classify a `Float32` value into bins:
+
 ```mojo
 my_value = input_data[global_i][0]  # Extract SIMD like in dot product
 bin_number = Int(floor(my_value * num_bins))
@@ -95,6 +100,7 @@ bin_number = Int(floor(my_value * num_bins))
 ### 3. **Binary predicate creation**
 
 Create an integer variable (0 or 1) indicating if this thread's element belongs to target_bin:
+
 ```mojo
 var belongs_to_target: Int = 0
 if (thread_has_valid_element) and (my_bin == target_bin):
@@ -106,6 +112,7 @@ This is the key insight: prefix sum works on these binary flags to compute posit
 ### 4. **`block.prefix_sum()` call pattern**
 
 Following the documentation, the call looks like:
+
 ```mojo
 offset = block.prefix_sum[
     dtype=DType.int32,         # Working with integer predicates
@@ -119,6 +126,7 @@ offset = block.prefix_sum[
 ### 5. **Conditional writing pattern**
 
 Only threads with `belongs_to_target == 1` should write:
+
 ```mojo
 if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
@@ -129,6 +137,7 @@ This is just like the bounds checking pattern from [Puzzle 12](../puzzle_12/layo
 ### 6. **Final count computation**
 
 The last thread (not thread 0!) computes the total count:
+
 ```mojo
 if local_i == tpb - 1:  # Last thread in block
     total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
@@ -140,6 +149,7 @@ if local_i == tpb - 1:  # Last thread in block
 ### 7. **Data types and conversions**
 
 Remember the patterns from previous puzzles:
+
 - `LayoutTensor` indexing returns SIMD: `input_data[i][0]`
 - `block.prefix_sum()` returns SIMD: `offset[0]` to extract
 - Array indexing needs `Int`: `Int(offset[0])` for `bin_output[...]`
@@ -150,15 +160,9 @@ Remember the patterns from previous puzzles:
 **Test the block.prefix_sum() approach:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run p27 --histogram
-```
-
   </div>
   <div class="tab-content">
 
@@ -167,9 +171,24 @@ pixi run p27 --histogram
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p27 --histogram -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p27 --histogram
+```
+
+  </div>
 </div>
 
 Expected output when solved:
+
 ```txt
 SIZE: 128
 TPB: 128
@@ -226,6 +245,7 @@ The `block.prefix_sum()` kernel demonstrates advanced parallel coordination patt
 ## **Step-by-step algorithm walkthrough:**
 
 ### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/layout_tensor.md) dot product)**
+
 ```
 Thread indexing (familiar pattern):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
@@ -240,6 +260,7 @@ Element loading (like LayoutTensor pattern):
 ```
 
 ### **Phase 2: Bin classification (new concept)**
+
 ```
 Bin calculation using floor operation:
   Thread 0:  my_bin = Int(floor(0.00 * 8)) = 0  // Values [0.000, 0.125) → bin 0
@@ -250,6 +271,7 @@ Bin calculation using floor operation:
 ```
 
 ### **Phase 3: Binary predicate creation (filtering pattern)**
+
 ```
 For target_bin=0, create extraction mask:
   Thread 0:  belongs_to_target = 1  (bin 0 == target 0)
@@ -262,6 +284,7 @@ This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 ```
 
 ### **Phase 4: Parallel prefix sum (the magic!)**
+
 ```
 block.prefix_sum[exclusive=True] on predicates:
 Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
@@ -273,6 +296,7 @@ Key insight: Each thread gets its WRITE POSITION in the output array!
 ```
 
 ### **Phase 5: Coordinated extraction (conditional write)**
+
 ```
 Only threads with belongs_to_target=1 write:
   Thread 0:  bin_output[0] = 0.00   // Uses write_offset[0] = 0
@@ -286,6 +310,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 ```
 
 ### **Phase 6: Count computation (like block.sum() pattern)**
+
 ```
 Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
@@ -296,16 +321,19 @@ Last thread computes total (not thread 0!):
 ## **Why this advanced algorithm works:**
 
 ### **Connection to [Puzzle 12](../puzzle_12/layout_tensor.md) (Traditional dot product):**
+
 - **Same thread indexing**: `global_i` and `local_i` patterns
 - **Same bounds checking**: `if global_i < size` validation
 - **Same data loading**: LayoutTensor SIMD extraction with `[0]`
 
 ### **Connection to [`block.sum()`](./block_sum.md) (earlier in this puzzle):**
+
 - **Same block-wide operation**: All threads participate in block primitive
 - **Same result handling**: Special thread (last instead of first) handles final result
 - **Same SIMD conversion**: `Int(result[0])` pattern for array indexing
 
 ### **Advanced concepts unique to `block.prefix_sum()`:**
+
 - **Every thread gets result**: Unlike `block.sum()` where only thread 0 matters
 - **Coordinated write positions**: Prefix sum eliminates race conditions automatically
 - **Parallel filtering**: Binary predicates enable sophisticated data reorganization
@@ -313,11 +341,13 @@ Last thread computes total (not thread 0!):
 ## **Performance advantages over naive approaches:**
 
 ### **vs. Atomic operations:**
+
 - **No race conditions**: Prefix sum gives unique write positions
 - **Coalesced memory**: Sequential writes improve cache performance
 - **No serialization**: All writes happen in parallel
 
 ### **vs. Multi-pass algorithms:**
+
 - **Single kernel**: Complete histogram extraction in one GPU launch
 - **Full utilization**: All threads work regardless of data distribution
 - **Optimal memory bandwidth**: Pattern optimized for GPU memory hierarchy
@@ -330,24 +360,27 @@ This demonstrates how `block.prefix_sum()` enables sophisticated parallel algori
 ## Performance insights
 
 **`block.prefix_sum()` vs Traditional:**
+
 - **Algorithm sophistication**: Advanced parallel partitioning vs sequential processing
 - **Memory efficiency**: Coalesced writes vs scattered random access
 - **Synchronization**: Built-in coordination vs manual barriers and atomics
 - **Scalability**: Works with any block size and bin count
 
 **`block.prefix_sum()` vs `block.sum()`:**
+
 - **Scope**: Every thread gets result vs only thread 0
 - **Use case**: Complex partitioning vs simple aggregation
 - **Algorithm type**: Parallel scan primitive vs reduction primitive
 - **Output pattern**: Per-thread positions vs single total
 
 **When to use `block.prefix_sum()`:**
+
 - **Parallel filtering**: Extract elements matching criteria
 - **Stream compaction**: Remove unwanted elements
 - **Parallel partitioning**: Separate data into categories
 - **Advanced algorithms**: Load balancing, sorting, graph algorithms
 
-## Next Steps
+## Next steps
 
 Once you've learned about `block.prefix_sum()` operations, you're ready for:
 

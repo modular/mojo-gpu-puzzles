@@ -2,18 +2,19 @@
 
 ## Overview
 
-Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) and stores the result in \\(\text{output}\\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.
+This puzzle implements matrix multiplication for square matrices \\(A\\) and \\(B\\), storing results in \\(\text{output}\\) while leveraging shared memory to optimize memory access patterns. The implementation preloads matrix blocks into shared memory before performing computations.
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Block-local memory management with LayoutTensor
 - Thread synchronization patterns
 - Memory access optimization using shared memory
 - Collaborative data loading with 2D indexing
 - Efficient use of LayoutTensor for matrix operations
 
-The key insight is understanding how to use fast shared memory with LayoutTensor to reduce expensive global memory operations.
+The central concept involves utilizing fast shared memory through LayoutTensor to minimize costly global memory accesses.
 
 ## Configuration
 
@@ -22,6 +23,7 @@ The key insight is understanding how to use fast shared memory with LayoutTensor
 - Grid dimensions: \\(1 \\times 1\\)
 
 Layout configuration:
+
 - Input A: `Layout.row_major(SIZE, SIZE)`
 - Input B: `Layout.row_major(SIZE, SIZE)`
 - Output: `Layout.row_major(SIZE, SIZE)`
@@ -40,6 +42,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 ```mojo
 {{#include ../../../problems/p16/p16.mojo:single_block_matmul}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a>
 
 <details>
@@ -51,6 +54,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 2. Call `barrier()` after loading
 3. Compute dot product using shared memory indices
 4. Check array bounds for all operations
+
 </div>
 </details>
 
@@ -60,15 +64,9 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p16 --single-block
-```
-
   </div>
   <div class="tab-content">
 
@@ -77,9 +75,24 @@ pixi run p16 --single-block
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p16 --single-block -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p16 --single-block
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
@@ -112,9 +125,10 @@ Matrix B:                           b_shared: (similar layout)
                                      [t[2,0] t[2,1] t[2,2]]
 ```
 
-### Implementation Phases:
+### Implementation phases
 
 1. **Shared Memory Setup**:
+
    ```mojo
    # Create 2D shared memory tensors using TensorBuilder
    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
@@ -122,6 +136,7 @@ Matrix B:                           b_shared: (similar layout)
    ```
 
 2. **Thread Indexing**:
+
    ```mojo
    # Global indices for matrix access
    row = block_dim.y * block_idx.y + thread_idx.y
@@ -133,6 +148,7 @@ Matrix B:                           b_shared: (similar layout)
    ```
 
 3. **Data Loading**:
+
    ```mojo
    # Load data into shared memory using LayoutTensor indexing
    if row < size and col < size:
@@ -141,6 +157,7 @@ Matrix B:                           b_shared: (similar layout)
    ```
 
 4. **Computation with Shared Memory**:
+
    ```mojo
    # Guard ensures we only compute for valid matrix elements
    if row < size and col < size:
@@ -158,26 +175,26 @@ Matrix B:                           b_shared: (similar layout)
 
    Key aspects:
    - **Boundary check**: `if row < size and col < size`
-     * Prevents out-of-bounds computation
-     * Only valid threads perform work
-     * Essential because TPB (3×3) > SIZE (2×2)
+     - Prevents out-of-bounds computation
+     - Only valid threads perform work
+     - Essential because TPB (3×3) > SIZE (2×2)
 
    - **Accumulator Type**: `var acc: output.element_type`
-     * Uses output tensor's element type for type safety
-     * Ensures consistent numeric precision
-     * Initialized to zero before accumulation
+     - Uses output tensor's element type for type safety
+     - Ensures consistent numeric precision
+     - Initialized to zero before accumulation
 
    - **Loop Optimization**: `@parameter for k in range(size)`
-     * Unrolls the loop at compile time
-     * Enables better instruction scheduling
-     * Efficient for small, known matrix sizes
+     - Unrolls the loop at compile time
+     - Enables better instruction scheduling
+     - Efficient for small, known matrix sizes
 
    - **Result Writing**: `output[row, col] = acc`
-     * Protected by the same guard condition
-     * Only valid threads write results
-     * Maintains matrix bounds safety
+     - Protected by the same guard condition
+     - Only valid threads write results
+     - Maintains matrix bounds safety
 
-### Thread safety and synchronization:
+### Thread safety and synchronization
 
 1. **Guard conditions**:
    - Input Loading: `if row < size and col < size`
@@ -190,7 +207,7 @@ Matrix B:                           b_shared: (similar layout)
    - Global memory: Protected by size checks
    - Output: Guarded writes prevent corruption
 
-### Key language features:
+### Key language features
 
 1. **LayoutTensor benefits**:
    - Direct 2D indexing simplifies code
@@ -207,7 +224,7 @@ Matrix B:                           b_shared: (similar layout)
    - Proper synchronization between load and compute
    - Thread cooperation within block
 
-### Performance optimizations:
+### Performance optimizations
 
 1. **Memory Access Efficiency**:
    - Single global memory load per element
@@ -225,9 +242,11 @@ Matrix B:                           b_shared: (similar layout)
    - Improved instruction throughput
 
 This implementation significantly improves performance over the naive version by:
+
 - Reducing global memory accesses
 - Enabling data reuse through shared memory
 - Using efficient 2D indexing with LayoutTensor
 - Maintaining proper thread synchronization
+
 </div>
 </details>

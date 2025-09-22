@@ -11,6 +11,7 @@ Implement a kernel that processes an image through a coordinated 3-stage pipelin
 **Pipeline concept:** The algorithm processes data through three distinct stages, where each stage has specialized thread groups that execute different algorithms. Each stage produces data that the next stage consumes, creating explicit **producer-consumer relationships** that must be carefully synchronized with barriers.
 
 **Data dependencies and synchronization:** Each stage produces data that the next stage consumes:
+
 - **Stage 1 → Stage 2**: First stage produces preprocessed data for blur processing
 - **Stage 2 → Stage 3**: Second stage produces blur results for final smoothing
 - **Barriers prevent race conditions** by ensuring complete stage completion before dependent stages begin
@@ -52,6 +53,7 @@ where \\(F[i]\\) is the final output with cascading smoothing applied.
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Implementing thread role specialization within a single GPU block
 - Coordinating producer-consumer relationships between processing stages
 - Using barriers to synchronize between different algorithms (not just within the same algorithm)
@@ -61,6 +63,7 @@ The key insight is understanding how to design multi-stage pipelines where diffe
 **Why this matters:** Most GPU tutorials teach barrier usage within a single algorithm - synchronizing threads during reductions or shared memory operations. But real-world GPU algorithms often require **architectural complexity** with multiple distinct processing stages that must be carefully orchestrated. This puzzle demonstrates how to transform monolithic algorithms into specialized, coordinated processing pipelines.
 
 **Previous vs. current barrier usage:**
+
 - **Previous puzzles ([P8](../puzzle_08/puzzle_08.md), [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** All threads execute the same algorithm, barriers sync within algorithm steps
 - **This puzzle:** Different thread groups execute different algorithms, barriers coordinate between different algorithms
 
@@ -69,12 +72,14 @@ The key insight is understanding how to design multi-stage pipelines where diffe
 ## Configuration
 
 **System parameters:**
+
 - **Image size**: `SIZE = 1024` elements (1D for simplicity)
 - **Threads per block**: `TPB = 256` threads organized as `(256, 1)` block dimension
 - **Grid configuration**: `(4, 1)` blocks to process entire image in tiles (4 blocks total)
 - **Data type**: `DType.float32` for all computations
 
 **Thread specialization architecture:**
+
 - **Stage 1 threads**: `STAGE1_THREADS = 128` (threads 0-127, first half of block)
   - **Responsibility**: Load input data from global memory and apply preprocessing
   - **Work distribution**: Each thread processes 2 elements for efficient load balancing
@@ -95,6 +100,7 @@ The key insight is understanding how to design multi-stage pipelines where diffe
 ```mojo
 {{#include ../../../problems/p29/p29.mojo:multi_stage_pipeline}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a>
 
 <details>
@@ -103,30 +109,35 @@ The key insight is understanding how to design multi-stage pipelines where diffe
 <div class="solution-tips">
 
 ### **Thread role identification**
+
 - Use thread index comparisons to determine which stage each thread should execute
 - Stage 1: First half of threads (threads 0-127)
 - Stage 2: Second half of threads (threads 128-255)
 - Stage 3: All threads participate
 
 ### **Stage 1 approach**
+
 - Identify Stage 1 threads using appropriate index comparison
 - Each thread should handle multiple elements for load balancing
 - Apply the preprocessing enhancement factor
 - Implement proper boundary handling with zero-padding
 
 ### **Stage 2 approach**
+
 - Identify Stage 2 threads and map their indices to processing range
 - Implement the blur kernel by averaging neighboring elements
 - Handle boundary conditions by only including valid neighbors
 - Process multiple elements per thread for efficiency
 
 ### **Stage 3 approach**
+
 - All threads participate in final processing
 - Apply neighbor smoothing using the specified scaling factor
 - Handle edge cases where neighbors may not exist
 - Write results to global output with bounds checking
 
 ### **Synchronization strategy**
+
 - Place barriers between stages to prevent race conditions
 - Ensure each stage completes before dependent stages begin
 - Use final barrier to guarantee completion before block exit
@@ -140,20 +151,28 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p29 --multi-stage
+pixi run p29 --multi-stage
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p29 --multi-stage
+pixi run p29 --multi-stage -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p29 --multi-stage
 ```
 
   </div>
@@ -197,11 +216,13 @@ The multi-stage pipeline solution demonstrates sophisticated thread specializati
 The fundamental breakthrough in this puzzle is **thread specialization by role** rather than by data:
 
 **Traditional approach:** All threads execute the same algorithm on different data
+
 - Everyone performs identical operations (like reductions or matrix operations)
 - Barriers synchronize threads within the same algorithm steps
 - Thread roles differ only by data indices they process
 
 **This puzzle's innovation:** Different thread groups execute completely different algorithms
+
 - Threads 0-127 execute loading and preprocessing algorithms
 - Threads 128-255 execute blur processing algorithms
 - All threads collaborate in final smoothing algorithm
@@ -224,6 +245,7 @@ Understanding when barriers are necessary vs. wasteful:
 - **Performance insight**: Each barrier has a cost - use them strategically
 
 **Critical synchronization points:**
+
 1. **After Stage 1**: Prevent Stage 2 from reading incomplete preprocessed data
 2. **After Stage 2**: Prevent Stage 3 from reading incomplete blur results
 3. **After Stage 3**: Ensure all output writes complete before block termination
@@ -239,11 +261,13 @@ This demonstrates sophisticated **algorithmic parallelism** where different thre
 ## **Memory hierarchy optimization**
 
 **Shared memory architecture:**
+
 - Two specialized buffers handle data flow between stages
 - Global memory access minimized to boundary operations only
 - All intermediate processing uses fast shared memory
 
 **Access pattern benefits:**
+
 - **Stage 1**: Coalesced global memory reads for input loading
 - **Stage 2**: Fast shared memory reads for blur processing
 - **Stage 3**: Coalesced global memory writes for output
@@ -253,16 +277,19 @@ This demonstrates sophisticated **algorithmic parallelism** where different thre
 This pipeline architecture pattern is fundamental to:
 
 **Image processing pipelines:**
+
 - Multi-stage filters (blur, sharpen, edge detection in sequence)
 - Color space conversions (RGB → HSV → processing → RGB)
 - Noise reduction with multiple algorithm passes
 
 **Scientific computing:**
+
 - Stencil computations with multi-stage finite difference methods
 - Signal processing with filtering, transformation, and analysis pipelines
 - Computational fluid dynamics with multi-stage solver iterations
 
 **Machine learning:**
+
 - Neural network layers with specialized thread groups for different operations
 - Data preprocessing pipelines (load, normalize, augment in coordinated stages)
 - Batch processing where different thread groups handle different operations
@@ -270,15 +297,18 @@ This pipeline architecture pattern is fundamental to:
 ## **Key technical insights**
 
 **Algorithmic vs. data parallelism:**
+
 - **Data parallelism**: Threads execute identical code on different data elements
 - **Algorithmic parallelism**: Threads execute fundamentally different algorithms based on their specialized roles
 
 **Barrier usage philosophy:**
+
 - **Strategic placement**: Barriers only where necessary to prevent race conditions between dependent stages
 - **Performance consideration**: Each barrier incurs synchronization overhead - use sparingly but correctly
 - **Correctness guarantee**: Proper barrier placement ensures deterministic results regardless of thread execution timing
 
 **Thread specialization benefits:**
+
 - **Algorithmic optimization**: Each stage can be optimized for its specific computational pattern
 - **Memory access optimization**: Different stages can use different memory access strategies
 - **Resource utilization**: Complex algorithms can be decomposed into specialized, efficient components

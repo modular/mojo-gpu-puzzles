@@ -7,6 +7,7 @@ Implement a kernel that broadcast adds vector `a` and vector `b` and stores it i
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Broadcasting 1D vectors across different dimensions
 - Using 2D thread indices for broadcast operations
 - Handling boundary conditions in broadcast patterns
@@ -23,6 +24,7 @@ The key insight is understanding how to map elements from two 1D vectors to crea
 ```mojo
 {{#include ../../../problems/p05/p05.mojo:broadcast_add}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a>
 
 <details>
@@ -33,6 +35,7 @@ The key insight is understanding how to map elements from two 1D vectors to crea
 1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard: think about how to broadcast values of `a` and `b`
+
 </div>
 </details>
 
@@ -42,15 +45,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p05
-```
-
   </div>
   <div class="tab-content">
 
@@ -59,9 +57,31 @@ pixi run p05
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p05 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p05 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p05
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
@@ -89,6 +109,7 @@ This solution demonstrates fundamental GPU broadcasting concepts without LayoutT
    - Vector `a` broadcasts horizontally: same `a[col]` used across each row
    - Vector `b` broadcasts vertically: same `b[row]` used across each column
    - Output combines both vectors through addition
+
    ```txt
    [ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
                  [ b1 ]     [ a0+b1  a1+b1 ]

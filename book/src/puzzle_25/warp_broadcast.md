@@ -142,20 +142,28 @@ After broadcasting, all lanes have the same value and can use it in their indivi
 **Test the basic broadcast:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p25 --broadcast-basic
+pixi run p25 --broadcast-basic
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-basic
+pixi run p25 --broadcast-basic -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p25 --broadcast-basic
 ```
 
   </div>
@@ -334,20 +342,28 @@ Consider efficient ways for lane 0 to analyze multiple data points.
 **Test the conditional broadcast:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p25 --broadcast-conditional
+pixi run p25 --broadcast-conditional
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-conditional
+pixi run p25 --broadcast-conditional -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p25 --broadcast-conditional
 ```
 
   </div>
@@ -547,20 +563,28 @@ Think about how to meaningfully combine broadcast parameters with shuffle-based 
 **Test the broadcast-shuffle coordination:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p25 --broadcast-shuffle-coordination
+pixi run p25 --broadcast-shuffle-coordination
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-shuffle-coordination
+pixi run p25 --broadcast-shuffle-coordination -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p25 --broadcast-shuffle-coordination
 ```
 
   </div>

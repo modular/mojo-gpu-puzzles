@@ -9,6 +9,7 @@ Implement a kernel that adds 10 to each position of 2D _LayoutTensor_ `a` and st
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Using `LayoutTensor` for 2D array access
 - Direct 2D indexing with `tensor[i, j]`
 - Handling bounds checking with `LayoutTensor`
@@ -25,6 +26,7 @@ The key insight is that `LayoutTensor` provides a natural 2D indexing interface,
 ```mojo
 {{#include ../../../problems/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p04/p04_layout_tensor.mojo" class="filename">View full file: problems/p04/p04_layout_tensor.mojo</a>
 
 <details>
@@ -35,6 +37,7 @@ The key insight is that `LayoutTensor` provides a natural 2D indexing interface,
 1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard add 10 to `a[row, col]`
+
 </div>
 </details>
 
@@ -44,15 +47,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p04_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -61,9 +59,31 @@ pixi run p04_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p04_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p04_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p04_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -81,8 +101,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <div class="solution-explanation">
 
 This solution:
+
 - Gets 2D thread indices with `row = thread_idx.y`, `col = thread_idx.x`
 - Guards against out-of-bounds with `if row < size and col < size`
 - Uses `LayoutTensor`'s 2D indexing: `output[row, col] = a[row, col] + 10.0`
+
 </div>
 </details>

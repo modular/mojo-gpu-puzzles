@@ -1,6 +1,6 @@
 # Puzzle 31: GPU Occupancy Optimization
 
-## Why This Puzzle Matters
+## Why this puzzle matters
 
 **Building on Puzzle 30:** You've just learned GPU profiling tools and discovered how memory access patterns can create dramatic performance differences. Now you're ready for the next level: **resource optimization**.
 
@@ -49,7 +49,7 @@ This puzzle explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with ide
 
 Use profiling tools to investigate three kernels and answer analysis questions about occupancy optimization. The kernels compute identical results but use resources very differently - your job is to discover why performance and occupancy behave counterintuitively!
 
-> The specific numerical results shown in this puzzle are based on **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on your GPU architecture (Pascal, Turing, Ampere, Ada, Hopper, etc.), but the **fundamental concepts, methodology, and insights remain universally applicable** across all modern NVIDIA GPUs. Use `pixi run gpu-specs` to get your specific hardware values.
+> The specific numerical results shown in this puzzle are based on **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4), but the **fundamental concepts, methodology, and insights remain universally applicable** across modern GPUs. Use `pixi run gpu-specs` to get your specific hardware values.
 
 ## Configuration
 
@@ -83,7 +83,7 @@ Theoretical Occupancy = min(
 ) × Threads Per Block / Max Threads Per SM
 ```
 
-## The Investigation
+## The investigation
 
 ### Step 1: Test the kernels
 
@@ -127,7 +127,7 @@ First, identify your GPU architecture and detailed specs:
 pixi run gpu-specs
 ```
 
-**Note**: `gpu-specs` shows **all architectural details** derived from your GPU hardware - no lookup tables needed!
+**Note**: `gpu-specs` automatically detects your GPU vendor (NVIDIA/AMD/Apple) and shows **all architectural details** derived from your hardware - no lookup tables needed!
 
 **Common Architecture Specs (Reference):**
 
@@ -165,7 +165,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 
 Compare the actual measured occupancy with your theoretical calculations - this is where the mystery reveals itself!
 
-## Key Insights
+## Key insights
 
 💡 **Occupancy Threshold:** Once you have sufficient occupancy for latency hiding (~25-50%), additional occupancy provides diminishing returns.
 

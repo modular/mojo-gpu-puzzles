@@ -9,6 +9,7 @@ Implement a kernel that broadcast adds 1D LayoutTensor `a` and 1D LayoutTensor `
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Using `LayoutTensor` for broadcast operations
 - Working with different tensor shapes
 - Handling 2D indexing with `LayoutTensor`
@@ -25,6 +26,7 @@ The key insight is that `LayoutTensor` allows natural broadcasting through diffe
 ```mojo
 {{#include ../../../problems/p05/p05_layout_tensor.mojo:broadcast_add_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05_layout_tensor.mojo" class="filename">View full file: problems/p05/p05_layout_tensor.mojo</a>
 
 <details>
@@ -35,6 +37,7 @@ The key insight is that `LayoutTensor` allows natural broadcasting through diffe
 1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard: think about how to broadcast values of `a` and `b` as LayoutTensors
+
 </div>
 </details>
 
@@ -44,15 +47,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p05_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -61,9 +59,31 @@ pixi run p05_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p05_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p05_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p05_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
@@ -92,6 +112,7 @@ This solution demonstrates key concepts of LayoutTensor broadcasting and GPU thr
    - Input `a` has shape `(1,n)`: `a[0,col]` broadcasts across rows
    - Input `b` has shape `(n,1)`: `b[row,0]` broadcasts across columns
    - Output has shape `(n,n)`: Each element is sum of corresponding broadcasts
+
    ```txt
    [ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
                  [ b1 ]     [ a0+b1  a1+b1 ]

@@ -10,7 +10,8 @@ Implement a kernel that adds 10 to each position of vector `a` and stores it in 
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Processing data larger than thread block size
 - Coordinating multiple blocks of threads
 - Computing global thread positions
@@ -22,7 +23,10 @@ The key insight is understanding how blocks of threads work together to process 
 ```mojo
 {{#include ../../../problems/p06/p06.mojo:add_10_blocks}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a>
+
+> Note: The `LayoutTensor` variant of this puzzle is very similar so we leave it to the reader.
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -32,6 +36,7 @@ The key insight is understanding how blocks of threads work together to process 
 1. Calculate global index: `i = block_dim.x * block_idx.x + thread_idx.x`
 2. Add guard: `if i < size`
 3. Inside guard: `output[i] = a[i] + 10.0`
+
 </div>
 </details>
 
@@ -41,15 +46,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p06
-```
-
   </div>
   <div class="tab-content">
 
@@ -58,9 +58,31 @@ pixi run p06
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p06 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p06 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p06
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
@@ -77,12 +99,13 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates key concepts of block-based GPU processing:
+This solution covers key concepts of block-based GPU processing:
 
 1. **Global thread indexing**
    - Combines block and thread indices: `block_dim.x * block_idx.x + thread_idx.x`
    - Maps each thread to a unique global position
    - Example for 3 threads per block:
+
      ```txt
      Block 0: [0 1 2]
      Block 1: [3 4 5]
@@ -93,6 +116,7 @@ This solution demonstrates key concepts of block-based GPU processing:
    - Each block processes a contiguous chunk of data
    - Block size (3) < Data size (9) requires multiple blocks
    - Automatic work distribution across blocks:
+
      ```txt
      Data:    [0 1 2 3 4 5 6 7 8]
      Block 0: [0 1 2]
@@ -108,7 +132,7 @@ This solution demonstrates key concepts of block-based GPU processing:
 4. **Memory access pattern**
    - Coalesced memory access: threads in a block access contiguous memory
    - Each thread processes one element: `output[i] = a[i] + 10.0`
-   - Block-level parallelism enables efficient memory bandwidth utilization
+   - Block-level parallelism provides efficient memory bandwidth utilization
 
 This pattern forms the foundation for processing large datasets that exceed the size of a single thread block.
 </div>

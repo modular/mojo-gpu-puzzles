@@ -5,6 +5,7 @@
 > We're now entering Part V of our GPU puzzle journey: **PyTorch Custom Operations**.
 >
 > In [Puzzle 17](../puzzle_17/puzzle_17.md), we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we'll explore how to:
+>
 > - Use the same Mojo kernel with PyTorch's CustomOpLibrary
 > - Integrate with PyTorch's tensor system and autograd
 > - Compare MAX Graph vs PyTorch approaches for custom operations
@@ -25,26 +26,35 @@ To complete this puzzle, you need to fill in one line to call the custom operati
 ```python
 {{#include ../../../problems/p20/p20.py:conv1d_pytorch}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a>
 
 You can run the puzzle with:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p20
+pixi run p20
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p20
+pixi run p20 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p20
 ```
 
   </div>
@@ -96,23 +106,29 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 ```
 
 ### 2. **Explicit Output Tensor Allocation**
+
 ```python
 output_tensor = torch.empty_like(input_tensor)
 ```
+
 - Unlike MAX Graph which handles output allocation automatically
 - PyTorch CustomOpLibrary requires **pre-allocated output tensors**
 - The Mojo operation signature expects `(out, input, kernel)` order
 
 ### 3. **Parameter Dictionary**
+
 ```python
 ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
 ```
+
 - Parameters are passed as a dictionary to the operation
 - These become compile-time parameters in the Mojo kernel
 - Must match the parameter names in the Mojo `@staticmethod fn execute` signature
 
 ### 4. **Same Kernel, Different Integration**
+
 The underlying Mojo kernel (`conv1d_kernel`) is identical to Puzzle 17:
+
 - Same GPU kernel code
 - Same memory access patterns
 - Same computational logic
@@ -148,6 +164,7 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 ```
 
 This pattern ensures:
+
 - Memory is allocated on the correct device
 - Output tensor has the right shape and dtype
 - The Mojo kernel can write directly to the output buffer
@@ -155,6 +172,7 @@ This pattern ensures:
 ### torch.compile() integration
 
 `torch.compile()` is essential because it:
+
 - Handles memory layout conversion between PyTorch and Mojo
 - Manages device synchronization (CPU ↔ GPU)
 - Optimizes tensor format conversion

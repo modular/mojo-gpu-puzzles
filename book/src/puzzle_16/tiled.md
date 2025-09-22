@@ -148,20 +148,28 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p16 --tiled
+pixi run p16 --tiled
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p16 --tiled
+pixi run p16 --tiled -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p16 --tiled
 ```
 
   </div>
@@ -324,12 +332,14 @@ The idiomatic tiled matrix multiplication leverages Mojo's LayoutTensor API and 
 **🔑 Key Point: This implementation performs standard matrix multiplication A × B using coalesced loading for both matrices.**
 
 **What this implementation does:**
+
 - **Matrix operation**: Standard \\(A \times B\\) multiplication (not \\(A \times B^T\\))
 - **Loading pattern**: Both matrices use `Layout.row_major(1, TPB)` for coalesced access
 - **Computation**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 - **Data layout**: No transposition during loading - both matrices loaded in same orientation
 
 **What this implementation does NOT do:**
+
 - Does NOT perform \\(A \times B^T\\) multiplication
 - Does NOT use transposed loading patterns
 - Does NOT transpose data during copy operations
@@ -366,7 +376,7 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
    - Use dedicated copy engines that bypass registers and enable compute-memory overlap via [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
-   - **Important**: 
+   - **Important**:
       - Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass
       - `copy_dram_to_sram_async` assumes that you are using a 1d thread block (`block_dim.y == block_dim.z == 1`) and all the threads from a thread block participate in the copy unless you specify otherwise.  This behaviour in overridden by specifying:
          - `block_dim_count`: the dimensionality of the thread block (`2` for the 2d thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`)
@@ -462,6 +472,7 @@ The idiomatic approach is not just cleaner but also potentially more performant 
 The current implementation does NOT use transposed loading. This section is purely educational to show what's possible with the layout system.
 
 **Current implementation recap:**
+
 - Uses `Layout.row_major(1, TPB)` for both matrices
 - Performs standard A × B multiplication
 - No data transposition during copy
@@ -479,12 +490,14 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 ```
 
 **Use cases for transposed loading (not used in this puzzle):**
+
 1. **Pre-transposed input matrices**: When \\(B\\) is already stored transposed in global memory
 2. **Different algorithms**: Computing \\(A^T \times B\\), \\(A \times B^T\\), or \\(A^T \times B^T\\)
 3. **Memory layout conversion**: Converting between row-major and column-major layouts
 4. **Avoiding transpose operations**: Loading data directly in the required orientation
 
 **Key distinction:**
+
 - **Current implementation**: Both matrices use `Layout.row_major(1, TPB)` for standard \\(A \times B\\) multiplication
 - **Transposed loading example**: Would use different layouts to handle pre-transposed data or different matrix operations
 
@@ -495,12 +508,14 @@ This demonstrates Mojo's philosophy: providing low-level control when needed whi
 ## Summary: Key takeaways
 
 **What the idiomatic tiled implementation actually does:**
+
 1. **Matrix Operation**: Standard A × B multiplication
 2. **Memory Loading**: Both matrices use `Layout.row_major(1, TPB)` for coalesced access
 3. **Computation Pattern**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 4. **Data Layout**: No transposition during loading
 
 **Why this is optimal:**
+
 - **Coalesced global memory access**: `Layout.row_major(1, TPB)` ensures efficient loading
 - **Bank conflict avoidance**: Shared memory access pattern avoids conflicts
 - **Standard algorithm**: Implements the most common matrix multiplication pattern

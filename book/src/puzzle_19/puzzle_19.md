@@ -9,12 +9,14 @@ Mathematically, the attention function is defined as:
 $$\\Large \\text{Attention}(Q, K, V) = \\text{softmax}(Q \\cdot K^T) \\cdot V$$
 
 Where:
+
 - \\(Q\\) is the **query vector** of shape \\((d,)~\\) - represents what we're looking for
 - \\(K\\) is the **key matrix** of shape \\((\text{seq\_len}, d)~\\) - represents what's available to match against
 - \\(V\\) is the **value matrix** of shape \\((\text{seq\_len}, d)~\\) - represents the information to retrieve
 - The output is a **weighted combination** vector of shape \\((d,)\\)
 
 The computation involves three main steps:
+
 1. **Attention Scores**: Compute \\(Q \cdot K^T\\) to measure how well the query matches each key vector
 2. **Attention Weights**: Apply softmax to convert scores into a probability distribution (weights sum to 1)
 3. **Weighted Sum**: Combine value vectors using attention weights to produce the final output
@@ -52,6 +54,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 **Key insight**: We reshape the query vector \\(Q\\) from shape \\((16,)\\) to \\((1,16)\\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 18!
 
 Our GPU implementation **reuses and combines optimized kernels from previous puzzles**:
+
 - **[Tiled matrix multiplication from Puzzle 16](../puzzle_16/puzzle_16.md)** for efficient \\(Q \cdot K^T\\) and \\(\text{weights} \cdot V\\) operations
 - **Shared memory transpose** for computing \\(K^T\\) efficiently
 - **[Parallel softmax from Puzzle 18](../puzzle_18/puzzle_18.md)** for numerically stable attention weight computation
@@ -77,6 +80,7 @@ Our GPU implementation **reuses and combines optimized kernels from previous puz
 - **Shared memory**: Utilized in transpose, matmul, and softmax kernels for performance
 
 Layout configuration:
+
 - Query tensor: `Layout.row_major(d)`
 - Key tensor: `Layout.row_major(seq_len, d)`
 - Value tensor: `Layout.row_major(seq_len, d)`
@@ -92,6 +96,7 @@ Key aspects of this puzzle include:
 5. **Multi-input operations**: Handling three input tensors (Q, K, V) in a single custom op
 
 Our attention custom operation will:
+
 - Accept query, key, and value tensors from Python
 - Process them efficiently on GPU using optimized kernels
 - Return the attention-weighted output vector
@@ -106,6 +111,7 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 ```mojo
 {{#include ../../../problems/p19/op/attention.mojo:transpose_kernel}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a>
 
 <details>
@@ -132,6 +138,7 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 6. **Boundary Handling**: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don't perfectly divide by `TRANSPOSE_BLOCK_DIM_XY` x `TRANSPOSE_BLOCK_DIM_XY`
 
 7. **Memory Coalescing**: This pattern ensures both reads and writes are coalesced for optimal memory bandwidth utilization
+
 </div>
 </details>
 
@@ -140,26 +147,35 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 ```mojo
 {{#include ../../../problems/p19/op/attention.mojo:attention_orchestration}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p19/op/attention.mojo" class="filename">View full file: problems/p19/op/attention.mojo</a>
 
 ### Test the kernels
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p19
+pixi run p19
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p19
+pixi run p19 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p19
 ```
 
   </div>
@@ -272,13 +288,14 @@ The attention operation follows the canonical mathematical definition:
 $$\\Large \\text{Attention}(Q, K, V) = \\text{softmax}(Q \\cdot K^T) \\cdot V$$
 
 **Breaking down the math**:
+
 - \\(Q \cdot K^T~\\): Query-key similarity scores of shape: \\((1, \text{seq\_len})\\)
 - \\(\text{softmax}(\cdot)~\\): Normalize scores to probabilities of shape: \\((1, \text{seq\_len})\\)
 - \\(\text{weights} \cdot V~\\): Weighted combination of values of shape: \\((1, d)\\)
 
 This involves several computational steps that we optimize using GPU kernels from previous puzzles.
 
-### 1. Transpose kernel implementation:
+### 1. Transpose kernel implementation
 
 ```mojo
 {{#include ../../../solutions/p19/op/attention.mojo:transpose_kernel_solution}}
@@ -289,6 +306,7 @@ This involves several computational steps that we optimize using GPU kernels fro
 The transpose kernel uses **shared memory tiling** to achieve coalesced memory access patterns. Key implementation details:
 
 #### Critical transpose pattern
+
 ```mojo
 # Load with normal indexing
 shared_tile[local_row, local_col] = inp[global_row, global_col]
@@ -300,7 +318,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 The transpose happens through **swapped indexing** in shared memory access (`[local_col, local_row]` instead of `[local_row, local_col]`) and **swapped block coordinates** for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.
 </div>
 
-### 2. GPU kernel orchestration:
+### 2. GPU kernel orchestration
 
 ```mojo
 {{#include ../../../solutions/p19/op/attention.mojo:attention_orchestration_solution}}
@@ -311,6 +329,7 @@ The transpose happens through **swapped indexing** in shared memory access (`[lo
 The GPU orchestration demonstrates **sophisticated kernel chaining** and **zero-copy memory optimization**:
 
 #### Advanced memory optimization strategies
+
 ```mojo
 # Zero-copy reshaping - no data movement, just reinterpret tensor shape
 q_2d = q_tensor.reshape[layout_q_2d]()
@@ -319,12 +338,14 @@ weights = scores_2d.reshape[layout_scores]()
 ```
 
 The implementation achieves **maximum memory efficiency** through:
+
 - **Zero-copy reshaping**: Reinterpreting tensor shapes without moving data in memory
 - **Intelligent buffer reuse**: The same `scores_weights_buf` serves dual purposes as both scores \\((1,\\text{seq_len})\\) and weights \\((\\text{seq_len},)\\)
 - **Minimal allocations**: Only 2 temporary buffers power the entire attention operation
 - **Memory coalescing**: All operations maintain optimal memory access patterns
 
 #### Strategic kernel reuse pattern
+
 - **Steps 3 & 7**: Both leverage `matmul_idiomatic_tiled` from [Puzzle 16](../puzzle_16/puzzle_16.md)
   - Step 3: \\(Q \\times K^T\\) → attention scores computation \\((1,d) \\times (d,\\text{seq_len}) \\rightarrow (1,\\text{seq_len})\\)
   - Step 7: \\(\\text{weights} \\times V\\) → final weighted output \\((1,\\text{seq_len}) \\times (\\text{seq_len},d) \\rightarrow (1,d)\\)
@@ -342,6 +363,7 @@ This exemplifies **modular GPU architecture**: complex neural network operations
 <div class="solution-explanation">
 
 #### Memory optimization strategy
+
 The implementation achieves **minimal memory allocation** through aggressive buffer reuse:
 
 ```mojo
@@ -351,16 +373,20 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 ```
 
 **Key optimization insights**:
+
 - The same `scores_weights_buf` is reused for both attention scores and weights through reshape operations
 - Zero-copy tensor reshaping eliminates unnecessary data movement
 
 #### Kernel reuse architecture
+
 This puzzle showcases **modular kernel design** by combining three specialized kernels:
+
 - **`matmul_idiomatic_tiled`** (used twice) - Powers both \\(Q \\times K^T\\) and \\(\\text{weights} \\times V\\) operations
 - **`softmax_kernel`** - Provides numerically stable attention weight computation with parallel reduction
 - **`transpose_kernel`** - Enables efficient \\(K^T\\) computation with coalesced memory access
 
 **Architectural benefits**:
+
 - **Composability**: Complex operations built from proven components
 - **Maintainability**: Each kernel has a single, well-defined responsibility
 - **Performance**: Leverages highly optimized implementations from previous puzzles

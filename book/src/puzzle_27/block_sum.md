@@ -7,6 +7,7 @@ Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using
 ## Key concepts
 
 In this puzzle, you'll learn:
+
 - **Block-level reductions** with `block.sum()`
 - **Block-wide synchronization** and thread coordination
 - **Cross-warp communication** within a single block
@@ -36,6 +37,7 @@ Recall the complex approach from [Puzzle 12](../puzzle_12/layout_tensor.md) that
 ```
 
 **What makes this complex:**
+
 - **Shared memory allocation**: Manual memory management within blocks
 - **Explicit barriers**: `barrier()` calls to synchronize all threads in block
 - **Tree reduction**: Complex loop with stride-based indexing (64→32→16→8→4→2→1)
@@ -53,6 +55,7 @@ Before jumping to block-level operations, recall how [Puzzle 24](../puzzle_24/wa
 ```
 
 **What `warp.sum()` achieved:**
+
 - **Single warp scope**: Works within 32 threads (NVIDIA) or 32/64 threads (AMD)
 - **Hardware shuffle**: Uses `shfl.sync.bfly.b32` instructions for efficiency
 - **Zero shared memory**: No explicit memory management needed
@@ -63,20 +66,28 @@ Before jumping to block-level operations, recall how [Puzzle 24](../puzzle_24/wa
 **Test the traditional approach:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
   </div>
   <div class="tab-content">
 
 ```bash
-uv run p27 --traditional-dot-product
+pixi run p27 --traditional-dot-product
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p27 --traditional-dot-product
+pixi run p27 --traditional-dot-product -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p27 --traditional-dot-product
 ```
 
   </div>
@@ -96,15 +107,9 @@ Transform the complex traditional approach into a simple block kernel using `blo
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run p27 --block-sum-dot-product
-```
-
   </div>
   <div class="tab-content">
 
@@ -113,9 +118,24 @@ pixi run p27 --block-sum-dot-product
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p27 --block-sum-dot-product -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p27 --block-sum-dot-product
+```
+
+  </div>
 </div>
 
 Expected output when solved:
+
 ```txt
 SIZE: 128
 TPB: 128
@@ -134,6 +154,7 @@ Just like warp.sum() but for the entire block
 ### 1. **Think about the three-step pattern**
 
 Every block reduction follows the same conceptual pattern:
+
 1. Each thread computes its local contribution
 2. All threads participate in a block-wide reduction
 3. One designated thread handles the final result
@@ -149,6 +170,7 @@ When accessing `LayoutTensor` elements, remember that indexing returns SIMD valu
 ### 4. **[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/block/sum) API concepts**
 
 Study the function signature - it needs:
+
 - A template parameter specifying the block size
 - A template parameter for result distribution (`broadcast`)
 - A runtime parameter containing the value to reduce
@@ -161,7 +183,6 @@ Study the function signature - it needs:
 
 </div>
 </details>
-
 
 ## Solution
 
@@ -177,6 +198,7 @@ Study the function signature - it needs:
 The `block.sum()` kernel demonstrates the fundamental transformation from complex block synchronization to expertly optimized implementations:
 
 **What disappeared from the traditional approach:**
+
 - **15+ lines → 8 lines**: Dramatic code reduction
 - **Shared memory allocation**: Zero memory management required
 - **7+ barrier() calls**: Zero explicit synchronization needed
@@ -185,6 +207,7 @@ The `block.sum()` kernel demonstrates the fundamental transformation from comple
 - **Cross-warp coordination**: Handled automatically by optimized implementation
 
 **Block-wide execution model:**
+
 ```
 Block threads (128 threads across 4 warps):
 Warp 0 (threads 0-31):
@@ -211,12 +234,14 @@ Thread 0 receives → total = 1381760.0 (when broadcast=False)
 ```
 
 **Why this works without barriers:**
+
 1. **Block-wide execution**: All threads execute each instruction in lockstep within warps
 2. **Built-in synchronization**: `block.sum()` implementation handles synchronization internally
 3. **Cross-warp communication**: Optimized communication between warps in the block
 4. **Coordinated result delivery**: Only thread 0 receives the final result
 
 **Comparison to warp.sum() (Puzzle 24):**
+
 - **Warp scope**: `warp.sum()` works within 32/64 threads (single warp)
 - **Block scope**: `block.sum()` works across entire block (multiple warps)
 - **Same simplicity**: Both replace complex manual reductions with one-line calls
@@ -226,7 +251,6 @@ Thread 0 receives → total = 1381760.0 (when broadcast=False)
 </details>
 
 ## Technical investigation: What does `block.sum()` actually compile to?
-
 
 To understand what `block.sum()` actually generates, we compiled the puzzle with debug information:
 
@@ -280,21 +304,23 @@ bar.sync           0;                        // barrier synchronization
 
 The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.
 
-
 ## Performance insights
 
 **`block.sum()` vs Traditional:**
+
 - **Code simplicity**: 15+ lines → 1 line for the reduction
 - **Memory usage**: No shared memory allocation required
 - **Synchronization**: No explicit barriers needed
 - **Scalability**: Works with any block size (up to hardware limits)
 
 **`block.sum()` vs `warp.sum()`:**
+
 - **Scope**: Block-wide (128 threads) vs warp-wide (32 threads)
 - **Use case**: When you need reduction across entire block
 - **Convenience**: Same programming model, different scale
 
 **When to use `block.sum()`:**
+
 - **Single block problems**: When all data fits in one block
 - **Block-level algorithms**: Shared memory computations needing reduction
 - **Convenience over scalability**: Simpler than multi-block approaches
@@ -302,6 +328,7 @@ The performance advantage comes from **expertly optimized algorithm choice** (bu
 ## Relationship to previous puzzles
 
 **From Puzzle 12 (Traditional):**
+
 ```
 Complex: shared memory + barriers + tree reduction
 ↓
@@ -309,6 +336,7 @@ Simple: block.sum() hardware primitive
 ```
 
 **From Puzzle 24 (`warp.sum()`):**
+
 ```
 Warp-level: warp.sum() across 32 threads (single warp)
 ↓
@@ -316,13 +344,14 @@ Block-level: block.sum() across 128 threads (multiple warps)
 ```
 
 **Three-stage progression:**
+
 1. **Manual reduction** (Puzzle 12): Complex shared memory + barriers + tree reduction
 2. **Warp primitives** (Puzzle 24): `warp.sum()` - simple but limited to single warp
 3. **Block primitives** (Puzzle 27): `block.sum()` - extends warp simplicity across multiple warps
 
 **The key insight:** `block.sum()` gives you the simplicity of `warp.sum()` but scales across an entire block by automatically handling the complex cross-warp coordination that you'd otherwise need to implement manually.
 
-## Next Steps
+## Next steps
 
 Once you've learned about `block.sum()` operations, you're ready for:
 

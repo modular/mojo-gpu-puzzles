@@ -6,7 +6,8 @@ Implement a kernel that computes the dot-product of vector `a` and vector `b` an
 
 ## Key concepts
 
-In this puzzle, you'll learn about:
+This puzzle covers:
+
 - Implementing parallel reduction operations
 - Using shared memory for intermediate results
 - Coordinating threads for collective operations
@@ -28,14 +29,15 @@ Notes:
 - **Thread coordination**: Synchronizing before combining results
 - **Final reduction**: Converting partial results to scalar output
 
-*Note: For this problem, you don't need to worry about number of shared reads. We will
-handle that challenge later.*
+_Note: For this problem, you don't need to worry about number of shared reads. We will
+handle that challenge later._
 
 ## Code to complete
 
 ```mojo
 {{#include ../../../problems/p12/p12.mojo:dot_product}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a>
 
 <details>
@@ -47,6 +49,7 @@ handle that challenge later.*
 2. Call `barrier()` to synchronize
 3. Use thread 0 to sum all products in shared memory
 4. Write final sum to `output[0]`
+
 </div>
 </details>
 
@@ -56,15 +59,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p12
-```
-
   </div>
   <div class="tab-content">
 
@@ -73,9 +71,31 @@ pixi run p12
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p12 -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p12 -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p12
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
@@ -97,11 +117,13 @@ The solution implements a parallel reduction algorithm for dot product computati
 ### Phase 1: Element-wise Multiplication
 
 Each thread performs one multiplication:
+
 ```txt
 Thread i: shared[i] = a[i] * b[i]
 ```
 
 ### Phase 2: Parallel Reduction
+
 The reduction uses a tree-based approach that halves active threads in each step:
 
 ```txt
@@ -118,7 +140,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 ```
 
-### Key Implementation Features:
+### Key implementation features
 
 1. **Memory Access Pattern**:
    - Each thread loads exactly two values from global memory (`a[i]`, `b[i]`)
@@ -140,6 +162,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
        barrier()
        stride //= 2
    ```
+
    - Halves stride in each step
    - Only active threads perform additions
    - Maintains work efficiency
@@ -152,7 +175,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 
 This implementation achieves \\(O(\log n)\\) time complexity compared to \\(O(n)\\) in sequential execution, demonstrating the power of parallel reduction algorithms.
 
-### Barrier Synchronization Importance
+### Barrier synchronization importance
 
 The `barrier()` between reduction steps is critical for correctness. Here's why:
 
@@ -174,6 +197,7 @@ Without barrier:
 ```
 
 With `barrier()`:
+
 ```text
 Step 1 (stride = 4):
 All threads write their sums:
@@ -187,15 +211,18 @@ Thread 1: shared[1] = 26 + 58 = 84
 ```
 
 The `barrier()` ensures:
+
 1. All writes from current step complete
 2. All threads see updated values
 3. No thread starts next iteration early
 4. Consistent shared memory state
 
 Without these synchronization points, we could get:
+
 - Memory race conditions
 - Threads reading stale values
 - Non-deterministic results
 - Incorrect final sum
+
 </div>
 </details>

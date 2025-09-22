@@ -4,10 +4,10 @@ Implement a kernel that adds 10 to each position of a 1D ayoutTensor `a` and sto
 
 **Note:** _You have fewer threads per block than the size of `a`._
 
-
 ## Key concepts
 
 In this puzzle, you'll learn about:
+
 - Using LayoutTensor's shared memory features
 - Thread synchronization with shared memory
 - Block-local data management with tensor builder
@@ -58,6 +58,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 ```mojo
 {{#include ../../../problems/p08/p08_layout_tensor.mojo:add_10_shared_layout_tensor}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08_layout_tensor.mojo" class="filename">View full file: problems/p08/p08_layout_tensor.mojo</a>
 
 <details>
@@ -70,6 +71,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 3. Synchronize with `barrier()` (educational - not strictly needed here)
 4. Process data using shared memory indices
 5. Guard against out-of-bounds access
+
 </div>
 </details>
 
@@ -79,15 +81,10 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe p08_layout_tensor
-```
-
   </div>
   <div class="tab-content">
 
@@ -96,14 +93,35 @@ pixi run p08_layout_tensor
 ```
 
   </div>
+  <div class="tab-content">
+
+```bash
+pixi run p08_layout_tensor -e amd
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p08_layout_tensor -e apple
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p08_layout_tensor
+```
+
+  </div>
 </div>
 
 Your output will look like this if the puzzle isn't solved yet:
+
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 ```
-
 
 ## Solution
 
@@ -122,6 +140,7 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
    - Global tensors: `a` and `output` (slow, visible to all blocks)
    - Shared tensor: `shared` (fast, thread-block local)
    - Example for 8 elements with 4 threads per block:
+
      ```txt
      Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
 
@@ -132,11 +151,13 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
 
 2. **Thread coordination**
    - Load phase with natural indexing:
+
      ```txt
      Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
      Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
      barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
      ```
+
    - Process phase: Each thread adds 10 to its shared tensor value
    - Result: `output[global_i] = shared[local_i] + 10 = 11`
 
@@ -144,15 +165,19 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
 
 3. **LayoutTensor benefits**
    - Shared memory allocation:
+
      ```txt
      # Clean tensor builder API
      shared = tb[dtype]().row_major[TPB]().shared().alloc()
      ```
+
    - Natural indexing for both global and shared:
+
      ```txt
      Block 0 output: [11 11 11 11]
      Block 1 output: [11 11 11 11]
      ```
+
    - Built-in layout management and type safety
 
 4. **Memory access pattern**

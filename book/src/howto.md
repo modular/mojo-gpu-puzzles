@@ -1,18 +1,18 @@
 ## How to Use This Book
 
-Each puzzle follows a consistent format designed to progressively build your skills:
+Each puzzle maintains a consistent structure to support systematic skill development:
 
-- **Overview**: Clear problem statement and key concepts introduced in each puzzle
-- **Configuration**: Setup parameters and memory organization specific to each challenge
-- **Code to Complete**: Skeleton code with specific sections for you to implement
-- **Tips**: Optional hints if you get stuck, without giving away complete solutions
-- **Solution**: Detailed explanations of the implementation, performance considerations, and underlying concepts
+- **Overview**: Problem definition and key concepts for each challenge
+- **Configuration**: Technical setup and memory organization details
+- **Code to Complete**: Implementation framework with clearly marked sections to fill in
+- **Tips**: Strategic hints available when needed, without revealing complete solutions
+- **Solution**: Comprehensive implementation analysis, including performance considerations and conceptual explanations
 
-The puzzles gradually increase in complexity, introducing new concepts while reinforcing fundamentals. We recommend solving them in order, as later puzzles build on skills developed in earlier ones.
+The puzzles increase in complexity systematically, building new concepts on established foundations. Working through them sequentially is recommended, as advanced puzzles assume familiarity with concepts from earlier challenges.
 
 ## Running the code
 
-All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.
+All puzzles integrate with a testing framework that validates implementations against expected results. Each puzzle provides specific execution instructions and solution verification procedures.
 
 ## Prerequisites
 
@@ -22,13 +22,34 @@ Make sure your system meets our [system requirements](https://docs.modular.com/m
 
 ### Compatible GPU
 
-You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles.
+You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles. If have the supported GPU, run the following command to get some info about your GPU:
+
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run gpu-specs
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe gpu-specs
+```
+
+  </div>
+</div>
 
 #### macOS Apple Sillicon (Early preview)
 
 For `osx-arm64` users, you'll need:
 
-- **macOS 15.0 or later** for optimal compatibility
+- **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos` and if it fails you'd need to upgrade.
 - **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
 
 If `xcrun -sdk macosx metal` outputs `cannot execite tool 'metal' due to missing Metal toolchain` proceed by running
@@ -111,13 +132,29 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
 
     <div class="code-tabs" data-tab-group="package-manager">
       <div class="tab-buttons">
-        <button class="tab-button">pixi</button>
+        <button class="tab-button">pixi NVIDIA (default)</button>
+        <button class="tab-button">pixi AMD</button>
+        <button class="tab-button">pixi Apple</button>
         <button class="tab-button">uv</button>
       </div>
       <div class="tab-content">
 
     ```bash
     pixi run pXX  # Replace XX with the puzzle number
+    ```
+
+      </div>
+      <div class="tab-content">
+
+    ```bash
+    pixi run pXX -e amd  # Replace XX with the puzzle number
+    ```
+
+      </div>
+      <div class="tab-content">
+
+    ```bash
+    pixi run pXX -e apple  # Replace XX with the puzzle number
     ```
 
       </div>
@@ -192,7 +229,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 - ✅ **Supported**: Puzzle works on this platform
 - ❌ **Not Supported**: Puzzle requires platform-specific features
 
-### Platform Notes
+### Platform notes
 
 **NVIDIA GPUs (Complete Support)**
 
@@ -217,7 +254,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 ### Recommendations
 
 - **Complete Learning Path**: Use NVIDIA GPU for full curriculum access (all 34 puzzles)
-- **Comprehensive Learning**: AMD GPUs excellent for most content (27 of 34 puzzles)
+- **Comprehensive Learning**: AMD GPUs work well for most content (27 of 34 puzzles)
 - **Basic Understanding**: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)
 - **Debugging & Profiling**: NVIDIA GPU required for debugging tools and performance analysis
 - **Modern GPU Features**: NVIDIA GPU required for Tensor Cores and cluster programming
