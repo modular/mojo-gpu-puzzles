@@ -21,6 +21,7 @@ alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
 alias MATMUL_BLOCK_DIM_COUNT = 2
 alias SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
 
+
 # Tiled matrix multiplication (from p16), updated to:
 # 1) Support different layouts for input (a, b) and output LayoutTensors.
 # 2) Handle cases where the inner dimension is not a multiple of MATMUL_BLOCK_DIM_XY.
@@ -48,19 +49,39 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
-    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        block_idx.y, block_idx.x
+    )
+    a_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
+    b_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_a_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
+    alias load_b_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
 
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            block_idx.y, idx
+        )
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            idx, block_idx.x
+        )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -81,8 +102,12 @@ fn matmul_idiomatic_tiled[
         # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(MATMUL_BLOCK_DIM_XY):
-            if(tiled_row < rows and tiled_col < cols): # Only perform calculation for valid outputs
-                if(k < a_tile.dim(1)): # Only perform calculation on valid inputs
+            if (
+                tiled_row < rows and tiled_col < cols
+            ):  # Only perform calculation for valid outputs
+                if k < a_tile.dim(
+                    1
+                ):  # Only perform calculation on valid inputs
                     acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -274,20 +299,31 @@ struct AttentionCustomOp:
             alias layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY)
+            alias transpose_threads_per_block = (
+                TRANSPOSE_BLOCK_DIM_XY,
+                TRANSPOSE_BLOCK_DIM_XY,
+            )
             # Tile over the K (seq_len, d) matrix
             alias transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
+                // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
+            alias matmul_threads_per_block = (
+                MATMUL_BLOCK_DIM_XY,
+                MATMUL_BLOCK_DIM_XY,
+            )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (seq_len + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias scores_blocks_per_grid = (
+                seq_len + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
             alias softmax_threads = SOFTMAX_BLOCK_DIM_X
             alias softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias result_blocks_per_grid = (
+                d + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
             k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](

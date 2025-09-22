@@ -15,6 +15,7 @@ alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
 alias MATMUL_BLOCK_DIM_COUNT = 2
 alias TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
 
+
 # ANCHOR: matmul_idiomatic_tiled
 # Idiomatic tiled matmul from p19.mojo
 fn matmul_idiomatic_tiled[
@@ -37,19 +38,39 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
-    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        block_idx.y, block_idx.x
+    )
+    a_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
+    b_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_a_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
+    alias load_b_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
 
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            block_idx.y, idx
+        )
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            idx, block_idx.x
+        )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -70,8 +91,12 @@ fn matmul_idiomatic_tiled[
         # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(MATMUL_BLOCK_DIM_XY):
-            if(tiled_row < rows and tiled_col < cols): # Only perform calculation for valid outputs
-                if(k < a_tile.dim(1)): # Only perform calculation on valid inputs
+            if (
+                tiled_row < rows and tiled_col < cols
+            ):  # Only perform calculation for valid outputs
+                if k < a_tile.dim(
+                    1
+                ):  # Only perform calculation on valid inputs
                     acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -92,7 +117,7 @@ fn layernorm_kernel[
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -149,7 +174,12 @@ fn transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
+    shared_tile = (
+        tb[dtype]()
+        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -182,7 +212,7 @@ fn add_bias_kernel[
     batch_size: Int,
     seq_len: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -215,7 +245,7 @@ fn minimal_fused_kernel[
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -284,7 +314,7 @@ fn minimal_fused_kernel_backward[
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
     grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
@@ -441,14 +471,14 @@ struct LayerNormLinearCustomOp:
         seq_len: Int,
         hidden_dim: Int,
         output_dim: Int,
-        dtype: DType = DType.float32
+        dtype: DType = DType.float32,
     ](
-        output: OutputTensor[dtype = dtype, rank=3],
-        input: InputTensor[dtype = dtype, rank=3],
-        ln_weight: InputTensor[dtype = dtype, rank=1],
-        ln_bias: InputTensor[dtype = dtype, rank=1],
-        linear_weight: InputTensor[dtype = dtype, rank=2],
-        linear_bias: InputTensor[dtype = dtype, rank=1],
+        output: OutputTensor[dtype=dtype, rank=3],
+        input: InputTensor[dtype=dtype, rank=3],
+        ln_weight: InputTensor[dtype=dtype, rank=1],
+        ln_bias: InputTensor[dtype=dtype, rank=1],
+        linear_weight: InputTensor[dtype=dtype, rank=2],
+        linear_bias: InputTensor[dtype=dtype, rank=1],
         ctx: DeviceContextPtr,
     ) raises:
         output_tensor = output.to_layout_tensor()
@@ -483,7 +513,7 @@ struct LayerNormLinearCustomOp:
                         seq_len,
                         hidden_dim,
                         output_dim,
-                        dtype
+                        dtype,
                     ]
                 ](
                     output_tensor,
@@ -514,7 +544,7 @@ struct LayerNormLinearCustomOp:
                         batch_size,
                         seq_len,
                         hidden_dim,
-                        dtype
+                        dtype,
                     ]
                 ](
                     normalized_tensor,
@@ -522,14 +552,18 @@ struct LayerNormLinearCustomOp:
                     ln_weight_tensor,
                     ln_bias_tensor,
                     grid_dim=(batch_size, seq_len),
-                    block_dim=hidden_dim
+                    block_dim=hidden_dim,
                 )
 
                 # Step 2: Matmul on normalized data
                 # (batch_size*seq_len, output_dim) outputs from ((batch*seq, hidden) @ (hidden, output) -> (batch*seq, output) ) with one thread per output
                 total_rows = batch_size * seq_len
-                blocks_y = (total_rows + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
-                blocks_x = (output_dim + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+                blocks_y = (
+                    total_rows + MATMUL_BLOCK_DIM_XY - 1
+                ) // MATMUL_BLOCK_DIM_XY
+                blocks_x = (
+                    output_dim + MATMUL_BLOCK_DIM_XY - 1
+                ) // MATMUL_BLOCK_DIM_XY
 
                 # Create intermediate result without bias
                 matmul_buffer = gpu_ctx.enqueue_create_buffer[dtype](
@@ -548,15 +582,19 @@ struct LayerNormLinearCustomOp:
                 ](transposed_weight_buffer.unsafe_ptr())
 
                 # Transpose the weight matrix
-                transpose_blocks_x = (hidden_dim + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
-                transpose_blocks_y = (output_dim + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+                transpose_blocks_x = (
+                    hidden_dim + TRANSPOSE_BLOCK_DIM_XY - 1
+                ) // TRANSPOSE_BLOCK_DIM_XY
+                transpose_blocks_y = (
+                    output_dim + TRANSPOSE_BLOCK_DIM_XY - 1
+                ) // TRANSPOSE_BLOCK_DIM_XY
                 gpu_ctx.enqueue_function[
                     transpose_kernel[
                         weight_layout,
                         transposed_weight_tensor.layout,
                         output_dim,
                         hidden_dim,
-                        dtype
+                        dtype,
                     ]
                 ](
                     transposed_weight_tensor,
@@ -581,7 +619,7 @@ struct LayerNormLinearCustomOp:
                         batch_size * seq_len,
                         output_dim,
                         hidden_dim,
-                        dtype
+                        dtype,
                     ]
                 ](
                     flat_matmul,
@@ -604,7 +642,7 @@ struct LayerNormLinearCustomOp:
                         batch_size,
                         seq_len,
                         output_dim,
-                        dtype
+                        dtype,
                     ]
                 ](
                     output_tensor,
@@ -666,18 +704,18 @@ struct LayerNormLinearBackwardCustomOp:
         seq_len: Int,
         hidden_dim: Int,
         output_dim: Int,
-        dtype: DType = DType.float32
+        dtype: DType = DType.float32,
     ](
-        grad_input: OutputTensor[dtype = dtype, rank=3],
-        grad_ln_weight: OutputTensor[dtype = dtype, rank=1],
-        grad_ln_bias: OutputTensor[dtype = dtype, rank=1],
-        grad_weight: OutputTensor[dtype = dtype, rank=2],
-        grad_bias: OutputTensor[dtype = dtype, rank=1],
-        grad_output: InputTensor[dtype = dtype, rank=3],
-        input: InputTensor[dtype = dtype, rank=3],
-        ln_weight: InputTensor[dtype = dtype, rank=1],
-        ln_bias: InputTensor[dtype = dtype, rank=1],
-        linear_weight: InputTensor[dtype = dtype, rank=2],
+        grad_input: OutputTensor[dtype=dtype, rank=3],
+        grad_ln_weight: OutputTensor[dtype=dtype, rank=1],
+        grad_ln_bias: OutputTensor[dtype=dtype, rank=1],
+        grad_weight: OutputTensor[dtype=dtype, rank=2],
+        grad_bias: OutputTensor[dtype=dtype, rank=1],
+        grad_output: InputTensor[dtype=dtype, rank=3],
+        input: InputTensor[dtype=dtype, rank=3],
+        ln_weight: InputTensor[dtype=dtype, rank=1],
+        ln_bias: InputTensor[dtype=dtype, rank=1],
+        linear_weight: InputTensor[dtype=dtype, rank=2],
         ctx: DeviceContextPtr,
     ) raises:
         grad_input_tensor = grad_input.to_layout_tensor()
@@ -722,7 +760,7 @@ struct LayerNormLinearBackwardCustomOp:
                     seq_len,
                     hidden_dim,
                     output_dim,
-                    dtype
+                    dtype,
                 ]
             ](
                 grad_input_tensor,
