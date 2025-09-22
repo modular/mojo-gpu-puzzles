@@ -651,6 +651,7 @@ UNFUSED Algorithm Test Completed!
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
+    dtype: DType = DType.float32
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -981,6 +982,7 @@ FUSED Algorithm Test Completed!
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
+    dtype: DType = DType.float32
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
