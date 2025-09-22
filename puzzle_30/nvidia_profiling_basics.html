@@ -279,7 +279,7 @@ Analysis &lt;----+     NSight Compute
 </blockquote>
 <h3 id="step-1-prepare-your-code-for-profiling"><a class="header" href="#step-1-prepare-your-code-for-profiling">Step 1: Prepare your code for profiling</a></h3>
 <p><strong>Critical</strong>: For accurate profiling, build with full debug information while keeping optimizations enabled:</p>
-<pre><code class="language-bash">pixi shell -e cuda
+<pre><code class="language-bash">pixi shell -e nvidia
 # Build with full debug info (for comprehensive source mapping) with optimizations enabled
 mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
 
@@ -347,7 +347,7 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 </ul>
 <h3 id="step-4-compare-implementations"><a class="header" href="#step-4-compare-implementations">Step 4: Compare implementations</a></h3>
 <p>Profile different versions and compare:</p>
-<pre><code class="language-bash"># Make sure you've in pixi shell still `pixi run -e cuda`
+<pre><code class="language-bash"># Make sure you've in pixi shell still `pixi run -e nvidia`
 
 # Profile shared memory version
 nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_shared ./solutions/p16/p16_optimized --single-block
@@ -434,7 +434,7 @@ This 2×2 matrix example demonstrates a <strong>classic small-kernel pattern</st
 <p>Now let’s dive deep into a specific kernel’s performance characteristics.</p>
 <h3 id="step-1-profile-a-specific-kernel"><a class="header" href="#step-1-profile-a-specific-kernel">Step 1: Profile a specific kernel</a></h3>
 <pre><code class="language-bash"># Make sure you're in an active shell
-pixi shell -e cuda
+pixi shell -e nvidia
 
 # Profile the naive MatMul kernel in detail (using our optimized build)
 ncu \
@@ -497,7 +497,7 @@ Achieved Occupancy                    %         2.09
 ------------------------------- ----------- ------------
 </code></pre>
 <p><strong>Critical Insights from Real Data</strong>:</p>
-<h4 id="performance-analysis---the-brutal-truth"><a class="header" href="#performance-analysis---the-brutal-truth">Performance analysis - the brutal truth!</a></h4>
+<h4 id="performance-analysis---the-brutal-truth"><a class="header" href="#performance-analysis---the-brutal-truth">Performance analysis - the brutal truth</a></h4>
 <ul>
 <li><strong>Compute Throughput: 0.00%</strong> - GPU is completely idle computationally</li>
 <li><strong>Memory Throughput: 1.02%</strong> - Barely touching memory bandwidth</li>

@@ -197,7 +197,7 @@
 <li><strong>AMD</strong>: Matrix Cores (CDNA/CDNA2/CDNA3 architectures)</li>
 </ul>
 <p>Think of them as hardware-accelerated GEMM (General Matrix Multiply) engines built directly into the GPU.</p>
-<h3 id="key-characteristics"><a class="header" href="#key-characteristics">Key characteristics:</a></h3>
+<h3 id="key-characteristics"><a class="header" href="#key-characteristics">Key characteristics</a></h3>
 <ul>
 <li><strong>Warp-level operations</strong>: Each instruction operates on data from an entire warp (32 threads on NVIDIA, 32 or 64 on AMD)</li>
 <li><strong>Fixed tile sizes</strong>: Operations work on specific matrix fragment sizes (e.g., 16×8×8 for FP32)</li>
@@ -214,11 +214,11 @@
 </ol>
 <h2 id="the-tensor-core-programming-model"><a class="header" href="#the-tensor-core-programming-model">The tensor core programming model</a></h2>
 <p>Tensor Cores expose a different programming paradigm:</p>
-<h3 id="traditional-compute-core-approach"><a class="header" href="#traditional-compute-core-approach">Traditional compute core approach:</a></h3>
+<h3 id="traditional-compute-core-approach"><a class="header" href="#traditional-compute-core-approach">Traditional compute core approach</a></h3>
 <pre><code class="language-mojo"># Each thread computes one element
 acc += a_shared[local_row, k] * b_shared[k, local_col]
 </code></pre>
-<h3 id="tensor-core-approach"><a class="header" href="#tensor-core-approach">Tensor core approach:</a></h3>
+<h3 id="tensor-core-approach"><a class="header" href="#tensor-core-approach">Tensor core approach</a></h3>
 <pre><code class="language-mojo"># Entire warp cooperates on matrix fragments
 a_reg = mma_op.load_a(A_mma_tile)           # Load 16×8 fragment
 b_reg = mma_op.load_b(B_mma_tile)           # Load 8×8 fragment
@@ -241,7 +241,7 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 # - store_d(): Store result fragment to memory
 </code></pre>
 <p><strong>Advanced features:</strong> The TensorCore API also supports quantized operations, different swizzle patterns for memory access optimization, and mixed-precision arithmetic. For complete documentation of all supported shapes, data types, and methods, see the <a href="https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/">official TensorCore API reference</a>.</p>
-<h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes:</a></h3>
+<h3 id="matrix-fragment-sizes"><a class="header" href="#matrix-fragment-sizes">Matrix fragment sizes</a></h3>
 <p>The TensorCore API supports different shapes and data types depending on the GPU hardware:</p>
 <p><strong>NVIDIA GPUs:</strong></p>
 <ul>
@@ -306,7 +306,7 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 </ol>
 <h2 id="the-challenge"><a class="header" href="#the-challenge">The challenge</a></h2>
 <p>Your task is to complete the <code>tensor_core_matrix_multiplication</code> function. The skeleton builds on the tiled approach but uses actual Tensor Core hardware operations.</p>
-<h3 id="key-requirements"><a class="header" href="#key-requirements">Key requirements:</a></h3>
+<h3 id="key-requirements"><a class="header" href="#key-requirements">Key requirements</a></h3>
 <ol>
 <li><strong>Use the actual Tensor Core API</strong>: Don’t simulate - use real <code>mma_op.load_a()</code>, <code>mma_op.mma_op()</code>, etc.</li>
 <li><strong>Maintain correctness</strong>: Your result must match the CPU reference implementation</li>
@@ -830,7 +830,7 @@ ALL TESTS PASSED!
 <h3 id="profiling-with-nvidia-nsight-compute-nvidia-only"><a class="header" href="#profiling-with-nvidia-nsight-compute-nvidia-only">Profiling with NVIDIA Nsight Compute (NVIDIA only)</a></h3>
 <p>First, enter the CUDA environment for <code>ncu</code> access:</p>
 <pre><code class="language-bash"># Enter CUDA environment
-pixi shell -e cuda
+pixi shell -e nvidia
 
 # Profile tensor core version
 ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,smsp__inst_executed_pipe_tensor_op_hmma.sum ./problems/p33p33_profiler --tensor-core
@@ -881,7 +881,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 <li><strong>Resource waste</strong>: Shared memory bank conflicts and suboptimal launch configuration</li>
 </ul>
 <p><strong>The lesson</strong>: Understanding performance bottlenecks and systematic optimization matter more than using the “latest and greatest” APIs. Hardware features are tools that require careful tuning, not magic bullets.</p>
-<h2 id="next-step"><a class="header" href="#next-step">Next step:</a></h2>
+<h2 id="next-step"><a class="header" href="#next-step">Next step</a></h2>
 <p>Ready for a rewarding GPU optimization challenge? Head to the <a href="../bonuses/part5.html">🎯 Performance Bonus Challenge</a> to learn how to transform your memory-bound Tensor Core implementation into something that actually beats the simple tiled version!</p>
 
                     </main>

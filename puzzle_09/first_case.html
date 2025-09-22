@@ -212,7 +212,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 </code></pre>
 <p>firsthand experience, run the following command in your terminal (<code>pixi</code> only):</p>
-<pre><code class="language-bash">pixi run p09 --first-case
+<pre><code class="language-bash">pixi run -e nvidia p09 --first-case
 </code></pre>
 <p>You’ll see output like when the program crashes with this error:</p>
 <pre><code class="language-txt">CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
@@ -241,7 +241,7 @@ Please file a bug report.
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your Task: Detective Work</a></h2>
 <p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
 <p>Start with:</p>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 </code></pre>
 <details>
 <summary><strong>Tips</strong></summary>
@@ -262,7 +262,7 @@ Please file a bug report.
 <div class="solution-explanation">
 <h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-Step Investigation with CUDA-GDB</a></h2>
 <h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the Debugger</a></h3>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 </code></pre>
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
@@ -335,18 +335,18 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
 <p><strong>You’ve learned crash debugging!</strong> You can now:</p>
 <ul>
-<li>✅ <strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
-<li>✅ <strong>Identify null pointer bugs</strong> through pointer address inspection</li>
-<li>✅ <strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
+<li><strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
+<li><strong>Identify null pointer bugs</strong> through pointer address inspection</li>
+<li><strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
 </ul>
 <h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your Next Challenge: <a href="./second_case.html">Detective Work: Second Case</a></a></h3>
 <p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but produces <strong>wrong results</strong>?</p>
 <p>The <a href="./second_case.html">Second Case</a> presents a completely different debugging challenge:</p>
 <ul>
-<li>❌ <strong>No crash messages</strong> to guide you</li>
-<li>❌ <strong>No obvious pointer problems</strong> to investigate</li>
-<li>❌ <strong>No stack traces</strong> pointing to the issue</li>
-<li>✅ <strong>Just wrong results</strong> that need systematic investigation</li>
+<li><strong>No crash messages</strong> to guide you</li>
+<li><strong>No obvious pointer problems</strong> to investigate</li>
+<li><strong>No stack traces</strong> pointing to the issue</li>
+<li><strong>Just wrong results</strong> that need systematic investigation</li>
 </ul>
 <p><strong>New skills you’ll develop:</strong></p>
 <ul>

@@ -296,7 +296,7 @@ alias BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 <p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.</p>
 <h2 id="the-investigation"><a class="header" href="#the-investigation">The investigation</a></h2>
 <h3 id="step-1-verify-correctness"><a class="header" href="#step-1-verify-correctness">Step 1: Verify correctness</a></h3>
-<pre><code class="language-bash">pixi shell -e cuda
+<pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p32/p32.mojo --test
 </code></pre>
 <p>Both kernels should produce identical results. This confirms that bank conflicts affect <strong>performance</strong> but not <strong>correctness</strong>.</p>
@@ -342,31 +342,31 @@ shared_buf[(thread_idx.x * 2) % TPB]
 </code></pre>
 <h2 id="your-task-solve-the-bank-conflict-mystery"><a class="header" href="#your-task-solve-the-bank-conflict-mystery">Your task: solve the bank conflict mystery</a></h2>
 <p><strong>After completing the investigation steps above, answer these analysis questions:</strong></p>
-<h3 id="performance-analysis-steps-1-2"><a class="header" href="#performance-analysis-steps-1-2">Performance analysis (Steps 1-2):</a></h3>
+<h3 id="performance-analysis-steps-1-2"><a class="header" href="#performance-analysis-steps-1-2">Performance analysis (Steps 1-2)</a></h3>
 <ol>
 <li>Do both kernels produce identical mathematical results?</li>
 <li>What are the execution time differences (if any) between the kernels?</li>
 <li>Why might performance be similar despite different access patterns?</li>
 </ol>
-<h3 id="bank-conflict-profiling-step-4"><a class="header" href="#bank-conflict-profiling-step-4">Bank conflict profiling (Step 4):</a></h3>
+<h3 id="bank-conflict-profiling-step-4"><a class="header" href="#bank-conflict-profiling-step-4">Bank conflict profiling (Step 4)</a></h3>
 <ol start="4">
 <li>How many bank conflicts does the no-conflict kernel generate for loads and stores?</li>
 <li>How many bank conflicts does the two-way conflict kernel generate for loads and stores?</li>
 <li>What is the total conflict count difference between the kernels?</li>
 </ol>
-<h3 id="access-pattern-analysis-step-5"><a class="header" href="#access-pattern-analysis-step-5">Access pattern analysis (Step 5):</a></h3>
+<h3 id="access-pattern-analysis-step-5"><a class="header" href="#access-pattern-analysis-step-5">Access pattern analysis (Step 5)</a></h3>
 <ol start="7">
 <li>In the no-conflict kernel, which bank does Thread 0 access? Thread 31?</li>
 <li>In the two-way conflict kernel, which threads access Bank 0? Which access Bank 2?</li>
 <li>How many threads compete for the same bank in the conflict kernel?</li>
 </ol>
-<h3 id="the-bank-conflict-detective-work"><a class="header" href="#the-bank-conflict-detective-work">The bank conflict detective work:</a></h3>
+<h3 id="the-bank-conflict-detective-work"><a class="header" href="#the-bank-conflict-detective-work">The bank conflict detective work</a></h3>
 <ol start="10">
 <li>Why does the two-way conflict kernel show measurable conflicts while the no-conflict kernel shows zero?</li>
 <li>How does the stride-2 access pattern <code>(thread_idx.x * 2) % TPB</code> create systematic conflicts?</li>
 <li>Why do bank conflicts matter more in compute-intensive kernels than memory-bound kernels?</li>
 </ol>
-<h3 id="real-world-implications"><a class="header" href="#real-world-implications">Real-world implications:</a></h3>
+<h3 id="real-world-implications"><a class="header" href="#real-world-implications">Real-world implications</a></h3>
 <ol start="13">
 <li>When would you expect bank conflicts to significantly impact application performance?</li>
 <li>How can you predict bank conflict patterns before implementing shared memory algorithms?</li>

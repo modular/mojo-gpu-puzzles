@@ -219,7 +219,7 @@
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <h3 id="step-1-run-the-benchmark"><a class="header" href="#step-1-run-the-benchmark">Step 1: Run the benchmark</a></h3>
-<pre><code class="language-bash">pixi shell -e cuda
+<pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p30/p30.mojo --benchmark
 </code></pre>
 <p>You’ll see dramatic timing differences between kernels! One kernel is <strong>much slower</strong> than the others. Your job is to figure out why using profiling tools <strong>without</strong> looking at the code.</p>
@@ -285,25 +285,25 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <p><strong>🤔 The Counterintuitive Result</strong>: You’ll notice Kernel2 has the <strong>highest</strong> cache hit rates but the <strong>lowest</strong> performance! This is the key mystery to solve.</p>
 <h2 id="step-5-detective-questions"><a class="header" href="#step-5-detective-questions">Step 5: Detective questions</a></h2>
 <p>Use your profiling evidence to answer these questions by looking at the kernel code <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>:</p>
-<h3 id="performance-analysis"><a class="header" href="#performance-analysis">Performance Analysis:</a></h3>
+<h3 id="performance-analysis"><a class="header" href="#performance-analysis">Performance Analysis</a></h3>
 <ol>
 <li><strong>Which kernel achieves the highest Memory Throughput?</strong> (Look at Gbyte/s values)</li>
 <li><strong>Which kernel has the lowest Max Bandwidth utilization?</strong> (Compare percentages)</li>
 <li><strong>What’s the performance gap in memory throughput?</strong> (Factor difference between fastest and slowest)</li>
 </ol>
-<h3 id="the-cache-paradox"><a class="header" href="#the-cache-paradox">The Cache Paradox:</a></h3>
+<h3 id="the-cache-paradox"><a class="header" href="#the-cache-paradox">The Cache Paradox</a></h3>
 <ol start="4">
 <li><strong>Which kernel has the highest L1/TEX Hit Rate?</strong></li>
 <li><strong>Which kernel has the highest L2 Hit Rate?</strong></li>
 <li><strong>🤯 Why does the kernel with the BEST cache hit rates perform the WORST?</strong></li>
 </ol>
-<h3 id="memory-access-detective-work"><a class="header" href="#memory-access-detective-work">Memory Access Detective Work:</a></h3>
+<h3 id="memory-access-detective-work"><a class="header" href="#memory-access-detective-work">Memory Access Detective Work</a></h3>
 <ol start="7">
 <li><strong>Can high cache hit rates actually indicate a performance problem?</strong></li>
 <li><strong>What memory access pattern would cause high cache hits but low throughput?</strong></li>
 <li><strong>Why might “efficient caching” be a symptom of “inefficient memory access”?</strong></li>
 </ol>
-<h3 id="the-aha-moment"><a class="header" href="#the-aha-moment">The “Aha!” Moment:</a></h3>
+<h3 id="the-aha-moment"><a class="header" href="#the-aha-moment">The “Aha!” Moment</a></h3>
 <ol start="10">
 <li><strong>Based on the profiling evidence, what fundamental GPU memory principle does this demonstrate?</strong></li>
 </ol>

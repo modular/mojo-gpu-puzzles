@@ -411,7 +411,7 @@ alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
 </code></pre>
 <h2 id="the-investigation"><a class="header" href="#the-investigation">The Investigation</a></h2>
 <h3 id="step-1-test-the-kernels"><a class="header" href="#step-1-test-the-kernels">Step 1: Test the kernels</a></h3>
-<pre><code class="language-bash">pixi shell -e cuda
+<pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p31/p31.mojo --all
 </code></pre>
 <p>All three should produce identical results. The mystery: why do they have different performance?</p>

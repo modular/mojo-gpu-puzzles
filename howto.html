@@ -201,6 +201,19 @@
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
+<h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
+<p>For <code>osx-arm64</code> users, you’ll need:</p>
+<ul>
+<li><strong>macOS 15.0 or later</strong> for optimal compatibility</li>
+<li><strong>Xcode 16 or later</strong> (minimum required). Use <code>xcodebuild -version</code> to check.</li>
+</ul>
+<p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execite tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
+<pre><code class="language-bash">xcodebuild -downloadComponent MetalToolchain
+</code></pre>
+<p>and then <code>xcrun -sdk macosx metal</code>, should give you the <code>no input files error</code>.</p>
+<blockquote>
+<p><strong>Note</strong>: Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
+</blockquote>
 <h3 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h3>
 <ol>
 <li>
