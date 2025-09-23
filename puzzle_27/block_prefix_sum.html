@@ -187,10 +187,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
-<p>Implement parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations to demonstrate advanced parallel filtering and extraction algorithms. Each thread will determine which bin its element belongs to, then use <code>block.prefix_sum()</code> to compute write positions for extracting elements of a specific bin, showcasing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation enables parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li><strong>Block-level prefix sum</strong> with <code>block.prefix_sum()</code></li>
 <li><strong>Parallel filtering and extraction</strong> using cumulative computations</li>
@@ -198,9 +198,9 @@
 <li><strong>Histogram binning</strong> with block-wide coordination</li>
 <li><strong>Exclusive vs inclusive</strong> prefix sum patterns</li>
 </ul>
-<p>The algorithm demonstrates histogram construction by extracting elements belonging to specific value ranges (bins):
+<p>The algorithm constructs histograms by extracting elements belonging to specific value ranges (bins):
 \[\Large \text{Bin}_k = \{x_i : k/N \leq x_i &lt; (k+1)/N\}\]</p>
-<p>Each thread computes which bin its element belongs to, then <code>block.prefix_sum()</code> coordinates parallel extraction.</p>
+<p>Each thread determines its element’s bin assignment, with <code>block.prefix_sum()</code> coordinating parallel extraction.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 128</code> elements</li>
@@ -342,15 +342,20 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <p><strong>Test the block.prefix_sum() approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --histogram
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --histogram
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --histogram -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --histogram
 </code></pre>
   </div>
 </div>
@@ -571,7 +576,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 <li><strong>Parallel partitioning</strong>: Separate data into categories</li>
 <li><strong>Advanced algorithms</strong>: Load balancing, sorting, graph algorithms</li>
 </ul>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned about <code>block.prefix_sum()</code> operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>

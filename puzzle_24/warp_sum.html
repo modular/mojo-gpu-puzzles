@@ -264,15 +264,20 @@ fn traditional_dot_product_p12_style[
 <p><strong>Test the traditional approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --traditional
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p24 --traditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --traditional -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --traditional
 </code></pre>
   </div>
 </div>
@@ -687,7 +692,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and memory subsystem</li>
 </ul>
 <p><strong>Note:</strong> Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, <code>WARP_SIZE</code>). The key insight is observing the relative performance trends rather than absolute timings.</p>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned warp sum operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>

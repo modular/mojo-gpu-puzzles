@@ -283,15 +283,20 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 <h3 id="running-manual-vectorization"><a class="header" href="#running-manual-vectorization">Running manual vectorization</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --manual-vectorized
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --manual-vectorized
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --manual-vectorized -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --manual-vectorized
 </code></pre>
   </div>
 </div>

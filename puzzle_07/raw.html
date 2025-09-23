@@ -239,15 +239,25 @@ fn add_10_blocks_2d(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p07
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
 </code></pre>
   </div>
 </div>
@@ -276,9 +286,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <li>
 <p><strong>2D thread indexing</strong></p>
 <ul>
-<li>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></li>
-<li>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Maps thread grid to matrix elements:
+<li>
+<p>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></p>
+</li>
+<li>
+<p>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>Maps thread grid to matrix elements:</p>
 <pre><code class="language-txt">5×5 matrix with 3×3 blocks:
 
 Block (0,0)         Block (1,0)
@@ -291,14 +306,18 @@ Block (0,1)         Block (1,1)
 [(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
 [  *     *     *  ] [  *     *      *  ]
 </code></pre>
-(* = thread exists but outside matrix bounds)</li>
+<p>(* = thread exists but outside matrix bounds)</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>Memory layout</strong></p>
 <ul>
-<li>Row-major linear memory: <code>index = row * size + col</code></li>
-<li>Example for 5×5 matrix:
+<li>
+<p>Row-major linear memory: <code>index = row * size + col</code></p>
+</li>
+<li>
+<p>Example for 5×5 matrix:</p>
 <pre><code class="language-txt">2D indices:    Linear memory:
 (2,1) -&gt; 11   [00 01 02 03 04]
               [05 06 07 08 09]

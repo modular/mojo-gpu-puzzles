@@ -285,15 +285,25 @@ fn add_10_shared_layout_tensor[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p08_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p08_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -337,9 +347,14 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy with LayoutTensor</strong></p>
 <ul>
-<li>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</li>
-<li>Shared tensor: <code>shared</code> (fast, thread-block local)</li>
-<li>Example for 8 elements with 4 threads per block:
+<li>
+<p>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</p>
+</li>
+<li>
+<p>Shared tensor: <code>shared</code> (fast, thread-block local)</p>
+</li>
+<li>
+<p>Example for 8 elements with 4 threads per block:</p>
 <pre><code class="language-txt">Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
 
 Block (0):         Block (1):
@@ -352,31 +367,40 @@ shared[0..3]       shared[0..3]
 <li>
 <p><strong>Thread coordination</strong></p>
 <ul>
-<li>Load phase with natural indexing:
+<li>
+<p>Load phase with natural indexing:</p>
 <pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
 Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
 barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
-<li>Process phase: Each thread adds 10 to its shared tensor value</li>
-<li>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></li>
+<li>
+<p>Process phase: Each thread adds 10 to its shared tensor value</p>
+</li>
+<li>
+<p>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></p>
+</li>
 </ul>
 <p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
 <li>
 <p><strong>LayoutTensor benefits</strong></p>
 <ul>
-<li>Shared memory allocation:
+<li>
+<p>Shared memory allocation:</p>
 <pre><code class="language-txt"># Clean tensor builder API
 shared = tb[dtype]().row_major[TPB]().shared().alloc()
 </code></pre>
 </li>
-<li>Natural indexing for both global and shared:
+<li>
+<p>Natural indexing for both global and shared:</p>
 <pre><code class="language-txt">Block 0 output: [11 11 11 11]
 Block 1 output: [11 11 11 11]
 </code></pre>
 </li>
-<li>Built-in layout management and type safety</li>
+<li>
+<p>Built-in layout management and type safety</p>
+</li>
 </ul>
 </li>
 <li>

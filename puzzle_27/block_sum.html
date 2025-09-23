@@ -294,15 +294,20 @@
 <p><strong>Test the traditional approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --traditional-dot-product
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --traditional-dot-product -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --traditional-dot-product
 </code></pre>
   </div>
 </div>
@@ -338,15 +343,20 @@ fn block_sum_dot_product[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --block-sum-dot-product
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --block-sum-dot-product -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --block-sum-dot-product
 </code></pre>
   </div>
 </div>
@@ -551,7 +561,7 @@ Block-level: block.sum() across 128 threads (multiple warps)
 <li><strong>Block primitives</strong> (Puzzle 27): <code>block.sum()</code> - extends warp simplicity across multiple warps</li>
 </ol>
 <p><strong>The key insight:</strong> <code>block.sum()</code> gives you the simplicity of <code>warp.sum()</code> but scales across an entire block by automatically handling the complex cross-warp coordination that you’d otherwise need to implement manually.</p>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned about <code>block.sum()</code> operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="./block_prefix_sum.html">Block Prefix Sum Operations</a></strong>: Cumulative operations across block threads</li>

@@ -191,7 +191,7 @@
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Parallel reduction along matrix dimensions using LayoutTensor</li>
 <li>Using block coordinates for data partitioning</li>
@@ -260,15 +260,25 @@ fn axis_sum[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p15
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p15
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p15
 </code></pre>
   </div>
 </div>
@@ -332,14 +342,14 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 </code></pre>
 <div class="solution-explanation">
 <p>The solution implements a parallel row-wise sum reduction for a 2D matrix using LayoutTensor. Here’s a comprehensive breakdown:</p>
-<h3 id="matrix-layout-and-block-mapping"><a class="header" href="#matrix-layout-and-block-mapping">Matrix Layout and Block Mapping</a></h3>
+<h3 id="matrix-layout-and-block-mapping"><a class="header" href="#matrix-layout-and-block-mapping">Matrix layout and block mapping</a></h3>
 <pre><code class="language-txt">Input Matrix (4×6) with LayoutTensor:                Block Assignment:
 [[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
  [ a[1,0]  a[1,1]  a[1,2]  a[1,3]  a[1,4]  a[1,5] ] → Block(0,1)
  [ a[2,0]  a[2,1]  a[2,2]  a[2,3]  a[2,4]  a[2,5] ] → Block(0,2)
  [ a[3,0]  a[3,1]  a[3,2]  a[3,3]  a[3,4]  a[3,5] ] → Block(0,3)
 </code></pre>
-<h3 id="parallel-reduction-process"><a class="header" href="#parallel-reduction-process">Parallel Reduction Process</a></h3>
+<h3 id="parallel-reduction-process"><a class="header" href="#parallel-reduction-process">Parallel reduction process</a></h3>
 <ol>
 <li>
 <p><strong>Initial Data Loading</strong>:</p>
@@ -358,7 +368,7 @@ Stride 1: [15 12 6  7  4  5  *  *]
 </code></pre>
 </li>
 </ol>
-<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key Implementation Features:</a></h3>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key implementation features</a></h3>
 <ol>
 <li>
 <p><strong>Layout Configuration</strong>:</p>
@@ -405,7 +415,7 @@ while stride &gt; 0:
 </code></pre>
 </li>
 </ol>
-<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance Optimizations:</a></h3>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance optimizations</a></h3>
 <ol>
 <li>
 <p><strong>Memory Efficiency</strong>:</p>
@@ -433,7 +443,7 @@ while stride &gt; 0:
 </ul>
 </li>
 </ol>
-<h3 id="complexity-analysis"><a class="header" href="#complexity-analysis">Complexity Analysis:</a></h3>
+<h3 id="complexity-analysis"><a class="header" href="#complexity-analysis">Complexity analysis</a></h3>
 <ul>
 <li>Time: \(O(\log n)\) per row, where n is row length</li>
 <li>Space: \(O(TPB)\) shared memory per block</li>

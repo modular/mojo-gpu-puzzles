@@ -188,9 +188,9 @@
                     <main>
                         <h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<p>This puzzle implements matrix multiplication for square matrices \(A\) and \(B\), storing results in \(\text{output}\) while leveraging shared memory to optimize memory access patterns. The implementation preloads matrix blocks into shared memory before performing computations.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Block-local memory management with LayoutTensor</li>
 <li>Thread synchronization patterns</li>
@@ -198,7 +198,7 @@
 <li>Collaborative data loading with 2D indexing</li>
 <li>Efficient use of LayoutTensor for matrix operations</li>
 </ul>
-<p>The key insight is understanding how to use fast shared memory with LayoutTensor to reduce expensive global memory operations.</p>
+<p>The central concept involves utilizing fast shared memory through LayoutTensor to minimize costly global memory accesses.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -249,15 +249,20 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16 --single-block
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p16 --single-block
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16 --single-block -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16 --single-block
 </code></pre>
   </div>
 </div>
@@ -313,7 +318,7 @@ Matrix B:                           b_shared: (similar layout)
  [b[1,0] b[1,1]]                     [t[1,0] t[1,1] t[1,2]]
                                      [t[2,0] t[2,1] t[2,2]]
 </code></pre>
-<h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation Phases:</a></h3>
+<h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation phases</a></h3>
 <ol>
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
@@ -393,7 +398,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization:</a></h3>
+<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization</a></h3>
 <ol>
 <li>
 <p><strong>Guard conditions</strong>:</p>
@@ -413,7 +418,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features:</a></h3>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features</a></h3>
 <ol>
 <li>
 <p><strong>LayoutTensor benefits</strong>:</p>
@@ -440,7 +445,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance optimizations:</a></h3>
+<h3 id="performance-optimizations"><a class="header" href="#performance-optimizations">Performance optimizations</a></h3>
 <ol>
 <li>
 <p><strong>Memory Access Efficiency</strong>:</p>

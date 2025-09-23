@@ -262,7 +262,7 @@
 </ul>
 </div>
 </details>
-<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced Cluster APIs</a></h2>
+<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
 <p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
 <ul>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
@@ -285,15 +285,15 @@
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p34 --advanced
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p34 --advanced
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --advanced
 </code></pre>
   </div>
 </div>

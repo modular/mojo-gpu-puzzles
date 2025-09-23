@@ -191,7 +191,7 @@
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>2D thread organization for matrix operations</li>
 <li>Global memory access patterns</li>
@@ -254,15 +254,20 @@ fn naive_matmul[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16 --naive
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p16 --naive
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16 --naive -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16 --naive
 </code></pre>
   </div>
 </div>
@@ -295,13 +300,13 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The naive matrix multiplication using LayoutTensor demonstrates the basic approach:</p>
-<h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix Layout (2×2 example)</a></h3>
+<p>The naive matrix multiplication using LayoutTensor follows this basic approach:</p>
+<h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix layout (2×2 example)</a></h3>
 <pre><code class="language-txt">Matrix A:          Matrix B:                   Output C:
 [a[0,0] a[0,1]]    [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
 [a[1,0] a[1,1]]    [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
 </code></pre>
-<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details:</a></h3>
+<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation details</a></h3>
 <ol>
 <li>
 <p><strong>Thread mapping</strong>:</p>
@@ -329,7 +334,7 @@ for k in range(size):
 </code></pre>
 </li>
 </ol>
-<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features:</a></h3>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features</a></h3>
 <ol>
 <li>
 <p><strong>Variable declaration</strong>:</p>
@@ -347,7 +352,7 @@ for k in range(size):
 </ul>
 </li>
 </ol>
-<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics:</a></h3>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h3>
 <ol>
 <li>
 <p><strong>Memory access</strong>:</p>

@@ -309,15 +309,20 @@ shared_value = broadcast(shared_value)
 <p><strong>Test the basic broadcast:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-basic
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-basic
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-basic -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-basic
 </code></pre>
   </div>
 </div>
@@ -510,15 +515,20 @@ else:
 <p><strong>Test the conditional broadcast:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-conditional
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-conditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-conditional -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-conditional
 </code></pre>
   </div>
 </div>
@@ -734,15 +744,20 @@ result = combine(current_val, neighbor_val, shared_param)
 <p><strong>Test the broadcast-shuffle coordination:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-shuffle-coordination
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
 </div>

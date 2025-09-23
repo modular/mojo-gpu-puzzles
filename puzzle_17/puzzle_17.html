@@ -326,15 +326,20 @@ struct Conv1DCustomOp:
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p17
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p17
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p17 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p17
 </code></pre>
   </div>
 </div>
@@ -413,7 +418,7 @@ This single line does several important things:
 </ul>
 </li>
 </ol>
-<h3 id="key-components-in-detail"><a class="header" href="#key-components-in-detail">Key Components in Detail</a></h3>
+<h3 id="key-components-in-detail"><a class="header" href="#key-components-in-detail">Key components in detail</a></h3>
 <ol>
 <li>
 <p><strong>Custom Op Structure</strong>:</p>

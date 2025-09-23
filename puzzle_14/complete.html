@@ -304,15 +304,25 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --complete
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p14 --complete
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --complete -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --complete -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --complete
 </code></pre>
   </div>
 </div>
@@ -422,7 +432,7 @@ Block 1 processes: [8, 9, 10, 11, 12, 13, 14] (7 valid elements)
 </code></pre>
 <p>The size of this extended buffer is: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
 <h2 id="phase-1-kernel-local-prefix-sums"><a class="header" href="#phase-1-kernel-local-prefix-sums">Phase 1 kernel: Local prefix sums</a></h2>
-<h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race Condition Prevention in Local Phase</a></h3>
+<h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race condition prevention in local phase</a></h3>
 <p>The local phase uses the same explicit synchronization pattern as the simple version to prevent read-write hazards:</p>
 <ul>
 <li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>

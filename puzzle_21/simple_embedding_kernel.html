@@ -597,15 +597,20 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p21
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21
 </code></pre>
   </div>
 </div>

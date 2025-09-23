@@ -263,15 +263,25 @@ fn add_10_shared(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p08
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p08
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08
 </code></pre>
   </div>
 </div>
@@ -318,9 +328,14 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy</strong></p>
 <ul>
-<li>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</li>
-<li>Shared memory: <code>shared</code> array (fast, thread-block local)</li>
-<li>Example for 8 elements with 4 threads per block:
+<li>
+<p>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</p>
+</li>
+<li>
+<p>Shared memory: <code>shared</code> array (fast, thread-block local)</p>
+</li>
+<li>
+<p>Example for 8 elements with 4 threads per block:</p>
 <pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
 
 Block (0):      Block (1):
@@ -333,26 +348,33 @@ shared[0..3]    shared[0..3]
 <li>
 <p><strong>Thread coordination</strong></p>
 <ul>
-<li>Load phase:
+<li>
+<p>Load phase:</p>
 <pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
 Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
 barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
-<li>Process phase: Each thread adds 10 to its shared memory value</li>
-<li>Result: <code>output[i] = shared[local_i] + 10 = 11</code></li>
+<li>
+<p>Process phase: Each thread adds 10 to its shared memory value</p>
+</li>
+<li>
+<p>Result: <code>output[i] = shared[local_i] + 10 = 11</code></p>
+</li>
 </ul>
 <p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
 <li>
 <p><strong>Index mapping</strong></p>
 <ul>
-<li>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code>
+<li>
+<p>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
 <pre><code class="language-txt">Block 0 output: [11 11 11 11]
 Block 1 output: [11 11 11 11]
 </code></pre>
 </li>
-<li>Local index: <code>thread_idx.x</code> for shared memory access
+<li>
+<p>Local index: <code>thread_idx.x</code> for shared memory access</p>
 <pre><code class="language-txt">Both blocks process: 1 + 10 = 11
 </code></pre>
 </li>

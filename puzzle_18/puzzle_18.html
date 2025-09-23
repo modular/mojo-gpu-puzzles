@@ -236,7 +236,7 @@
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <p>To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.</p>
-<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel:</a></h3>
+<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel</a></h3>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
@@ -280,7 +280,7 @@ fn softmax_gpu_kernel[
 </ol>
 </div>
 </details>
-<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel:</a></h3>
+<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -329,7 +329,7 @@ Passed : 1 (100.00%)
 Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 </code></pre>
-<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition:</a></h3>
+<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition</a></h3>
 <pre><code class="language-python">from pathlib import Path
 import numpy as np
 from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
@@ -381,15 +381,20 @@ def softmax(
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p18
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p18
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p18 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p18
 </code></pre>
   </div>
 </div>
@@ -418,7 +423,7 @@ Sum of all probabilities on GPU: 1.0
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
 <p>However, to prevent numerical overflow, we use the more stable form:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
-<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation:</a></h3>
+<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation</a></h3>
 <pre><code class="language-mojo">fn softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -603,7 +608,7 @@ if global_i &lt; input_size:
 </ul>
 <p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
 </div>
-<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
+<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -660,7 +665,7 @@ for i in range(input_size):
 <p>The CPU implementation uses the same numerical stability technique (subtracting the maximum) but with sequential operations rather than parallel ones. It’s simpler than the GPU version since it doesn’t need to handle shared memory or thread synchronization, but it’s also less efficient for large inputs.</p>
 <p>Both implementations are registered with MAX Graph’s custom operation system through the <code>@compiler.register("softmax")</code> decorator, allowing seamless execution on either device type based on availability.</p>
 </div>
-<h3 id="python-integration"><a class="header" href="#python-integration">Python integration:</a></h3>
+<h3 id="python-integration"><a class="header" href="#python-integration">Python integration</a></h3>
 <pre><code class="language-python">    with Graph(
         "softmax_graph",
         input_types=[

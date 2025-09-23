@@ -190,7 +190,7 @@
 <p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor `output.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Implementing sliding window operations on GPUs</li>
 <li>Managing data dependencies across threads</li>
@@ -253,15 +253,25 @@ fn conv_1d_simple[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p13 --simple
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p13 --simple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --simple -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --simple -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p13 --simple
 </code></pre>
   </div>
 </div>
@@ -320,11 +330,11 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 </code></pre>
 <div class="solution-explanation">
 <p>The solution implements a 1D convolution using shared memory for efficient access to overlapping elements. Here’s a detailed breakdown:</p>
-<h3 id="memory-layout"><a class="header" href="#memory-layout">Memory Layout</a></h3>
+<h3 id="memory-layout"><a class="header" href="#memory-layout">Memory layout</a></h3>
 <pre><code class="language-txt">Input array a:   [0  1  2  3  4  5]
 Kernel b:        [0  1  2]
 </code></pre>
-<h3 id="computation-steps"><a class="header" href="#computation-steps">Computation Steps</a></h3>
+<h3 id="computation-steps"><a class="header" href="#computation-steps">Computation steps</a></h3>
 <ol>
 <li>
 <p><strong>Data Loading</strong>:</p>
@@ -343,7 +353,7 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 </code></pre>
 </li>
 </ol>
-<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h3>
+<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation details</a></h3>
 <ol>
 <li>
 <p><strong>Thread Participation and Efficiency Considerations</strong>:</p>

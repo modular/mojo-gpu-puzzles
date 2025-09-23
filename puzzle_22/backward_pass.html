@@ -394,15 +394,20 @@ where:</p>
 <p>To test your fused backward implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --backward
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --backward
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --backward -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --backward
 </code></pre>
   </div>
 </div>
@@ -477,7 +482,7 @@ BACKWARD PASS Test Completed!
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
     grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],

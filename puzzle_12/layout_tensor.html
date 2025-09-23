@@ -190,7 +190,7 @@
 <p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Similar to the <a href="../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
 <li>Managing shared memory using <code>LayoutTensorBuilder</code></li>
@@ -257,15 +257,25 @@ fn dot_product[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p12_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -330,7 +340,7 @@ Step 2:   [16+40 26+58 40   58   16   25   36   49]
 Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 </code></pre>
-<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key Implementation Features:</a></h3>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key implementation features</a></h3>
 <ol>
 <li>
 <p><strong>Memory Management</strong>:</p>
@@ -376,7 +386,7 @@ while stride &gt; 0:
 <li>Layout awareness</li>
 <li>Natural indexing syntax</li>
 </ul>
-<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier Synchronization Importance</a></h3>
+<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier synchronization importance</a></h3>
 <p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
 <p>Without <code>barrier()</code>, race conditions occur:</p>
 <pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]

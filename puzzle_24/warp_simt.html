@@ -251,7 +251,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 │   └── Block 2 (independent group)
 </code></pre>
 <p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like <code>sum()</code> that would otherwise require complex shared memory coordination.</p>
-<p>This mental model helps you recognize when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
+<p>This mental model supports recognizing when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
 <h2 id="the-hardware-foundation-of-warp-programming"><a class="header" href="#the-hardware-foundation-of-warp-programming">The hardware foundation of warp programming</a></h2>
 <p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is crucial for effective warp programming. This isn’t just a software abstraction - it’s how GPU hardware actually works at the silicon level.</p>
 <h2 id="what-is-simt-execution"><a class="header" href="#what-is-simt-execution">What is SIMT execution?</a></h2>
@@ -397,7 +397,7 @@ else:
 <li><strong>Performance scaling</strong>: Twice as many lanes per warp on AMD</li>
 </ul>
 <h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
-<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture Adaptation Strategies</a></h3>
+<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture adaptation strategies</a></h3>
 <p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
 <pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
 alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
@@ -408,7 +408,7 @@ alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 alias REDUCTION_SIZE = 32           # Wrong on AMD!
 </code></pre>
 <p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
-<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real Hardware Impact</a></h3>
+<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real hardware impact</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>GPU Architecture</th><th>WARP_SIZE</th><th>Memory per Warp</th><th>Reduction Steps</th><th>Lane Pattern</th></tr></thead><tbody>
 <tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
 <tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6 steps: 64→32→16→8→4→2→1</td><td>Lanes 0-63</td></tr>
@@ -422,7 +422,7 @@ alias REDUCTION_SIZE = 32           # Wrong on AMD!
 <li><strong>Code portability</strong>: Same source, optimal performance on both</li>
 </ul>
 <h2 id="memory-access-patterns-with-warps"><a class="header" href="#memory-access-patterns-with-warps">Memory access patterns with warps</a></h2>
-<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced Memory Access Patterns</a></h3>
+<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced memory access patterns</a></h3>
 <p><strong>✅ PERFECT: Coalesced access (100% bandwidth utilization)</strong></p>
 <pre><code class="language-mojo"># Adjacent lanes → adjacent memory addresses
 var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.

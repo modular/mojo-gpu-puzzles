@@ -316,15 +316,20 @@ fn neighbor_difference[
 <p><strong>Test the neighbor difference:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --neighbor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --neighbor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --neighbor
 </code></pre>
   </div>
 </div>
@@ -525,15 +530,20 @@ else:
 <p><strong>Test the moving average:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --average
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --average
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --average -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --average
 </code></pre>
   </div>
 </div>

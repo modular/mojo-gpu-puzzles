@@ -363,15 +363,20 @@ if local_i == 0:
 <p><strong>Test the block.broadcast() approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --normalize
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --normalize -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --normalize
 </code></pre>
   </div>
 </div>
@@ -714,7 +719,7 @@ Example combinations seen in real applications:
 • All three together:                    Complex parallel algorithms
 • With traditional patterns:             Hybrid optimization strategies
 </code></pre>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned about the complete block operations trilogy, you’re ready for:</p>
 <ul>
 <li><strong>Multi-block algorithms</strong>: Coordinating operations across multiple thread blocks</li>

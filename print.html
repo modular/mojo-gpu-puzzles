@@ -217,10 +217,10 @@
 <p><em>“For the things we have to learn before we can do them, we learn by doing them.”</em>
 Aristotle, (Nicomachean Ethics)</p>
 </blockquote>
-<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to understanding GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥, the innovative programming language that combines Pythonic syntax with systems-level performance.</p>
+<p>Welcome to <strong>Mojo 🔥 GPU Puzzles</strong>, a hands-on guide to understanding GPU programming using <a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥, the programming language that combines Pythonic syntax with systems-level performance.</p>
 <h2 id="why-gpu-programming"><a class="header" href="#why-gpu-programming">Why GPU programming?</a></h2>
-<p>In today’s computational landscape, GPU programming has become essential infrastructure for solving humanity’s most challenging problems. The explosive growth of artificial intelligence, from large language models processing billions of parameters to computer vision systems analyzing real-time video streams, relies fundamentally on GPU acceleration. Scientific breakthroughs in climate modeling, drug discovery, and quantum simulation depend on the massive parallel processing power that only GPUs can provide. Financial institutions use GPU computing for real-time risk analysis and algorithmic trading, while autonomous vehicles process sensor data through GPU-accelerated neural networks to make split-second decisions.</p>
-<p>The economic impact is equally compelling. Organizations that effectively harness GPU computing gain significant competitive advantages: faster time-to-market for AI products, reduced computational costs through efficient resource utilization, and the ability to tackle previously impossible computational challenges. As we enter an era where computational capability directly translates to business value, GPU programming skills have become a strategic differentiator for engineers, researchers, and organizations alike.</p>
+<p>GPU programming has evolved from a specialized skill into fundamental infrastructure for modern computing. From large language models processing billions of parameters to computer vision systems analyzing real-time video streams, GPU acceleration drives the computational breakthroughs we see today. Scientific advances in climate modeling, drug discovery, and quantum simulation depend on the massive parallel processing capabilities that GPUs uniquely provide. Financial institutions rely on GPU computing for real-time risk analysis and algorithmic trading, while autonomous vehicles process sensor data through GPU-accelerated neural networks for critical decision-making.</p>
+<p>The economic implications are substantial. Organizations that effectively leverage GPU computing achieve significant competitive advantages: accelerated development cycles, reduced computational costs, and the capacity to address previously intractable computational challenges. In an era where computational capability directly correlates with business value, GPU programming skills represent a strategic differentiator for engineers, researchers, and organizations.</p>
 <h2 id="why-mojo-for-gpu-programming"><a class="header" href="#why-mojo-for-gpu-programming">Why Mojo🔥 for GPU programming?</a></h2>
 <p>The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.</p>
 <p>Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:</p>
@@ -236,22 +236,23 @@ Aristotle, (Nicomachean Ethics)</p>
 </ul>
 <blockquote>
 <p><strong>Mojo🔥 aims to fuel innovation by democratizing GPU programming.</strong>
-<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo empowers programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
+<strong>By expanding on Python’s familiar syntax while adding direct GPU access, Mojo allows programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.</strong></p>
 </blockquote>
 <h2 id="why-learn-through-puzzles"><a class="header" href="#why-learn-through-puzzles">Why learn through puzzles?</a></h2>
-<p>Traditional GPU programming tutorials often overwhelm learners with complex theory before they write their first kernel. This book flips that approach: you’ll start solving puzzles immediately, building intuition through hands-on experience.</p>
-<p><strong>The puzzle-based learning advantage:</strong></p>
+<p>Most GPU programming resources begin with extensive theoretical foundations before introducing practical implementation. Such approaches can overwhelm newcomers with abstract concepts that only become meaningful through direct application.</p>
+<p>This book adopts a different methodology: immediate engagement with practical problems that progressively introduce underlying concepts through guided discovery.</p>
+<p><strong>Advantages of puzzle-based learning:</strong></p>
 <ul>
-<li><strong>Immediate feedback</strong>: See your code running on real GPU hardware from day one</li>
-<li><strong>Progressive complexity</strong>: Each puzzle builds naturally on previous concepts</li>
-<li><strong>Practical focus</strong>: Learn by solving real computational problems, not abstract examples</li>
-<li><strong>Debugging skills</strong>: Develop troubleshooting abilities through trial and refinement</li>
-<li><strong>Retention</strong>: Active problem-solving creates stronger memory connections than passive reading</li>
+<li><strong>Direct experience</strong>: Immediate execution on actual GPU hardware provides concrete feedback</li>
+<li><strong>Incremental complexity</strong>: Each challenge builds systematically on previously established concepts</li>
+<li><strong>Applied focus</strong>: Problems mirror real-world computational scenarios rather than artificial examples</li>
+<li><strong>Diagnostic skills</strong>: Systematic debugging practice develops essential troubleshooting capabilities</li>
+<li><strong>Knowledge retention</strong>: Active problem-solving reinforces understanding more effectively than passive consumption</li>
 </ul>
-<p>Rather than memorizing GPU programming rules, you’ll discover them through exploration. Each “aha!” moment comes from your own experimentation, making the knowledge stick.</p>
+<p>The methodology emphasizes discovery over memorization. Concepts emerge naturally through experimentation, creating deeper understanding and practical competency.</p>
 <blockquote>
 <p><strong>Acknowledgement</strong>: The Part I and III of this book are heavily inspired by <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>, an interactive
-NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo’s powerful abstractions and performance capabilities, while
+NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo’s abstractions and performance capabilities, while
 expanding on advanced topics with Mojo-specific optimizations.</p>
 </blockquote>
 <h2 id="the-gpu-programming-mindset"><a class="header" href="#the-gpu-programming-mindset">The GPU programming mindset</a></h2>
@@ -262,21 +263,21 @@ expanding on advanced topics with Mojo-specific optimizations.</p>
 for i in range(data_size):
     result[i] = process(data[i])
 </code></pre>
-<p>With GPUs, we flip this model entirely. Instead of moving sequentially through data, we map thousands of parallel threads directly onto the data:</p>
+<p>GPU programming inverts this paradigm completely. Rather than iterating sequentially through data, we assign thousands of parallel threads to process data elements simultaneously:</p>
 <pre><code class="language-mojo"># GPU approach (conceptual)
 thread_id = get_global_id()
 if thread_id &lt; data_size:
     result[thread_id] = process(data[thread_id])
 </code></pre>
-<p>Each thread becomes responsible for computing a single element, eliminating the need for explicit loops. This mental shift—from “stepping through data” to “blanketing data with compute”—is central to GPU programming.</p>
+<p>Each thread handles a single data element, replacing explicit iteration with massive parallelism. This fundamental reframing—from sequential processing to concurrent execution across all data elements—represents the core conceptual shift in GPU programming.</p>
 <h3 id="fitting-a-mesh-of-compute-over-data"><a class="header" href="#fitting-a-mesh-of-compute-over-data">Fitting a mesh of compute over data</a></h3>
-<p>Imagine your data as a grid, and GPU threads as another grid that overlays it. Your task is to design this “compute mesh” to efficiently cover your data:</p>
+<p>Consider your data as a structured grid, with GPU threads forming a corresponding computational grid that maps onto it. Effective GPU programming involves designing this thread organization to optimally cover your data space:</p>
 <ul>
-<li><strong>Threads</strong>: Individual compute units that process single data elements</li>
-<li><strong>Blocks</strong>: Organized groups of threads that share fast memory</li>
-<li><strong>Grid</strong>: The entire collection of blocks that covers your dataset</li>
+<li><strong>Threads</strong>: Individual processing units, each responsible for specific data elements</li>
+<li><strong>Blocks</strong>: Coordinated thread groups with shared memory access and synchronization capabilities</li>
+<li><strong>Grid</strong>: The complete thread hierarchy spanning the entire computational problem</li>
 </ul>
-<p>The art of GPU programming lies in crafting this mesh to maximize parallelism while respecting memory and synchronization constraints.</p>
+<p>Successful GPU programming requires balancing this thread organization to maximize parallel efficiency while managing memory access patterns and synchronization requirements.</p>
 <h3 id="data-movement-vs-computation"><a class="header" href="#data-movement-vs-computation">Data movement vs. computation</a></h3>
 <p>In GPU programming, data movement is often more expensive than computation:</p>
 <ul>
@@ -287,7 +288,7 @@ if thread_id &lt; data_size:
 <p>This inverts another common assumption in programming: computation is no longer the bottleneck—data movement is.</p>
 <p>Through the puzzles in this book, you’ll develop an intuitive understanding of these principles, transforming how you approach computational problems.</p>
 <h2 id="what-you-will-learn"><a class="header" href="#what-you-will-learn">What you will learn</a></h2>
-<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, we’ll build your understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. By learning both low-level memory management and high-level tensor abstractions, you’ll gain the versatility to tackle any GPU programming challenge.</p>
+<p>This book takes you on a journey from first principles to advanced GPU programming techniques. Rather than treating the GPU as a mysterious black box, the content builds understanding layer by layer—starting with how individual threads operate and culminating in sophisticated parallel algorithms. Learning both low-level memory management and high-level tensor abstractions provides the versatility to tackle any GPU programming challenge.</p>
 <h3 id="your-current-learning-path"><a class="header" href="#your-current-learning-path">Your current learning path</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Essential Skill</th><th>Status</th><th>Puzzles</th></tr></thead><tbody>
 <tr><td>Thread/Block basics</td><td>✅ <strong>Available</strong></td><td>Part I (1-8)</td></tr>
@@ -376,32 +377,46 @@ if thread_id &lt; data_size:
 <li>Program tensor cores for AI workloads</li>
 <li>Learn cluster programming in modern GPUs</li>
 </ul>
-<p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This gives you both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
+<p>The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo’s powerful LayoutTensor abstractions. This provides both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.</p>
 <h2 id="ready-to-get-started"><a class="header" href="#ready-to-get-started">Ready to get started?</a></h2>
 <p>Now that you understand why GPU programming matters, why Mojo is the right tool, and how puzzle-based learning works, you’re ready to begin your journey.</p>
 <p><strong>Next step</strong>: Head to <a href="howto.html">How to Use This Book</a> for setup instructions, system requirements, and guidance on running your first puzzle.</p>
 <p>Let’s start building your GPU programming skills! 🚀</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="how-to-use-this-book"><a class="header" href="#how-to-use-this-book">How to Use This Book</a></h2>
-<p>Each puzzle follows a consistent format designed to progressively build your skills:</p>
+<p>Each puzzle maintains a consistent structure to support systematic skill development:</p>
 <ul>
-<li><strong>Overview</strong>: Clear problem statement and key concepts introduced in each puzzle</li>
-<li><strong>Configuration</strong>: Setup parameters and memory organization specific to each challenge</li>
-<li><strong>Code to Complete</strong>: Skeleton code with specific sections for you to implement</li>
-<li><strong>Tips</strong>: Optional hints if you get stuck, without giving away complete solutions</li>
-<li><strong>Solution</strong>: Detailed explanations of the implementation, performance considerations, and underlying concepts</li>
+<li><strong>Overview</strong>: Problem definition and key concepts for each challenge</li>
+<li><strong>Configuration</strong>: Technical setup and memory organization details</li>
+<li><strong>Code to Complete</strong>: Implementation framework with clearly marked sections to fill in</li>
+<li><strong>Tips</strong>: Strategic hints available when needed, without revealing complete solutions</li>
+<li><strong>Solution</strong>: Comprehensive implementation analysis, including performance considerations and conceptual explanations</li>
 </ul>
-<p>The puzzles gradually increase in complexity, introducing new concepts while reinforcing fundamentals. We recommend solving them in order, as later puzzles build on skills developed in earlier ones.</p>
+<p>The puzzles increase in complexity systematically, building new concepts on established foundations. Working through them sequentially is recommended, as advanced puzzles assume familiarity with concepts from earlier challenges.</p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
+<p>All puzzles integrate with a testing framework that validates implementations against expected results. Each puzzle provides specific execution instructions and solution verification procedures.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
 <p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
+<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. If have the supported GPU, run the following command to get some info about your GPU:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run gpu-specs
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe gpu-specs
+</code></pre>
+  </div>
+</div>
 <h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
 <p>For <code>osx-arm64</code> users, you’ll need:</p>
 <ul>
-<li><strong>macOS 15.0 or later</strong> for optimal compatibility</li>
+<li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code> and if it fails you’d need to upgrade.</li>
 <li><strong>Xcode 16 or later</strong> (minimum required). Use <code>xcodebuild -version</code> to check.</li>
 </ul>
 <p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execite tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
@@ -463,11 +478,21 @@ cd mojo-gpu-puzzles
 <p>Run the puzzles via <code>pixi</code> or <code>uv</code> as follows:</p>
  <div class="code-tabs" data-tab-group="package-manager">
    <div class="tab-buttons">
-     <button class="tab-button">pixi</button>
+     <button class="tab-button">pixi NVIDIA (default)</button>
+     <button class="tab-button">pixi AMD</button>
+     <button class="tab-button">pixi Apple</button>
      <button class="tab-button">uv</button>
    </div>
    <div class="tab-content">
 <pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
+</code></pre>
+   </div>
+   <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX -e amd  # Replace XX with the puzzle number
+</code></pre>
+   </div>
+   <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX -e apple  # Replace XX with the puzzle number
 </code></pre>
    </div>
    <div class="tab-content">
@@ -537,7 +562,7 @@ cd mojo-gpu-puzzles
 <li>✅ <strong>Supported</strong>: Puzzle works on this platform</li>
 <li>❌ <strong>Not Supported</strong>: Puzzle requires platform-specific features</li>
 </ul>
-<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform Notes</a></h3>
+<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform notes</a></h3>
 <p><strong>NVIDIA GPUs (Complete Support)</strong></p>
 <ul>
 <li>All puzzles (1-34) work on NVIDIA GPUs with CUDA support</li>
@@ -562,7 +587,7 @@ cd mojo-gpu-puzzles
 <h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
 <ul>
 <li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
-<li><strong>Comprehensive Learning</strong>: AMD GPUs excellent for most content (27 of 34 puzzles)</li>
+<li><strong>Comprehensive Learning</strong>: AMD GPUs work well for most content (27 of 34 puzzles)</li>
 <li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
 <li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
 <li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>
@@ -593,8 +618,8 @@ cd mojo-gpu-puzzles
 <p>Currently, we can ship stickers to addresses within <strong>North America</strong>. If you’re located elsewhere, please still submit your solutions – we’re working on expanding our shipping reach and would love to recognize your achievements when possible.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-1-map"><a class="header" href="#puzzle-1-map">Puzzle 1: Map</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>GPU programming is all about parallelism. In this puzzle, each thread will process a single element of the input array independently.
-Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
+<p>This puzzle introduces the fundamental concept of GPU parallelism: mapping individual threads to data elements for concurrent processing.
+Your task is to implement a kernel that adds 10 to each element of vector <code>a</code>, storing the results in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
 <p><img src="puzzle_01/./media/videos/720p30/puzzle_01_viz.gif" alt="Map" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -611,7 +636,7 @@ Implement a kernel that adds 10 to each position of vector <code>a</code> and st
 <p>Start with direct memory manipulation to understand GPU fundamentals.</p>
 <h3 id="-preview-modern-approach-with-layouttensor"><a class="header" href="#-preview-modern-approach-with-layouttensor"><a href="puzzle_01/./layout_tensor_preview.html">💡 Preview: Modern Approach with LayoutTensor</a></a></h3>
 <p>See how LayoutTensor simplifies GPU programming with safer, cleaner code.</p>
-<p>💡 <strong>Tip</strong>: Understanding both approaches helps you better appreciate modern GPU programming patterns.</p>
+<p>💡 <strong>Tip</strong>: Understanding both approaches leads to better appreciation of modern GPU programming patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="key-concepts-1"><a class="header" href="#key-concepts-1">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -667,15 +692,25 @@ fn add_10(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p01
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p01
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p01 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p01 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p01
 </code></pre>
   </div>
 </div>
@@ -702,7 +737,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </ul>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h2 id="why-consider-layouttensor"><a class="header" href="#why-consider-layouttensor">Why Consider LayoutTensor?</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="why-consider-layouttensor"><a class="header" href="#why-consider-layouttensor">Why consider LayoutTensor?</a></h2>
 <p>Looking at our traditional implementation above, you might notice some potential issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
 <pre><code class="language-mojo">i = thread_idx.x
@@ -791,15 +826,25 @@ fn add(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p02
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p02
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p02 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p02 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p02
 </code></pre>
   </div>
 </div>
@@ -842,17 +887,17 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
 <p><img src="puzzle_03/./media/videos/720p30/puzzle_03_viz.gif" alt="Guard" /></p>
 <h2 id="key-concepts-3"><a class="header" href="#key-concepts-3">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Handling thread/data size mismatches</li>
 <li>Preventing out-of-bounds memory access</li>
 <li>Using conditional execution in GPU kernels</li>
 <li>Safe memory access patterns</li>
 </ul>
-<h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical Description</a></h3>
+<h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical description</a></h3>
 <p>For each thread \(i\):
 \[\Large \text{if}\ i &lt; \text{size}: output[i] = a[i] + 10\]</p>
-<h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory Safety Pattern</a></h3>
+<h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory safety pattern</a></h3>
 <pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  output[0] = a[0] + 10  ✓ Valid
 Thread 1 (i=1):  if 1 &lt; size:  output[1] = a[1] + 10  ✓ Valid
 Thread 2 (i=2):  if 2 &lt; size:  output[2] = a[2] + 10  ✓ Valid
@@ -898,15 +943,25 @@ fn add_10_guard(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p03
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p03
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p03 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p03 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p03
 </code></pre>
   </div>
 </div>
@@ -1045,15 +1100,25 @@ fn add_10_2d(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p04
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p04
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p04
 </code></pre>
   </div>
 </div>
@@ -1246,15 +1311,25 @@ def main():
 <p>When we run this code with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe layout_tensor_intro
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run layout_tensor_intro
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run layout_tensor_intro -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run layout_tensor_intro -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe layout_tensor_intro
 </code></pre>
   </div>
 </div>
@@ -1339,15 +1414,25 @@ fn add_10_2d(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p04_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p04_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p04_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p04_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -1448,15 +1533,25 @@ fn broadcast_add(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p05
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p05
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p05
 </code></pre>
   </div>
 </div>
@@ -1573,15 +1668,25 @@ fn broadcast_add[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p05_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p05_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p05_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -1649,7 +1754,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
 <p><img src="puzzle_06/./media/videos/720p30/puzzle_06_viz.gif" alt="Blocks visualization" /></p>
 <h2 id="key-concepts-10"><a class="header" href="#key-concepts-10">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Processing data larger than thread block size</li>
 <li>Coordinating multiple blocks of threads</li>
@@ -1674,6 +1779,9 @@ fn add_10_blocks(
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a></p>
+<blockquote>
+<p>Note: The <code>LayoutTensor</code> variant of this puzzle is very similar so we leave it to the reader.</p>
+</blockquote>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -1688,15 +1796,25 @@ fn add_10_blocks(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p06
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p06
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p06 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p06 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p06
 </code></pre>
   </div>
 </div>
@@ -1719,14 +1837,19 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates key concepts of block-based GPU processing:</p>
+<p>This solution covers key concepts of block-based GPU processing:</p>
 <ol>
 <li>
 <p><strong>Global thread indexing</strong></p>
 <ul>
-<li>Combines block and thread indices: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Maps each thread to a unique global position</li>
-<li>Example for 3 threads per block:
+<li>
+<p>Combines block and thread indices: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>Maps each thread to a unique global position</p>
+</li>
+<li>
+<p>Example for 3 threads per block:</p>
 <pre><code class="language-txt">Block 0: [0 1 2]
 Block 1: [3 4 5]
 Block 2: [6 7 8]
@@ -1737,9 +1860,14 @@ Block 2: [6 7 8]
 <li>
 <p><strong>Block coordination</strong></p>
 <ul>
-<li>Each block processes a contiguous chunk of data</li>
-<li>Block size (3) &lt; Data size (9) requires multiple blocks</li>
-<li>Automatic work distribution across blocks:
+<li>
+<p>Each block processes a contiguous chunk of data</p>
+</li>
+<li>
+<p>Block size (3) &lt; Data size (9) requires multiple blocks</p>
+</li>
+<li>
+<p>Automatic work distribution across blocks:</p>
 <pre><code class="language-txt">Data:    [0 1 2 3 4 5 6 7 8]
 Block 0: [0 1 2]
 Block 1:       [3 4 5]
@@ -1761,7 +1889,7 @@ Block 2:             [6 7 8]
 <ul>
 <li>Coalesced memory access: threads in a block access contiguous memory</li>
 <li>Each thread processes one element: <code>output[i] = a[i] + 10.0</code></li>
-<li>Block-level parallelism enables efficient memory bandwidth utilization</li>
+<li>Block-level parallelism provides efficient memory bandwidth utilization</li>
 </ul>
 </li>
 </ol>
@@ -1863,15 +1991,25 @@ fn add_10_blocks_2d(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p07
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
 </code></pre>
   </div>
 </div>
@@ -1900,9 +2038,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <li>
 <p><strong>2D thread indexing</strong></p>
 <ul>
-<li>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></li>
-<li>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Maps thread grid to matrix elements:
+<li>
+<p>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></p>
+</li>
+<li>
+<p>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>Maps thread grid to matrix elements:</p>
 <pre><code class="language-txt">5×5 matrix with 3×3 blocks:
 
 Block (0,0)         Block (1,0)
@@ -1915,14 +2058,18 @@ Block (0,1)         Block (1,1)
 [(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
 [  *     *     *  ] [  *     *      *  ]
 </code></pre>
-(* = thread exists but outside matrix bounds)</li>
+<p>(* = thread exists but outside matrix bounds)</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>Memory layout</strong></p>
 <ul>
-<li>Row-major linear memory: <code>index = row * size + col</code></li>
-<li>Example for 5×5 matrix:
+<li>
+<p>Row-major linear memory: <code>index = row * size + col</code></p>
+</li>
+<li>
+<p>Example for 5×5 matrix:</p>
 <pre><code class="language-txt">2D indices:    Linear memory:
 (2,1) -&gt; 11   [00 01 02 03 04]
               [05 06 07 08 09]
@@ -2017,15 +2164,25 @@ fn add_10_blocks_2d[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p07_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p07_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -2057,9 +2214,14 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <li>
 <p><strong>2D thread indexing</strong></p>
 <ul>
-<li>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></li>
-<li>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></li>
-<li>Maps thread grid to tensor elements:
+<li>
+<p>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></p>
+</li>
+<li>
+<p>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>Maps thread grid to tensor elements:</p>
 <pre><code class="language-txt">5×5 tensor with 3×3 blocks:
 
 Block (0,0)         Block (1,0)
@@ -2072,15 +2234,21 @@ Block (0,1)         Block (1,1)
 [(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
 [  *     *     *  ] [  *     *      *  ]
 </code></pre>
-(* = thread exists but outside tensor bounds)</li>
+<p>(* = thread exists but outside tensor bounds)</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>LayoutTensor benefits</strong></p>
 <ul>
-<li>Natural 2D indexing: <code>tensor[row, col]</code> instead of manual offset calculation</li>
-<li>Automatic memory layout optimization</li>
-<li>Example access pattern:
+<li>
+<p>Natural 2D indexing: <code>tensor[row, col]</code> instead of manual offset calculation</p>
+</li>
+<li>
+<p>Automatic memory layout optimization</p>
+</li>
+<li>
+<p>Example access pattern:</p>
 <pre><code class="language-txt">Raw memory:         LayoutTensor:
 row * size + col    tensor[row, col]
 (2,1) -&gt; 11        (2,1) -&gt; same element
@@ -2207,15 +2375,25 @@ fn add_10_shared(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p08
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p08
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08
 </code></pre>
   </div>
 </div>
@@ -2262,9 +2440,14 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy</strong></p>
 <ul>
-<li>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</li>
-<li>Shared memory: <code>shared</code> array (fast, thread-block local)</li>
-<li>Example for 8 elements with 4 threads per block:
+<li>
+<p>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</p>
+</li>
+<li>
+<p>Shared memory: <code>shared</code> array (fast, thread-block local)</p>
+</li>
+<li>
+<p>Example for 8 elements with 4 threads per block:</p>
 <pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
 
 Block (0):      Block (1):
@@ -2277,26 +2460,33 @@ shared[0..3]    shared[0..3]
 <li>
 <p><strong>Thread coordination</strong></p>
 <ul>
-<li>Load phase:
+<li>
+<p>Load phase:</p>
 <pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
 Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
 barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
-<li>Process phase: Each thread adds 10 to its shared memory value</li>
-<li>Result: <code>output[i] = shared[local_i] + 10 = 11</code></li>
+<li>
+<p>Process phase: Each thread adds 10 to its shared memory value</p>
+</li>
+<li>
+<p>Result: <code>output[i] = shared[local_i] + 10 = 11</code></p>
+</li>
 </ul>
 <p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
 <li>
 <p><strong>Index mapping</strong></p>
 <ul>
-<li>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code>
+<li>
+<p>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
 <pre><code class="language-txt">Block 0 output: [11 11 11 11]
 Block 1 output: [11 11 11 11]
 </code></pre>
 </li>
-<li>Local index: <code>thread_idx.x</code> for shared memory access
+<li>
+<p>Local index: <code>thread_idx.x</code> for shared memory access</p>
 <pre><code class="language-txt">Both blocks process: 1 + 10 = 11
 </code></pre>
 </li>
@@ -2414,15 +2604,25 @@ fn add_10_shared_layout_tensor[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p08_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p08_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -2466,9 +2666,14 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <li>
 <p><strong>Memory hierarchy with LayoutTensor</strong></p>
 <ul>
-<li>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</li>
-<li>Shared tensor: <code>shared</code> (fast, thread-block local)</li>
-<li>Example for 8 elements with 4 threads per block:
+<li>
+<p>Global tensors: <code>a</code> and <code>output</code> (slow, visible to all blocks)</p>
+</li>
+<li>
+<p>Shared tensor: <code>shared</code> (fast, thread-block local)</p>
+</li>
+<li>
+<p>Example for 8 elements with 4 threads per block:</p>
 <pre><code class="language-txt">Global tensor a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
 
 Block (0):         Block (1):
@@ -2481,31 +2686,40 @@ shared[0..3]       shared[0..3]
 <li>
 <p><strong>Thread coordination</strong></p>
 <ul>
-<li>Load phase with natural indexing:
+<li>
+<p>Load phase with natural indexing:</p>
 <pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
 Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
 barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 </code></pre>
 </li>
-<li>Process phase: Each thread adds 10 to its shared tensor value</li>
-<li>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></li>
+<li>
+<p>Process phase: Each thread adds 10 to its shared tensor value</p>
+</li>
+<li>
+<p>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></p>
+</li>
 </ul>
 <p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
 <li>
 <p><strong>LayoutTensor benefits</strong></p>
 <ul>
-<li>Shared memory allocation:
+<li>
+<p>Shared memory allocation:</p>
 <pre><code class="language-txt"># Clean tensor builder API
 shared = tb[dtype]().row_major[TPB]().shared().alloc()
 </code></pre>
 </li>
-<li>Natural indexing for both global and shared:
+<li>
+<p>Natural indexing for both global and shared:</p>
 <pre><code class="language-txt">Block 0 output: [11 11 11 11]
 Block 1 output: [11 11 11 11]
 </code></pre>
 </li>
-<li>Built-in layout management and type safety</li>
+<li>
+<p>Built-in layout management and type safety</p>
+</li>
 </ul>
 </li>
 <li>
@@ -2643,9 +2857,9 @@ Block 1 output: [11 11 11 11]
 <p>Welcome to the world of GPU debugging! After learning GPU programming concepts through puzzles 1-8, you’re now ready to learn the most critical skill for any GPU programmer: <strong>how to debug when things go wrong</strong>.</p>
 <p>GPU debugging can seem intimidating at first - you’re dealing with thousands of threads running in parallel, different memory spaces, and hardware-specific behaviors. But with the right tools and workflow, debugging GPU code becomes systematic and manageable.</p>
 <p>In this guide, you’ll learn to debug both the <strong>CPU host code</strong> (where you set up your GPU operations) and the <strong>GPU kernel code</strong> (where the parallel computation happens). We’ll use real examples, actual debugger output, and step-by-step workflows that you can immediately apply to your own projects.</p>
-<p><strong>Note</strong>: This tutorial focuses on command-line debugging for universal IDE compatibility. If you prefer VS Code debugging, refer to the <a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a> for VS Code-specific setup and workflows.</p>
+<p><strong>Note</strong>: The following content focuses on command-line debugging for universal IDE compatibility. If you prefer VS Code debugging, refer to the <a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a> for VS Code-specific setup and workflows.</p>
 <h2 id="why-gpu-debugging-is-different"><a class="header" href="#why-gpu-debugging-is-different">Why GPU debugging is different</a></h2>
-<p>Before diving into tools, let’s understand what makes GPU debugging unique:</p>
+<p>Before diving into tools, consider what makes GPU debugging unique:</p>
 <ul>
 <li><strong>Traditional CPU debugging</strong>: One thread, sequential execution, straightforward memory model</li>
 <li><strong>GPU debugging</strong>: Thousands of threads, parallel execution, multiple memory spaces, race conditions</li>
@@ -2665,7 +2879,7 @@ Block 1 output: [11 11 11 11]
 <li><strong>Command-line interface</strong> via <code>mojo debug</code> for universal IDE compatibility</li>
 </ul>
 <p>For GPU-specific debugging, the <a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU debugging guide</a> provides additional technical details.</p>
-<p>The beauty of this architecture is that you get the best of both worlds: familiar debugging commands with powerful GPU-specific capabilities.</p>
+<p>This architecture provides the best of both worlds: familiar debugging commands with GPU-specific capabilities.</p>
 <h2 id="the-debugging-workflow-from-problem-to-solution"><a class="header" href="#the-debugging-workflow-from-problem-to-solution">The debugging workflow: From problem to solution</a></h2>
 <p>When your GPU program crashes, produces wrong results, or behaves unexpectedly, follow this systematic approach:</p>
 <ol>
@@ -2735,7 +2949,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 <p>The beauty is that you can mix and match. Start with JIT + LLDB to debug your setup code, then switch to JIT + CUDA-GDB to debug the actual kernel.</p>
 <hr />
 <h2 id="understanding-gpu-kernel-debugging-with-cuda-gdb"><a class="header" href="#understanding-gpu-kernel-debugging-with-cuda-gdb">Understanding GPU kernel debugging with CUDA-GDB</a></h2>
-<p>Now let’s dive deeper into GPU kernel debugging - the most powerful (and complex) part of your debugging toolkit.</p>
+<p>Next comes GPU kernel debugging - the most powerful (and complex) part of your debugging toolkit.</p>
 <p>When you use <code>--cuda-gdb</code>, Mojo integrates with NVIDIA’s <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">CUDA-GDB debugger</a>. This isn’t just another debugger - it’s specifically designed for the parallel, multi-threaded world of GPU computing.</p>
 <h3 id="what-makes-cuda-gdb-special"><a class="header" href="#what-makes-cuda-gdb-special">What makes CUDA-GDB special</a></h3>
 <p><strong>Regular GDB</strong> debugs one thread at a time, stepping through sequential code.
@@ -2760,15 +2974,18 @@ row = thread_idx.y  # 2D grid of threads
 col = thread_idx.x
 </code></pre>
 <p>With CUDA-GDB, you can <strong>actually see these thread coordinates in action</strong>:</p>
-<pre><code class="language-gdb"># Show all active threads and their coordinates
-(cuda-gdb) info cuda threads
-  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+<pre><code class="language-gdb">(cuda-gdb) info cuda threads
+</code></pre>
+<p>outputs</p>
+<pre><code>  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffcf26fed0 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    13
-
-# Jump to a specific thread to see what it's doing
-(cuda-gdb) cuda thread (1,0,0)
-[Switching to CUDA thread (1,0,0)]
+</code></pre>
+<p>and jump to a specific thread to see what it’s doing</p>
+<pre><code class="language-gdb">(cuda-gdb) cuda thread (1,0,0)
+</code></pre>
+<p>shows</p>
+<pre><code>[Switching to CUDA thread (1,0,0)]
 </code></pre>
 <p>This is incredibly powerful - you can literally <strong>watch your parallel algorithm execute across different threads</strong>.</p>
 <h4 id="memory-space-debugging"><a class="header" href="#memory-space-debugging">Memory space debugging</a></h4>
@@ -2799,7 +3016,7 @@ $2 = {42}
 <p>This lets you focus on exactly the threads and conditions you care about, instead of drowning in output from thousands of threads.</p>
 <hr />
 <h2 id="getting-your-environment-ready"><a class="header" href="#getting-your-environment-ready">Getting your environment ready</a></h2>
-<p>Before you can start debugging, let’s make sure your development environment is properly configured. The good news is that if you’ve been working through the earlier puzzles, most of this is already set up!</p>
+<p>Before you can start debugging, ensure your development environment is properly configured. If you’ve been working through the earlier puzzles, most of this is already set up!</p>
 <p><strong>Note</strong>: Without <code>pixi</code>, you would need to manually install CUDA Toolkit from <a href="https://developer.nvidia.com/cuda-toolkit">NVIDIA’s official resources</a>, manage driver compatibility, configure environment variables, and handle version conflicts between components. <code>pixi</code> eliminates this complexity by automatically managing all CUDA dependencies, versions, and environment configuration for you.</p>
 <h3 id="why-pixi-matters-for-debugging"><a class="header" href="#why-pixi-matters-for-debugging">Why <code>pixi</code> matters for debugging</a></h3>
 <p><strong>The challenge</strong>: GPU debugging requires precise coordination between CUDA toolkit, GPU drivers, Mojo compiler, and debugger components. Version mismatches can lead to frustrating “debugger not found” errors.</p>
@@ -2868,12 +3085,16 @@ pixi run mojo debug solutions/p01/p01.mojo
 <p>Let’s trace through what happens when Puzzle 01 runs. <strong>Type these commands exactly as shown</strong> and observe the output:</p>
 <p><strong>Step 1: Set a breakpoint at the main function</strong></p>
 <pre><code class="language-bash">(lldb) br set -n main
-Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
+</code></pre>
+<p>Output:</p>
+<pre><code>Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 </code></pre>
 <p>The debugger found your main function and will pause execution there.</p>
 <p><strong>Step 2: Start your program</strong></p>
 <pre><code class="language-bash">(lldb) run
-Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
+</code></pre>
+<p>Output:</p>
+<pre><code>Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
 Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = breakpoint 1.1
     frame #0: 0x0000555557d2b530 mojo`main
@@ -2886,7 +3107,9 @@ mojo`main:
 <p><strong>Step 3: Navigate through the startup process</strong></p>
 <pre><code class="language-bash"># Try stepping through one instruction
 (lldb) next
-Process 186951 stopped
+</code></pre>
+<p>Output:</p>
+<pre><code>Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = instruction step over
     frame #0: 0x0000555557d2b531 mojo`main + 1
 mojo`main:
@@ -2898,7 +3121,9 @@ mojo`main:
 <p><strong>Step 4: Continue to reach your Mojo source code</strong></p>
 <pre><code class="language-bash"># Skip through the startup assembly to get to your actual code
 (lldb) continue
-Process 186951 resuming
+</code></pre>
+<p>Output:</p>
+<pre><code>Process 186951 resuming
 Process 186951 stopped and restarted: thread 1 received signal: SIGCHLD
 2 locations added to breakpoint 1
 Process 186951 stopped
@@ -2909,7 +3134,9 @@ Process 186951 stopped
 <p><strong>Step 5: Continue to your actual code</strong></p>
 <pre><code class="language-bash"># One more continue to reach your p01.mojo code!
 (lldb) continue
-Process 186951 resuming
+</code></pre>
+<p>Output:</p>
+<pre><code>Process 186951 resuming
 Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = breakpoint 1.2
     frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main(__error__=&lt;unavailable&gt;) at p01.mojo:24:23
@@ -2930,7 +3157,9 @@ Process 186951 stopped
 <p><strong>Step 6: Let the program complete</strong></p>
 <pre><code class="language-bash"># Let the program run to completion
 (lldb) continue
-Process 186951 resuming
+</code></pre>
+<p>Output:</p>
+<pre><code>Process 186951 resuming
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 Process 186951 exited with status = 0 (0x00000000)
@@ -2945,7 +3174,7 @@ Process 186951 exited with status = 0 (0x00000000)
 <li><strong>Watched JIT compilation</strong> - Observed Mojo compiling your code on-the-fly</li>
 <li><strong>Verified successful execution</strong> - Confirmed your program produces the expected output</li>
 </ol>
-<p><strong>What LLDB debugging gives you:</strong></p>
+<p><strong>LLDB debugging provides:</strong></p>
 <ul>
 <li>✅ <strong>CPU-side visibility</strong>: See your <code>main()</code> function, buffer allocation, memory setup</li>
 <li>✅ <strong>Source code inspection</strong>: View your actual Mojo code with line numbers</li>
@@ -2971,7 +3200,7 @@ Process 186951 exited with status = 0 (0x00000000)
 <p><strong>Key insight</strong>: LLDB is perfect for <strong>host-side debugging</strong> - everything that happens on your CPU before and after GPU execution. For the actual GPU kernel debugging, you need our next approach…</p>
 <h2 id="tutorial-step-2-binary-debugging"><a class="header" href="#tutorial-step-2-binary-debugging">Tutorial step 2: Binary debugging</a></h2>
 <p>You’ve learned JIT debugging - now let’s explore the <strong>professional approach</strong> used in production environments.</p>
-<p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or you need to debug the same program repeatedly. Building a binary first gives you more control and faster debugging iterations.</p>
+<p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or you need to debug the same program repeatedly. Building a binary first provides more control and faster debugging iterations.</p>
 <h3 id="build-your-debug-binary"><a class="header" href="#build-your-debug-binary">Build your debug binary</a></h3>
 <p><strong>Step 1: Compile with debug information</strong></p>
 <pre><code class="language-bash"># Create a debug build (notice the clear naming)
@@ -3039,7 +3268,9 @@ pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 <p>The CUDA-GDB prompt looks like: <code>(cuda-gdb)</code>. Start the program:</p>
 <pre><code class="language-gdb"># Run the program - it automatically stops when the GPU kernel launches
 (cuda-gdb) run
-Starting program: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo...
+</code></pre>
+<p>Output:</p>
+<pre><code>Starting program: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo...
 [Thread debugging using libthread_db enabled]
 ...
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0)]
@@ -3053,7 +3284,9 @@ CUDA thread hit application kernel entry function breakpoint, p01_add_10_UnsafeP
 <p><strong>Step 3: Explore the parallel execution</strong></p>
 <pre><code class="language-gdb"># See all the GPU threads that are paused at your breakpoint
 (cuda-gdb) info cuda threads
-  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+</code></pre>
+<p>Output:</p>
+<pre><code>  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd326fb70 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    16
 </code></pre>
@@ -3067,69 +3300,100 @@ Kernel 0
 <p><strong>Step 4: Step through the kernel and examine variables</strong></p>
 <pre><code class="language-gdb"># Use 'next' to step through code (not 'step' which goes into internals)
 (cuda-gdb) next
-p01_add_10_UnsafePointer... at p01.mojo:17
+</code></pre>
+<p>Output:</p>
+<pre><code>p01_add_10_UnsafePointer... at p01.mojo:17
 17          output[i] = a[i] + 10.0
-
-# ✅ Local variables work with pre-compiled binaries!
+</code></pre>
+<pre><code class="language-gdb"># Local variables work with pre-compiled binaries!
 (cuda-gdb) print i
-$1 = 0                    # This thread's index (captures thread_idx.x value)
-
-# ❌ GPU built-ins don't work, but you don't need them
+</code></pre>
+<p>Output:</p>
+<pre><code>$1 = 0                    # This thread's index (captures thread_idx.x value)
+</code></pre>
+<pre><code class="language-gdb"># GPU built-ins don't work, but you don't need them
 (cuda-gdb) print thread_idx.x
-No symbol "thread_idx" in current context.
-
-# ✅ Access thread-specific data using local variables
+</code></pre>
+<p>Output:</p>
+<pre><code>No symbol "thread_idx" in current context.
+</code></pre>
+<pre><code class="language-gdb"># Access thread-specific data using local variables
 (cuda-gdb) print a[i]     # This thread's input: a[0]
-$2 = {0}                  # Input value (Mojo scalar format)
-
-(cuda-gdb) print output[i] # This thread's output BEFORE computation
-$3 = {0}                  # Still zero - computation hasn't executed yet!
-
-# Execute the computation line
+</code></pre>
+<p>Output:</p>
+<pre><code>$2 = {0}                  # Input value (Mojo scalar format)
+</code></pre>
+<pre><code class="language-gdb">(cuda-gdb) print output[i] # This thread's output BEFORE computation
+</code></pre>
+<p>Output:</p>
+<pre><code>$3 = {0}                  # Still zero - computation hasn't executed yet!
+</code></pre>
+<pre><code class="language-gdb"># Execute the computation line
 (cuda-gdb) next
-13      fn add_10(         # Steps to function signature line after computation
-
-# Now check the result
+</code></pre>
+<p>Output:</p>
+<pre><code>13      fn add_10(         # Steps to function signature line after computation
+</code></pre>
+<pre><code class="language-gdb"># Now check the result
 (cuda-gdb) print output[i]
-$4 = {10}                 # Now shows the computed result: 0 + 10 = 10 ✅
-
-# ✅ Function parameters are still available
+</code></pre>
+<p>Output:</p>
+<pre><code>$4 = {10}                 # Now shows the computed result: 0 + 10 = 10
+</code></pre>
+<pre><code class="language-gdb"># Function parameters are still available
 (cuda-gdb) print a
-$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
-
+</code></pre>
+<p>Output:</p>
+<pre><code>$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <p><strong>Step 5: Navigate between parallel threads</strong></p>
 <pre><code class="language-gdb"># Switch to a different thread to see its execution
 (cuda-gdb) cuda thread (1,0,0)
-[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
+</code></pre>
+<p>Output:</p>
+<pre><code>[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
 13      fn add_10(         # Thread 1 is also at function signature
-
-# ✅ Check the thread's local variable
+</code></pre>
+<pre><code class="language-gdb"># Check the thread's local variable
 (cuda-gdb) print i
-$5 = 1                    # Thread 1's index (different from Thread 0!)
-
-# ✅ Examine what this thread processes
+</code></pre>
+<p>Output:</p>
+<pre><code>$5 = 1                    # Thread 1's index (different from Thread 0!)
+</code></pre>
+<pre><code class="language-gdb"># Examine what this thread processes
 (cuda-gdb) print a[i]     # This thread's input: a[1]
-$6 = {1}                  # Input value for thread 1
-
-# ✅ Thread 1's computation is already done (parallel execution!)
+</code></pre>
+<p>Output:</p>
+<pre><code>$6 = {1}                  # Input value for thread 1
+</code></pre>
+<pre><code class="language-gdb"># Thread 1's computation is already done (parallel execution!)
 (cuda-gdb) print output[i] # This thread's output: output[1]
-$7 = {11}                 # 1 + 10 = 11 ✅ (already computed)
-
-# 🎯 BEST TECHNIQUE: View all thread results at once
+</code></pre>
+<p>Output:</p>
+<pre><code>$7 = {11}                 # 1 + 10 = 11 (already computed)
+</code></pre>
+<pre><code class="language-gdb"># BEST TECHNIQUE: View all thread results at once
 (cuda-gdb) print output[0]@4
-$8 = {{10}, {11}, {12}, {13}}     # All 4 threads' results in one command!
-
-(cuda-gdb) print a[0]@4
-$9 = {{0}, {1}, {2}, {3}}         # All input values for comparison
-
-# ⚠️ Don't step too far or you'll lose CUDA context
+</code></pre>
+<p>Output:</p>
+<pre><code>$8 = {{10}, {11}, {12}, {13}}     # All 4 threads' results in one command!
+</code></pre>
+<pre><code class="language-gdb">(cuda-gdb) print a[0]@4
+</code></pre>
+<p>Output:</p>
+<pre><code>$9 = {{0}, {1}, {2}, {3}}         # All input values for comparison
+</code></pre>
+<pre><code class="language-gdb"># Don't step too far or you'll lose CUDA context
 (cuda-gdb) next
-[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # Back to host thread
+</code></pre>
+<p>Output:</p>
+<pre><code>[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # Back to host thread
 0x00007fffeca3f831 in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
-
-(cuda-gdb) print output[i]
-No symbol "output" in current context.  # Lost GPU context!
+</code></pre>
+<pre><code class="language-gdb">(cuda-gdb) print output[i]
+</code></pre>
+<p>Output:</p>
+<pre><code>No symbol "output" in current context.  # Lost GPU context!
 </code></pre>
 <p><strong>Key insights from this debugging session:</strong></p>
 <ul>
@@ -3168,56 +3432,74 @@ No symbol "output" in current context.  # Lost GPU context!
 <h4 id="technique-1-verifying-thread-boundaries"><a class="header" href="#technique-1-verifying-thread-boundaries">Technique 1: Verifying thread boundaries</a></h4>
 <pre><code class="language-gdb"># Check if all 4 threads computed correctly
 (cuda-gdb) print output[0]@4
-$8 = {{10}, {11}, {12}, {13}}    # All 4 threads computed correctly
-
-# Check beyond valid range to detect out-of-bounds issues
-(cuda-gdb) print output[0]@5
-$9 = {{10}, {11}, {12}, {13}, {0}}  # Element 4 is uninitialized (good!)
-
-# Compare with input to verify computation
-(cuda-gdb) print a[0]@4
-$10 = {{0}, {1}, {2}, {3}}       # Input values: 0+10=10, 1+10=11, etc. ✅
 </code></pre>
-<p><strong>Why this matters</strong>: Out-of-bounds access is the #1 cause of GPU crashes. This technique catches it early.</p>
+<p>Output:</p>
+<pre><code>$8 = {{10}, {11}, {12}, {13}}    # All 4 threads computed correctly
+</code></pre>
+<pre><code class="language-gdb"># Check beyond valid range to detect out-of-bounds issues
+(cuda-gdb) print output[0]@5
+</code></pre>
+<p>Output:</p>
+<pre><code>$9 = {{10}, {11}, {12}, {13}, {0}}  # Element 4 is uninitialized (good!)
+</code></pre>
+<pre><code class="language-gdb"># Compare with input to verify computation
+(cuda-gdb) print a[0]@4
+</code></pre>
+<p>Output:</p>
+<pre><code>$10 = {{0}, {1}, {2}, {3}}       # Input values: 0+10=10, 1+10=11, etc.
+</code></pre>
+<p><strong>Why this matters</strong>: Out-of-bounds access is the #1 cause of GPU crashes. These debugging steps catch it early.</p>
 <h4 id="technique-2-understanding-thread-organization"><a class="header" href="#technique-2-understanding-thread-organization">Technique 2: Understanding thread organization</a></h4>
 <pre><code class="language-gdb"># See how your threads are organized into blocks
 (cuda-gdb) info cuda blocks
-  BlockIdx To BlockIdx Count   State
+</code></pre>
+<p>Output:</p>
+<pre><code>  BlockIdx To BlockIdx Count   State
 Kernel 0
 *  (0,0,0)     (0,0,0)     1 running
-
-# See all threads in the current block
-(cuda-gdb) info cuda threads
-# Shows which threads are active, stopped, or have errors
 </code></pre>
+<pre><code class="language-gdb"># See all threads in the current block
+(cuda-gdb) info cuda threads
+</code></pre>
+<p>Output shows which threads are active, stopped, or have errors.</p>
 <p><strong>Why this matters</strong>: Understanding thread block organization helps debug synchronization and shared memory issues.</p>
 <h4 id="technique-3-memory-access-pattern-analysis"><a class="header" href="#technique-3-memory-access-pattern-analysis">Technique 3: Memory access pattern analysis</a></h4>
-<pre><code class="language-gdb"># ✅ Check GPU memory addresses:
+<pre><code class="language-gdb"># Check GPU memory addresses:
 (cuda-gdb) print a               # Input array GPU pointer
-$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
-
-(cuda-gdb) print output          # Output array GPU pointer
-$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
-
-# ✅ Verify memory access pattern using local variables:
+</code></pre>
+<p>Output:</p>
+<pre><code>$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+</code></pre>
+<pre><code class="language-gdb">(cuda-gdb) print output          # Output array GPU pointer
+</code></pre>
+<p>Output:</p>
+<pre><code>$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+</code></pre>
+<pre><code class="language-gdb"># Verify memory access pattern using local variables:
 (cuda-gdb) print a[i]            # Each thread accesses its own element using 'i'
-$11 = {0}                        # Thread's input data
+</code></pre>
+<p>Output:</p>
+<pre><code>$11 = {0}                        # Thread's input data
 </code></pre>
 <p><strong>Why this matters</strong>: Memory access patterns affect performance and correctness. Wrong patterns cause race conditions or crashes.</p>
 <h4 id="technique-4-results-verification-and-completion"><a class="header" href="#technique-4-results-verification-and-completion">Technique 4: Results verification and completion</a></h4>
 <pre><code class="language-gdb"># After stepping through kernel execution, verify the final results
 (cuda-gdb) print output[0]@4
-$11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
-
-# Let the program complete normally
+</code></pre>
+<p>Output:</p>
+<pre><code>$11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
+</code></pre>
+<pre><code class="language-gdb"># Let the program complete normally
 (cuda-gdb) continue
-...Program output shows success...
-
-# Exit the debugger
+</code></pre>
+<p>Output:</p>
+<pre><code>...Program output shows success...
+</code></pre>
+<pre><code class="language-gdb"># Exit the debugger
 (cuda-gdb) exit
 </code></pre>
 <p>You’ve completed debugging a GPU kernel execution from setup to results.</p>
-<h2 id="your-gpu-debugging-progress-key-insights"><a class="header" href="#your-gpu-debugging-progress-key-insights">Your GPU debugging progress: Key insights</a></h2>
+<h2 id="your-gpu-debugging-progress-key-insights"><a class="header" href="#your-gpu-debugging-progress-key-insights">Your GPU debugging progress: key insights</a></h2>
 <p>You’ve completed a comprehensive GPU debugging tutorial. Here’s what you discovered about parallel computing:</p>
 <h3 id="deep-insights-about-parallel-execution"><a class="header" href="#deep-insights-about-parallel-execution">Deep insights about parallel execution</a></h3>
 <ol>
@@ -3339,7 +3621,7 @@ $11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 </code></pre>
 <hr />
-<h2 id="youve-learned-the-essentials-of-gpu-debugging"><a class="header" href="#youve-learned-the-essentials-of-gpu-debugging">You’ve learned the essentials of GPU debugging!</a></h2>
+<h2 id="youve-learned-the-essentials-of-gpu-debugging"><a class="header" href="#youve-learned-the-essentials-of-gpu-debugging">You’ve learned the essentials of GPU debugging</a></h2>
 <p>You’ve completed a comprehensive tutorial on GPU debugging fundamentals. Here’s what you’ve accomplished:</p>
 <h3 id="skills-youve-learned"><a class="header" href="#skills-youve-learned">Skills you’ve learned</a></h3>
 <p><strong>Multi-level debugging knowledge</strong>:</p>
@@ -3353,7 +3635,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <ul>
 <li><strong>Saw threads in action</strong> - witnessed <code>thread_idx.x</code> having different values across parallel threads</li>
 <li><strong>Understood memory hierarchy</strong> - debugged global GPU memory, shared memory, thread-local variables</li>
-<li><strong>Learned thread navigation</strong> - jumped between thousands of parallel threads seamlessly</li>
+<li><strong>Learned thread navigation</strong> - jumped between thousands of parallel threads efficiently</li>
 </ul>
 <h3 id="from-theory-to-practice"><a class="header" href="#from-theory-to-practice">From theory to practice</a></h3>
 <p>You didn’t just read about GPU debugging - you <strong>experienced it</strong>:</p>
@@ -3363,7 +3645,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <li><strong>Used professional tools</strong>: The same CUDA-GDB used in production GPU development</li>
 <li><strong>Solved real scenarios</strong>: Out-of-bounds access, race conditions, kernel launch failures</li>
 </ul>
-<h3 id="your-debugging-toolkit-1"><a class="header" href="#your-debugging-toolkit-1">Your Debugging Toolkit</a></h3>
+<h3 id="your-debugging-toolkit-1"><a class="header" href="#your-debugging-toolkit-1">Your debugging toolkit</a></h3>
 <p><strong>Quick decision guide</strong> (keep this handy!):</p>
 <div class="table-wrapper"><table><thead><tr><th>Problem Type</th><th>Tool</th><th>Command</th></tr></thead><tbody>
 <tr><td><strong>Program crashes before GPU</strong></td><td>LLDB</td><td><code>pixi run mojo debug program.mojo</code></td></tr>
@@ -3406,7 +3688,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <p><strong>Note</strong>: GPU debugging requires patience and systematic investigation. The workflow and commands in this puzzle provide the foundation for debugging complex GPU issues you’ll encounter in real applications.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-detective-work-first-case"><a class="header" href="#-detective-work-first-case">🧐 Detective Work: First Case</a></h1>
 <h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
-<p>In this puzzle, you’ll face a GPU program that crashes and the task is to find the issue without looking at the code and only through <code>(cuda-gdb)</code>. Run the debugger and be a detective!</p>
+<p>This puzzle presents a crashing GPU program where your task is to identify the issue using only <code>(cuda-gdb)</code> debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!</p>
 <p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
 <pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
 ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
@@ -3456,7 +3738,7 @@ Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or
 mojo crashed!
 Please file a bug report.
 </code></pre>
-<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your Task: Detective Work</a></h2>
+<h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
 <p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
 <p>Start with:</p>
 <pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
@@ -3494,7 +3776,7 @@ CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
 <li><code>result</code> has a valid GPU memory address</li>
 <li><code>input</code> is <code>0x0</code> - this is a null pointer!</li>
 </ul>
-<h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic Variable Inspection</a></h3>
+<h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code>(cuda-gdb) next
 32          result[i] = input[i] + 10.0
 (cuda-gdb) print i
@@ -3504,7 +3786,7 @@ $2 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
 (cuda-gdb) print input
 $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 </code></pre>
-<p><strong>🔍 Evidence Gathering</strong>:</p>
+<p><strong>Evidence Gathering</strong>:</p>
 <ul>
 <li>✅ Thread index <code>i=0</code> is valid</li>
 <li>✅ Result pointer <code>0x302000000</code> is a proper GPU address</li>
@@ -3514,8 +3796,8 @@ $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 <pre><code>(cuda-gdb) print input[i]
 Cannot access memory at address 0x0
 </code></pre>
-<p><strong>💥 Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
-<h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root Cause Analysis</a></h2>
+<p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
+<h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="puzzle_09/../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
 <pre><code class="language-mojo">input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
 </code></pre>
@@ -3525,7 +3807,7 @@ Cannot access memory at address 0x0
 <li>This null pointer gets passed to the GPU kernel</li>
 <li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
-<h2 id="the-fix"><a class="header" href="#the-fix">The Fix</a></h2>
+<h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
 <pre><code class="language-mojo"># Wrong: Creates null pointer
 input_ptr = UnsafePointer[Scalar[dtype]]()
@@ -3533,7 +3815,7 @@ input_ptr = UnsafePointer[Scalar[dtype]]()
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 </code></pre>
-<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key Debugging Lessons</a></h2>
+<h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
 <p><strong>Pattern Recognition</strong>:</p>
 <ul>
 <li><code>0x0</code> addresses are always null pointers</li>
@@ -3550,14 +3832,14 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 <p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
 </div>
 </details>
-<h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next Steps: From Crashes to Silent Bugs</a></h2>
+<h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next steps: from crashes to silent bugs</a></h2>
 <p><strong>You’ve learned crash debugging!</strong> You can now:</p>
 <ul>
 <li><strong>Systematically investigate GPU crashes</strong> using error messages as clues</li>
 <li><strong>Identify null pointer bugs</strong> through pointer address inspection</li>
 <li><strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
 </ul>
-<h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your Next Challenge: <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a></a></h3>
+<h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your next challenge: <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a></a></h3>
 <p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but produces <strong>wrong results</strong>?</p>
 <p>The <a href="puzzle_09/./second_case.html">Second Case</a> presents a completely different debugging challenge:</p>
 <ul>
@@ -3581,7 +3863,7 @@ input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 <li><strong>First Case</strong>: Clear crash signals (<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>) guided your investigation</li>
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results that require detective work</li>
 </ul>
-<p>This intermediate-level debugging challenge teaches you to investigate <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
+<p>This intermediate-level debugging challenge covers investigating <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
 <p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="puzzle_09/./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
 <pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
 ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
@@ -3678,7 +3960,7 @@ Check the window indexing logic...
 <pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 </code></pre>
 <h4 id="step-2-analyze-the-symptoms-first"><a class="header" href="#step-2-analyze-the-symptoms-first">Step 2: analyze the symptoms first</a></h4>
-<p>Before diving into the debugger, let’s examine what we know:</p>
+<p>Before diving into the debugger, examine what we know:</p>
 <pre><code class="language-txt">Actual result: [0.0, 1.0, 3.0, 5.0]
 Expected: [1.0, 3.0, 6.0, 5.0]
 </code></pre>
@@ -3861,7 +4143,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <p><strong>💡 Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
 </div>
 </details>
-<h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next Steps: From Logic Bugs to Coordination Deadlocks</a></h2>
+<h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next steps: from logic bugs to coordination deadlocks</a></h2>
 <p><strong>You’ve learned logic bug debugging!</strong> You can now:</p>
 <ul>
 <li>✅ <strong>Investigate algorithmic errors</strong> without crashes or obvious symptoms</li>
@@ -3869,7 +4151,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li>✅ <strong>Debug with limited variable access</strong> using execution flow analysis</li>
 <li>✅ <strong>Apply mathematical reasoning</strong> when debugger tools have limitations</li>
 </ul>
-<h3 id="your-final-challenge-detective-work-third-case"><a class="header" href="#your-final-challenge-detective-work-third-case">Your Final Challenge: <a href="puzzle_09/./third_case.html">Detective Work: Third Case</a></a></h3>
+<h3 id="your-final-challenge-detective-work-third-case"><a class="header" href="#your-final-challenge-detective-work-third-case">Your final challenge: <a href="puzzle_09/./third_case.html">Detective Work: Third Case</a></a></h3>
 <p><strong>But what if your program doesn’t crash AND doesn’t finish?</strong> What if it just <strong>hangs forever</strong>?</p>
 <p>The <a href="puzzle_09/./third_case.html">Third Case</a> presents the ultimate debugging challenge:</p>
 <ul>
@@ -4905,15 +5187,25 @@ fn pooling(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p11
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11
 </code></pre>
   </div>
 </div>
@@ -4958,23 +5250,30 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <li>
 <p><strong>Shared memory setup</strong></p>
 <ul>
-<li>Allocates <code>TPB</code> elements in shared memory:
+<li>
+<p>Allocates <code>TPB</code> elements in shared memory:</p>
 <pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 </code></pre>
 </li>
-<li>Each thread loads one element from global memory</li>
-<li><code>barrier()</code> ensures all data is loaded</li>
+<li>
+<p>Each thread loads one element from global memory</p>
+</li>
+<li>
+<p><code>barrier()</code> ensures all data is loaded</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>Boundary cases</strong></p>
 <ul>
-<li>Position 0: Single element
+<li>
+<p>Position 0: Single element</p>
 <pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
-<li>Position 1: Sum of first two elements
+<li>
+<p>Position 1: Sum of first two elements</p>
 <pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
@@ -4983,14 +5282,16 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <li>
 <p><strong>Main window operation</strong></p>
 <ul>
-<li>For positions 2 and beyond:
+<li>
+<p>For positions 2 and beyond:</p>
 <pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
 Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
 Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
 ...
 </code></pre>
 </li>
-<li>Window calculation using local indices:
+<li>
+<p>Window calculation using local indices:</p>
 <pre><code class="language-txt"># Sliding window of 3 elements
 window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
@@ -5087,15 +5388,25 @@ fn pooling[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p11_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -5145,26 +5456,32 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <li>
 <p><strong>Shared memory setup</strong></p>
 <ul>
-<li>Tensor builder creates block-local storage:
+<li>
+<p>Tensor builder creates block-local storage:</p>
 <pre><code class="language-txt">shared = tb[dtype]().row_major[TPB]().shared().alloc()
 </code></pre>
 </li>
-<li>Each thread loads one element:
+<li>
+<p>Each thread loads one element:</p>
 <pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 </code></pre>
 </li>
-<li><code>barrier()</code> ensures all data is loaded</li>
+<li>
+<p><code>barrier()</code> ensures all data is loaded</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>Boundary cases</strong></p>
 <ul>
-<li>Position 0: Single element
+<li>
+<p>Position 0: Single element</p>
 <pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
-<li>Position 1: Sum of first two elements
+<li>
+<p>Position 1: Sum of first two elements</p>
 <pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
@@ -5173,14 +5490,16 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <li>
 <p><strong>Main window operation</strong></p>
 <ul>
-<li>For positions 2 and beyond:
+<li>
+<p>For positions 2 and beyond:</p>
 <pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
 Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
 Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
 ...
 </code></pre>
 </li>
-<li>Natural indexing with LayoutTensor:
+<li>
+<p>Natural indexing with LayoutTensor:</p>
 <pre><code class="language-txt"># Sliding window of 3 elements
 window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
@@ -5230,7 +5549,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-21"><a class="header" href="#key-concepts-21">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Implementing parallel reduction operations</li>
 <li>Using shared memory for intermediate results</li>
@@ -5289,15 +5608,25 @@ fn dot_product(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p12
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12
 </code></pre>
   </div>
 </div>
@@ -5370,7 +5699,7 @@ Step 2:   [16+40 26+58 40   58   16   25   36   49]
 Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 </code></pre>
-<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key Implementation Features:</a></h3>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key implementation features</a></h3>
 <ol>
 <li>
 <p><strong>Memory Access Pattern</strong>:</p>
@@ -5414,7 +5743,7 @@ while stride &gt; 0:
 </li>
 </ol>
 <p>This implementation achieves \(O(\log n)\) time complexity compared to \(O(n)\) in sequential execution, demonstrating the power of parallel reduction algorithms.</p>
-<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier Synchronization Importance</a></h3>
+<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier synchronization importance</a></h3>
 <p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
 <p>Without <code>barrier()</code>, race conditions occur:</p>
 <pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]
@@ -5461,7 +5790,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>Implement a kernel that computes the dot-product of 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code> (single number).</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <h2 id="key-concepts-22"><a class="header" href="#key-concepts-22">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Similar to the <a href="puzzle_12/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_12/../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
 <li>Managing shared memory using <code>LayoutTensorBuilder</code></li>
@@ -5528,15 +5857,25 @@ fn dot_product[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p12_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -5601,7 +5940,7 @@ Step 2:   [16+40 26+58 40   58   16   25   36   49]
 Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 </code></pre>
-<h3 id="key-implementation-features-1"><a class="header" href="#key-implementation-features-1">Key Implementation Features:</a></h3>
+<h3 id="key-implementation-features-1"><a class="header" href="#key-implementation-features-1">Key implementation features</a></h3>
 <ol>
 <li>
 <p><strong>Memory Management</strong>:</p>
@@ -5647,7 +5986,7 @@ while stride &gt; 0:
 <li>Layout awareness</li>
 <li>Natural indexing syntax</li>
 </ul>
-<h3 id="barrier-synchronization-importance-1"><a class="header" href="#barrier-synchronization-importance-1">Barrier Synchronization Importance</a></h3>
+<h3 id="barrier-synchronization-importance-1"><a class="header" href="#barrier-synchronization-importance-1">Barrier synchronization importance</a></h3>
 <p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
 <p>Without <code>barrier()</code>, race conditions occur:</p>
 <pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]
@@ -5738,7 +6077,7 @@ Then tackle the more challenging case where data needs to be shared across block
 <p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor `output.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="key-concepts-23"><a class="header" href="#key-concepts-23">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Implementing sliding window operations on GPUs</li>
 <li>Managing data dependencies across threads</li>
@@ -5801,15 +6140,25 @@ fn conv_1d_simple[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p13 --simple
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p13 --simple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --simple -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --simple -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p13 --simple
 </code></pre>
   </div>
 </div>
@@ -5868,11 +6217,11 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 </code></pre>
 <div class="solution-explanation">
 <p>The solution implements a 1D convolution using shared memory for efficient access to overlapping elements. Here’s a detailed breakdown:</p>
-<h3 id="memory-layout"><a class="header" href="#memory-layout">Memory Layout</a></h3>
+<h3 id="memory-layout"><a class="header" href="#memory-layout">Memory layout</a></h3>
 <pre><code class="language-txt">Input array a:   [0  1  2  3  4  5]
 Kernel b:        [0  1  2]
 </code></pre>
-<h3 id="computation-steps"><a class="header" href="#computation-steps">Computation Steps</a></h3>
+<h3 id="computation-steps"><a class="header" href="#computation-steps">Computation steps</a></h3>
 <ol>
 <li>
 <p><strong>Data Loading</strong>:</p>
@@ -5891,7 +6240,7 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 </code></pre>
 </li>
 </ol>
-<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation Details</a></h3>
+<h3 id="implementation-details"><a class="header" href="#implementation-details">Implementation details</a></h3>
 <ol>
 <li>
 <p><strong>Thread Participation and Efficiency Considerations</strong>:</p>
@@ -6023,15 +6372,25 @@ fn conv_1d_block_boundary[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p13 --block-boundary
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p13 --block-boundary
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --block-boundary -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --block-boundary -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p13 --block-boundary
 </code></pre>
   </div>
 </div>
@@ -6217,8 +6576,8 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 </ul>
 </li>
 </ol>
-<h3 id="boundary-condition-improvement"><a class="header" href="#boundary-condition-improvement">Boundary Condition Improvement</a></h3>
-<p>The solution uses <code>if global_i + j &lt; SIZE_2:</code> rather than checking shared memory bounds. This approach is:</p>
+<h3 id="boundary-condition-improvement"><a class="header" href="#boundary-condition-improvement">Boundary condition improvement</a></h3>
+<p>The solution uses <code>if global_i + j &lt; SIZE_2:</code> rather than checking shared memory bounds. This pattern is:</p>
 <ul>
 <li><strong>Mathematically correct</strong>: Only computes convolution where input data actually exists</li>
 <li><strong>More efficient</strong>: Avoids unnecessary computations for positions beyond the input array</li>
@@ -6328,15 +6687,25 @@ fn prefix_sum_simple[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --simple
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p14 --simple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --simple -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --simple -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --simple
 </code></pre>
   </div>
 </div>
@@ -6387,7 +6756,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <li><code>TPB</code> (Threads Per Block) = 8</li>
 <li><code>SIZE</code> (Array Size) = 8</li>
 </ul>
-<h3 id="race-condition-prevention"><a class="header" href="#race-condition-prevention">Race Condition Prevention</a></h3>
+<h3 id="race-condition-prevention"><a class="header" href="#race-condition-prevention">Race condition prevention</a></h3>
 <p>The algorithm uses explicit synchronization to prevent read-write hazards:</p>
 <ul>
 <li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>
@@ -6396,13 +6765,13 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 </ul>
 <p>This prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations.</p>
 <p><strong>Alternative approach</strong>: Another solution to prevent race conditions is through <em>double buffering</em>, where you allocate twice the shared memory and alternate between reading from one buffer and writing to another. While this approach eliminates race conditions completely, it requires more shared memory and adds complexity. For educational purposes, we use the explicit synchronization approach as it’s more straightforward to understand.</p>
-<h3 id="thread-mapping"><a class="header" href="#thread-mapping">Thread Mapping</a></h3>
+<h3 id="thread-mapping"><a class="header" href="#thread-mapping">Thread mapping</a></h3>
 <ul>
 <li><code>thread_idx.x</code>: \([0, 1, 2, 3, 4, 5, 6, 7]\) (<code>local_i</code>)</li>
 <li><code>block_idx.x</code>: \([0, 0, 0, 0, 0, 0, 0, 0]\)</li>
 <li><code>global_i</code>: \([0, 1, 2, 3, 4, 5, 6, 7]\) (<code>block_idx.x * TPB + thread_idx.x</code>)</li>
 </ul>
-<h3 id="initial-load-to-shared-memory"><a class="header" href="#initial-load-to-shared-memory">Initial Load to Shared Memory</a></h3>
+<h3 id="initial-load-to-shared-memory"><a class="header" href="#initial-load-to-shared-memory">Initial load to shared memory</a></h3>
 <pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 Input array:  [0    1    2    3    4    5    6    7]
 shared:       [0    1    2    3    4    5    6    7]
@@ -6457,14 +6826,14 @@ Result:      [0    1    3    6    10   15   21   28]
                                   ↑    ↑    ↑    ↑
                                   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="final-write-to-output"><a class="header" href="#final-write-to-output">Final Write to Output</a></h3>
+<h3 id="final-write-to-output"><a class="header" href="#final-write-to-output">Final write to output</a></h3>
 <pre><code class="language-txt">Threads:      T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 global_i:     0    1    2    3    4    5    6    7
 output:       [0    1    3    6    10   15   21   28]
               ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
               T₀   T₁   T₂   T₃   T₄   T₅   T₆   T₇
 </code></pre>
-<h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key Implementation Details</a></h3>
+<h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key implementation details</a></h3>
 <p><strong>Synchronization Pattern</strong>: Each iteration follows a strict read → sync → write pattern:</p>
 <ol>
 <li><code>var current_val: out.element_type = 0</code> - Initialize local variable</li>
@@ -6601,15 +6970,25 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p14 --complete
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p14 --complete
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --complete -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --complete -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --complete
 </code></pre>
   </div>
 </div>
@@ -6719,7 +7098,7 @@ Block 1 processes: [8, 9, 10, 11, 12, 13, 14] (7 valid elements)
 </code></pre>
 <p>The size of this extended buffer is: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
 <h2 id="phase-1-kernel-local-prefix-sums"><a class="header" href="#phase-1-kernel-local-prefix-sums">Phase 1 kernel: Local prefix sums</a></h2>
-<h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race Condition Prevention in Local Phase</a></h3>
+<h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race condition prevention in local phase</a></h3>
 <p>The local phase uses the same explicit synchronization pattern as the simple version to prevent read-write hazards:</p>
 <ul>
 <li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>
@@ -6904,7 +7283,7 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
 <p><img src="puzzle_15/./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
 <h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Parallel reduction along matrix dimensions using LayoutTensor</li>
 <li>Using block coordinates for data partitioning</li>
@@ -6973,15 +7352,25 @@ fn axis_sum[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p15
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p15
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p15 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p15
 </code></pre>
   </div>
 </div>
@@ -7045,14 +7434,14 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 </code></pre>
 <div class="solution-explanation">
 <p>The solution implements a parallel row-wise sum reduction for a 2D matrix using LayoutTensor. Here’s a comprehensive breakdown:</p>
-<h3 id="matrix-layout-and-block-mapping"><a class="header" href="#matrix-layout-and-block-mapping">Matrix Layout and Block Mapping</a></h3>
+<h3 id="matrix-layout-and-block-mapping"><a class="header" href="#matrix-layout-and-block-mapping">Matrix layout and block mapping</a></h3>
 <pre><code class="language-txt">Input Matrix (4×6) with LayoutTensor:                Block Assignment:
 [[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
  [ a[1,0]  a[1,1]  a[1,2]  a[1,3]  a[1,4]  a[1,5] ] → Block(0,1)
  [ a[2,0]  a[2,1]  a[2,2]  a[2,3]  a[2,4]  a[2,5] ] → Block(0,2)
  [ a[3,0]  a[3,1]  a[3,2]  a[3,3]  a[3,4]  a[3,5] ] → Block(0,3)
 </code></pre>
-<h3 id="parallel-reduction-process"><a class="header" href="#parallel-reduction-process">Parallel Reduction Process</a></h3>
+<h3 id="parallel-reduction-process"><a class="header" href="#parallel-reduction-process">Parallel reduction process</a></h3>
 <ol>
 <li>
 <p><strong>Initial Data Loading</strong>:</p>
@@ -7071,7 +7460,7 @@ Stride 1: [15 12 6  7  4  5  *  *]
 </code></pre>
 </li>
 </ol>
-<h3 id="key-implementation-features-2"><a class="header" href="#key-implementation-features-2">Key Implementation Features:</a></h3>
+<h3 id="key-implementation-features-2"><a class="header" href="#key-implementation-features-2">Key implementation features</a></h3>
 <ol>
 <li>
 <p><strong>Layout Configuration</strong>:</p>
@@ -7118,7 +7507,7 @@ while stride &gt; 0:
 </code></pre>
 </li>
 </ol>
-<h3 id="performance-optimizations-1"><a class="header" href="#performance-optimizations-1">Performance Optimizations:</a></h3>
+<h3 id="performance-optimizations-1"><a class="header" href="#performance-optimizations-1">Performance optimizations</a></h3>
 <ol>
 <li>
 <p><strong>Memory Efficiency</strong>:</p>
@@ -7146,7 +7535,7 @@ while stride &gt; 0:
 </ul>
 </li>
 </ol>
-<h3 id="complexity-analysis"><a class="header" href="#complexity-analysis">Complexity Analysis:</a></h3>
+<h3 id="complexity-analysis"><a class="header" href="#complexity-analysis">Complexity analysis</a></h3>
 <ul>
 <li>Time: \(O(\log n)\) per row, where n is row length</li>
 <li>Space: \(O(TPB)\) shared memory per block</li>
@@ -7189,7 +7578,7 @@ Further optimizes by dividing the computation into tiles, allowing threads to co
 <p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
 This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts-26"><a class="header" href="#key-concepts-26">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>2D thread organization for matrix operations</li>
 <li>Global memory access patterns</li>
@@ -7252,15 +7641,20 @@ fn naive_matmul[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16 --naive
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p16 --naive
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16 --naive -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16 --naive
 </code></pre>
   </div>
 </div>
@@ -7293,13 +7687,13 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The naive matrix multiplication using LayoutTensor demonstrates the basic approach:</p>
-<h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix Layout (2×2 example)</a></h3>
+<p>The naive matrix multiplication using LayoutTensor follows this basic approach:</p>
+<h3 id="matrix-layout-22-example"><a class="header" href="#matrix-layout-22-example">Matrix layout (2×2 example)</a></h3>
 <pre><code class="language-txt">Matrix A:          Matrix B:                   Output C:
 [a[0,0] a[0,1]]    [b[0,0] b[0,1]]             [c[0,0] c[0,1]]
 [a[1,0] a[1,1]]    [b[1,0] b[1,1]]             [c[1,0] c[1,1]]
 </code></pre>
-<h3 id="implementation-details-2"><a class="header" href="#implementation-details-2">Implementation Details:</a></h3>
+<h3 id="implementation-details-2"><a class="header" href="#implementation-details-2">Implementation details</a></h3>
 <ol>
 <li>
 <p><strong>Thread mapping</strong>:</p>
@@ -7327,7 +7721,7 @@ for k in range(size):
 </code></pre>
 </li>
 </ol>
-<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features:</a></h3>
+<h3 id="key-language-features"><a class="header" href="#key-language-features">Key language features</a></h3>
 <ol>
 <li>
 <p><strong>Variable declaration</strong>:</p>
@@ -7345,7 +7739,7 @@ for k in range(size):
 </ul>
 </li>
 </ol>
-<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics:</a></h3>
+<h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h3>
 <ol>
 <li>
 <p><strong>Memory access</strong>:</p>
@@ -7480,9 +7874,9 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <p>Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview-32"><a class="header" href="#overview-32">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\), using shared memory to improve memory access efficiency. This version loads matrix blocks into shared memory before computation.</p>
+<p>This puzzle implements matrix multiplication for square matrices \(A\) and \(B\), storing results in \(\text{output}\) while leveraging shared memory to optimize memory access patterns. The implementation preloads matrix blocks into shared memory before performing computations.</p>
 <h2 id="key-concepts-27"><a class="header" href="#key-concepts-27">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Block-local memory management with LayoutTensor</li>
 <li>Thread synchronization patterns</li>
@@ -7490,7 +7884,7 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <li>Collaborative data loading with 2D indexing</li>
 <li>Efficient use of LayoutTensor for matrix operations</li>
 </ul>
-<p>The key insight is understanding how to use fast shared memory with LayoutTensor to reduce expensive global memory operations.</p>
+<p>The central concept involves utilizing fast shared memory through LayoutTensor to minimize costly global memory accesses.</p>
 <h2 id="configuration-15"><a class="header" href="#configuration-15">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -7541,15 +7935,20 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16 --single-block
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p16 --single-block
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16 --single-block -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16 --single-block
 </code></pre>
   </div>
 </div>
@@ -7605,7 +8004,7 @@ Matrix B:                           b_shared: (similar layout)
  [b[1,0] b[1,1]]                     [t[1,0] t[1,1] t[1,2]]
                                      [t[2,0] t[2,1] t[2,2]]
 </code></pre>
-<h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation Phases:</a></h3>
+<h3 id="implementation-phases"><a class="header" href="#implementation-phases">Implementation phases</a></h3>
 <ol>
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
@@ -7685,7 +8084,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization:</a></h3>
+<h3 id="thread-safety-and-synchronization"><a class="header" href="#thread-safety-and-synchronization">Thread safety and synchronization</a></h3>
 <ol>
 <li>
 <p><strong>Guard conditions</strong>:</p>
@@ -7705,7 +8104,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="key-language-features-1"><a class="header" href="#key-language-features-1">Key language features:</a></h3>
+<h3 id="key-language-features-1"><a class="header" href="#key-language-features-1">Key language features</a></h3>
 <ol>
 <li>
 <p><strong>LayoutTensor benefits</strong>:</p>
@@ -7732,7 +8131,7 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<h3 id="performance-optimizations-2"><a class="header" href="#performance-optimizations-2">Performance optimizations:</a></h3>
+<h3 id="performance-optimizations-2"><a class="header" href="#performance-optimizations-2">Performance optimizations</a></h3>
 <ol>
 <li>
 <p><strong>Memory Access Efficiency</strong>:</p>
@@ -7934,15 +8333,20 @@ Thread(1,2) in Block(1,0):
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p16 --tiled
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p16 --tiled
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p16 --tiled -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p16 --tiled
 </code></pre>
   </div>
 </div>
@@ -8524,15 +8928,20 @@ struct Conv1DCustomOp:
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p17
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p17
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p17 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p17
 </code></pre>
   </div>
 </div>
@@ -8611,7 +9020,7 @@ This single line does several important things:
 </ul>
 </li>
 </ol>
-<h3 id="key-components-in-detail"><a class="header" href="#key-components-in-detail">Key Components in Detail</a></h3>
+<h3 id="key-components-in-detail"><a class="header" href="#key-components-in-detail">Key components in detail</a></h3>
 <ol>
 <li>
 <p><strong>Custom Op Structure</strong>:</p>
@@ -8781,7 +9190,7 @@ with Graph(
 </ul>
 <h2 id="code-to-complete-25"><a class="header" href="#code-to-complete-25">Code to complete</a></h2>
 <p>To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.</p>
-<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel:</a></h3>
+<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel</a></h3>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
@@ -8825,7 +9234,7 @@ fn softmax_gpu_kernel[
 </ol>
 </div>
 </details>
-<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel:</a></h3>
+<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -8874,7 +9283,7 @@ Passed : 1 (100.00%)
 Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 </code></pre>
-<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition:</a></h3>
+<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition</a></h3>
 <pre><code class="language-python">from pathlib import Path
 import numpy as np
 from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
@@ -8926,15 +9335,20 @@ def softmax(
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p18
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p18
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p18 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p18
 </code></pre>
   </div>
 </div>
@@ -8963,7 +9377,7 @@ Sum of all probabilities on GPU: 1.0
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
 <p>However, to prevent numerical overflow, we use the more stable form:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
-<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation:</a></h3>
+<h3 id="gpu-kernel-implementation"><a class="header" href="#gpu-kernel-implementation">GPU kernel implementation</a></h3>
 <pre><code class="language-mojo">fn softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -9148,7 +9562,7 @@ if global_i &lt; input_size:
 </ul>
 <p>The algorithm is also numerically robust, handling potential overflow/underflow cases by applying the max-subtraction technique that maintains precision across the wide range of values common in neural network activations.</p>
 </div>
-<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation:</a></h3>
+<h3 id="cpu-fallback-implementation"><a class="header" href="#cpu-fallback-implementation">CPU fallback implementation</a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -9205,7 +9619,7 @@ for i in range(input_size):
 <p>The CPU implementation uses the same numerical stability technique (subtracting the maximum) but with sequential operations rather than parallel ones. It’s simpler than the GPU version since it doesn’t need to handle shared memory or thread synchronization, but it’s also less efficient for large inputs.</p>
 <p>Both implementations are registered with MAX Graph’s custom operation system through the <code>@compiler.register("softmax")</code> decorator, allowing seamless execution on either device type based on availability.</p>
 </div>
-<h3 id="python-integration-1"><a class="header" href="#python-integration-1">Python integration:</a></h3>
+<h3 id="python-integration-1"><a class="header" href="#python-integration-1">Python integration</a></h3>
 <pre><code class="language-python">    with Graph(
         "softmax_graph",
         input_types=[
@@ -9487,20 +9901,31 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             alias layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY)
+            alias transpose_threads_per_block = (
+                TRANSPOSE_BLOCK_DIM_XY,
+                TRANSPOSE_BLOCK_DIM_XY,
+            )
             # Tile over the K (seq_len, d) matrix
             alias transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
+                // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
+            alias matmul_threads_per_block = (
+                MATMUL_BLOCK_DIM_XY,
+                MATMUL_BLOCK_DIM_XY,
+            )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (seq_len + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias scores_blocks_per_grid = (
+                seq_len + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
             alias softmax_threads = SOFTMAX_BLOCK_DIM_X
             alias softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias result_blocks_per_grid = (
+                d + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
             k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
@@ -9543,15 +9968,20 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <h3 id="test-the-kernels"><a class="header" href="#test-the-kernels">Test the kernels</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p19
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p19
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p19 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p19
 </code></pre>
   </div>
 </div>
@@ -9657,7 +10087,7 @@ Output vector norms:
 <li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1, d)\)</li>
 </ul>
 <p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
-<h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation:</a></h3>
+<h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation</a></h3>
 <pre><code class="language-mojo">fn transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
@@ -9669,7 +10099,12 @@ Output vector norms:
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
+    shared_tile = (
+        tb[dtype]()
+        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -9703,7 +10138,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
 <p>The transpose happens through <strong>swapped indexing</strong> in shared memory access (<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and <strong>swapped block coordinates</strong> for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.</p>
 </div>
-<h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration:</a></h3>
+<h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration</a></h3>
 <pre><code class="language-mojo">
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             q_2d = q_tensor.reshape[layout_q_2d]()
@@ -9725,7 +10160,15 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 mut=True, dtype, layout_scores_2d, MutableAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_q_2d, layout_k_t, layout_scores_2d, 1, seq_len, d, dtype]
+                matmul_idiomatic_tiled[
+                    layout_q_2d,
+                    layout_k_t,
+                    layout_scores_2d,
+                    1,
+                    seq_len,
+                    d,
+                    dtype,
+                ]
             ](
                 scores_2d,
                 q_2d,
@@ -9754,7 +10197,15 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_weights_2d, layout_v, layout_result_2d, 1, d, seq_len, dtype]
+                matmul_idiomatic_tiled[
+                    layout_weights_2d,
+                    layout_v,
+                    layout_result_2d,
+                    1,
+                    d,
+                    seq_len,
+                    dtype,
+                ]
             ](
                 result_2d,
                 weights_2d,
@@ -9828,9 +10279,8 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <p>The implementation demonstrates that <strong>sophisticated neural network operations</strong> can be built by orchestrating simpler, well-tested GPU kernels rather than writing monolithic implementations.</p>
 </div>
 </details>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="-bonus-challenges"><a class="header" href="#-bonus-challenges">🎯 Bonus Challenges</a></h1>
-<h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus challenges</a></h1>
-<h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: Advanced softmax implementations</a></h2>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="bonus-challenges"><a class="header" href="#bonus-challenges">Bonus Challenges</a></h1>
+<h2 id="challenge-i-advanced-softmax-implementations"><a class="header" href="#challenge-i-advanced-softmax-implementations">Challenge I: advanced softmax implementations</a></h2>
 <p><em>This challenge extends <a href="bonuses/../puzzle_18/puzzle_18.html">Puzzle 18: Softmax Op</a></em></p>
 <p>Here are some advanced challenges to extend your softmax implementation:</p>
 <h3 id="1-large-scale-softmax-handling-tpb--size"><a class="header" href="#1-large-scale-softmax-handling-tpb--size">1. Large-scale softmax: Handling <code>TPB &lt; SIZE</code></a></h3>
@@ -9856,7 +10306,7 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li>Column-wise softmax: Apply softmax independently to each column</li>
 <li>Compare performance differences between these implementations</li>
 </ul>
-<h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: Advanced attention mechanisms</a></h2>
+<h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: advanced attention mechanisms</a></h2>
 <p><em>This challenge extends <a href="bonuses/../puzzle_19/puzzle_19.html">Puzzle 19: Attention Op</a></em></p>
 <p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
 <h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
@@ -9945,15 +10395,20 @@ def conv1d_pytorch(
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p20
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p20
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p20 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p20
 </code></pre>
   </div>
 </div>
@@ -10540,15 +10995,20 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
 <p>You can run the puzzle with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p21
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p21
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p21 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p21
 </code></pre>
   </div>
 </div>
@@ -11102,19 +11562,39 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
-    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        block_idx.y, block_idx.x
+    )
+    a_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
+    b_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_a_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
+    alias load_b_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
 
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            block_idx.y, idx
+        )
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            idx, block_idx.x
+        )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -11135,8 +11615,12 @@ fn matmul_idiomatic_tiled[
         # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(MATMUL_BLOCK_DIM_XY):
-            if(tiled_row &lt; rows and tiled_col &lt; cols): # Only perform calculation for valid outputs
-                if(k &lt; a_tile.dim(1)): # Only perform calculation on valid inputs
+            if (
+                tiled_row &lt; rows and tiled_col &lt; cols
+            ):  # Only perform calculation for valid outputs
+                if k &lt; a_tile.dim(
+                    1
+                ):  # Only perform calculation on valid inputs
                     acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -11162,7 +11646,12 @@ fn matmul_idiomatic_tiled[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
+    shared_tile = (
+        tb[dtype]()
+        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -11309,15 +11798,20 @@ fn matmul_idiomatic_tiled[
 <p>To test your unfused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --unfused
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --unfused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --unfused -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --unfused
 </code></pre>
   </div>
 </div>
@@ -11378,7 +11872,7 @@ UNFUSED Algorithm Test Completed!
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -11651,15 +12145,20 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 <p>To test your fused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --fused
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --fused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --fused -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --fused
 </code></pre>
   </div>
 </div>
@@ -11723,7 +12222,7 @@ FUSED Algorithm Test Completed!
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -12118,15 +12617,20 @@ where:</p>
 <p>To test your fused backward implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --backward
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --backward
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --backward -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --backward
 </code></pre>
   </div>
 </div>
@@ -12201,7 +12705,7 @@ BACKWARD PASS Test Completed!
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
     grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
@@ -12662,10 +13166,10 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p><strong>Learning objective</strong>: By the end of Part V, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
 <p><strong>Ready to begin?</strong> Start with <strong><a href="puzzle_23/./elementwise.html">Elementwise Operations</a></strong> and discover the power of functional GPU programming!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
-<p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
+<p>This puzzle implements vector addition using Mojo’s functional <code>elementwise</code> pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
 <h2 id="key-concepts-35"><a class="header" href="#key-concepts-35">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
 <li><strong>Automatic SIMD vectorization</strong> within GPU threads</li>
@@ -12675,7 +13179,7 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 </ul>
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
-<p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
+<p>The implementation covers fundamental patterns applicable to all GPU functional programming in Mojo.</p>
 <h2 id="configuration-21"><a class="header" href="#configuration-21">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
@@ -12771,15 +13275,20 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --elementwise
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --elementwise
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --elementwise -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --elementwise
 </code></pre>
   </div>
 </div>
@@ -12829,7 +13338,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The elementwise functional pattern in Mojo demonstrates several fundamental concepts for modern GPU programming:</p>
+<p>The elementwise functional pattern in Mojo introduces several fundamental concepts for modern GPU programming:</p>
 <h3 id="1-functional-abstraction-philosophy"><a class="header" href="#1-functional-abstraction-philosophy">1. <strong>Functional abstraction philosophy</strong></a></h3>
 <p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
@@ -12857,7 +13366,7 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 </code></pre>
 <p><strong>Parameter Analysis:</strong></p>
 <ul>
-<li><strong><code>@parameter</code></strong>: This decorator enables <strong>compile-time specialization</strong>. The function is generated separately for each unique <code>simd_width</code> and <code>rank</code>, allowing aggressive optimization.</li>
+<li><strong><code>@parameter</code></strong>: This decorator provides <strong>compile-time specialization</strong>. The function is generated separately for each unique <code>simd_width</code> and <code>rank</code>, allowing aggressive optimization.</li>
 <li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call overhead by embedding the code directly into the kernel.</li>
 <li><strong><code>capturing</code></strong>: Enables <strong>lexical scoping</strong> - the inner function can access variables from the outer scope without explicit parameter passing.</li>
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
@@ -12969,7 +13478,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>This pattern represents the future of GPU programming - high-level abstractions that don’t sacrifice performance, making GPU computing accessible while maintaining optimal efficiency.</p>
 </div>
 </details>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned elementwise operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_23/./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
@@ -12977,7 +13486,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li><strong><a href="puzzle_23/./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
 <li><strong><a href="puzzle_23/./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
-<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
+<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern shows how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tile---memory-efficient-tiled-processing"><a class="header" href="#tile---memory-efficient-tiled-processing">Tile - Memory-Efficient Tiled Processing</a></h1>
 <h2 id="overview-43"><a class="header" href="#overview-43">Overview</a></h2>
 <p>Building on the <strong>elementwise</strong> pattern, this puzzle introduces <strong>tiled processing</strong> - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.</p>
@@ -13087,15 +13596,20 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --tiled
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --tiled
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --tiled -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --tiled
 </code></pre>
   </div>
 </div>
@@ -13404,15 +13918,20 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 <h3 id="running-manual-vectorization"><a class="header" href="#running-manual-vectorization">Running manual vectorization</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --manual-vectorized
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --manual-vectorized
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --manual-vectorized -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --manual-vectorized
 </code></pre>
   </div>
 </div>
@@ -13930,7 +14449,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 <p>💡 <strong>Key takeaway</strong>: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-benchmarking---performance-analysis-and-optimization"><a class="header" href="#-benchmarking---performance-analysis-and-optimization">📊 Benchmarking - Performance Analysis and Optimization</a></h1>
 <h2 id="overview-46"><a class="header" href="#overview-46">Overview</a></h2>
-<p>After learning <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. This guide explains how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
+<p>After learning <strong>elementwise</strong>, <strong>tiled</strong>, <strong>manual vectorization</strong>, and <strong>Mojo vectorize</strong> patterns, it’s time to measure their actual performance. Here’s how to use the built-in benchmarking system in <code>p21.mojo</code> to scientifically compare these approaches and understand their performance characteristics.</p>
 <blockquote>
 <p><strong>Key insight:</strong> <em>Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware.</em></p>
 </blockquote>
@@ -13938,15 +14457,20 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 <p>To execute the comprehensive benchmark suite:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --benchmark
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --benchmark
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --benchmark -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --benchmark
 </code></pre>
   </div>
 </div>
@@ -14183,7 +14707,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Memory optimization</strong>: Dive deeper into shared memory and advanced caching</li>
 </ul>
 <p>💡 <strong>Key takeaway</strong>: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.</p>
-<h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking Ahead: When you need more control</a></h2>
+<h2 id="looking-ahead-when-you-need-more-control"><a class="header" href="#looking-ahead-when-you-need-more-control">Looking ahead: when you need more control</a></h2>
 <p>The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require <strong>direct thread communication</strong>:</p>
 <h3 id="algorithms-that-benefit-from-warp-programming"><a class="header" href="#algorithms-that-benefit-from-warp-programming"><strong>Algorithms that benefit from warp programming:</strong></a></h3>
 <ul>
@@ -14403,7 +14927,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 │   └── Block 2 (independent group)
 </code></pre>
 <p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like <code>sum()</code> that would otherwise require complex shared memory coordination.</p>
-<p>This mental model helps you recognize when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
+<p>This mental model supports recognizing when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
 <h2 id="the-hardware-foundation-of-warp-programming"><a class="header" href="#the-hardware-foundation-of-warp-programming">The hardware foundation of warp programming</a></h2>
 <p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is crucial for effective warp programming. This isn’t just a software abstraction - it’s how GPU hardware actually works at the silicon level.</p>
 <h2 id="what-is-simt-execution"><a class="header" href="#what-is-simt-execution">What is SIMT execution?</a></h2>
@@ -14549,7 +15073,7 @@ else:
 <li><strong>Performance scaling</strong>: Twice as many lanes per warp on AMD</li>
 </ul>
 <h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
-<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture Adaptation Strategies</a></h3>
+<h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture adaptation strategies</a></h3>
 <p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
 <pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
 alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
@@ -14560,7 +15084,7 @@ alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 alias REDUCTION_SIZE = 32           # Wrong on AMD!
 </code></pre>
 <p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
-<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real Hardware Impact</a></h3>
+<h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real hardware impact</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>GPU Architecture</th><th>WARP_SIZE</th><th>Memory per Warp</th><th>Reduction Steps</th><th>Lane Pattern</th></tr></thead><tbody>
 <tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5 steps: 32→16→8→4→2→1</td><td>Lanes 0-31</td></tr>
 <tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6 steps: 64→32→16→8→4→2→1</td><td>Lanes 0-63</td></tr>
@@ -14574,7 +15098,7 @@ alias REDUCTION_SIZE = 32           # Wrong on AMD!
 <li><strong>Code portability</strong>: Same source, optimal performance on both</li>
 </ul>
 <h2 id="memory-access-patterns-with-warps"><a class="header" href="#memory-access-patterns-with-warps">Memory access patterns with warps</a></h2>
-<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced Memory Access Patterns</a></h3>
+<h3 id="coalesced-memory-access-patterns"><a class="header" href="#coalesced-memory-access-patterns">Coalesced memory access patterns</a></h3>
 <p><strong>✅ PERFECT: Coalesced access (100% bandwidth utilization)</strong></p>
 <pre><code class="language-mojo"># Adjacent lanes → adjacent memory addresses
 var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
@@ -14717,15 +15241,20 @@ fn traditional_dot_product_p12_style[
 <p><strong>Test the traditional approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p24 --traditional
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p24 --traditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p24 --traditional -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p24 --traditional
 </code></pre>
   </div>
 </div>
@@ -15140,7 +15669,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <li><strong>Variability</strong>: Performance depends heavily on specific GPU architecture and memory subsystem</li>
 </ul>
 <p><strong>Note:</strong> Your results will vary significantly depending on your hardware (GPU model, memory bandwidth, <code>WARP_SIZE</code>). The key insight is observing the relative performance trends rather than absolute timings.</p>
-<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next Steps</a></h2>
+<h2 id="next-steps-6"><a class="header" href="#next-steps-6">Next steps</a></h2>
 <p>Once you’ve learned warp sum operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_24/./warp_extra.html">When to Use Warp Programming</a></strong>: Strategic decision framework for warp vs traditional approaches</li>
@@ -15505,15 +16034,20 @@ fn neighbor_difference[
 <p><strong>Test the neighbor difference:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --neighbor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --neighbor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --neighbor
 </code></pre>
   </div>
 </div>
@@ -15714,15 +16248,20 @@ else:
 <p><strong>Test the moving average:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --average
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --average
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --average -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --average
 </code></pre>
   </div>
 </div>
@@ -15981,15 +16520,20 @@ shared_value = broadcast(shared_value)
 <p><strong>Test the basic broadcast:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-basic
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-basic
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-basic -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-basic
 </code></pre>
   </div>
 </div>
@@ -16182,15 +16726,20 @@ else:
 <p><strong>Test the conditional broadcast:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-conditional
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-conditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-conditional -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-conditional
 </code></pre>
   </div>
 </div>
@@ -16406,15 +16955,20 @@ result = combine(current_val, neighbor_val, shared_param)
 <p><strong>Test the broadcast-shuffle coordination:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p25 --broadcast-shuffle-coordination
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
 </div>
@@ -16837,15 +17391,20 @@ fn butterfly_pair_swap[
 <p><strong>Test the butterfly pair swap:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --pair-swap
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --pair-swap -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --pair-swap
 </code></pre>
   </div>
 </div>
@@ -17041,15 +17600,20 @@ Result: All lanes have global maximum = 7
 <p><strong>Test the butterfly parallel maximum:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --parallel-max
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --parallel-max -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --parallel-max
 </code></pre>
   </div>
 </div>
@@ -17235,15 +17799,20 @@ fn butterfly_conditional_max[
 <p><strong>Test the butterfly conditional maximum:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --conditional-max
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --conditional-max -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --conditional-max
 </code></pre>
   </div>
 </div>
@@ -17582,15 +18151,20 @@ output[global_i] = scan_result
 <p><strong>Test the warp inclusive prefix sum:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --prefix-sum
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --prefix-sum
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --prefix-sum -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --prefix-sum
 </code></pre>
   </div>
 </div>
@@ -18242,15 +18816,20 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 <p><strong>Test the traditional approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --traditional-dot-product
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --traditional-dot-product -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --traditional-dot-product
 </code></pre>
   </div>
 </div>
@@ -18286,15 +18865,20 @@ fn block_sum_dot_product[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --block-sum-dot-product
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --block-sum-dot-product -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --block-sum-dot-product
 </code></pre>
   </div>
 </div>
@@ -18499,7 +19083,7 @@ Block-level: block.sum() across 128 threads (multiple warps)
 <li><strong>Block primitives</strong> (Puzzle 27): <code>block.sum()</code> - extends warp simplicity across multiple warps</li>
 </ol>
 <p><strong>The key insight:</strong> <code>block.sum()</code> gives you the simplicity of <code>warp.sum()</code> but scales across an entire block by automatically handling the complex cross-warp coordination that you’d otherwise need to implement manually.</p>
-<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next Steps</a></h2>
+<h2 id="next-steps-7"><a class="header" href="#next-steps-7">Next steps</a></h2>
 <p>Once you’ve learned about <code>block.sum()</code> operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_27/./block_prefix_sum.html">Block Prefix Sum Operations</a></strong>: Cumulative operations across block threads</li>
@@ -18507,10 +19091,10 @@ Block-level: block.sum() across 128 threads (multiple warps)
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: Block operations extend warp programming concepts to entire thread blocks, providing optimized primitives that replace complex synchronization patterns while working across multiple warps simultaneously. Just like <code>warp.sum()</code> simplified warp-level reductions, <code>block.sum()</code> simplifies block-level reductions without sacrificing performance.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
-<p>Implement parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations to demonstrate advanced parallel filtering and extraction algorithms. Each thread will determine which bin its element belongs to, then use <code>block.prefix_sum()</code> to compute write positions for extracting elements of a specific bin, showcasing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation enables parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
 <h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li><strong>Block-level prefix sum</strong> with <code>block.prefix_sum()</code></li>
 <li><strong>Parallel filtering and extraction</strong> using cumulative computations</li>
@@ -18518,9 +19102,9 @@ Block-level: block.sum() across 128 threads (multiple warps)
 <li><strong>Histogram binning</strong> with block-wide coordination</li>
 <li><strong>Exclusive vs inclusive</strong> prefix sum patterns</li>
 </ul>
-<p>The algorithm demonstrates histogram construction by extracting elements belonging to specific value ranges (bins):
+<p>The algorithm constructs histograms by extracting elements belonging to specific value ranges (bins):
 \[\Large \text{Bin}_k = \{x_i : k/N \leq x_i &lt; (k+1)/N\}\]</p>
-<p>Each thread computes which bin its element belongs to, then <code>block.prefix_sum()</code> coordinates parallel extraction.</p>
+<p>Each thread determines its element’s bin assignment, with <code>block.prefix_sum()</code> coordinating parallel extraction.</p>
 <h2 id="configuration-36"><a class="header" href="#configuration-36">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 128</code> elements</li>
@@ -18662,15 +19246,20 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <p><strong>Test the block.prefix_sum() approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --histogram
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --histogram
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --histogram -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --histogram
 </code></pre>
   </div>
 </div>
@@ -18891,7 +19480,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 <li><strong>Parallel partitioning</strong>: Separate data into categories</li>
 <li><strong>Advanced algorithms</strong>: Load balancing, sorting, graph algorithms</li>
 </ul>
-<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next Steps</a></h2>
+<h2 id="next-steps-8"><a class="header" href="#next-steps-8">Next steps</a></h2>
 <p>Once you’ve learned about <code>block.prefix_sum()</code> operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="puzzle_27/./block_broadcast.html">Block Broadcast Operations</a></strong>: Sharing values across all threads in a block</li>
@@ -19077,15 +19666,20 @@ if local_i == 0:
 <p><strong>Test the block.broadcast() approach:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p27 --normalize
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --normalize -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --normalize
 </code></pre>
   </div>
 </div>
@@ -19428,7 +20022,7 @@ Example combinations seen in real applications:
 • All three together:                    Complex parallel algorithms
 • With traditional patterns:             Hybrid optimization strategies
 </code></pre>
-<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next Steps</a></h2>
+<h2 id="next-steps-9"><a class="header" href="#next-steps-9">Next steps</a></h2>
 <p>Once you’ve learned about the complete block operations trilogy, you’re ready for:</p>
 <ul>
 <li><strong>Multi-block algorithms</strong>: Coordinating operations across multiple thread blocks</li>
@@ -19693,15 +20287,20 @@ fn async_copy_overlap_convolution[
 <p><strong>Test the async copy overlap:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p28
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p28 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p28
 </code></pre>
   </div>
 </div>
@@ -20157,15 +20756,20 @@ fn multi_stage_image_blur_pipeline[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p29 --multi-stage
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --multi-stage
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p29 --multi-stage -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p29 --multi-stage
 </code></pre>
   </div>
 </div>
@@ -20543,15 +21147,20 @@ fn double_buffered_stencil_computation[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p29 --double-buffer
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p29 --double-buffer
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p29 --double-buffer -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p29 --double-buffer
 </code></pre>
   </div>
 </div>
@@ -21532,19 +22141,19 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <p><strong>🤔 The Counterintuitive Result</strong>: You’ll notice Kernel2 has the <strong>highest</strong> cache hit rates but the <strong>lowest</strong> performance! This is the key mystery to solve.</p>
 <h2 id="step-5-detective-questions"><a class="header" href="#step-5-detective-questions">Step 5: Detective questions</a></h2>
 <p>Use your profiling evidence to answer these questions by looking at the kernel code <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>:</p>
-<h3 id="performance-analysis-1"><a class="header" href="#performance-analysis-1">Performance Analysis</a></h3>
+<h3 id="performance-analysis-1"><a class="header" href="#performance-analysis-1">Performance analysis</a></h3>
 <ol>
 <li><strong>Which kernel achieves the highest Memory Throughput?</strong> (Look at Gbyte/s values)</li>
 <li><strong>Which kernel has the lowest Max Bandwidth utilization?</strong> (Compare percentages)</li>
 <li><strong>What’s the performance gap in memory throughput?</strong> (Factor difference between fastest and slowest)</li>
 </ol>
-<h3 id="the-cache-paradox"><a class="header" href="#the-cache-paradox">The Cache Paradox</a></h3>
+<h3 id="the-cache-paradox"><a class="header" href="#the-cache-paradox">The cache paradox</a></h3>
 <ol start="4">
 <li><strong>Which kernel has the highest L1/TEX Hit Rate?</strong></li>
 <li><strong>Which kernel has the highest L2 Hit Rate?</strong></li>
 <li><strong>🤯 Why does the kernel with the BEST cache hit rates perform the WORST?</strong></li>
 </ol>
-<h3 id="memory-access-detective-work"><a class="header" href="#memory-access-detective-work">Memory Access Detective Work</a></h3>
+<h3 id="memory-access-detective-work"><a class="header" href="#memory-access-detective-work">Memory access detective work</a></h3>
 <ol start="7">
 <li><strong>Can high cache hit rates actually indicate a performance problem?</strong></li>
 <li><strong>What memory access pattern would cause high cache hits but low throughput?</strong></li>
@@ -21813,7 +22422,7 @@ The profiler data directly reveals the memory access efficiency!
 <p>The cache paradox demonstrates that <strong>high-level metrics can mislead without architectural understanding</strong> - applicable far beyond GPU programming.</p>
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-31-gpu-occupancy-optimization"><a class="header" href="#puzzle-31-gpu-occupancy-optimization">Puzzle 31: GPU Occupancy Optimization</a></h1>
-<h2 id="why-this-puzzle-matters"><a class="header" href="#why-this-puzzle-matters">Why This Puzzle Matters</a></h2>
+<h2 id="why-this-puzzle-matters"><a class="header" href="#why-this-puzzle-matters">Why this puzzle matters</a></h2>
 <p><strong>Building on Puzzle 30:</strong> You’ve just learned GPU profiling tools and discovered how memory access patterns can create dramatic performance differences. Now you’re ready for the next level: <strong>resource optimization</strong>.</p>
 <p><strong>The Learning Journey:</strong></p>
 <ul>
@@ -22006,7 +22615,7 @@ fn minimal_kernel[
 <h2 id="your-task"><a class="header" href="#your-task">Your task</a></h2>
 <p>Use profiling tools to investigate three kernels and answer analysis questions about occupancy optimization. The kernels compute identical results but use resources very differently - your job is to discover why performance and occupancy behave counterintuitively!</p>
 <blockquote>
-<p>The specific numerical results shown in this puzzle are based on <strong>NVIDIA A10G (Ampere 8.6)</strong> hardware. Your results will vary depending on your GPU architecture (Pascal, Turing, Ampere, Ada, Hopper, etc.), but the <strong>fundamental concepts, methodology, and insights remain universally applicable</strong> across all modern NVIDIA GPUs. Use <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
+<p>The specific numerical results shown in this puzzle are based on <strong>NVIDIA A10G (Ampere 8.6)</strong> hardware. Your results will vary depending on your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4), but the <strong>fundamental concepts, methodology, and insights remain universally applicable</strong> across modern GPUs. Use <code>pixi run gpu-specs</code> to get your specific hardware values.</p>
 </blockquote>
 <h2 id="configuration-43"><a class="header" href="#configuration-43">Configuration</a></h2>
 <p><strong>Requirements:</strong></p>
@@ -22035,7 +22644,7 @@ alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
     Max Blocks Per SM
 ) × Threads Per Block / Max Threads Per SM
 </code></pre>
-<h2 id="the-investigation"><a class="header" href="#the-investigation">The Investigation</a></h2>
+<h2 id="the-investigation"><a class="header" href="#the-investigation">The investigation</a></h2>
 <h3 id="step-1-test-the-kernels"><a class="header" href="#step-1-test-the-kernels">Step 1: Test the kernels</a></h3>
 <pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p31/p31.mojo --all
@@ -22059,7 +22668,7 @@ ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
 <p>First, identify your GPU architecture and detailed specs:</p>
 <pre><code class="language-bash">pixi run gpu-specs
 </code></pre>
-<p><strong>Note</strong>: <code>gpu-specs</code> shows <strong>all architectural details</strong> derived from your GPU hardware - no lookup tables needed!</p>
+<p><strong>Note</strong>: <code>gpu-specs</code> automatically detects your GPU vendor (NVIDIA/AMD/Apple) and shows <strong>all architectural details</strong> derived from your hardware - no lookup tables needed!</p>
 <p><strong>Common Architecture Specs (Reference):</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Architecture</th><th>Compute Cap</th><th>Registers/SM</th><th>Shared Mem/SM</th><th>Max Threads/SM</th><th>Max Blocks/SM</th></tr></thead><tbody>
 <tr><td><strong>Hopper (H100)</strong></td><td>9.0</td><td>65,536</td><td>228KB</td><td>2,048</td><td>32</td></tr>
@@ -22089,7 +22698,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --balanced
 </code></pre>
 <p>Compare the actual measured occupancy with your theoretical calculations - this is where the mystery reveals itself!</p>
-<h2 id="key-insights-1"><a class="header" href="#key-insights-1">Key Insights</a></h2>
+<h2 id="key-insights-1"><a class="header" href="#key-insights-1">Key insights</a></h2>
 <p>💡 <strong>Occupancy Threshold:</strong> Once you have sufficient occupancy for latency hiding (~25-50%), additional occupancy provides diminishing returns.</p>
 <p>💡 <strong>Memory Bound vs Compute Bound:</strong> SAXPY is memory-bound. Memory bandwidth often matters more than occupancy for memory-bound kernels.</p>
 <p>💡 <strong>Resource Efficiency:</strong> Modern GPUs can handle moderate register pressure (20-40 registers/thread) without dramatic occupancy loss.</p>
@@ -23384,15 +23993,15 @@ for mma_k in range(BK // MMA_K):     # 32÷8 = 4 iterations (K dimension)
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p33 --test
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p33 --test
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p33 --test
 </code></pre>
   </div>
 </div>
@@ -23908,15 +24517,15 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 <h2 id="running-the-code-37"><a class="header" href="#running-the-code-37">Running the code</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p34 --coordination
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p34 --coordination
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --coordination
 </code></pre>
   </div>
 </div>
@@ -24159,15 +24768,15 @@ Stride 1:   [T0] += [T1] → Final result at T0
 <h2 id="running-the-code-38"><a class="header" href="#running-the-code-38">Running the code</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p34 --reduction
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p34 --reduction
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --reduction
 </code></pre>
   </div>
 </div>
@@ -24426,7 +25035,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </ul>
 </div>
 </details>
-<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced Cluster APIs</a></h2>
+<h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
 <p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
 <ul>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
@@ -24449,15 +25058,15 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="running-the-code-39"><a class="header" href="#running-the-code-39">Running the code</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run p34 --advanced
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p34 --advanced
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --advanced
 </code></pre>
   </div>
 </div>

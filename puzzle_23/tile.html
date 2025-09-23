@@ -295,15 +295,20 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --tiled
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --tiled
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --tiled -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --tiled
 </code></pre>
   </div>
 </div>

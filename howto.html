@@ -187,26 +187,40 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="how-to-use-this-book"><a class="header" href="#how-to-use-this-book">How to Use This Book</a></h2>
-<p>Each puzzle follows a consistent format designed to progressively build your skills:</p>
+<p>Each puzzle maintains a consistent structure to support systematic skill development:</p>
 <ul>
-<li><strong>Overview</strong>: Clear problem statement and key concepts introduced in each puzzle</li>
-<li><strong>Configuration</strong>: Setup parameters and memory organization specific to each challenge</li>
-<li><strong>Code to Complete</strong>: Skeleton code with specific sections for you to implement</li>
-<li><strong>Tips</strong>: Optional hints if you get stuck, without giving away complete solutions</li>
-<li><strong>Solution</strong>: Detailed explanations of the implementation, performance considerations, and underlying concepts</li>
+<li><strong>Overview</strong>: Problem definition and key concepts for each challenge</li>
+<li><strong>Configuration</strong>: Technical setup and memory organization details</li>
+<li><strong>Code to Complete</strong>: Implementation framework with clearly marked sections to fill in</li>
+<li><strong>Tips</strong>: Strategic hints available when needed, without revealing complete solutions</li>
+<li><strong>Solution</strong>: Comprehensive implementation analysis, including performance considerations and conceptual explanations</li>
 </ul>
-<p>The puzzles gradually increase in complexity, introducing new concepts while reinforcing fundamentals. We recommend solving them in order, as later puzzles build on skills developed in earlier ones.</p>
+<p>The puzzles increase in complexity systematically, building new concepts on established foundations. Working through them sequentially is recommended, as advanced puzzles assume familiarity with concepts from earlier challenges.</p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>All puzzles are designed to be run with the provided testing framework that verifies your implementation against expected results. Each puzzle includes instructions for running the code and validating your solution.</p>
+<p>All puzzles integrate with a testing framework that validates implementations against expected results. Each puzzle provides specific execution instructions and solution verification procedures.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
 <p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles.</p>
+<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. If have the supported GPU, run the following command to get some info about your GPU:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run gpu-specs
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe gpu-specs
+</code></pre>
+  </div>
+</div>
 <h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
 <p>For <code>osx-arm64</code> users, you’ll need:</p>
 <ul>
-<li><strong>macOS 15.0 or later</strong> for optimal compatibility</li>
+<li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code> and if it fails you’d need to upgrade.</li>
 <li><strong>Xcode 16 or later</strong> (minimum required). Use <code>xcodebuild -version</code> to check.</li>
 </ul>
 <p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execite tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
@@ -268,11 +282,21 @@ cd mojo-gpu-puzzles
 <p>Run the puzzles via <code>pixi</code> or <code>uv</code> as follows:</p>
  <div class="code-tabs" data-tab-group="package-manager">
    <div class="tab-buttons">
-     <button class="tab-button">pixi</button>
+     <button class="tab-button">pixi NVIDIA (default)</button>
+     <button class="tab-button">pixi AMD</button>
+     <button class="tab-button">pixi Apple</button>
      <button class="tab-button">uv</button>
    </div>
    <div class="tab-content">
 <pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
+</code></pre>
+   </div>
+   <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX -e amd  # Replace XX with the puzzle number
+</code></pre>
+   </div>
+   <div class="tab-content">
+<pre><code class="language-bash">pixi run pXX -e apple  # Replace XX with the puzzle number
 </code></pre>
    </div>
    <div class="tab-content">
@@ -342,7 +366,7 @@ cd mojo-gpu-puzzles
 <li>✅ <strong>Supported</strong>: Puzzle works on this platform</li>
 <li>❌ <strong>Not Supported</strong>: Puzzle requires platform-specific features</li>
 </ul>
-<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform Notes</a></h3>
+<h3 id="platform-notes"><a class="header" href="#platform-notes">Platform notes</a></h3>
 <p><strong>NVIDIA GPUs (Complete Support)</strong></p>
 <ul>
 <li>All puzzles (1-34) work on NVIDIA GPUs with CUDA support</li>
@@ -367,7 +391,7 @@ cd mojo-gpu-puzzles
 <h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
 <ul>
 <li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
-<li><strong>Comprehensive Learning</strong>: AMD GPUs excellent for most content (27 of 34 puzzles)</li>
+<li><strong>Comprehensive Learning</strong>: AMD GPUs work well for most content (27 of 34 puzzles)</li>
 <li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
 <li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
 <li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>

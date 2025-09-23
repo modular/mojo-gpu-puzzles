@@ -375,19 +375,39 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
-    b_shared = tb[dtype]().row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]().shared().alloc()
+    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        block_idx.y, block_idx.x
+    )
+    a_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
+    b_shared = (
+        tb[dtype]()
+        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)  # Coalesced loading
+    alias load_a_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
+    alias load_b_layout = Layout.row_major(
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    )  # Coalesced loading
 
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](block_idx.y, idx)
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](idx, block_idx.x)
+        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            block_idx.y, idx
+        )
+        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+            idx, block_idx.x
+        )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -408,8 +428,12 @@ fn matmul_idiomatic_tiled[
         # Compute partial matrix multiplication for this tile
         @parameter
         for k in range(MATMUL_BLOCK_DIM_XY):
-            if(tiled_row &lt; rows and tiled_col &lt; cols): # Only perform calculation for valid outputs
-                if(k &lt; a_tile.dim(1)): # Only perform calculation on valid inputs
+            if (
+                tiled_row &lt; rows and tiled_col &lt; cols
+            ):  # Only perform calculation for valid outputs
+                if k &lt; a_tile.dim(
+                    1
+                ):  # Only perform calculation on valid inputs
                     acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -435,7 +459,12 @@ fn matmul_idiomatic_tiled[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
+    shared_tile = (
+        tb[dtype]()
+        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -582,15 +611,20 @@ fn matmul_idiomatic_tiled[
 <p>To test your unfused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --unfused
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --unfused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --unfused -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --unfused
 </code></pre>
   </div>
 </div>
@@ -651,7 +685,7 @@ UNFUSED Algorithm Test Completed!
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
@@ -924,15 +958,20 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 <p>To test your fused implementation, run:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p22 --fused
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p22 --fused
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p22 --fused -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p22 --fused
 </code></pre>
   </div>
 </div>
@@ -996,7 +1035,7 @@ FUSED Algorithm Test Completed!
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
-    dtype: DType = DType.float32
+    dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],

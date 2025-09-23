@@ -362,20 +362,31 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             alias layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY)
+            alias transpose_threads_per_block = (
+                TRANSPOSE_BLOCK_DIM_XY,
+                TRANSPOSE_BLOCK_DIM_XY,
+            )
             # Tile over the K (seq_len, d) matrix
             alias transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
-                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY
+                (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
+                // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY)
+            alias matmul_threads_per_block = (
+                MATMUL_BLOCK_DIM_XY,
+                MATMUL_BLOCK_DIM_XY,
+            )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (seq_len + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias scores_blocks_per_grid = (
+                seq_len + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
             alias softmax_threads = SOFTMAX_BLOCK_DIM_X
             alias softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (d + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+            alias result_blocks_per_grid = (
+                d + MATMUL_BLOCK_DIM_XY - 1
+            ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
             k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
@@ -418,15 +429,20 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <h3 id="test-the-kernels"><a class="header" href="#test-the-kernels">Test the kernels</a></h3>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p19
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p19
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p19 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p19
 </code></pre>
   </div>
 </div>
@@ -532,7 +548,7 @@ Output vector norms:
 <li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1, d)\)</li>
 </ul>
 <p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
-<h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation:</a></h3>
+<h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation</a></h3>
 <pre><code class="language-mojo">fn transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
@@ -544,7 +560,12 @@ Output vector norms:
     inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    shared_tile = tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()
+    shared_tile = (
+        tb[dtype]()
+        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
+        .shared()
+        .alloc()
+    )
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -578,7 +599,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
 <p>The transpose happens through <strong>swapped indexing</strong> in shared memory access (<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and <strong>swapped block coordinates</strong> for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.</p>
 </div>
-<h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration:</a></h3>
+<h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration</a></h3>
 <pre><code class="language-mojo">
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             q_2d = q_tensor.reshape[layout_q_2d]()
@@ -600,7 +621,15 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 mut=True, dtype, layout_scores_2d, MutableAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_q_2d, layout_k_t, layout_scores_2d, 1, seq_len, d, dtype]
+                matmul_idiomatic_tiled[
+                    layout_q_2d,
+                    layout_k_t,
+                    layout_scores_2d,
+                    1,
+                    seq_len,
+                    d,
+                    dtype,
+                ]
             ](
                 scores_2d,
                 q_2d,
@@ -629,7 +658,15 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
             gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[layout_weights_2d, layout_v, layout_result_2d, 1, d, seq_len, dtype]
+                matmul_idiomatic_tiled[
+                    layout_weights_2d,
+                    layout_v,
+                    layout_result_2d,
+                    1,
+                    d,
+                    seq_len,
+                    dtype,
+                ]
             ](
                 result_2d,
                 weights_2d,

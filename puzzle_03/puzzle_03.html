@@ -192,17 +192,17 @@
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
 <p><img src="./media/videos/720p30/puzzle_03_viz.gif" alt="Guard" /></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li>Handling thread/data size mismatches</li>
 <li>Preventing out-of-bounds memory access</li>
 <li>Using conditional execution in GPU kernels</li>
 <li>Safe memory access patterns</li>
 </ul>
-<h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical Description</a></h3>
+<h3 id="mathematical-description"><a class="header" href="#mathematical-description">Mathematical description</a></h3>
 <p>For each thread \(i\):
 \[\Large \text{if}\ i &lt; \text{size}: output[i] = a[i] + 10\]</p>
-<h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory Safety Pattern</a></h3>
+<h3 id="memory-safety-pattern"><a class="header" href="#memory-safety-pattern">Memory safety pattern</a></h3>
 <pre><code class="language-txt">Thread 0 (i=0):  if 0 &lt; size:  output[0] = a[0] + 10  ✓ Valid
 Thread 1 (i=1):  if 1 &lt; size:  output[1] = a[1] + 10  ✓ Valid
 Thread 2 (i=2):  if 2 &lt; size:  output[2] = a[2] + 10  ✓ Valid
@@ -248,15 +248,25 @@ fn add_10_guard(
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p03
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p03
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p03 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p03 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p03
 </code></pre>
   </div>
 </div>

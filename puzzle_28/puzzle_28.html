@@ -441,15 +441,20 @@ fn async_copy_overlap_convolution[
 <p><strong>Test the async copy overlap:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p28
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p28 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p28
 </code></pre>
   </div>
 </div>

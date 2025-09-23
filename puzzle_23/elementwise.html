@@ -187,10 +187,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
-<p>Implement a kernel that adds two vectors element-wise using Mojo’s functional <code>elementwise</code> pattern. Each thread will process multiple SIMD elements automatically, demonstrating how modern GPU programming abstracts away low-level details while maintaining high performance.</p>
+<p>This puzzle implements vector addition using Mojo’s functional <code>elementwise</code> pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.</p>
 <p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn:</p>
+<p>This puzzle covers:</p>
 <ul>
 <li><strong>Functional GPU programming</strong> with <code>elementwise</code></li>
 <li><strong>Automatic SIMD vectorization</strong> within GPU threads</li>
@@ -200,7 +200,7 @@
 </ul>
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
-<p>But the implementation teaches fundamental patterns for all GPU functional programming in Mojo.</p>
+<p>The implementation covers fundamental patterns applicable to all GPU functional programming in Mojo.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
@@ -296,15 +296,20 @@ b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p23 --elementwise
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p23 --elementwise
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p23 --elementwise -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p23 --elementwise
 </code></pre>
   </div>
 </div>
@@ -354,7 +359,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The elementwise functional pattern in Mojo demonstrates several fundamental concepts for modern GPU programming:</p>
+<p>The elementwise functional pattern in Mojo introduces several fundamental concepts for modern GPU programming:</p>
 <h3 id="1-functional-abstraction-philosophy"><a class="header" href="#1-functional-abstraction-philosophy">1. <strong>Functional abstraction philosophy</strong></a></h3>
 <p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
@@ -382,7 +387,7 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 </code></pre>
 <p><strong>Parameter Analysis:</strong></p>
 <ul>
-<li><strong><code>@parameter</code></strong>: This decorator enables <strong>compile-time specialization</strong>. The function is generated separately for each unique <code>simd_width</code> and <code>rank</code>, allowing aggressive optimization.</li>
+<li><strong><code>@parameter</code></strong>: This decorator provides <strong>compile-time specialization</strong>. The function is generated separately for each unique <code>simd_width</code> and <code>rank</code>, allowing aggressive optimization.</li>
 <li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call overhead by embedding the code directly into the kernel.</li>
 <li><strong><code>capturing</code></strong>: Enables <strong>lexical scoping</strong> - the inner function can access variables from the outer scope without explicit parameter passing.</li>
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
@@ -494,7 +499,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <p>This pattern represents the future of GPU programming - high-level abstractions that don’t sacrifice performance, making GPU computing accessible while maintaining optimal efficiency.</p>
 </div>
 </details>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Once you’ve learned elementwise operations, you’re ready for:</p>
 <ul>
 <li><strong><a href="./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
@@ -502,7 +507,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
 <li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
 </ul>
-<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern demonstrates how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
+<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern shows how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
 
                     </main>
 

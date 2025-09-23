@@ -304,15 +304,20 @@ fn butterfly_pair_swap[
 <p><strong>Test the butterfly pair swap:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --pair-swap
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --pair-swap -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --pair-swap
 </code></pre>
   </div>
 </div>
@@ -508,15 +513,20 @@ Result: All lanes have global maximum = 7
 <p><strong>Test the butterfly parallel maximum:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --parallel-max
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --parallel-max -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --parallel-max
 </code></pre>
   </div>
 </div>
@@ -702,15 +712,20 @@ fn butterfly_conditional_max[
 <p><strong>Test the butterfly conditional maximum:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p26 --conditional-max
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p26 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --conditional-max -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --conditional-max
 </code></pre>
   </div>
 </div>

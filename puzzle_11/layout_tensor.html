@@ -254,15 +254,25 @@ fn pooling[
 <p>To test your solution, run the following command in your terminal:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
-    <button class="tab-button">pixi</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11_layout_tensor
-</code></pre>
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run p11_layout_tensor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11_layout_tensor -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11_layout_tensor -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11_layout_tensor
 </code></pre>
   </div>
 </div>
@@ -312,26 +322,32 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <li>
 <p><strong>Shared memory setup</strong></p>
 <ul>
-<li>Tensor builder creates block-local storage:
+<li>
+<p>Tensor builder creates block-local storage:</p>
 <pre><code class="language-txt">shared = tb[dtype]().row_major[TPB]().shared().alloc()
 </code></pre>
 </li>
-<li>Each thread loads one element:
+<li>
+<p>Each thread loads one element:</p>
 <pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 </code></pre>
 </li>
-<li><code>barrier()</code> ensures all data is loaded</li>
+<li>
+<p><code>barrier()</code> ensures all data is loaded</p>
+</li>
 </ul>
 </li>
 <li>
 <p><strong>Boundary cases</strong></p>
 <ul>
-<li>Position 0: Single element
+<li>
+<p>Position 0: Single element</p>
 <pre><code class="language-txt">output[0] = shared[0] = 0.0
 </code></pre>
 </li>
-<li>Position 1: Sum of first two elements
+<li>
+<p>Position 1: Sum of first two elements</p>
 <pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
 </code></pre>
 </li>
@@ -340,14 +356,16 @@ Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
 <li>
 <p><strong>Main window operation</strong></p>
 <ul>
-<li>For positions 2 and beyond:
+<li>
+<p>For positions 2 and beyond:</p>
 <pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
 Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
 Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
 ...
 </code></pre>
 </li>
-<li>Natural indexing with LayoutTensor:
+<li>
+<p>Natural indexing with LayoutTensor:</p>
 <pre><code class="language-txt"># Sliding window of 3 elements
 window_sum = shared[i-2] + shared[i-1] + shared[i]
 </code></pre>
