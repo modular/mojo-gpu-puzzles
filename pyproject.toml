@@ -4,14 +4,15 @@ version = "0.0.0"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "mojo<1.0.0",
-    "max>=25.6.0.dev2025073105",
+    "mojo>=0.25.7.0.dev2025100107,<1.0.0",
+    "max>=25.7.0.dev2025100107",
     "poethepoet>=0.34.0",
     "scipy>=1.15.3",
     "torch==2.7.1",
 ]
 
 [[tool.uv.index]]
+name = "modular-nightly"
 url = "https://dl.modular.com/public/nightly/python/simple/"
 prerelease = "allow"
 
@@ -21,11 +22,27 @@ url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [tool.uv.sources]
+mojo = [
+  { index = "modular-nightly" },
+]
+max = [
+  { index = "modular-nightly" },
+]
+mblack = [
+  { index = "modular-nightly" },
+]
+mojo-compiler = [
+  { index = "modular-nightly" },
+]
+mojo-lldb-libs = [
+  { index = "modular-nightly" },
+]
 torch = [
   { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
 ]
 
 [tool.uv]
+prerelease = "allow"
 
 [tool.poe.tasks]
 tests = "bash solutions/run.sh"
