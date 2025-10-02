@@ -36,7 +36,6 @@
   </a>
 </p>
 
-
 ## Overview
 
 > _"For the things we have to learn before we can do them, we learn by doing them."_
@@ -68,13 +67,15 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 1. Visit [https://builds.modular.com/puzzles](https://builds.modular.com/puzzles)
 2. Clone this repository
+
    ```bash
    git clone https://github.com/modular/mojo-gpu-puzzles
    cd mojo-gpu-puzzles
    ```
+
 3. Install a package manager to run the Mojo🔥 programs:
 
-    ### **(Hightly recommended) Option 1**: [pixi](https://pixi.sh/latest/#installation)
+   ### **Option 1 (Hightly recommended)**: [pixi](https://pixi.sh/latest/#installation)
 
     `pixi` is the **recommended option** for this project because:
     - Easy access to Modular's MAX/Mojo packages
@@ -84,28 +85,33 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
     **Note: A few puzzles only work with `pixi`.**
 
     **Install:**
+
     ```bash
     curl -fsSL https://pixi.sh/install.sh | sh
     ```
 
     **Update:**
+
     ```bash
     pixi self-update
     ```
 
-    ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+   ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
     **Install:**
+
     ```bash
     curl -fsSL https://astral.sh/uv/install.sh | sh
     ```
 
     **Update:**
+
     ```bash
     uv self update
     ```
 
     **Create a virtual environment:**
+
     ```bash
     uv venv && source .venv/bin/activate
     ```
@@ -145,11 +151,13 @@ pixi run format
 ## Contributing
 
 We welcome contributions! Whether it's:
+
 - 📝 Improving explanations
 - 🐛 Fixing bugs ([report bug](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=bug_report.yml))
 - 💡 Suggesting improvements ([request feature](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=feature_request.yml))
 
 Please feel free to:
+
 1. Fork the repository
 2. Create your feature branch
 3. Submit a pull request
