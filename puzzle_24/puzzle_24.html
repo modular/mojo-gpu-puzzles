@@ -188,9 +188,9 @@
                     <main>
                         <h1 id="puzzle-24-warp-fundamentals"><a class="header" href="#puzzle-24-warp-fundamentals">Puzzle 24: Warp Fundamentals</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Welcome to <strong>Part VI: GPU Warp Programming</strong>! This section introduces you to GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll learn the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
-<p><strong>What you’ll achieve:</strong> Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.</p>
-<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
+<p><strong>Part VI: GPU Warp Programming</strong> introduces GPU <strong>warp-level primitives</strong> - hardware-accelerated operations that leverage synchronized thread execution within warps. You’ll learn to use built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.</p>
+<p><strong>Goal:</strong> Replace complex shared memory + barrier + tree reduction patterns with efficient warp primitive calls that leverage hardware synchronization.</p>
+<p><strong>Key insight:</strong> <em>GPU warps execute in lockstep - Mojo’s warp operations use this synchronization to provide powerful parallel primitives with zero explicit synchronization.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
 <h3 id="gpu-warp-execution-model"><a class="header" href="#gpu-warp-execution-model"><strong>GPU warp execution model</strong></a></h3>
 <p>Understand the fundamental hardware unit of GPU parallelism:</p>
@@ -320,7 +320,7 @@ if lane_id() == 0:
 <li><strong>Regular patterns</strong>: Warp operations excel with predictable access patterns</li>
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
+<p>Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.</p>
 <p>💡 <strong>Success tip</strong>: Think of warps as <strong>synchronized vector units</strong> rather than independent threads. This mental model will guide you toward effective warp programming patterns.</p>
 <p><strong>Learning objective</strong>: By the end of Part VI, you’ll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.</p>
 <p><strong>Ready to begin?</strong> Start with <strong><a href="./warp_simt.html">SIMT Execution Model</a></strong> and discover the power of warp-level programming!</p>

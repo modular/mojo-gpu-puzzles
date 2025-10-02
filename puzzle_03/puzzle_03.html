@@ -295,6 +295,12 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <li>Guards against out-of-bounds access with <code>if i &lt; size</code></li>
 <li>Inside guard: adds 10 to input value</li>
 </ul>
+<blockquote>
+<p>You might wonder why it passes the test even without the bound-check!
+Always remember that passing the tests doesn’t necessarily mean the code
+is sound and free of Undefined Behavoirs. In <a href="../puzzle_10/puzzle_10.html">puzzle 10</a> we’ll examine such cases and use some tools to catch such
+soundness bugs.</p>
+</blockquote>
 </div>
 </details>
 <h3 id="looking-ahead"><a class="header" href="#looking-ahead">Looking ahead</a></h3>

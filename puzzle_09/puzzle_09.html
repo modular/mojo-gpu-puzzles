@@ -190,15 +190,15 @@
 <blockquote>
 <p>⚠️ This puzzle works on compatible <strong>NVIDIA GPU</strong> only. We are working to enable tooling support for other GPU vendors.</p>
 </blockquote>
-<h2 id="the-moment-every-gpu-programmer-faces"><a class="header" href="#the-moment-every-gpu-programmer-faces">The moment every GPU programmer faces</a></h2>
-<p>You’ve learned to write GPU kernels, work with shared memory, and coordinate thousands of parallel threads. Your code compiles perfectly. You run it with confidence, expecting beautiful results, and then…</p>
+<h2 id="when-gpu-programs-fail"><a class="header" href="#when-gpu-programs-fail">When GPU programs fail</a></h2>
+<p>You’ve written GPU kernels, worked with shared memory, and coordinated thousands of parallel threads. Your code compiles. You run it expecting correct results, and then:</p>
 <ul>
 <li><strong>CRASH</strong></li>
 <li><strong>Wrong results</strong></li>
 <li><strong>Infinite hang</strong></li>
 </ul>
-<p>Welcome to the reality of GPU programming: <strong>debugging parallel code running on thousands of threads simultaneously</strong>. This is where theory meets practice, where algorithmic knowledge meets investigative skills, and where patience becomes your greatest asset.</p>
-<h2 id="why-gpu-debugging-is-uniquely-challenging"><a class="header" href="#why-gpu-debugging-is-uniquely-challenging">Why GPU debugging is uniquely challenging</a></h2>
+<p>This is GPU programming reality: <strong>debugging parallel code running on thousands of threads simultaneously</strong>. This is where theory meets practice, where algorithmic knowledge meets investigative skills.</p>
+<h2 id="why-gpu-debugging-is-challenging"><a class="header" href="#why-gpu-debugging-is-challenging">Why GPU debugging is challenging</a></h2>
 <p>Unlike traditional CPU debugging where you follow a single thread through sequential execution, GPU debugging requires you to:</p>
 <ul>
 <li><strong>Think in parallel</strong>: Thousands of threads executing simultaneously, each potentially doing something different</li>
@@ -207,16 +207,16 @@
 <li><strong>Debug optimized code</strong>: JIT compilation, variable optimization, limited symbol information</li>
 <li><strong>Use specialized tools</strong>: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis</li>
 </ul>
-<p>But here’s the exciting part: <strong>once you learn GPU debugging, you’ll understand parallel computing at a deeper level than most developers ever reach</strong>.</p>
+<p><strong>GPU debugging skills provide deep understanding of parallel computing fundamentals</strong>.</p>
 <h2 id="what-youll-learn-in-this-puzzle"><a class="header" href="#what-youll-learn-in-this-puzzle">What you’ll learn in this puzzle</a></h2>
-<p>This puzzle transforms you from someone who <em>writes</em> GPU code to someone who can <em>debug</em> GPU code as well. You’ll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
+<p>This puzzle teaches you to debug GPU code systematically. You’ll learn the approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.</p>
 <h3 id="essential-skills-youll-develop"><a class="header" href="#essential-skills-youll-develop"><strong>Essential skills you’ll develop</strong></a></h3>
 <ol>
 <li><strong>Professional debugging workflow</strong> - The systematic approach professionals use</li>
 <li><strong>Tool proficiency</strong> - LLDB for host code, CUDA-GDB for GPU kernels</li>
-<li><strong>Pattern recognition</strong> - Instantly identify common GPU bug types</li>
-<li><strong>Investigation techniques</strong> - Find root causes when variables are optimized out</li>
-<li><strong>Thread coordination debugging</strong> - The most advanced GPU debugging skill</li>
+<li><strong>Pattern recognition</strong> - Common GPU bug types and symptoms</li>
+<li><strong>Investigation techniques</strong> - Finding root causes when variables are optimized out</li>
+<li><strong>Thread coordination debugging</strong> - Advanced GPU debugging skills</li>
 </ol>
 <h3 id="real-world-debugging-scenarios"><a class="header" href="#real-world-debugging-scenarios"><strong>Real-world debugging scenarios</strong></a></h3>
 <p>You’ll tackle the three most common GPU programming failures:</p>
@@ -225,7 +225,7 @@
 <li><strong>Logic bugs</strong> - Correct execution with wrong results, algorithmic errors</li>
 <li><strong>Coordination deadlocks</strong> - Barrier synchronization failures, infinite hangs</li>
 </ul>
-<p>Each scenario teaches different investigation techniques and builds your debugging intuition.</p>
+<p>Each scenario teaches different investigation techniques and builds debugging intuition.</p>
 <h2 id="your-debugging-journey"><a class="header" href="#your-debugging-journey">Your debugging journey</a></h2>
 <p>This puzzle takes you through a carefully designed progression from basic debugging concepts to advanced parallel coordination failures:</p>
 <h3 id="-step-1-mojo-gpu-debugging-essentials"><a class="header" href="#-step-1-mojo-gpu-debugging-essentials">📚 <strong>Step 1: <a href="./essentials.html">Mojo GPU Debugging Essentials</a></strong></a></h3>

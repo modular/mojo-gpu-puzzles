@@ -234,89 +234,11 @@ tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())
 tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
-<h3 id="preview-of-advanced-features"><a class="header" href="#preview-of-advanced-features">Preview of advanced features</a></h3>
-<p>As we progress through the puzzles, you’ll learn about:</p>
+<p>To learn more about <code>Layout</code> and <code>LayoutTensor</code>, see these guides from the <a href="https://docs.modular.com/mojo/manual/">Mojo manual</a></p>
 <ul>
-<li>Shared memory optimizations</li>
-<li>Efficient tiling strategies</li>
-<li>Vectorized operations</li>
-<li>Hardware acceleration</li>
-<li>Optimized memory access patterns</li>
+<li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
+<li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using LayoutTensor</a></li>
 </ul>
-<pre><code class="language-mojo"># Column-major layout
-layout_col = Layout.col_major(HEIGHT, WIDTH)
-
-# Tiled layout (for better cache utilization)
-layout_tiled = tensor.tiled[4, 4](HEIGHT, WIDTH)
-</code></pre>
-<p>Each layout has its advantages:</p>
-<ul>
-<li>
-<p><strong>Row-major</strong>: Elements in a row are contiguous</p>
-<pre><code class="language-mojo"># [1 2 3]
-# [4 5 6] -&gt; [1 2 3 4 5 6]
-layout_row = Layout.row_major(2, 3)
-</code></pre>
-</li>
-<li>
-<p><strong>Column-major</strong>: Elements in a column are contiguous</p>
-<pre><code class="language-mojo"># [1 2 3]
-# [4 5 6] -&gt; [1 4 2 5 3 6]
-layout_col = Layout.col_major(2, 3)
-</code></pre>
-</li>
-<li>
-<p><strong>Tiled</strong>: Elements grouped in tiles for cache efficiency</p>
-<pre><code class="language-mojo"># [[1 2] [3 4]] in 2x2 tiles
-layout_tiled = Layout.tiled[2, 2](4, 4)
-</code></pre>
-</li>
-</ul>
-<h3 id="advanced-gpu-optimizations"><a class="header" href="#advanced-gpu-optimizations">Advanced GPU optimizations</a></h3>
-<p>As you progress, you’ll discover LayoutTensor’s powerful features for GPU programming:</p>
-<ol>
-<li><strong>Memory hierarchy management</strong></li>
-</ol>
-<pre><code class="language-mojo"># Shared memory allocation
-shared_mem = tb[dtype]().row_major[BM, BK]().shared().alloc()
-
-# Register allocation
-reg_tile = tb[dtype]().row_major[TM, TN]().local().alloc()
-</code></pre>
-<ol start="2">
-<li><strong>Tiling strategies</strong></li>
-</ol>
-<pre><code class="language-mojo"># Block tiling
-block_tile = tensor.tile[BM, BN](block_idx.y, block_idx.x)
-
-# Register tiling
-reg_tile = block_tile.tile[TM, TN](thread_row, thread_col)
-</code></pre>
-<ol start="3">
-<li><strong>Memory access patterns</strong></li>
-</ol>
-<pre><code class="language-mojo"># Vectorized access
-vec_tensor = tensor.vectorize[1, simd_width]()
-
-# Asynchronous transfers
-copy_dram_to_sram_async[thread_layout=layout](dst, src)
-</code></pre>
-<ol start="4">
-<li><strong>Hardware acceleration</strong></li>
-</ol>
-<pre><code class="language-mojo"># Tensor Core operations (coming in later puzzles)
-mma_op = TensorCore[dtype, out_type, Index(M, N, K)]()
-result = mma_op.mma_op(a_reg, b_reg, c_reg)
-</code></pre>
-<p>💡 <strong>Looking ahead</strong>: Through these puzzles, you’ll learn to:</p>
-<ul>
-<li>Optimize data access with shared memory</li>
-<li>Implement efficient tiling strategies</li>
-<li>Leverage vectorized operations</li>
-<li>Utilize hardware accelerators</li>
-<li>Learn memory access patterns</li>
-</ul>
-<p>Each concept builds on the last, gradually taking you from basic tensor operations to advanced GPU programming. Ready to begin? Let’s start with the fundamentals!</p>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
 <p>Let’s put everything together with a simple example that demonstrates the basics of LayoutTensor:</p>
 <pre><code class="language-mojo">from gpu.host import DeviceContext
