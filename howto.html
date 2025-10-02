@@ -388,11 +388,52 @@ cd mojo-gpu-puzzles
 <blockquote>
 <p><strong>Future Support</strong>: We’re actively working to expand tooling and platform support for AMD and Apple GPUs. Missing features like debugging tools, profiling capabilities, and advanced GPU operations are planned for future releases. Check back for updates as we continue to broaden cross-platform compatibility.</p>
 </blockquote>
+<h2 id="gpu-resources"><a class="header" href="#gpu-resources">GPU Resources</a></h2>
+<h3 id="free-cloud-gpu-platforms"><a class="header" href="#free-cloud-gpu-platforms">Free cloud GPU platforms</a></h3>
+<p>If you don’t have local GPU access, several cloud platforms offer free GPU resources for learning and experimentation:</p>
+<h4 id="google-colab"><a class="header" href="#google-colab"><strong>Google Colab</strong></a></h4>
+<p>Google Colab provides free GPU access with some limitations for Mojo GPU programming:</p>
+<p><strong>Available GPUs:</strong></p>
+<ul>
+<li>Tesla T4 (older Turing architecture)</li>
+<li>Tesla V100 (limited availability)</li>
+</ul>
+<p><strong>Limitations for Mojo GPU Puzzles:</strong></p>
+<ul>
+<li><strong>Older GPU architecture</strong>: T4 GPUs may have limited compatibility with advanced Mojo GPU features</li>
+<li><strong>Session limits</strong>: 12-hour maximum runtime, then automatic disconnect</li>
+<li><strong>Limited debugging support</strong>: NVIDIA debugging tools (puzzles 9-10) may not be fully available</li>
+<li><strong>Package installation restrictions</strong>: May require workarounds for Mojo/MAX installation</li>
+<li><strong>Performance limitations</strong>: Shared infrastructure affects consistent benchmarking</li>
+</ul>
+<p><strong>Recommended for:</strong> Basic GPU programming concepts (puzzles 1-8, 11-15) and learning fundamental patterns.</p>
+<h4 id="kaggle-notebooks"><a class="header" href="#kaggle-notebooks"><strong>Kaggle Notebooks</strong></a></h4>
+<p>Kaggle offers more generous free GPU access:</p>
+<p><strong>Available GPUs:</strong></p>
+<ul>
+<li>Tesla T4 (30 hours per week free)</li>
+<li>P100 (limited availability)</li>
+</ul>
+<p><strong>Advantages over Colab:</strong></p>
+<ul>
+<li><strong>More generous time limits</strong>: 30 hours per week compared to Colab’s daily session limits</li>
+<li><strong>Better persistence</strong>: Notebooks save automatically</li>
+<li><strong>Consistent environment</strong>: More reliable package installation</li>
+</ul>
+<p><strong>Limitations for Mojo GPU Puzzles:</strong></p>
+<ul>
+<li><strong>Same GPU architecture constraints</strong>: T4 compatibility issues with advanced features</li>
+<li><strong>Limited debugging tools</strong>: NVIDIA profiling and debugging tools (puzzles 9-10, 30-32) unavailable</li>
+<li><strong>Mojo installation complexity</strong>: Requires manual setup of Mojo environment</li>
+<li><strong>No cluster programming support</strong>: Advanced puzzles (33-34) won’t work</li>
+</ul>
+<p><strong>Recommended for:</strong> Extended learning sessions on fundamental GPU programming (puzzles 1-16).</p>
 <h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
 <ul>
 <li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
 <li><strong>Comprehensive Learning</strong>: AMD GPUs work well for most content (27 of 34 puzzles)</li>
 <li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
+<li><strong>Free Platform Learning</strong>: Google Colab/Kaggle suitable for basic to intermediate concepts (puzzles 1-16)</li>
 <li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
 <li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>
 </ul>
