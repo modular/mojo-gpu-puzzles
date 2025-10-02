@@ -4,6 +4,7 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Mojo 🔥 GPU Puzzles"
+version = "1.0.0"
 
 [output.html]
 additional-css = [
@@ -28,7 +29,7 @@ git-repository-url = "https://github.com/modular/mojo-gpu-puzzles"
 mathjax-support = true
 theme-switcher = true
 no-theme-selection = false
-draft = true
+draft = false
 
 [output.html.highlight]
 enable = true

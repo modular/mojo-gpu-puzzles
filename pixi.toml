@@ -3,7 +3,7 @@ authors = ["Modular <hello@modular.com>"]
 channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
 name = "mojo-gpu-puzzles"
 platforms = ["linux-64", "osx-arm64"]
-version = "0.0.0"
+version = "1.0.0"
 
 [feature.nvidia]
 system-requirements = { cuda = "12" }

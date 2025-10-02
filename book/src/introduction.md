@@ -24,12 +24,10 @@
   </a>
 </p>
 
-> 🚧 This book is a work in progress! Some sections may be incomplete or subject to change. 🚧
-
 > _"For the things we have to learn before we can do them, we learn by doing them."_
 > Aristotle, (Nicomachean Ethics)
 
-Welcome to **Mojo 🔥 GPU Puzzles**, a hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
+Welcome to **Mojo 🔥 GPU Puzzles, Edition 1**, a hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
 
 ## Why GPU programming?
 

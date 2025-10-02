@@ -41,7 +41,7 @@
 > _"For the things we have to learn before we can do them, we learn by doing them."_
 > — Aristotle, (Nicomachean Ethics)
 
-Welcome to **Mojo🔥 GPU Puzzles** — an interactive approach to learning GPU programming through hands-on puzzle solving. Instead of traditional textbook learning, you'll immediately dive into writing real GPU code and seeing the results.
+Welcome to **Mojo🔥 GPU Puzzles, Edition 1** — an interactive approach to learning GPU programming through hands-on puzzle solving. Instead of traditional textbook learning, you'll immediately dive into writing real GPU code and seeing the results.
 
 Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
