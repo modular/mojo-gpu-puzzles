@@ -53,7 +53,7 @@ Think of it as **X-ray vision for your GPU programs** - revealing hidden problem
 
 ## What you'll learn in this puzzle
 
-This puzzle transforms you from someone who *writes* GPU code to someone who can *hunt down the most elusive GPU bugs*. You'll learn the detective skills that separate good GPU developers from great ones.
+This puzzle teaches you to systematically find and fix the most elusive GPU bugs. You'll learn the detective skills that distinguish competent GPU developers from exceptional ones.
 
 ### **Critical skills you'll develop**
 

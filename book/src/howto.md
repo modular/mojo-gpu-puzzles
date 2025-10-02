@@ -87,7 +87,7 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
 
 2. Install a package manager to run the Mojo🔥 programs:
 
-   #### **Option 1 (Hightly recommended)**: [pixi](https://pixi.sh/latest/#installation)
+   #### **Option 1 (Highly recommended)**: [pixi](https://pixi.sh/latest/#installation)
 
     `pixi` is the **recommended option** for this project because:
     - Easy access to Modular's MAX/Mojo packages

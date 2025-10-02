@@ -2,17 +2,17 @@
 
 > ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.
 
-## The moment every GPU programmer faces
+## When GPU programs fail
 
-You've learned to write GPU kernels, work with shared memory, and coordinate thousands of parallel threads. Your code compiles perfectly. You run it with confidence, expecting beautiful results, and then...
+You've written GPU kernels, worked with shared memory, and coordinated thousands of parallel threads. Your code compiles. You run it expecting correct results, and then:
 
 - **CRASH**
 - **Wrong results**
 - **Infinite hang**
 
-Welcome to the reality of GPU programming: **debugging parallel code running on thousands of threads simultaneously**. This is where theory meets practice, where algorithmic knowledge meets investigative skills, and where patience becomes your greatest asset.
+This is GPU programming reality: **debugging parallel code running on thousands of threads simultaneously**. This is where theory meets practice, where algorithmic knowledge meets investigative skills.
 
-## Why GPU debugging is uniquely challenging
+## Why GPU debugging is challenging
 
 Unlike traditional CPU debugging where you follow a single thread through sequential execution, GPU debugging requires you to:
 
@@ -22,19 +22,19 @@ Unlike traditional CPU debugging where you follow a single thread through sequen
 - **Debug optimized code**: JIT compilation, variable optimization, limited symbol information
 - **Use specialized tools**: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis
 
-But here's the exciting part: **once you learn GPU debugging, you'll understand parallel computing at a deeper level than most developers ever reach**.
+**GPU debugging skills provide deep understanding of parallel computing fundamentals**.
 
 ## What you'll learn in this puzzle
 
-This puzzle transforms you from someone who *writes* GPU code to someone who can *debug* GPU code as well. You'll learn the systematic approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.
+This puzzle teaches you to debug GPU code systematically. You'll learn the approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.
 
 ### **Essential skills you'll develop**
 
 1. **Professional debugging workflow** - The systematic approach professionals use
 2. **Tool proficiency** - LLDB for host code, CUDA-GDB for GPU kernels
-3. **Pattern recognition** - Instantly identify common GPU bug types
-4. **Investigation techniques** - Find root causes when variables are optimized out
-5. **Thread coordination debugging** - The most advanced GPU debugging skill
+3. **Pattern recognition** - Common GPU bug types and symptoms
+4. **Investigation techniques** - Finding root causes when variables are optimized out
+5. **Thread coordination debugging** - Advanced GPU debugging skills
 
 ### **Real-world debugging scenarios**
 
@@ -44,7 +44,7 @@ You'll tackle the three most common GPU programming failures:
 - **Logic bugs** - Correct execution with wrong results, algorithmic errors
 - **Coordination deadlocks** - Barrier synchronization failures, infinite hangs
 
-Each scenario teaches different investigation techniques and builds your debugging intuition.
+Each scenario teaches different investigation techniques and builds debugging intuition.
 
 ## Your debugging journey
 

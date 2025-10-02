@@ -2,11 +2,11 @@
 
 ## Overview
 
-Welcome to **Part VI: GPU Warp Programming**! This section introduces you to GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll learn the art of using built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
+**Part VI: GPU Warp Programming** introduces GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll learn to use built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
 
-**What you'll achieve:** Transform from complex shared memory + barrier + tree reduction patterns to elegant warp primitive calls that leverage hardware synchronization.
+**Goal:** Replace complex shared memory + barrier + tree reduction patterns with efficient warp primitive calls that leverage hardware synchronization.
 
-**Key insight:** _GPU warps execute in lockstep - Mojo's warp operations harness this synchronization to provide powerful parallel primitives with zero explicit synchronization._
+**Key insight:** _GPU warps execute in lockstep - Mojo's warp operations use this synchronization to provide powerful parallel primitives with zero explicit synchronization._
 
 ## What you'll learn
 
@@ -171,7 +171,7 @@ Recognizing when warp operations provide advantages:
 
 ## Getting started
 
-Ready to harness GPU warp-level parallelism? Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.
+Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.
 
 💡 **Success tip**: Think of warps as **synchronized vector units** rather than independent threads. This mental model will guide you toward effective warp programming patterns.
 

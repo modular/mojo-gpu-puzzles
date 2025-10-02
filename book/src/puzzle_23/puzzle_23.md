@@ -2,9 +2,7 @@
 
 ## Overview
 
-Welcome to **Part V: Mojo Functional Patterns**! This section introduces you to Mojo's revolutionary approach to GPU programming through **functional patterns** that abstract away low-level complexity while delivering exceptional performance. You'll learn the art of writing clean, efficient parallel code that scales across thousands of GPU threads.
-
-**What you'll achieve:** Transform from manual GPU kernel programming to high-level functional patterns that automatically handle vectorization, memory optimization, and performance tuning.
+**Part VI: Functional GPU Programming** introduces Mojo's high-level programming patterns for GPU computation. You'll learn functional approaches that automatically handle vectorization, memory optimization, and performance tuning, replacing manual GPU kernel programming.
 
 **Key insight:** _Modern GPU programming doesn't require sacrificing elegance for performance - Mojo's functional patterns give you both._
 
@@ -162,10 +160,10 @@ Learn to measure, analyze, and optimize GPU performance scientifically.
 
 ## Getting started
 
-Ready to transform your GPU programming skills? Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.
+Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.
 
 💡 **Success tip**: Focus on understanding the **why** behind each pattern, not just the **how**. The conceptual framework you develop here will serve you throughout your GPU programming career.
 
-**Learning objective**: By the end of Part V, you'll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.
+**Learning objective**: By the end of Part VI, you'll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.
 
-**Ready to begin?** Start with **[Elementwise Operations](./elementwise.md)** and discover the power of functional GPU programming!
+**Begin with**: **[Elementwise Operations](./elementwise.md)** to discover functional GPU programming.

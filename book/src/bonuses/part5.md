@@ -93,4 +93,4 @@ This bonus challenge teaches the most important lesson in GPU optimization: **un
 
 The goal isn't just to make Tensor Cores faster - it's to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.
 
-Master this challenge, and you'll have the skills to optimize any GPU workload, regardless of the hardware features available.
+Complete this challenge, and you'll have the skills to optimize any GPU workload, regardless of the hardware features available.

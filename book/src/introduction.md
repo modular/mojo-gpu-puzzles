@@ -29,7 +29,7 @@
 > _"For the things we have to learn before we can do them, we learn by doing them."_
 > Aristotle, (Nicomachean Ethics)
 
-Welcome to **Mojo 🔥 GPU Puzzles**, a hands-on guide to understanding GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Pythonic syntax with systems-level performance.
+Welcome to **Mojo 🔥 GPU Puzzles**, a hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
 
 ## Why GPU programming?
 
@@ -39,34 +39,34 @@ The economic implications are substantial. Organizations that effectively levera
 
 ## Why Mojo🔥 for GPU programming?
 
-The computing industry has reached a critical inflection point. We can no longer rely on new CPU generations to automatically increase application performance through higher clock speeds. As power and heat constraints have plateaued CPU speeds, hardware manufacturers have shifted toward increasing the number of physical cores. This multi-core revolution has reached its zenith in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run an astonishing 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued and ready for execution.
+The computing industry has reached a critical point. CPU performance no longer increases through higher clock speeds due to power and heat constraints. Hardware manufacturers have shifted toward increasing physical cores. This multi-core approach reaches its peak in modern GPUs, which contain thousands of cores operating in parallel. The NVIDIA H100, for example, can run 16,896 threads simultaneously in a single clock cycle, with over 270,000 threads queued for execution.
 
-Mojo represents a fresh approach to GPU programming, making this massive parallelism more accessible and productive:
+Mojo provides a practical approach to GPU programming, making this parallelism more accessible:
 
-- **Python-like Syntax** with systems programming capabilities that feels familiar to the largest programming community
-- **Zero-cost Abstractions** that compile to efficient machine code without sacrificing performance
-- **Strong Type System** that catches errors at compile time while maintaining expressiveness
-- **Built-in Tensor Support** with hardware-aware optimizations specifically designed for GPU computation
-- **Direct Access** to low-level CPU and GPU intrinsics for systems-level programming
-- **Cross-Hardware Portability** allowing you to write code that can run on both CPUs and GPUs
-- **Ergonomic and Safety Improvements** over traditional C/C++ GPU programming
-- **Lower Barrier to Entry** enabling more programmers to harness GPU power effectively
+- **Python-like Syntax** with systems programming capabilities
+- **Zero-cost Abstractions** that compile to efficient machine code
+- **Strong Type System** that catches errors at compile time
+- **Built-in Tensor Support** with hardware-aware optimizations for GPU computation
+- **Direct Access** to low-level CPU and GPU intrinsics
+- **Cross-Hardware Portability** for code that runs on both CPUs and GPUs
+- **Improved Safety** over traditional C/C++ GPU programming
+- **Lower Barrier to Entry** for more programmers to access GPU power
 
 > **Mojo🔥 aims to fuel innovation by democratizing GPU programming.**
 >**By expanding on Python's familiar syntax while adding direct GPU access, Mojo allows programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.**
 
 ## Why learn through puzzles?
 
-Most GPU programming resources begin with extensive theoretical foundations before introducing practical implementation. Such approaches can overwhelm newcomers with abstract concepts that only become meaningful through direct application.
+Most GPU programming resources start with extensive theory before practical implementation. This can overwhelm newcomers with abstract concepts that only become clear through direct application.
 
-This book adopts a different methodology: immediate engagement with practical problems that progressively introduce underlying concepts through guided discovery.
+This book uses a different approach: immediate engagement with practical problems that progressively introduce concepts through guided discovery.
 
 **Advantages of puzzle-based learning:**
 
-- **Direct experience**: Immediate execution on actual GPU hardware provides concrete feedback
-- **Incremental complexity**: Each challenge builds systematically on previously established concepts
-- **Applied focus**: Problems mirror real-world computational scenarios rather than artificial examples
-- **Diagnostic skills**: Systematic debugging practice develops essential troubleshooting capabilities
+- **Direct experience**: Immediate execution on GPU hardware provides concrete feedback
+- **Incremental complexity**: Each challenge builds on previously established concepts
+- **Applied focus**: Problems mirror real-world computational scenarios
+- **Diagnostic skills**: Systematic debugging practice develops troubleshooting capabilities
 - **Knowledge retention**: Active problem-solving reinforces understanding more effectively than passive consumption
 
 The methodology emphasizes discovery over memorization. Concepts emerge naturally through experimentation, creating deeper understanding and practical competency.
@@ -158,6 +158,8 @@ This book takes you on a journey from first principles to advanced GPU programmi
 - Develop systematic approaches to identifying and fixing GPU bugs
 - Build confidence for tackling complex GPU programming challenges
 
+> **Note**: Debugging puzzles require `pixi` for access to NVIDIA's GPU debugging tools. These puzzles work exclusively on NVIDIA GPUs with CUDA support.
+
 **Part III: GPU algorithms (Puzzles 11-16) ✅**
 
 - Implement parallel reductions and pooling operations
@@ -216,12 +218,10 @@ This book takes you on a journey from first principles to advanced GPU programmi
 - Program tensor cores for AI workloads
 - Learn cluster programming in modern GPUs
 
-The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo's powerful LayoutTensor abstractions. This provides both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.
+The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo's LayoutTensor abstractions. This provides both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.
 
 ## Ready to get started?
 
-Now that you understand why GPU programming matters, why Mojo is the right tool, and how puzzle-based learning works, you're ready to begin your journey.
+You now understand why GPU programming matters, why Mojo is suitable for this work, and how puzzle-based learning functions. You're prepared to begin.
 
 **Next step**: Head to [How to Use This Book](howto.md) for setup instructions, system requirements, and guidance on running your first puzzle.
-
-Let's start building your GPU programming skills! 🚀

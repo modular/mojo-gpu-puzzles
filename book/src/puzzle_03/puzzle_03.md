@@ -124,6 +124,11 @@ This solution:
 - Guards against out-of-bounds access with `if i < size`
 - Inside guard: adds 10 to input value
 
+> You might wonder why it passes the test even without the bound-check!
+> Always remember that passing the tests doesn't necessarily mean the code
+> is sound and free of Undefined Behavoirs. In [puzzle 10](../puzzle_10/puzzle_10.md) we'll examine such cases and use some tools to catch such
+> soundness bugs.
+
 </div>
 </details>
 
