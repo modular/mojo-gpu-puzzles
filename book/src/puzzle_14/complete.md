@@ -109,28 +109,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete
+pixi run p14 --block-boundary
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete -e amd
+pixi run p14 --block-boundary -e amd
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete -e apple
+pixi run p14 --block-boundary -e apple
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p14 --complete
+uv run poe p14 --block-boundary
 ```
 
   </div>
