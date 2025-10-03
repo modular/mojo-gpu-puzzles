@@ -65,11 +65,11 @@ def main():
     with DeviceContext() as ctx:
         if len(argv()) != 2 or argv()[1] not in [
             "--simple",
-            "--block-boundary",
+            "--complete",
         ]:
             raise Error(
                 "Expected one command-line argument: '--simple' or"
-                " '--block-boundary'"
+                " '--complete'"
             )
 
         use_simple = argv()[1] == "--simple"
