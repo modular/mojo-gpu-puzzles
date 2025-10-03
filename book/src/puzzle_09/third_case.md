@@ -28,13 +28,13 @@ In this debugging challenge, you'll learn about:
 
 ## Running the code
 
-Given the kernel and without looking at the complete code:
+First, examine the kernel without looking at the complete code:
 
 ```mojo
 {{#include ../../../problems/p09/p09.mojo:third_crash}}
 ```
 
-First experience the issue firsthand, run the following command in your terminal (`pixi` only):
+To experience the bug firsthand, run the following command in your terminal (`pixi` only):
 
 ```bash
 pixi run p09 --third-case

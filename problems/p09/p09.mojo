@@ -17,10 +17,11 @@ alias ITER = 2
 
 # ANCHOR: first_crash
 fn add_10(
-    result: UnsafePointer[Scalar[dtype]], input: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype]],
+    a: UnsafePointer[Scalar[dtype]]
 ):
     i = thread_idx.x
-    result[i] = input[i] + 10.0
+    output[i] = a[i] + 10.0
 
 
 # ANCHOR_END: first_crash
@@ -29,7 +30,7 @@ fn add_10(
 # ANCHOR: second_crash
 fn process_sliding_window(
     output: LayoutTensor[mut=True, dtype, vector_layout],
-    input: LayoutTensor[mut=False, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
 
@@ -40,7 +41,7 @@ fn process_sliding_window(
     for offset in range(ITER):
         idx = thread_id + offset - 1
         if 0 <= idx < SIZE:
-            value = rebind[Scalar[dtype]](input[idx])
+            value = rebind[Scalar[dtype]](a[idx])
             window_sum += value
 
     output[thread_id] = window_sum
@@ -52,7 +53,7 @@ fn process_sliding_window(
 # ANCHOR: third_crash
 fn collaborative_filter(
     output: LayoutTensor[mut=True, dtype, vector_layout],
-    input: LayoutTensor[mut=False, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
 
@@ -61,7 +62,7 @@ fn collaborative_filter(
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -78,7 +79,7 @@ fn collaborative_filter(
     if thread_id < SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 
 
 # ANCHOR_END: third_crash
