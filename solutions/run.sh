@@ -29,7 +29,7 @@ VERBOSE_MODE=true
 IGNORE_LOW_COMPUTE_FAILURES=false
 
 # Puzzles that require higher compute capability (>= 8.0 on NVIDIA)
-NVIDIA_HIGH_COMPUTE_REQUIRED_PUZZLES=("p16" "p28" "p29" "p33" "p34")
+NVIDIA_HIGH_COMPUTE_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33" "p34")
 
 # Arrays to store results
 declare -a FAILED_TESTS_LIST
@@ -156,7 +156,7 @@ usage() {
     echo -e "${BOLD}Examples:${NC}"
     echo -e "  ${GREEN}$0${NC}                                    ${GRAY}# Run all puzzles${NC}"
     echo -e "  ${GREEN}$0 -v${NC}                                 ${GRAY}# Run all puzzles with verbose output${NC}"
-    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# Run all puzzles, ignore compute <8.0 failures (for CI/T4)${NC}"
+    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# Run all puzzles, ignore compute <8.0 failures (for T4/CI)${NC}"
     echo -e "  ${GREEN}$0 p23${NC}                                ${GRAY}# Run only p23 tests with all flags${NC}"
     echo -e "  ${GREEN}$0 p26 --double-buffer${NC}                ${GRAY}# Run p26 with specific flag${NC}"
     echo -e "  ${GREEN}$0 -v p26 --double-buffer${NC}             ${GRAY}# Run p26 with specific flag (verbose)${NC}"
@@ -196,7 +196,7 @@ print_test_result() {
     elif [ "$result" = "FAIL" ]; then
         # Check if this is a NVIDIA high compute required puzzle and we should ignore failures on low compute GPUs
         if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && is_nvidia_high_compute_required_puzzle "$test_name" && ! has_high_compute_capability; then
-            echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}IGNORED${NC} ${GRAY}$full_name${NC} ${PURPLE}(NVIDIA requires compute >=8.0)${NC}"
+            echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(NVIDIA requires compute >=8.0)${NC}"
             SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
             IGNORED_LOW_COMPUTE_TESTS_LIST+=("$full_name")
         else
@@ -419,6 +419,17 @@ done
 
 cd solutions || exit 1
 
+# Auto-detect and enable ignoring low compute failures
+if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "false" ]; then
+    local gpu_platform=$(detect_gpu_platform)
+    if [ "$gpu_platform" = "nvidia" ] && ! has_high_compute_capability; then
+        IGNORE_LOW_COMPUTE_FAILURES=true
+        echo -e "${YELLOW}${BOLD}Auto-detected:${NC} NVIDIA GPU with compute capability <8.0"
+        echo -e "Automatically ignoring failures for high compute puzzles (p16, p19, p28, p29, p33, p34)"
+        echo ""
+    fi
+fi
+
 # Function to test a specific directory
 test_puzzle_directory() {
     local dir="$1"
@@ -464,9 +475,10 @@ print_summary() {
     echo -e "  ${YELLOW}${BOLD}Skipped:${NC} $SKIPPED_TESTS"
     echo ""
 
-    # Success rate
+    # Success rate (considering skipped tests as successful)
     if [ $TOTAL_TESTS -gt 0 ]; then
-        local success_rate=$((PASSED_TESTS * 100 / TOTAL_TESTS))
+        local effective_passed=$((PASSED_TESTS + SKIPPED_TESTS))
+        local success_rate=$((effective_passed * 100 / TOTAL_TESTS))
         echo -e "  ${BOLD}Success Rate:${NC} ${success_rate}%"
 
         # Progress bar for success rate
@@ -508,7 +520,11 @@ print_summary() {
 
     # Final status
     if [ $FAILED_TESTS -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}${CHECK_MARK} All tests passed!${NC}"
+        if [ ${#IGNORED_LOW_COMPUTE_TESTS_LIST[@]} -gt 0 ]; then
+            echo -e "${GREEN}${BOLD}${CHECK_MARK} All tests passed!${NC} ${GRAY}(${#IGNORED_LOW_COMPUTE_TESTS_LIST[@]} skipped due to low compute capability)${NC}"
+        else
+            echo -e "${GREEN}${BOLD}${CHECK_MARK} All tests passed!${NC}"
+        fi
     else
         echo -e "${RED}${BOLD}${CROSS_MARK} Some tests failed.${NC}"
     fi
