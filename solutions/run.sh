@@ -417,11 +417,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-cd solutions || exit 1
-
-# Auto-detect and enable ignoring low compute failures
+# Auto-detect and enable ignoring low compute failures BEFORE changing directory
 if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "false" ]; then
-    local gpu_platform=$(detect_gpu_platform)
+    gpu_platform=$(detect_gpu_platform)
     if [ "$gpu_platform" = "nvidia" ] && ! has_high_compute_capability; then
         IGNORE_LOW_COMPUTE_FAILURES=true
         echo -e "${YELLOW}${BOLD}Auto-detected:${NC} NVIDIA GPU with compute capability <8.0"
@@ -429,6 +427,8 @@ if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "false" ]; then
         echo ""
     fi
 fi
+
+cd solutions || exit 1
 
 # Function to test a specific directory
 test_puzzle_directory() {
