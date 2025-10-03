@@ -28,7 +28,7 @@ In this debugging challenge, you'll learn about:
 
 ## Running the code
 
-Given the kernel and without looking at the complete code:
+First, examine the kernel without looking at the complete code:
 
 ```mojo
 {{#include ../../../problems/p09/p09.mojo:third_crash}}
