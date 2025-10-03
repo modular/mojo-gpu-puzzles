@@ -208,10 +208,10 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <li><strong>Result pattern analysis</strong>: Using output data to trace back to root causes</li>
 </ul>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>Given the kernel and without looking at the complete code:</p>
+<p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn process_sliding_window(
     output: LayoutTensor[mut=True, dtype, vector_layout],
-    input: LayoutTensor[mut=False, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
 
@@ -222,14 +222,14 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
     for offset in range(ITER):
         idx = thread_id + offset - 1
         if 0 &lt;= idx &lt; SIZE:
-            value = rebind[Scalar[dtype]](input[idx])
+            value = rebind[Scalar[dtype]](a[idx])
             window_sum += value
 
     output[thread_id] = window_sum
 
 
 </code></pre>
-<p>First experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
 <pre><code class="language-bash">pixi run p09 --second-case
 </code></pre>
 <p>You’ll see output like this - <strong>no crash, but wrong results</strong>:</p>
