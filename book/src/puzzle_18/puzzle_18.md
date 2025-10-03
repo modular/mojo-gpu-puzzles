@@ -63,7 +63,7 @@ Our softmax custom operation will:
 
 To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.
 
-### 1. Implement the GPU kernel
+### 1. Implement the GPU kernel in `softmax.mojo`
 
 ```mojo
 {{#include ../../../problems/p18/op/softmax.mojo:softmax_gpu_kernel}}
@@ -86,7 +86,7 @@ To complete this puzzle, you need to implement both the GPU and CPU kernels in t
 </div>
 </details>
 
-### 2. Implement the CPU kernel
+### 2. Implement the CPU kernel in `softmax.mojo`
 
 ```mojo
 {{#include ../../../problems/p18/op/softmax.mojo:softmax_cpu_kernel}}
@@ -141,7 +141,7 @@ Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 ```
 
-### 3. Complete the graph definition
+### 3. Complete the graph definition in `p18.py`
 
 ```python
 {{#include ../../../problems/p18/p18.py:softmax_custom_op_graph}}
