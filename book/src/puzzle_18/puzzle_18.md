@@ -4,6 +4,11 @@
 
 In this puzzle, we'll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.
 
+The softmax function works by performing two main steps:
+1. Exponentiation: It applies the exponential function to each element of the input vector. This ensures all values are positive and amplifies the differences between them. Larger input values result in significantly larger exponential outputs, while smaller or negative values result in outputs closer to zero.
+
+2. Normalization: It then divides each exponentiated value by the sum of all the exponentiated values. This normalization step ensures that the resulting values are a valid probability distribution, meaning they are all between 0 and 1 and their sum is exactly 1.
+
 Mathematically, the softmax function is defined as:
 
 $$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$
@@ -58,7 +63,7 @@ Our softmax custom operation will:
 
 To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.
 
-### 1. Implement the GPU kernel
+### 1. Implement the GPU kernel in `softmax.mojo`
 
 ```mojo
 {{#include ../../../problems/p18/op/softmax.mojo:softmax_gpu_kernel}}
@@ -81,7 +86,7 @@ To complete this puzzle, you need to implement both the GPU and CPU kernels in t
 </div>
 </details>
 
-### 2. Implement the CPU kernel
+### 2. Implement the CPU kernel in `softmax.mojo`
 
 ```mojo
 {{#include ../../../problems/p18/op/softmax.mojo:softmax_cpu_kernel}}
@@ -136,7 +141,7 @@ Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 ```
 
-### 3. Complete the graph definition
+### 3. Complete the graph definition in `p18.py`
 
 ```python
 {{#include ../../../problems/p18/p18.py:softmax_custom_op_graph}}
@@ -233,7 +238,7 @@ $$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - 
 ```
 
 <div class="solution-explanation">
-Our GPU implementation implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
+Our GPU kernel implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
 
 #### Kernel signature and memory management
 

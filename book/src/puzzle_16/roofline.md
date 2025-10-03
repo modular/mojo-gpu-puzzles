@@ -60,8 +60,8 @@ The animation below shows how our puzzle implementations map onto the A100's roo
 The visualization demonstrates the optimization journey we'll take in this puzzle:
 
 1. **Hardware constraints** – The red memory roof and blue compute roof define performance limits
-2. **Our starting point** – The naive implementation (left purple dot) sitting firmly on the memory roof
-3. **Optimization target** – The shared memory version (right purple dot) with improved arithmetic intensity
+2. **Our starting point** – The naive implementation (orange dot) sitting firmly on the memory roof
+3. **Optimization target** – The shared memory version (teal dot) with improved arithmetic intensity
 4. **Ultimate goal** – The golden arrow pointing toward the critical intensity where kernels become compute-bound
 
 ## 4. Analyzing our naive implementation
@@ -82,12 +82,14 @@ Let's examine why our naive kernel from the previous section performs as it does
 **Arithmetic intensity**:
 \\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\\]
 
-Since \\(I_{\text{naive}} = 0.1875 \ll I^* = 12.5\\), our naive kernel is **severely memory-bound**.
+This arithmetic intensity is far below the compute roof of an A100, indicating that our naive kernel is **severely memory-bound**.
+
+\\[\Large I_{\text{naive}} = 0.1875 \ll I^* = 12.5\\]
 
 **Expected performance**:
 \\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\\]
 
-This represents only \\(\frac{292}{19{,}500} \approx 1.5\%\\) of the GPU's computational potential! The visualization clearly shows this as the leftmost purple dot sitting squarely on the memory roof—we're nowhere near the compute ceiling.
+This represents only \\(\frac{292}{19{,}500} \approx 1.5\%\\) of the GPU's computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we're nowhere near the compute ceiling.
 
 ## 5. The path forward: shared memory optimization
 
@@ -138,7 +140,7 @@ Each technique moves kernels along the roofline—either up the memory roof (bet
 
 ## Connection to our shared memory puzzle
 
-In the next section, we'll implement the **shared memory optimization** that begins moving our kernel up the roofline. As the visualization shows, this takes us from the left purple dot (naive) to the right purple dot (shared memory)—a clear performance improvement through better data reuse.
+In the next section, we'll implement the **shared memory optimization** that begins moving our kernel up the roofline. As the visualization shows, this takes us from the orange dot (naive) to the teal dot (shared memory)—a clear performance improvement through better data reuse.
 
 While our \\(2 \times 2\\) example won't reach the compute roof, you'll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding **why** shared memory helps and **how much** improvement to expect.
 

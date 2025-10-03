@@ -2,7 +2,7 @@
 
 ## Overview
 
-In this puzzle, we'll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly [transformers](https://arxiv.org/abs/1706.03762), that allows models to focus on relevant parts of the input when making predictions.
+In this puzzle, we'll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly by [transformers](https://arxiv.org/abs/1706.03762), that allows models to focus on relevant parts of the input when making predictions.
 
 Mathematically, the attention function is defined as:
 
