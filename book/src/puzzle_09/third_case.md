@@ -34,7 +34,7 @@ Given the kernel and without looking at the complete code:
 {{#include ../../../problems/p09/p09.mojo:third_crash}}
 ```
 
-First experience the issue firsthand, run the following command in your terminal (`pixi` only):
+To experience the bug firsthand, run the following command in your terminal (`pixi` only):
 
 ```bash
 pixi run p09 --third-case
