@@ -41,6 +41,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
+**Note**: `MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0` is a command-line environment variable setting that disables a device context's buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.
+
 ```txt
 ========= COMPUTE-SANITIZER
 out shape: 2 x 2
