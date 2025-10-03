@@ -82,7 +82,9 @@ Let's examine why our naive kernel from the previous section performs as it does
 **Arithmetic intensity**:
 \\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\\]
 
-Since \\(I_{\text{naive}} = 0.1875 \ll I^* = 12.5\\), our naive kernel is **severely memory-bound**.
+This arithmetic intensity is far below the compute roof of an A100, indicating that our naive kernel is **severely memory-bound**.
+
+\\[\Large I_{\text{naive}} = 0.1875 \ll I^* = 12.5\\]
 
 **Expected performance**:
 \\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\\]
