@@ -194,16 +194,9 @@ print_test_result() {
         PASSED_TESTS=$((PASSED_TESTS + 1))
         PASSED_TESTS_LIST+=("$full_name")
     elif [ "$result" = "FAIL" ]; then
-        # Check if this is a NVIDIA high compute required puzzle and we should ignore failures on low compute GPUs
-        if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && is_nvidia_high_compute_required_puzzle "$test_name" && ! has_high_compute_capability; then
-            echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(NVIDIA requires compute >=8.0)${NC}"
-            SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
-            IGNORED_LOW_COMPUTE_TESTS_LIST+=("$full_name")
-        else
-            echo -e "    ${RED}${CROSS_MARK}${NC} ${RED}FAILED${NC} ${GRAY}$full_name${NC}"
-            FAILED_TESTS=$((FAILED_TESTS + 1))
-            FAILED_TESTS_LIST+=("$full_name")
-        fi
+        echo -e "    ${RED}${CROSS_MARK}${NC} ${RED}FAILED${NC} ${GRAY}$full_name${NC}"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+        FAILED_TESTS_LIST+=("$full_name")
     elif [ "$result" = "SKIP" ]; then
         echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC}"
         SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
@@ -222,6 +215,33 @@ print_progress() {
     printf "%*s" $filled | tr ' ' '█'
     printf "%*s" $empty | tr ' ' '░'
     printf "${GRAY}] %d%% (%d/%d)${NC}" $percentage $current $total
+}
+
+# Helper function to check if a test should be skipped and handle execution
+execute_or_skip_test() {
+    local test_name="$1"
+    local flag="$2"
+    local cmd="$3"
+    local full_name="${test_name}$([ -n "$flag" ] && echo " ($flag)" || echo "")"
+
+    # Check if this should be skipped due to low compute capability BEFORE running
+    if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && is_nvidia_high_compute_required_puzzle "$test_name" && ! has_high_compute_capability; then
+        print_test_start "$test_name" "$flag"
+        echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(NVIDIA requires compute >=8.0)${NC}"
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        IGNORED_LOW_COMPUTE_TESTS_LIST+=("$full_name")
+        TOTAL_TESTS=$((TOTAL_TESTS + 1))
+        return 0  # Skipped successfully
+    else
+        # Run the test normally
+        print_test_start "$test_name" "$flag"
+        if capture_output "$cmd" "$VERBOSE_MODE"; then
+            print_test_result "$test_name" "$flag" "PASS"
+        else
+            print_test_result "$test_name" "$flag" "FAIL"
+        fi
+        return 0
+    fi
 }
 
 capture_output() {
@@ -290,12 +310,7 @@ run_mojo_files() {
       if [ -n "$specific_flag" ]; then
         # Check if the file supports this flag
         if grep -q "argv()\[1\] == \"$specific_flag\"" "$f" || grep -q "test_type == \"$specific_flag\"" "$f"; then
-          print_test_start "${path_prefix}$f" "$specific_flag"
-          if capture_output "mojo \"$f\" \"$specific_flag\"" "$VERBOSE_MODE"; then
-            print_test_result "${path_prefix}$f" "$specific_flag" "PASS"
-          else
-            print_test_result "${path_prefix}$f" "$specific_flag" "FAIL"
-          fi
+          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "mojo \"$f\" \"$specific_flag\""
         else
           print_test_result "${path_prefix}$f" "$specific_flag" "SKIP"
         fi
@@ -304,20 +319,10 @@ run_mojo_files() {
         flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
-          print_test_start "${path_prefix}$f" ""
-          if capture_output "mojo \"$f\"" "$VERBOSE_MODE"; then
-            print_test_result "${path_prefix}$f" "" "PASS"
-          else
-            print_test_result "${path_prefix}$f" "" "FAIL"
-          fi
+          execute_or_skip_test "${path_prefix}$f" "" "mojo \"$f\""
         else
           for flag in $flags; do
-            print_test_start "${path_prefix}$f" "$flag"
-            if capture_output "mojo \"$f\" \"$flag\"" "$VERBOSE_MODE"; then
-              print_test_result "${path_prefix}$f" "$flag" "PASS"
-            else
-              print_test_result "${path_prefix}$f" "$flag" "FAIL"
-            fi
+            execute_or_skip_test "${path_prefix}$f" "$flag" "mojo \"$f\" \"$flag\""
           done
         fi
       fi
@@ -335,12 +340,7 @@ run_python_files() {
       if [ -n "$specific_flag" ]; then
         # Check if the file supports this flag
         if grep -q "sys\.argv\[1\] == \"$specific_flag\"" "$f"; then
-          print_test_start "${path_prefix}$f" "$specific_flag"
-          if capture_output "python \"$f\" \"$specific_flag\"" "$VERBOSE_MODE"; then
-            print_test_result "${path_prefix}$f" "$specific_flag" "PASS"
-          else
-            print_test_result "${path_prefix}$f" "$specific_flag" "FAIL"
-          fi
+          execute_or_skip_test "${path_prefix}$f" "$specific_flag" "python \"$f\" \"$specific_flag\""
         else
           print_test_result "${path_prefix}$f" "$specific_flag" "SKIP"
         fi
@@ -349,20 +349,10 @@ run_python_files() {
         flags=$(grep -o 'sys\.argv\[1\] == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
-          print_test_start "${path_prefix}$f" ""
-          if capture_output "python \"$f\"" "$VERBOSE_MODE"; then
-            print_test_result "${path_prefix}$f" "" "PASS"
-          else
-            print_test_result "${path_prefix}$f" "" "FAIL"
-          fi
+          execute_or_skip_test "${path_prefix}$f" "" "python \"$f\""
         else
           for flag in $flags; do
-            print_test_start "${path_prefix}$f" "$flag"
-            if capture_output "python \"$f\" \"$flag\"" "$VERBOSE_MODE"; then
-              print_test_result "${path_prefix}$f" "$flag" "PASS"
-            else
-              print_test_result "${path_prefix}$f" "$flag" "FAIL"
-            fi
+            execute_or_skip_test "${path_prefix}$f" "$flag" "python \"$f\" \"$flag\""
           done
         fi
       fi
