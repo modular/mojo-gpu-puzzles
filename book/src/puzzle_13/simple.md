@@ -1,6 +1,6 @@
 # Simple Case with Single Block
 
-Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output.
+Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output`.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
 
