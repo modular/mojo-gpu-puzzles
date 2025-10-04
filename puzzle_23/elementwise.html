@@ -266,14 +266,14 @@ fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing
 <li>And so on…</li>
 </ul>
 <h3 id="3-simd-loading-pattern"><a class="header" href="#3-simd-loading-pattern">3. <strong>SIMD loading pattern</strong></a></h3>
-<pre><code class="language-mojo">a_simd = a.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
-b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
+<pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
+b_simd = b.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
 <p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of elements loaded depends on your GPU’s SIMD capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
 <pre><code class="language-mojo">result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
 </code></pre>
-<p>This performs element-wise addition across the entire SIMD vector in parallel - much faster than 4 separate scalar additions.</p>
+<p>This performs element-wise addition across the entire SIMD vector (if supported) in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
 <pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
@@ -346,13 +346,13 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.load[simd_width](idx, 0)
-        b_simd = b.load[simd_width](idx, 0)
+        a_simd = a.aligned_load[width=simd_width](idx, 0)
+        b_simd = b.aligned_load[width=simd_width](idx, 0)
         ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
-        output.store[simd_width](idx, 0, ret)
+        output.aligned_store[simd_width](idx, 0, ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
 
@@ -393,11 +393,11 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">idx = indices[0]                          # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                     # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">idx = indices[0]                                  # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+a_simd = a.aligned_load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+b_simd = b.aligned_load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
+output.aligned_store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -419,7 +419,7 @@ output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU
 </ul>
 <p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for RTX 4090, 16 for A100).</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a.load[simd_width](idx, 0)  // Coalesced memory access
+<pre><code class="language-mojo">a.aligned_load[simd_width](idx, 0)  // Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>

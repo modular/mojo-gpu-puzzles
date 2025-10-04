@@ -13213,14 +13213,14 @@ fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing
 <li>And so on…</li>
 </ul>
 <h3 id="3-simd-loading-pattern"><a class="header" href="#3-simd-loading-pattern">3. <strong>SIMD loading pattern</strong></a></h3>
-<pre><code class="language-mojo">a_simd = a.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
-b_simd = b.load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
+<pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
+b_simd = b.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
 <p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of elements loaded depends on your GPU’s SIMD capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
 <pre><code class="language-mojo">result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
 </code></pre>
-<p>This performs element-wise addition across the entire SIMD vector in parallel - much faster than 4 separate scalar additions.</p>
+<p>This performs element-wise addition across the entire SIMD vector (if supported) in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
 <pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
@@ -13293,13 +13293,13 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.load[simd_width](idx, 0)
-        b_simd = b.load[simd_width](idx, 0)
+        a_simd = a.aligned_load[width=simd_width](idx, 0)
+        b_simd = b.aligned_load[width=simd_width](idx, 0)
         ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
-        output.store[simd_width](idx, 0, ret)
+        output.aligned_store[simd_width](idx, 0, ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
 
@@ -13340,11 +13340,11 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 <li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
-<pre><code class="language-mojo">idx = indices[0]                          # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
-ret = a_simd + b_simd                     # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
+<pre><code class="language-mojo">idx = indices[0]                                  # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
+a_simd = a.aligned_load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+b_simd = b.aligned_load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
+output.aligned_store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -13366,7 +13366,7 @@ output.store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU
 </ul>
 <p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for RTX 4090, 16 for A100).</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a.load[simd_width](idx, 0)  // Coalesced memory access
+<pre><code class="language-mojo">a.aligned_load[simd_width](idx, 0)  // Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>
@@ -13953,12 +13953,12 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         for i in range(tile_size):
             global_start = tile_id * chunk_size + i * simd_width
 
-            a_vec = a.load[simd_width](global_start, 0)
-            b_vec = b.load[simd_width](global_start, 0)
+            a_vec = a.aligned_load[simd_width](global_start, 0)
+            b_vec = b.aligned_load[simd_width](global_start, 0)
             ret = a_vec + b_vec
             # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
 
-            output.store[simd_width](global_start, 0, ret)
+            output.aligned_store[simd_width](global_start, 0, ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     num_tiles = (size + chunk_size - 1) // chunk_size
@@ -14156,10 +14156,10 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         fn vectorized_add[width: Int](i: Int):
             global_idx = tile_start + i
             if global_idx + width &lt;= size:
-                a_vec = a.load[width](global_idx, 0)
-                b_vec = b.load[width](global_idx, 0)
+                a_vec = a.aligned_load[width](global_idx, 0)
+                b_vec = b.aligned_load[width](global_idx, 0)
                 result = a_vec + b_vec
-                output.store[width](global_idx, 0, result)
+                output.aligned_store[width](global_idx, 0, result)
 
         # Use vectorize within each tile
         vectorize[vectorized_add, simd_width](actual_tile_size)
@@ -14467,20 +14467,20 @@ Running elementwise_1M_1024
 Running tiled_1M_1024
 Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
-| name                      | met (ms)             | iters |
-| ------------------------- | -------------------- | ----- |
-| elementwise_16_4          | 0.06439936           | 100   |
-| tiled_16_4                | 0.06331391           | 100   |
-| manual_vectorized_16_4    | 0.063744             | 100   |
-| vectorized_16_4           | 0.06380544           | 100   |
-| elementwise_128_16        | 0.062341110000000005 | 100   |
-| tiled_128_16              | 0.0627712            | 100   |
-| manual_vectorized_128_16  | 0.06385632000000001  | 100   |
-| vectorized_128_16         | 0.0649728            | 100   |
-| elementwise_1M_1024       | 10.452562250000001   | 100   |
-| tiled_1M_1024             | 11.08958251          | 100   |
-| manual_vectorized_1M_1024 | 12.958359263736263   | 91    |
-| vectorized_1M_1024        | 11.13388061          | 100   |
+| name                      | met (ms)              | iters |
+| ------------------------- | --------------------- | ----- |
+| elementwise_16_4          | 0.0033248             | 100   |
+| tiled_16_4                | 0.00327392            | 100   |
+| manual_vectorized_16_4    | 0.0036169600000000002 | 100   |
+| vectorized_16_4           | 0.0037209599999999997 | 100   |
+| elementwise_128_16        | 0.00351999            | 100   |
+| tiled_128_16              | 0.00370431            | 100   |
+| manual_vectorized_128_16  | 0.0043696             | 100   |
+| vectorized_128_16         | 0.00378048            | 100   |
+| elementwise_1M_1024       | 0.03130143            | 100   |
+| tiled_1M_1024             | 0.6892189000000001    | 100   |
+| manual_vectorized_1M_1024 | 0.5923888             | 100   |
+| vectorized_1M_1024        | 0.1876688             | 100   |
 
 Benchmarks completed!
 </code></pre>
@@ -14499,14 +14499,14 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 <p>Each benchmark follows a streamlined pattern:</p>
 <pre><code class="language-mojo">@parameter
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    # Setup: Create buffers and initialize data
+    # Prevent optimization: keep(out.unsafe_ptr())
+    # Synchronize: ctx.synchronize()
     @parameter
     fn pattern_workflow(ctx: DeviceContext) raises:
-        # Setup: Create buffers and initialize data
-        # Compute: Execute the algorithm being measured
-        # Prevent optimization: keep(out.unsafe_ptr())
-        # Synchronize: ctx.synchronize()
+      # Compute: Execute the algorithm being measured
 
-    bench_ctx = DeviceContext()
     b.iter_custom[pattern_workflow](bench_ctx)
 </code></pre>
 <p><strong>Key phases:</strong></p>
@@ -14549,30 +14549,30 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <h3 id="performance-characteristics-by-problem-size"><a class="header" href="#performance-characteristics-by-problem-size">Performance characteristics by problem size</a></h3>
 <p><strong>Small problems (SIZE=16):</strong></p>
 <ul>
-<li>Launch overhead dominates (~0.064ms baseline)</li>
+<li>Launch overhead dominates (~0.003ms baseline)</li>
 <li>Thread count differences don’t matter</li>
 <li>Tiled/vectorize show slightly lower overhead</li>
 </ul>
 <p><strong>Medium problems (SIZE=128):</strong></p>
 <ul>
-<li>Still overhead-dominated (~0.063ms for all)</li>
+<li>Still overhead-dominated (~0.003ms for all)</li>
 <li>Performance differences nearly disappear</li>
 <li>Transitional behavior between overhead and computation</li>
 </ul>
 <p><strong>Large problems (SIZE=1M):</strong></p>
 <ul>
 <li>Real algorithmic differences emerge</li>
-<li>Memory bandwidth becomes primary factor</li>
+<li>Impact of uncoalesced loads becomes apparent</li>
 <li>Clear performance ranking appears</li>
 </ul>
 <h2 id="what-the-data-shows"><a class="header" href="#what-the-data-shows">What the data shows</a></h2>
 <p>Based on empirical benchmark results across different hardware:</p>
 <h3 id="performance-rankings-large-problems"><a class="header" href="#performance-rankings-large-problems">Performance rankings (large problems)</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Rank</th><th>Pattern</th><th>Typical time</th><th>Key insight</th></tr></thead><tbody>
-<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~10.45ms</td><td>Max parallelism wins for memory-bound ops</td></tr>
-<tr><td>🥈</td><td><strong>Tiled</strong></td><td>~11.09ms</td><td>Good balance of parallelism + locality</td></tr>
-<tr><td>🥉</td><td><strong>Mojo vectorize</strong></td><td>~11.13ms</td><td>Automatic optimization competitive with tiling</td></tr>
-<tr><td>4th</td><td><strong>Manual vectorized</strong></td><td>~12.96ms</td><td>Complex indexing hurts simple operations</td></tr>
+<tr><td>🥇</td><td><strong>Elementwise</strong></td><td>~0.03ms</td><td>Coalesced memory access wins for memory-bound ops</td></tr>
+<tr><td>🥈</td><td><strong>Mojo vectorize</strong></td><td>~0.19ms</td><td>Uncoalesced memory access hurts performance</td></tr>
+<tr><td>🥉</td><td><strong>Manual vectorized</strong></td><td>~0.59ms</td><td>Uncoalesced memory access and manual optimization reduces performance</td></tr>
+<tr><td>4th</td><td><strong>Tiled</strong></td><td>~0.69ms</td><td>Uncoalesced memory access, manual optimization without SIMD loads reduces performance further</td></tr>
 </tbody></table>
 </div>
 <h3 id="key-performance-insights"><a class="header" href="#key-performance-insights">Key performance insights</a></h3>
@@ -14608,10 +14608,10 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <h2 id="interpreting-your-results"><a class="header" href="#interpreting-your-results">Interpreting your results</a></h2>
 <h3 id="reading-the-output-table"><a class="header" href="#reading-the-output-table">Reading the output table</a></h3>
 <pre><code class="language-txt">| name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 10.452562250000001 | 100   |
+| elementwise_1M_1024      | 0.03130143         | 100   |
 </code></pre>
 <ul>
-<li><strong><code>met (ms)</code></strong>: Total execution time for all iterations</li>
+<li><strong><code>met (ms)</code></strong>: Execution time for a single iteration</li>
 <li><strong><code>iters</code></strong>: Number of iterations performed</li>
 <li><strong>Compare within problem size</strong>: Same-size comparisons are most meaningful</li>
 </ul>
@@ -14663,7 +14663,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <ul>
 <li><strong>Start simple</strong>: Begin with elementwise for memory-bound operations</li>
 <li><strong>Measure don’t guess</strong>: Theoretical analysis guides, empirical data decides</li>
-<li><strong>Scale matters</strong>: Small problem performance doesn’t predict large problem behavior</li>
+<li><strong>Scale matters</strong>: Small problem performance doesn’t predict large problem behaviour</li>
 <li><strong>Total cost optimization</strong>: Balance development time vs runtime performance</li>
 </ul>
 <h2 id="next-steps-4"><a class="header" href="#next-steps-4">Next steps</a></h2>
