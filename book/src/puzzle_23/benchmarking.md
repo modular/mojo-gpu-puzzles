@@ -66,20 +66,20 @@ Running elementwise_1M_1024
 Running tiled_1M_1024
 Running manual_vectorized_1M_1024
 Running vectorized_1M_1024
-| name                      | met (ms)             | iters |
-| ------------------------- | -------------------- | ----- |
-| elementwise_16_4          | 0.06439936           | 100   |
-| tiled_16_4                | 0.06331391           | 100   |
-| manual_vectorized_16_4    | 0.063744             | 100   |
-| vectorized_16_4           | 0.06380544           | 100   |
-| elementwise_128_16        | 0.062341110000000005 | 100   |
-| tiled_128_16              | 0.0627712            | 100   |
-| manual_vectorized_128_16  | 0.06385632000000001  | 100   |
-| vectorized_128_16         | 0.0649728            | 100   |
-| elementwise_1M_1024       | 10.452562250000001   | 100   |
-| tiled_1M_1024             | 11.08958251          | 100   |
-| manual_vectorized_1M_1024 | 12.958359263736263   | 91    |
-| vectorized_1M_1024        | 11.13388061          | 100   |
+| name                      | met (ms)              | iters |
+| ------------------------- | --------------------- | ----- |
+| elementwise_16_4          | 0.0033248             | 100   |
+| tiled_16_4                | 0.00327392            | 100   |
+| manual_vectorized_16_4    | 0.0036169600000000002 | 100   |
+| vectorized_16_4           | 0.0037209599999999997 | 100   |
+| elementwise_128_16        | 0.00351999            | 100   |
+| tiled_128_16              | 0.00370431            | 100   |
+| manual_vectorized_128_16  | 0.0043696             | 100   |
+| vectorized_128_16         | 0.00378048            | 100   |
+| elementwise_1M_1024       | 0.03130143            | 100   |
+| tiled_1M_1024             | 0.6892189000000001    | 100   |
+| manual_vectorized_1M_1024 | 0.5923888             | 100   |
+| vectorized_1M_1024        | 0.1876688             | 100   |
 
 Benchmarks completed!
 ```
@@ -106,14 +106,14 @@ Each benchmark follows a streamlined pattern:
 ```mojo
 @parameter
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    # Setup: Create buffers and initialize data
+    # Prevent optimization: keep(out.unsafe_ptr())
+    # Synchronize: ctx.synchronize()
     @parameter
     fn pattern_workflow(ctx: DeviceContext) raises:
-        # Setup: Create buffers and initialize data
-        # Compute: Execute the algorithm being measured
-        # Prevent optimization: keep(out.unsafe_ptr())
-        # Synchronize: ctx.synchronize()
+      # Compute: Execute the algorithm being measured
 
-    bench_ctx = DeviceContext()
     b.iter_custom[pattern_workflow](bench_ctx)
 ```
 
@@ -161,20 +161,20 @@ The benchmark suite tests three scenarios to reveal performance characteristics:
 
 **Small problems (SIZE=16):**
 
-- Launch overhead dominates (~0.064ms baseline)
+- Launch overhead dominates (~0.003ms baseline)
 - Thread count differences don't matter
 - Tiled/vectorize show slightly lower overhead
 
 **Medium problems (SIZE=128):**
 
-- Still overhead-dominated (~0.063ms for all)
+- Still overhead-dominated (~0.003ms for all)
 - Performance differences nearly disappear
 - Transitional behavior between overhead and computation
 
 **Large problems (SIZE=1M):**
 
 - Real algorithmic differences emerge
-- Memory bandwidth becomes primary factor
+- Impact of uncoalesced loads becomes apparent
 - Clear performance ranking appears
 
 ## What the data shows
@@ -185,10 +185,10 @@ Based on empirical benchmark results across different hardware:
 
 | Rank | Pattern | Typical time | Key insight |
 |------|---------|-------------|-------------|
-| 🥇 | **Elementwise** | ~10.45ms | Max parallelism wins for memory-bound ops |
-| 🥈 | **Tiled** | ~11.09ms | Good balance of parallelism + locality |
-| 🥉 | **Mojo vectorize** | ~11.13ms | Automatic optimization competitive with tiling |
-| 4th | **Manual vectorized** | ~12.96ms | Complex indexing hurts simple operations |
+| 🥇 | **Elementwise** | ~0.03ms | Coalesced memory access wins for memory-bound ops |
+| 🥈 | **Mojo vectorize** | ~0.19ms | Uncoalesced memory access hurts performance |
+| 🥉 | **Manual vectorized** | ~0.59ms | Uncoalesced memory access and manual optimization reduces performance |
+| 4th | **Tiled** | ~0.69ms | Uncoalesced memory access, manual optimization without SIMD loads reduces performance further |
 
 ### Key performance insights
 
@@ -226,10 +226,10 @@ Based on empirical benchmark results across different hardware:
 
 ```txt
 | name                     | met (ms)           | iters |
-| elementwise_1M_1024      | 10.452562250000001 | 100   |
+| elementwise_1M_1024      | 0.03130143         | 100   |
 ```
 
-- **`met (ms)`**: Total execution time for all iterations
+- **`met (ms)`**: Execution time for a single iteration
 - **`iters`**: Number of iterations performed
 - **Compare within problem size**: Same-size comparisons are most meaningful
 
@@ -290,7 +290,7 @@ Your results will vary based on:
 
 - **Start simple**: Begin with elementwise for memory-bound operations
 - **Measure don't guess**: Theoretical analysis guides, empirical data decides
-- **Scale matters**: Small problem performance doesn't predict large problem behavior
+- **Scale matters**: Small problem performance doesn't predict large problem behaviour
 - **Total cost optimization**: Balance development time vs runtime performance
 
 ## Next steps
