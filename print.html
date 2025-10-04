@@ -3672,8 +3672,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn add_10(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
