@@ -60,8 +60,8 @@ The animation below shows how our puzzle implementations map onto the A100's roo
 The visualization demonstrates the optimization journey we'll take in this puzzle:
 
 1. **Hardware constraints** – The red memory roof and blue compute roof define performance limits
-2. **Our starting point** – The naive implementation (left purple dot) sitting firmly on the memory roof
-3. **Optimization target** – The shared memory version (right purple dot) with improved arithmetic intensity
+2. **Our starting point** – The naive implementation (orange dot) sitting firmly on the memory roof
+3. **Optimization target** – The shared memory version (teal dot) with improved arithmetic intensity
 4. **Ultimate goal** – The golden arrow pointing toward the critical intensity where kernels become compute-bound
 
 ## 4. Analyzing our naive implementation
