@@ -521,8 +521,8 @@ def test_implementation(
         output = reference_layernorm_linear(
             input_tensor, ln_weight, ln_bias, linear_weight, linear_bias
         )
-        success_msg = "✅ Reference PyTorch"
-        error_msg = "❌ Reference failed"
+        success_msg = "Reference PyTorch passed"
+        error_msg = "Reference PyTorch failed"
     else:
         output, error = run_mojo_implementation(
             input_tensor,
@@ -533,7 +533,7 @@ def test_implementation(
             algorithm=algorithm,
             target=target,
         )
-        success_msg = f"✅ Using Mojo {algorithm} kernel ({target.upper()})"
+        success_msg = f"Using Mojo {algorithm} kernel ({target.upper()}) passed"
         error_msg = f"{algorithm} kernel failed: {error}"
 
     if output is not None:
@@ -619,7 +619,7 @@ def test_backward_pass(name, target="auto", test_data=None):
         mojo_grad = mojo_gradients[grad_name]
 
         if ref_grad is None or mojo_grad is None:
-            print(f"   {grad_name}: ❌ Missing gradient")
+            print(f"   {grad_name}: Missing gradient")
             all_gradients_correct = False
             continue
 
@@ -656,7 +656,7 @@ def test_backward_pass(name, target="auto", test_data=None):
 def run_comprehensive_test():
     """Run comprehensive test of all implementations."""
     print("=" * 60)
-    print("   Puzzle 20: Fused LayerNorm + Linear Comparison")
+    print("   Puzzle 22: Fused LayerNorm + Linear Comparison")
     print("   (Reference vs CPU vs GPU Unfused vs GPU Fused)")
     print("=" * 60)
 
@@ -714,7 +714,7 @@ def run_comprehensive_test():
     )
 
     if all_correct:
-        print("\nPuzzle 20 completed successfully!")
+        print("\nPuzzle 22 completed successfully!")
         print("\nWhat we achieved:")
         print("✅ CPU implementation: Fused LayerNorm + Linear")
         print(
@@ -730,7 +730,7 @@ def run_comprehensive_test():
         print("- CPU vs GPU optimization strategies")
         print("- Integration of optimized kernels from previous puzzles")
     else:
-        print("\n❌ Some implementations failed!")
+        print("\nSome implementations failed!")
 
     return all_correct
 
@@ -738,7 +738,7 @@ def run_comprehensive_test():
 def run_fused_only_test():
     """Run only the fused kernel test."""
     print("=" * 50)
-    print("   Puzzle 20: Testing FUSED KERNEL ONLY")
+    print("   Puzzle 22: Testing FUSED KERNEL ONLY")
     print("=" * 50)
 
     test_data = create_test_data()
@@ -753,14 +753,13 @@ def run_fused_only_test():
     )
 
     print(
-        "\n🧪 Fused kernel result:"
-        f" {'✅ CORRECT' if is_correct else '❌ INCORRECT'}"
+        f"\nFused kernel result: {'✅ CORRECT' if is_correct else '❌ INCORRECT'}"
     )
 
     if is_correct:
-        print("\n🎉 Fused kernel works perfectly!")
+        print("\nFused kernel works perfectly!")
     else:
-        print("\n❌ Fused kernel failed!")
+        print("\nFused kernel failed!")
 
 
 def benchmark_implementations(algorithm, test_data, iterations=50):
@@ -771,7 +770,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
     input_tensor, ln_weight, ln_bias, linear_weight, linear_bias = test_data
 
     if input_tensor.device.type != "cuda":
-        print("   ❌ CUDA not available - skipping GPU benchmark")
+        print("   CUDA not available - skipping GPU benchmark")
         return
 
     times = {}
@@ -839,19 +838,19 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
         else:
             print(f"   CPU wins (GPU overhead > computation benefit)")
     else:
-        print("\n   ❌ Benchmark incomplete due to failures")
+        print("\n   Benchmark incomplete due to failures")
 
 
 def run_algorithm_specific_test(algorithm):
     """Run correctness and benchmark tests for specific algorithm."""
     print("=" * 60)
-    print(f"   Puzzle 20: {algorithm.upper()} Algorithm Test & Benchmark")
+    print(f"   Puzzle 22: {algorithm.upper()} Algorithm Test & Benchmark")
     print("=" * 60)
 
     test_data = create_test_data()
     reference_output = reference_layernorm_linear(*test_data)
 
-    print(f"\n🧪 Correctness Testing for {algorithm.upper()} Algorithm")
+    print(f"\nCorrectness Testing for {algorithm.upper()} Algorithm")
     print("=" * (45 + len(algorithm)))
 
     results = {}
@@ -925,7 +924,7 @@ def run_algorithm_specific_test(algorithm):
             print("- Computation density optimization")
     else:
         if not all_correct:
-            print(f"\n❌ Correctness issues found - skipping benchmark")
+            print(f"\nCorrectness issues found - skipping benchmark")
         else:
             print(f"\n CUDA not available - only correctness tested")
 
@@ -959,7 +958,7 @@ def run_comprehensive_backward_test():
             "GPU Backward Implementation", target="gpu"
         )
     else:
-        print(f"\n❌ CUDA not available - skipping GPU backward test")
+        print(f"\nCUDA not available - skipping GPU backward test")
 
     # Summary
     print(f"\nBackward Pass Test Summary:")
@@ -1005,7 +1004,7 @@ def run_comprehensive_backward_test():
         print("- Memory-efficient gradient computation")
         print("- Educational focus on backward pass mathematics")
     else:
-        print(f"\n❌ Some backward pass tests failed!")
+        print(f"\nSome backward pass tests failed!")
         print("   Check the error messages above for details.")
 
     return overall_success
@@ -1017,7 +1016,7 @@ def demonstrate_neural_network_fast():
     print("=" * 50)
 
     if not torch.cuda.is_available():
-        print("❌ CUDA not available")
+        print("CUDA not available")
         return False
 
     device = torch.device("cuda")
@@ -1184,7 +1183,7 @@ def demonstrate_single_operation():
 
 def main():
     """Main function with command line argument handling."""
-    parser = argparse.ArgumentParser(description="Run tests for Puzzle 20")
+    parser = argparse.ArgumentParser(description="Run tests for Puzzle 22")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--fused",
@@ -1225,12 +1224,12 @@ def main():
         demonstrate_single_operation()
     else:
         print("Usage:")
-        print("  python p20.py --fused          # Test fused algorithm")
-        print("  python p20.py --unfused        # Test unfused algorithm")
-        print("  python p20.py --backward       # Test backward pass")
-        print("  python p20.py --demo           # Neural network demo")
+        print("  python p22.py --fused          # Test fused algorithm")
+        print("  python p22.py --unfused        # Test unfused algorithm")
+        print("  python p22.py --backward       # Test backward pass")
+        print("  python p22.py --demo           # Neural network demo")
         print(
-            "  python p20.py --demo-simple    # Single operation demo (fastest)"
+            "  python p22.py --demo-simple    # Single operation demo (fastest)"
         )
 
 

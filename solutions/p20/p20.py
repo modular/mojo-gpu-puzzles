@@ -127,7 +127,7 @@ if __name__ == "__main__":
     input_array = np.arange(INPUT_SIZE, dtype=np.float32)
     kernel_array = np.arange(KERNEL_SIZE, dtype=np.float32)
 
-    print("Puzzle 18: From MAX Graph to PyTorch Custom Ops")
+    print("Puzzle 20: From MAX Graph to PyTorch Custom Ops")
     print("=" * 60)
     print(f"Input array: {input_array}")
     print(f"Convolution kernel: {kernel_array}")
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         print("✅ PyTorch custom op verification PASSED")
 
     except Exception as e:
-        print(f"❌ PyTorch custom op failed: {e}")
+        print(f"PyTorch custom op failed: {e}")
         pytorch_result_cpu = None
 
     print()
@@ -178,13 +178,4 @@ if __name__ == "__main__":
             print("✅ PyTorch and MAX Graph results MATCH")
 
     except Exception as e:
-        print(f"❌ MAX Graph comparison failed: {e}")
-
-    print()
-    print("Key Learning Points:")
-    print("• Same Mojo kernel works for both MAX Graph and PyTorch")
-    print(
-        "• PyTorch CustomOpLibrary requires explicit output tensor allocation"
-    )
-    print("• Both approaches call the exact same optimized GPU kernel")
-    print("• PyTorch tensors can stay on GPU throughout the computation")
+        print(f"MAX Graph comparison failed: {e}")
