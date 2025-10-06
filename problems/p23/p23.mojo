@@ -382,7 +382,7 @@ def main():
         print("Running P21 GPU Benchmarks...")
         print("SIMD width:", SIMD_WIDTH)
         print("-" * 80)
-        bench_config = BenchConfig(max_iters=10, min_warmuptime_secs=0.2)
+        bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
         bench = Bench(bench_config.copy())
 
         print("Testing SIZE=16, TILE=4")
