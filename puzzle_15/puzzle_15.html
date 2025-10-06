@@ -250,7 +250,7 @@ fn axis_sum[
 <div class="solution-tips">
 <ol>
 <li>Use <code>batch = block_idx.y</code> to select row</li>
-<li>Load elements: <code>cache[local_i] = a[batch * size + local_i]</code></li>
+<li>Load elements: <code>cache[local_i] = a[batch, local_i]</code></li>
 <li>Perform parallel reduction with halving stride</li>
 <li>Thread 0 writes final sum to <code>output[batch]</code></li>
 </ol>
