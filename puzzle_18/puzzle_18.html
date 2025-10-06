@@ -189,6 +189,15 @@
                         <h1 id="puzzle-18-softmax-op"><a class="header" href="#puzzle-18-softmax-op">Puzzle 18: Softmax Op</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>In this puzzle, we’ll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.</p>
+<p>The softmax function works by performing two main steps:</p>
+<ol>
+<li>
+<p>Exponentiation: It applies the exponential function to each element of the input vector. This ensures all values are positive and amplifies the differences between them. Larger input values result in significantly larger exponential outputs, while smaller or negative values result in outputs closer to zero.</p>
+</li>
+<li>
+<p>Normalization: It then divides each exponentiated value by the sum of all the exponentiated values. This normalization step ensures that the resulting values are a valid probability distribution, meaning they are all between 0 and 1 and their sum is exactly 1.</p>
+</li>
+</ol>
 <p>Mathematically, the softmax function is defined as:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j=1}^{n} e^{x_j}}$$</p>
 <p>Where:</p>
@@ -236,7 +245,7 @@
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <p>To complete this puzzle, you need to implement both the GPU and CPU kernels in the Mojo file and complete the graph definition in the Python code.</p>
-<h3 id="1-implement-the-gpu-kernel"><a class="header" href="#1-implement-the-gpu-kernel">1. Implement the GPU kernel</a></h3>
+<h3 id="1-implement-the-gpu-kernel-in-softmaxmojo"><a class="header" href="#1-implement-the-gpu-kernel-in-softmaxmojo">1. Implement the GPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from layout import Layout, LayoutTensor
@@ -280,7 +289,7 @@ fn softmax_gpu_kernel[
 </ol>
 </div>
 </details>
-<h3 id="2-implement-the-cpu-kernel"><a class="header" href="#2-implement-the-cpu-kernel">2. Implement the CPU kernel</a></h3>
+<h3 id="2-implement-the-cpu-kernel-in-softmaxmojo"><a class="header" href="#2-implement-the-cpu-kernel-in-softmaxmojo">2. Implement the CPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">fn softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
@@ -329,7 +338,7 @@ Passed : 1 (100.00%)
 Failed : 0 (0.00%)
 Skipped: 0 (0.00%)
 </code></pre>
-<h3 id="3-complete-the-graph-definition"><a class="header" href="#3-complete-the-graph-definition">3. Complete the graph definition</a></h3>
+<h3 id="3-complete-the-graph-definition-in-p18py"><a class="header" href="#3-complete-the-graph-definition-in-p18py">3. Complete the graph definition in <code>p18.py</code></a></h3>
 <pre><code class="language-python">from pathlib import Path
 import numpy as np
 from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
@@ -484,7 +493,7 @@ Sum of all probabilities on GPU: 1.0
 
 </code></pre>
 <div class="solution-explanation">
-Our GPU implementation implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
+Our GPU kernel implements the numerically stable softmax algorithm with highly optimized parallel reduction techniques. Let's dissect the kernel in detail:
 <h4 id="kernel-signature-and-memory-management"><a class="header" href="#kernel-signature-and-memory-management">Kernel signature and memory management</a></h4>
 <pre><code class="language-mojo">fn softmax_gpu_kernel[
     layout: Layout,

@@ -188,7 +188,12 @@
                     <main>
                         <h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes the dot-product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
+<p>Implement a kernel that computes the dot product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).  The dot product is an operation that takes two vectors of the same size and returns a single number (a scalar). It is calculated by multiplying corresponding elements from each vector and then summing those products.</p>
+<p>For example, if you have two vectors:</p>
+<p>\[a = [a_{1}, a_{2}, …, a_{n}] \]
+\[b = [b_{1}, b_{2}, …, b_{n}] \]</p>
+<p>​Their dot product is:
+\[a \cdot b = a_{1}b_{1} +  a_{2}b_{2} + … + a_{n}b_{n}\]</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <p><img src="./media/videos/720p30/puzzle_12_viz.gif" alt="Dot product visualization" /></p>
 <h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
