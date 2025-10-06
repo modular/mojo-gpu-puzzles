@@ -136,10 +136,12 @@ total = warp_sum(partial_product)
 
 ```mojo
 if lane_id() == 0:
-    output[0] = total
+    output[global_i // WARP_SIZE] = total
 ```
 
 **Why only lane 0?** All lanes have the same `total` value after `warp_sum()`, but we only want to write once to avoid race conditions.
+
+**Why not write to `output[0]`?** Flexibility, function can be used in cases where there is more than one warp. i.e. The result from each warp is written to the unique location `global_i // WARP_SIZE`.
 
 **`lane_id()`:** Returns 0-31 (NVIDIA) or 0-63 (AMD) - identifies which lane within the warp.
 
@@ -280,10 +282,10 @@ else:
 total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](0, 0, total)
+    output.store[1](idx // WARP_SIZE, 0, total)
 ```
 
-**Storage pattern:** `output.store[1](0, 0, total)` stores 1 element at position (0, 0) in the output tensor.
+**Storage pattern:** `output.store[1](idx // WARP_SIZE, 0, total)` stores 1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
 
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in functional approach.
 
@@ -444,42 +446,38 @@ Testing SIZE=65536 x WARP_SIZE, BLOCKS=65536 (Massive Scale)
 Running traditional_65536x
 Running simple_warp_65536x
 Running functional_warp_65536x
-| name                   | met (ms)           | iters |
-| ---------------------- | ------------------ | ----- |
-| traditional_1x         | 1.0263419180000002 | 1000  |
-| simple_warp_1x         | 1.025756103        | 1000  |
-| functional_warp_1x     | 1.027618774        | 1000  |
-| traditional_4x         | 1.026372558        | 1000  |
-| simple_warp_4x         | 1.0274108880000001 | 1000  |
-| functional_warp_4x     | 1.0272440180000002 | 1000  |
-| traditional_32x        | 1.029869628        | 1000  |
-| simple_warp_32x        | 1.029203002        | 1000  |
-| functional_warp_32x    | 1.0293903800000002 | 1000  |
-| traditional_256x       | 1.055470581        | 1000  |
-| simple_warp_256x       | 1.0549002680000001 | 1000  |
-| functional_warp_256x   | 1.054106567        | 1000  |
-| traditional_2048x      | 1.170297851        | 1000  |
-| simple_warp_2048x      | 1.1691909169999999 | 1000  |
-| functional_warp_2048x  | 1.166839843        | 1000  |
-| traditional_16384x     | 6.470711037837837  | 185   |
-| simple_warp_16384x     | 6.482257572972973  | 185   |
-| functional_warp_16384x | 6.414636946524065  | 187   |
-| traditional_65536x     | 22.48350437735849  | 53    |
-| simple_warp_65536x     | 22.561115754716983 | 53    |
-| functional_warp_65536x | 22.399149188679246 | 53    |
+| name                   | met (ms)              | iters |
+| ---------------------- | --------------------- | ----- |
+| traditional_1x         | 0.00460128            | 100   |
+| simple_warp_1x         | 0.00574047            | 100   |
+| functional_warp_1x     | 0.00484192            | 100   |
+| traditional_4x         | 0.00492671            | 100   |
+| simple_warp_4x         | 0.00485247            | 100   |
+| functional_warp_4x     | 0.00587679            | 100   |
+| traditional_32x        | 0.0062406399999999996 | 100   |
+| simple_warp_32x        | 0.0054918400000000004 | 100   |
+| functional_warp_32x    | 0.00552447            | 100   |
+| traditional_256x       | 0.0050614300000000004 | 100   |
+| simple_warp_256x       | 0.00488768            | 100   |
+| functional_warp_256x   | 0.00461472            | 100   |
+| traditional_2048x      | 0.01120031            | 100   |
+| simple_warp_2048x      | 0.00884383            | 100   |
+| functional_warp_2048x  | 0.007038720000000001  | 100   |
+| traditional_16384x     | 0.038533750000000005  | 100   |
+| simple_warp_16384x     | 0.0323264             | 100   |
+| functional_warp_16384x | 0.01674271            | 100   |
+| traditional_65536x     | 0.19784991999999998   | 100   |
+| simple_warp_65536x     | 0.12870176            | 100   |
+| functional_warp_65536x | 0.048680310000000004  | 100   |
 
 Benchmarks completed!
 
 WARP OPERATIONS PERFORMANCE ANALYSIS:
    GPU Architecture: NVIDIA (WARP_SIZE=32) vs AMD (WARP_SIZE=64)
-   - 1 x WARP_SIZE: Single warp baseline
-   - 4 x WARP_SIZE: Few warps, warp overhead visible
-   - 32 x WARP_SIZE: Medium scale, warp benefits emerge
-   - 256 x WARP_SIZE: Large scale, dramatic warp advantages
-   - 2048 x WARP_SIZE: Massive scale, warp operations dominate
+   - 1,...,256 x WARP_SIZE: Grid size too small to benchmark
+   - 2048 x WARP_SIZE: Warp primative benefits emerge
    - 16384 x WARP_SIZE: Large scale (512K-1M elements)
    - 65536 x WARP_SIZE: Massive scale (2M-4M elements)
-   - Note: AMD GPUs process 2 x elements per warp vs NVIDIA!
 
    Expected Results at Large Scales:
    • Traditional: Slower due to more barrier overhead
