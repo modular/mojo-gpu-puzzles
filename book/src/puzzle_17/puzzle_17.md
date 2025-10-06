@@ -40,7 +40,7 @@ When you complete this puzzle, you'll have created a seamless bridge between Pyt
 
 ## Code to complete
 
-To complete this puzzle, you only need to fill one line to call the `conv1d_kernel`:
+To complete this puzzle, you only need to fill one line in `conv1d.mojo` to call the `conv1d_kernel`:
 
 ```mojo
 {{#include ../../../problems/p17/op/conv1d.mojo:conv1d_custom_op}}

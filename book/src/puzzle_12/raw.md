@@ -1,6 +1,6 @@
 ## Overview
 
-Implement a kernel that computes the dot-product of vector `a` and vector `b` and stores it in `output` (single number).
+Implement a kernel that computes the dot product of vector `a` and vector `b` and stores it in `output` (single number).
 
 **Note:** _You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block._
 
