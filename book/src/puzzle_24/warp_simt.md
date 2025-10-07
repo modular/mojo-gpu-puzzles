@@ -41,7 +41,7 @@ __m256 result = _mm256_add_ps(a, b);   // Add 8 pairs simultaneously
 
 ```mojo
 # SIMD in Mojo is first class citizen type so if a, b are of type SIMD then
-# addition 8 floats in parallel
+# addition is performed in parallel
 var result = a + b # Add 8 pairs simultaneously
 ```
 
