@@ -471,6 +471,120 @@ GPU output sample: 1.0 1.0 1.0
 ✅ Double-buffered stencil test PASSED!
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn double_buffered_stencil_computation[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Double-buffered stencil computation with memory barrier coordination.
+
+    Iteratively applies 3-point stencil using alternating buffers.
+    Uses mbarrier APIs for precise buffer swap coordination.
+    """
+
+    # Double-buffering: Two shared memory buffers
+    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    # Memory barriers for coordinating buffer swaps
+    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Initialize barriers (only thread 0)
+    if local_i == 0:
+        mbarrier_init(init_barrier.ptr, TPB)
+        mbarrier_init(iter_barrier.ptr, TPB)
+        mbarrier_init(final_barrier.ptr, TPB)
+
+    # Initialize buffer_A with input data
+    if local_i &lt; TPB and global_i &lt; size:
+        buffer_A[local_i] = input[global_i]
+    else:
+        buffer_A[local_i] = 0.0
+
+    # Wait for buffer_A initialization
+    _ = mbarrier_arrive(init_barrier.ptr)
+    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+
+    # Iterative stencil processing with double-buffering
+    @parameter
+    for iteration in range(STENCIL_ITERATIONS):
+
+        @parameter
+        if iteration % 2 == 0:
+            # Even iteration: Read from A, Write to B
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_A[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_B[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_B[local_i] = buffer_A[local_i]
+
+        else:
+            # Odd iteration: Read from B, Write to A
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_B[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_A[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_A[local_i] = buffer_B[local_i]
+
+        # Memory barrier: wait for all writes before buffer swap
+        _ = mbarrier_arrive(iter_barrier.ptr)
+        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+
+        # Reinitialize barrier for next iteration
+        if local_i == 0:
+            mbarrier_init(iter_barrier.ptr, TPB)
+
+    # Write final results from active buffer
+    if local_i &lt; TPB and global_i &lt; size:
+
+        @parameter
+        if STENCIL_ITERATIONS % 2 == 0:
+            # Even iterations end in buffer_A
+            output[global_i] = buffer_A[local_i]
+        else:
+            # Odd iterations end in buffer_B
+            output[global_i] = buffer_B[local_i]
+
+    # Final barrier
+    _ = mbarrier_arrive(final_barrier.ptr)
+    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+
+
+</code></pre>
+<div class="solution-explanation">
 <p>The key insight is recognizing this as a <strong>double-buffering architecture problem</strong> with explicit memory barrier coordination:</p>
 <ol>
 <li><strong>Design alternating buffer roles</strong>: Swap read/write responsibilities each iteration</li>
@@ -479,7 +593,7 @@ GPU output sample: 1.0 1.0 1.0
 <li><strong>Optimize memory access patterns</strong>: Keep all processing in fast shared memory</li>
 </ol>
 <details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p><strong>Complete Solution with Detailed Explanation</strong></p>
 <p>The double-buffered stencil solution demonstrates sophisticated memory barrier coordination and iterative processing patterns. This approach enables safe iterative refinement algorithms that require precise control over memory access timing.</p>
 <h2 id="double-buffering-architecture-design"><a class="header" href="#double-buffering-architecture-design"><strong>Double-buffering architecture design</strong></a></h2>
 <p>The fundamental breakthrough in this puzzle is <strong>explicit memory barrier control</strong> rather than simple thread synchronization:</p>

@@ -278,7 +278,8 @@ output[global_i] = scan_result
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
-    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive:
+    Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:
@@ -363,7 +364,45 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Compare this to Puzzle 12's complex shared memory + barrier approach.
+
+    Puzzle 12 approach:
+    - Shared memory allocation
+    - Multiple barrier synchronizations
+    - Log(n) iterations with manual tree reduction
+    - Complex multi-phase algorithm
+
+    Warp prefix_sum approach:
+    - Single function call!
+    - Hardware-optimized parallel scan
+    - Automatic synchronization
+    - O(log n) complexity, but implemented in hardware.
+
+    NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
+    For multi-warp scenarios, additional coordination would be needed.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        # But it only works within the current warp (WARP_SIZE threads)
+        scan_result = prefix_sum[exclusive=False](
+            rebind[Scalar[dtype]](current_val)
+        )
+
+        output[global_i] = scan_result
+
+
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates how <code>prefix_sum()</code> replaces complex multi-phase algorithms with a single hardware-optimized function call.</p>
@@ -545,7 +584,60 @@ pivot: 5.0
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">fn warp_partition[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    pivot: Float32,
+):
+    """
+    Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
+    This implements a warp-level quicksort partition step that places elements &lt; pivot
+    on the left and elements &gt;= pivot on the right.
+
+    ALGORITHM COMPLEXITY - combines two advanced warp primitives:
+    1. shuffle_xor(): Butterfly pattern for warp-level reductions
+    2. prefix_sum(): Warp-level exclusive scan for position calculation.
+
+    This demonstrates the power of warp primitives for sophisticated parallel algorithms
+    within a single warp (works for any WARP_SIZE: 32, 64, etc.).
+
+    Example with pivot=5:
+    Input:  [3, 7, 1, 8, 2, 9, 4, 6]
+    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # Phase 1: Create warp-level predicates
+        predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
+        predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+
+        # Phase 2: Warp-level prefix sum to get positions within warp
+        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+
+        # Phase 3: Get total left count using shuffle_xor reduction
+        warp_left_total = predicate_left
+
+        # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            warp_left_total += shuffle_xor(warp_left_total, offset)
+            offset //= 2
+
+        # Phase 4: Write to output positions
+        if current_val &lt; pivot:
+            # Left partition: use warp-level position
+            output[Int(warp_left_pos)] = current_val
+        else:
+            # Right partition: offset by total left count + right position
+            output[Int(warp_left_total + warp_right_pos)] = current_val
+
+
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates advanced coordination between multiple warp primitives to implement sophisticated parallel algorithms.</p>

@@ -404,6 +404,99 @@ Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Multi-stage image blur pipeline with barrier coordination.
+
+    Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
+    Stage 2 (threads 128-255): Apply 5-point blur with BLUR_RADIUS=2
+    Stage 3 (all threads): Final neighbor smoothing and output
+    """
+
+    # Shared memory buffers for pipeline stages
+    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Stage 1: Load and preprocess (threads 0-127)
+    if local_i &lt; STAGE1_THREADS:
+        if global_i &lt; size:
+            input_shared[local_i] = input[global_i] * 1.1
+            # Each thread loads 2 elements
+            if local_i + STAGE1_THREADS &lt; size:
+                input_shared[local_i + STAGE1_THREADS] = (
+                    input[global_i + STAGE1_THREADS] * 1.1
+                )
+        else:
+            # Zero-padding for out-of-bounds
+            input_shared[local_i] = 0.0
+            if local_i + STAGE1_THREADS &lt; TPB:
+                input_shared[local_i + STAGE1_THREADS] = 0.0
+
+    barrier()  # Wait for Stage 1 completion
+
+    # Stage 2: Apply blur (threads 128-255)
+    if local_i &gt;= STAGE1_THREADS:
+        blur_idx = local_i - STAGE1_THREADS
+        var blur_sum: Scalar[dtype] = 0.0
+        blur_count = 0
+
+        # 5-point blur kernel
+        for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+            sample_idx = blur_idx + offset
+            if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_count += 1
+
+        if blur_count &gt; 0:
+            blur_shared[blur_idx] = blur_sum / blur_count
+        else:
+            blur_shared[blur_idx] = 0.0
+
+        # Process second element
+        second_idx = blur_idx + STAGE1_THREADS
+        if second_idx &lt; TPB:
+            blur_sum = 0.0
+            blur_count = 0
+            for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+                sample_idx = second_idx + offset
+                if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_count += 1
+
+            if blur_count &gt; 0:
+                blur_shared[second_idx] = blur_sum / blur_count
+            else:
+                blur_shared[second_idx] = 0.0
+
+    barrier()  # Wait for Stage 2 completion
+
+    # Stage 3: Final smoothing (all threads)
+    if global_i &lt; size:
+        final_value = blur_shared[local_i]
+
+        # Neighbor smoothing with 0.6 scaling
+        if local_i &gt; 0:
+            final_value = (final_value + blur_shared[local_i - 1]) * 0.6
+        if local_i &lt; TPB - 1:
+            final_value = (final_value + blur_shared[local_i + 1]) * 0.6
+
+        output[global_i] = final_value
+
+    barrier()  # Ensure all writes complete
+
+
+</code></pre>
+<div class="solution-explanation">
 <p>The key insight is recognizing this as a <strong>pipeline architecture problem</strong> with thread role specialization:</p>
 <ol>
 <li><strong>Design stage-specific thread groups</strong>: Divide threads by function, not just by data</li>
@@ -411,8 +504,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <li><strong>Use strategic barrier placement</strong>: Synchronize between different algorithms, not within the same algorithm</li>
 <li><strong>Optimize memory access patterns</strong>: Ensure coalesced reads and efficient shared memory usage</li>
 </ol>
-<details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p><strong>Complete Solution with Detailed Explanation</strong></p>
 <p>The multi-stage pipeline solution demonstrates sophisticated thread specialization and barrier coordination. This approach transforms a traditional monolithic GPU algorithm into a specialized, coordinated processing pipeline.</p>
 <h2 id="pipeline-architecture-design"><a class="header" href="#pipeline-architecture-design"><strong>Pipeline architecture design</strong></a></h2>
 <p>The fundamental breakthrough in this puzzle is <strong>thread specialization by role</strong> rather than by data:</p>

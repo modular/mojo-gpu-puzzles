@@ -14874,7 +14874,7 @@ __m256 result = _mm256_add_ps(a, b);   // Add 8 pairs simultaneously
 </code></pre>
 <p><strong>CPU SIMD approach (Mojo):</strong></p>
 <pre><code class="language-mojo"># SIMD in Mojo is first class citizen type so if a, b are of type SIMD then
-# addition 8 floats in parallel
+# addition is performed in parallel
 var result = a + b # Add 8 pairs simultaneously
 </code></pre>
 <p><strong>GPU SIMT approach (Mojo):</strong></p>
@@ -17321,30 +17321,7 @@ output[global_i] = swapped_val
 <p><strong>Mathematical operation:</strong> Create adjacent pairs that exchange values using XOR pattern:
 \[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
 <p>This transforms input data <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code> into pairs <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>, where each pair <code>(i, i+1)</code> swaps values through XOR communication.</p>
-<pre><code class="language-mojo">alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-
-
-fn butterfly_pair_swap[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[mut=False, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-):
-    """
-    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
-    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
-    Uses shuffle_xor(val, 1) to swap values within each pair.
-    This is the foundation of butterfly network communication patterns.
-    """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-
-    # FILL ME IN (4 lines)
-
-
+<pre><code class="language-mojo">
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
@@ -18077,7 +18054,8 @@ output[global_i] = scan_result
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
-    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive:
+    Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:
@@ -18162,7 +18140,45 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <h3 id="solution-44"><a class="header" href="#solution-44">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+):
+    """
+    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Compare this to Puzzle 12's complex shared memory + barrier approach.
+
+    Puzzle 12 approach:
+    - Shared memory allocation
+    - Multiple barrier synchronizations
+    - Log(n) iterations with manual tree reduction
+    - Complex multi-phase algorithm
+
+    Warp prefix_sum approach:
+    - Single function call!
+    - Hardware-optimized parallel scan
+    - Automatic synchronization
+    - O(log n) complexity, but implemented in hardware.
+
+    NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
+    For multi-warp scenarios, additional coordination would be needed.
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
+        # But it only works within the current warp (WARP_SIZE threads)
+        scan_result = prefix_sum[exclusive=False](
+            rebind[Scalar[dtype]](current_val)
+        )
+
+        output[global_i] = scan_result
+
+
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates how <code>prefix_sum()</code> replaces complex multi-phase algorithms with a single hardware-optimized function call.</p>
@@ -18344,7 +18360,60 @@ pivot: 5.0
 <h3 id="solution-45"><a class="header" href="#solution-45">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">fn warp_partition[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[mut=False, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    pivot: Float32,
+):
+    """
+    Single-warp parallel partitioning using BOTH shuffle_xor AND prefix_sum.
+    This implements a warp-level quicksort partition step that places elements &lt; pivot
+    on the left and elements &gt;= pivot on the right.
+
+    ALGORITHM COMPLEXITY - combines two advanced warp primitives:
+    1. shuffle_xor(): Butterfly pattern for warp-level reductions
+    2. prefix_sum(): Warp-level exclusive scan for position calculation.
+
+    This demonstrates the power of warp primitives for sophisticated parallel algorithms
+    within a single warp (works for any WARP_SIZE: 32, 64, etc.).
+
+    Example with pivot=5:
+    Input:  [3, 7, 1, 8, 2, 9, 4, 6]
+    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    """
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # Phase 1: Create warp-level predicates
+        predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
+        predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+
+        # Phase 2: Warp-level prefix sum to get positions within warp
+        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+
+        # Phase 3: Get total left count using shuffle_xor reduction
+        warp_left_total = predicate_left
+
+        # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            warp_left_total += shuffle_xor(warp_left_total, offset)
+            offset //= 2
+
+        # Phase 4: Write to output positions
+        if current_val &lt; pivot:
+            # Left partition: use warp-level position
+            output[Int(warp_left_pos)] = current_val
+        else:
+            # Right partition: offset by total left count + right position
+            output[Int(warp_left_total + warp_right_pos)] = current_val
+
+
 </code></pre>
 <div class="solution-explanation">
 <p>This solution demonstrates advanced coordination between multiple warp primitives to implement sophisticated parallel algorithms.</p>
@@ -20774,6 +20843,99 @@ Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 </code></pre>
 <h2 id="solution-50"><a class="header" href="#solution-50">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Multi-stage image blur pipeline with barrier coordination.
+
+    Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
+    Stage 2 (threads 128-255): Apply 5-point blur with BLUR_RADIUS=2
+    Stage 3 (all threads): Final neighbor smoothing and output
+    """
+
+    # Shared memory buffers for pipeline stages
+    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Stage 1: Load and preprocess (threads 0-127)
+    if local_i &lt; STAGE1_THREADS:
+        if global_i &lt; size:
+            input_shared[local_i] = input[global_i] * 1.1
+            # Each thread loads 2 elements
+            if local_i + STAGE1_THREADS &lt; size:
+                input_shared[local_i + STAGE1_THREADS] = (
+                    input[global_i + STAGE1_THREADS] * 1.1
+                )
+        else:
+            # Zero-padding for out-of-bounds
+            input_shared[local_i] = 0.0
+            if local_i + STAGE1_THREADS &lt; TPB:
+                input_shared[local_i + STAGE1_THREADS] = 0.0
+
+    barrier()  # Wait for Stage 1 completion
+
+    # Stage 2: Apply blur (threads 128-255)
+    if local_i &gt;= STAGE1_THREADS:
+        blur_idx = local_i - STAGE1_THREADS
+        var blur_sum: Scalar[dtype] = 0.0
+        blur_count = 0
+
+        # 5-point blur kernel
+        for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+            sample_idx = blur_idx + offset
+            if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_count += 1
+
+        if blur_count &gt; 0:
+            blur_shared[blur_idx] = blur_sum / blur_count
+        else:
+            blur_shared[blur_idx] = 0.0
+
+        # Process second element
+        second_idx = blur_idx + STAGE1_THREADS
+        if second_idx &lt; TPB:
+            blur_sum = 0.0
+            blur_count = 0
+            for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+                sample_idx = second_idx + offset
+                if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_count += 1
+
+            if blur_count &gt; 0:
+                blur_shared[second_idx] = blur_sum / blur_count
+            else:
+                blur_shared[second_idx] = 0.0
+
+    barrier()  # Wait for Stage 2 completion
+
+    # Stage 3: Final smoothing (all threads)
+    if global_i &lt; size:
+        final_value = blur_shared[local_i]
+
+        # Neighbor smoothing with 0.6 scaling
+        if local_i &gt; 0:
+            final_value = (final_value + blur_shared[local_i - 1]) * 0.6
+        if local_i &lt; TPB - 1:
+            final_value = (final_value + blur_shared[local_i + 1]) * 0.6
+
+        output[global_i] = final_value
+
+    barrier()  # Ensure all writes complete
+
+
+</code></pre>
+<div class="solution-explanation">
 <p>The key insight is recognizing this as a <strong>pipeline architecture problem</strong> with thread role specialization:</p>
 <ol>
 <li><strong>Design stage-specific thread groups</strong>: Divide threads by function, not just by data</li>
@@ -20781,8 +20943,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <li><strong>Use strategic barrier placement</strong>: Synchronize between different algorithms, not within the same algorithm</li>
 <li><strong>Optimize memory access patterns</strong>: Ensure coalesced reads and efficient shared memory usage</li>
 </ol>
-<details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p><strong>Complete Solution with Detailed Explanation</strong></p>
 <p>The multi-stage pipeline solution demonstrates sophisticated thread specialization and barrier coordination. This approach transforms a traditional monolithic GPU algorithm into a specialized, coordinated processing pipeline.</p>
 <h2 id="pipeline-architecture-design"><a class="header" href="#pipeline-architecture-design"><strong>Pipeline architecture design</strong></a></h2>
 <p>The fundamental breakthrough in this puzzle is <strong>thread specialization by role</strong> rather than by data:</p>
@@ -21164,6 +21325,120 @@ GPU output sample: 1.0 1.0 1.0
 ✅ Double-buffered stencil test PASSED!
 </code></pre>
 <h2 id="solution-51"><a class="header" href="#solution-51">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn double_buffered_stencil_computation[
+    layout: Layout
+](
+    output: LayoutTensor[mut=True, dtype, layout],
+    input: LayoutTensor[mut=False, dtype, layout],
+    size: Int,
+):
+    """Double-buffered stencil computation with memory barrier coordination.
+
+    Iteratively applies 3-point stencil using alternating buffers.
+    Uses mbarrier APIs for precise buffer swap coordination.
+    """
+
+    # Double-buffering: Two shared memory buffers
+    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+
+    # Memory barriers for coordinating buffer swaps
+    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Initialize barriers (only thread 0)
+    if local_i == 0:
+        mbarrier_init(init_barrier.ptr, TPB)
+        mbarrier_init(iter_barrier.ptr, TPB)
+        mbarrier_init(final_barrier.ptr, TPB)
+
+    # Initialize buffer_A with input data
+    if local_i &lt; TPB and global_i &lt; size:
+        buffer_A[local_i] = input[global_i]
+    else:
+        buffer_A[local_i] = 0.0
+
+    # Wait for buffer_A initialization
+    _ = mbarrier_arrive(init_barrier.ptr)
+    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+
+    # Iterative stencil processing with double-buffering
+    @parameter
+    for iteration in range(STENCIL_ITERATIONS):
+
+        @parameter
+        if iteration % 2 == 0:
+            # Even iteration: Read from A, Write to B
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_A[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_B[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_B[local_i] = buffer_A[local_i]
+
+        else:
+            # Odd iteration: Read from B, Write to A
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_B[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_A[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_A[local_i] = buffer_B[local_i]
+
+        # Memory barrier: wait for all writes before buffer swap
+        _ = mbarrier_arrive(iter_barrier.ptr)
+        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+
+        # Reinitialize barrier for next iteration
+        if local_i == 0:
+            mbarrier_init(iter_barrier.ptr, TPB)
+
+    # Write final results from active buffer
+    if local_i &lt; TPB and global_i &lt; size:
+
+        @parameter
+        if STENCIL_ITERATIONS % 2 == 0:
+            # Even iterations end in buffer_A
+            output[global_i] = buffer_A[local_i]
+        else:
+            # Odd iterations end in buffer_B
+            output[global_i] = buffer_B[local_i]
+
+    # Final barrier
+    _ = mbarrier_arrive(final_barrier.ptr)
+    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+
+
+</code></pre>
+<div class="solution-explanation">
 <p>The key insight is recognizing this as a <strong>double-buffering architecture problem</strong> with explicit memory barrier coordination:</p>
 <ol>
 <li><strong>Design alternating buffer roles</strong>: Swap read/write responsibilities each iteration</li>
@@ -21172,7 +21447,7 @@ GPU output sample: 1.0 1.0 1.0
 <li><strong>Optimize memory access patterns</strong>: Keep all processing in fast shared memory</li>
 </ol>
 <details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<p><strong>Complete Solution with Detailed Explanation</strong></p>
 <p>The double-buffered stencil solution demonstrates sophisticated memory barrier coordination and iterative processing patterns. This approach enables safe iterative refinement algorithms that require precise control over memory access timing.</p>
 <h2 id="double-buffering-architecture-design"><a class="header" href="#double-buffering-architecture-design"><strong>Double-buffering architecture design</strong></a></h2>
 <p>The fundamental breakthrough in this puzzle is <strong>explicit memory barrier control</strong> rather than simple thread synchronization:</p>

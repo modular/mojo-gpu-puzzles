@@ -250,30 +250,7 @@ output[global_i] = swapped_val
 <p><strong>Mathematical operation:</strong> Create adjacent pairs that exchange values using XOR pattern:
 \[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
 <p>This transforms input data <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code> into pairs <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>, where each pair <code>(i, i+1)</code> swaps values through XOR communication.</p>
-<pre><code class="language-mojo">alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-
-
-fn butterfly_pair_swap[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[mut=False, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-):
-    """
-    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
-    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
-    Uses shuffle_xor(val, 1) to swap values within each pair.
-    This is the foundation of butterfly network communication patterns.
-    """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-
-    # FILL ME IN (4 lines)
-
-
+<pre><code class="language-mojo">
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a></p>
 <details>
