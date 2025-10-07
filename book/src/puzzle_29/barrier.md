@@ -199,6 +199,15 @@ Output sample: 1.6665002 2.3331003 3.3996604
 
 ## Solution
 
+<details class="solution-details">
+<summary></summary>
+
+```mojo
+{{#include ../../../solutions/p29/p29.mojo:multi_stage_pipeline_solution}}
+```
+
+<div class="solution-explanation">
+
 The key insight is recognizing this as a **pipeline architecture problem** with thread role specialization:
 
 1. **Design stage-specific thread groups**: Divide threads by function, not just by data
@@ -206,8 +215,7 @@ The key insight is recognizing this as a **pipeline architecture problem** with 
 3. **Use strategic barrier placement**: Synchronize between different algorithms, not within the same algorithm
 4. **Optimize memory access patterns**: Ensure coalesced reads and efficient shared memory usage
 
-<details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+<strong>Complete Solution with Detailed Explanation</strong>
 
 The multi-stage pipeline solution demonstrates sophisticated thread specialization and barrier coordination. This approach transforms a traditional monolithic GPU algorithm into a specialized, coordinated processing pipeline.
 

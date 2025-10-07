@@ -94,7 +94,8 @@ fn warp_inclusive_prefix_sum[
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
-    Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
+    Inclusive prefix sum using warp primitive:
+    Each thread gets sum of all elements up to and including its position.
     Compare this to Puzzle 12's complex shared memory + barrier approach.
 
     Puzzle 12 approach:

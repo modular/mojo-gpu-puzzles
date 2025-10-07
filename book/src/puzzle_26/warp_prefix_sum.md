@@ -160,7 +160,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p24/p24.mojo:warp_inclusive_prefix_sum_solution}}
+{{#include ../../../solutions/p26/p26.mojo:warp_inclusive_prefix_sum_solution}}
 ```
 
 <div class="solution-explanation">
@@ -356,7 +356,7 @@ pivot: 5.0
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p24/p24.mojo:warp_partition_solution}}
+{{#include ../../../solutions/p26/p26.mojo:warp_partition_solution}}
 ```
 
 <div class="solution-explanation">
