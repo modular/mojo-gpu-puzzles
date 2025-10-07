@@ -80,7 +80,7 @@ Implement pair swapping using `shuffle_xor()` to exchange values between adjacen
 This transforms input data `[0, 1, 2, 3, 4, 5, 6, 7, ...]` into pairs `[1, 0, 3, 2, 5, 4, 7, 6, ...]`, where each pair `(i, i+1)` swaps values through XOR communication.
 
 ```mojo
-{{#include ../../../problems/p26/p26.mojo:butterfly_pair_swap}}
+{{#include ../../../problems/p26/p26.mojo:butterfly_pair_swap_solution}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a>
