@@ -244,6 +244,15 @@ GPU output sample: 1.0 1.0 1.0
 
 ## Solution
 
+<details class="solution-details">
+<summary></summary>
+
+```mojo
+{{#include ../../../solutions/p29/p29.mojo:double_buffered_stencil_solution}}
+```
+
+<div class="solution-explanation">
+
 The key insight is recognizing this as a **double-buffering architecture problem** with explicit memory barrier coordination:
 
 1. **Design alternating buffer roles**: Swap read/write responsibilities each iteration
@@ -252,7 +261,8 @@ The key insight is recognizing this as a **double-buffering architecture problem
 4. **Optimize memory access patterns**: Keep all processing in fast shared memory
 
 <details class="solution-details">
-<summary><strong>Complete Solution with Detailed Explanation</strong></summary>
+
+<strong>Complete Solution with Detailed Explanation</strong>
 
 The double-buffered stencil solution demonstrates sophisticated memory barrier coordination and iterative processing patterns. This approach enables safe iterative refinement algorithms that require precise control over memory access timing.
 
