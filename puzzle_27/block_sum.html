@@ -279,7 +279,7 @@
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        output[0] = total
+        output[global_i // WARP_SIZE] = total
 
 
 </code></pre>
