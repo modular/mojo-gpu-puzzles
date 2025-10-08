@@ -207,7 +207,7 @@ GPU performance isn’t just about algorithmic efficiency - it’s about <strong
 The principles you learn here apply to any parallel computing system where resources are shared among many execution units - from CPUs with hyperthreading to distributed computing clusters.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p><strong>GPU Occupancy</strong> is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.</p>
-<p>This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
+<p><strong>SAXPY</strong> is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
 <pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
 alias THREADS_PER_BLOCK = (1024, 1)
 alias BLOCKS_PER_GRID = (SIZE // 1024, 1)

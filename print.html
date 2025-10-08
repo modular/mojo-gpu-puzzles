@@ -21073,7 +21073,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <p>This puzzle demonstrates <strong>synchronization patterns</strong> used in real-world GPU computing applications like iterative solvers, simulation frameworks, and high-performance image processing pipelines.</p>
 </blockquote>
 <h2 id="overview-53"><a class="header" href="#overview-53">Overview</a></h2>
-<p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.</p>
+<p>Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations. A stencil operation is a computational pattern where the value of each element in an array is calculated based on a fixed pattern of its neighbors.</p>
 <p><strong>Note:</strong> <em>You have alternating buffer roles: <code>buffer_A</code> and <code>buffer_B</code> swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps.</em></p>
 <p><strong>Algorithm architecture:</strong> This puzzle implements a <strong>double-buffering pattern</strong> where two shared memory buffers alternate roles as read and write targets across multiple iterations. Unlike simple stencil operations that process data once, this approach performs iterative refinement with careful memory barrier coordination to prevent race conditions during buffer transitions.</p>
 <p><strong>Pipeline concept:</strong> The algorithm processes data through iterative stencil refinement, where each iteration reads from one buffer and writes to another. The buffers alternate roles each iteration, creating a ping-pong pattern that enables continuous processing without data corruption.</p>
@@ -22701,7 +22701,7 @@ GPU performance isn’t just about algorithmic efficiency - it’s about <strong
 The principles you learn here apply to any parallel computing system where resources are shared among many execution units - from CPUs with hyperthreading to distributed computing clusters.</p>
 <h2 id="overview-57"><a class="header" href="#overview-57">Overview</a></h2>
 <p><strong>GPU Occupancy</strong> is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.</p>
-<p>This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
+<p><strong>SAXPY</strong> is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
 <pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
 alias THREADS_PER_BLOCK = (1024, 1)
 alias BLOCKS_PER_GRID = (SIZE // 1024, 1)
