@@ -34,7 +34,7 @@
 
 ## Overview
 
-Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations.
+Implement a kernel that performs iterative stencil operations using double-buffered shared memory, coordinated with explicit memory barriers to ensure safe buffer swapping between iterations. A stencil operation is a computational pattern where the value of each element in an array is calculated based on a fixed pattern of its neighbors.
 
 **Note:** _You have alternating buffer roles: `buffer_A` and `buffer_B` swap between read and write operations each iteration, with mbarrier synchronization ensuring all threads complete writes before buffer swaps._
 

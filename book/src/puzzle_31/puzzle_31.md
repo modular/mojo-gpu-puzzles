@@ -25,7 +25,7 @@ The principles you learn here apply to any parallel computing system where resou
 
 **GPU Occupancy** is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.
 
-This puzzle explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with identical math but different resource usage:
+**SAXPY** is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with identical math but different resource usage:
 
 ```mojo
 {{#include ../../../problems/p31/p31.mojo:minimal_kernel}}
