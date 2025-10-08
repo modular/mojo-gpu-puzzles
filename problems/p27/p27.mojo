@@ -9,36 +9,6 @@ from sys import argv
 from testing import assert_equal
 from math import floor
 
-
-# ANCHOR: block_sum_dot_product
-alias SIZE = 128
-alias TPB = 128
-alias NUM_BINS = 8
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
-alias dtype = DType.float32
-
-
-fn block_sum_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
-](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
-):
-    """Dot product using block.sum() - convenience function like warp.sum()!
-    Replaces manual shared memory + barriers + tree reduction with one line."""
-
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-
-    # FILL IN (roughly 6 lines)
-
-
-# ANCHOR_END: block_sum_dot_product
-
-
 # ANCHOR: traditional_dot_product
 fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
@@ -77,6 +47,34 @@ fn traditional_dot_product[
 
 
 # ANCHOR_END: traditional_dot_product
+
+# ANCHOR: block_sum_dot_product
+alias SIZE = 128
+alias TPB = 128
+alias NUM_BINS = 8
+alias in_layout = Layout.row_major(SIZE)
+alias out_layout = Layout.row_major(1)
+alias dtype = DType.float32
+
+
+fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    a: LayoutTensor[mut=False, dtype, in_layout],
+    b: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # FILL IN (roughly 6 lines)
+
+
+# ANCHOR_END: block_sum_dot_product
 
 # ANCHOR: block_histogram
 alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
