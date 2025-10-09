@@ -355,7 +355,7 @@ The functional warp approach showcases modern Mojo programming patterns with war
 **Functional approach characteristics:**
 
 ```mojo
-elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
 ```
 
 **Benefits:**

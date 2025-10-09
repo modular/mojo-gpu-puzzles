@@ -38,7 +38,7 @@
 | **Matrix row/col sum** | Warp ops | Natural reduction pattern |
 | **Prefix sum** | Always warp `prefix_sum()` | Hardware-optimized primitive |
 | **Pooling (max/min)** | Warp ops (regular windows) | Efficient window reductions |
-| **Histogram** | Traditional | Irregular writes, atomic updates |
+| **Histogram with large number of bins** | Traditional | Irregular writes, atomic updates |
 
 ## Code examples
 
