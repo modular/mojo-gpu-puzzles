@@ -68,8 +68,7 @@ def main():
             "--complete",
         ]:
             raise Error(
-                "Expected one command-line argument: '--simple' or"
-                " '--complete'"
+                "Expected one command-line argument: '--simple' or '--complete'"
             )
 
         use_simple = argv()[1] == "--simple"

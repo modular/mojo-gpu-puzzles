@@ -4,7 +4,7 @@ Each puzzle maintains a consistent structure to support systematic skill develop
 
 - **Overview**: Problem definition and key concepts for each challenge
 - **Configuration**: Technical setup and memory organization details
-- **Code to Complete**: Implementation framework with clearly marked sections to fill in
+- **Code to Complete**: Implementation framework in `problems/pXX/` with clearly marked sections to fill in
 - **Tips**: Strategic hints available when needed, without revealing complete solutions
 - **Solution**: Comprehensive implementation analysis, including performance considerations and conceptual explanations
 
@@ -22,28 +22,7 @@ Make sure your system meets our [system requirements](https://docs.modular.com/m
 
 ### Compatible GPU
 
-You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles. If have the supported GPU, run the following command to get some info about your GPU:
-
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">pixi</button>
-    <button class="tab-button">uv</button>
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run gpu-specs
-```
-
-  </div>
-  <div class="tab-content">
-
-```bash
-uv run poe gpu-specs
-```
-
-  </div>
-</div>
+You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles. After setup, you can verify your GPU compatibility using the `gpu-specs` command (see Quick Start section below).
 
 #### macOS Apple Sillicon (Early preview)
 
@@ -108,7 +87,7 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
     pixi self-update
     ```
 
-   #### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+   #### **Option 2**: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
     **Install:**
 
@@ -128,49 +107,128 @@ Let's begin our journey into the exciting world of GPU computing with Mojo🔥!
     uv venv && source .venv/bin/activate
     ```
 
-3. Run the puzzles via `pixi` or `uv` as follows:
+3. **Verify setup and run your first puzzle:**
 
-    <div class="code-tabs" data-tab-group="package-manager">
-      <div class="tab-buttons">
-        <button class="tab-button">pixi NVIDIA (default)</button>
-        <button class="tab-button">pixi AMD</button>
-        <button class="tab-button">pixi Apple</button>
-        <button class="tab-button">uv</button>
-      </div>
-      <div class="tab-content">
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
 
-    ```bash
-    pixi run pXX  # Replace XX with the puzzle number
-    ```
+```bash
+# Check your GPU specifications
+pixi run gpu-specs
 
-      </div>
-      <div class="tab-content">
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01
+```
 
-    ```bash
-    pixi run pXX -e amd  # Replace XX with the puzzle number
-    ```
+  </div>
+  <div class="tab-content">
 
-      </div>
-      <div class="tab-content">
+```bash
+# Check your GPU specifications
+pixi run gpu-specs
 
-    ```bash
-    pixi run pXX -e apple  # Replace XX with the puzzle number
-    ```
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01 -e amd
+```
 
-      </div>
-      <div class="tab-content">
+  </div>
+  <div class="tab-content">
 
-    ```bash
-    uv run poe pXX  # Replace XX with the puzzle number
-    ```
+```bash
+# Check your GPU specifications
+pixi run gpu-specs
 
-      </div>
-    </div>
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01 -e apple
+```
 
-For example, to run puzzle 01:
+  </div>
+  <div class="tab-content">
 
-- `pixi run p01` or
-- `uv run poe p01`
+```bash
+# Check your GPU specifications
+uv run poe gpu-specs
+
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+uv run poe p01
+```
+
+  </div>
+</div>
+
+## Working with puzzles
+
+### Project structure
+
+- **[`problems/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/problems)**: Where you implement your solutions (this is where you work!)
+- **[`solutions/`](https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions)**: Reference solutions for comparison and learning that we use throughout the book
+
+### Workflow
+
+1. Navigate to `problems/pXX/` to find the puzzle template
+2. Implement your solution in the provided framework
+3. Test your implementation: `pixi run pXX` or `uv run poe pXX` (remember to include your platform with `-e platform` such as `-e amd`)
+4. Compare with `solutions/pXX/` to learn different approaches
+
+### Essential commands
+
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+
+```bash
+# Run puzzles (remember to include your platform with -e if needed)
+pixi run pXX             # NVIDIA (default) same as `pixi run pXX -e nvidia`
+pixi run pXX -e amd      # AMD GPU
+pixi run pXX -e apple    # Apple GPU
+
+# Test solutions
+pixi run tests           # Test all solutions
+pixi run tests pXX       # Test specific puzzle
+
+# Run manually
+pixi run mojo problems/pXX/pXX.mojo     # Your implementation
+pixi run mojo solutions/pXX/pXX.mojo    # Reference solution
+
+# Interactive shell
+pixi shell               # Enter environment
+mojo problems/p01/p01.mojo              # Direct execution
+exit                     # Leave shell
+
+# Development
+pixi run format         # Format code
+pixi task list          # Available commands
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+# Note: uv is limited and some chapters require pixi
+# Test solutions
+uv run poe tests        # Test all solutions
+uv run poe tests pXX    # Test specific puzzle
+
+# Run manually
+uv run mojo problems/pXX/pXX.mojo      # Your implementation
+uv run mojo solutions/pXX/pXX.mojo     # Reference solution
+```
+
+  </div>
+</div>
 
 ## GPU support matrix
 

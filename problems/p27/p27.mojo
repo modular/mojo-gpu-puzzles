@@ -9,6 +9,7 @@ from sys import argv
 from testing import assert_equal
 from math import floor
 
+
 # ANCHOR: traditional_dot_product
 fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
