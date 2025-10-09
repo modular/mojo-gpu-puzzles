@@ -386,7 +386,7 @@ if thread_id &lt; data_size:
 <ul>
 <li><strong>Overview</strong>: Problem definition and key concepts for each challenge</li>
 <li><strong>Configuration</strong>: Technical setup and memory organization details</li>
-<li><strong>Code to Complete</strong>: Implementation framework with clearly marked sections to fill in</li>
+<li><strong>Code to Complete</strong>: Implementation framework in <code>problems/pXX/</code> with clearly marked sections to fill in</li>
 <li><strong>Tips</strong>: Strategic hints available when needed, without revealing complete solutions</li>
 <li><strong>Solution</strong>: Comprehensive implementation analysis, including performance considerations and conceptual explanations</li>
 </ul>
@@ -397,21 +397,7 @@ if thread_id &lt; data_size:
 <h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
 <p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. If have the supported GPU, run the following command to get some info about your GPU:</p>
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">pixi</button>
-    <button class="tab-button">uv</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run gpu-specs
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe gpu-specs
-</code></pre>
-  </div>
-</div>
+<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. After setup, you can verify your GPU compatibility using the <code>gpu-specs</code> command (see Quick Start section below).</p>
 <h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
 <p>For <code>osx-arm64</code> users, you’ll need:</p>
 <ul>
@@ -462,7 +448,7 @@ cd mojo-gpu-puzzles
 <p><strong>Update:</strong></p>
 <pre><code class="language-bash">pixi self-update
 </code></pre>
-<h4 id="option-2-uv"><a class="header" href="#option-2-uv">Option 2: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></a></h4>
+<h4 id="option-2-uv"><a class="header" href="#option-2-uv"><strong>Option 2</strong>: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></a></h4>
 <p><strong>Install:</strong></p>
 <pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
 </code></pre>
@@ -474,38 +460,108 @@ cd mojo-gpu-puzzles
 </code></pre>
 </li>
 <li>
-<p>Run the puzzles via <code>pixi</code> or <code>uv</code> as follows:</p>
- <div class="code-tabs" data-tab-group="package-manager">
-   <div class="tab-buttons">
-     <button class="tab-button">pixi NVIDIA (default)</button>
-     <button class="tab-button">pixi AMD</button>
-     <button class="tab-button">pixi Apple</button>
-     <button class="tab-button">uv</button>
-   </div>
-   <div class="tab-content">
-<pre><code class="language-bash">pixi run pXX  # Replace XX with the puzzle number
-</code></pre>
-   </div>
-   <div class="tab-content">
-<pre><code class="language-bash">pixi run pXX -e amd  # Replace XX with the puzzle number
-</code></pre>
-   </div>
-   <div class="tab-content">
-<pre><code class="language-bash">pixi run pXX -e apple  # Replace XX with the puzzle number
-</code></pre>
-   </div>
-   <div class="tab-content">
-<pre><code class="language-bash">uv run poe pXX  # Replace XX with the puzzle number
-</code></pre>
-   </div>
- </div>
+<p><strong>Verify setup and run your first puzzle:</strong></p>
 </li>
 </ol>
-<p>For example, to run puzzle 01:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Check your GPU specifications
+pixi run gpu-specs
+
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Check your GPU specifications
+pixi run gpu-specs
+
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01 -e amd
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Check your GPU specifications
+pixi run gpu-specs
+
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+pixi run p01 -e apple
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Check your GPU specifications
+uv run poe gpu-specs
+
+# Run your first puzzle
+# This fails waiting for your implementation! follow the content
+uv run poe p01
+</code></pre>
+  </div>
+</div>
+<h2 id="working-with-puzzles"><a class="header" href="#working-with-puzzles">Working with puzzles</a></h2>
+<h3 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h3>
 <ul>
-<li><code>pixi run p01</code> or</li>
-<li><code>uv run poe p01</code></li>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/problems"><code>problems/</code></a></strong>: Where you implement your solutions (this is where you work!)</li>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions"><code>solutions/</code></a></strong>: Reference solutions for comparison and learning that we use throughout the book</li>
 </ul>
+<h3 id="workflow"><a class="header" href="#workflow">Workflow</a></h3>
+<ol>
+<li>Navigate to <code>problems/pXX/</code> to find the puzzle template</li>
+<li>Implement your solution in the provided framework</li>
+<li>Test your implementation: <code>pixi run pXX</code> or <code>uv run poe pXX</code> (remember to include your platform with <code>-e platform</code> such as <code>-e amd</code>)</li>
+<li>Compare with <code>solutions/pXX/</code> to learn different approaches</li>
+</ol>
+<h3 id="essential-commands"><a class="header" href="#essential-commands">Essential commands</a></h3>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Run puzzles (remember to include your platform with -e if needed)
+pixi run pXX             # NVIDIA (default) same as `pixi run pXX -e nvidia`
+pixi run pXX -e amd      # AMD GPU
+pixi run pXX -e apple    # Apple GPU
+
+# Test solutions
+pixi run tests           # Test all solutions
+pixi run tests pXX       # Test specific puzzle
+
+# Run manually
+pixi run mojo problems/pXX/pXX.mojo     # Your implementation
+pixi run mojo solutions/pXX/pXX.mojo    # Reference solution
+
+# Interactive shell
+pixi shell               # Enter environment
+mojo problems/p01/p01.mojo              # Direct execution
+exit                     # Leave shell
+
+# Development
+pixi run format         # Format code
+pixi task list          # Available commands
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># Note: uv is limited and some chapters require pixi
+# Test solutions
+uv run poe tests        # Test all solutions
+uv run poe tests pXX    # Test specific puzzle
+
+# Run manually
+uv run mojo problems/pXX/pXX.mojo      # Your implementation
+uv run mojo solutions/pXX/pXX.mojo     # Reference solution
+</code></pre>
+  </div>
+</div>
 <h2 id="gpu-support-matrix"><a class="header" href="#gpu-support-matrix">GPU support matrix</a></h2>
 <p>The following table shows GPU platform compatibility for each puzzle. Different puzzles require different GPU features and vendor-specific tools.</p>
 <div class="table-wrapper"><table><thead><tr><th>Puzzle</th><th>NVIDIA GPU</th><th>AMD GPU</th><th>Apple GPU</th><th>Notes</th></tr></thead><tbody>
@@ -3672,8 +3728,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn add_10(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
