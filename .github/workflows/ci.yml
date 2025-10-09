@@ -8,6 +8,9 @@ on:
       - 'README.md'
       - 'LICENSE'
       - 'CODE_OF_CONDUCT.md'
+  pull_request:
+    branches:
+      - main
 
 permissions:
   id-token: write
