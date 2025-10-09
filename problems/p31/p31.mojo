@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_dim, block_idx, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import argv
 from testing import assert_almost_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -46,7 +46,7 @@ fn sophisticated_kernel[
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    shared_cache = tb[dtype]().row_major[1024 * 12]().shared().alloc()  # 48KB
+    shared_cache = LayoutTensor[dtype, Layout.row_major(1024 * 12), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # 48KB
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -138,9 +138,7 @@ fn balanced_kernel[
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    shared_cache = (
-        tb[dtype]().row_major[1024 * 4]().shared().alloc()
-    )  # 16KB total
+    shared_cache = LayoutTensor[dtype, Layout.row_major(1024 * 4), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # 16KB total
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

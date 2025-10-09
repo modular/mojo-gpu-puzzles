@@ -130,9 +130,9 @@ Matrix B:                           b_shared: (similar layout)
 1. **Shared Memory Setup**:
 
    ```mojo
-   # Create 2D shared memory tensors using TensorBuilder
-   a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-   b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+   # Create 2D shared memory tensors using LayoutTensor with address_space
+   a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
    ```
 
 2. **Thread Indexing**:
@@ -215,7 +215,7 @@ Matrix B:                           b_shared: (similar layout)
    - Efficient memory layout handling
 
 2. **Shared memory allocation**:
-   - TensorBuilder for structured allocation
+   - LayoutTensor with address_space for structured allocation
    - Row-major layout matching input tensors
    - Proper alignment for efficient access
 

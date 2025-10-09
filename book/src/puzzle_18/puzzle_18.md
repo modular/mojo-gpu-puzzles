@@ -264,8 +264,8 @@ The kernel is parameterized with:
 #### Shared memory allocation
 
 ```mojo
-shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
-shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 ```
 
 The kernel allocates two shared memory buffers:

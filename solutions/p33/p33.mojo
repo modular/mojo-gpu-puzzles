@@ -1,10 +1,9 @@
 from gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
-from gpu.memory import async_copy_wait_all
+from gpu.memory import async_copy_wait_all, AddressSpace
 from utils import Index
 from sys import size_of, argv
 from testing import assert_equal, assert_almost_equal
@@ -41,8 +40,8 @@ fn matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
+    a_shared = LayoutTensor[dtype, Layout.row_major(TILE_SIZE, TILE_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    b_shared = LayoutTensor[dtype, Layout.row_major(TILE_SIZE, TILE_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -146,11 +145,11 @@ fn tensor_core_matrix_multiplication[
     mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    A_sram_tile = tb[A.dtype]().row_major[BM, BK]().shared().alloc()
-    B_sram_tile = tb[B.dtype]().row_major[BK, BN]().shared().alloc()
+    A_sram_tile = LayoutTensor[A.dtype, Layout.row_major(BM, BK), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    B_sram_tile = LayoutTensor[B.dtype, Layout.row_major(BK, BN), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    C_warp_accum = tb[C.dtype]().row_major[WM, WN]().local().alloc()
+    C_warp_accum = LayoutTensor[C.dtype, Layout.row_major(WM, WN), MutableAnyOrigin, address_space = AddressSpace.LOCAL].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:

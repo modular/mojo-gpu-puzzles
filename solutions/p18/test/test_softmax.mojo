@@ -1,6 +1,5 @@
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from testing import assert_almost_equal
 from bit import log2_ceil
 

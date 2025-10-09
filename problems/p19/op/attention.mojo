@@ -1,16 +1,15 @@
 from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
+from layout.layout_tensor import copy_dram_to_sram_async
 from math import exp
 from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 import compiler
 from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from gpu.memory import async_copy_wait_all
-from layout.layout_tensor import copy_dram_to_sram_async
 
 alias SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 alias D = 16  # This must be equal to D in p19.py
@@ -52,18 +51,8 @@ fn matmul_idiomatic_tiled[
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    a_shared = (
-        tb[dtype]()
-        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-        .shared()
-        .alloc()
-    )
-    b_shared = (
-        tb[dtype]()
-        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-        .shared()
-        .alloc()
-    )
+    a_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    b_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(
@@ -144,8 +133,8 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
+    shared_max = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_sum = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum

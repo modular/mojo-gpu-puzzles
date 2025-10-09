@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import size_of, argv
 from testing import assert_equal
 

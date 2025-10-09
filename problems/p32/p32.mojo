@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_dim, block_idx, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import argv
 from testing import assert_almost_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -29,7 +29,7 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -67,7 +67,7 @@ fn two_way_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

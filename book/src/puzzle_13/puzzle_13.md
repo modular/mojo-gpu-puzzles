@@ -5,7 +5,7 @@
 > So far in our GPU puzzle journey, we've been exploring two parallel approaches to GPU memory management:
 >
 > 1. Raw memory management with direct pointer manipulation using [UnsafePointer](https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/)
-> 2. The more structured [LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/) and its related abstractions such as [LayoutTensorBuild](https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild/)
+> 2. The more structured [LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/) with its powerful address_space parameter for memory allocation
 >
 > Starting from this puzzle, we're transitioning exclusively to using `LayoutTensor`. This abstraction provides several benefits:
 > - Type-safe memory access patterns

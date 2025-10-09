@@ -1,8 +1,9 @@
 from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
+from layout.layout_tensor import copy_dram_to_sram_async
 from math import exp
 from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
@@ -168,8 +169,8 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[SOFTMAX_BLOCK_DIM_X]().shared().alloc()
+    shared_max = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_sum = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum

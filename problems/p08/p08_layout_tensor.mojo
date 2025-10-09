@@ -1,8 +1,8 @@
 from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from testing import assert_equal
 
 # ANCHOR: add_10_shared_layout_tensor
@@ -21,8 +21,8 @@ fn add_10_shared_layout_tensor[
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
-    # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    # Allocate shared memory using LayoutTensor with explicit address_space
+    shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

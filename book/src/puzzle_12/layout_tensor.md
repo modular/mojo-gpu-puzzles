@@ -9,7 +9,7 @@ Implement a kernel that computes the dot product of 1D LayoutTensor `a` and 1D L
 This puzzle covers:
 
 - Similar to the [puzzle 8](../puzzle_08/layout_tensor.md) and [puzzle 11](../puzzle_11/layout_tensor.md), implementing parallel reduction with LayoutTensor
-- Managing shared memory using `LayoutTensorBuilder`
+- Managing shared memory using LayoutTensor with address_space
 - Coordinating threads for collective operations
 - Using layout-aware tensor operations
 
@@ -25,7 +25,7 @@ The key insight is how LayoutTensor simplifies memory management while maintaini
 
 Notes:
 
-- **Tensor builder**: Use `LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()`
+- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
 - **Thread coordination**: Same synchronization patterns with `barrier()`
@@ -43,7 +43,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Create shared memory with tensor builder
+1. Create shared memory with LayoutTensor using address_space
 2. Store `a[global_i] * b[global_i]` in `shared[local_i]`
 3. Use parallel reduction pattern with `barrier()`
 4. Let thread 0 write final result to `output[0]`
@@ -141,7 +141,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 ### Key implementation features
 
 1. **Memory Management**:
-   - Clean shared memory allocation with tensor builder
+   - Clean shared memory allocation with LayoutTensor address_space parameter
    - Type-safe operations with LayoutTensor
    - Automatic bounds checking
    - Layout-aware indexing

@@ -1,7 +1,6 @@
 from gpu import thread_idx, block_dim, block_idx
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import argv
 from testing import assert_almost_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep

@@ -3,8 +3,8 @@ from memory import UnsafePointer
 # ANCHOR: softmax_gpu_kernel
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
 from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
