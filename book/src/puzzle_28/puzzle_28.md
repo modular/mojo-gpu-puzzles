@@ -231,7 +231,7 @@ Async copy operations initiate background transfers while your block continues e
 
 **Thread layout considerations:**
 
-- Your block has `(THREADS_PER_BLOCK_ASYNC, 1) = (256, 1)` threads
+- Your block has `THREADS_PER_BLOCK_ASYNC = 256` threads
 - The tile has `CONV_TILE_SIZE = 256` elements
 - What layout pattern ensures optimal memory coalescing?
 
@@ -317,7 +317,7 @@ The async copy overlap solution demonstrates how to hide memory latency by overl
 ```mojo
 # Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 

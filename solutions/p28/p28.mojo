@@ -55,7 +55,7 @@ fn async_copy_overlap_convolution[
     input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
-    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
     copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
     # Phase 2: Load kernel synchronously (small data)
