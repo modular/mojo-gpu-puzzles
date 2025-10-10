@@ -102,7 +102,7 @@ fn manual_vectorized_tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = output.tile[chunk_size](tile_id)
+        output_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
 
@@ -170,31 +170,37 @@ fn vectorize_within_tiles_elementwise_add[
 fn benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    alias layout = Layout.row_major(test_size)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = 2 * i
+            b_host[i] = 2 * i + 1
+
+    a_tensor = LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin](
+        a.unsafe_ptr()
+    )
+    b_tensor = LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin](
+        b_buf.unsafe_ptr()
+    )
+    out_tensor = LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin](
+        out.unsafe_ptr()
+    )
+
     @parameter
     @always_inline
     fn elementwise_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = 2 * i
-                b_host[i] = 2 * i + 1
-
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-
         elementwise_add[layout, dtype, SIMD_WIDTH, rank, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
-        keep(out.unsafe_ptr())
-        ctx.synchronize()
 
-    bench_ctx = DeviceContext()
     b.iter_custom[elementwise_workflow](bench_ctx)
+    keep(out.unsafe_ptr())
+    bench_ctx.synchronize()
 
 
 @parameter
@@ -202,31 +208,31 @@ fn benchmark_elementwise_parameterized[
 fn benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    alias layout = Layout.row_major(test_size)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = 2 * i
+            b_host[i] = 2 * i + 1
+
+    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+
     @parameter
     @always_inline
     fn tiled_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = 2 * i
-                b_host[i] = 2 * i + 1
-
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-
         tiled_elementwise_add[
             layout, dtype, SIMD_WIDTH, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
-        keep(out.unsafe_ptr())
-        ctx.synchronize()
 
-    bench_ctx = DeviceContext()
     b.iter_custom[tiled_workflow](bench_ctx)
+    keep(out.unsafe_ptr())
+    bench_ctx.synchronize()
 
 
 @parameter
@@ -234,31 +240,31 @@ fn benchmark_tiled_parameterized[
 fn benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    alias layout = Layout.row_major(test_size)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = 2 * i
+            b_host[i] = 2 * i + 1
+
+    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+
     @parameter
     @always_inline
     fn manual_vectorized_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = 2 * i
-                b_host[i] = 2 * i + 1
-
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-
         manual_vectorized_tiled_elementwise_add[
             layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
-        keep(out.unsafe_ptr())
-        ctx.synchronize()
 
-    bench_ctx = DeviceContext()
     b.iter_custom[manual_vectorized_workflow](bench_ctx)
+    keep(out.unsafe_ptr())
+    bench_ctx.synchronize()
 
 
 @parameter
@@ -266,31 +272,31 @@ fn benchmark_manual_vectorized_parameterized[
 fn benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
+    bench_ctx = DeviceContext()
+    alias layout = Layout.row_major(test_size)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+
+    with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
+        for i in range(test_size):
+            a_host[i] = 2 * i
+            b_host[i] = 2 * i + 1
+
+    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+
     @parameter
     @always_inline
     fn vectorized_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-
-        with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
-            for i in range(test_size):
-                a_host[i] = 2 * i
-                b_host[i] = 2 * i + 1
-
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-
         vectorize_within_tiles_elementwise_add[
             layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
-        keep(out.unsafe_ptr())
-        ctx.synchronize()
 
-    bench_ctx = DeviceContext()
     b.iter_custom[vectorized_workflow](bench_ctx)
+    keep(out.unsafe_ptr())
+    bench_ctx.synchronize()
 
 
 def main():
@@ -313,18 +319,6 @@ def main():
 
     print("SIZE:", SIZE)
     print("simd_width:", SIMD_WIDTH)
-
-    if len(argv()) != 2 or argv()[1] not in [
-        "--elementwise",
-        "--tiled",
-        "--manual-vectorized",
-        "--vectorized",
-        "--benchmark",
-    ]:
-        raise Error(
-            "Usage: --elementwise | --tiled | --manual-vectorized |"
-            " --vectorized | --benchmark"
-        )
 
     if argv()[1] == "--elementwise":
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
@@ -433,3 +427,9 @@ def main():
 
         print(bench)
         print("Benchmarks completed!")
+
+    else:
+        print(
+            "Usage: --elementwise | --tiled | --manual-vectorized |"
+            " --vectorized | --benchmark"
+        )
