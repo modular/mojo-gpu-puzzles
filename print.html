@@ -20513,7 +20513,7 @@ fn async_copy_overlap_convolution[
 </ul>
 <p><strong>Thread layout considerations:</strong></p>
 <ul>
-<li>Your block has <code>(THREADS_PER_BLOCK_ASYNC, 1) = (256, 1)</code> threads</li>
+<li>Your block has <code>THREADS_PER_BLOCK_ASYNC = 256</code> threads</li>
 <li>The tile has <code>CONV_TILE_SIZE = 256</code> elements</li>
 <li>What layout pattern ensures optimal memory coalescing?</li>
 </ul>
@@ -20604,7 +20604,7 @@ fn async_copy_overlap_convolution[
     input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
-    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
     copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
     # Phase 2: Load kernel synchronously (small data)
@@ -20639,7 +20639,7 @@ fn async_copy_overlap_convolution[
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)
+alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
