@@ -46,6 +46,7 @@ default = { features = ["nvidia"] }
 [tasks]
 install-pre-commit = "pre-commit install"
 format = { cmd="mojo format problems solutions", depends-on = ["install-pre-commit"] }
+format-check = { cmd = "bash -c 'mojo format problems solutions && git diff --exit-code problems solutions || (echo \"Error: Code is not formatted. Run \\\"pixi run format\\\" to fix.\" && exit 1)'", description = "Check if code is formatted without modifying files" }
 
 tests = { cmd = "bash solutions/run.sh" }
 
