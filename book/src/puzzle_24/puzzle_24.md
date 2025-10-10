@@ -47,25 +47,27 @@ Learn the core warp primitives from `gpu.warp`:
 ### **Performance transformation example**
 
 ```mojo
+# 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
 barrier()
 
-# Safe tree reduction would require read-write separation:
-stride = SIZE // 2
+# Safe tree reduction through shared memory requires a barrier after each reduction phase:
+stride = WARP_SIZE // 2
 while stride > 0:
-    var temp_val: Scalar[dtype] = 0
     if local_i < stride:
-        temp_val = shared[local_i + stride]  # Read phase
-    barrier()
-    if local_i < stride:
-        shared[local_i] += temp_val  # Write phase
+        shared[local_i] += shared[local_i + stride]
+
     barrier()
     stride //= 2
 
-# But warp operations eliminate all this complexity:
-total = sum(partial_product)  # No barriers, no race conditions!
+# 2. Reduction using warp primatives
+# Safe tree reduction using warp primatives does not require shared memory or a barrier
+# after each reduction phase.
+# Mojo's warp-level sum operation uses warp primatives under the hood and hides all this
+# complexity:
+total = sum(partial_product)  # Internally no barriers, no race conditions!
 ```
 
 ### **When warp operations excel**

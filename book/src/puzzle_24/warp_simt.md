@@ -162,12 +162,14 @@ my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 The most powerful aspect of SIMT: **implicit synchronization**.
 
 ```mojo
-# Traditional shared memory approach:
-shared[local_i] = partial_result
-barrier()  # Explicit synchronization required
-var sum = shared[0] + shared[1] + ...  # Complex reduction
+# Example with thread_idx.x < WARP_SIZE
 
-# Warp approach:
+# 1. Traditional shared memory approach:
+shared[thread_idx.x] = partial_result
+barrier()  # Explicit synchronization required
+var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
+
+# 2. Warp approach:
 from gpu.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
@@ -189,7 +191,7 @@ else:
 # All lanes converge here
 ```
 
-**Hardware behavior steps:**
+**Hardware behaviour steps:**
 
 | Step | Phase | Active Lanes | Waiting Lanes | Efficiency | Performance Cost |
 |------|-------|--------------|---------------|------------|------------------|
@@ -382,10 +384,12 @@ Assume that a GPU shared memory is divided into 32 independent **banks** that ca
 |----------------|------------|--------|-------------|-------------|
 | **✅ Sequential** | `shared[thread_idx.x]` | 1 cycle | 100% | Each lane hits different bank |
 | | Lane 0→Bank 0, Lane 1→Bank 1, ... | | Optimal | No conflicts |
+| **✅ Same index** | `shared[0]`| 1 cycle | 100% | All lanes broadcast from same address |
+| | All 32 lanes→Bank 0 (Same address) | | Optimal | No conflicts |
 | **❌ Stride 2** | `shared[thread_idx.x * 2]` | 2 cycles | 50% | 2 lanes per bank |
 | | Lane 0,16→Bank 0; Lane 1,17→Bank 1 | | **2× slower** | Serialized access |
-| **💀 Same index** | `shared[0]` (all lanes) | 32 cycles | 3% | All lanes hit Bank 0 |
-| | All 32 lanes→Bank 0 | | **32× slower** | Completely serialized |
+| **💀 Stride 32** | `shared[thread_idx.x * 32]` | 32 cycles | 3% | All lanes hit same bank |
+| | All 32 lanes→Bank 0 (Different address) | | **32× slower** | Completely serialized |
 
 ## Practical implications for warp programming
 
@@ -400,7 +404,7 @@ Assume that a GPU shared memory is divided into 32 independent **banks** that ca
 
 | Operation Type | Traditional | Warp Operations |
 |----------------|------------|-----------------|
-| **Reduction (32 elements)** | ~10 instructions | 1 instruction |
+| **Reduction (32 elements)** | ~20 instructions | 10 instructions |
 | **Memory traffic** | High | Minimal |
 | **Synchronization cost** | Expensive | Free |
 | **Code complexity** | High | Low |
