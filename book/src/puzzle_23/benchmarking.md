@@ -108,13 +108,13 @@ Each benchmark follows a streamlined pattern:
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    # Prevent optimization: keep(out.unsafe_ptr())
-    # Synchronize: ctx.synchronize()
     @parameter
     fn pattern_workflow(ctx: DeviceContext) raises:
       # Compute: Execute the algorithm being measured
 
     b.iter_custom[pattern_workflow](bench_ctx)
+    # Prevent optimization: keep(out.unsafe_ptr())
+    # Synchronize: ctx.synchronize()
 ```
 
 **Key phases:**
@@ -169,7 +169,7 @@ The benchmark suite tests three scenarios to reveal performance characteristics:
 
 - Still overhead-dominated (~0.003ms for all)
 - Performance differences nearly disappear
-- Transitional behavior between overhead and computation
+- Transitional behaviour between overhead and computation
 
 **Large problems (SIZE=1M):**
 
