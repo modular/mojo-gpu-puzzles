@@ -42,8 +42,18 @@ fn matmul_idiomatic_tiled[
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    a_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    b_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(
@@ -149,7 +159,12 @@ fn transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_tile = LayoutTensor[
+        dtype,
+        Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     local_row = thread_idx.y
     local_col = thread_idx.x

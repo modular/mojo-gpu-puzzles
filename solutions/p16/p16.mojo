@@ -50,8 +50,18 @@ fn single_block_matmul[
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     if row < size and col < size:
         a_shared[local_row, local_col] = a[row, col]
@@ -91,8 +101,18 @@ fn matmul_tiled[
     tiled_row = block_idx.y * TPB + local_row
     tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -151,8 +171,18 @@ fn matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 

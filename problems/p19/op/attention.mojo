@@ -51,8 +51,18 @@ fn matmul_idiomatic_tiled[
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    a_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    b_shared = LayoutTensor[dtype, Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(
@@ -133,8 +143,18 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    shared_sum = LayoutTensor[dtype, Layout.row_major(SOFTMAX_BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_max = LayoutTensor[
+        dtype,
+        Layout.row_major(SOFTMAX_BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(SOFTMAX_BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum

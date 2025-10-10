@@ -46,7 +46,12 @@ fn sophisticated_kernel[
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    shared_cache = LayoutTensor[dtype, Layout.row_major(1024 * 12), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # 48KB
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 12),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 48KB
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -138,7 +143,12 @@ fn balanced_kernel[
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    shared_cache = LayoutTensor[dtype, Layout.row_major(1024 * 4), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # 16KB total
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 4),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 16KB total
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

@@ -25,8 +25,18 @@ fn conv1d_kernel[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # first: need to account for padding
-    shared_a = LayoutTensor[dtype, Layout.row_major(TPB + conv_size - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    shared_b = LayoutTensor[dtype, Layout.row_major(conv_size), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + conv_size - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(conv_size),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i < input_size:
         shared_a[local_i] = input[global_i]
 

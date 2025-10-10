@@ -24,8 +24,18 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_max = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum

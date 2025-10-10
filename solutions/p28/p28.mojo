@@ -35,8 +35,18 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = LayoutTensor[dtype, Layout.row_major(CONV_TILE_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    kernel_shared = LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     local_i = thread_idx.x
 

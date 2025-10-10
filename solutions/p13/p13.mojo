@@ -26,8 +26,18 @@ fn conv_1d_simple[
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared_a = LayoutTensor[dtype, Layout.row_major(SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    shared_b = LayoutTensor[dtype, Layout.row_major(CONV), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -84,8 +94,18 @@ fn conv_1d_block_boundary[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # first: need to account for padding
-    shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-    shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + CONV_2 - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_2),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i < SIZE_2:
         shared_a[local_i] = a[global_i]
     else:

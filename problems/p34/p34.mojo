@@ -37,7 +37,12 @@ fn cluster_coordination_basics[
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data

@@ -24,7 +24,12 @@ fn shared_memory_race(
     row = thread_idx.y
     col = thread_idx.x
 
-    shared_sum = LayoutTensor[dtype, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Only thread 0 does all the accumulation work to prevent races
     if row == 0 and col == 0:

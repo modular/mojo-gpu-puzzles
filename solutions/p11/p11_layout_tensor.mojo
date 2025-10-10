@@ -21,7 +21,12 @@ fn pooling[
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

@@ -22,7 +22,12 @@ fn shared_memory_race(
     row = thread_idx.y
     col = thread_idx.x
 
-    shared_sum = LayoutTensor[dtype, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     if row < size and col < size:
         shared_sum[0] += a[row, col]

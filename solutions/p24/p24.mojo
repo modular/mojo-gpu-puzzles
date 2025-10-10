@@ -41,7 +41,12 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = LayoutTensor[dtype, Layout.row_major(WARP_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(WARP_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 

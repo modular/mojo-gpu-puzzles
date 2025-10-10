@@ -26,7 +26,12 @@ fn axis_sum[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     batch = block_idx.y
-    cache = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    cache = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -> Row 0: [0,1,2,3,4,5]

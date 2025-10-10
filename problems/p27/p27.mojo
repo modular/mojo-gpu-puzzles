@@ -22,7 +22,12 @@ fn traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
