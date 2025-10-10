@@ -326,7 +326,12 @@ Error: 0.0
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_mem = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()
 

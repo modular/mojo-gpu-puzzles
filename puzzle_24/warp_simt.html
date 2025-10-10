@@ -297,12 +297,14 @@ my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 <p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware register, not computing a value.</p>
 <h3 id="synchronization-within-warps"><a class="header" href="#synchronization-within-warps">Synchronization within warps</a></h3>
 <p>The most powerful aspect of SIMT: <strong>implicit synchronization</strong>.</p>
-<pre><code class="language-mojo"># Traditional shared memory approach:
-shared[local_i] = partial_result
-barrier()  # Explicit synchronization required
-var sum = shared[0] + shared[1] + ...  # Complex reduction
+<pre><code class="language-mojo"># Example with thread_idx.x &lt; WARP_SIZE
 
-# Warp approach:
+# 1. Traditional shared memory approach:
+shared[thread_idx.x] = partial_result
+barrier()  # Explicit synchronization required
+var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
+
+# 2. Warp approach:
 from gpu.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
@@ -318,7 +320,7 @@ else:
     result = compute_odd()
 # All lanes converge here
 </code></pre>
-<p><strong>Hardware behavior steps:</strong></p>
+<p><strong>Hardware behaviour steps:</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Step</th><th>Phase</th><th>Active Lanes</th><th>Waiting Lanes</th><th>Efficiency</th><th>Performance Cost</th></tr></thead><tbody>
 <tr><td><strong>1</strong></td><td>Condition evaluation</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed</td></tr>
 <tr><td><strong>2</strong></td><td>Even lanes branch</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
@@ -461,10 +463,12 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>Bank Usage</th><th>Cycles</th><th>Performance</th><th>Explanation</th></tr></thead><tbody>
 <tr><td><strong>✅ Sequential</strong></td><td><code>shared[thread_idx.x]</code></td><td>1 cycle</td><td>100%</td><td>Each lane hits different bank</td></tr>
 <tr><td></td><td>Lane 0→Bank 0, Lane 1→Bank 1, …</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
+<tr><td><strong>✅ Same index</strong></td><td><code>shared[0]</code></td><td>1 cycle</td><td>100%</td><td>All lanes broadcast from same address</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0 (Same address)</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
 <tr><td><strong>❌ Stride 2</strong></td><td><code>shared[thread_idx.x * 2]</code></td><td>2 cycles</td><td>50%</td><td>2 lanes per bank</td></tr>
 <tr><td></td><td>Lane 0,16→Bank 0; Lane 1,17→Bank 1</td><td></td><td><strong>2× slower</strong></td><td>Serialized access</td></tr>
-<tr><td><strong>💀 Same index</strong></td><td><code>shared[0]</code> (all lanes)</td><td>32 cycles</td><td>3%</td><td>All lanes hit Bank 0</td></tr>
-<tr><td></td><td>All 32 lanes→Bank 0</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
+<tr><td><strong>💀 Stride 32</strong></td><td><code>shared[thread_idx.x * 32]</code></td><td>32 cycles</td><td>3%</td><td>All lanes hit same bank</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0 (Different address)</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
 </tbody></table>
 </div>
 <h2 id="practical-implications-for-warp-programming"><a class="header" href="#practical-implications-for-warp-programming">Practical implications for warp programming</a></h2>
@@ -477,7 +481,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </ol>
 <h3 id="performance-characteristics"><a class="header" href="#performance-characteristics">Performance characteristics</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
-<tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
+<tr><td><strong>Reduction (32 elements)</strong></td><td>~20 instructions</td><td>10 instructions</td></tr>
 <tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
 <tr><td><strong>Synchronization cost</strong></td><td>Expensive</td><td>Free</td></tr>
 <tr><td><strong>Code complexity</strong></td><td>High</td><td>Low</td></tr>

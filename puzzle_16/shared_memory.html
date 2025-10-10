@@ -284,8 +284,18 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     if row &lt; size and col &lt; size:
         a_shared[local_row, local_col] = a[row, col]
@@ -321,9 +331,9 @@ Matrix B:                           b_shared: (similar layout)
 <ol>
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
-<pre><code class="language-mojo"># Create 2D shared memory tensors using TensorBuilder
-a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+<pre><code class="language-mojo"># Create 2D shared memory tensors using LayoutTensor with address_space
+a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -430,7 +440,7 @@ if row &lt; size and col &lt; size:
 <li>
 <p><strong>Shared memory allocation</strong>:</p>
 <ul>
-<li>TensorBuilder for structured allocation</li>
+<li>LayoutTensor with address_space for structured allocation</li>
 <li>Row-major layout matching input tensors</li>
 <li>Proper alignment for efficient access</li>
 </ul>

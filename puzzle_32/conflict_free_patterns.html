@@ -218,7 +218,12 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -253,7 +258,12 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -509,7 +519,7 @@ if thread_idx.x &lt; stride:
 <pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
 </code></pre>
 <p><strong>3. Padding techniques:</strong></p>
-<pre><code class="language-mojo">shared = tb[dtype]().row_major[TPB + 1]().shared().alloc()  # Shift access patterns
+<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
 </code></pre>
 <p><strong>4. Access pattern analysis:</strong></p>
 <ul>

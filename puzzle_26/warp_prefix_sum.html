@@ -221,7 +221,12 @@
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 

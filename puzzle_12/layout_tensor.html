@@ -192,7 +192,7 @@
 <p>This puzzle covers:</p>
 <ul>
 <li>Similar to the <a href="../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
-<li>Managing shared memory using <code>LayoutTensorBuilder</code></li>
+<li>Managing shared memory using LayoutTensor with address_space</li>
 <li>Coordinating threads for collective operations</li>
 <li>Using layout-aware tensor operations</li>
 </ul>
@@ -207,7 +207,7 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Tensor builder</strong>: Use <code>LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Element access</strong>: Natural indexing with bounds checking</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
@@ -215,7 +215,6 @@
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 8
@@ -245,7 +244,7 @@ fn dot_product[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space</li>
 <li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
 <li>Let thread 0 write final result to <code>output[0]</code></li>
@@ -293,7 +292,12 @@ expected: HostBuffer([140.0])
     b: LayoutTensor[mut=True, dtype, in_layout],
     size: Int,
 ):
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
@@ -344,7 +348,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 <li>
 <p><strong>Memory Management</strong>:</p>
 <ul>
-<li>Clean shared memory allocation with tensor builder</li>
+<li>Clean shared memory allocation with LayoutTensor address_space parameter</li>
 <li>Type-safe operations with LayoutTensor</li>
 <li>Automatic bounds checking</li>
 <li>Layout-aware indexing</li>

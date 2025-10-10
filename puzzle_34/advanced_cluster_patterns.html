@@ -330,7 +330,12 @@ Advanced cluster algorithm results:
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Compute cluster mask for advanced coordination
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter

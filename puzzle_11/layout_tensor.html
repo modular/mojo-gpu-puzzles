@@ -192,7 +192,7 @@
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor for sliding window operations</li>
-<li>Managing shared memory with <code>LayoutTensorBuilder</code> that we saw in <a href="../puzzle_08/layout_tensor.html">puzzle_08</a></li>
+<li>Managing shared memory with LayoutTensor address_space that we saw in <a href="../puzzle_08/layout_tensor.html">puzzle_08</a></li>
 <li>Efficient neighbor access patterns</li>
 <li>Boundary condition handling</li>
 </ul>
@@ -206,7 +206,7 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Tensor builder</strong>: Use <code>LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Window access</strong>: Natural indexing for 3-element windows</li>
 <li><strong>Edge handling</strong>: Special cases for first two positions</li>
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
@@ -228,7 +228,12 @@ fn pooling[
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -241,7 +246,7 @@ fn pooling[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space</li>
 <li>Load data with natural indexing: <code>shared[local_i] = a[global_i]</code></li>
 <li>Handle special cases for first two elements</li>
 <li>Use shared memory for window operations</li>
@@ -290,7 +295,12 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -322,8 +332,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <p><strong>Shared memory setup</strong></p>
 <ul>
 <li>
-<p>Tensor builder creates block-local storage:</p>
-<pre><code class="language-txt">shared = tb[dtype]().row_major[TPB]().shared().alloc()
+<p>LayoutTensor creates block-local storage with address_space:</p>
+<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>

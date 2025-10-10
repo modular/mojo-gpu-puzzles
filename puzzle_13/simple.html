@@ -290,8 +290,18 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared_a = tb[dtype]().row_major[SIZE]().shared().alloc()
-    shared_b = tb[dtype]().row_major[CONV]().shared().alloc()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
 

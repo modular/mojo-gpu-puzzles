@@ -314,7 +314,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>

@@ -191,9 +191,9 @@
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Using LayoutTensor’s shared memory features</li>
+<li>Using LayoutTensor’s shared memory features with address_space</li>
 <li>Thread synchronization with shared memory</li>
-<li>Block-local data management with tensor builder</li>
+<li>Block-local data management with LayoutTensor</li>
 </ul>
 <p>The key insight is how LayoutTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
@@ -206,12 +206,12 @@
 <h2 id="key-differences-from-raw-approach"><a class="header" href="#key-differences-from-raw-approach">Key differences from raw approach</a></h2>
 <ol>
 <li>
-<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild">LayoutTensorBuild</a> instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
+<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
-shared = LayoutTensorBuild[dtype]().row_major[TPB]().shared().alloc()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -252,8 +252,13 @@ fn add_10_shared_layout_tensor[
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
-    # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    # Allocate shared memory using LayoutTensor with explicit address_space
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -272,7 +277,7 @@ fn add_10_shared_layout_tensor[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space parameter</li>
 <li>Load data with natural indexing: <code>shared[local_i] = a[global_i]</code></li>
 <li>Synchronize with <code>barrier()</code> (educational - not strictly needed here)</li>
 <li>Process data using shared memory indices</li>
@@ -321,7 +326,12 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -387,8 +397,8 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <ul>
 <li>
 <p>Shared memory allocation:</p>
-<pre><code class="language-txt"># Clean tensor builder API
-shared = tb[dtype]().row_major[TPB]().shared().alloc()
+<pre><code class="language-txt"># Clean LayoutTensor API with address_space
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>

@@ -215,8 +215,8 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to Complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 8
@@ -298,7 +298,12 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     batch = block_idx.y
-    cache = tb[dtype]().row_major[TPB]().shared().alloc()
+    cache = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 0: [0,1,2,3,4,5]

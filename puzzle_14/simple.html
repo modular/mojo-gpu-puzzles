@@ -198,7 +198,7 @@
 <p>Notes:</p>
 <ul>
 <li><strong>Data loading</strong>: Each thread loads one element using LayoutTensor access</li>
-<li><strong>Memory pattern</strong>: Shared memory for intermediate results using <code>LayoutTensorBuild</code></li>
+<li><strong>Memory pattern</strong>: Shared memory for intermediate results using LayoutTensor with address_space</li>
 <li><strong>Thread sync</strong>: Coordination between computation phases</li>
 <li><strong>Access pattern</strong>: Stride-based parallel computation</li>
 <li><strong>Type safety</strong>: Leveraging LayoutTensor’s type system</li>
@@ -279,7 +279,12 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 

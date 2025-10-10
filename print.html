@@ -2534,9 +2534,9 @@ Block 1 output: [11 11 11 11]
 <h2 id="key-concepts-15"><a class="header" href="#key-concepts-15">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Using LayoutTensor’s shared memory features</li>
+<li>Using LayoutTensor’s shared memory features with address_space</li>
 <li>Thread synchronization with shared memory</li>
-<li>Block-local data management with tensor builder</li>
+<li>Block-local data management with LayoutTensor</li>
 </ul>
 <p>The key insight is how LayoutTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.</p>
 <h2 id="configuration-3"><a class="header" href="#configuration-3">Configuration</a></h2>
@@ -2549,12 +2549,12 @@ Block 1 output: [11 11 11 11]
 <h2 id="key-differences-from-raw-approach"><a class="header" href="#key-differences-from-raw-approach">Key differences from raw approach</a></h2>
 <ol>
 <li>
-<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild">LayoutTensorBuild</a> instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
+<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
-shared = LayoutTensorBuild[dtype]().row_major[TPB]().shared().alloc()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -2595,8 +2595,13 @@ fn add_10_shared_layout_tensor[
     a: LayoutTensor[mut=True, dtype, layout],
     size: Int,
 ):
-    # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    # Allocate shared memory using LayoutTensor with explicit address_space
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -2615,7 +2620,7 @@ fn add_10_shared_layout_tensor[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space parameter</li>
 <li>Load data with natural indexing: <code>shared[local_i] = a[global_i]</code></li>
 <li>Synchronize with <code>barrier()</code> (educational - not strictly needed here)</li>
 <li>Process data using shared memory indices</li>
@@ -2664,7 +2669,12 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -2730,8 +2740,8 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <ul>
 <li>
 <p>Shared memory allocation:</p>
-<pre><code class="language-txt"># Clean tensor builder API
-shared = tb[dtype]().row_major[TPB]().shared().alloc()
+<pre><code class="language-txt"># Clean LayoutTensor API with address_space
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -4214,7 +4224,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <p>In this debugging challenge, you’ll learn about:</p>
 <ul>
 <li><strong>Barrier deadlock detection</strong>: Identifying when threads wait forever at synchronization points</li>
-<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns</li>
+<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns with LayoutTensor</li>
 <li><strong>Conditional execution analysis</strong>: Debugging when some threads take different code paths</li>
 <li><strong>Thread coordination debugging</strong>: Using CUDA-GDB to analyze multi-thread synchronization failures</li>
 </ul>
@@ -4227,7 +4237,12 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
     thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    shared_workspace = tb[dtype]().row_major[SIZE - 1]().shared().alloc()
+    shared_workspace = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
@@ -4870,7 +4885,12 @@ fn shared_memory_race(
     row = thread_idx.y
     col = thread_idx.x
 
-    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     if row &lt; size and col &lt; size:
         shared_sum[0] += a[row, col]
@@ -5024,7 +5044,12 @@ fn shared_memory_race(
     row = thread_idx.y
     col = thread_idx.x
 
-    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Only thread 0 does all the accumulation work to prevent races
     if row == 0 and col == 0:
@@ -5351,7 +5376,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using LayoutTensor for sliding window operations</li>
-<li>Managing shared memory with <code>LayoutTensorBuilder</code> that we saw in <a href="puzzle_11/../puzzle_08/layout_tensor.html">puzzle_08</a></li>
+<li>Managing shared memory with LayoutTensor address_space that we saw in <a href="puzzle_11/../puzzle_08/layout_tensor.html">puzzle_08</a></li>
 <li>Efficient neighbor access patterns</li>
 <li>Boundary condition handling</li>
 </ul>
@@ -5365,7 +5390,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Tensor builder</strong>: Use <code>LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Window access</strong>: Natural indexing for 3-element windows</li>
 <li><strong>Edge handling</strong>: Special cases for first two positions</li>
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
@@ -5387,7 +5412,12 @@ fn pooling[
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -5400,7 +5430,7 @@ fn pooling[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space</li>
 <li>Load data with natural indexing: <code>shared[local_i] = a[global_i]</code></li>
 <li>Handle special cases for first two elements</li>
 <li>Use shared memory for window operations</li>
@@ -5449,7 +5479,12 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     size: Int,
 ):
     # Allocate shared memory using tensor builder
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -5481,8 +5516,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <p><strong>Shared memory setup</strong></p>
 <ul>
 <li>
-<p>Tensor builder creates block-local storage:</p>
-<pre><code class="language-txt">shared = tb[dtype]().row_major[TPB]().shared().alloc()
+<p>LayoutTensor creates block-local storage with address_space:</p>
+<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -5822,7 +5857,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>This puzzle covers:</p>
 <ul>
 <li>Similar to the <a href="puzzle_12/../puzzle_08/layout_tensor.html">puzzle 8</a> and <a href="puzzle_12/../puzzle_11/layout_tensor.html">puzzle 11</a>, implementing parallel reduction with LayoutTensor</li>
-<li>Managing shared memory using <code>LayoutTensorBuilder</code></li>
+<li>Managing shared memory using LayoutTensor with address_space</li>
 <li>Coordinating threads for collective operations</li>
 <li>Using layout-aware tensor operations</li>
 </ul>
@@ -5837,7 +5872,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Tensor builder</strong>: Use <code>LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Element access</strong>: Natural indexing with bounds checking</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
@@ -5845,7 +5880,6 @@ Thread 1: shared[1] = 26 + 58 = 84
 <h2 id="code-to-complete-15"><a class="header" href="#code-to-complete-15">Code to complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 8
@@ -5875,7 +5909,7 @@ fn dot_product[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Create shared memory with tensor builder</li>
+<li>Create shared memory with LayoutTensor using address_space</li>
 <li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
 <li>Use parallel reduction pattern with <code>barrier()</code></li>
 <li>Let thread 0 write final result to <code>output[0]</code></li>
@@ -5923,7 +5957,12 @@ expected: HostBuffer([140.0])
     b: LayoutTensor[mut=True, dtype, in_layout],
     size: Int,
 ):
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
@@ -5974,7 +6013,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 <li>
 <p><strong>Memory Management</strong>:</p>
 <ul>
-<li>Clean shared memory allocation with tensor builder</li>
+<li>Clean shared memory allocation with LayoutTensor address_space parameter</li>
 <li>Type-safe operations with LayoutTensor</li>
 <li>Automatic bounds checking</li>
 <li>Layout-aware indexing</li>
@@ -6064,7 +6103,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches to GPU memory management:</p>
 <ol>
 <li>Raw memory management with direct pointer manipulation using <a href="https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a></li>
-<li>The more structured <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> and its related abstractions such as <a href="https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild/">LayoutTensorBuild</a></li>
+<li>The more structured <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> with its powerful address_space parameter for memory allocation</li>
 </ol>
 <p>Starting from this puzzle, we’re transitioning exclusively to using <code>LayoutTensor</code>. This abstraction provides several benefits:</p>
 <ul>
@@ -6207,8 +6246,18 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared_a = tb[dtype]().row_major[SIZE]().shared().alloc()
-    shared_b = tb[dtype]().row_major[CONV]().shared().alloc()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -6389,7 +6438,7 @@ fn conv_1d_block_boundary[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()</code> for shared memory</li>
+<li>Use <code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory</li>
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -6440,8 +6489,18 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # first: need to account for padding
-    shared_a = tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()
-    shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + CONV_2 - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_2),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; SIZE_2:
         shared_a[local_i] = a[global_i]
     else:
@@ -6496,8 +6555,8 @@ Size calculation:
 <li>
 <p><strong>Shared Memory Allocation</strong>:</p>
 <pre><code class="language-mojo"># First: account for padding needed for convolution window
-shared_a = tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()
-shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
+shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>This allocation pattern ensures we have enough space for both the block’s data and the overlap region.</p>
 </li>
@@ -6673,7 +6732,7 @@ Then tackle the more challenging case of handling larger arrays that span multip
 <p>Notes:</p>
 <ul>
 <li><strong>Data loading</strong>: Each thread loads one element using LayoutTensor access</li>
-<li><strong>Memory pattern</strong>: Shared memory for intermediate results using <code>LayoutTensorBuild</code></li>
+<li><strong>Memory pattern</strong>: Shared memory for intermediate results using LayoutTensor with address_space</li>
 <li><strong>Thread sync</strong>: Coordination between computation phases</li>
 <li><strong>Access pattern</strong>: Stride-based parallel computation</li>
 <li><strong>Type safety</strong>: Leveraging LayoutTensor’s type system</li>
@@ -6754,7 +6813,12 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -7040,7 +7104,12 @@ fn prefix_sum_local_phase[
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:
@@ -7337,8 +7406,8 @@ Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 </code></pre>
 <h2 id="code-to-complete-20"><a class="header" href="#code-to-complete-20">Code to Complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 8
@@ -7420,7 +7489,12 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     batch = block_idx.y
-    cache = tb[dtype]().row_major[TPB]().shared().alloc()
+    cache = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -&gt; Row 0: [0,1,2,3,4,5]
@@ -7629,8 +7703,8 @@ This is the most straightforward implementation where each thread computes one e
 </ul>
 <h2 id="code-to-complete-21"><a class="header" href="#code-to-complete-21">Code to complete</a></h2>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 3
@@ -8001,8 +8075,18 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     local_row = thread_idx.y
     local_col = thread_idx.x
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     if row &lt; size and col &lt; size:
         a_shared[local_row, local_col] = a[row, col]
@@ -8038,9 +8122,9 @@ Matrix B:                           b_shared: (similar layout)
 <ol>
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
-<pre><code class="language-mojo"># Create 2D shared memory tensors using TensorBuilder
-a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+<pre><code class="language-mojo"># Create 2D shared memory tensors using LayoutTensor with address_space
+a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -8147,7 +8231,7 @@ if row &lt; size and col &lt; size:
 <li>
 <p><strong>Shared memory allocation</strong>:</p>
 <ul>
-<li>TensorBuilder for structured allocation</li>
+<li>LayoutTensor with address_space for structured allocation</li>
 <li>Row-major layout matching input tensors</li>
 <li>Proper alignment for efficient access</li>
 </ul>
@@ -8399,8 +8483,18 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     tiled_row = block_idx.y * TPB + local_row
     tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -8597,8 +8691,18 @@ fn matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -8852,8 +8956,18 @@ fn conv1d_kernel[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # first: need to account for padding
-    shared_a = tb[dtype]().row_major[TPB + conv_size - 1]().shared().alloc()
-    shared_b = tb[dtype]().row_major[conv_size]().shared().alloc()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + conv_size - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(conv_size),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; input_size:
         shared_a[local_i] = input[global_i]
 
@@ -9232,8 +9346,8 @@ with Graph(
 <h3 id="1-implement-the-gpu-kernel-in-softmaxmojo"><a class="header" href="#1-implement-the-gpu-kernel-in-softmaxmojo">1. Implement the GPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
 from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
@@ -9425,8 +9539,18 @@ Sum of all probabilities on GPU: 1.0
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    shared_max = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
@@ -9497,8 +9621,8 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
-shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>
@@ -9893,7 +10017,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>tb[dtype]().row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]().shared().alloc()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>
@@ -11604,18 +11728,18 @@ fn matmul_idiomatic_tiled[
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    a_shared = (
-        tb[dtype]()
-        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-        .shared()
-        .alloc()
-    )
-    b_shared = (
-        tb[dtype]()
-        .row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-        .shared()
-        .alloc()
-    )
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     var acc: output.element_type = 0
 
     alias load_a_layout = Layout.row_major(
@@ -11685,12 +11809,12 @@ fn matmul_idiomatic_tiled[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = (
-        tb[dtype]()
-        .row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
-        .shared()
-        .alloc()
-    )
+    shared_tile = LayoutTensor[
+        dtype,
+        Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -14798,25 +14922,27 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong><code>lane_id()</code></strong>: Get current thread’s lane number (0-31 or 0-63)</li>
 </ol>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
-<pre><code class="language-mojo"># Complex pattern we have seen earlier (from p12.mojo):
+<pre><code class="language-mojo"># 1. Reduction through shared memory
+# Complex pattern we have seen earlier (from p12.mojo):
 shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
 shared[local_i] = partial_product
 barrier()
 
-# Safe tree reduction would require read-write separation:
-stride = SIZE // 2
+# Safe tree reduction through shared memory requires a barrier after each reduction phase:
+stride = WARP_SIZE // 2
 while stride &gt; 0:
-    var temp_val: Scalar[dtype] = 0
     if local_i &lt; stride:
-        temp_val = shared[local_i + stride]  # Read phase
-    barrier()
-    if local_i &lt; stride:
-        shared[local_i] += temp_val  # Write phase
+        shared[local_i] += shared[local_i + stride]
+
     barrier()
     stride //= 2
 
-# But warp operations eliminate all this complexity:
-total = sum(partial_product)  # No barriers, no race conditions!
+# 2. Reduction using warp primatives
+# Safe tree reduction using warp primatives does not require shared memory or a barrier
+# after each reduction phase.
+# Mojo's warp-level sum operation uses warp primatives under the hood and hides all this
+# complexity:
+total = sum(partial_product)  # Internally no barriers, no race conditions!
 </code></pre>
 <h3 id="when-warp-operations-excel"><a class="header" href="#when-warp-operations-excel"><strong>When warp operations excel</strong></a></h3>
 <p>Learn the performance characteristics:</p>
@@ -15012,12 +15138,14 @@ my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 <p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware register, not computing a value.</p>
 <h3 id="synchronization-within-warps"><a class="header" href="#synchronization-within-warps">Synchronization within warps</a></h3>
 <p>The most powerful aspect of SIMT: <strong>implicit synchronization</strong>.</p>
-<pre><code class="language-mojo"># Traditional shared memory approach:
-shared[local_i] = partial_result
-barrier()  # Explicit synchronization required
-var sum = shared[0] + shared[1] + ...  # Complex reduction
+<pre><code class="language-mojo"># Example with thread_idx.x &lt; WARP_SIZE
 
-# Warp approach:
+# 1. Traditional shared memory approach:
+shared[thread_idx.x] = partial_result
+barrier()  # Explicit synchronization required
+var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
+
+# 2. Warp approach:
 from gpu.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
@@ -15033,7 +15161,7 @@ else:
     result = compute_odd()
 # All lanes converge here
 </code></pre>
-<p><strong>Hardware behavior steps:</strong></p>
+<p><strong>Hardware behaviour steps:</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Step</th><th>Phase</th><th>Active Lanes</th><th>Waiting Lanes</th><th>Efficiency</th><th>Performance Cost</th></tr></thead><tbody>
 <tr><td><strong>1</strong></td><td>Condition evaluation</td><td>All 32 lanes</td><td>None</td><td>100%</td><td>Normal speed</td></tr>
 <tr><td><strong>2</strong></td><td>Even lanes branch</td><td>Lanes 0,2,4…30 (16 lanes)</td><td>Lanes 1,3,5…31 (16 lanes)</td><td>50%</td><td><strong>2× slower</strong></td></tr>
@@ -15176,10 +15304,12 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 <div class="table-wrapper"><table><thead><tr><th>Access Pattern</th><th>Bank Usage</th><th>Cycles</th><th>Performance</th><th>Explanation</th></tr></thead><tbody>
 <tr><td><strong>✅ Sequential</strong></td><td><code>shared[thread_idx.x]</code></td><td>1 cycle</td><td>100%</td><td>Each lane hits different bank</td></tr>
 <tr><td></td><td>Lane 0→Bank 0, Lane 1→Bank 1, …</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
+<tr><td><strong>✅ Same index</strong></td><td><code>shared[0]</code></td><td>1 cycle</td><td>100%</td><td>All lanes broadcast from same address</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0 (Same address)</td><td></td><td>Optimal</td><td>No conflicts</td></tr>
 <tr><td><strong>❌ Stride 2</strong></td><td><code>shared[thread_idx.x * 2]</code></td><td>2 cycles</td><td>50%</td><td>2 lanes per bank</td></tr>
 <tr><td></td><td>Lane 0,16→Bank 0; Lane 1,17→Bank 1</td><td></td><td><strong>2× slower</strong></td><td>Serialized access</td></tr>
-<tr><td><strong>💀 Same index</strong></td><td><code>shared[0]</code> (all lanes)</td><td>32 cycles</td><td>3%</td><td>All lanes hit Bank 0</td></tr>
-<tr><td></td><td>All 32 lanes→Bank 0</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
+<tr><td><strong>💀 Stride 32</strong></td><td><code>shared[thread_idx.x * 32]</code></td><td>32 cycles</td><td>3%</td><td>All lanes hit same bank</td></tr>
+<tr><td></td><td>All 32 lanes→Bank 0 (Different address)</td><td></td><td><strong>32× slower</strong></td><td>Completely serialized</td></tr>
 </tbody></table>
 </div>
 <h2 id="practical-implications-for-warp-programming"><a class="header" href="#practical-implications-for-warp-programming">Practical implications for warp programming</a></h2>
@@ -15192,7 +15322,7 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </ol>
 <h3 id="performance-characteristics-4"><a class="header" href="#performance-characteristics-4">Performance characteristics</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Operation Type</th><th>Traditional</th><th>Warp Operations</th></tr></thead><tbody>
-<tr><td><strong>Reduction (32 elements)</strong></td><td>~10 instructions</td><td>1 instruction</td></tr>
+<tr><td><strong>Reduction (32 elements)</strong></td><td>~20 instructions</td><td>10 instructions</td></tr>
 <tr><td><strong>Memory traffic</strong></td><td>High</td><td>Minimal</td></tr>
 <tr><td><strong>Synchronization cost</strong></td><td>Expensive</td><td>Free</td></tr>
 <tr><td><strong>Code complexity</strong></td><td>High</td><td>Low</td></tr>
@@ -15245,7 +15375,12 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(WARP_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
@@ -15583,7 +15718,7 @@ expected: 10416.0
 <div class="solution-explanation">
 <p>The functional warp approach showcases modern Mojo programming patterns with warp operations:</p>
 <p><strong>Functional approach characteristics:</strong></p>
-<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -15754,7 +15889,7 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <tr><td><strong>Matrix row/col sum</strong></td><td>Warp ops</td><td>Natural reduction pattern</td></tr>
 <tr><td><strong>Prefix sum</strong></td><td>Always warp <code>prefix_sum()</code></td><td>Hardware-optimized primitive</td></tr>
 <tr><td><strong>Pooling (max/min)</strong></td><td>Warp ops (regular windows)</td><td>Efficient window reductions</td></tr>
-<tr><td><strong>Histogram</strong></td><td>Traditional</td><td>Irregular writes, atomic updates</td></tr>
+<tr><td><strong>Histogram with large number of bins</strong></td><td>Traditional</td><td>Irregular writes, atomic updates</td></tr>
 </tbody></table>
 </div>
 <h2 id="code-examples"><a class="header" href="#code-examples">Code examples</a></h2>
@@ -18052,7 +18187,12 @@ while offset &gt; 0:
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -18852,7 +18992,12 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
@@ -20337,8 +20482,18 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
-    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -20429,8 +20584,18 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
-    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     local_i = thread_idx.x
 
@@ -20793,8 +20958,18 @@ fn multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
-    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -20914,8 +21089,18 @@ Output sample: 1.6665002 2.3331003 3.3996604
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
-    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -21236,13 +21421,38 @@ fn double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
-    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_A = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    buffer_B = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
-    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    init_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    iter_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    final_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -21395,13 +21605,38 @@ GPU output sample: 1.0 1.0 1.0
     """
 
     # Double-buffering: Two shared memory buffers
-    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
-    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_A = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    buffer_B = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
-    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    init_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    iter_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    final_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -22793,7 +23028,12 @@ fn minimal_kernel[
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    shared_cache = tb[dtype]().row_major[1024 * 12]().shared().alloc()  # 48KB
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 12),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 48KB
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -22883,9 +23123,12 @@ fn minimal_kernel[
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    shared_cache = (
-        tb[dtype]().row_major[1024 * 4]().shared().alloc()
-    )  # 16KB total
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 4),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 16KB total
 
     i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -23520,7 +23763,12 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -23555,7 +23803,12 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    shared_buf = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared_buf = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -23811,7 +24064,7 @@ if thread_idx.x &lt; stride:
 <pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
 </code></pre>
 <p><strong>3. Padding techniques:</strong></p>
-<pre><code class="language-mojo">shared = tb[dtype]().row_major[TPB + 1]().shared().alloc()  # Shift access patterns
+<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
 </code></pre>
 <p><strong>4. Access pattern analysis:</strong></p>
 <ul>
@@ -24031,8 +24284,18 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TILE_SIZE, TILE_SIZE]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TILE_SIZE, TILE_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TILE_SIZE, TILE_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -24176,11 +24439,26 @@ fn tensor_core_matrix_multiplication[
     mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    A_sram_tile = tb[A.dtype]().row_major[BM, BK]().shared().alloc()
-    B_sram_tile = tb[B.dtype]().row_major[BK, BN]().shared().alloc()
+    A_sram_tile = LayoutTensor[
+        A.dtype,
+        Layout.row_major(BM, BK),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    B_sram_tile = LayoutTensor[
+        B.dtype,
+        Layout.row_major(BK, BN),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    C_warp_accum = tb[C.dtype]().row_major[WM, WN]().local().alloc()
+    C_warp_accum = LayoutTensor[
+        C.dtype,
+        Layout.row_major(WM, WN),
+        MutableAnyOrigin,
+        address_space = AddressSpace.GENERIC,
+    ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
@@ -24365,11 +24643,26 @@ ALL TESTS PASSED!
     mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    A_sram_tile = tb[A.dtype]().row_major[BM, BK]().shared().alloc()
-    B_sram_tile = tb[B.dtype]().row_major[BK, BN]().shared().alloc()
+    A_sram_tile = LayoutTensor[
+        A.dtype,
+        Layout.row_major(BM, BK),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    B_sram_tile = LayoutTensor[
+        B.dtype,
+        Layout.row_major(BK, BN),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    C_warp_accum = tb[C.dtype]().row_major[WM, WN]().local().alloc()
+    C_warp_accum = LayoutTensor[
+        C.dtype,
+        Layout.row_major(WM, WN),
+        MutableAnyOrigin,
+        address_space = AddressSpace.LOCAL,
+    ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
@@ -24808,7 +25101,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 </ul>
 <h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
 <ul>
-<li>Allocate shared memory using <code>tb[dtype]().row_major[tpb]().shared().alloc()</code> (see <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
+<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
 <li>Process input data scaled by <code>block_id + 1</code> to create distinct scaling per block</li>
 <li>Use bounds checking when accessing input data (pattern from <a href="puzzle_34/../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
 </ul>
@@ -24876,7 +25169,12 @@ Block coordination results:
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -24919,7 +25217,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </code></pre>
 <p><strong>Shared memory allocation and data processing:</strong></p>
 <ul>
-<li>Each block allocates its own shared memory workspace: <code>tb[dtype]().row_major[tpb]().shared().alloc()</code></li>
+<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block processes data differently
 <ul>
 <li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0</li>
@@ -25132,7 +25430,12 @@ Error: 0.0
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_mem = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()
 
@@ -25417,7 +25720,12 @@ Advanced cluster algorithm results:
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Compute cluster mask for advanced coordination
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter

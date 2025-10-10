@@ -247,8 +247,8 @@
 <h3 id="1-implement-the-gpu-kernel-in-softmaxmojo"><a class="header" href="#1-implement-the-gpu-kernel-in-softmaxmojo">1. Implement the GPU kernel in <code>softmax.mojo</code></a></h3>
 <pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from math import exp
 from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
@@ -440,8 +440,18 @@ Sum of all probabilities on GPU: 1.0
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
-    shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
-    shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+    shared_max = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
@@ -512,8 +522,8 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
-shared_sum = tb[dtype]().row_major[BLOCK_DIM_X]().shared().alloc()
+<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>

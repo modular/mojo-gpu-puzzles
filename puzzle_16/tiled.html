@@ -387,8 +387,18 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     tiled_row = block_idx.y * TPB + local_row
     tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 
@@ -585,8 +595,18 @@ fn matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    a_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
-    b_shared = tb[dtype]().row_major[TPB, TPB]().shared().alloc()
+    a_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     var acc: output.element_type = 0
 

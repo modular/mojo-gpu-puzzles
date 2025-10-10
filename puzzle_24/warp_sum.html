@@ -229,7 +229,12 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(WARP_SIZE),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
@@ -567,7 +572,7 @@ expected: 10416.0
 <div class="solution-explanation">
 <p>The functional warp approach showcases modern Mojo programming patterns with warp operations:</p>
 <p><strong>Functional approach characteristics:</strong></p>
-<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](WARP_SIZE, ctx)
+<pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
 </code></pre>
 <p><strong>Benefits:</strong></p>
 <ul>

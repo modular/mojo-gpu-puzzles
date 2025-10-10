@@ -231,7 +231,7 @@ fn conv_1d_block_boundary[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()</code> for shared memory</li>
+<li>Use <code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory</li>
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -282,8 +282,18 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # first: need to account for padding
-    shared_a = tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()
-    shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + CONV_2 - 1),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_2),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
     if global_i &lt; SIZE_2:
         shared_a[local_i] = a[global_i]
     else:
@@ -338,8 +348,8 @@ Size calculation:
 <li>
 <p><strong>Shared Memory Allocation</strong>:</p>
 <pre><code class="language-mojo"># First: account for padding needed for convolution window
-shared_a = tb[dtype]().row_major[TPB + CONV_2 - 1]().shared().alloc()
-shared_b = tb[dtype]().row_major[CONV_2]().shared().alloc()
+shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>This allocation pattern ensures we have enough space for both the block’s data and the overlap region.</p>
 </li>

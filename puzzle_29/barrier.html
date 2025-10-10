@@ -299,8 +299,18 @@ fn multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
-    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -420,8 +430,18 @@ Output sample: 1.6665002 2.3331003 3.3996604
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
-    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
