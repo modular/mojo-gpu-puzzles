@@ -22,7 +22,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 In this debugging challenge, you'll learn about:
 - **Barrier deadlock detection**: Identifying when threads wait forever at synchronization points
-- **Shared memory coordination**: Understanding thread cooperation patterns
+- **Shared memory coordination**: Understanding thread cooperation patterns with LayoutTensor
 - **Conditional execution analysis**: Debugging when some threads take different code paths
 - **Thread coordination debugging**: Using CUDA-GDB to analyze multi-thread synchronization failures
 

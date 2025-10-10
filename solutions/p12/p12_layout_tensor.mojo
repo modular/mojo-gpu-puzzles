@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from testing import assert_equal
 
 alias TPB = 8
@@ -22,7 +22,7 @@ fn dot_product[
     b: LayoutTensor[mut=True, dtype, in_layout],
     size: Int,
 ):
-    shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 

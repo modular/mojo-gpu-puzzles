@@ -4,7 +4,6 @@ from gpu.host import DeviceContext
 # ANCHOR: dot_product_layout_tensor
 from gpu import thread_idx, block_idx, block_dim, barrier
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 8

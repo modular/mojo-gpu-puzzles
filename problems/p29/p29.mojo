@@ -8,9 +8,8 @@ from gpu.sync import (
     cp_async_bulk_wait_group,
 )
 from gpu.host import DeviceContext
-from gpu.memory import async_copy_wait_all
+from gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from layout.layout_tensor import copy_dram_to_sram_async
 from sys import size_of, argv, info
 from testing import assert_true, assert_almost_equal
@@ -45,8 +44,8 @@ fn multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = tb[dtype]().row_major[TPB]().shared().alloc()
-    blur_shared = tb[dtype]().row_major[TPB]().shared().alloc()
+    input_shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    blur_shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -93,13 +92,13 @@ fn double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    buffer_A = tb[dtype]().row_major[TPB]().shared().alloc()
-    buffer_B = tb[dtype]().row_major[TPB]().shared().alloc()
+    buffer_A = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    buffer_B = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
-    init_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    iter_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
-    final_barrier = tb[DType.uint64]().row_major[1]().shared().alloc()
+    init_barrier = LayoutTensor[DType.uint64, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    iter_barrier = LayoutTensor[DType.uint64, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    final_barrier = LayoutTensor[DType.uint64, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

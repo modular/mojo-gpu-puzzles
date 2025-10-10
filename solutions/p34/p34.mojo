@@ -8,8 +8,8 @@ from gpu.cluster import (
     cluster_mask_base,
     elect_one_sync,
 )
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import argv
 from testing import assert_equal, assert_almost_equal, assert_true
 
@@ -37,7 +37,7 @@ fn cluster_coordination_basics[
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_data = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -92,7 +92,7 @@ fn cluster_collective_operations[
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_mem = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()
 
@@ -137,7 +137,7 @@ fn advanced_cluster_patterns[
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
-    shared_data = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared_data = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     # Compute cluster mask for advanced coordination
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter

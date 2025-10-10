@@ -1,8 +1,7 @@
 from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from gpu.host import DeviceContext
-from gpu.memory import async_copy_wait_all
+from gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from layout.layout_tensor import copy_dram_to_sram_async
 from sys import argv, info
 from testing import assert_equal, assert_almost_equal
@@ -35,8 +34,8 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = tb[dtype]().row_major[CONV_TILE_SIZE]().shared().alloc()
-    kernel_shared = tb[dtype]().row_major[KERNEL_SIZE]().shared().alloc()
+    input_shared = LayoutTensor[dtype, Layout.row_major(CONV_TILE_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+    kernel_shared = LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
 

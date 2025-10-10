@@ -3,8 +3,8 @@ from os.atomic import Atomic
 from gpu.warp import WARP_SIZE
 from gpu import block
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from sys import argv
 from testing import assert_equal
 from math import floor
@@ -64,7 +64,7 @@ fn traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = tb[dtype]().row_major[tpb]().shared().alloc()
+    shared = LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 

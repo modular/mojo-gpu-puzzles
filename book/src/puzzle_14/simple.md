@@ -14,7 +14,7 @@ Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and store
 Notes:
 
 - **Data loading**: Each thread loads one element using LayoutTensor access
-- **Memory pattern**: Shared memory for intermediate results using `LayoutTensorBuild`
+- **Memory pattern**: Shared memory for intermediate results using LayoutTensor with address_space
 - **Thread sync**: Coordination between computation phases
 - **Access pattern**: Stride-based parallel computation
 - **Type safety**: Leveraging LayoutTensor's type system

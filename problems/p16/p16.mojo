@@ -4,8 +4,8 @@ from gpu.host import DeviceContext
 
 # ANCHOR: naive_matmul
 from gpu import thread_idx, block_idx, block_dim, barrier
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 
 
 alias TPB = 3

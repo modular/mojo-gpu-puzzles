@@ -8,9 +8,9 @@ Implement a kernel that adds 10 to each position of a 1D LayoutTensor `a` and st
 
 In this puzzle, you'll learn about:
 
-- Using LayoutTensor's shared memory features
+- Using LayoutTensor's shared memory features with address_space
 - Thread synchronization with shared memory
-- Block-local data management with tensor builder
+- Block-local data management with LayoutTensor
 
 The key insight is how LayoutTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.
 
@@ -23,14 +23,14 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 ## Key differences from raw approach
 
-1. **Memory allocation**: We will use [LayoutTensorBuild](https://docs.modular.com/mojo/stdlib/layout/tensor_builder/LayoutTensorBuild) instead of [stack_allocation](https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/)
+1. **Memory allocation**: We will use [LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor) with address_space instead of [stack_allocation](https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/)
 
    ```mojo
    # Raw approach
    shared = stack_allocation[TPB, Scalar[dtype]]()
 
    # LayoutTensor approach
-   shared = LayoutTensorBuild[dtype]().row_major[TPB]().shared().alloc()
+   shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
    ```
 
 2. **Memory access**: Same syntax
@@ -66,7 +66,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 <div class="solution-tips">
 
-1. Create shared memory with tensor builder
+1. Create shared memory with LayoutTensor using address_space parameter
 2. Load data with natural indexing: `shared[local_i] = a[global_i]`
 3. Synchronize with `barrier()` (educational - not strictly needed here)
 4. Process data using shared memory indices
@@ -167,8 +167,8 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
    - Shared memory allocation:
 
      ```txt
-     # Clean tensor builder API
-     shared = tb[dtype]().row_major[TPB]().shared().alloc()
+     # Clean LayoutTensor API with address_space
+     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - Natural indexing for both global and shared:

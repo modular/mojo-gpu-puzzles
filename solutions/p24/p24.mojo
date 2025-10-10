@@ -2,9 +2,9 @@ from math import ceildiv
 from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.memory import AddressSpace
 from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from utils import IndexList
 from sys import argv, simd_width_of, size_of, align_of
 from testing import assert_equal
@@ -41,7 +41,7 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+    shared = LayoutTensor[dtype, Layout.row_major(WARP_SIZE), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 

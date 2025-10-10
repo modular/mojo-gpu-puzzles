@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_dim, block_idx, barrier
 from gpu.host import DeviceContext
+from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from testing import assert_equal
 from sys import argv
 
@@ -22,7 +22,7 @@ fn shared_memory_race(
     row = thread_idx.y
     col = thread_idx.x
 
-    shared_sum = tb[dtype]().row_major[1]().shared().alloc()
+    shared_sum = LayoutTensor[dtype, Layout.row_major(1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 
     if row < size and col < size:
         shared_sum[0] += a[row, col]

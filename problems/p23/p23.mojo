@@ -2,7 +2,6 @@ from gpu import thread_idx, block_dim, block_idx, barrier
 from gpu.host import DeviceContext
 from gpu.host.compile import get_gpu_target
 from layout import Layout, LayoutTensor
-from layout.tensor_builder import LayoutTensorBuild as tb
 from utils import IndexList
 from math import log2
 from algorithm.functional import elementwise, vectorize

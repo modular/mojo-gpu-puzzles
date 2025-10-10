@@ -9,7 +9,7 @@ Implement a kernel that compute the running sum of the last 3 positions of 1D La
 In this puzzle, you'll learn about:
 
 - Using LayoutTensor for sliding window operations
-- Managing shared memory with `LayoutTensorBuilder` that we saw in [puzzle_08](../puzzle_08/layout_tensor.md)
+- Managing shared memory with LayoutTensor address_space that we saw in [puzzle_08](../puzzle_08/layout_tensor.md)
 - Efficient neighbor access patterns
 - Boundary condition handling
 
@@ -24,7 +24,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 Notes:
 
-- **Tensor builder**: Use `LayoutTensorBuilder[dtype]().row_major[TPB]().shared().alloc()`
+- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Window access**: Natural indexing for 3-element windows
 - **Edge handling**: Special cases for first two positions
 - **Memory pattern**: One shared memory load per thread
@@ -42,7 +42,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Create shared memory with tensor builder
+1. Create shared memory with LayoutTensor using address_space
 2. Load data with natural indexing: `shared[local_i] = a[global_i]`
 3. Handle special cases for first two elements
 4. Use shared memory for window operations
@@ -113,10 +113,10 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 The solution implements a sliding window sum using LayoutTensor with these key steps:
 
 1. **Shared memory setup**
-   - Tensor builder creates block-local storage:
+   - LayoutTensor creates block-local storage with address_space:
 
      ```txt
-     shared = tb[dtype]().row_major[TPB]().shared().alloc()
+     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - Each thread loads one element:
