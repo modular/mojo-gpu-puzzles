@@ -14038,7 +14038,7 @@ Tiled:       Moderate parallelism, localized memory access
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = output.tile[chunk_size](tile_id)
+        output_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
 
@@ -14695,13 +14695,13 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
-    # Prevent optimization: keep(out.unsafe_ptr())
-    # Synchronize: ctx.synchronize()
     @parameter
     fn pattern_workflow(ctx: DeviceContext) raises:
       # Compute: Execute the algorithm being measured
 
     b.iter_custom[pattern_workflow](bench_ctx)
+    # Prevent optimization: keep(out.unsafe_ptr())
+    # Synchronize: ctx.synchronize()
 </code></pre>
 <p><strong>Key phases:</strong></p>
 <ol>
@@ -14751,7 +14751,7 @@ fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Benche
 <ul>
 <li>Still overhead-dominated (~0.003ms for all)</li>
 <li>Performance differences nearly disappear</li>
-<li>Transitional behavior between overhead and computation</li>
+<li>Transitional behaviour between overhead and computation</li>
 </ul>
 <p><strong>Large problems (SIZE=1M):</strong></p>
 <ul>

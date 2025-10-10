@@ -240,7 +240,7 @@
     ](indices: IndexList[rank]) capturing -&gt; None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        out_tile = output.tile[chunk_size](tile_id)
+        output_tile = output.tile[chunk_size](tile_id)
         a_tile = a.tile[chunk_size](tile_id)
         b_tile = b.tile[chunk_size](tile_id)
 
