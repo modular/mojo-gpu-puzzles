@@ -7,7 +7,8 @@ Your task is to implement a kernel that adds 10 to each element of vector `a`, s
 
 **Note:** _You have 1 thread per position._
 
-![Map](./media/videos/720p30/puzzle_01_viz.gif)
+<img src="./media/01.png" alt="Map" class="light-mode-img">
+<img src="./media/01d.png" alt="Map" class="dark-mode-img">
 
 ## Key concepts
 

@@ -6,7 +6,8 @@ Implement a kernel that adds 10 to each position of vector `a` and stores it in 
 
 **Note:** _You have fewer threads per block than the size of a._
 
-![Blocks visualization](./media/videos/720p30/puzzle_06_viz.gif)
+<img src="./media/06.png" alt="Blocks visualization" class="light-mode-img">
+<img src="./media/06d.png" alt="Blocks visualization" class="dark-mode-img">
 
 ## Key concepts
 

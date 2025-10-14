@@ -6,7 +6,8 @@ Implement a kernel that adds 10 to each position of vector `a` and stores it in 
 
 **Note**: _You have more threads than positions. This means you need to protect against out-of-bounds memory access._
 
-![Guard](./media/videos/720p30/puzzle_03_viz.gif)
+<img src="./media/03.png" alt="Guard" class="light-mode-img">
+<img src="./media/03d.png" alt="Guard" class="dark-mode-img">
 
 ## Key concepts
 

@@ -4,8 +4,8 @@
 Implement a kernel that adds 10 to each position of 2D square matrix `a` and stores it in 2D square matrix `output`.
 
 **Note:** _You have more threads than positions_.
-
-![2D Matrix Mapping](./media/videos/720p30/puzzle_04_viz.gif)
+<img src="./media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
+<img src="./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img">
 
 ## Key concepts
 - 2D thread indexing
@@ -21,8 +21,8 @@ For each position \\((i,j)\\):
 > When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:
 > - `thread_idx.y` corresponds to the row index
 > - `thread_idx.x` corresponds to the column index
->
-> ![2D thread indexing](./media/videos/720p30/thread_indexing_viz.gif)
+> <img src="./media/04b.png" alt="2D thread indexing" class="light-mode-img">
+> <img src="./media/04bd.png" alt="2D thread indexing" class="dark-mode-img">
 >
 > This convention aligns with:
 >
