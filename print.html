@@ -716,7 +716,8 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <p>This puzzle introduces the fundamental concept of GPU parallelism: mapping individual threads to data elements for concurrent processing.
 Your task is to implement a kernel that adds 10 to each element of vector <code>a</code>, storing the results in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
-<p><img src="puzzle_01/./media/videos/720p30/puzzle_01_viz.gif" alt="Map" /></p>
+<img src="puzzle_01/./media/01.png" alt="Map" class="light-mode-img">
+<img src="puzzle_01/./media/01d.png" alt="Map" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
 <li>Basic GPU kernel structure</li>
@@ -872,7 +873,8 @@ output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 <h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
-<p><img src="puzzle_02/./media/videos/720p30/puzzle_02_viz.gif" alt="Zip" /></p>
+<img src="puzzle_02/./media/02.png" alt="Zip" class="light-mode-img">
+<img src="puzzle_02/./media/02d.png" alt="Zip" class="dark-mode-img">
 <h2 id="key-concepts-2"><a class="header" href="#key-concepts-2">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -980,7 +982,8 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
-<p><img src="puzzle_03/./media/videos/720p30/puzzle_03_viz.gif" alt="Guard" /></p>
+<img src="puzzle_03/./media/03.png" alt="Guard" class="light-mode-img">
+<img src="puzzle_03/./media/03d.png" alt="Guard" class="dark-mode-img">
 <h2 id="key-concepts-3"><a class="header" href="#key-concepts-3">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -1115,8 +1118,9 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
-<p><img src="puzzle_04/./media/videos/720p30/puzzle_04_viz.gif" alt="2D Matrix Mapping" /></p>
+<p><strong>Note:</strong> <em>You have more threads than positions</em>.
+<img src="puzzle_04/./media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
+<img src="puzzle_04/./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img"></p>
 <h2 id="key-concepts-4"><a class="header" href="#key-concepts-4">Key concepts</a></h2>
 <ul>
 <li>2D thread indexing</li>
@@ -1131,9 +1135,10 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
 <ul>
 <li><code>thread_idx.y</code> corresponds to the row index</li>
-<li><code>thread_idx.x</code> corresponds to the column index</li>
+<li><code>thread_idx.x</code> corresponds to the column index
+<img src="puzzle_04/./media/04b.png" alt="2D thread indexing" class="light-mode-img">
+<img src="puzzle_04/./media/04bd.png" alt="2D thread indexing" class="dark-mode-img"></li>
 </ul>
-<p><img src="puzzle_04/./media/videos/720p30/thread_indexing_viz.gif" alt="2D thread indexing" /></p>
 <p>This convention aligns with:</p>
 <ol>
 <li>The standard mathematical notation where matrix positions are specified as (row, column)</li>
@@ -1491,7 +1496,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h2 id="overview-6"><a class="header" href="#overview-6">Overview</a></h2>
 <p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
-<p><img src="puzzle_05/./media/videos/720p30/puzzle_05_viz.gif" alt="Broadcast visualization" /></p>
+<img src="puzzle_05/./media/05.png" alt="Broadcast visualization" class="light-mode-img">
+<img src="puzzle_05/./media/05d.png" alt="Broadcast visualization" class="dark-mode-img">
 <h2 id="key-concepts-7"><a class="header" href="#key-concepts-7">Key concepts</a></h2>
 <ul>
 <li>Broadcasting vectors to matrix</li>
@@ -1775,7 +1781,8 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <h2 id="overview-9"><a class="header" href="#overview-9">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
-<p><img src="puzzle_06/./media/videos/720p30/puzzle_06_viz.gif" alt="Blocks visualization" /></p>
+<img src="puzzle_06/./media/06.png" alt="Blocks visualization" class="light-mode-img">
+<img src="puzzle_06/./media/06d.png" alt="Blocks visualization" class="dark-mode-img">
 <h2 id="key-concepts-10"><a class="header" href="#key-concepts-10">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -1923,7 +1930,8 @@ Block 2:             [6 7 8]
 <h2 id="overview-10"><a class="header" href="#overview-10">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
-<p><img src="puzzle_07/./media/videos/720p30/puzzle_07_viz.gif" alt="Blocks 2D visualization" /></p>
+<img src="puzzle_07/./media/07.png" alt="Blocks 2D visualization" class="light-mode-img">
+<img src="puzzle_07/./media/07d.png" alt="Blocks 2D visualization" class="dark-mode-img">
 <h2 id="key-concepts-11"><a class="header" href="#key-concepts-11">Key concepts</a></h2>
 <ul>
 <li>Block-based processing</li>
@@ -2314,7 +2322,8 @@ row * size + col    tensor[row, col]
 <h2 id="overview-13"><a class="header" href="#overview-13">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
-<p><img src="puzzle_08/./media/videos/720p30/puzzle_08_viz.gif" alt="Shared memory visualization" /></p>
+<img src="puzzle_08/./media/08.png" alt="Shared memory visualization" class="light-mode-img">
+<img src="puzzle_08/./media/08d.png" alt="Shared memory visualization" class="dark-mode-img">
 <h2 id="implementation-approaches-3"><a class="header" href="#implementation-approaches-3">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach-4"><a class="header" href="#-raw-memory-approach-4"><a href="puzzle_08/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to manually manage shared memory and synchronization.</p>

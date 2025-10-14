@@ -188,8 +188,9 @@
                         <h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
-<p><img src="./media/videos/720p30/puzzle_04_viz.gif" alt="2D Matrix Mapping" /></p>
+<p><strong>Note:</strong> <em>You have more threads than positions</em>.
+<img src="./media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
+<img src="./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img"></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
 <li>2D thread indexing</li>
@@ -204,9 +205,10 @@
 <p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
 <ul>
 <li><code>thread_idx.y</code> corresponds to the row index</li>
-<li><code>thread_idx.x</code> corresponds to the column index</li>
+<li><code>thread_idx.x</code> corresponds to the column index
+<img src="./media/04b.png" alt="2D thread indexing" class="light-mode-img">
+<img src="./media/04bd.png" alt="2D thread indexing" class="dark-mode-img"></li>
 </ul>
-<p><img src="./media/videos/720p30/thread_indexing_viz.gif" alt="2D thread indexing" /></p>
 <p>This convention aligns with:</p>
 <ol>
 <li>The standard mathematical notation where matrix positions are specified as (row, column)</li>
