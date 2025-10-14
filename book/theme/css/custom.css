@@ -563,6 +563,23 @@ img {
   margin: 1em auto;
 }
 
+/* Puzzle images that switch with theme - show/hide light/dark versions */
+img.light-mode-img {
+  display: block;
+}
+
+img.dark-mode-img {
+  display: none;
+}
+
+.ayu img.light-mode-img {
+  display: none;
+}
+
+.ayu img.dark-mode-img {
+  display: block;
+}
+
 /* Mojo-specific syntax highlighting for light mode */
 .language-mojo .kw,
 .language-mojo .hljs-keyword,

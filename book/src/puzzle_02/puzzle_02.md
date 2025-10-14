@@ -6,7 +6,8 @@ Implement a kernel that adds together each position of vector `a` and vector `b`
 
 **Note:** _You have 1 thread per position._
 
-![Zip](./media/videos/720p30/puzzle_02_viz.gif)
+<img src="./media/02.png" alt="Zip" class="light-mode-img">
+<img src="./media/02d.png" alt="Zip" class="dark-mode-img">
 
 ## Key concepts
 

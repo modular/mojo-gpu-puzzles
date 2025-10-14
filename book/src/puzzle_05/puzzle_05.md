@@ -6,7 +6,8 @@ Implement a kernel that broadcast adds vector `a` and vector `b` and stores it i
 
 **Note:** _You have more threads than positions._
 
-![Broadcast visualization](./media/videos/720p30/puzzle_05_viz.gif)
+<img src="./media/05.png" alt="Broadcast visualization" class="light-mode-img">
+<img src="./media/05d.png" alt="Broadcast visualization" class="dark-mode-img">
 
 ## Key concepts
 - Broadcasting vectors to matrix
