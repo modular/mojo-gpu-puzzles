@@ -131,7 +131,7 @@ if __name__ == "__main__":
     input_array = np.arange(INPUT_SIZE, dtype=np.float32)
     kernel_array = np.arange(KERNEL_SIZE, dtype=np.float32)
 
-    print("Puzzle 18: From MAX Graph to PyTorch Custom Ops")
+    print("Puzzle 20: From MAX Graph to PyTorch Custom Ops")
     print("=" * 60)
     print(f"Input array: {input_array}")
     print(f"Convolution kernel: {kernel_array}")
