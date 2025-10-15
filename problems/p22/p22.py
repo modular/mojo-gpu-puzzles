@@ -656,7 +656,7 @@ def test_backward_pass(name, target="auto", test_data=None):
 def run_comprehensive_test():
     """Run comprehensive test of all implementations."""
     print("=" * 60)
-    print("   Puzzle 20: Fused LayerNorm + Linear Comparison")
+    print("   Puzzle 22: Fused LayerNorm + Linear Comparison")
     print("   (Reference vs CPU vs GPU Unfused vs GPU Fused)")
     print("=" * 60)
 
@@ -714,7 +714,7 @@ def run_comprehensive_test():
     )
 
     if all_correct:
-        print("\nPuzzle 20 completed successfully!")
+        print("\nPuzzle 22 completed successfully!")
         print("\nWhat we achieved:")
         print("✅ CPU implementation: Fused LayerNorm + Linear")
         print(
@@ -738,7 +738,7 @@ def run_comprehensive_test():
 def run_fused_only_test():
     """Run only the fused kernel test."""
     print("=" * 50)
-    print("   Puzzle 20: Testing FUSED KERNEL ONLY")
+    print("   Puzzle 22: Testing FUSED KERNEL ONLY")
     print("=" * 50)
 
     test_data = create_test_data()
@@ -845,7 +845,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
 def run_algorithm_specific_test(algorithm):
     """Run correctness and benchmark tests for specific algorithm."""
     print("=" * 60)
-    print(f"   Puzzle 20: {algorithm.upper()} Algorithm Test & Benchmark")
+    print(f"   Puzzle 22: {algorithm.upper()} Algorithm Test & Benchmark")
     print("=" * 60)
 
     test_data = create_test_data()
@@ -1184,7 +1184,7 @@ def demonstrate_single_operation():
 
 def main():
     """Main function with command line argument handling."""
-    parser = argparse.ArgumentParser(description="Run tests for Puzzle 20")
+    parser = argparse.ArgumentParser(description="Run tests for Puzzle 22")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--fused",
