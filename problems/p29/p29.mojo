@@ -197,7 +197,7 @@ fn double_buffered_stencil_computation[
 
 
 def test_multi_stage_pipeline():
-    """Test Puzzle 26A: Multi-Stage Pipeline Coordination."""
+    """Test Puzzle 29A: Multi-Stage Pipeline Coordination."""
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
         inp = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
@@ -255,9 +255,9 @@ def test_multi_stage_pipeline():
 
 
 def test_double_buffered_stencil():
-    """Test Puzzle 26B: Double-Buffered Stencil Computation."""
+    """Test Puzzle 29B: Double-Buffered Stencil Computation."""
     with DeviceContext() as ctx:
-        # Test Puzzle 26B: Double-Buffered Stencil Computation
+        # Test Puzzle 29B: Double-Buffered Stencil Computation
         out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
         inp = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 
@@ -267,7 +267,7 @@ def test_double_buffered_stencil():
                 # Create a step pattern that will be smoothed by stencil
                 inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
 
-        # Create LayoutTensors for Puzzle 26B
+        # Create LayoutTensors for Puzzle 29B
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
         inp_tensor = LayoutTensor[mut=False, dtype, layout](inp.unsafe_ptr())
 
@@ -330,7 +330,7 @@ def test_double_buffered_stencil():
 
 def main():
     """Run GPU synchronization tests based on command line arguments."""
-    print("Puzzle 26: GPU Synchronization Primitives")
+    print("Puzzle 29: GPU Synchronization Primitives")
     print("=" * 50)
 
     # Parse command line arguments
@@ -347,7 +347,7 @@ def main():
         print("STAGE2_THREADS:", STAGE2_THREADS)
         print("BLUR_RADIUS:", BLUR_RADIUS)
         print("")
-        print("Testing Puzzle 26A: Multi-Stage Pipeline Coordination")
+        print("Testing Puzzle 29A: Multi-Stage Pipeline Coordination")
         print("=" * 60)
         test_multi_stage_pipeline()
     elif argv()[1] == "--double-buffer":
@@ -356,7 +356,7 @@ def main():
         print("STENCIL_ITERATIONS:", STENCIL_ITERATIONS)
         print("BUFFER_COUNT:", BUFFER_COUNT)
         print("")
-        print("Testing Puzzle 26B: Double-Buffered Stencil Computation")
+        print("Testing Puzzle 29B: Double-Buffered Stencil Computation")
         print("=" * 60)
         test_double_buffered_stencil()
     else:

@@ -154,7 +154,7 @@ def main():
         print("Usage: p25.mojo")
         return
 
-    print("Puzzle 25: Async Memory Operations & Copy Overlap")
+    print("Puzzle 28: Async Memory Operations & Copy Overlap")
     print("=" * 50)
     print("VECTOR_SIZE:", VECTOR_SIZE)
     print("CONV_TILE_SIZE:", CONV_TILE_SIZE)
