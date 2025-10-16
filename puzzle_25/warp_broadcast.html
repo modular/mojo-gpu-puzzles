@@ -257,7 +257,7 @@ result = use_collective_value(collective_value)
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -338,7 +338,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -445,7 +445,7 @@ Cycle 3: Individual computation with broadcast value
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -544,7 +544,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -681,7 +681,7 @@ Step 3: Conditional execution per lane
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -773,7 +773,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """

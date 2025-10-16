@@ -255,7 +255,7 @@ alias layout = Layout.row_major(SIZE)
 fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -345,7 +345,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 <pre><code class="language-mojo">fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -456,7 +456,7 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -559,7 +559,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 <pre><code class="language-mojo">fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """

@@ -6190,7 +6190,7 @@ alias conv_layout = Layout.row_major(CONV)
 fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -6249,7 +6249,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <pre><code class="language-mojo">fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -6432,7 +6432,7 @@ alias conv_2_layout = Layout.row_major(CONV_2)
 fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -6491,7 +6491,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <pre><code class="language-mojo">fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, conv_layout],
 ):
@@ -6758,7 +6758,7 @@ alias layout = Layout.row_major(SIZE)
 fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):
@@ -6816,7 +6816,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):
@@ -6989,7 +6989,7 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -7001,7 +7001,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[mut=False, dtype, layout], size: Int):
+](output: LayoutTensor[mut=True, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -7107,7 +7107,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -7172,7 +7172,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[mut=False, dtype, layout], size: Int):
+](output: LayoutTensor[mut=True, dtype, layout], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -7432,7 +7432,7 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -7491,7 +7491,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <pre><code class="language-mojo">fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout],
+    output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     size: Int,
 ):
@@ -7727,7 +7727,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn naive_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -7780,7 +7780,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <pre><code class="language-mojo">fn naive_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -8020,7 +8020,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -8075,7 +8075,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -8375,7 +8375,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -8483,7 +8483,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <pre><code class="language-mojo">fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -8689,7 +8689,7 @@ alias BLOCK_DIM_COUNT = 2
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -11723,7 +11723,7 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
 ):
@@ -12691,7 +12691,7 @@ where:</p>
     grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
     grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
     grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=False, dtype, grad_output_layout],
+    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
     ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
     ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
@@ -12884,7 +12884,7 @@ BACKWARD PASS Test Completed!
     grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
     grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
     grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=False, dtype, grad_output_layout],
+    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
     ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
     ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
@@ -16156,7 +16156,7 @@ alias layout = Layout.row_major(SIZE)
 fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16246,7 +16246,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 <pre><code class="language-mojo">fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16357,7 +16357,7 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16460,7 +16460,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 <pre><code class="language-mojo">fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16651,7 +16651,7 @@ result = use_collective_value(collective_value)
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16732,7 +16732,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16839,7 +16839,7 @@ Cycle 3: Individual computation with broadcast value
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -16938,7 +16938,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17075,7 +17075,7 @@ Step 3: Conditional execution per lane
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17167,7 +17167,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17580,7 +17580,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 <pre><code class="language-mojo">fn butterfly_pair_swap[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17682,7 +17682,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17789,7 +17789,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17899,7 +17899,7 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -17988,7 +17988,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 <pre><code class="language-mojo">fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -18190,7 +18190,7 @@ while offset &gt; 0:
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):
@@ -18253,7 +18253,7 @@ output[global_i] = scan_result
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -18346,7 +18346,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -18470,7 +18470,7 @@ Cycle 3: Store results
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
     pivot: Float32,
 ):
@@ -18566,7 +18566,7 @@ pivot: 5.0
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
     pivot: Float32,
 ):

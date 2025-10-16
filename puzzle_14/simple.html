@@ -215,7 +215,7 @@ alias layout = Layout.row_major(SIZE)
 fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):
@@ -273,7 +273,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     size: Int,
 ):

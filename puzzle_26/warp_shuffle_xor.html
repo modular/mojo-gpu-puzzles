@@ -310,7 +310,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 <pre><code class="language-mojo">fn butterfly_pair_swap[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -412,7 +412,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -519,7 +519,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -629,7 +629,7 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """
@@ -718,7 +718,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 <pre><code class="language-mojo">fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
 ):
     """

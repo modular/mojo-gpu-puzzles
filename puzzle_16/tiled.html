@@ -270,7 +270,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -378,7 +378,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <pre><code class="language-mojo">fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
@@ -584,7 +584,7 @@ alias BLOCK_DIM_COUNT = 2
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
 ):
