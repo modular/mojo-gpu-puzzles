@@ -26,7 +26,7 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
 ):
@@ -320,7 +320,7 @@ fn minimal_fused_kernel_backward[
     grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
     grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
     grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=False, dtype, grad_output_layout],
+    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
     input: LayoutTensor[mut=False, dtype, input_layout],
     ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
     ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
