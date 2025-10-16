@@ -37,7 +37,7 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=False, dtype, out_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
     b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
 ):
