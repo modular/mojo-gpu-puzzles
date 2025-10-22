@@ -71,7 +71,7 @@ def main():
             for i in range(conv):
                 b_host[i] = i
 
-        if len(argv()) != 2 or argv()[1] not in [
+        if len(argv()) < 2 or argv()[1] not in [
             "--simple",
             "--block-boundary",
         ]:
