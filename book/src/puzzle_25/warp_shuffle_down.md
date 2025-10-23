@@ -144,7 +144,7 @@ pixi run p25 --neighbor
   <div class="tab-content">
 
 ```bash
-pixi run p25 --neighbor -e amd
+pixi run -e amd p25 --neighbor
 ```
 
   </div>
@@ -357,7 +357,7 @@ pixi run p25 --average
   <div class="tab-content">
 
 ```bash
-pixi run p25 --average -e amd
+pixi run -e amd p25 --average
 ```
 
   </div>

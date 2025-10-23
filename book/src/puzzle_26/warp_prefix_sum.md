@@ -131,7 +131,7 @@ pixi run p26 --prefix-sum
   <div class="tab-content">
 
 ```bash
-pixi run p26 --prefix-sum -e amd
+pixi run -e amd p26 --prefix-sum
 ```
 
   </div>

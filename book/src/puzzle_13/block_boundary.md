@@ -62,14 +62,14 @@ pixi run p13 --block-boundary
   <div class="tab-content">
 
 ```bash
-pixi run p13 --block-boundary -e amd
+pixi run -e amd p13 --block-boundary
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p13 --block-boundary -e apple
+pixi run -e apple p13 --block-boundary
 ```
 
   </div>

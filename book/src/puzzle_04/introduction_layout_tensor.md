@@ -92,14 +92,14 @@ pixi run layout_tensor_intro
   <div class="tab-content">
 
 ```bash
-pixi run layout_tensor_intro -e amd
+pixi run -e amd layout_tensor_intro
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run layout_tensor_intro -e apple
+pixi run -e apple layout_tensor_intro
 ```
 
   </div>

@@ -60,14 +60,14 @@ pixi run p05
   <div class="tab-content">
 
 ```bash
-pixi run p05 -e amd
+pixi run -e amd p05
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p05 -e apple
+pixi run -e apple p05
 ```
 
   </div>

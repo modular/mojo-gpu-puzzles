@@ -132,7 +132,7 @@ pixi run p23 --tiled
   <div class="tab-content">
 
 ```bash
-pixi run p23 --tiled -e amd
+pixi run -e amd p23 --tiled
 ```
 
   </div>

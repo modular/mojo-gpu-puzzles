@@ -61,7 +61,7 @@ pixi run p24 --traditional
   <div class="tab-content">
 
 ```bash
-pixi run p24 --traditional -e amd
+pixi run -e amd p24 --traditional
 ```
 
   </div>

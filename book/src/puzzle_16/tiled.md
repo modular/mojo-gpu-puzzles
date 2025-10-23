@@ -162,7 +162,7 @@ pixi run p16 --tiled
   <div class="tab-content">
 
 ```bash
-pixi run p16 --tiled -e amd
+pixi run -e amd p16 --tiled
 ```
 
   </div>

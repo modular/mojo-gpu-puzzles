@@ -80,7 +80,7 @@ pixi run p27 --traditional-dot-product
   <div class="tab-content">
 
 ```bash
-pixi run p27 --traditional-dot-product -e amd
+pixi run -e amd p27 --traditional-dot-product
 ```
 
   </div>
@@ -121,7 +121,7 @@ pixi run p27 --block-sum-dot-product
   <div class="tab-content">
 
 ```bash
-pixi run p27 --block-sum-dot-product -e amd
+pixi run -e amd p27 --block-sum-dot-product
 ```
 
   </div>

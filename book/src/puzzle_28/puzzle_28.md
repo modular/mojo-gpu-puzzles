@@ -286,7 +286,7 @@ pixi run p28
   <div class="tab-content">
 
 ```bash
-pixi run p28 -e amd
+pixi run -e amd p28
 ```
 
   </div>

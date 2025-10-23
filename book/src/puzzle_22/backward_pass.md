@@ -133,7 +133,7 @@ pixi run p22 --backward
   <div class="tab-content">
 
 ```bash
-pixi run p22 --backward -e amd
+pixi run -e amd p22 --backward
 ```
 
   </div>

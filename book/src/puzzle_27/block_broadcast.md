@@ -194,7 +194,7 @@ pixi run p27 --normalize
   <div class="tab-content">
 
 ```bash
-pixi run p27 --normalize -e amd
+pixi run -e amd p27 --normalize
 ```
 
   </div>

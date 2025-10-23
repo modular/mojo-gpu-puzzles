@@ -174,7 +174,7 @@ pixi run p27 --histogram
   <div class="tab-content">
 
 ```bash
-pixi run p27 --histogram -e amd
+pixi run -e amd p27 --histogram
 ```
 
   </div>

@@ -26,7 +26,7 @@ pixi run p23 --benchmark
   <div class="tab-content">
 
 ```bash
-pixi run p23 --benchmark -e amd
+pixi run -e amd p23 --benchmark
 ```
 
   </div>

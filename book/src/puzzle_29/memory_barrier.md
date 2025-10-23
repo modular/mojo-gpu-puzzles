@@ -211,7 +211,7 @@ pixi run p29 --double-buffer
   <div class="tab-content">
 
 ```bash
-pixi run p29 --double-buffer -e amd
+pixi run -e amd p29 --double-buffer
 ```
 
   </div>

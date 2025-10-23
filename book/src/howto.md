@@ -136,7 +136,7 @@ pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
-pixi run p01 -e amd
+pixi run -e amd p01
 ```
 
   </div>
@@ -148,7 +148,7 @@ pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
-pixi run p01 -e apple
+pixi run -e apple p01
 ```
 
   </div>
@@ -191,9 +191,9 @@ uv run poe p01
 
 ```bash
 # Run puzzles (remember to include your platform with -e if needed)
-pixi run pXX             # NVIDIA (default) same as `pixi run pXX -e nvidia`
-pixi run pXX -e amd      # AMD GPU
-pixi run pXX -e apple    # Apple GPU
+pixi run pXX             # NVIDIA (default) same as `pixi run -e nvidia pXX`
+pixi run -e amd pXX      # AMD GPU
+pixi run -e apple pXX    # Apple GPU
 
 # Test solutions
 pixi run tests           # Test all solutions

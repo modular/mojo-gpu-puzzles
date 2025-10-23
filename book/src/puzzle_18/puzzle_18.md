@@ -5,6 +5,7 @@
 In this puzzle, we'll implement the softmax function as a custom MAX Graph operation. Softmax takes a vector of real numbers and normalizes it into a probability distribution.
 
 The softmax function works by performing two main steps:
+
 1. Exponentiation: It applies the exponential function to each element of the input vector. This ensures all values are positive and amplifies the differences between them. Larger input values result in significantly larger exponential outputs, while smaller or negative values result in outputs closer to zero.
 
 2. Normalization: It then divides each exponentiated value by the sum of all the exponentiated values. This normalization step ensures that the resulting values are a valid probability distribution, meaning they are all between 0 and 1 and their sum is exactly 1.
@@ -182,7 +183,7 @@ pixi run p18
   <div class="tab-content">
 
 ```bash
-pixi run p18 -e amd
+pixi run -e amd p18
 ```
 
   </div>

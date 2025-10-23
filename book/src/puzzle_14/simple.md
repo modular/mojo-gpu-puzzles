@@ -61,14 +61,14 @@ pixi run p14 --simple
   <div class="tab-content">
 
 ```bash
-pixi run p14 --simple -e amd
+pixi run -e amd p14 --simple
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p14 --simple -e apple
+pixi run -e apple p14 --simple
 ```
 
   </div>

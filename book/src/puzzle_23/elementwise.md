@@ -137,7 +137,7 @@ pixi run p23 --elementwise
   <div class="tab-content">
 
 ```bash
-pixi run p23 --elementwise -e amd
+pixi run -e amd p23 --elementwise
 ```
 
   </div>

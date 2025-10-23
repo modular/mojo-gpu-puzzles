@@ -226,7 +226,7 @@ pixi run p22 --unfused
   <div class="tab-content">
 
 ```bash
-pixi run p22 --unfused -e amd
+pixi run -e amd p22 --unfused
 ```
 
   </div>
@@ -467,7 +467,7 @@ pixi run p22 --fused
   <div class="tab-content">
 
 ```bash
-pixi run p22 --fused -e amd
+pixi run -e amd p22 --fused
 ```
 
   </div>

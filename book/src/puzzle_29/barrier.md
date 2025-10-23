@@ -165,7 +165,7 @@ pixi run p29 --multi-stage
   <div class="tab-content">
 
 ```bash
-pixi run p29 --multi-stage -e amd
+pixi run -e amd p29 --multi-stage
 ```
 
   </div>

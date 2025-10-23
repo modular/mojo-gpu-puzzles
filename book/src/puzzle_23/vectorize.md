@@ -101,7 +101,7 @@ pixi run p23 --manual-vectorized
   <div class="tab-content">
 
 ```bash
-pixi run p23 --manual-vectorized -e amd
+pixi run -e amd p23 --manual-vectorized
 ```
 
   </div>

@@ -72,14 +72,14 @@ pixi run p11_layout_tensor
   <div class="tab-content">
 
 ```bash
-pixi run p11_layout_tensor -e amd
+pixi run -e amd p11_layout_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p11_layout_tensor -e apple
+pixi run -e apple p11_layout_tensor
 ```
 
   </div>

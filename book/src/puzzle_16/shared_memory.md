@@ -78,7 +78,7 @@ pixi run p16 --single-block
   <div class="tab-content">
 
 ```bash
-pixi run p16 --single-block -e amd
+pixi run -e amd p16 --single-block
 ```
 
   </div>

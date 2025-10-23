@@ -138,7 +138,7 @@ pixi run p26 --pair-swap
   <div class="tab-content">
 
 ```bash
-pixi run p26 --pair-swap -e amd
+pixi run -e amd p26 --pair-swap
 ```
 
   </div>
@@ -353,7 +353,7 @@ pixi run p26 --parallel-max
   <div class="tab-content">
 
 ```bash
-pixi run p26 --parallel-max -e amd
+pixi run -e amd p26 --parallel-max
 ```
 
   </div>
@@ -545,7 +545,7 @@ pixi run p26 --conditional-max
   <div class="tab-content">
 
 ```bash
-pixi run p26 --conditional-max -e amd
+pixi run -e amd p26 --conditional-max
 ```
 
   </div>

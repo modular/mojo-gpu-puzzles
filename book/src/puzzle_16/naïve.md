@@ -69,7 +69,7 @@ pixi run p16 --naive
   <div class="tab-content">
 
 ```bash
-pixi run p16 --naive -e amd
+pixi run -e amd p16 --naive
 ```
 
   </div>

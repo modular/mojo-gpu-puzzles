@@ -168,7 +168,7 @@ pixi run p19
   <div class="tab-content">
 
 ```bash
-pixi run p19 -e amd
+pixi run -e amd p19
 ```
 
   </div>

@@ -156,7 +156,7 @@ pixi run p25 --broadcast-basic
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-basic -e amd
+pixi run -e amd p25 --broadcast-basic
 ```
 
   </div>
@@ -356,7 +356,7 @@ pixi run p25 --broadcast-conditional
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-conditional -e amd
+pixi run -e amd p25 --broadcast-conditional
 ```
 
   </div>
@@ -577,7 +577,7 @@ pixi run p25 --broadcast-shuffle-coordination
   <div class="tab-content">
 
 ```bash
-pixi run p25 --broadcast-shuffle-coordination -e amd
+pixi run -e amd p25 --broadcast-shuffle-coordination
 ```
 
   </div>

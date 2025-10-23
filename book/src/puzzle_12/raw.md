@@ -74,14 +74,14 @@ pixi run p12
   <div class="tab-content">
 
 ```bash
-pixi run p12 -e amd
+pixi run -e amd p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p12 -e apple
+pixi run -e apple p12
 ```
 
   </div>

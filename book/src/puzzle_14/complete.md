@@ -116,14 +116,14 @@ pixi run p14 --complete
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete -e amd
+pixi run -e amd p14 --complete
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run p14 --complete -e apple
+pixi run -e apple p14 --complete
 ```
 
   </div>
