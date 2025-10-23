@@ -44,6 +44,8 @@ fn conv1d_kernel[
         next_idx = global_i + TPB
         if next_idx < input_size:
             shared_a[TPB + local_i] = input[next_idx]
+        else:
+            shared_a[TPB + local_i] = 0
 
     if local_i < conv_size:
         shared_b[local_i] = kernel[local_i]
