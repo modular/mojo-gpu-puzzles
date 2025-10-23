@@ -484,7 +484,7 @@ pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
-pixi run p01 -e amd
+pixi run -e amd p01
 </code></pre>
   </div>
   <div class="tab-content">
@@ -493,7 +493,7 @@ pixi run gpu-specs
 
 # Run your first puzzle
 # This fails waiting for your implementation! follow the content
-pixi run p01 -e apple
+pixi run -e apple p01
 </code></pre>
   </div>
   <div class="tab-content">
@@ -527,9 +527,9 @@ uv run poe p01
   </div>
   <div class="tab-content">
 <pre><code class="language-bash"># Run puzzles (remember to include your platform with -e if needed)
-pixi run pXX             # NVIDIA (default) same as `pixi run pXX -e nvidia`
-pixi run pXX -e amd      # AMD GPU
-pixi run pXX -e apple    # Apple GPU
+pixi run pXX             # NVIDIA (default) same as `pixi run -e nvidia pXX`
+pixi run -e amd pXX      # AMD GPU
+pixi run -e apple pXX    # Apple GPU
 
 # Test solutions
 pixi run tests           # Test all solutions
@@ -798,11 +798,11 @@ fn add_10(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p01 -e amd
+<pre><code class="language-bash">pixi run -e amd p01
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p01 -e apple
+<pre><code class="language-bash">pixi run -e apple p01
 </code></pre>
   </div>
   <div class="tab-content">
@@ -933,11 +933,11 @@ fn add(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p02 -e amd
+<pre><code class="language-bash">pixi run -e amd p02
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p02 -e apple
+<pre><code class="language-bash">pixi run -e apple p02
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1051,11 +1051,11 @@ fn add_10_guard(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p03 -e amd
+<pre><code class="language-bash">pixi run -e amd p03
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p03 -e apple
+<pre><code class="language-bash">pixi run -e apple p03
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1216,11 +1216,11 @@ fn add_10_2d(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p04 -e amd
+<pre><code class="language-bash">pixi run -e amd p04
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p04 -e apple
+<pre><code class="language-bash">pixi run -e apple p04
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1349,11 +1349,11 @@ def main():
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run layout_tensor_intro -e amd
+<pre><code class="language-bash">pixi run -e amd layout_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run layout_tensor_intro -e apple
+<pre><code class="language-bash">pixi run -e apple layout_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1452,11 +1452,11 @@ fn add_10_2d(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p04_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p04_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p04_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p04_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1572,11 +1572,11 @@ fn broadcast_add(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05 -e amd
+<pre><code class="language-bash">pixi run -e amd p05
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05 -e apple
+<pre><code class="language-bash">pixi run -e apple p05
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1707,11 +1707,11 @@ fn broadcast_add[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p05_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p05_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -1836,11 +1836,11 @@ fn add_10_blocks(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p06 -e amd
+<pre><code class="language-bash">pixi run -e amd p06
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p06 -e apple
+<pre><code class="language-bash">pixi run -e apple p06
 </code></pre>
   </div>
   <div class="tab-content">
@@ -2032,11 +2032,11 @@ fn add_10_blocks_2d(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p07 -e amd
+<pre><code class="language-bash">pixi run -e amd p07
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p07 -e apple
+<pre><code class="language-bash">pixi run -e apple p07
 </code></pre>
   </div>
   <div class="tab-content">
@@ -2205,11 +2205,11 @@ fn add_10_blocks_2d[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p07_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p07_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p07_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p07_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -2417,11 +2417,11 @@ fn add_10_shared(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p08 -e amd
+<pre><code class="language-bash">pixi run -e amd p08
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p08 -e apple
+<pre><code class="language-bash">pixi run -e apple p08
 </code></pre>
   </div>
   <div class="tab-content">
@@ -2651,11 +2651,11 @@ fn add_10_shared_layout_tensor[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p08_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p08_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p08_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p08_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -5255,11 +5255,11 @@ fn pooling(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11 -e amd
+<pre><code class="language-bash">pixi run -e amd p11
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11 -e apple
+<pre><code class="language-bash">pixi run -e apple p11
 </code></pre>
   </div>
   <div class="tab-content">
@@ -5461,11 +5461,11 @@ fn pooling[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p11_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p11_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -5691,11 +5691,11 @@ fn dot_product(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12 -e amd
+<pre><code class="language-bash">pixi run -e amd p12
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12 -e apple
+<pre><code class="language-bash">pixi run -e apple p12
 </code></pre>
   </div>
   <div class="tab-content">
@@ -5939,11 +5939,11 @@ fn dot_product[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12_layout_tensor -e amd
+<pre><code class="language-bash">pixi run -e amd p12_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p12_layout_tensor -e apple
+<pre><code class="language-bash">pixi run -e apple p12_layout_tensor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -6227,11 +6227,11 @@ fn conv_1d_simple[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p13 --simple -e amd
+<pre><code class="language-bash">pixi run -e amd p13 --simple
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p13 --simple -e apple
+<pre><code class="language-bash">pixi run -e apple p13 --simple
 </code></pre>
   </div>
   <div class="tab-content">
@@ -6469,11 +6469,11 @@ fn conv_1d_block_boundary[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p13 --block-boundary -e amd
+<pre><code class="language-bash">pixi run -e amd p13 --block-boundary
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p13 --block-boundary -e apple
+<pre><code class="language-bash">pixi run -e apple p13 --block-boundary
 </code></pre>
   </div>
   <div class="tab-content">
@@ -6794,11 +6794,11 @@ fn prefix_sum_simple[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --simple -e amd
+<pre><code class="language-bash">pixi run -e amd p14 --simple
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --simple -e apple
+<pre><code class="language-bash">pixi run -e apple p14 --simple
 </code></pre>
   </div>
   <div class="tab-content">
@@ -7082,11 +7082,11 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --complete -e amd
+<pre><code class="language-bash">pixi run -e amd p14 --complete
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p14 --complete -e apple
+<pre><code class="language-bash">pixi run -e apple p14 --complete
 </code></pre>
   </div>
   <div class="tab-content">
@@ -7469,11 +7469,11 @@ fn axis_sum[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p15 -e amd
+<pre><code class="language-bash">pixi run -e amd p15
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p15 -e apple
+<pre><code class="language-bash">pixi run -e apple p15
 </code></pre>
   </div>
   <div class="tab-content">
@@ -7762,7 +7762,7 @@ fn naive_matmul[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p16 --naive -e amd
+<pre><code class="language-bash">pixi run -e amd p16 --naive
 </code></pre>
   </div>
   <div class="tab-content">
@@ -8057,7 +8057,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p16 --single-block -e amd
+<pre><code class="language-bash">pixi run -e amd p16 --single-block
 </code></pre>
   </div>
   <div class="tab-content">
@@ -8465,7 +8465,7 @@ Thread(1,2) in Block(1,0):
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p16 --tiled -e amd
+<pre><code class="language-bash">pixi run -e amd p16 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
@@ -9092,7 +9092,7 @@ struct Conv1DCustomOp:
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p17 -e amd
+<pre><code class="language-bash">pixi run -e amd p17
 </code></pre>
   </div>
   <div class="tab-content">
@@ -9508,7 +9508,7 @@ def softmax(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p18 -e amd
+<pre><code class="language-bash">pixi run -e amd p18
 </code></pre>
   </div>
   <div class="tab-content">
@@ -10151,7 +10151,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p19 -e amd
+<pre><code class="language-bash">pixi run -e amd p19
 </code></pre>
   </div>
   <div class="tab-content">
@@ -10578,7 +10578,7 @@ def conv1d_pytorch(
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p20 -e amd
+<pre><code class="language-bash">pixi run -e amd p20
 </code></pre>
   </div>
   <div class="tab-content">
@@ -11178,7 +11178,7 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p21 -e amd
+<pre><code class="language-bash">pixi run -e amd p21
 </code></pre>
   </div>
   <div class="tab-content">
@@ -11981,7 +11981,7 @@ fn matmul_idiomatic_tiled[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --unfused -e amd
+<pre><code class="language-bash">pixi run -e amd p22 --unfused
 </code></pre>
   </div>
   <div class="tab-content">
@@ -12328,7 +12328,7 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --fused -e amd
+<pre><code class="language-bash">pixi run -e amd p22 --fused
 </code></pre>
   </div>
   <div class="tab-content">
@@ -12800,7 +12800,7 @@ where:</p>
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p22 --backward -e amd
+<pre><code class="language-bash">pixi run -e amd p22 --backward
 </code></pre>
   </div>
   <div class="tab-content">
@@ -13457,7 +13457,7 @@ b_simd = b.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-de
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --elementwise -e amd
+<pre><code class="language-bash">pixi run -e amd p23 --elementwise
 </code></pre>
   </div>
   <div class="tab-content">
@@ -13778,7 +13778,7 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --tiled -e amd
+<pre><code class="language-bash">pixi run -e amd p23 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
@@ -14100,7 +14100,7 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --manual-vectorized -e amd
+<pre><code class="language-bash">pixi run -e amd p23 --manual-vectorized
 </code></pre>
   </div>
   <div class="tab-content">
@@ -14639,7 +14639,7 @@ output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p23 --benchmark -e amd
+<pre><code class="language-bash">pixi run -e amd p23 --benchmark
 </code></pre>
   </div>
   <div class="tab-content">
@@ -15434,7 +15434,7 @@ fn traditional_dot_product_p12_style[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p24 --traditional -e amd
+<pre><code class="language-bash">pixi run -e amd p24 --traditional
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16227,7 +16227,7 @@ fn neighbor_difference[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25 --neighbor -e amd
+<pre><code class="language-bash">pixi run -e amd p25 --neighbor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16441,7 +16441,7 @@ else:
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25 --average -e amd
+<pre><code class="language-bash">pixi run -e amd p25 --average
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16713,7 +16713,7 @@ shared_value = broadcast(shared_value)
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25 --broadcast-basic -e amd
+<pre><code class="language-bash">pixi run -e amd p25 --broadcast-basic
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16919,7 +16919,7 @@ else:
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25 --broadcast-conditional -e amd
+<pre><code class="language-bash">pixi run -e amd p25 --broadcast-conditional
 </code></pre>
   </div>
   <div class="tab-content">
@@ -17148,7 +17148,7 @@ result = combine(current_val, neighbor_val, shared_param)
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p25 --broadcast-shuffle-coordination -e amd
+<pre><code class="language-bash">pixi run -e amd p25 --broadcast-shuffle-coordination
 </code></pre>
   </div>
   <div class="tab-content">
@@ -17561,7 +17561,7 @@ output[global_i] = swapped_val
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --pair-swap -e amd
+<pre><code class="language-bash">pixi run -e amd p26 --pair-swap
 </code></pre>
   </div>
   <div class="tab-content">
@@ -17770,7 +17770,7 @@ Result: All lanes have global maximum = 7
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --parallel-max -e amd
+<pre><code class="language-bash">pixi run -e amd p26 --parallel-max
 </code></pre>
   </div>
   <div class="tab-content">
@@ -17969,7 +17969,7 @@ fn butterfly_conditional_max[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --conditional-max -e amd
+<pre><code class="language-bash">pixi run -e amd p26 --conditional-max
 </code></pre>
   </div>
   <div class="tab-content">
@@ -18327,7 +18327,7 @@ output[global_i] = scan_result
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p26 --prefix-sum -e amd
+<pre><code class="language-bash">pixi run -e amd p26 --prefix-sum
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19088,7 +19088,7 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p27 --traditional-dot-product -e amd
+<pre><code class="language-bash">pixi run -e amd p27 --traditional-dot-product
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19137,7 +19137,7 @@ fn block_sum_dot_product[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p27 --block-sum-dot-product -e amd
+<pre><code class="language-bash">pixi run -e amd p27 --block-sum-dot-product
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19518,7 +19518,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p27 --histogram -e amd
+<pre><code class="language-bash">pixi run -e amd p27 --histogram
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19938,7 +19938,7 @@ if local_i == 0:
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p27 --normalize -e amd
+<pre><code class="language-bash">pixi run -e amd p27 --normalize
 </code></pre>
   </div>
   <div class="tab-content">
@@ -20569,7 +20569,7 @@ fn async_copy_overlap_convolution[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p28 -e amd
+<pre><code class="language-bash">pixi run -e amd p28
 </code></pre>
   </div>
   <div class="tab-content">
@@ -21058,7 +21058,7 @@ fn multi_stage_image_blur_pipeline[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p29 --multi-stage -e amd
+<pre><code class="language-bash">pixi run -e amd p29 --multi-stage
 </code></pre>
   </div>
   <div class="tab-content">
@@ -21576,7 +21576,7 @@ fn double_buffered_stencil_computation[
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p29 --double-buffer -e amd
+<pre><code class="language-bash">pixi run -e amd p29 --double-buffer
 </code></pre>
   </div>
   <div class="tab-content">
