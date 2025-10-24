@@ -74,8 +74,7 @@
 html {
   scroll-padding-top: var(--modular-header-height);
   font-family: "Inter", sans-serif;
-  font-feature-settings: "dlig" 1, "cv05" 1, "ss03" 1, "ss07" 1, "ss08" 1,
-    "ss01" 0;
+  font-feature-settings: "dlig" 1, "cv05" 1, "ss03" 1, "ss07" 1, "ss08" 1, "ss01" 0;
   border-right: 1px solid var(--modular-border);
 
   -moz-osx-font-smoothing: grayscale;
@@ -812,8 +811,8 @@ mark {
   .page-header {
     border-bottom: none;
   }
-  .sidebar {
-    width: 100%;
+  :root {
+    --sidebar-width: 100vw;
   }
 }
 
