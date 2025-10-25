@@ -65,7 +65,7 @@ Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
 You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the examples.
 
-1. Visit [https://builds.modular.com/puzzles](https://builds.modular.com/puzzles)
+1. Visit [puzzles.modular.com](https://puzzles.modular.com)
 2. Clone this repository
 
    ```bash
