@@ -403,7 +403,7 @@ if thread_id &lt; data_size:
 <li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code> and if it fails you’d need to upgrade.</li>
 <li><strong>Xcode 16 or later</strong> (minimum required). Use <code>xcodebuild -version</code> to check.</li>
 </ul>
-<p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execite tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
+<p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execute tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
 <pre><code class="language-bash">xcodebuild -downloadComponent MetalToolchain
 </code></pre>
 <p>and then <code>xcrun -sdk macosx metal</code>, should give you the <code>no input files error</code>.</p>
