@@ -31,7 +31,7 @@ For `osx-arm64` users, you'll need:
 - **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos` and if it fails you'd need to upgrade.
 - **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
 
-If `xcrun -sdk macosx metal` outputs `cannot execite tool 'metal' due to missing Metal toolchain` proceed by running
+If `xcrun -sdk macosx metal` outputs `cannot execute tool 'metal' due to missing Metal toolchain` proceed by running
 
 ```bash
 xcodebuild -downloadComponent MetalToolchain
