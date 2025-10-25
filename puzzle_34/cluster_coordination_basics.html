@@ -223,7 +223,57 @@
 <li>Block 3: threads 0-255 → elements 768-1023</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">
+<pre><code class="language-mojo">fn cluster_coordination_basics[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[mut=True, dtype, out_layout],
+    input: LayoutTensor[mut=False, dtype, in_layout],
+    size: Int,
+):
+    """Real cluster coordination using SM90+ cluster APIs."""
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+
+    # Check what's happening with cluster ranks
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutableAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # FIX: Use block_idx.x for data distribution instead of cluster rank
+    # Each block should process different portions of the data
+    var data_scale = Float32(
+        block_id + 1
+    )  # Use block_idx instead of cluster rank
+
+    # Phase 1: Each block processes its portion
+    if global_i &lt; size:
+        shared_data[local_i] = input[global_i] * data_scale
+    else:
+        shared_data[local_i] = 0.0
+
+    barrier()
+
+    # Phase 2: Use cluster_arrive() for inter-block coordination
+    # Signal this block has completed processing
+
+    # FILL IN 1 line here
+
+    # Block-level aggregation (only thread 0)
+    if local_i == 0:
+        # FILL IN 4 line here
+        ...
+
+    # Wait for all blocks in cluster to complete
+
+    # FILL IN 1 line here
+
+
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a></p>
 <details>
@@ -301,7 +351,7 @@ Block coordination results:
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
-    # DIAGNOSTIC: Check what's happening with cluster ranks
+    # Check what's happening with cluster ranks
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
