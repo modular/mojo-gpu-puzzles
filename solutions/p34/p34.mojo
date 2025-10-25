@@ -5,7 +5,6 @@ from gpu.cluster import (
     cluster_sync,
     cluster_arrive,
     cluster_wait,
-    cluster_mask_base,
     elect_one_sync,
 )
 from gpu.memory import AddressSpace
@@ -33,7 +32,7 @@ fn cluster_coordination_basics[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
-    # DIAGNOSTIC: Check what's happening with cluster ranks
+    # Check what's happening with cluster ranks
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 

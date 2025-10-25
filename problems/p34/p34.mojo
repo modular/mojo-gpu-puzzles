@@ -5,7 +5,6 @@ from gpu.cluster import (
     cluster_sync,
     cluster_arrive,
     cluster_wait,
-    cluster_mask_base,
     elect_one_sync,
 )
 from gpu.memory import AddressSpace
@@ -21,7 +20,7 @@ alias in_layout = Layout.row_major(SIZE)
 alias out_layout = Layout.row_major(1)
 
 
-# ANCHOR: cluster_coordination_basics_solution
+# ANCHOR: cluster_coordination_basics
 fn cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
@@ -33,7 +32,7 @@ fn cluster_coordination_basics[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
 
-    # DIAGNOSTIC: Check what's happening with cluster ranks
+    # Check what's happening with cluster ranks
     my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
@@ -73,10 +72,10 @@ fn cluster_coordination_basics[
     # FILL IN 1 line here
 
 
-# ANCHOR_END: cluster_coordination_basics_solution
+# ANCHOR_END: cluster_coordination_basics
 
 
-# ANCHOR: cluster_collective_operations_solution
+# ANCHOR: cluster_collective_operations
 fn cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
@@ -92,10 +91,10 @@ fn cluster_collective_operations[
     # FILL IN (roughly 24 lines)
 
 
-# ANCHOR_END: cluster_collective_operations_solution
+# ANCHOR_END: cluster_collective_operations
 
 
-# ANCHOR: advanced_cluster_patterns_solution
+# ANCHOR: advanced_cluster_patterns
 fn advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
@@ -111,7 +110,7 @@ fn advanced_cluster_patterns[
     # FILL IN (roughly 26 lines)
 
 
-# ANCHOR_END: advanced_cluster_patterns_solution
+# ANCHOR_END: advanced_cluster_patterns
 
 
 def main():
