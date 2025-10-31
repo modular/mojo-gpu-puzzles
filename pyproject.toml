@@ -88,7 +88,7 @@ p17 = [
 ]
 
 p18-package = "mojo package problems/p18/op -o problems/p18/op.mojopkg"
-p18-test-kernels = { cmd = "mojo test problems/p18", deps = ["p18-package"] }
+p18-test-kernels = { cmd = "mojo run -I problems/p18 problems/p18/test/test_softmax.mojo", deps = ["p18-package"] }
 p18 = { cmd = "python problems/p18/p18.py", deps = ["p18-package"] }
 
 p19 = [
