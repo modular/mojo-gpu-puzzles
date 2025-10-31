@@ -122,7 +122,7 @@ rooflineviz = "cd book/src/puzzle_16 && python roofline_viz.py"
 p17 = "mojo package problems/p17/op -o problems/p17/op.mojopkg && python problems/p17/p17.py"
 
 p18-package = "mojo package problems/p18/op -o problems/p18/op.mojopkg"
-p18-test-kernels = { cmd = "mojo test problems/p18", depends-on = ["p18-package"] }
+p18-test-kernels = { cmd = "mojo run -I problems/p18 problems/p18/test/test_softmax.mojo", depends-on = ["p18-package"] }
 p18 = { cmd = "python problems/p18/p18.py", depends-on = ["p18-package"] }
 
 p19 = "mojo package problems/p19/op -o problems/p19/op.mojopkg && python problems/p19/p19.py"

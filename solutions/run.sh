@@ -435,14 +435,15 @@ test_puzzle_directory() {
 
     process_directory "${dir}" "$specific_flag"
 
-    # Check for test directory and run mojo test (only if no specific flag)
+    # Check for test directory and run mojo run (only if no specific flag)
     if [ -z "$specific_flag" ] && ([ -d "test" ] || [ -d "tests" ]); then
         echo ""
-        echo -e "  ${CYAN}${ARROW}${NC} Running ${YELLOW}mojo test${NC} in ${PURPLE}${dir}${NC}"
-        if capture_output "mojo test ." "$VERBOSE_MODE"; then
-            print_test_result "mojo test" "" "PASS"
+        command="mojo run -I . test/*.mojo"
+        echo -e "  ${CYAN}${ARROW}${NC} Running ${YELLOW}${command}${NC} in ${PURPLE}${dir}${NC}"
+        if capture_output "$command" "$VERBOSE_MODE"; then
+            print_test_result "$command" "" "PASS"
         else
-            print_test_result "mojo test" "" "FAIL"
+            print_test_result "$command" "" "FAIL"
         fi
     fi
 
