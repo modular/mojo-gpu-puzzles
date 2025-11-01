@@ -23,7 +23,7 @@ fn axis_sum[
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

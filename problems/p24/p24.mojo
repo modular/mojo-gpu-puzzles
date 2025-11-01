@@ -32,7 +32,7 @@ alias out_layout = Layout.row_major(1)
 
 
 fn traditional_dot_product_p12_style[
-    in_layout: Layout, out_layout: Layout, size: Int
+    in_layout: Layout, out_layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
@@ -73,7 +73,7 @@ fn traditional_dot_product_p12_style[
 
 # ANCHOR: simple_warp_kernel
 fn simple_warp_dot_product[
-    in_layout: Layout, out_layout: Layout, size: Int
+    in_layout: Layout, out_layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
@@ -91,9 +91,9 @@ fn functional_warp_dot_product[
     layout: Layout,
     out_layout: Layout,
     dtype: DType,
-    simd_width: Int,
-    rank: Int,
-    size: Int,
+    simd_width: UInt,
+    rank: UInt,
+    size: UInt,
 ](
     output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -103,7 +103,7 @@ fn functional_warp_dot_product[
     @parameter
     @always_inline
     fn compute_dot_product[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
+        simd_width: UInt, rank: UInt, alignment: UInt = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
         print("idx:", idx)
@@ -117,7 +117,7 @@ fn functional_warp_dot_product[
 
 
 fn expected_output[
-    dtype: DType, n_warps: Int
+    dtype: DType, n_warps: UInt
 ](
     expected: HostBuffer[dtype],
     a: DeviceBuffer[dtype],
@@ -135,7 +135,7 @@ fn expected_output[
 
 
 fn rand_int[
-    dtype: DType, size: Int
+    dtype: DType, size: UInt
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
         for i in range(size):
@@ -143,7 +143,7 @@ fn rand_int[
 
 
 fn check_result[
-    dtype: DType, size: Int, print_result: Bool = False
+    dtype: DType, size: UInt, print_result: Bool = False
 ](actual: DeviceBuffer[dtype], expected: HostBuffer[dtype]) raises:
     with actual.map_to_host() as actual_host:
         if print_result:
@@ -157,7 +157,7 @@ fn check_result[
 @parameter
 @always_inline
 fn benchmark_simple_warp_parameterized[
-    test_size: Int
+    test_size: UInt
 ](mut bencher: Bencher) raises:
     alias n_warps = test_size // WARP_SIZE
     alias in_layout = Layout.row_major(test_size)
@@ -206,7 +206,7 @@ fn benchmark_simple_warp_parameterized[
 @parameter
 @always_inline
 fn benchmark_functional_warp_parameterized[
-    test_size: Int
+    test_size: UInt
 ](mut bencher: Bencher) raises:
     alias n_warps = test_size // WARP_SIZE
     alias in_layout = Layout.row_major(test_size)

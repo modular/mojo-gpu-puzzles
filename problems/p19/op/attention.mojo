@@ -32,9 +32,9 @@ fn matmul_idiomatic_tiled[
     a_layout: Layout,
     b_layout: Layout,
     out_layout: Layout,
-    rows: Int,
-    cols: Int,
-    inner: Int,
+    rows: UInt,
+    cols: UInt,
+    inner: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
@@ -120,8 +120,8 @@ fn matmul_idiomatic_tiled[
 fn transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
-    rows: Int,
-    cols: Int,
+    rows: UInt,
+    cols: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
@@ -137,7 +137,7 @@ fn transpose_kernel[
 # Apply softmax to attention scores taken from p16
 fn softmax_gpu_kernel[
     layout: Layout,
-    input_size: Int,
+    input_size: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, layout],
@@ -209,8 +209,8 @@ fn attention_cpu_kernel[
     layout_k: Layout,
     layout_v: Layout,
     layout_out: Layout,
-    seq_len: Int,
-    d: Int,
+    seq_len: UInt,
+    d: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutableAnyOrigin],
@@ -259,8 +259,8 @@ struct AttentionCustomOp:
     @staticmethod
     fn execute[
         target: StaticString,  # "cpu" or "gpu"
-        seq_len: Int,
-        d: Int,
+        seq_len: UInt,
+        d: UInt,
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1],  # Output vector (d,)

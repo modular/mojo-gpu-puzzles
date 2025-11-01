@@ -19,7 +19,7 @@ fn add_10_shared_layout_tensor[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using LayoutTensor with explicit address_space
     shared = LayoutTensor[

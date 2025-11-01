@@ -34,7 +34,7 @@ fn multi_stage_image_blur_pipeline[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
 
@@ -93,7 +93,7 @@ fn double_buffered_stencil_computation[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
 

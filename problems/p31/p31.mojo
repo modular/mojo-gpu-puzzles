@@ -21,7 +21,7 @@ fn minimal_kernel[
     y: LayoutTensor[mut=True, dtype, layout],
     x: LayoutTensor[mut=False, dtype, layout],
     alpha: Float32,
-    size: Int,
+    size: UInt,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -41,7 +41,7 @@ fn sophisticated_kernel[
     y: LayoutTensor[mut=True, dtype, layout],
     x: LayoutTensor[mut=False, dtype, layout],
     alpha: Float32,
-    size: Int,
+    size: UInt,
 ):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
@@ -138,7 +138,7 @@ fn balanced_kernel[
     y: LayoutTensor[mut=True, dtype, layout],
     x: LayoutTensor[mut=False, dtype, layout],
     alpha: Float32,
-    size: Int,
+    size: UInt,
 ):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
@@ -191,7 +191,7 @@ fn balanced_kernel[
 
 @parameter
 @always_inline
-fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
+fn benchmark_minimal_parameterized[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn minimal_workflow(ctx: DeviceContext) raises:
@@ -224,7 +224,9 @@ fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
+fn benchmark_sophisticated_parameterized[
+    test_size: UInt
+](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn sophisticated_workflow(ctx: DeviceContext) raises:
@@ -257,7 +259,7 @@ fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
+fn benchmark_balanced_parameterized[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn balanced_workflow(ctx: DeviceContext) raises:

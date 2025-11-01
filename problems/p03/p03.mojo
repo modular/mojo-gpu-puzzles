@@ -13,7 +13,7 @@ alias dtype = DType.float32
 fn add_10_guard(
     output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
-    size: Int,
+    size: UInt,
 ):
     i = thread_idx.x
     # FILL ME IN (roughly 2 lines)

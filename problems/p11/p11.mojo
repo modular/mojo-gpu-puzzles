@@ -16,7 +16,7 @@ alias dtype = DType.float32
 fn pooling(
     output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,

@@ -13,10 +13,10 @@ fn embedding_kernel_coalesced[
     indices_layout: Layout,
     weights_layout: Layout,
     out_layout: Layout,
-    batch_size: Int,
-    seq_len: Int,
-    vocab_size: Int,
-    embed_dim: Int,
+    batch_size: UInt,
+    seq_len: UInt,
+    vocab_size: UInt,
+    embed_dim: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
@@ -57,10 +57,10 @@ fn embedding_kernel_2d[
     indices_layout: Layout,
     weights_layout: Layout,
     out_layout: Layout,
-    batch_size: Int,
-    seq_len: Int,
-    vocab_size: Int,
-    embed_dim: Int,
+    batch_size: UInt,
+    seq_len: UInt,
+    vocab_size: UInt,
+    embed_dim: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
@@ -108,10 +108,10 @@ struct EmbeddingCustomOp:
     @staticmethod
     fn execute[
         target: StaticString,
-        batch_size: Int,
-        seq_len: Int,
-        vocab_size: Int,
-        embed_dim: Int,
+        batch_size: UInt,
+        seq_len: UInt,
+        vocab_size: UInt,
+        embed_dim: UInt,
     ](
         output: OutputTensor[
             dtype = DType.float32, rank=3
@@ -194,10 +194,10 @@ struct Embedding2DCustomOp:
     @staticmethod
     fn execute[
         target: StaticString,
-        batch_size: Int,
-        seq_len: Int,
-        vocab_size: Int,
-        embed_dim: Int,
+        batch_size: UInt,
+        seq_len: UInt,
+        vocab_size: UInt,
+        embed_dim: UInt,
     ](
         output: OutputTensor[
             dtype = DType.float32, rank=3

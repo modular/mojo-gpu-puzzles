@@ -18,7 +18,7 @@ fn add_10_blocks_2d[
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
-    size: Int,
+    size: UInt,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x

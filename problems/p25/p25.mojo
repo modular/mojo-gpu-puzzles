@@ -14,7 +14,7 @@ alias layout = Layout.row_major(SIZE)
 
 
 fn neighbor_difference[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
@@ -40,7 +40,7 @@ alias layout_2 = Layout.row_major(SIZE_2)
 
 
 fn moving_average_3[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
@@ -61,7 +61,7 @@ fn moving_average_3[
 
 # ANCHOR: broadcast_shuffle_coordination
 fn broadcast_shuffle_coordination[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
@@ -84,7 +84,7 @@ fn broadcast_shuffle_coordination[
 
 # ANCHOR: basic_broadcast
 fn basic_broadcast[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
@@ -106,7 +106,7 @@ fn basic_broadcast[
 
 # ANCHOR: conditional_broadcast
 fn conditional_broadcast[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],

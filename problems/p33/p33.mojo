@@ -23,7 +23,7 @@ alias THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 
 # ANCHOR: matmul_idiomatic_tiled_solution
 fn matmul_idiomatic_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],

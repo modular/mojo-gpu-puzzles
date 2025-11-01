@@ -20,7 +20,7 @@ fn no_conflict_kernel[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     """Perfect shared memory access - no bank conflicts.
 
@@ -63,7 +63,7 @@ fn two_way_conflict_kernel[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     input: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
@@ -107,7 +107,7 @@ fn two_way_conflict_kernel[
 
 @parameter
 @always_inline
-fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
+fn benchmark_no_conflict[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
@@ -140,7 +140,7 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
+fn benchmark_two_way_conflict[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
