@@ -5,8 +5,9 @@ from testing import assert_equal
 
 # ANCHOR: add_10_guard
 alias SIZE = 4
+alias CHECKED_SIZE = 8
 alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (8, 1)
+alias THREADS_PER_BLOCK = 8
 alias dtype = DType.float32
 
 
@@ -24,7 +25,7 @@ fn add_10_guard(
 
 def main():
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](CHECKED_SIZE).enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
@@ -38,7 +39,9 @@ def main():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](
+            CHECKED_SIZE
+        ).enqueue_fill(0)
         ctx.synchronize()
 
         for i in range(SIZE):
@@ -47,5 +50,5 @@ def main():
         with out.map_to_host() as out_host:
             print("out:", out_host)
             print("expected:", expected)
-            for i in range(SIZE):
+            for i in range(CHECKED_SIZE):
                 assert_equal(out_host[i], expected[i])
