@@ -125,6 +125,7 @@ To test your solution, run the following command in your terminal:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -138,6 +139,13 @@ pixi run p23 --elementwise
 
 ```bash
 pixi run -e amd p23 --elementwise
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p23 --elementwise
 ```
 
   </div>
