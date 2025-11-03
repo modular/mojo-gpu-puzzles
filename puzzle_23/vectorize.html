@@ -284,6 +284,7 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -292,6 +293,10 @@ output.store[simd_width](global_start, 0, ret)  # Store to global tensor
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p23 --manual-vectorized
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p23 --manual-vectorized
 </code></pre>
   </div>
   <div class="tab-content">

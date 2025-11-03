@@ -296,6 +296,7 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -304,6 +305,10 @@ out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p23 --tiled
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p23 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
