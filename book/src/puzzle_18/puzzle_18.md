@@ -171,6 +171,7 @@ You can run the puzzle with:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -184,6 +185,13 @@ pixi run p18
 
 ```bash
 pixi run -e amd p18
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p18
 ```
 
   </div>
