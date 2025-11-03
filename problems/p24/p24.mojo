@@ -34,9 +34,9 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
@@ -75,9 +75,9 @@ fn traditional_dot_product_p12_style[
 fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
@@ -178,16 +178,15 @@ fn benchmark_simple_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, in_layout](b.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, out_layout](out.unsafe_ptr())
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
 
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        ctx.enqueue_function[
-            simple_warp_dot_product[in_layout, out_layout, test_size]
-        ](
+        alias kernel = simple_warp_dot_product[in_layout, out_layout, test_size]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -225,9 +224,9 @@ fn benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, in_layout](b.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, out_layout](out.unsafe_ptr())
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -267,15 +266,16 @@ fn benchmark_traditional_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, in_layout](b.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, out_layout](out.unsafe_ptr())
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
 
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        ctx.enqueue_function[
-            traditional_dot_product_p12_style[in_layout, out_layout, test_size]
+        ctx.enqueue_function_checked[
+            traditional_dot_product_p12_style[in_layout, out_layout, test_size],
+            traditional_dot_product_p12_style[in_layout, out_layout, test_size],
         ](
             out_tensor,
             a_tensor,
@@ -306,11 +306,9 @@ def main():
                 n_warps
             ).enqueue_fill(0)
 
-            out_tensor = LayoutTensor[mut=True, dtype, out_layout](
-                out.unsafe_ptr()
-            )
-            a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-            b_tensor = LayoutTensor[mut=False, dtype, in_layout](b.unsafe_ptr())
+            out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
@@ -318,10 +316,13 @@ def main():
                     b_host[i] = i
 
             if argv()[1] == "--traditional":
-                ctx.enqueue_function[
+                ctx.enqueue_function_checked[
                     traditional_dot_product_p12_style[
                         in_layout, out_layout, SIZE
-                    ]
+                    ],
+                    traditional_dot_product_p12_style[
+                        in_layout, out_layout, SIZE
+                    ],
                 ](
                     out_tensor,
                     a_tensor,
@@ -330,8 +331,9 @@ def main():
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--kernel":
-                ctx.enqueue_function[
-                    simple_warp_dot_product[in_layout, out_layout, SIZE]
+                ctx.enqueue_function_checked[
+                    simple_warp_dot_product[in_layout, out_layout, SIZE],
+                    simple_warp_dot_product[in_layout, out_layout, SIZE],
                 ](
                     out_tensor,
                     a_tensor,

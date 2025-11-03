@@ -37,9 +37,9 @@ def main():
                     a_host[i * SIZE + j] = i * SIZE + j
                     expected[i * SIZE + j] = a_host[i * SIZE + j] + 10
 
-        ctx.enqueue_function[add_10_2d](
-            out.unsafe_ptr(),
-            a.unsafe_ptr(),
+        ctx.enqueue_function_checked[add_10_2d, add_10_2d](
+            out,
+            a,
             SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,

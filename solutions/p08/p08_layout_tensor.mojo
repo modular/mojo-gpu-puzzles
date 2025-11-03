@@ -17,8 +17,8 @@ alias layout = Layout.row_major(SIZE)
 fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
@@ -53,10 +53,11 @@ def main():
         out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(1)
 
-        out_tensor = LayoutTensor[dtype, layout](out.unsafe_ptr())
-        a_tensor = LayoutTensor[dtype, layout](a.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
 
-        ctx.enqueue_function[add_10_shared_layout_tensor[layout]](
+        alias kernel = add_10_shared_layout_tensor[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
             SIZE,

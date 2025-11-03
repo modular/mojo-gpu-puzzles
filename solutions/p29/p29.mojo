@@ -28,8 +28,8 @@ alias BLUR_RADIUS = 2
 fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -136,8 +136,8 @@ alias BUFFER_COUNT = 2
 fn double_buffered_stencil_computation[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -284,10 +284,11 @@ def test_multi_stage_pipeline():
                 inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        inp_tensor = LayoutTensor[mut=False, dtype, layout](inp.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
+        inp_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](inp)
 
-        ctx.enqueue_function[multi_stage_image_blur_pipeline[layout]](
+        alias kernel = multi_stage_image_blur_pipeline[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
             SIZE,
@@ -343,10 +344,11 @@ def test_double_buffered_stencil():
                 inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 26B
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        inp_tensor = LayoutTensor[mut=False, dtype, layout](inp.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
+        inp_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](inp)
 
-        ctx.enqueue_function[double_buffered_stencil_computation[layout]](
+        alias kernel = double_buffered_stencil_computation[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
             SIZE,

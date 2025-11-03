@@ -16,8 +16,8 @@ fn add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
+    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutableAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -31,9 +31,7 @@ fn add_10_blocks_2d[
 def main():
     with DeviceContext() as ctx:
         out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
-        out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](
-            out_buf.unsafe_ptr()
-        )
+        out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out_buf)
 
         expected_buf = ctx.enqueue_create_host_buffer[dtype](
             SIZE * SIZE
@@ -48,11 +46,10 @@ def main():
                     a_host[k] = k
                     expected_buf[k] = k + 10
 
-        a_tensor = LayoutTensor[dtype, a_layout, MutableAnyOrigin](
-            a.unsafe_ptr()
-        )
+        a_tensor = LayoutTensor[dtype, a_layout, ImmutableAnyOrigin](a)
 
-        ctx.enqueue_function[add_10_blocks_2d[out_layout, a_layout]](
+        alias kernel = add_10_blocks_2d[out_layout, a_layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
             SIZE,
@@ -63,15 +60,13 @@ def main():
         ctx.synchronize()
 
         expected_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](
-            expected_buf.unsafe_ptr()
+            expected_buf
         )
 
         with out_buf.map_to_host() as out_buf_host:
             print(
                 "out:",
-                LayoutTensor[dtype, out_layout, MutableAnyOrigin](
-                    out_buf_host.unsafe_ptr()
-                ),
+                LayoutTensor[dtype, out_layout, MutableAnyOrigin](out_buf_host),
             )
             print("expected:", expected_tensor)
             for i in range(SIZE):

@@ -39,9 +39,9 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        ctx.enqueue_function[pooling](
-            out.unsafe_ptr(),
-            a.unsafe_ptr(),
+        ctx.enqueue_function_checked[pooling, pooling](
+            out,
+            a,
             SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
@@ -52,7 +52,7 @@ def main():
         ctx.synchronize()
 
         with a.map_to_host() as a_host:
-            ptr = a_host.unsafe_ptr()
+            ptr = a_host
             for i in range(SIZE):
                 s = Scalar[dtype](0)
                 for j in range(max(i - 2, 0), i + 1):

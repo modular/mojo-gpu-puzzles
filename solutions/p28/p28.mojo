@@ -24,9 +24,11 @@ alias layout_async = Layout.row_major(VECTOR_SIZE)
 fn async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
+    kernel: LayoutTensor[
+        dtype, Layout.row_major(KERNEL_SIZE), ImmutableAnyOrigin
+    ],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -111,19 +113,18 @@ def test_async_copy_overlap_convolution():
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Float32(i + 1)
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout_async](
-            input_buf.unsafe_ptr()
+        input_tensor = LayoutTensor[dtype, layout_async, ImmutableAnyOrigin](
+            input_buf
         )
-        output_tensor = LayoutTensor[mut=True, dtype, layout_async](
-            output_buf.unsafe_ptr()
+        output_tensor = LayoutTensor[dtype, layout_async, MutableAnyOrigin](
+            output_buf
         )
         kernel_tensor = LayoutTensor[
             mut=False, dtype, Layout.row_major(KERNEL_SIZE)
-        ](kernel_buf.unsafe_ptr())
+        ](kernel_buf)
 
-        ctx.enqueue_function[
-            async_copy_overlap_convolution[dtype, layout_async]
-        ](
+        alias kernel = async_copy_overlap_convolution[dtype, layout_async]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             kernel_tensor,

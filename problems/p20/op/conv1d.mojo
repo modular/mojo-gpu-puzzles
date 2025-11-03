@@ -19,9 +19,9 @@ fn conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=True, dtype, in_layout],
-    kernel: LayoutTensor[mut=True, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, MutableAnyOrigin],
+    kernel: LayoutTensor[dtype, conv_layout, MutableAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -113,11 +113,10 @@ struct Conv1DCustomOp:
                 ),
                 0,
             )
-            gpu_ctx.enqueue_function[
-                conv1d_kernel[
-                    in_layout, out_layout, conv_layout, input_size, conv_size
-                ]
-            ](
+            alias kernel = conv1d_kernel[
+                in_layout, out_layout, conv_layout, input_size, conv_size
+            ],
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 input_tensor,
                 kernel_tensor,
