@@ -244,7 +244,7 @@ def main():
             out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
 
             # Traditional approach: works perfectly when size == TPB
-            alias kernel = traditional_dot_product[in_layout, out_layout, TPB],
+            alias kernel = traditional_dot_product[in_layout, out_layout, TPB]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
