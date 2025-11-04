@@ -182,6 +182,7 @@ The beauty is that each block operation follows consistent patterns!
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -195,6 +196,13 @@ pixi run p27 --normalize
 
 ```bash
 pixi run -e amd p27 --normalize
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p27 --normalize
 ```
 
   </div>

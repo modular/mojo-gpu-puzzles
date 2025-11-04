@@ -81,8 +81,8 @@ if __name__ == "__main__":
     INPUT_SIZE = 15
     KERNEL_SIZE = 4
 
-    # Place the graph on a GPU if available, otherwise use CPU
-    device = CPU() if accelerator_count() == 0 else Accelerator()
+    # Place the graph on a GPU
+    device = Accelerator()
 
     # Set up an inference session for running the graph
     session = InferenceSession(devices=[device])

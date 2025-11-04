@@ -144,6 +144,7 @@ After broadcasting, all lanes have the same value and can use it in their indivi
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -157,6 +158,13 @@ pixi run p25 --broadcast-basic
 
 ```bash
 pixi run -e amd p25 --broadcast-basic
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p25 --broadcast-basic
 ```
 
   </div>

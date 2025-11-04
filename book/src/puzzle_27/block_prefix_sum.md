@@ -162,6 +162,7 @@ Remember the patterns from previous puzzles:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -175,6 +176,13 @@ pixi run p27 --histogram
 
 ```bash
 pixi run -e amd p27 --histogram
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p27 --histogram
 ```
 
   </div>
