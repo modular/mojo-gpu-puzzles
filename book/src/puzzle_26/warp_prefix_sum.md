@@ -119,6 +119,7 @@ The `prefix_sum` function may require specific data types for optimal performanc
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -132,6 +133,13 @@ pixi run p26 --prefix-sum
 
 ```bash
 pixi run -e amd p26 --prefix-sum
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p26 --prefix-sum
 ```
 
   </div>

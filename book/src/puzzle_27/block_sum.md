@@ -68,6 +68,7 @@ Before jumping to block-level operations, recall how [Puzzle 24](../puzzle_24/wa
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -81,6 +82,13 @@ pixi run p27 --traditional-dot-product
 
 ```bash
 pixi run -e amd p27 --traditional-dot-product
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p27 --traditional-dot-product
 ```
 
   </div>

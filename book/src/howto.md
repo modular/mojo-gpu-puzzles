@@ -256,7 +256,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | 15 - Matmul | ✅ | ✅ | ✅ | Basic GPU kernels |
 | 16 - Flashdot | ✅ | ✅ | ❌ | Advanced memory patterns |
 | **Part IV: MAX Graph** | | | | |
-| 17 - Custom Op | ✅ | ✅ | ❌ | MAX Graph integration |
+| 17 - Custom Op | ✅ | ✅ | ✅ | MAX Graph integration |
 | 18 - Softmax | ✅ | ✅ | ✅ | MAX Graph integration |
 | 19 - Attention | ✅ | ✅ | ❌ | MAX Graph integration |
 | **Part V: PyTorch Integration** | | | | |
@@ -266,11 +266,11 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | **Part VI: Functional Patterns** | | | | |
 | 23 - Functional | ✅ | ✅ | ✅ | Advanced Mojo patterns |
 | **Part VII: Warp Programming** | | | | |
-| 24 - Warp Sum | ✅ | ✅ | ❌ | Warp-level operations |
-| 25 - Warp Communication | ✅ | ✅ | ❌ | Warp-level operations |
-| 26 - Advanced Warp | ✅ | ✅ | ❌ | Warp-level operations |
+| 24 - Warp Sum | ✅ | ✅ | ✅ | Warp-level operations |
+| 25 - Warp Communication | ✅ | ✅ | ✅ | Warp-level operations |
+| 26 - Advanced Warp | ✅ | ✅ | ✅ | Warp-level operations |
 | **Part VIII: Block Programming** | | | | |
-| 27 - Block Operations | ✅ | ✅ | ❌ | Block-level patterns |
+| 27 - Block Operations | ✅ | ✅ | ✅ | Block-level patterns |
 | **Part IX: Memory Systems** | | | | |
 | 28 - Async Memory | ✅ | ✅ | ❌ | Advanced memory operations |
 | 29 - Barriers | ✅ | ✅ | ❌ | Advanced synchronization |
@@ -303,7 +303,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 
 **Apple GPUs (Basic Support)**
 
-- Only fundamental puzzles (1-8, 11-15, 18, 23) supported
+- A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are supported
 - Missing: All advanced features, debugging, profiling tools
 - Suitable for learning basic GPU programming patterns
 
