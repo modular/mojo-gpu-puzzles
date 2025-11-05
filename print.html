@@ -584,7 +584,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td>15 - Matmul</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
 <tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory patterns</td></tr>
 <tr><td><strong>Part IV: MAX Graph</strong></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
 <tr><td>18 - Softmax</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
 <tr><td>19 - Attention</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
 <tr><td><strong>Part V: PyTorch Integration</strong></td><td></td><td></td><td></td><td></td></tr>
@@ -594,11 +594,11 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td><strong>Part VI: Functional Patterns</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>23 - Functional</td><td>✅</td><td>✅</td><td>✅</td><td>Advanced Mojo patterns</td></tr>
 <tr><td><strong>Part VII: Warp Programming</strong></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>24 - Warp Sum</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
-<tr><td>25 - Warp Communication</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
-<tr><td>26 - Advanced Warp</td><td>✅</td><td>✅</td><td>❌</td><td>Warp-level operations</td></tr>
+<tr><td>24 - Warp Sum</td><td>✅</td><td>✅</td><td>✅</td><td>Warp-level operations</td></tr>
+<tr><td>25 - Warp Communication</td><td>✅</td><td>✅</td><td>✅</td><td>Warp-level operations</td></tr>
+<tr><td>26 - Advanced Warp</td><td>✅</td><td>✅</td><td>✅</td><td>Warp-level operations</td></tr>
 <tr><td><strong>Part VIII: Block Programming</strong></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>❌</td><td>Block-level patterns</td></tr>
+<tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>✅</td><td>Block-level patterns</td></tr>
 <tr><td><strong>Part IX: Memory Systems</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory operations</td></tr>
 <tr><td>29 - Barriers</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced synchronization</td></tr>
@@ -631,7 +631,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 </ul>
 <p><strong>Apple GPUs (Basic Support)</strong></p>
 <ul>
-<li>Only fundamental puzzles (1-8, 11-15, 18, 23) supported</li>
+<li>A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are supported</li>
 <li>Missing: All advanced features, debugging, profiling tools</li>
 <li>Suitable for learning basic GPU programming patterns</li>
 </ul>
@@ -9086,6 +9086,7 @@ struct Conv1DCustomOp:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -9094,6 +9095,10 @@ struct Conv1DCustomOp:
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p17
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p17
 </code></pre>
   </div>
   <div class="tab-content">
@@ -15453,6 +15458,7 @@ fn traditional_dot_product_p12_style[
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -15461,6 +15467,10 @@ fn traditional_dot_product_p12_style[
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p24 --traditional
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p24 --traditional
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16246,6 +16256,7 @@ fn neighbor_difference[
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -16254,6 +16265,10 @@ fn neighbor_difference[
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p25 --neighbor
 </code></pre>
   </div>
   <div class="tab-content">
@@ -16732,6 +16747,7 @@ shared_value = broadcast(shared_value)
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -16740,6 +16756,10 @@ shared_value = broadcast(shared_value)
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p25 --broadcast-basic
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p25 --broadcast-basic
 </code></pre>
   </div>
   <div class="tab-content">
@@ -17580,6 +17600,7 @@ output[global_i] = swapped_val
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -17588,6 +17609,10 @@ output[global_i] = swapped_val
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p26 --pair-swap
 </code></pre>
   </div>
   <div class="tab-content">
@@ -18346,6 +18371,7 @@ output[global_i] = scan_result
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -18354,6 +18380,10 @@ output[global_i] = scan_result
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p26 --prefix-sum
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p26 --prefix-sum
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19107,6 +19137,7 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -19115,6 +19146,10 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p27 --traditional-dot-product
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19537,6 +19572,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -19545,6 +19581,10 @@ if (thread_has_valid_element) and (my_bin == target_bin):
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p27 --histogram
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p27 --histogram
 </code></pre>
   </div>
   <div class="tab-content">
@@ -19957,6 +19997,7 @@ if local_i == 0:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -19965,6 +20006,10 @@ if local_i == 0:
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p27 --normalize
 </code></pre>
   </div>
   <div class="tab-content">
