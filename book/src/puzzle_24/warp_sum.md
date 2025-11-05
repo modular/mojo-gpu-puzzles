@@ -49,6 +49,7 @@ This works, but it's verbose, error-prone, and requires deep understanding of GP
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -62,6 +63,13 @@ pixi run p24 --traditional
 
 ```bash
 pixi run -e amd p24 --traditional
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p24 --traditional
 ```
 
   </div>
