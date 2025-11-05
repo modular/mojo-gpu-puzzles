@@ -68,7 +68,6 @@ fn conv1d_kernel[
 import compiler
 from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
 from gpu.host import DeviceBuffer
 
 

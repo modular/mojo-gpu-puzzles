@@ -1,4 +1,3 @@
-from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim
 from gpu.host import DeviceContext
 from testing import assert_equal
@@ -11,8 +10,8 @@ alias dtype = DType.float32
 
 # ANCHOR: add_10_blocks_2d_solution
 fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafeMutPointer[Scalar[dtype]],
+    a: UnsafeImmutPointer[Scalar[dtype]],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y

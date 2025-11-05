@@ -1,4 +1,3 @@
-from memory import UnsafePointer
 from gpu import thread_idx, block_dim, block_idx
 from gpu.host import DeviceContext
 from testing import assert_equal
@@ -11,9 +10,9 @@ alias dtype = DType.float32
 
 
 fn add(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafeMutPointer[Scalar[dtype]],
+    a: UnsafeImmutPointer[Scalar[dtype]],
+    b: UnsafeImmutPointer[Scalar[dtype]],
 ):
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)

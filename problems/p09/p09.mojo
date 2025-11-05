@@ -1,4 +1,3 @@
-from memory import UnsafePointer
 from gpu import thread_idx, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -17,7 +16,8 @@ alias ITER = 2
 
 # ANCHOR: first_crash
 fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafeMutPointer[Scalar[dtype]],
+    a: UnsafeImmutPointer[Scalar[dtype]]
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
@@ -105,6 +105,7 @@ def main():
         print()
 
         with DeviceContext() as ctx:
+            # TODO: fix this
             input_ptr = UnsafePointer[Scalar[dtype]]()
             result_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
 

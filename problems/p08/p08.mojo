@@ -1,4 +1,4 @@
-from memory import UnsafePointer, stack_allocation
+from memory import stack_allocation
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -14,8 +14,8 @@ alias dtype = DType.float32
 
 
 fn add_10_shared(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafeMutPointer[Scalar[dtype]],
+    a: UnsafeImmutPointer[Scalar[dtype]],
     size: Int,
 ):
     shared = stack_allocation[
