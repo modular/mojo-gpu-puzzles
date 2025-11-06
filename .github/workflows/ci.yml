@@ -22,7 +22,12 @@ permissions:
 
 jobs:
   test:
-    runs-on: github-gpu
+    strategy:
+      matrix:
+        include:
+          - machine: github-gpu
+          - machine: macos-15-xlarge
+    runs-on: ${{ matrix.machine }}
     steps:
       - uses: actions/checkout@v4
 
