@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: github-gpu
+    runs-on: [github-gpu, macos-15-xlarge]
     steps:
       - uses: actions/checkout@v4
 
