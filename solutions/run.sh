@@ -57,12 +57,12 @@ detect_gpu_platform() {
     fi
 
     # Check for Apple Silicon (macOS)
-    if [[ "$(uname -s)" == "Darwin"* ]]; then
-        if system_profiler SPDisplaysDataType 2>/dev/null | grep -q "Apple"; then
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        if [[ "$(uname -m)" == "arm64" ]]; then
             echo "apple"
             return
         fi
-    fi
+    fi    
 
     echo "unknown"
 }
