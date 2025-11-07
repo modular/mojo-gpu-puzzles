@@ -30,7 +30,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
    shared = stack_allocation[TPB, Scalar[dtype]]()
 
    # LayoutTensor approach
-   shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
    ```
 
 2. **Memory access**: Same syntax
@@ -168,7 +168,7 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
 
      ```txt
      # Clean LayoutTensor API with address_space
-     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - Natural indexing for both global and shared:

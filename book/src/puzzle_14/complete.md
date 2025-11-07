@@ -343,10 +343,10 @@ The two kernel phases execute sequentially **without any explicit synchronizatio
 
 ```mojo
 # Phase 1: Local prefix sums
-ctx.enqueue_function[prefix_sum_local_phase[...]](...)
+ctx.enqueue_function_checked[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
-ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function_checked[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
 ```
 
 **Key insight**: Mojo's `DeviceContext` uses a single execution stream (CUDA stream on NVIDIA GPUs, HIP stream on AMD ROCm GPUs), which guarantees that kernel launches execute in the exact order they are enqueued. No explicit synchronization is needed between kernels.

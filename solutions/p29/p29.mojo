@@ -28,8 +28,8 @@ alias BLUR_RADIUS = 2
 fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -43,13 +43,13 @@ fn multi_stage_image_blur_pipeline[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -136,8 +136,8 @@ alias BUFFER_COUNT = 2
 fn double_buffered_stencil_computation[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -150,13 +150,13 @@ fn double_buffered_stencil_computation[
     buffer_A = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     buffer_B = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -164,19 +164,19 @@ fn double_buffered_stencil_computation[
     init_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     iter_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     final_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -284,10 +284,11 @@ def test_multi_stage_pipeline():
                 inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        inp_tensor = LayoutTensor[mut=False, dtype, layout](inp.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
-        ctx.enqueue_function[multi_stage_image_blur_pipeline[layout]](
+        alias kernel = multi_stage_image_blur_pipeline[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
             SIZE,
@@ -343,10 +344,11 @@ def test_double_buffered_stencil():
                 inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 26B
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        inp_tensor = LayoutTensor[mut=False, dtype, layout](inp.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
-        ctx.enqueue_function[double_buffered_stencil_computation[layout]](
+        alias kernel = double_buffered_stencil_computation[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
             SIZE,

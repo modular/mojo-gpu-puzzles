@@ -49,7 +49,7 @@ fn sophisticated_kernel[
     shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 12),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
@@ -146,7 +146,7 @@ fn balanced_kernel[
     shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 4),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 

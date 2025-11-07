@@ -189,7 +189,7 @@ Let's break down how this works in the larger context:
    ```mojo
    gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # Zero output buffer
-   gpu_ctx.enqueue_function[...](...) # Schedule kernel
+   gpu_ctx.enqueue_function_checked[..., ...](...) # Schedule kernel
    ```
 
    - Device context manages GPU resources

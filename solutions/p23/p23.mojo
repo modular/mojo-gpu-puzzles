@@ -20,9 +20,9 @@ alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -60,9 +60,9 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -100,9 +100,9 @@ fn manual_vectorized_tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -150,9 +150,9 @@ fn vectorize_within_tiles_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -203,13 +203,13 @@ fn benchmark_elementwise_parameterized[
             a_host[i] = 2 * i
             b_host[i] = 2 * i + 1
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin](
+    a_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
         a.unsafe_ptr()
     )
-    b_tensor = LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin](
+    b_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
         b_buf.unsafe_ptr()
     )
-    out_tensor = LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin](
+    out_tensor = LayoutTensor[mut=True, dtype, layout, MutAnyOrigin](
         out.unsafe_ptr()
     )
 

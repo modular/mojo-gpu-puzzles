@@ -34,10 +34,10 @@ def main():
                 b_host[i] = i
                 expected[i] = a_host[i] + b_host[i]
 
-        ctx.enqueue_function[add](
-            out.unsafe_ptr(),
-            a.unsafe_ptr(),
-            b.unsafe_ptr(),
+        ctx.enqueue_function_checked[add, add](
+            out,
+            a,
+            b,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

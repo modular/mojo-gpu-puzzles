@@ -38,9 +38,9 @@ def main():
                     a_host[k] = k
                     expected[k] = k + 10
 
-        ctx.enqueue_function[add_10_blocks_2d](
-            out.unsafe_ptr(),
-            a.unsafe_ptr(),
+        ctx.enqueue_function_checked[add_10_blocks_2d, add_10_blocks_2d](
+            out,
+            a,
             SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,

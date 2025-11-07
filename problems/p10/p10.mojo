@@ -25,7 +25,7 @@ fn shared_memory_race(
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

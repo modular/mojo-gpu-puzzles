@@ -25,7 +25,7 @@ The key insight is how LayoutTensor simplifies memory management while maintaini
 
 Notes:
 
-- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
 - **Thread coordination**: Same synchronization patterns with `barrier()`

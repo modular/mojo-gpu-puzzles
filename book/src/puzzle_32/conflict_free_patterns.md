@@ -354,7 +354,7 @@ constant = shared[0]  # All threads read same address - hardware optimized
 **3. Padding techniques:**
 
 ```mojo
-shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
+shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
 ```
 
 **4. Access pattern analysis:**

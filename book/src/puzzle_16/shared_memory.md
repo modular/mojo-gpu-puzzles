@@ -131,8 +131,8 @@ Matrix B:                           b_shared: (similar layout)
 
    ```mojo
    # Create 2D shared memory tensors using LayoutTensor with address_space
-   a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-   b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
    ```
 
 2. **Thread Indexing**:
