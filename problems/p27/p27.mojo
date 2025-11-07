@@ -14,9 +14,9 @@ from math import floor
 fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
@@ -25,7 +25,7 @@ fn traditional_dot_product[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -66,9 +66,9 @@ alias dtype = DType.float32
 fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -89,9 +89,9 @@ alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
-    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -139,8 +139,8 @@ alias vector_layout = Layout.row_major(SIZE)
 fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -205,18 +205,13 @@ def main():
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-            b_tensor = LayoutTensor[mut=False, dtype, in_layout](
-                b_buf.unsafe_ptr()
-            )
-            out_tensor = LayoutTensor[mut=True, dtype, out_layout](
-                out.unsafe_ptr()
-            )
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b_buf)
+            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Traditional approach: works perfectly when size == TPB
-            ctx.enqueue_function[
-                traditional_dot_product[in_layout, out_layout, TPB]
-            ](
+            alias kernel = traditional_dot_product[in_layout, out_layout, TPB]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -249,18 +244,13 @@ def main():
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = LayoutTensor[mut=False, dtype, in_layout](a.unsafe_ptr())
-            b_tensor = LayoutTensor[mut=False, dtype, in_layout](
-                b_buf.unsafe_ptr()
-            )
-            out_tensor = LayoutTensor[mut=True, dtype, out_layout](
-                out.unsafe_ptr()
-            )
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b_buf)
+            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Block.sum(): Same result with dramatically simpler code!
-            ctx.enqueue_function[
-                block_sum_dot_product[in_layout, out_layout, TPB]
-            ](
+            alias kernel = block_sum_dot_product[in_layout, out_layout, TPB]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -306,8 +296,8 @@ def main():
             print("...")
             print()
 
-            input_tensor = LayoutTensor[mut=False, dtype, in_layout](
-                input_buf.unsafe_ptr()
+            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
+                input_buf
             )
 
             # Demonstrate histogram for each bin using block.prefix_sum()
@@ -330,19 +320,18 @@ def main():
                     1
                 ).enqueue_fill(0)
 
-                bin_tensor = LayoutTensor[mut=True, dtype, bin_layout](
-                    bin_data.unsafe_ptr()
+                bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
+                    bin_data
                 )
-                count_tensor = LayoutTensor[mut=True, DType.int32, out_layout](
-                    bin_count.unsafe_ptr()
-                )
+                count_tensor = LayoutTensor[
+                    DType.int32, out_layout, MutAnyOrigin
+                ](bin_count)
 
                 # Execute histogram kernel for this specific bin
-                ctx.enqueue_function[
-                    block_histogram_bin_extract[
-                        in_layout, bin_layout, out_layout, TPB
-                    ]
-                ](
+                alias kernel = block_histogram_bin_extract[
+                    in_layout, bin_layout, out_layout, TPB
+                ],
+                ctx.enqueue_function_checked[kernel, kernel](
                     input_tensor,
                     bin_tensor,
                     count_tensor,
@@ -405,17 +394,18 @@ def main():
             print("Mean value:", mean_value)
             print()
 
-            input_tensor = LayoutTensor[mut=False, dtype, in_layout](
-                input_buf.unsafe_ptr()
+            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
+                input_buf
             )
-            output_tensor = LayoutTensor[mut=True, dtype, vector_layout](
-                output_buf.unsafe_ptr()
+            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+                output_buf
             )
 
             # Execute vector normalization kernel
-            ctx.enqueue_function[
-                block_normalize_vector[in_layout, vector_layout, TPB]
-            ](
+            alias kernel = block_normalize_vector[
+                in_layout, vector_layout, TPB
+            ],
+            ctx.enqueue_function_checked[kernel, kernel](
                 input_tensor,
                 output_tensor,
                 SIZE,

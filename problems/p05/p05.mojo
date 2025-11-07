@@ -39,10 +39,10 @@ def main():
                 for j in range(SIZE):
                     expected[i * SIZE + j] = a_host[j] + b_host[i]
 
-        ctx.enqueue_function[broadcast_add](
-            out.unsafe_ptr(),
-            a.unsafe_ptr(),
-            b.unsafe_ptr(),
+        ctx.enqueue_function_checked[broadcast_add, broadcast_add](
+            out,
+            a,
+            b,
             SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,

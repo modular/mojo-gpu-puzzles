@@ -19,9 +19,9 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, in_layout],
-    b: LayoutTensor[mut=True, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -42,11 +42,12 @@ def main():
                 a_host[i] = i
                 b_host[i] = i
 
-        out_tensor = LayoutTensor[dtype, out_layout](out.unsafe_ptr())
-        a_tensor = LayoutTensor[dtype, layout](a.unsafe_ptr())
-        b_tensor = LayoutTensor[dtype, layout](b.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
-        ctx.enqueue_function[dot_product[layout, out_layout]](
+        alias kernel = dot_product[layout, out_layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
             b_tensor,

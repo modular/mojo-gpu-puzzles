@@ -19,9 +19,9 @@ fn embedding_kernel_coalesced[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -71,9 +71,9 @@ fn embedding_kernel_2d[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -171,20 +171,19 @@ struct EmbeddingCustomOp:
             blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
 
             # Compile and launch optimized kernel
-            compiled_kernel = gpu_ctx.compile_function[
-                embedding_kernel_coalesced[
-                    indices_layout,
-                    weights_layout,
-                    out_layout,
-                    batch_size,
-                    seq_len,
-                    vocab_size,
-                    embed_dim,
-                    output.dtype,
-                ]
-            ]()
+            alias kernel = embedding_kernel_coalesced[
+                indices_layout,
+                weights_layout,
+                out_layout,
+                batch_size,
+                seq_len,
+                vocab_size,
+                embed_dim,
+                output.dtype,
+            ]
+            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
 
-            gpu_ctx.enqueue_function(
+            gpu_ctx.enqueue_function_checked(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,

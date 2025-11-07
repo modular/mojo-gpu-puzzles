@@ -29,13 +29,13 @@ fn conv_1d_simple[
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE:
@@ -97,13 +97,13 @@ fn conv_1d_block_boundary[
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV_2),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE_2:

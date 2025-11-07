@@ -16,15 +16,15 @@ alias layout = Layout.row_major(SIZE)
 fn pooling[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -45,10 +45,10 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        out_tensor = LayoutTensor[dtype, layout](out.unsafe_ptr())
-        a_tensor = LayoutTensor[dtype, layout](a.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
 
-        ctx.enqueue_function[pooling[layout]](
+        ctx.enqueue_function_checked[pooling[layout], pooling[layout]](
             out_tensor,
             a_tensor,
             SIZE,
@@ -60,7 +60,7 @@ def main():
         ctx.synchronize()
 
         with a.map_to_host() as a_host:
-            ptr = a_host.unsafe_ptr()
+            ptr = a_host
             for i in range(SIZE):
                 s = Scalar[dtype](0)
                 for j in range(max(i - 2, 0), i + 1):
