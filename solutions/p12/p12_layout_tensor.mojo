@@ -17,15 +17,15 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -66,9 +66,9 @@ def main():
                 a_host[i] = i
                 b_host[i] = i
 
-        out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b)
+        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         alias kernel = dot_product[layout, out_layout]
         ctx.enqueue_function_checked[kernel, kernel](

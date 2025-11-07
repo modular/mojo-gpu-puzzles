@@ -16,9 +16,9 @@ alias layout = Layout.row_major(SIZE)
 fn kernel1[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -33,9 +33,9 @@ fn kernel1[
 fn kernel2[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
@@ -54,9 +54,9 @@ fn kernel2[
 fn kernel3[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
@@ -88,9 +88,9 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b_buf)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function_checked[kernel1[layout], kernel1[layout]](
             out_tensor,
@@ -123,9 +123,9 @@ fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b_buf)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function_checked[kernel2[layout], kernel2[layout]](
             out_tensor,
@@ -158,9 +158,9 @@ fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b_buf)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function_checked[kernel3[layout], kernel3[layout]](
             out_tensor,
@@ -192,9 +192,9 @@ def test_kernel1():
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function_checked[kernel1[layout], kernel1[layout]](
             out_tensor,
@@ -232,9 +232,9 @@ def test_kernel2():
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function_checked[kernel2[layout], kernel2[layout]](
             out_tensor,
@@ -275,9 +275,9 @@ def test_kernel3():
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutableAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutableAnyOrigin](b)
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function_checked[kernel3[layout], kernel3[layout]](
             out_tensor,

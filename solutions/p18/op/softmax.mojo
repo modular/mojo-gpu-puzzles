@@ -27,13 +27,13 @@ fn softmax_gpu_kernel[
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = thread_idx.x
@@ -93,8 +93,8 @@ fn softmax_cpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
@@ -131,10 +131,10 @@ struct SoftmaxCustomOp:
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
         var output_tensor = rebind[
-            LayoutTensor[dtype, layout, MutableAnyOrigin]
+            LayoutTensor[dtype, layout, MutAnyOrigin]
         ](output.to_layout_tensor())
         var input_tensor = rebind[
-            LayoutTensor[dtype, layout, MutableAnyOrigin]
+            LayoutTensor[dtype, layout, MutAnyOrigin]
         ](input.to_layout_tensor())
 
         @parameter

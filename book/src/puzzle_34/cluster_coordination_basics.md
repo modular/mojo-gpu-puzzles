@@ -65,7 +65,7 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 
 ### **Shared memory coordination**
 
-- Allocate shared memory using `LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` (see [shared memory basics from Puzzle 8](../puzzle_08/puzzle_08.md))
+- Allocate shared memory using `LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` (see [shared memory basics from Puzzle 8](../puzzle_08/puzzle_08.md))
 - Process input data scaled by `block_id + 1` to create distinct scaling per block
 - Use bounds checking when accessing input data (pattern from [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
 
@@ -153,7 +153,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 
 **Shared memory allocation and data processing:**
 
-- Each block allocates its own shared memory workspace: `LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- Each block allocates its own shared memory workspace: `LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Scaling strategy**: `data_scale = Float32(block_id + 1)` ensures each block processes data differently
   - Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0
 - **Bounds checking**: `if global_i < size:` prevents out-of-bounds memory access

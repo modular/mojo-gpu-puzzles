@@ -19,9 +19,9 @@ fn conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, MutableAnyOrigin],
-    kernel: LayoutTensor[dtype, conv_layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -29,13 +29,13 @@ fn conv1d_kernel[
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < input_size:

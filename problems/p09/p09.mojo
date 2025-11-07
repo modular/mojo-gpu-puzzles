@@ -60,7 +60,7 @@ fn collaborative_filter(
     shared_workspace = LayoutTensor[
         dtype,
         Layout.row_major(SIZE - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

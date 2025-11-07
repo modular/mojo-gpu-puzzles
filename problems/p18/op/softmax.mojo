@@ -38,8 +38,8 @@ fn softmax_cpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -66,10 +66,10 @@ struct SoftmaxCustomOp:
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
         var output_tensor = rebind[
-            LayoutTensor[dtype, layout, MutableAnyOrigin]
+            LayoutTensor[dtype, layout, MutAnyOrigin]
         ](output.to_layout_tensor())
         var input_tensor = rebind[
-            LayoutTensor[dtype, layout, MutableAnyOrigin]
+            LayoutTensor[dtype, layout, MutAnyOrigin]
         ](input.to_layout_tensor())
 
         @parameter

@@ -21,9 +21,9 @@ alias dtype = DType.float32
 fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -56,9 +56,9 @@ fn block_sum_dot_product[
 fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
@@ -67,7 +67,7 @@ fn traditional_dot_product[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -103,9 +103,9 @@ alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    bin_output: LayoutTensor[dtype, bin_layout, MutableAnyOrigin],
-    count_output: LayoutTensor[DType.int32, out_layout, MutableAnyOrigin],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -167,8 +167,8 @@ alias vector_layout = Layout.row_major(SIZE)  # For full vector output
 fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    output_data: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -239,9 +239,9 @@ def main():
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-            b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b_buf)
-            out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b_buf)
+            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Traditional approach: works perfectly when size == TPB
             alias kernel = traditional_dot_product[in_layout, out_layout, TPB]
@@ -278,9 +278,9 @@ def main():
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-            b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b_buf)
-            out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b_buf)
+            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Block.sum(): Same result with dramatically simpler code!
             alias kernel = block_sum_dot_product[in_layout, out_layout, TPB]
@@ -330,7 +330,7 @@ def main():
             print("...")
             print()
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](
+            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
 
@@ -354,11 +354,11 @@ def main():
                     1
                 ).enqueue_fill(0)
 
-                bin_tensor = LayoutTensor[dtype, bin_layout, MutableAnyOrigin](
+                bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
                     bin_data
                 )
                 count_tensor = LayoutTensor[
-                    DType.int32, out_layout, MutableAnyOrigin
+                    DType.int32, out_layout, MutAnyOrigin
                 ](bin_count)
 
                 # Execute histogram kernel for this specific bin
@@ -428,11 +428,11 @@ def main():
             print("Mean value:", mean_value)
             print()
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](
+            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
             output_tensor = LayoutTensor[
-                dtype, vector_layout, MutableAnyOrigin
+                dtype, vector_layout, MutAnyOrigin
             ](output_buf)
 
             # Execute vector normalization kernel

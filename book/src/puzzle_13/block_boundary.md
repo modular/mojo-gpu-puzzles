@@ -32,7 +32,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory
+1. Use `LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory
 2. Load main data: `shared_a[local_i] = a[global_i]`
 3. Load boundary: `if local_i < CONV_2 - 1` handle next block data
 4. Load kernel: `shared_b[local_i] = b[local_i]`
@@ -125,8 +125,8 @@ Size calculation:
 
    ```mojo
    # First: account for padding needed for convolution window
-   shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-   shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
    ```
 
    This allocation pattern ensures we have enough space for both the block's data and the overlap region.

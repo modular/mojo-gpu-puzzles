@@ -39,9 +39,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
     local_row = thread_idx.y
@@ -56,13 +56,13 @@ fn matmul_idiomatic_tiled[
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
@@ -126,14 +126,14 @@ fn transpose_kernel[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
     shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -172,13 +172,13 @@ fn softmax_gpu_kernel[
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = thread_idx.x
@@ -239,10 +239,10 @@ fn attention_cpu_kernel[
     d: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout_out, MutableAnyOrigin],
-    q: LayoutTensor[dtype, layout_q, MutableAnyOrigin],
-    k: LayoutTensor[dtype, layout_k, MutableAnyOrigin],
-    v: LayoutTensor[dtype, layout_v, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    q: LayoutTensor[dtype, layout_q, MutAnyOrigin],
+    k: LayoutTensor[dtype, layout_k, MutAnyOrigin],
+    v: LayoutTensor[dtype, layout_v, MutAnyOrigin],
 ):
     """CPU implementation of vector attention."""
     var scores = List[Float32]()
@@ -304,15 +304,15 @@ struct AttentionCustomOp:
 
         # Convert to layout tensors
         var output_tensor = rebind[
-            LayoutTensor[dtype, layout_out, MutableAnyOrigin]
+            LayoutTensor[dtype, layout_out, MutAnyOrigin]
         ](output.to_layout_tensor())
-        var q_tensor = rebind[LayoutTensor[dtype, layout_q, MutableAnyOrigin]](
+        var q_tensor = rebind[LayoutTensor[dtype, layout_q, MutAnyOrigin]](
             q.to_layout_tensor()
         )
-        var k_tensor = rebind[LayoutTensor[dtype, layout_k, MutableAnyOrigin]](
+        var k_tensor = rebind[LayoutTensor[dtype, layout_k, MutAnyOrigin]](
             k.to_layout_tensor()
         )
-        var v_tensor = rebind[LayoutTensor[dtype, layout_v, MutableAnyOrigin]](
+        var v_tensor = rebind[LayoutTensor[dtype, layout_v, MutAnyOrigin]](
             v.to_layout_tensor()
         )
 
@@ -367,7 +367,7 @@ struct AttentionCustomOp:
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutableAnyOrigin](
+            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutAnyOrigin](
                 k_t_buf.unsafe_ptr()
             )
 
@@ -390,7 +390,7 @@ struct AttentionCustomOp:
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
             scores_2d = LayoutTensor[
-                mut=True, dtype, layout_scores_2d, MutableAnyOrigin
+                mut=True, dtype, layout_scores_2d, MutAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
                 matmul_idiomatic_tiled[

@@ -19,9 +19,9 @@ fn embedding_kernel_coalesced[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutableAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -63,9 +63,9 @@ fn embedding_kernel_2d[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutableAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.

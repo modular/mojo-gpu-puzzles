@@ -34,9 +34,9 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
@@ -44,7 +44,7 @@ fn traditional_dot_product_p12_style[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -75,9 +75,9 @@ fn traditional_dot_product_p12_style[
 fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
@@ -95,9 +95,9 @@ fn functional_warp_dot_product[
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -178,9 +178,9 @@ fn benchmark_simple_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -224,9 +224,9 @@ fn benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -266,9 +266,9 @@ fn benchmark_traditional_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
+    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -306,9 +306,9 @@ def main():
                 n_warps
             ).enqueue_fill(0)
 
-            out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out)
-            a_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](a)
-            b_tensor = LayoutTensor[dtype, in_layout, ImmutableAnyOrigin](b)
+            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):

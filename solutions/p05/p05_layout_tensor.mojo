@@ -18,9 +18,9 @@ fn broadcast_add[
     a_layout: Layout,
     b_layout: Layout,
 ](
-    output: LayoutTensor[dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, ImmutableAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, ImmutableAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -35,13 +35,13 @@ fn broadcast_add[
 def main():
     with DeviceContext() as ctx:
         out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
-        out_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](out_buf)
+        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf)
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
         expected_buf = ctx.enqueue_create_host_buffer[dtype](
             SIZE * SIZE
         ).enqueue_fill(0)
-        expected_tensor = LayoutTensor[dtype, out_layout, MutableAnyOrigin](
+        expected_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
             expected_buf
         )
 
@@ -56,8 +56,8 @@ def main():
                 for j in range(SIZE):
                     expected_tensor[i, j] = a_host[j] + b_host[i]
 
-        a_tensor = LayoutTensor[dtype, a_layout, ImmutableAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, b_layout, ImmutableAnyOrigin](b)
+        a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
+        b_tensor = LayoutTensor[dtype, b_layout, ImmutAnyOrigin](b)
 
         alias kernel = broadcast_add[out_layout, a_layout, b_layout]
         ctx.enqueue_function_checked[kernel, kernel](

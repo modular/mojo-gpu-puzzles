@@ -24,7 +24,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 Notes:
 
-- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Window access**: Natural indexing for 3-element windows
 - **Edge handling**: Special cases for first two positions
 - **Memory pattern**: One shared memory load per thread
@@ -116,7 +116,7 @@ The solution implements a sliding window sum using LayoutTensor with these key s
    - LayoutTensor creates block-local storage with address_space:
 
      ```txt
-     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - Each thread loads one element:
