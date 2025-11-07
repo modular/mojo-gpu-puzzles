@@ -20,7 +20,7 @@ fn prefix_sum_simple[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -43,7 +43,7 @@ fn prefix_sum_local_phase[
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x

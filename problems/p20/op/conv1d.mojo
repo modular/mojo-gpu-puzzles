@@ -15,8 +15,8 @@ fn conv1d_kernel[
     in_layout: Layout,
     out_layout: Layout,
     conv_layout: Layout,
-    input_size: Int,
-    conv_size: Int,
+    input_size: UInt,
+    conv_size: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],

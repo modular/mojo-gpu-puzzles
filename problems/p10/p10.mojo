@@ -17,7 +17,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn shared_memory_race(
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -45,7 +45,7 @@ fn shared_memory_race(
 fn add_10_2d(
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

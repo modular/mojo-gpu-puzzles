@@ -22,11 +22,11 @@ alias out_layout = Layout.row_major(1)
 
 # ANCHOR: cluster_coordination_basics
 fn cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    in_layout: Layout, out_layout: Layout, tpb: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     input: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -77,12 +77,12 @@ fn cluster_coordination_basics[
 
 # ANCHOR: cluster_collective_operations
 fn cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    in_layout: Layout, out_layout: Layout, tpb: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     input: LayoutTensor[mut=False, dtype, in_layout],
     temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
-    size: Int,
+    size: UInt,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -96,11 +96,11 @@ fn cluster_collective_operations[
 
 # ANCHOR: advanced_cluster_patterns
 fn advanced_cluster_patterns[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    in_layout: Layout, out_layout: Layout, tpb: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     input: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """

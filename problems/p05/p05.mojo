@@ -14,7 +14,7 @@ fn broadcast_add(
     output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

@@ -19,7 +19,7 @@ fn kernel1[
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
@@ -36,7 +36,7 @@ fn kernel2[
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
     stride = 512
@@ -57,7 +57,7 @@ fn kernel3[
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=False, dtype, layout],
     b: LayoutTensor[mut=False, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
     total_threads = (SIZE // 1024) * 1024
@@ -74,7 +74,7 @@ fn kernel3[
 
 @parameter
 @always_inline
-fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
+fn benchmark_kernel1_parameterized[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel1_workflow(ctx: DeviceContext) raises:
@@ -109,7 +109,7 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
+fn benchmark_kernel2_parameterized[test_size: UInt](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel2_workflow(ctx: DeviceContext) raises:

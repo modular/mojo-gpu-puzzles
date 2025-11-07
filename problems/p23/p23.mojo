@@ -18,7 +18,7 @@ alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 
 
 fn elementwise_add[
-    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    layout: Layout, dtype: DType, simd_width: UInt, rank: UInt, size: UInt
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -47,10 +47,10 @@ alias TILE_SIZE = 32
 fn tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
-    simd_width: Int,
-    rank: Int,
-    size: Int,
-    tile_size: Int,
+    simd_width: UInt,
+    rank: UInt,
+    size: UInt,
+    tile_size: UInt,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -60,7 +60,7 @@ fn tiled_elementwise_add[
     @parameter
     @always_inline
     fn process_tiles[
-        simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
+        simd_width: UInt, rank: UInt, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
@@ -81,11 +81,11 @@ fn tiled_elementwise_add[
 fn manual_vectorized_tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
-    simd_width: Int,
-    num_threads_per_tile: Int,
-    rank: Int,
-    size: Int,
-    tile_size: Int,
+    simd_width: UInt,
+    num_threads_per_tile: UInt,
+    rank: UInt,
+    size: UInt,
+    tile_size: UInt,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -98,7 +98,9 @@ fn manual_vectorized_tiled_elementwise_add[
     @parameter
     @always_inline
     fn process_manual_vectorized_tiles[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
+        num_threads_per_tile: UInt,
+        rank: UInt,
+        alignment: UInt = align_of[dtype](),
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
@@ -122,11 +124,11 @@ fn manual_vectorized_tiled_elementwise_add[
 fn vectorize_within_tiles_elementwise_add[
     layout: Layout,
     dtype: DType,
-    simd_width: Int,
-    num_threads_per_tile: Int,
-    rank: Int,
-    size: Int,
-    tile_size: Int,
+    simd_width: UInt,
+    num_threads_per_tile: UInt,
+    rank: UInt,
+    size: UInt,
+    tile_size: UInt,
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
     a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
@@ -137,7 +139,9 @@ fn vectorize_within_tiles_elementwise_add[
     @parameter
     @always_inline
     fn process_tile_with_vectorize[
-        num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
+        num_threads_per_tile: UInt,
+        rank: UInt,
+        alignment: UInt = align_of[dtype](),
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         tile_start = tile_id * tile_size
@@ -168,7 +172,7 @@ fn vectorize_within_tiles_elementwise_add[
 @parameter
 @always_inline
 fn benchmark_elementwise_parameterized[
-    test_size: Int, tile_size: Int
+    test_size: UInt, tile_size: UInt
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
@@ -206,7 +210,7 @@ fn benchmark_elementwise_parameterized[
 @parameter
 @always_inline
 fn benchmark_tiled_parameterized[
-    test_size: Int, tile_size: Int
+    test_size: UInt, tile_size: UInt
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
@@ -238,7 +242,7 @@ fn benchmark_tiled_parameterized[
 @parameter
 @always_inline
 fn benchmark_manual_vectorized_parameterized[
-    test_size: Int, tile_size: Int
+    test_size: UInt, tile_size: UInt
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
@@ -270,7 +274,7 @@ fn benchmark_manual_vectorized_parameterized[
 @parameter
 @always_inline
 fn benchmark_vectorized_parameterized[
-    test_size: Int, tile_size: Int
+    test_size: UInt, tile_size: UInt
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)

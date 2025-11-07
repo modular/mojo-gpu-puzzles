@@ -18,7 +18,7 @@ fn pooling[
 ](
     output: LayoutTensor[mut=True, dtype, layout],
     a: LayoutTensor[mut=True, dtype, layout],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[

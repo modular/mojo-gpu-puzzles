@@ -21,7 +21,7 @@ fn broadcast_add[
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, a_layout],
     b: LayoutTensor[mut=False, dtype, b_layout],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

@@ -19,7 +19,7 @@ alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 fn softmax_gpu_kernel[
     layout: Layout,
-    input_size: Int,
+    input_size: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[mut=True, dtype, layout],
@@ -35,7 +35,7 @@ fn softmax_gpu_kernel[
 # ANCHOR: softmax_cpu_kernel
 fn softmax_cpu_kernel[
     layout: Layout,
-    input_size: Int,
+    input_size: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutableAnyOrigin],
@@ -57,7 +57,7 @@ struct SoftmaxCustomOp:
     @staticmethod
     fn execute[
         target: StaticString,  # "cpu" or "gpu"
-        input_size: Int,
+        input_size: UInt,
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1],

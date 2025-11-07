@@ -12,12 +12,12 @@ from math import floor
 
 # ANCHOR: traditional_dot_product
 fn traditional_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    in_layout: Layout, out_layout: Layout, tpb: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
@@ -64,12 +64,12 @@ alias dtype = DType.float32
 
 
 fn block_sum_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    in_layout: Layout, out_layout: Layout, tpb: UInt
 ](
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=False, dtype, in_layout],
     b: LayoutTensor[mut=False, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
@@ -92,9 +92,9 @@ fn block_histogram_bin_extract[
     input_data: LayoutTensor[mut=False, dtype, in_layout],
     bin_output: LayoutTensor[mut=True, dtype, bin_layout],
     count_output: LayoutTensor[mut=True, DType.int32, out_layout],
-    size: Int,
-    target_bin: Int,
-    num_bins: Int,
+    size: UInt,
+    target_bin: UInt,
+    num_bins: UInt,
 ):
     """Parallel histogram using block.prefix_sum() for bin extraction.
 

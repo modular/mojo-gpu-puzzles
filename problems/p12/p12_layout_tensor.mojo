@@ -22,7 +22,7 @@ fn dot_product[
     output: LayoutTensor[mut=True, dtype, out_layout],
     a: LayoutTensor[mut=True, dtype, in_layout],
     b: LayoutTensor[mut=True, dtype, in_layout],
-    size: Int,
+    size: UInt,
 ):
     # FILL ME IN (roughly 13 lines)
     ...

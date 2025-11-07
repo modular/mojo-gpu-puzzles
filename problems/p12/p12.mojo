@@ -17,7 +17,7 @@ fn dot_product(
     output: UnsafePointer[Scalar[dtype]],
     a: UnsafePointer[Scalar[dtype]],
     b: UnsafePointer[Scalar[dtype]],
-    size: Int,
+    size: UInt,
 ):
     # FILL ME IN (roughly 13 lines)
     ...
