@@ -130,12 +130,12 @@ struct SoftmaxCustomOp:
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
-        var output_tensor = rebind[
-            LayoutTensor[dtype, layout, MutAnyOrigin]
-        ](output.to_layout_tensor())
-        var input_tensor = rebind[
-            LayoutTensor[dtype, layout, MutAnyOrigin]
-        ](input.to_layout_tensor())
+        var output_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
+            output.to_layout_tensor()
+        )
+        var input_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
+            input.to_layout_tensor()
+        )
 
         @parameter
         if target == "gpu":

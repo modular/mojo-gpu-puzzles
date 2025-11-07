@@ -431,9 +431,9 @@ def main():
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[
-                dtype, vector_layout, MutAnyOrigin
-            ](output_buf)
+            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+                output_buf
+            )
 
             # Execute vector normalization kernel
             alias kernel = block_normalize_vector[in_layout, vector_layout, TPB]

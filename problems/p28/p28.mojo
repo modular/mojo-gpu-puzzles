@@ -25,9 +25,7 @@ fn async_copy_overlap_convolution[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[
-        dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin
-    ],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 

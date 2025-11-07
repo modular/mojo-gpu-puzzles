@@ -28,9 +28,9 @@ fn add_10_2d(
 def main():
     with DeviceContext() as ctx:
         out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            out_buf
-        ).reshape[layout]()
+        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf).reshape[
+            layout
+        ]()
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
         expected = ctx.enqueue_create_host_buffer[dtype](
