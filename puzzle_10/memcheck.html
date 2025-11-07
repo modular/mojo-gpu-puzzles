@@ -325,8 +325,8 @@ Running memory bug example (bounds checking issue)...
 <h3 id="the-solution"><a class="header" href="#the-solution">The solution</a></h3>
 <p>As we saw in <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>, we need to bound-check as follows:</p>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y

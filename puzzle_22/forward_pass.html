@@ -363,9 +363,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
@@ -380,13 +380,13 @@ fn matmul_idiomatic_tiled[
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
@@ -452,8 +452,8 @@ fn matmul_idiomatic_tiled[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -461,7 +461,7 @@ fn matmul_idiomatic_tiled[
     shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

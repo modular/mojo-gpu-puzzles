@@ -343,7 +343,7 @@ Error: 0.0
     shared_mem = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_mem[local_i] = my_value

@@ -218,9 +218,9 @@ alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -336,9 +336,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter

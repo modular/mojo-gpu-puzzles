@@ -224,7 +224,7 @@
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; size:

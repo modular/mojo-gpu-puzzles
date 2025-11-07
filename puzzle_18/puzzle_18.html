@@ -294,8 +294,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -448,13 +448,13 @@ Sum of all probabilities on GPU: 1.0
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = thread_idx.x
@@ -527,8 +527,8 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>
@@ -637,8 +637,8 @@ if global_i &lt; input_size:
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):

@@ -236,9 +236,9 @@ for element in data:
 fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
-    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -408,9 +408,9 @@ Bin 7 extracted elements:
 <pre><code class="language-mojo">fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
-    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,

@@ -214,9 +214,9 @@
 <pre><code class="language-mojo">fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
@@ -225,7 +225,7 @@
     shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -267,9 +267,9 @@
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -334,9 +334,9 @@ alias dtype = DType.float32
 fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -413,9 +413,9 @@ Just like warp.sum() but for the entire block
 <pre><code class="language-mojo">fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!

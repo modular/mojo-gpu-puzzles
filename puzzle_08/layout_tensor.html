@@ -211,7 +211,7 @@
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
-shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -248,15 +248,15 @@ alias layout = Layout.row_major(SIZE)
 fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using LayoutTensor with explicit address_space
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -321,15 +321,15 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -398,7 +398,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <li>
 <p>Shared memory allocation:</p>
 <pre><code class="language-txt"># Clean LayoutTensor API with address_space
-shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>

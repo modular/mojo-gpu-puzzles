@@ -1319,7 +1319,7 @@ alias WIDTH = 3
 alias dtype = DType.float32
 alias layout = Layout.row_major(HEIGHT, WIDTH)
 
-fn kernel[dtype: DType, layout: Layout](tensor: LayoutTensor[mut=True, dtype, layout]):
+fn kernel[dtype: DType, layout: Layout](tensor: LayoutTensor[dtype, layout, MutAnyOrigin]):
     print("Before:")
     print(tensor)
     tensor[0, 0] += 1
@@ -1330,9 +1330,9 @@ def main():
     ctx = DeviceContext()
 
     a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH).enqueue_fill(0)
-    tensor = LayoutTensor[mut=True, dtype, layout](a.unsafe_ptr())
+    tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function[kernel[dtype, layout]](tensor, grid_dim=1, block_dim=1)
+    ctx.enqueue_function_checked[kernel[dtype, layout], kernel[dtype, layout]](tensor, grid_dim=1, block_dim=1)
 
     ctx.synchronize()
 </code></pre>
@@ -1417,8 +1417,8 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1472,8 +1472,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1671,9 +1671,9 @@ fn broadcast_add[
     a_layout: Layout,
     b_layout: Layout,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
-    b: LayoutTensor[mut=False, dtype, b_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1731,9 +1731,9 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     a_layout: Layout,
     b_layout: Layout,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
-    b: LayoutTensor[mut=False, dtype, b_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -2170,8 +2170,8 @@ fn add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -2228,8 +2228,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
     out_layout: Layout,
     a_layout: Layout,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, a_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -2563,7 +2563,7 @@ Block 1 output: [11 11 11 11]
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
 # LayoutTensor approach
-shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -2600,15 +2600,15 @@ alias layout = Layout.row_major(SIZE)
 fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using LayoutTensor with explicit address_space
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -2673,15 +2673,15 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">fn add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -2750,7 +2750,7 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <li>
 <p>Shared memory allocation:</p>
 <pre><code class="language-txt"># Clean LayoutTensor API with address_space
-shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -4249,7 +4249,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
     shared_workspace = LayoutTensor[
         dtype,
         Layout.row_major(SIZE - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -4823,8 +4823,8 @@ Running memory bug example (bounds checking issue)...
 <h3 id="the-solution"><a class="header" href="#the-solution">The solution</a></h3>
 <p>As we saw in <a href="puzzle_10/../puzzle_04/layout_tensor.html">Puzzle 04</a>, we need to bound-check as follows:</p>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -4897,7 +4897,7 @@ fn shared_memory_race(
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -5056,7 +5056,7 @@ fn shared_memory_race(
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -5399,7 +5399,7 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Window access</strong>: Natural indexing for 3-element windows</li>
 <li><strong>Edge handling</strong>: Special cases for first two positions</li>
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
@@ -5416,15 +5416,15 @@ alias layout = Layout.row_major(SIZE)
 fn pooling[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -5483,15 +5483,15 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <pre><code class="language-mojo">fn pooling[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -5526,7 +5526,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <ul>
 <li>
 <p>LayoutTensor creates block-local storage with address_space:</p>
-<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -5881,7 +5881,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Element access</strong>: Natural indexing with bounds checking</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
@@ -5904,9 +5904,9 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, in_layout],
-    b: LayoutTensor[mut=True, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -5962,15 +5962,15 @@ expected: HostBuffer([140.0])
 <pre><code class="language-mojo">fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, in_layout],
-    b: LayoutTensor[mut=True, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -6259,13 +6259,13 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; SIZE:
@@ -6448,7 +6448,7 @@ fn conv_1d_block_boundary[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory</li>
+<li>Use <code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory</li>
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -6502,13 +6502,13 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV_2),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; SIZE_2:
@@ -6565,8 +6565,8 @@ Size calculation:
 <li>
 <p><strong>Shared Memory Allocation</strong>:</p>
 <pre><code class="language-mojo"># First: account for padding needed for convolution window
-shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>This allocation pattern ensures we have enough space for both the block’s data and the overlap region.</p>
 </li>
@@ -6826,7 +6826,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; size:
@@ -7117,7 +7117,7 @@ fn prefix_sum_local_phase[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -7324,10 +7324,10 @@ shared[7] = 22 + 6 = 28
 <h2 id="host-device-synchronization-when-its-actually-needed"><a class="header" href="#host-device-synchronization-when-its-actually-needed">Host-device synchronization: When it’s actually needed</a></h2>
 <p>The two kernel phases execute sequentially <strong>without any explicit synchronization</strong> between them:</p>
 <pre><code class="language-mojo"># Phase 1: Local prefix sums
-ctx.enqueue_function[prefix_sum_local_phase[...]](...)
+ctx.enqueue_function_checked[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
-ctx.enqueue_function[prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function_checked[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
 </code></pre>
 <p><strong>Key insight</strong>: Mojo’s <code>DeviceContext</code> uses a single execution stream (CUDA stream on NVIDIA GPUs, HIP stream on AMD ROCm GPUs), which guarantees that kernel launches execute in the exact order they are enqueued. No explicit synchronization is needed between kernels.</p>
 <p><strong>When <code>ctx.synchronize()</code> is needed</strong>:</p>
@@ -7502,7 +7502,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     cache = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -8088,13 +8088,13 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -8133,8 +8133,8 @@ Matrix B:                           b_shared: (similar layout)
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
 <pre><code class="language-mojo"># Create 2D shared memory tensors using LayoutTensor with address_space
-a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>
@@ -8496,13 +8496,13 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -8704,13 +8704,13 @@ fn matmul_idiomatic_tiled[
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -8959,9 +8959,9 @@ fn conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=True, dtype, in_layout],
-    kernel: LayoutTensor[mut=True, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -8969,13 +8969,13 @@ fn conv1d_kernel[
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; input_size:
@@ -9121,11 +9121,10 @@ Verification passed: Custom kernel results match NumPy calculation
 <summary></summary>
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
-<pre><code class="language-mojo">            gpu_ctx.enqueue_function[
-                conv1d_kernel[
-                    in_layout, out_layout, conv_layout, input_size, conv_size
-                ]
-            ](
+<pre><code class="language-mojo">            alias kernel = conv1d_kernel[
+                in_layout, out_layout, conv_layout, input_size, conv_size
+            ]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 kernel_tensor,
@@ -9219,7 +9218,7 @@ kernel_tensor = kernel.to_layout_tensor()
 <p><strong>Device Context Usage</strong>:</p>
 <pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
 gpu_ctx.enqueue_memset(...)  # Zero output buffer
-gpu_ctx.enqueue_function[...](...) # Schedule kernel
+gpu_ctx.enqueue_function_checked[..., ...](...) # Schedule kernel
 </code></pre>
 <ul>
 <li>Device context manages GPU resources</li>
@@ -9410,8 +9409,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -9564,13 +9563,13 @@ Sum of all probabilities on GPU: 1.0
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = thread_idx.x
@@ -9643,8 +9642,8 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 <li>Non-mutable input tensor (mut=False)</li>
 </ul>
 <h4 id="shared-memory-allocation"><a class="header" href="#shared-memory-allocation">Shared memory allocation</a></h4>
-<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+<pre><code class="language-mojo">shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 <p>The kernel allocates two shared memory buffers:</p>
 <ul>
@@ -9753,8 +9752,8 @@ if global_i &lt; input_size:
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutableAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
@@ -10024,8 +10023,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
@@ -10039,7 +10038,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>
@@ -10120,7 +10119,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutableAnyOrigin](
+            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutAnyOrigin](
                 k_t_buf.unsafe_ptr()
             )
 
@@ -10280,14 +10279,14 @@ Output vector norms:
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
     shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -10342,7 +10341,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
             scores_2d = LayoutTensor[
-                mut=True, dtype, layout_scores_2d, MutableAnyOrigin
+                mut=True, dtype, layout_scores_2d, MutAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
                 matmul_idiomatic_tiled[
@@ -10801,9 +10800,9 @@ fn embedding_kernel_coalesced[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -10873,9 +10872,9 @@ fn embedding_kernel_coalesced[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -10981,20 +10980,19 @@ struct EmbeddingCustomOp:
             blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
 
             # Compile and launch optimized kernel
-            compiled_kernel = gpu_ctx.compile_function[
-                embedding_kernel_coalesced[
-                    indices_layout,
-                    weights_layout,
-                    out_layout,
-                    batch_size,
-                    seq_len,
-                    vocab_size,
-                    embed_dim,
-                    output.dtype,
-                ]
-            ]()
+            alias kernel = embedding_kernel_coalesced[
+                indices_layout,
+                weights_layout,
+                out_layout,
+                batch_size,
+                seq_len,
+                vocab_size,
+                embed_dim,
+                output.dtype,
+            ]
+            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
 
-            gpu_ctx.enqueue_function(
+            gpu_ctx.enqueue_function_checked(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,
@@ -11236,9 +11234,9 @@ Key Learning Points:
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -11286,9 +11284,9 @@ Key Learning Points:
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    indices: LayoutTensor[mut=True, DType.int32, indices_layout],
-    weights: LayoutTensor[mut=True, dtype, weights_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -11736,9 +11734,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
@@ -11753,13 +11751,13 @@ fn matmul_idiomatic_tiled[
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
@@ -11825,8 +11823,8 @@ fn matmul_idiomatic_tiled[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -11834,7 +11832,7 @@ fn matmul_idiomatic_tiled[
     shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -13382,9 +13380,9 @@ alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -13500,9 +13498,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">fn elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -13714,9 +13712,9 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -13836,9 +13834,9 @@ fn tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -14055,9 +14053,9 @@ Tiled:       Moderate parallelism, localized memory access
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -14161,9 +14159,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -14260,9 +14258,9 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -14367,9 +14365,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -15410,9 +15408,9 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
@@ -15420,7 +15418,7 @@ fn traditional_dot_product_p12_style[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -15484,9 +15482,9 @@ fn traditional_dot_product_p12_style[
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
@@ -15566,9 +15564,9 @@ expected: 10416.0
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -15627,9 +15625,9 @@ All lanes receive → total = 10416.0 (broadcast result)
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -15729,9 +15727,9 @@ expected: 10416.0
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -18252,7 +18250,7 @@ while offset &gt; 0:
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; size:
@@ -19051,9 +19049,9 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 <pre><code class="language-mojo">fn traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
@@ -19062,7 +19060,7 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
     shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -19104,9 +19102,9 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -19171,9 +19169,9 @@ alias dtype = DType.float32
 fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -19250,9 +19248,9 @@ Just like warp.sum() but for the entire block
 <pre><code class="language-mojo">fn block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -19465,9 +19463,9 @@ for element in data:
 fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
-    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -19637,9 +19635,9 @@ Bin 7 extracted elements:
 <pre><code class="language-mojo">fn block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    bin_output: LayoutTensor[mut=True, dtype, bin_layout],
-    count_output: LayoutTensor[mut=True, DType.int32, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
+    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -19886,8 +19884,8 @@ alias vector_layout = Layout.row_major(SIZE)
 fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -20038,8 +20036,8 @@ Output mean: 1.0
 <pre><code class="language-mojo">fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -20553,9 +20551,9 @@ alias layout_async = Layout.row_major(VECTOR_SIZE)
 fn async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -20567,13 +20565,13 @@ fn async_copy_overlap_convolution[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -20655,9 +20653,9 @@ fn async_copy_overlap_convolution[
 <pre><code class="language-mojo">fn async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -20669,13 +20667,13 @@ fn async_copy_overlap_convolution[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21028,8 +21026,8 @@ alias BLUR_RADIUS = 2
 fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -21043,13 +21041,13 @@ fn multi_stage_image_blur_pipeline[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21159,8 +21157,8 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -21174,13 +21172,13 @@ Output sample: 1.6665002 2.3331003 3.3996604
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21492,8 +21490,8 @@ alias BUFFER_COUNT = 2
 fn double_buffered_stencil_computation[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -21506,13 +21504,13 @@ fn double_buffered_stencil_computation[
     buffer_A = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     buffer_B = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21520,19 +21518,19 @@ fn double_buffered_stencil_computation[
     init_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     iter_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     final_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21676,8 +21674,8 @@ GPU output sample: 1.0 1.0 1.0
 <pre><code class="language-mojo">fn double_buffered_stencil_computation[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -21690,13 +21688,13 @@ GPU output sample: 1.0 1.0 1.0
     buffer_A = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     buffer_B = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -21704,19 +21702,19 @@ GPU output sample: 1.0 1.0 1.0
     init_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     iter_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     final_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -22843,9 +22841,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel1[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -22859,9 +22857,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel2[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
@@ -22879,9 +22877,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel3[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
@@ -23113,7 +23111,7 @@ fn minimal_kernel[
     shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 12),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
@@ -23208,7 +23206,7 @@ fn minimal_kernel[
     shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 4),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
@@ -23848,7 +23846,7 @@ fn no_conflict_kernel[
     shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -23888,7 +23886,7 @@ fn no_conflict_kernel[
     shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -24146,7 +24144,7 @@ if thread_idx.x &lt; stride:
 <pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
 </code></pre>
 <p><strong>3. Padding techniques:</strong></p>
-<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
+<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
 </code></pre>
 <p><strong>4. Access pattern analysis:</strong></p>
 <ul>
@@ -24369,13 +24367,13 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -24524,13 +24522,13 @@ fn tensor_core_matrix_multiplication[
     A_sram_tile = LayoutTensor[
         A.dtype,
         Layout.row_major(BM, BK),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -24538,7 +24536,7 @@ fn tensor_core_matrix_multiplication[
     C_warp_accum = LayoutTensor[
         C.dtype,
         Layout.row_major(WM, WN),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.GENERIC,
     ].stack_allocation()
 
@@ -24728,13 +24726,13 @@ ALL TESTS PASSED!
     A_sram_tile = LayoutTensor[
         A.dtype,
         Layout.row_major(BM, BK),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -24742,7 +24740,7 @@ ALL TESTS PASSED!
     C_warp_accum = LayoutTensor[
         C.dtype,
         Layout.row_major(WM, WN),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.LOCAL,
     ].stack_allocation()
 
@@ -25187,7 +25185,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
     shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -25233,7 +25231,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 </ul>
 <h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
 <ul>
-<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
+<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="puzzle_34/../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
 <li>Process input data scaled by <code>block_id + 1</code> to create distinct scaling per block</li>
 <li>Use bounds checking when accessing input data (pattern from <a href="puzzle_34/../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
 </ul>
@@ -25304,7 +25302,7 @@ Block coordination results:
     shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -25349,7 +25347,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </code></pre>
 <p><strong>Shared memory allocation and data processing:</strong></p>
 <ul>
-<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block processes data differently
 <ul>
 <li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0</li>
@@ -25579,7 +25577,7 @@ Error: 0.0
     shared_mem = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_mem[local_i] = my_value
@@ -25883,7 +25881,7 @@ Advanced cluster algorithm results:
     shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

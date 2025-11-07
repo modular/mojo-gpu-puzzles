@@ -225,9 +225,9 @@
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -331,9 +331,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -430,9 +430,9 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -537,9 +537,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)

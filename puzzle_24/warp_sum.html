@@ -222,9 +222,9 @@ alias out_layout = Layout.row_major(1)
 fn traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
@@ -232,7 +232,7 @@ fn traditional_dot_product_p12_style[
     shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -296,9 +296,9 @@ fn traditional_dot_product_p12_style[
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
@@ -378,9 +378,9 @@ expected: 10416.0
 <pre><code class="language-mojo">fn simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
@@ -439,9 +439,9 @@ All lanes receive → total = 10416.0 (broadcast result)
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -541,9 +541,9 @@ expected: 10416.0
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutableAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter

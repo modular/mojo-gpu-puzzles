@@ -287,8 +287,8 @@ alias BLUR_RADIUS = 2
 fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -302,13 +302,13 @@ fn multi_stage_image_blur_pipeline[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -418,8 +418,8 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -433,13 +433,13 @@ Output sample: 1.6665002 2.3331003 3.3996604
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

@@ -253,8 +253,8 @@ alias vector_layout = Layout.row_major(SIZE)
 fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -405,8 +405,8 @@ Output mean: 1.0
 <pre><code class="language-mojo">fn block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    input_data: LayoutTensor[mut=False, dtype, in_layout],
-    output_data: LayoutTensor[mut=True, dtype, out_layout],
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.

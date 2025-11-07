@@ -241,7 +241,7 @@
     shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -287,7 +287,7 @@
 </ul>
 <h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
 <ul>
-<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
+<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
 <li>Process input data scaled by <code>block_id + 1</code> to create distinct scaling per block</li>
 <li>Use bounds checking when accessing input data (pattern from <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
 </ul>
@@ -358,7 +358,7 @@ Block coordination results:
     shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -403,7 +403,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </code></pre>
 <p><strong>Shared memory allocation and data processing:</strong></p>
 <ul>
-<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block processes data differently
 <ul>
 <li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0</li>

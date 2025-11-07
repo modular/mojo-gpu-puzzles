@@ -287,13 +287,13 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -332,8 +332,8 @@ Matrix B:                           b_shared: (similar layout)
 <li>
 <p><strong>Shared Memory Setup</strong>:</p>
 <pre><code class="language-mojo"># Create 2D shared memory tensors using LayoutTensor with address_space
-a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>

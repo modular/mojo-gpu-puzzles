@@ -207,7 +207,7 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Element access</strong>: Natural indexing with bounds checking</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
@@ -230,9 +230,9 @@ alias out_layout = Layout.row_major(1)
 fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, in_layout],
-    b: LayoutTensor[mut=True, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -288,15 +288,15 @@ expected: HostBuffer([140.0])
 <pre><code class="language-mojo">fn dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=True, dtype, in_layout],
-    b: LayoutTensor[mut=True, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     global_i = block_dim.x * block_idx.x + thread_idx.x

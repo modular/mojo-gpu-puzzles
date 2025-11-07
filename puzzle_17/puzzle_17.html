@@ -212,9 +212,9 @@ fn conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=True, dtype, in_layout],
-    kernel: LayoutTensor[mut=True, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -222,13 +222,13 @@ fn conv1d_kernel[
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; input_size:
@@ -374,11 +374,10 @@ Verification passed: Custom kernel results match NumPy calculation
 <summary></summary>
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
-<pre><code class="language-mojo">            gpu_ctx.enqueue_function[
-                conv1d_kernel[
-                    in_layout, out_layout, conv_layout, input_size, conv_size
-                ]
-            ](
+<pre><code class="language-mojo">            alias kernel = conv1d_kernel[
+                in_layout, out_layout, conv_layout, input_size, conv_size
+            ]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 kernel_tensor,
@@ -472,7 +471,7 @@ kernel_tensor = kernel.to_layout_tensor()
 <p><strong>Device Context Usage</strong>:</p>
 <pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
 gpu_ctx.enqueue_memset(...)  # Zero output buffer
-gpu_ctx.enqueue_function[...](...) # Schedule kernel
+gpu_ctx.enqueue_function_checked[..., ...](...) # Schedule kernel
 </code></pre>
 <ul>
 <li>Device context manages GPU resources</li>

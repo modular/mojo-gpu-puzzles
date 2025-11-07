@@ -301,7 +301,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     cache = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

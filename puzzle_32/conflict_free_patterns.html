@@ -221,7 +221,7 @@ fn no_conflict_kernel[
     shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -261,7 +261,7 @@ fn no_conflict_kernel[
     shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -519,7 +519,7 @@ if thread_idx.x &lt; stride:
 <pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
 </code></pre>
 <p><strong>3. Padding techniques:</strong></p>
-<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
+<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
 </code></pre>
 <p><strong>4. Access pattern analysis:</strong></p>
 <ul>

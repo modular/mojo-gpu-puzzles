@@ -372,9 +372,9 @@ alias layout_async = Layout.row_major(VECTOR_SIZE)
 fn async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -386,13 +386,13 @@ fn async_copy_overlap_convolution[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -474,9 +474,9 @@ fn async_copy_overlap_convolution[
 <pre><code class="language-mojo">fn async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
-    kernel: LayoutTensor[mut=False, dtype, Layout.row_major(KERNEL_SIZE)],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -488,13 +488,13 @@ fn async_copy_overlap_convolution[
     input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
     kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 

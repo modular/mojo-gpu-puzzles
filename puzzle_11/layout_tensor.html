@@ -206,7 +206,7 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li><strong>LayoutTensor allocation</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
 <li><strong>Window access</strong>: Natural indexing for 3-element windows</li>
 <li><strong>Edge handling</strong>: Special cases for first two positions</li>
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
@@ -223,15 +223,15 @@ alias layout = Layout.row_major(SIZE)
 fn pooling[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -290,15 +290,15 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <pre><code class="language-mojo">fn pooling[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -333,7 +333,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <ul>
 <li>
 <p>LayoutTensor creates block-local storage with address_space:</p>
-<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+<pre><code class="language-txt">shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 </code></pre>
 </li>
 <li>

@@ -299,8 +299,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
@@ -314,7 +314,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutableAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use <code>LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>
@@ -395,7 +395,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutableAnyOrigin](
+            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutAnyOrigin](
                 k_t_buf.unsafe_ptr()
             )
 
@@ -555,14 +555,14 @@ Output vector norms:
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutableAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutableAnyOrigin],
+    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
     shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutableAnyOrigin,
+        MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
@@ -617,7 +617,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
             scores_2d = LayoutTensor[
-                mut=True, dtype, layout_scores_2d, MutableAnyOrigin
+                mut=True, dtype, layout_scores_2d, MutAnyOrigin
             ](scores_weights_buf.unsafe_ptr())
             gpu_ctx.enqueue_function[
                 matmul_idiomatic_tiled[

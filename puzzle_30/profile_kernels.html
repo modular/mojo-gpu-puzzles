@@ -356,9 +356,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel1[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -372,9 +372,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel2[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
@@ -392,9 +392,9 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <pre><code class="language-mojo">fn kernel3[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     tid = block_idx.x * block_dim.x + thread_idx.x
