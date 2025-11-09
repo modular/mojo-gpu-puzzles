@@ -274,8 +274,10 @@ fn double_buffered_stencil_computation[
 def test_multi_stage_pipeline():
     """Test Puzzle 26A: Multi-Stage Pipeline Coordination."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        inp = ctx.enqueue_create_buffer[dtype](SIZE)
+        inp.enqueue_fill(0)
 
         # Initialize input with a simple pattern
         with inp.map_to_host() as inp_host:
@@ -334,8 +336,10 @@ def test_double_buffered_stencil():
     """Test Puzzle 26B: Double-Buffered Stencil Computation."""
     with DeviceContext() as ctx:
         # Test Puzzle 26B: Double-Buffered Stencil Computation
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        inp = ctx.enqueue_create_buffer[dtype](SIZE)
+        inp.enqueue_fill(0)
 
         # Initialize input with a different pattern for stencil testing
         with inp.map_to_host() as inp_host:

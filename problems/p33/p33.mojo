@@ -262,14 +262,12 @@ def main():
 
     with DeviceContext() as ctx:
         # Create buffers
-        out_tensor_core = ctx.enqueue_create_buffer[dtype](
-            SIZE * SIZE
-        ).enqueue_fill(0)
+        out_tensor_core = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out_tensor_core.enqueue_fill(0)
         inp1 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         inp2 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        expected = ctx.enqueue_create_host_buffer[dtype](
-            SIZE * SIZE
-        ).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        expected.enqueue_fill(0)
 
         # Initialize data (like p16.mojo)
         with inp1.map_to_host() as inp1_host, inp2.map_to_host() as inp2_host:
@@ -324,9 +322,8 @@ def main():
             print("\n=== Running Idiomatic Tiled Matrix Multiplication ===")
 
             # Create separate buffer for tiled result
-            out_tiled = ctx.enqueue_create_buffer[dtype](
-                SIZE * SIZE
-            ).enqueue_fill(0)
+            out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+            out_tiled.enqueue_fill(0)
             out_tiled_layout = LayoutTensor[dtype, layout](
                 out_tiled.unsafe_ptr()
             )
@@ -431,9 +428,8 @@ def main():
 
             # Test 2: Idiomatic Tiled vs CPU
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
-            out_tiled = ctx.enqueue_create_buffer[dtype](
-                SIZE * SIZE
-            ).enqueue_fill(0)
+            out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+            out_tiled.enqueue_fill(0)
             out_tiled_layout = LayoutTensor[dtype, layout](
                 out_tiled.unsafe_ptr()
             )

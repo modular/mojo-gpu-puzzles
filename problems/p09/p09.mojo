@@ -106,7 +106,8 @@ def main():
 
         with DeviceContext() as ctx:
             input_ptr = UnsafePointer[Scalar[dtype]]()
-            result_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            result_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            result_buf.enqueue_fill(0)
 
             # Enqueue function
             ctx.enqueue_function[add_10](
@@ -127,8 +128,10 @@ def main():
 
         with DeviceContext() as ctx:
             # Create buffers
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            output_buf.enqueue_fill(0)
 
             # Initialize input [0, 1, 2, 3]
             with input_buf.map_to_host() as input_host:
@@ -200,8 +203,10 @@ def main():
 
         with DeviceContext() as ctx:
             # Create input and output buffers
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            output_buf.enqueue_fill(0)
 
             # Initialize input data [1, 2, 3, 4]
             with input_buf.map_to_host() as input_host:

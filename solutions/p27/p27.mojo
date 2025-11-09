@@ -224,9 +224,12 @@ def main():
 
     with DeviceContext() as ctx:
         if argv()[1] == "--traditional-dot-product":
-            out = ctx.enqueue_create_buffer[dtype](1).enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            b_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            out = ctx.enqueue_create_buffer[dtype](1)
+            out.enqueue_fill(0)
+            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            a.enqueue_fill(0)
+            b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            b_buf.enqueue_fill(0)
 
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -263,9 +266,12 @@ def main():
                 print("Complex: shared memory + barriers + tree reduction")
 
         elif argv()[1] == "--block-sum-dot-product":
-            out = ctx.enqueue_create_buffer[dtype](1).enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            b_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            out = ctx.enqueue_create_buffer[dtype](1)
+            out.enqueue_fill(0)
+            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            a.enqueue_fill(0)
+            b_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            b_buf.enqueue_fill(0)
 
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -313,7 +319,8 @@ def main():
             print()
 
             # Create input data with known distribution across bins
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
 
             # Create test data: values distributed across 8 bins [0.0, 1.0)
             with input_buf.map_to_host() as input_host:
@@ -347,12 +354,10 @@ def main():
                 )
 
                 # Create output buffers for this bin
-                bin_data = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(
-                    0
-                )
-                bin_count = ctx.enqueue_create_buffer[DType.int32](
-                    1
-                ).enqueue_fill(0)
+                bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
+                bin_data.enqueue_fill(0)
+                bin_count = ctx.enqueue_create_buffer[DType.int32](1)
+                bin_count.enqueue_fill(0)
 
                 bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
                     bin_data
@@ -402,8 +407,10 @@ def main():
             print()
 
             # Create input data with known values for easy verification
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
             # Mean value will be 4.5, so normalized values will be input[i] / 4.5

@@ -112,8 +112,10 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](test_size)
+        out.enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
@@ -145,8 +147,10 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](test_size)
+        out.enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
@@ -174,8 +178,10 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
 fn test_no_conflict() raises:
     """Test that no-conflict kernel produces correct results."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -205,8 +211,10 @@ fn test_no_conflict() raises:
 fn test_two_way_conflict() raises:
     """Test that 2-way conflict kernel produces identical results."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):

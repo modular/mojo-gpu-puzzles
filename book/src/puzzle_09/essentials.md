@@ -421,7 +421,7 @@ Process 186951 stopped
    23   def main():
 -> 24       with DeviceContext() as ctx:
    25           out = ctx.enqueue_create_buffer[dtype](SIZE)
-   26           out = out.enqueue_fill(0)
+   26           out.enqueue_fill(0)
    27           a = ctx.enqueue_create_buffer[dtype](SIZE)
 ```
 

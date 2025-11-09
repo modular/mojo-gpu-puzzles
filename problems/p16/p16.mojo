@@ -84,12 +84,15 @@ def main():
                 " '--tiled'"
             )
         size = SIZE_TILED if argv()[1] == "--tiled" else SIZE
-        out = ctx.enqueue_create_buffer[dtype](size * size).enqueue_fill(0)
-        inp1 = ctx.enqueue_create_buffer[dtype](size * size).enqueue_fill(0)
-        inp2 = ctx.enqueue_create_buffer[dtype](size * size).enqueue_fill(0)
-        expected = ctx.enqueue_create_host_buffer[dtype](
-            size * size
-        ).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](size * size)
+        out.enqueue_fill(0)
+        inp1 = ctx.enqueue_create_buffer[dtype](size * size)
+        inp1.enqueue_fill(0)
+        inp2 = ctx.enqueue_create_buffer[dtype](size * size)
+        inp2.enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](size * size)
+        expected.enqueue_fill(0)
+
         with inp1.map_to_host() as inp1_host, inp2.map_to_host() as inp2_host:
             for row in range(size):
                 for col in range(size):

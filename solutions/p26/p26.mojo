@@ -224,8 +224,10 @@ fn warp_partition[
 
 def test_butterfly_pair_swap():
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -245,9 +247,8 @@ def test_butterfly_pair_swap():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results: pairs should be swapped
@@ -271,8 +272,10 @@ def test_butterfly_pair_swap():
 
 def test_butterfly_parallel_max():
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -296,9 +299,8 @@ def test_butterfly_parallel_max():
 
         ctx.synchronize()
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            1000.0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(1000.0)
 
         # All threads should have the maximum value (1000.0)
         with output_buf.map_to_host() as output_host:
@@ -313,8 +315,10 @@ def test_butterfly_parallel_max():
 
 def test_butterfly_conditional_max():
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE_2):
@@ -340,9 +344,8 @@ def test_butterfly_conditional_max():
 
         ctx.synchronize()
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](
-            SIZE_2
-        ).enqueue_fill(0)
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
+        expected_buf.enqueue_fill(0)
 
         # Expected: even lanes get max, odd lanes get min
         with input_buf.map_to_host() as input_host:
@@ -375,8 +378,10 @@ def test_butterfly_conditional_max():
 
 def test_warp_inclusive_prefix_sum():
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -396,9 +401,9 @@ def test_warp_inclusive_prefix_sum():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected inclusive prefix sum: [1, 3, 6, 10, 15, 21, 28, 36, ...]
@@ -418,8 +423,10 @@ def test_warp_inclusive_prefix_sum():
 
 def test_warp_partition():
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         # Create test data: mix of values above and below pivot
         pivot_value = Float32(5.0)
@@ -444,9 +451,9 @@ def test_warp_partition():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
+
         ctx.synchronize()
 
         # Create expected results: elements < 5 on left, >= 5 on right
