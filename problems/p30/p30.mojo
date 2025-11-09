@@ -79,9 +79,12 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn kernel1_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](test_size)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](test_size)
+        a.enqueue_fill(0)
+        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
@@ -114,9 +117,12 @@ fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn kernel2_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](test_size)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](test_size)
+        a.enqueue_fill(0)
+        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
@@ -149,9 +155,12 @@ fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn kernel3_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](test_size)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](test_size)
+        a.enqueue_fill(0)
+        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
@@ -181,9 +190,12 @@ def test_kernel1():
     """Test kernel 1."""
     print("Testing kernel 1...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        a.enqueue_fill(0)
+        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        b.enqueue_fill(0)
 
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
@@ -221,9 +233,12 @@ def test_kernel2():
     """Test kernel 2."""
     print("Testing kernel 2...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        a.enqueue_fill(0)
+        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        b.enqueue_fill(0)
 
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
@@ -264,9 +279,12 @@ def test_kernel3():
     """Test kernel 3."""
     print("Testing kernel 3...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        a.enqueue_fill(0)
+        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        b.enqueue_fill(0)
 
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:

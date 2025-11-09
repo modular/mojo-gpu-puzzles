@@ -26,11 +26,13 @@ fn add_10_2d(
 
 def main():
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
-        expected = ctx.enqueue_create_host_buffer[dtype](
-            SIZE * SIZE
-        ).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out.enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        expected.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        a.enqueue_fill(0)
+
         with a.map_to_host() as a_host:
             # row-major
             for y in range(SIZE):

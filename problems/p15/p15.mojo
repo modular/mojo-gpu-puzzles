@@ -36,8 +36,10 @@ fn axis_sum[
 
 def main():
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](BATCH).enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](BATCH)
+        out.enqueue_fill(0)
+        inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE)
+        inp.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
                 for col in range(SIZE):
@@ -56,7 +58,8 @@ def main():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](BATCH).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](BATCH)
+        expected.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
                 for col in range(SIZE):

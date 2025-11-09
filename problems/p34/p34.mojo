@@ -124,10 +124,10 @@ def main():
             print("Testing Multi-Block Coordination")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](
-                CLUSTER_SIZE
-            ).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            output_buf.enqueue_fill(0)
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
@@ -183,11 +183,12 @@ def main():
             print("Testing Cluster-Wide Reduction")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](1).enqueue_fill(0)
-            temp_buf = ctx.enqueue_create_buffer[dtype](
-                CLUSTER_SIZE
-            ).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](1)
+            output_buf.enqueue_fill(0)
+            temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            temp_buf.enqueue_fill(0)
 
             var expected_sum: Float32 = 0.0
             with input_buf.map_to_host() as input_host:
@@ -237,10 +238,10 @@ def main():
             print("Testing Advanced Cluster Algorithms")
             print("SIZE:", SIZE, "TPB:", TPB, "CLUSTER_SIZE:", CLUSTER_SIZE)
 
-            input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](
-                CLUSTER_SIZE
-            ).enqueue_fill(0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            input_buf.enqueue_fill(0)
+            output_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            output_buf.enqueue_fill(0)
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):

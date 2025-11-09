@@ -136,8 +136,10 @@ fn conditional_broadcast[
 def test_neighbor_difference():
     with DeviceContext() as ctx:
         # Create test data: [0, 1, 4, 9, 16, 25, ...] (squares)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -157,9 +159,8 @@ def test_neighbor_difference():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results: differences of squares should be odd numbers
@@ -181,8 +182,10 @@ def test_neighbor_difference():
 def test_moving_average():
     with DeviceContext() as ctx:
         # Create test data: [1, 2, 4, 7, 11, 16, 22, 29, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             input_host[0] = 1
@@ -203,9 +206,8 @@ def test_moving_average():
             block_dim=THREADS_PER_BLOCK_2,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](
-            SIZE_2
-        ).enqueue_fill(0)
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
@@ -246,8 +248,10 @@ def test_moving_average():
 def test_broadcast_shuffle_coordination():
     with DeviceContext() as ctx:
         # Create test data: [2, 4, 6, 8, 1, 3, 5, 7, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern: [2, 4, 6, 8, 1, 3, 5, 7, ...]
@@ -271,9 +275,8 @@ def test_broadcast_shuffle_coordination():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
@@ -302,8 +305,10 @@ def test_broadcast_shuffle_coordination():
 def test_basic_broadcast():
     with DeviceContext() as ctx:
         # Create test data: [1, 2, 3, 4, 5, 6, 7, 8, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
@@ -323,9 +328,8 @@ def test_basic_broadcast():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
@@ -349,8 +353,10 @@ def test_basic_broadcast():
 def test_conditional_broadcast():
     with DeviceContext() as ctx:
         # Create test data: [3, 1, 7, 2, 9, 4, 6, 8, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern with known max
@@ -381,9 +387,8 @@ def test_conditional_broadcast():
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(
-            0
-        )
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results

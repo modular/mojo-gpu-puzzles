@@ -60,9 +60,12 @@ def main():
     with DeviceContext() as ctx:
         size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
         conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        out = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](conv).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](size)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](size)
+        a.enqueue_fill(0)
+        b = ctx.enqueue_create_buffer[dtype](conv)
+        b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
                 a_host[i] = i
@@ -122,7 +125,8 @@ def main():
             )
 
         ctx.synchronize()
-        expected = ctx.enqueue_create_host_buffer[dtype](size).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        expected.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(size):

@@ -196,8 +196,10 @@ fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn minimal_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](test_size)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](test_size)
+        x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
@@ -229,8 +231,10 @@ fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn sophisticated_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](test_size)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](test_size)
+        x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
@@ -262,8 +266,10 @@ fn benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     fn balanced_workflow(ctx: DeviceContext) raises:
         alias layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](test_size)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](test_size)
+        x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
@@ -292,8 +298,10 @@ def test_minimal():
     """Test minimal kernel."""
     print("Testing minimal kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        x.enqueue_fill(0)
 
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
@@ -332,8 +340,10 @@ def test_sophisticated():
     """Test sophisticated kernel."""
     print("Testing sophisticated kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        x.enqueue_fill(0)
 
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
@@ -373,8 +383,10 @@ def test_balanced():
     """Test balanced kernel."""
     print("Testing balanced kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        y.enqueue_fill(0)
+        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        x.enqueue_fill(0)
 
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:

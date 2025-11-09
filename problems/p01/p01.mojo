@@ -23,9 +23,9 @@ fn add_10(
 def main():
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
-        out = out.enqueue_fill(0)
+        out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a = a.enqueue_fill(0)
+        a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
                 a_host[i] = i
@@ -38,7 +38,7 @@ def main():
         )
 
         expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
-        expected = expected.enqueue_fill(0)
+        expected.enqueue_fill(0)
         ctx.synchronize()
 
         for i in range(SIZE):
