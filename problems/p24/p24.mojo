@@ -167,12 +167,14 @@ fn benchmark_simple_warp_parameterized[
 
     bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](
-        n_warps
-    ).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b.enqueue_fill(0)
+    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
@@ -213,12 +215,14 @@ fn benchmark_functional_warp_parameterized[
 
     bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](
-        n_warps
-    ).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b.enqueue_fill(0)
+    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
@@ -255,12 +259,14 @@ fn benchmark_traditional_parameterized[
 
     bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](
-        n_warps
-    ).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b.enqueue_fill(0)
+    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
@@ -299,12 +305,14 @@ def main():
         print("SIMD_WIDTH:", SIMD_WIDTH)
         alias n_warps = SIZE // WARP_SIZE
         with DeviceContext() as ctx:
-            out = ctx.enqueue_create_buffer[dtype](n_warps).enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-            expected = ctx.enqueue_create_host_buffer[dtype](
-                n_warps
-            ).enqueue_fill(0)
+            out = ctx.enqueue_create_buffer[dtype](n_warps)
+            out.enqueue_fill(0)
+            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            a.enqueue_fill(0)
+            b = ctx.enqueue_create_buffer[dtype](SIZE)
+            b.enqueue_fill(0)
+            expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
+            expected.enqueue_fill(0)
 
             out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
             a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)

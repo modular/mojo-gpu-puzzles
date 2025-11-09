@@ -14,12 +14,13 @@ alias dtype = DType.float32
 
 def test_softmax():
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[DType.float32](SIZE).enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[DType.float32](SIZE).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        out.enqueue_fill(0)
+        inp = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        inp.enqueue_fill(0)
         # for CPU testing
-        expected = ctx.enqueue_create_host_buffer[DType.float32](
-            SIZE
-        ).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
+        expected.enqueue_fill(0)
         expected_tensor = LayoutTensor[mut=True, dtype, layout](
             expected.unsafe_ptr()
         )

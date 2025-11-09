@@ -80,8 +80,10 @@ def main():
             raise Error("Extended buffer too small for the number of blocks")
 
         buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size).enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size).enqueue_fill(0)
+        out = ctx.enqueue_create_buffer[dtype](buffer_size)
+        out.enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](size)
+        a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:
             for i in range(size):
@@ -133,7 +135,8 @@ def main():
             # ANCHOR_END: prefix_sum_complete_block_level_sync
 
         # Verify results for both cases
-        expected = ctx.enqueue_create_host_buffer[dtype](size).enqueue_fill(0)
+        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        expected.enqueue_fill(0)
         ctx.synchronize()
 
         with a.map_to_host() as a_host:

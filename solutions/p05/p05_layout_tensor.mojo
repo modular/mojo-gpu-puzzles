@@ -34,19 +34,21 @@ fn broadcast_add[
 
 def main():
     with DeviceContext() as ctx:
-        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
+        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out_buf.enqueue_fill(0)
         out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf)
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](
-            SIZE * SIZE
-        ).enqueue_fill(0)
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        expected_buf.enqueue_fill(0)
         expected_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
             expected_buf
         )
 
-        a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
+        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        a.enqueue_fill(0)
+        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        b.enqueue_fill(0)
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
                 a_host[i] = i + 1

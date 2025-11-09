@@ -172,9 +172,12 @@ fn benchmark_elementwise_parameterized[
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
@@ -210,9 +213,12 @@ fn benchmark_tiled_parameterized[
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
@@ -242,9 +248,12 @@ fn benchmark_manual_vectorized_parameterized[
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
@@ -274,9 +283,12 @@ fn benchmark_vectorized_parameterized[
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     alias layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size).enqueue_fill(0)
+    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    out.enqueue_fill(0)
+    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    a.enqueue_fill(0)
+    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
@@ -301,10 +313,14 @@ fn benchmark_vectorized_parameterized[
 
 def main():
     ctx = DeviceContext()
-    out = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-    a = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-    b = ctx.enqueue_create_buffer[dtype](SIZE).enqueue_fill(0)
-    expected = ctx.enqueue_create_host_buffer[dtype](SIZE).enqueue_fill(0)
+    out = ctx.enqueue_create_buffer[dtype](SIZE)
+    out.enqueue_fill(0)
+    a = ctx.enqueue_create_buffer[dtype](SIZE)
+    a.enqueue_fill(0)
+    b = ctx.enqueue_create_buffer[dtype](SIZE)
+    b.enqueue_fill(0)
+    expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
+    expected.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b.map_to_host() as b_host:
         for i in range(SIZE):

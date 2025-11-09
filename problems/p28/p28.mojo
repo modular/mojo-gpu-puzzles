@@ -56,15 +56,12 @@ fn async_copy_overlap_convolution[
 def test_async_copy_overlap_convolution():
     """Test async copy overlap with 1D convolution."""
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE).enqueue_fill(
-            0
-        )
-        output_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE).enqueue_fill(
-            0
-        )
-        kernel_buf = ctx.enqueue_create_buffer[dtype](KERNEL_SIZE).enqueue_fill(
-            0
-        )
+        input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
+        input_buf.enqueue_fill(0)
+        output_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
+        output_buf.enqueue_fill(0)
+        kernel_buf = ctx.enqueue_create_buffer[dtype](KERNEL_SIZE)
+        kernel_buf.enqueue_fill(0)
 
         # Create test data: consecutive integers [1, 2, 3, ..., VECTOR_SIZE]
         with input_buf.map_to_host() as input_host:

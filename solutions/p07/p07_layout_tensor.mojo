@@ -31,14 +31,15 @@ fn add_10_blocks_2d[
 
 def main():
     with DeviceContext() as ctx:
-        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(0)
+        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        out_buf.enqueue_fill(0)
         out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf)
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](
-            SIZE * SIZE
-        ).enqueue_fill(1)
+        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        expected_buf.enqueue_fill(1)
 
-        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE).enqueue_fill(1)
+        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        a.enqueue_fill(1)
 
         with a.map_to_host() as a_host:
             for j in range(SIZE):
