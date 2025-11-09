@@ -167,8 +167,8 @@ Replace null pointer creation with proper buffer allocation:
 input_ptr = UnsafePointer[Scalar[dtype]]()
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
-input_buf = ctx.enqueue_create_buffer[dtype](SIZE).
-input_buf.enqueue_fill(0)
+input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+input_bufenqueue_fill(0)
 ```
 
 ## Key debugging lessons
