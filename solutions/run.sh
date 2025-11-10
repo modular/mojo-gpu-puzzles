@@ -537,25 +537,14 @@ print_startup_banner() {
     # TEMPORARY Debugging MacOS CI issue
     local mac_displays_info=$(system_profiler SPDisplaysDataType)
     local mac_hardware_info=$(system_profiler SPHardwareDataType)
+    local mac_swift_debug=$(swift scripts/debug_mac_gpu.swift)
     echo -e "Debug info about Mac displays:"
     echo -e "$mac_displays_info"
     echo -e "Debug info about Mac hardware:"
     echo -e "$mac_hardware_info"
     echo -e "Debug info from Swift:"
-    swift - <<'EOF'
-import Metal
-guard let device = MTLCreateSystemDefaultDevice() else {
-  print("Error: Could not find Metal device.")
-  exit(1)
-}
-print("Name: \(device.name)")
-print("Is Headless: \(device.isHeadless)")
-print("Supports Raytracing: \(device.supportsRaytracing)")
-print("Supports Dynamic Libraries: \(device.supportsDynamicLibraries)")
-print("Supports 32-bit float atomics: \(device.supports32BitFloatAtomics)")
-print("Max Buffer (GB): \(String(format: "%.2f", Double(device.maxBufferLength) / 1.0e9))")
-print("Recommended Max VRAM (GB): \(String(format: "%.2f", Double(device.recommendedMaxWorkingSetSize) / 1.0e9))")
-EOF
+    echo -e "$mac_swift_debug"
+
     # End
 
     echo -e "${BOLD}GPU Information:${NC}"
