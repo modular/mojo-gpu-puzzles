@@ -537,7 +537,7 @@ print_startup_banner() {
     # TEMPORARY Debugging MacOS CI issue
     local mac_displays_info=$(system_profiler SPDisplaysDataType)
     local mac_hardware_info=$(system_profiler SPHardwareDataType)
-    local mac_swift_debug=$(swift scripts/debug_mac_gpu.swift)
+    local mac_swift_debug=$(swift ../scripts/debug_mac_gpu.swift)
     echo -e "Debug info about Mac displays:"
     echo -e "$mac_displays_info"
     echo -e "Debug info about Mac hardware:"
