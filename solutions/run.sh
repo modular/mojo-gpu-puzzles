@@ -534,6 +534,15 @@ print_startup_banner() {
     local compute_cap=$(detect_gpu_compute_capability)
     local gpu_name=""
 
+    # TEMPORARY Debugging MacOS CI issue
+    local mac_displays_info=$(system_profiler SPDisplaysDataType)
+    local mac_hardware_info=$(system_profiler SPHardwareDataType)
+    echo -e "Debug info about Mac displays:"
+    echo -e "$mac_displays_info"
+    echo -e "Debug info about Mac hardware:"
+    echo -e "$mac_hardware_info"
+    # End
+
     echo -e "${BOLD}GPU Information:${NC}"
     echo -e "  ${BULLET} Platform: ${CYAN}$(echo "$gpu_platform" | tr '[:lower:]' '[:upper:]')${NC}"
 
