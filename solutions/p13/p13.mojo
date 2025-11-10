@@ -20,9 +20,9 @@ alias conv_layout = Layout.row_major(CONV)
 fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -87,9 +87,9 @@ alias conv_2_layout = Layout.row_major(CONV_2)
 fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -160,18 +160,11 @@ def main():
                 b_host[i] = i
 
         if argv()[1] == "--simple":
-            var out_tensor = LayoutTensor[mut=False, dtype, out_layout](
-                out.unsafe_ptr()
-            )
-            var a_tensor = LayoutTensor[mut=False, dtype, in_layout](
-                a.unsafe_ptr()
-            )
-            var b_tensor = LayoutTensor[mut=False, dtype, conv_layout](
-                b.unsafe_ptr()
-            )
-            ctx.enqueue_function[
-                conv_1d_simple[in_layout, out_layout, conv_layout]
-            ](
+            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            var b_tensor = LayoutTensor[dtype, conv_layout, ImmutAnyOrigin](b)
+            alias kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -179,20 +172,15 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--block-boundary":
-            var out_tensor = LayoutTensor[mut=False, dtype, out_2_layout](
-                out.unsafe_ptr()
+            var out_tensor = LayoutTensor[dtype, out_2_layout, MutAnyOrigin](
+                out
             )
-            var a_tensor = LayoutTensor[mut=False, dtype, in_2_layout](
-                a.unsafe_ptr()
-            )
-            var b_tensor = LayoutTensor[mut=False, dtype, conv_2_layout](
-                b.unsafe_ptr()
-            )
-            ctx.enqueue_function[
-                conv_1d_block_boundary[
-                    in_2_layout, out_2_layout, conv_2_layout, dtype
-                ]
-            ](
+            var a_tensor = LayoutTensor[dtype, in_2_layout, ImmutAnyOrigin](a)
+            var b_tensor = LayoutTensor[dtype, conv_2_layout, ImmutAnyOrigin](b)
+            alias kernel = conv_1d_block_boundary[
+                in_2_layout, out_2_layout, conv_2_layout, dtype
+            ]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
