@@ -6199,9 +6199,9 @@ alias conv_layout = Layout.row_major(CONV)
 fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -6258,9 +6258,9 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <pre><code class="language-mojo">fn conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -6441,9 +6441,9 @@ alias conv_2_layout = Layout.row_major(CONV_2)
 fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -6500,9 +6500,9 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <pre><code class="language-mojo">fn conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
-    b: LayoutTensor[mut=False, dtype, conv_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -6767,8 +6767,8 @@ alias layout = Layout.row_major(SIZE)
 fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -6825,8 +6825,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -6991,6 +6991,7 @@ output:       [0    1    3    6    10   15   21   28]
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
 alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+alias layout_2 = Layout.row_major(SIZE_2)
 alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
@@ -6998,8 +6999,8 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -7010,7 +7011,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[mut=True, dtype, layout], size: Int):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -7019,9 +7020,8 @@ fn prefix_sum_block_sum_phase[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase[extended_layout, extended_layout]
-            ](
+            alias kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 size,
@@ -7030,7 +7030,8 @@ fn prefix_sum_block_sum_phase[
             )
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[prefix_sum_block_sum_phase[extended_layout]](
+            alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -7116,8 +7117,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -7181,7 +7182,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[mut=True, dtype, layout], size: Int):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -7441,8 +7442,8 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -7500,8 +7501,8 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <pre><code class="language-mojo">fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -7736,9 +7737,9 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn naive_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
@@ -7789,9 +7790,9 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <pre><code class="language-mojo">fn naive_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
@@ -8029,9 +8030,9 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
@@ -8084,9 +8085,9 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <pre><code class="language-mojo">fn single_block_matmul[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
@@ -8384,9 +8385,9 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -8492,9 +8493,9 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <pre><code class="language-mojo">fn matmul_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -8698,9 +8699,9 @@ alias BLOCK_DIM_COUNT = 2
 fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
     local_row = thread_idx.y
     local_col = thread_idx.x
@@ -18249,8 +18250,8 @@ while offset &gt; 0:
 <pre><code class="language-mojo">fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x

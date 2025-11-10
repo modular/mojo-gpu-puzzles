@@ -232,8 +232,8 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -291,8 +291,8 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <pre><code class="language-mojo">fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
