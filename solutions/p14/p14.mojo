@@ -18,8 +18,8 @@ alias layout = Layout.row_major(SIZE)
 fn prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -59,6 +59,7 @@ alias SIZE_2 = 15
 alias BLOCKS_PER_GRID_2 = (2, 1)
 alias THREADS_PER_BLOCK_2 = (TPB, 1)
 alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+alias layout_2 = Layout.row_major(SIZE_2)
 alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 # ANCHOR: prefix_sum_complete_solution
@@ -68,8 +69,8 @@ alias extended_layout = Layout.row_major(EXTENDED_SIZE)
 fn prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -133,7 +134,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[mut=True, dtype, layout], size: Int):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -170,14 +171,12 @@ def main():
             for i in range(size):
                 a_host[i] = i
 
-        a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-
         if use_simple:
-            out_tensor = LayoutTensor[mut=False, dtype, layout](
-                out.unsafe_ptr()
-            )
+            a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+            out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
 
-            ctx.enqueue_function[prefix_sum_simple[layout]](
+            alias kernel = prefix_sum_simple[layout]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 size,
@@ -185,15 +184,15 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         else:
-            var out_tensor = LayoutTensor[mut=False, dtype, extended_layout](
-                out.unsafe_ptr()
+            var a_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](a)
+            var out_tensor = LayoutTensor[dtype, extended_layout, MutAnyOrigin](
+                out
             )
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            ctx.enqueue_function[
-                prefix_sum_local_phase[extended_layout, extended_layout]
-            ](
+            alias kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 size,
@@ -202,7 +201,8 @@ def main():
             )
 
             # Phase 2: Add block sums
-            ctx.enqueue_function[prefix_sum_block_sum_phase[extended_layout]](
+            alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,

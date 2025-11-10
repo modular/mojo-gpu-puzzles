@@ -21,8 +21,8 @@ alias out_layout = Layout.row_major(BATCH, 1)
 fn axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    a: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -45,12 +45,11 @@ def main():
                 for col in range(SIZE):
                     inp_host[row * SIZE + col] = row * SIZE + col
 
-        out_tensor = LayoutTensor[mut=False, dtype, out_layout](
-            out.unsafe_ptr()
-        )
-        inp_tensor = LayoutTensor[mut=False, dtype, in_layout](inp.unsafe_ptr())
+        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+        inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
-        ctx.enqueue_function[axis_sum[in_layout, out_layout]](
+        alias kernel = axis_sum[in_layout, out_layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
             SIZE,
