@@ -266,8 +266,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 31 lines)
     ...
@@ -295,7 +295,7 @@ fn softmax_gpu_kernel[
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -442,8 +442,8 @@ Sum of all probabilities on GPU: 1.0
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     shared_max = LayoutTensor[
         dtype,
@@ -638,7 +638,7 @@ if global_i &lt; input_size:
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):

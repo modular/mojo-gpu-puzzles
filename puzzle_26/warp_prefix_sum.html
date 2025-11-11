@@ -278,8 +278,8 @@ output[global_i] = scan_result
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive:
@@ -376,8 +376,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
@@ -500,8 +500,8 @@ Cycle 3: Store results
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """
@@ -596,8 +596,8 @@ pivot: 5.0
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """

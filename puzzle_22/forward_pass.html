@@ -363,9 +363,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
@@ -452,8 +452,8 @@ fn matmul_idiomatic_tiled[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -496,9 +496,9 @@ fn matmul_idiomatic_tiled[
     seq_len: Int,
     output_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, MutAnyOrigin],
+    bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
     batch_idx = block_idx.x
@@ -529,10 +529,10 @@ fn matmul_idiomatic_tiled[
     seq_len: Int,
     hidden_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
     batch_idx = block_idx.x
     seq_idx = block_idx.y
@@ -686,10 +686,10 @@ UNFUSED Algorithm Test Completed!
     hidden_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
     batch_idx = block_idx.x
     seq_idx = block_idx.y
@@ -879,12 +879,12 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     hidden_dim: Int,
     output_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
-    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """
@@ -1036,12 +1036,12 @@ FUSED Algorithm Test Completed!
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
-    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """

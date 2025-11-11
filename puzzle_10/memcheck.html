@@ -194,8 +194,8 @@
 <h3 id="test-passes-but-is-my-code-actually-correct"><a class="header" href="#test-passes-but-is-my-code-actually-correct">Test passes, but is my code actually correct?</a></h3>
 <p>Let’s start with a seemingly innocent program that appears to work perfectly (this is <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a> without guards):</p>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y

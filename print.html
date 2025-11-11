@@ -3929,8 +3929,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code-14"><a class="header" href="#running-the-code-14">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn process_sliding_window(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     thread_id = thread_idx.x
 
@@ -4248,8 +4248,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code-15"><a class="header" href="#running-the-code-15">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn collaborative_filter(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     thread_id = thread_idx.x
 
@@ -4700,8 +4700,8 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <h3 id="test-passes-but-is-my-code-actually-correct"><a class="header" href="#test-passes-but-is-my-code-actually-correct">Test passes, but is my code actually correct?</a></h3>
 <p>Let’s start with a seemingly innocent program that appears to work perfectly (this is <a href="puzzle_10/../puzzle_04/layout_tensor.html">Puzzle 04</a> without guards):</p>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=True, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -4895,8 +4895,8 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -5053,8 +5053,8 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
@@ -9390,8 +9390,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 31 lines)
     ...
@@ -9419,7 +9419,7 @@ fn softmax_gpu_kernel[
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -9566,8 +9566,8 @@ Sum of all probabilities on GPU: 1.0
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     shared_max = LayoutTensor[
         dtype,
@@ -9762,7 +9762,7 @@ if global_i &lt; input_size:
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     var max_val: Scalar[dtype] = min_finite[dtype]()
     for i in range(input_size):
@@ -10288,8 +10288,8 @@ Output vector norms:
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
     shared_tile = LayoutTensor[
@@ -10336,10 +10336,11 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             q_2d = q_tensor.reshape[layout_q_2d]()
 
-            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)
-            gpu_ctx.enqueue_function[
-                transpose_kernel[layout_k, layout_k_t, seq_len, d, dtype]
-            ](
+            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
+            alias kernel = transpose_kernel[
+                layout_k, layout_k_t, seq_len, d, dtype
+            ]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -10349,20 +10350,19 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
-            scores_2d = LayoutTensor[
-                mut=True, dtype, layout_scores_2d, MutAnyOrigin
-            ](scores_weights_buf.unsafe_ptr())
-            gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[
-                    layout_q_2d,
-                    layout_k_t,
-                    layout_scores_2d,
-                    1,
-                    seq_len,
-                    d,
-                    dtype,
-                ]
-            ](
+            scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
+                scores_weights_buf
+            )
+            alias kernel2 = matmul_idiomatic_tiled[
+                layout_q_2d,
+                layout_k_t,
+                layout_scores_2d,
+                1,
+                seq_len,
+                d,
+                dtype,
+            ]
+            gpu_ctx.enqueue_function_checked[kernel2, kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -10374,9 +10374,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
-            gpu_ctx.enqueue_function[
-                softmax_gpu_kernel[layout_scores, seq_len, dtype]
-            ](
+            alias kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
+            gpu_ctx.enqueue_function_checked[kernel3, kernel3](
                 weights,
                 weights,
                 grid_dim=softmax_blocks_per_grid,
@@ -10389,17 +10388,16 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
-            gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[
-                    layout_weights_2d,
-                    layout_v,
-                    layout_result_2d,
-                    1,
-                    d,
-                    seq_len,
-                    dtype,
-                ]
-            ](
+            alias kernel4 = matmul_idiomatic_tiled[
+                layout_weights_2d,
+                layout_v,
+                layout_result_2d,
+                1,
+                d,
+                seq_len,
+                dtype,
+            ]
+            gpu_ctx.enqueue_function_checked[kernel4, kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,
@@ -11087,20 +11085,20 @@ struct Embedding2DCustomOp:
             blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
 
             # Compile and launch 2D kernel
-            compiled_kernel = gpu_ctx.compile_function[
-                embedding_kernel_2d[
-                    indices_layout,
-                    weights_layout,
-                    out_layout,
-                    batch_size,
-                    seq_len,
-                    vocab_size,
-                    embed_dim,
-                    output.dtype,
-                ]
-            ]()
+            alias kernel = embedding_kernel_2d[
+                indices_layout,
+                weights_layout,
+                out_layout,
+                batch_size,
+                seq_len,
+                vocab_size,
+                embed_dim,
+                output.dtype,
+            ]
 
-            gpu_ctx.enqueue_function(
+            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+
+            gpu_ctx.enqueue_function_checked(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,
@@ -11743,9 +11741,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
@@ -11832,8 +11830,8 @@ fn matmul_idiomatic_tiled[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -11876,9 +11874,9 @@ fn matmul_idiomatic_tiled[
     seq_len: Int,
     output_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, MutAnyOrigin],
+    bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
     batch_idx = block_idx.x
@@ -11909,10 +11907,10 @@ fn matmul_idiomatic_tiled[
     seq_len: Int,
     hidden_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
     batch_idx = block_idx.x
     seq_idx = block_idx.y
@@ -12066,10 +12064,10 @@ UNFUSED Algorithm Test Completed!
     hidden_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
     batch_idx = block_idx.x
     seq_idx = block_idx.y
@@ -12259,12 +12257,12 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     hidden_dim: Int,
     output_dim: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
-    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """
@@ -12416,12 +12414,12 @@ FUSED Algorithm Test Completed!
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
-    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """
@@ -12706,16 +12704,16 @@ where:</p>
     hidden_dim: Int,
     output_dim: Int,
 ](
-    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
-    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
-    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
-    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
-    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
+    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
+    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
+    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
+    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
+    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -12899,16 +12897,16 @@ BACKWARD PASS Test Completed!
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
-    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
-    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
-    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
-    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
+    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
+    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
+    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
+    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
+    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -16201,8 +16199,8 @@ alias layout = Layout.row_major(SIZE)
 fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -16296,8 +16294,8 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 <pre><code class="language-mojo">fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -16407,8 +16405,8 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -16510,8 +16508,8 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 <pre><code class="language-mojo">fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -16701,8 +16699,8 @@ result = use_collective_value(collective_value)
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -16787,8 +16785,8 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <pre><code class="language-mojo">fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -16894,8 +16892,8 @@ Cycle 3: Individual computation with broadcast value
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -16993,8 +16991,8 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <pre><code class="language-mojo">fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -17130,8 +17128,8 @@ Step 3: Conditional execution per lane
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -17222,8 +17220,8 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 <pre><code class="language-mojo">fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -17640,8 +17638,8 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 <pre><code class="language-mojo">fn butterfly_pair_swap[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
@@ -17742,8 +17740,8 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Parallel maximum reduction using butterfly pattern.
@@ -17849,8 +17847,8 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <pre><code class="language-mojo">fn butterfly_parallel_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Parallel maximum reduction using butterfly pattern.
@@ -17959,8 +17957,8 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
@@ -18048,8 +18046,8 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 <pre><code class="language-mojo">fn butterfly_conditional_max[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional butterfly maximum: Perform butterfly max reduction, but only store result
@@ -18313,8 +18311,8 @@ output[global_i] = scan_result
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive:
@@ -18411,8 +18409,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
@@ -18535,8 +18533,8 @@ Cycle 3: Store results
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """
@@ -18631,8 +18629,8 @@ pivot: 5.0
 <pre><code class="language-mojo">fn warp_partition[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """
@@ -23091,8 +23089,8 @@ alias ALPHA = Float32(2.5)  # SAXPY coefficient
 fn minimal_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[mut=True, dtype, layout],
-    x: LayoutTensor[mut=False, dtype, layout],
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
@@ -23109,8 +23107,8 @@ fn minimal_kernel[
 <pre><code class="language-mojo">fn sophisticated_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[mut=True, dtype, layout],
-    x: LayoutTensor[mut=False, dtype, layout],
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
@@ -23204,8 +23202,8 @@ fn minimal_kernel[
 <pre><code class="language-mojo">fn balanced_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[mut=True, dtype, layout],
-    x: LayoutTensor[mut=False, dtype, layout],
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
@@ -23841,8 +23839,8 @@ alias layout = Layout.row_major(SIZE)
 fn no_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -23881,8 +23879,8 @@ fn no_conflict_kernel[
 <pre><code class="language-mojo">fn two_way_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
@@ -24358,9 +24356,9 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 <pre><code class="language-mojo">fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
@@ -24506,9 +24504,9 @@ fn tensor_core_matrix_multiplication[
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[mut=False, dtype, layout_a],
-    B: LayoutTensor[mut=False, dtype, layout_b],
-    C: LayoutTensor[mut=True, dtype, layout_c],
+    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
     alias M = C.shape[0]()
     alias N = C.shape[1]()
@@ -24710,9 +24708,9 @@ ALL TESTS PASSED!
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[mut=False, dtype, layout_a],
-    B: LayoutTensor[mut=False, dtype, layout_b],
-    C: LayoutTensor[mut=True, dtype, layout_c],
+    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
     alias M = C.shape[0]()
     alias N = C.shape[1]()
@@ -25179,8 +25177,8 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 <pre><code class="language-mojo">fn cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -25296,8 +25294,8 @@ Block coordination results:
 <pre><code class="language-mojo">fn cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -25467,9 +25465,11 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <pre><code class="language-mojo">fn cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
-    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -25566,9 +25566,11 @@ Error: 0.0
 <pre><code class="language-mojo">fn cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
-    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -25771,8 +25773,8 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <pre><code class="language-mojo">fn advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -25876,8 +25878,8 @@ Advanced cluster algorithm results:
 <pre><code class="language-mojo">fn advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.

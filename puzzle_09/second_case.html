@@ -209,8 +209,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn process_sliding_window(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     thread_id = thread_idx.x
 

@@ -495,20 +495,20 @@ struct Embedding2DCustomOp:
             blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
 
             # Compile and launch 2D kernel
-            compiled_kernel = gpu_ctx.compile_function[
-                embedding_kernel_2d[
-                    indices_layout,
-                    weights_layout,
-                    out_layout,
-                    batch_size,
-                    seq_len,
-                    vocab_size,
-                    embed_dim,
-                    output.dtype,
-                ]
-            ]()
+            alias kernel = embedding_kernel_2d[
+                indices_layout,
+                weights_layout,
+                out_layout,
+                batch_size,
+                seq_len,
+                vocab_size,
+                embed_dim,
+                output.dtype,
+            ]
 
-            gpu_ctx.enqueue_function(
+            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+
+            gpu_ctx.enqueue_function_checked(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,

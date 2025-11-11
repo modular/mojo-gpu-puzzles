@@ -336,9 +336,9 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 <pre><code class="language-mojo">fn matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    a: LayoutTensor[mut=False, dtype, layout],
-    b: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
@@ -484,9 +484,9 @@ fn tensor_core_matrix_multiplication[
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[mut=False, dtype, layout_a],
-    B: LayoutTensor[mut=False, dtype, layout_b],
-    C: LayoutTensor[mut=True, dtype, layout_c],
+    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
     alias M = C.shape[0]()
     alias N = C.shape[1]()
@@ -688,9 +688,9 @@ ALL TESTS PASSED!
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[mut=False, dtype, layout_a],
-    B: LayoutTensor[mut=False, dtype, layout_b],
-    C: LayoutTensor[mut=True, dtype, layout_c],
+    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
     alias M = C.shape[0]()
     alias N = C.shape[1]()

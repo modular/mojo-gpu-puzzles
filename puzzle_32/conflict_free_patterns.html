@@ -207,8 +207,8 @@ alias layout = Layout.row_major(SIZE)
 fn no_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -247,8 +247,8 @@ fn no_conflict_kernel[
 <pre><code class="language-mojo">fn two_way_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.

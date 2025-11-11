@@ -228,8 +228,8 @@
 <pre><code class="language-mojo">fn advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -333,8 +333,8 @@ Advanced cluster algorithm results:
 <pre><code class="language-mojo">fn advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.

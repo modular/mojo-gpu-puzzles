@@ -224,9 +224,11 @@
 <pre><code class="language-mojo">fn cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
-    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -323,9 +325,11 @@ Error: 0.0
 <pre><code class="language-mojo">fn cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
-    temp_storage: LayoutTensor[mut=True, dtype, Layout.row_major(CLUSTER_SIZE)],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""

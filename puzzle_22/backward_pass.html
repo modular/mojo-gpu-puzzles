@@ -290,16 +290,16 @@ where:</p>
     hidden_dim: Int,
     output_dim: Int,
 ](
-    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
-    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
-    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
-    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
-    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
+    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
+    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
+    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
+    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
+    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -483,16 +483,16 @@ BACKWARD PASS Test Completed!
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
-    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
-    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
-    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
-    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
+    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
+    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
+    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
+    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
+    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """

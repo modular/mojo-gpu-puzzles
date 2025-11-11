@@ -226,8 +226,8 @@
 <pre><code class="language-mojo">fn cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -343,8 +343,8 @@ Block coordination results:
 <pre><code class="language-mojo">fn cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout],
-    input: LayoutTensor[mut=False, dtype, in_layout],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""

@@ -555,8 +555,8 @@ Output vector norms:
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
     shared_tile = LayoutTensor[
@@ -603,10 +603,11 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             q_2d = q_tensor.reshape[layout_q_2d]()
 
-            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)
-            gpu_ctx.enqueue_function[
-                transpose_kernel[layout_k, layout_k_t, seq_len, d, dtype]
-            ](
+            # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
+            alias kernel = transpose_kernel[
+                layout_k, layout_k_t, seq_len, d, dtype
+            ]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -616,20 +617,19 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
-            scores_2d = LayoutTensor[
-                mut=True, dtype, layout_scores_2d, MutAnyOrigin
-            ](scores_weights_buf.unsafe_ptr())
-            gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[
-                    layout_q_2d,
-                    layout_k_t,
-                    layout_scores_2d,
-                    1,
-                    seq_len,
-                    d,
-                    dtype,
-                ]
-            ](
+            scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
+                scores_weights_buf
+            )
+            alias kernel2 = matmul_idiomatic_tiled[
+                layout_q_2d,
+                layout_k_t,
+                layout_scores_2d,
+                1,
+                seq_len,
+                d,
+                dtype,
+            ]
+            gpu_ctx.enqueue_function_checked[kernel2, kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -641,9 +641,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
-            gpu_ctx.enqueue_function[
-                softmax_gpu_kernel[layout_scores, seq_len, dtype]
-            ](
+            alias kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
+            gpu_ctx.enqueue_function_checked[kernel3, kernel3](
                 weights,
                 weights,
                 grid_dim=softmax_blocks_per_grid,
@@ -656,17 +655,16 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
-            gpu_ctx.enqueue_function[
-                matmul_idiomatic_tiled[
-                    layout_weights_2d,
-                    layout_v,
-                    layout_result_2d,
-                    1,
-                    d,
-                    seq_len,
-                    dtype,
-                ]
-            ](
+            alias kernel4 = matmul_idiomatic_tiled[
+                layout_weights_2d,
+                layout_v,
+                layout_result_2d,
+                1,
+                d,
+                seq_len,
+                dtype,
+            ]
+            gpu_ctx.enqueue_function_checked[kernel4, kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,
