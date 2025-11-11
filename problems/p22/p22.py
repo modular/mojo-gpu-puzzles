@@ -1225,12 +1225,12 @@ def main():
         demonstrate_single_operation()
     else:
         print("Usage:")
-        print("  python p20.py --fused          # Test fused algorithm")
-        print("  python p20.py --unfused        # Test unfused algorithm")
-        print("  python p20.py --backward       # Test backward pass")
-        print("  python p20.py --demo           # Neural network demo")
+        print("  python p22.py --fused          # Test fused algorithm")
+        print("  python p22.py --unfused        # Test unfused algorithm")
+        print("  python p22.py --backward       # Test backward pass")
+        print("  python p22.py --demo           # Neural network demo")
         print(
-            "  python p20.py --demo-simple    # Single operation demo (fastest)"
+            "  python p22.py --demo-simple    # Single operation demo (fastest)"
         )
         exit(1)
 

@@ -18,8 +18,8 @@ alias layout = Layout.row_major(SIZE)
 fn no_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -61,8 +61,8 @@ fn no_conflict_kernel[
 fn two_way_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
@@ -126,7 +126,8 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
             input_buf.unsafe_ptr()
         )
 
-        ctx.enqueue_function[no_conflict_kernel[layout]](
+        alias kernel = no_conflict_kernel[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -161,7 +162,8 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
             input_buf.unsafe_ptr()
         )
 
-        ctx.enqueue_function[two_way_conflict_kernel[layout]](
+        alias kernel = two_way_conflict_kernel[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -192,7 +194,8 @@ fn test_no_conflict() raises:
             input_buf.unsafe_ptr()
         )
 
-        ctx.enqueue_function[no_conflict_kernel[layout]](
+        alias kernel = no_conflict_kernel[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
             SIZE,
@@ -225,7 +228,8 @@ fn test_two_way_conflict() raises:
             input_buf.unsafe_ptr()
         )
 
-        ctx.enqueue_function[two_way_conflict_kernel[layout]](
+        alias kernel = two_way_conflict_kernel[layout]
+        ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
             SIZE,

@@ -26,9 +26,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
@@ -118,10 +118,10 @@ fn layernorm_kernel[
     hidden_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
     batch_idx = block_idx.x
     seq_idx = block_idx.y
@@ -167,8 +167,8 @@ fn transpose_kernel[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
@@ -213,9 +213,9 @@ fn add_bias_kernel[
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, MutAnyOrigin],
+    bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
     batch_idx = block_idx.x
@@ -246,12 +246,12 @@ fn minimal_fused_kernel[
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
-    linear_bias: LayoutTensor[mut=False, dtype, bias_layout],
+    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """
@@ -315,16 +315,16 @@ fn minimal_fused_kernel_backward[
     output_dim: Int,
     dtype: DType = DType.float32,
 ](
-    grad_input: LayoutTensor[mut=True, dtype, grad_input_layout],
-    grad_ln_weight: LayoutTensor[mut=True, dtype, grad_ln_weight_layout],
-    grad_ln_bias: LayoutTensor[mut=True, dtype, grad_ln_bias_layout],
-    grad_weight: LayoutTensor[mut=True, dtype, grad_weight_layout],
-    grad_bias: LayoutTensor[mut=True, dtype, grad_bias_layout],
-    grad_output: LayoutTensor[mut=True, dtype, grad_output_layout],
-    input: LayoutTensor[mut=False, dtype, input_layout],
-    ln_weight: LayoutTensor[mut=False, dtype, ln_params_layout],
-    ln_bias: LayoutTensor[mut=False, dtype, ln_params_layout],
-    linear_weight: LayoutTensor[mut=False, dtype, weight_layout],
+    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
+    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
+    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
+    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
+    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
+    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
+    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
+    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -480,18 +480,31 @@ struct LayerNormLinearCustomOp:
         linear_bias: InputTensor[dtype=dtype, rank=1],
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        input_tensor = input.to_layout_tensor()
-        ln_weight_tensor = ln_weight.to_layout_tensor()
-        ln_bias_tensor = ln_bias.to_layout_tensor()
-        linear_weight_tensor = linear_weight.to_layout_tensor()
-        linear_bias_tensor = linear_bias.to_layout_tensor()
+        alias input_layout = input.static_spec.to_layout()
+        alias ln_params_layout = ln_weight.static_spec.to_layout()
+        alias weight_layout = linear_weight.static_spec.to_layout()
+        alias bias_layout = linear_bias.static_spec.to_layout()
+        alias output_layout = output.static_spec.to_layout()
 
-        alias input_layout = input_tensor.layout
-        alias ln_params_layout = ln_weight_tensor.layout
-        alias weight_layout = linear_weight_tensor.layout
-        alias bias_layout = linear_bias_tensor.layout
-        alias output_layout = output_tensor.layout
+        # Note: rebind is necessary now but it shouldn't be!
+        output_tensor = rebind[
+            LayoutTensor[dtype, output_layout, MutAnyOrigin]
+        ](output.to_layout_tensor())
+        input_tensor = rebind[
+            LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
+        ](input.to_layout_tensor())
+        ln_weight_tensor = rebind[
+            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+        ](ln_weight.to_layout_tensor())
+        ln_bias_tensor = rebind[
+            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+        ](ln_bias.to_layout_tensor())
+        linear_weight_tensor = rebind[
+            LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
+        ](linear_weight.to_layout_tensor())
+        linear_bias_tensor = rebind[
+            LayoutTensor[dtype, bias_layout, ImmutAnyOrigin]
+        ](linear_bias.to_layout_tensor())
 
         @parameter
         if target == "gpu":
@@ -501,20 +514,18 @@ struct LayerNormLinearCustomOp:
             @parameter
             if algorithm == "fused":
                 # fused case - one thread per sequence position
-                gpu_ctx.enqueue_function[
-                    minimal_fused_kernel[
-                        input_layout,
-                        ln_params_layout,
-                        weight_layout,
-                        bias_layout,
-                        output_layout,
-                        batch_size,
-                        seq_len,
-                        hidden_dim,
-                        output_dim,
-                        dtype,
-                    ]
-                ](
+                alias kernel = minimal_fused_kernel[
+                    input_layout,
+                    ln_params_layout,
+                    weight_layout,
+                    bias_layout,
+                    output_layout,
+                    batch_size,
+                    seq_len,
+                    hidden_dim,
+                    output_dim,
+                ]
+                gpu_ctx.enqueue_function_checked[kernel, kernel](
                     output_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -530,22 +541,20 @@ struct LayerNormLinearCustomOp:
                 normalized_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * hidden_dim
                 )
-                normalized_tensor = LayoutTensor[mut=True, dtype, input_layout](
-                    normalized_buffer.unsafe_ptr()
-                )
+                normalized_tensor = LayoutTensor[
+                    dtype, input_layout, MutAnyOrigin
+                ](normalized_buffer)
 
                 # Step 1: LayerNorm kernel
-                gpu_ctx.enqueue_function[
-                    layernorm_kernel[
-                        input_layout,
-                        ln_params_layout,
-                        input_layout,
-                        batch_size,
-                        seq_len,
-                        hidden_dim,
-                        dtype,
-                    ]
-                ](
+                alias kernel = layernorm_kernel[
+                    input_layout,
+                    ln_params_layout,
+                    input_layout,
+                    batch_size,
+                    seq_len,
+                    hidden_dim,
+                ]
+                gpu_ctx.enqueue_function_checked[kernel, kernel](
                     normalized_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -568,17 +577,19 @@ struct LayerNormLinearCustomOp:
                 matmul_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * output_dim
                 )
-                matmul_tensor = LayoutTensor[mut=True, dtype, output_layout](
-                    matmul_buffer.unsafe_ptr()
-                )
+                matmul_tensor = LayoutTensor[
+                    dtype, output_layout, MutAnyOrigin
+                ](matmul_buffer)
 
                 # Create transposed weight matrix: [output_dim, hidden_dim] -> [hidden_dim, output_dim]
                 transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     hidden_dim * output_dim
                 )
                 transposed_weight_tensor = LayoutTensor[
-                    mut=True, dtype, Layout.row_major(hidden_dim, output_dim)
-                ](transposed_weight_buffer.unsafe_ptr())
+                    dtype,
+                    Layout.row_major(hidden_dim, output_dim),
+                    MutAnyOrigin,
+                ](transposed_weight_buffer)
 
                 # Transpose the weight matrix
                 transpose_blocks_x = (
@@ -587,15 +598,13 @@ struct LayerNormLinearCustomOp:
                 transpose_blocks_y = (
                     output_dim + TRANSPOSE_BLOCK_DIM_XY - 1
                 ) // TRANSPOSE_BLOCK_DIM_XY
-                gpu_ctx.enqueue_function[
-                    transpose_kernel[
-                        weight_layout,
-                        transposed_weight_tensor.layout,
-                        output_dim,
-                        hidden_dim,
-                        dtype,
-                    ]
-                ](
+                alias kernel2 = transpose_kernel[
+                    weight_layout,
+                    transposed_weight_tensor.layout,
+                    output_dim,
+                    hidden_dim,
+                ]
+                gpu_ctx.enqueue_function_checked[kernel2, kernel2](
                     transposed_weight_tensor,
                     linear_weight_tensor,
                     grid_dim=(transpose_blocks_x, transpose_blocks_y),
@@ -610,17 +619,15 @@ struct LayerNormLinearCustomOp:
                     Layout.row_major(batch_size * seq_len, output_dim)
                 ]()
 
-                gpu_ctx.enqueue_function[
-                    matmul_idiomatic_tiled[
-                        flat_normalized.layout,
-                        transposed_weight_tensor.layout,
-                        flat_matmul.layout,
-                        batch_size * seq_len,
-                        output_dim,
-                        hidden_dim,
-                        dtype,
-                    ]
-                ](
+                alias kernel3 = matmul_idiomatic_tiled[
+                    flat_normalized.layout,
+                    transposed_weight_tensor.layout,
+                    flat_matmul.layout,
+                    batch_size * seq_len,
+                    output_dim,
+                    hidden_dim,
+                ]
+                gpu_ctx.enqueue_function_checked[kernel3, kernel3](
                     flat_matmul,
                     flat_normalized,
                     transposed_weight_tensor,
@@ -633,17 +640,15 @@ struct LayerNormLinearCustomOp:
                     Layout.row_major(batch_size, seq_len, output_dim)
                 ]()
 
-                gpu_ctx.enqueue_function[
-                    add_bias_kernel[
-                        reshaped_matmul.layout,
-                        bias_layout,
-                        output_layout,
-                        batch_size,
-                        seq_len,
-                        output_dim,
-                        dtype,
-                    ]
-                ](
+                alias kernel4 = add_bias_kernel[
+                    reshaped_matmul.layout,
+                    bias_layout,
+                    output_layout,
+                    batch_size,
+                    seq_len,
+                    output_dim,
+                ]
+                gpu_ctx.enqueue_function_checked[kernel4, kernel4](
                     output_tensor,
                     reshaped_matmul,
                     linear_bias_tensor,
@@ -717,51 +722,68 @@ struct LayerNormLinearBackwardCustomOp:
         linear_weight: InputTensor[dtype=dtype, rank=2],
         ctx: DeviceContextPtr,
     ) raises:
-        grad_input_tensor = grad_input.to_layout_tensor()
-        grad_ln_weight_tensor = grad_ln_weight.to_layout_tensor()
-        grad_ln_bias_tensor = grad_ln_bias.to_layout_tensor()
-        grad_weight_tensor = grad_weight.to_layout_tensor()
-        grad_bias_tensor = grad_bias.to_layout_tensor()
+        alias grad_output_layout = grad_output.static_spec.to_layout()
+        alias input_layout = input.static_spec.to_layout()
+        alias ln_params_layout = ln_weight.static_spec.to_layout()
+        alias weight_layout = linear_weight.static_spec.to_layout()
+        alias grad_input_layout = grad_input.static_spec.to_layout()
+        alias grad_ln_weight_layout = grad_ln_weight.static_spec.to_layout()
+        alias grad_ln_bias_layout = grad_ln_bias.static_spec.to_layout()
+        alias grad_weight_layout = grad_weight.static_spec.to_layout()
+        alias grad_bias_layout = grad_bias.static_spec.to_layout()
 
-        grad_output_tensor = grad_output.to_layout_tensor()
-        input_tensor = input.to_layout_tensor()
-        ln_weight_tensor = ln_weight.to_layout_tensor()
-        ln_bias_tensor = ln_bias.to_layout_tensor()
-        linear_weight_tensor = linear_weight.to_layout_tensor()
-
-        alias grad_output_layout = grad_output_tensor.layout
-        alias input_layout = input_tensor.layout
-        alias ln_params_layout = ln_weight_tensor.layout
-        alias weight_layout = linear_weight_tensor.layout
-        alias grad_input_layout = grad_input_tensor.layout
-        alias grad_ln_weight_layout = grad_ln_weight_tensor.layout
-        alias grad_ln_bias_layout = grad_ln_bias_tensor.layout
-        alias grad_weight_layout = grad_weight_tensor.layout
-        alias grad_bias_layout = grad_bias_tensor.layout
+        grad_input_tensor = rebind[
+            LayoutTensor[dtype, grad_input_layout, MutAnyOrigin]
+        ](grad_input.to_layout_tensor())
+        grad_ln_weight_tensor = rebind[
+            LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin]
+        ](grad_ln_weight.to_layout_tensor())
+        grad_ln_bias_tensor = rebind[
+            LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin]
+        ](grad_ln_bias.to_layout_tensor())
+        grad_weight_tensor = rebind[
+            LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin]
+        ](grad_weight.to_layout_tensor())
+        grad_bias_tensor = rebind[
+            LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin]
+        ](grad_bias.to_layout_tensor())
+        grad_output_tensor = rebind[
+            LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin]
+        ](grad_output.to_layout_tensor())
+        input_tensor = rebind[
+            LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
+        ](input.to_layout_tensor())
+        ln_weight_tensor = rebind[
+            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+        ](ln_weight.to_layout_tensor())
+        ln_bias_tensor = rebind[
+            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+        ](ln_bias.to_layout_tensor())
+        linear_weight_tensor = rebind[
+            LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
+        ](linear_weight.to_layout_tensor())
 
         @parameter
         if target == "gpu":
             gpu_ctx = ctx.get_device_context()
 
             # Launch backward kernel
-            gpu_ctx.enqueue_function[
-                minimal_fused_kernel_backward[
-                    grad_output_layout,
-                    input_layout,
-                    ln_params_layout,
-                    weight_layout,
-                    grad_input_layout,
-                    grad_ln_weight_layout,
-                    grad_ln_bias_layout,
-                    grad_weight_layout,
-                    grad_bias_layout,
-                    batch_size,
-                    seq_len,
-                    hidden_dim,
-                    output_dim,
-                    dtype,
-                ]
-            ](
+            alias kernel = minimal_fused_kernel_backward[
+                grad_output_layout,
+                input_layout,
+                ln_params_layout,
+                weight_layout,
+                grad_input_layout,
+                grad_ln_weight_layout,
+                grad_ln_bias_layout,
+                grad_weight_layout,
+                grad_bias_layout,
+                batch_size,
+                seq_len,
+                hidden_dim,
+                output_dim,
+            ]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 grad_input_tensor,
                 grad_ln_weight_tensor,
                 grad_ln_bias_tensor,
