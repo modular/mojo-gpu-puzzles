@@ -16,8 +16,8 @@ alias layout = Layout.row_major(SIZE)
 fn neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -42,8 +42,8 @@ alias layout_2 = Layout.row_major(SIZE_2)
 fn moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -63,8 +63,8 @@ fn moving_average_3[
 fn broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -86,8 +86,8 @@ fn broadcast_shuffle_coordination[
 fn basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -108,8 +108,8 @@ fn basic_broadcast[
 fn conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -145,14 +145,11 @@ def test_neighbor_difference():
             for i in range(SIZE):
                 input_host[i] = i * i
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
-        )
-        output_tensor = LayoutTensor[mut=False, dtype, layout](
-            output_buf.unsafe_ptr()
-        )
+        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        ctx.enqueue_function[neighbor_difference[layout, SIZE]](
+        alias kernel = neighbor_difference[layout, SIZE]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -192,14 +189,11 @@ def test_moving_average():
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + i + 1
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout_2](
-            input_buf.unsafe_ptr()
-        )
-        output_tensor = LayoutTensor[mut=False, dtype, layout_2](
-            output_buf.unsafe_ptr()
-        )
+        input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
+        output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
-        ctx.enqueue_function[moving_average_3[layout_2, SIZE_2]](
+        alias kernel = moving_average_3[layout_2, SIZE_2]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID_2,
@@ -261,14 +255,11 @@ def test_broadcast_shuffle_coordination():
                 else:
                     input_host[i] = ((i - 4) % 4) * 2 + 1
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
-        )
-        output_tensor = LayoutTensor[mut=False, dtype, layout](
-            output_buf.unsafe_ptr()
-        )
+        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        ctx.enqueue_function[broadcast_shuffle_coordination[layout, SIZE]](
+        alias kernel = broadcast_shuffle_coordination[layout, SIZE]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -314,14 +305,11 @@ def test_basic_broadcast():
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
-        )
-        output_tensor = LayoutTensor[mut=False, dtype, layout](
-            output_buf.unsafe_ptr()
-        )
+        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        ctx.enqueue_function[basic_broadcast[layout, SIZE]](
+        alias kernel = basic_broadcast[layout, SIZE]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -373,14 +361,11 @@ def test_conditional_broadcast():
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
-        )
-        output_tensor = LayoutTensor[mut=False, dtype, layout](
-            output_buf.unsafe_ptr()
-        )
+        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        ctx.enqueue_function[conditional_broadcast[layout, SIZE]](
+        alias kernel = conditional_broadcast[layout, SIZE]
+        ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,

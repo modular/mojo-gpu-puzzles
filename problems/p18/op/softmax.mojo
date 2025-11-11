@@ -22,8 +22,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 31 lines)
     ...
@@ -39,7 +39,7 @@ fn softmax_cpu_kernel[
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
     ...
@@ -68,7 +68,7 @@ struct SoftmaxCustomOp:
         var output_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
             output.to_layout_tensor()
         )
-        var input_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
+        var input_tensor = rebind[LayoutTensor[dtype, layout, ImmutAnyOrigin]](
             input.to_layout_tensor()
         )
 
@@ -88,9 +88,8 @@ struct SoftmaxCustomOp:
                 0,
             )
 
-            gpu_ctx.enqueue_function[
-                softmax_gpu_kernel[layout, input_size, dtype]
-            ](
+            alias kernel = softmax_gpu_kernel[layout, input_size, dtype]
+            gpu_ctx.enqueue_function_checked[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 grid_dim=GRID_DIM_X,

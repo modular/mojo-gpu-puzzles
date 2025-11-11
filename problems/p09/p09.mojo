@@ -28,8 +28,8 @@ fn add_10(
 
 # ANCHOR: second_crash
 fn process_sliding_window(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     thread_id = thread_idx.x
 
@@ -51,8 +51,8 @@ fn process_sliding_window(
 
 # ANCHOR: third_crash
 fn collaborative_filter(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     thread_id = thread_idx.x
 
@@ -105,14 +105,14 @@ def main():
         print()
 
         with DeviceContext() as ctx:
-            input_ptr = UnsafePointer[Scalar[dtype]]()
+            input_buf = ctx.enqueue_create_buffer[dtype](0)
             result_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             result_buf.enqueue_fill(0)
 
             # Enqueue function
-            ctx.enqueue_function[add_10](
-                result_buf.unsafe_ptr(),
-                input_ptr,
+            ctx.enqueue_function_checked[add_10, add_10](
+                result_buf,
+                input_buf,
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )
@@ -139,11 +139,11 @@ def main():
                     input_host[i] = i
 
             # Create LayoutTensors for structured access
-            input_tensor = LayoutTensor[mut=False, dtype, vector_layout](
-                input_buf.unsafe_ptr()
+            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
+                input_buf
             )
-            output_tensor = LayoutTensor[mut=True, dtype, vector_layout](
-                output_buf.unsafe_ptr()
+            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+                output_buf
             )
 
             print("Input array: [0, 1, 2, 3]")
@@ -153,7 +153,9 @@ def main():
                 " right]"
             )
 
-            ctx.enqueue_function[process_sliding_window](
+            ctx.enqueue_function_checked[
+                process_sliding_window, process_sliding_window
+            ](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,
@@ -214,11 +216,11 @@ def main():
                     input_host[i] = i + 1
 
             # Create LayoutTensors
-            input_tensor = LayoutTensor[mut=False, dtype, vector_layout](
-                input_buf.unsafe_ptr()
+            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
+                input_buf
             )
-            output_tensor = LayoutTensor[mut=True, dtype, vector_layout](
-                output_buf.unsafe_ptr()
+            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+                output_buf
             )
 
             print("Input array: [1, 2, 3, 4]")
@@ -226,7 +228,9 @@ def main():
             print("Each thread cooperates with neighbors for smoothing...")
 
             # This will likely hang due to barrier deadlock
-            ctx.enqueue_function[collaborative_filter](
+            ctx.enqueue_function_checked[
+                collaborative_filter, collaborative_filter
+            ](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,
