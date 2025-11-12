@@ -11,8 +11,8 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
