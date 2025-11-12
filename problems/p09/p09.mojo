@@ -17,7 +17,8 @@ alias ITER = 2
 
 # ANCHOR: first_crash
 fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
