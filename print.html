@@ -766,7 +766,8 @@ alias dtype = DType.float32
 
 
 fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)
@@ -818,7 +819,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
@@ -899,9 +901,9 @@ alias dtype = DType.float32
 
 
 fn add(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)
@@ -953,9 +955,9 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     output[i] = a[i] + b[i]
@@ -1017,8 +1019,8 @@ alias dtype = DType.float32
 
 
 fn add_10_guard(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     i = thread_idx.x
@@ -1071,8 +1073,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_guard(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     i = thread_idx.x
@@ -1181,8 +1183,8 @@ alias dtype = DType.float32
 
 
 fn add_10_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1236,8 +1238,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1543,9 +1545,9 @@ alias dtype = DType.float32
 
 
 fn broadcast_add(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1599,9 +1601,9 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn broadcast_add(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = thread_idx.y
@@ -1806,8 +1808,8 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -1863,8 +1865,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_blocks(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
@@ -2004,8 +2006,8 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -2059,8 +2061,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -2375,8 +2377,8 @@ alias dtype = DType.float32
 
 
 fn add_10_shared(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[
@@ -2444,8 +2446,8 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_shared(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[
@@ -3753,7 +3755,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code-13"><a class="header" href="#running-the-code-13">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
@@ -3848,18 +3851,18 @@ Cannot access memory at address 0x0
 <p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="puzzle_09/../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
-<pre><code class="language-mojo">input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
+<pre><code class="language-mojo">input_ptr = {}  # Creates NULL pointer!
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
-<li><code>UnsafePointer[Scalar[dtype]]()</code> creates an uninitialized pointer (null)</li>
+<li><code>{}</code> creates an uninitialized pointer (null)</li>
 <li>This null pointer gets passed to the GPU kernel</li>
 <li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
 <pre><code class="language-mojo"># Wrong: Creates null pointer
-input_ptr = UnsafePointer[Scalar[dtype]]()
+input_ptr = {}
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -5222,8 +5225,8 @@ alias dtype = DType.float32
 
 
 fn pooling(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[
@@ -5283,8 +5286,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn pooling(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[
@@ -5663,9 +5666,9 @@ alias dtype = DType.float32
 
 
 fn dot_product(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -5719,9 +5722,9 @@ expected: HostBuffer([140.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn dot_product(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[
@@ -9070,7 +9073,7 @@ struct Conv1DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output_tensor.dtype]]](
+                    rebind[LegacyUnsafePointer[Scalar[output_tensor.dtype]]](
                         output_tensor.ptr
                     ),
                     input_size,
@@ -10973,7 +10976,7 @@ struct EmbeddingCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                    rebind[LegacyUnsafePointer[Scalar[output.dtype]]](
                         output_tensor.ptr
                     ),
                     batch_size * seq_len * embed_dim,
@@ -11068,7 +11071,7 @@ struct Embedding2DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                    rebind[LegacyUnsafePointer[Scalar[output.dtype]]](
                         output_tensor.ptr
                     ),
                     batch_size * seq_len * embed_dim,

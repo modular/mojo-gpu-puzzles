@@ -222,9 +222,9 @@ alias dtype = DType.float32
 
 
 fn dot_product(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -278,9 +278,9 @@ expected: HostBuffer([140.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn dot_product(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
-    b: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     shared = stack_allocation[

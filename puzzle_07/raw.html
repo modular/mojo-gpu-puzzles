@@ -213,8 +213,8 @@ alias dtype = DType.float32
 
 
 fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
@@ -268,8 +268,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn add_10_blocks_2d(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y

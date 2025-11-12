@@ -203,7 +203,8 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">fn add_10(
-    output: UnsafePointer[Scalar[dtype]], a: UnsafePointer[Scalar[dtype]]
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
     output[i] = a[i] + 10.0
@@ -298,18 +299,18 @@ Cannot access memory at address 0x0
 <p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
-<pre><code class="language-mojo">input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
+<pre><code class="language-mojo">input_ptr = {}  # Creates NULL pointer!
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
-<li><code>UnsafePointer[Scalar[dtype]]()</code> creates an uninitialized pointer (null)</li>
+<li><code>{}</code> creates an uninitialized pointer (null)</li>
 <li>This null pointer gets passed to the GPU kernel</li>
 <li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
 <pre><code class="language-mojo"># Wrong: Creates null pointer
-input_ptr = UnsafePointer[Scalar[dtype]]()
+input_ptr = {}
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
