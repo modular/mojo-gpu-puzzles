@@ -11,8 +11,8 @@ alias dtype = DType.float32
 
 # ANCHOR: add_10_guard_solution
 fn add_10_guard(
-    output: UnsafePointer[Scalar[dtype]],
-    a: UnsafePointer[Scalar[dtype]],
+    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: Int,
 ):
     i = thread_idx.x

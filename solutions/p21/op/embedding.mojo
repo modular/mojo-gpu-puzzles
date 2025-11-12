@@ -157,7 +157,7 @@ struct EmbeddingCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                    rebind[LegacyUnsafePointer[Scalar[output.dtype]]](
                         output_tensor.ptr
                     ),
                     batch_size * seq_len * embed_dim,
@@ -246,7 +246,7 @@ struct Embedding2DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[UnsafePointer[Scalar[output.dtype]]](
+                    rebind[LegacyUnsafePointer[Scalar[output.dtype]]](
                         output_tensor.ptr
                     ),
                     batch_size * seq_len * embed_dim,

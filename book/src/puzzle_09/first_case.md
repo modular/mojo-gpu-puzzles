@@ -149,12 +149,12 @@ Cannot access memory at address 0x0
 **The Problem**: Now if we look at the [code](../../../problems/p09/p09.mojo) for `--first-crash`, we see that the host code creates a null pointer instead of allocating proper GPU memory:
 
 ```mojo
-input_ptr = UnsafePointer[Scalar[dtype]]()  # Creates NULL pointer!
+input_ptr = {}  # Creates NULL pointer!
 ```
 
 **Why This Crashes**:
 
-1. `UnsafePointer[Scalar[dtype]]()` creates an uninitialized pointer (null)
+1. `{}` creates an uninitialized pointer (null)
 2. This null pointer gets passed to the GPU kernel
 3. When kernel tries `input[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
 
@@ -164,7 +164,7 @@ Replace null pointer creation with proper buffer allocation:
 
 ```mojo
 # Wrong: Creates null pointer
-input_ptr = UnsafePointer[Scalar[dtype]]()
+input_ptr = {}
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
