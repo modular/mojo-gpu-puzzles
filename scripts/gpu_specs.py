@@ -19,8 +19,15 @@ Requirements:
 - Apple: system_profiler, sysctl (built-in macOS tools)
 
 Usage:
-    python3 scripts/gpu_specs.py
-    pixi run gpu-specs
+    # With pixi (recommended - handles all dependencies):
+    pixi run gpu-specs              # NVIDIA (default)
+    pixi run -e amd gpu-specs       # AMD
+    pixi run -e apple gpu-specs     # Apple
+
+    # With uv (install GPU-specific deps if needed):
+    uv pip install -e ".[nvidia]"   # For NVIDIA GPUs
+    uv pip install -e ".[amd]"      # For AMD GPUs
+    uv run poe gpu-specs
 """
 
 import platform
@@ -97,7 +104,13 @@ def detect_platform() -> str:
 def get_nvidia_specs(device_index: int = 0) -> GPUSpecs:
     """Get NVIDIA GPU specifications using pynvml and PyTorch"""
     try:
-        import pynvml
+        try:
+            import pynvml
+        except ImportError:
+            raise RuntimeError(
+                "pynvml not installed. Install with: uv pip install -e '.[nvidia]'\n"
+                "Or use pixi which handles all dependencies automatically."
+            )
 
         arch_map = {
             "5.0": "Maxwell",
