@@ -155,6 +155,11 @@ pixi run -e apple p01
   <div class="tab-content">
 
 ```bash
+# Install GPU-specific dependencies
+uv pip install -e ".[nvidia]"  # For NVIDIA GPUs
+# OR
+uv pip install -e ".[amd]"     # For AMD GPUs
+
 # Check your GPU specifications
 uv run poe gpu-specs
 
@@ -218,6 +223,10 @@ pixi task list          # Available commands
 
 ```bash
 # Note: uv is limited and some chapters require pixi
+# Install GPU-specific dependencies:
+uv pip install -e ".[nvidia]"  # For NVIDIA GPUs
+uv pip install -e ".[amd]"     # For AMD GPUs
+
 # Test solutions
 uv run poe tests        # Test all solutions
 uv run poe tests pXX    # Test specific puzzle
