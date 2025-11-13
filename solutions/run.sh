@@ -28,8 +28,14 @@ SKIPPED_TESTS=0
 VERBOSE_MODE=true
 IGNORE_LOW_COMPUTE_FAILURES=false
 
-# Puzzles that require higher compute capability (>= 8.0 on NVIDIA)
-NVIDIA_HIGH_COMPUTE_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33" "p34")
+# Puzzles that require higher compute capability on NVIDIA
+# >= 8.0 (Ampere): Tensor Cores, full async copy (RTX 30xx, A100+)
+NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33")
+# >= 9.0 (Hopper): SM90+ cluster programming (H100+)
+NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
+
+# Puzzles that are not supported on Apple GPUs
+APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p16" "p19" "p20" "p21" "p22" "p28" "p29" "p30" "p31" "p32" "p33" "p34")
 
 # Arrays to store results
 declare -a FAILED_TESTS_LIST
@@ -71,29 +77,45 @@ detect_gpu_compute_capability() {
     # Try to detect NVIDIA GPU compute capability
     local compute_capability=""
 
-    # Method 1: Try nvidia-smi
+    # Method 1: Try nvidia-smi with expanded GPU list
     if command -v nvidia-smi >/dev/null 2>&1; then
         local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null | head -1)
         if [ -n "$gpu_name" ]; then
-            # Check for H100 or other SM90+ GPUs
-            if echo "$gpu_name" | grep -qi "H100\|A100\|RTX 40[0-9][0-9]\|RTX 4090\|L40S"; then
-                if echo "$gpu_name" | grep -qi "H100"; then
-                    compute_capability="9.0"
-                elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S"; then
-                    compute_capability="8.9"
-                elif echo "$gpu_name" | grep -qi "A100"; then
-                    compute_capability="8.0"
-                fi
+            # Check for known GPU families and their compute capabilities
+            if echo "$gpu_name" | grep -qi "H100"; then
+                compute_capability="9.0"
+            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4"; then
+                compute_capability="8.9"
+            elif echo "$gpu_name" | grep -qi "RTX 30[0-9][0-9]\|RTX 3090\|RTX 3080\|RTX 3070\|RTX 3060\|A40\|A30\|A10"; then
+                compute_capability="8.6"
+            elif echo "$gpu_name" | grep -qi "A100"; then
+                compute_capability="8.0"
+            elif echo "$gpu_name" | grep -qi "V100"; then
+                compute_capability="7.0"
+            elif echo "$gpu_name" | grep -qi "T4\|RTX 20[0-9][0-9]\|RTX 2080\|RTX 2070\|RTX 2060"; then
+                compute_capability="7.5"
             fi
         fi
     fi
 
     # Method 2: Try Python with GPU detection script if available
-    if [ -z "$compute_capability" ] && [ -f "../scripts/gpu_specs.py" ]; then
-        local gpu_info=$(python3 ../scripts/gpu_specs.py 2>/dev/null | grep -i "compute capability" | head -1)
-        if [ -n "$gpu_info" ]; then
-            compute_capability=$(echo "$gpu_info" | grep -o '[0-9]\+\.[0-9]\+' | head -1)
-        fi
+    # Try multiple possible paths for gpu_specs.py
+    local gpu_specs_paths=(
+        "../scripts/gpu_specs.py"           # From solutions/ directory
+        "scripts/gpu_specs.py"              # From repo root
+        "./scripts/gpu_specs.py"            # From repo root (explicit)
+    )
+
+    if [ -z "$compute_capability" ]; then
+        for gpu_specs_path in "${gpu_specs_paths[@]}"; do
+            if [ -f "$gpu_specs_path" ]; then
+                local gpu_info=$(python3 "$gpu_specs_path" 2>/dev/null | grep -i "compute capability" | head -1)
+                if [ -n "$gpu_info" ]; then
+                    compute_capability=$(echo "$gpu_info" | grep -o '[0-9]\+\.[0-9]\+' | head -1)
+                    break
+                fi
+            fi
+        done
     fi
 
     echo "$compute_capability"
@@ -115,7 +137,50 @@ has_high_compute_capability() {
     fi
 }
 
-is_nvidia_high_compute_required_puzzle() {
+get_nvidia_puzzle_min_compute() {
+    local puzzle_name="$1"
+
+    # Check if puzzle requires compute 9.0+ (Hopper)
+    for required_puzzle in "${NVIDIA_COMPUTE_90_REQUIRED_PUZZLES[@]}"; do
+        if [[ "$puzzle_name" == *"$required_puzzle"* ]]; then
+            echo "90"
+            return 0
+        fi
+    done
+
+    # Check if puzzle requires compute 8.0+ (Ampere)
+    for required_puzzle in "${NVIDIA_COMPUTE_80_REQUIRED_PUZZLES[@]}"; do
+        if [[ "$puzzle_name" == *"$required_puzzle"* ]]; then
+            echo "80"
+            return 0
+        fi
+    done
+
+    # No special compute requirement
+    echo "0"
+    return 0
+}
+
+should_skip_puzzle_for_apple() {
+    local puzzle_name="$1"
+    local gpu_platform=$(detect_gpu_platform)
+
+    # Only apply to Apple platforms
+    if [ "$gpu_platform" != "apple" ]; then
+        return 1  # Not restricted for non-Apple platforms
+    fi
+
+    # Check if puzzle is in the unsupported list
+    for unsupported_puzzle in "${APPLE_UNSUPPORTED_PUZZLES[@]}"; do
+        if [[ "$puzzle_name" == *"$unsupported_puzzle"* ]]; then
+            return 0  # Should skip
+        fi
+    done
+
+    return 1  # Don't skip
+}
+
+should_skip_puzzle_for_low_compute() {
     local puzzle_name="$1"
     local gpu_platform=$(detect_gpu_platform)
 
@@ -124,12 +189,22 @@ is_nvidia_high_compute_required_puzzle() {
         return 1  # Not restricted for non-NVIDIA platforms
     fi
 
-    for required_puzzle in "${NVIDIA_HIGH_COMPUTE_REQUIRED_PUZZLES[@]}"; do
-        if [[ "$puzzle_name" == *"$required_puzzle"* ]]; then
-            return 0
-        fi
-    done
-    return 1
+    # Get current GPU's compute capability
+    local compute_cap=$(detect_gpu_compute_capability)
+    if [ -z "$compute_cap" ]; then
+        # Can't detect, assume low compute
+        local numeric_cap=0
+    else
+        local major=$(echo "$compute_cap" | cut -d'.' -f1)
+        local minor=$(echo "$compute_cap" | cut -d'.' -f2)
+        local numeric_cap=$((major * 10 + minor))
+    fi
+
+    # Get puzzle's minimum compute requirement
+    local required_compute=$(get_nvidia_puzzle_min_compute "$puzzle_name")
+
+    # Skip if GPU doesn't meet requirement
+    [ "$numeric_cap" -lt "$required_compute" ]
 }
 
 # Usage function
@@ -141,7 +216,7 @@ usage() {
     echo ""
     echo -e "${BOLD}Options:${NC}"
     echo -e "  ${YELLOW}-v, --verbose${NC}                     Show output for all tests (not just failures)"
-    echo -e "  ${YELLOW}--ignore-low-compute-failures${NC}     Ignore failures from NVIDIA puzzles requiring compute >=8.0 (p16, p28, p29, p33, p34)"
+    echo -e "  ${YELLOW}--ignore-low-compute-failures${NC}     Skip NVIDIA puzzles requiring higher compute (8.0+: p16,p19,p28,p29,p33 | 9.0+: p34)"
     echo -e "  ${YELLOW}-h, --help${NC}                        Show this help message"
     echo ""
     echo -e "${BOLD}Parameters:${NC}"
@@ -156,7 +231,7 @@ usage() {
     echo -e "${BOLD}Examples:${NC}"
     echo -e "  ${GREEN}$0${NC}                                    ${GRAY}# Run all puzzles${NC}"
     echo -e "  ${GREEN}$0 -v${NC}                                 ${GRAY}# Run all puzzles with verbose output${NC}"
-    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# Run all puzzles, ignore compute <8.0 failures (for T4/CI)${NC}"
+    echo -e "  ${GREEN}$0 --ignore-low-compute-failures${NC}      ${GRAY}# Run all puzzles, skip high-compute puzzles (for T4/V100 CI)${NC}"
     echo -e "  ${GREEN}$0 p23${NC}                                ${GRAY}# Run only p23 tests with all flags${NC}"
     echo -e "  ${GREEN}$0 p26 --double-buffer${NC}                ${GRAY}# Run p26 with specific flag${NC}"
     echo -e "  ${GREEN}$0 -v p26 --double-buffer${NC}             ${GRAY}# Run p26 with specific flag (verbose)${NC}"
@@ -224,24 +299,36 @@ execute_or_skip_test() {
     local cmd="$3"
     local full_name="${test_name}$([ -n "$flag" ] && echo " ($flag)" || echo "")"
 
-    # Check if this should be skipped due to low compute capability BEFORE running
-    if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && is_nvidia_high_compute_required_puzzle "$test_name" && ! has_high_compute_capability; then
+    # Check if this should be skipped for Apple GPU (always skip unsupported puzzles)
+    if should_skip_puzzle_for_apple "$test_name"; then
         print_test_start "$test_name" "$flag"
-        echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(NVIDIA requires compute >=8.0)${NC}"
+        echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(not supported on Apple GPU)${NC}"
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        SKIPPED_TESTS_LIST+=("$full_name (Apple unsupported)")
+        TOTAL_TESTS=$((TOTAL_TESTS + 1))
+        return 0  # Skipped successfully
+    fi
+
+    # Check if this should be skipped due to low compute capability BEFORE running
+    if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ] && should_skip_puzzle_for_low_compute "$test_name"; then
+        local required_compute=$(get_nvidia_puzzle_min_compute "$test_name")
+        local required_version=$(echo "$required_compute" | sed 's/\([0-9]\)\([0-9]\)/\1.\2/')
+        print_test_start "$test_name" "$flag"
+        echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(requires NVIDIA compute >=$required_version)${NC}"
         SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
         IGNORED_LOW_COMPUTE_TESTS_LIST+=("$full_name")
         TOTAL_TESTS=$((TOTAL_TESTS + 1))
         return 0  # Skipped successfully
-    else
-        # Run the test normally
-        print_test_start "$test_name" "$flag"
-        if capture_output "$cmd" "$VERBOSE_MODE"; then
-            print_test_result "$test_name" "$flag" "PASS"
-        else
-            print_test_result "$test_name" "$flag" "FAIL"
-        fi
-        return 0
     fi
+
+    # Run the test normally
+    print_test_start "$test_name" "$flag"
+    if capture_output "$cmd" "$VERBOSE_MODE"; then
+        print_test_result "$test_name" "$flag" "PASS"
+    else
+        print_test_result "$test_name" "$flag" "FAIL"
+    fi
+    return 0
 }
 
 capture_output() {
@@ -412,8 +499,9 @@ if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "false" ]; then
     gpu_platform=$(detect_gpu_platform)
     if [ "$gpu_platform" = "nvidia" ] && ! has_high_compute_capability; then
         IGNORE_LOW_COMPUTE_FAILURES=true
-        echo -e "${YELLOW}${BOLD}Auto-detected:${NC} NVIDIA GPU with compute capability <8.0"
-        echo -e "Automatically ignoring failures for high compute puzzles (p16, p19, p28, p29, p33, p34)"
+        compute_cap=$(detect_gpu_compute_capability)
+        echo -e "${YELLOW}${BOLD}Auto-detected:${NC} NVIDIA GPU with compute capability ${compute_cap:-<8.0}"
+        echo -e "Automatically skipping high-compute puzzles (8.0+: p16,p19,p28,p29,p33 | 9.0+: p34)"
         echo ""
     fi
 fi
@@ -502,9 +590,9 @@ print_summary() {
 
     # Show ignored low compute tests if any
     if [ ${#IGNORED_LOW_COMPUTE_TESTS_LIST[@]} -gt 0 ]; then
-        echo -e "${PURPLE}${BOLD}Ignored High Compute Required Tests:${NC}"
+        echo -e "${PURPLE}${BOLD}Skipped Tests (Insufficient Compute):${NC}"
         for test in "${IGNORED_LOW_COMPUTE_TESTS_LIST[@]}"; do
-            echo -e "  ${PURPLE}${BULLET}${NC} $test ${GRAY}(requires compute capability >=8.0)${NC}"
+            echo -e "  ${PURPLE}${BULLET}${NC} $test"
         done
         echo ""
     fi
@@ -563,6 +651,7 @@ print_startup_banner() {
             ;;
         "apple")
             echo -e "  ${BULLET} Metal Support: ${GREEN}Available${NC}"
+            echo -e "  ${BULLET} Auto-Skip: ${YELLOW}Some puzzles unsupported${NC} ${GRAY}(14 puzzles will be skipped)${NC}"
             ;;
         *)
             echo -e "  ${BULLET} Status: ${YELLOW}Unknown GPU platform${NC}"
@@ -570,7 +659,7 @@ print_startup_banner() {
     esac
 
     if [ "$IGNORE_LOW_COMPUTE_FAILURES" = "true" ]; then
-        echo -e "  ${BULLET} Low Compute Failure Mode: ${YELLOW}IGNORED${NC} ${GRAY}(--ignore-low-compute-failures enabled)${NC}"
+        echo -e "  ${BULLET} Skip Mode: ${YELLOW}HIGH-COMPUTE PUZZLES SKIPPED${NC} ${GRAY}(--ignore-low-compute-failures)${NC}"
     fi
     echo ""
 }
