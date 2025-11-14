@@ -269,15 +269,18 @@ pixi run cuda-gdb --version
 
 If any of these commands fail, double-check your `pixi.toml` configuration and ensure the CUDA toolkit feature is enabled.
 
-**🚨Important**: The `pixi run setup-cuda-gdb` command is required because conda's `cuda-gdb` package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (`/usr/local/cuda/`) to the conda environment, enabling full GPU debugging capabilities.
+**Important**: The `pixi run setup-cuda-gdb` command is required because conda's `cuda-gdb` package only provides a wrapper script. This command auto-detects and links the actual CUDA-GDB binaries from your system CUDA installation to the conda environment, enabling full GPU debugging capabilities.
 
-**What this command does under the hood:**
+**What this command does:**
 
-```bash
-# Creates symlinks to system CUDA-GDB binaries
-ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
-```
+The script automatically detects CUDA from multiple common locations:
+
+- `$CUDA_HOME` environment variable
+- `/usr/local/cuda` (Ubuntu/Debian default)
+- `/opt/cuda` (ArchLinux and other distributions)
+- System PATH (via `which cuda-gdb`)
+
+See [`scripts/setup-cuda-gdb.sh`](https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh) for implementation details.
 
 ---
 

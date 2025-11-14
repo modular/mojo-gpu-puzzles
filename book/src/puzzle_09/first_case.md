@@ -4,12 +4,13 @@
 
 This puzzle presents a crashing GPU program where your task is to identify the issue using only `(cuda-gdb)` debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!
 
-**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) to understand CUDA-GDB setup and basic debugging commands. Make sure you've run `pixi run setup-cuda-gdb` or similar symlink is available
+**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) to understand CUDA-GDB setup and basic debugging commands. Make sure you've run:
 
 ```bash
-ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+pixi run setup-cuda-gdb
 ```
+
+This auto-detects your CUDA installation and sets up the necessary links for GPU debugging.
 
 ## Key concepts
 

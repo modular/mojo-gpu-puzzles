@@ -50,8 +50,8 @@ format-check = { cmd = "bash -c 'mojo format problems solutions && git diff --ex
 
 tests = { cmd = "bash solutions/run.sh" }
 
-# Fix conda cuda-gdb by linking to system CUDA installation
-setup-cuda-gdb = { cmd = "ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal && ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui", description = "Link system CUDA-GDB binaries to conda environment" }
+# Setup CUDA-GDB by linking system CUDA installation to conda environment
+setup-cuda-gdb = { cmd = "bash scripts/setup-cuda-gdb.sh", description = "Auto-detect and link system CUDA-GDB binaries to conda environment" }
 
 set-buffer-cache = { cmd = "export MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0" }
 memcheck = { cmd = "bash solutions/sanitizer.sh memcheck", depends-on = ["set-buffer-cache"] }
