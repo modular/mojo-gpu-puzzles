@@ -378,12 +378,16 @@ pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
 <p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>🚨Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command links the actual CUDA-GDB binaries from your system CUDA installation (<code>/usr/local/cuda/</code>) to the conda environment, enabling full GPU debugging capabilities.</p>
-<p><strong>What this command does under the hood:</strong></p>
-<pre><code class="language-bash"># Creates symlinks to system CUDA-GDB binaries
-ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
-</code></pre>
+<p><strong>Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command auto-detects and links the actual CUDA-GDB binaries from your system CUDA installation to the conda environment, enabling full GPU debugging capabilities.</p>
+<p><strong>What this command does:</strong></p>
+<p>The script automatically detects CUDA from multiple common locations:</p>
+<ul>
+<li><code>$CUDA_HOME</code> environment variable</li>
+<li><code>/usr/local/cuda</code> (Ubuntu/Debian default)</li>
+<li><code>/opt/cuda</code> (ArchLinux and other distributions)</li>
+<li>System PATH (via <code>which cuda-gdb</code>)</li>
+</ul>
+<p>See <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh"><code>scripts/setup-cuda-gdb.sh</code></a> for implementation details.</p>
 <hr />
 <h2 id="hands-on-tutorial-your-first-gpu-debugging-session"><a class="header" href="#hands-on-tutorial-your-first-gpu-debugging-session">Hands-on tutorial: Your first GPU debugging session</a></h2>
 <p>Theory is great, but nothing beats hands-on experience. Let’s debug a real program using Puzzle 01 - the simple “add 10 to each array element” kernel you know well.</p>

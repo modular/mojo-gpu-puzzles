@@ -188,10 +188,10 @@
                         <h1 id="-detective-work-first-case"><a class="header" href="#-detective-work-first-case">🧐 Detective Work: First Case</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>This puzzle presents a crashing GPU program where your task is to identify the issue using only <code>(cuda-gdb)</code> debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!</p>
-<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
-<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run:</p>
+<pre><code class="language-bash">pixi run setup-cuda-gdb
 </code></pre>
+<p>This auto-detects your CUDA installation and sets up the necessary links for GPU debugging.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
 <ul>
