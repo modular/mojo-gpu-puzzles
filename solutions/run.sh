@@ -66,12 +66,12 @@ detect_gpu_platform() {
     fi
 
     # Check for Apple Silicon (macOS)
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        if system_profiler SPDisplaysDataType 2>/dev/null | grep -q "Apple"; then
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        if [[ "$(uname -m)" == "arm64" ]]; then
             echo "apple"
             return
         fi
-    fi
+    fi    
 
     echo "unknown"
 }
@@ -653,6 +653,19 @@ print_startup_banner() {
     local gpu_platform=$(detect_gpu_platform)
     local compute_cap=$(detect_gpu_compute_capability)
     local gpu_name=""
+
+    # TEMPORARY Debugging MacOS CI issue
+    local mac_displays_info=$(system_profiler SPDisplaysDataType)
+    local mac_hardware_info=$(system_profiler SPHardwareDataType)
+    local mac_swift_debug=$(swift ../scripts/debug_mac_gpu.swift)
+    echo -e "Debug info about Mac displays:"
+    echo -e "$mac_displays_info"
+    echo -e "Debug info about Mac hardware:"
+    echo -e "$mac_hardware_info"
+    echo -e "Debug info from Swift:"
+    echo -e "$mac_swift_debug"
+
+    # End
 
     echo -e "${BOLD}GPU Information:${NC}"
     echo -e "  ${BULLET} Platform: ${CYAN}$(echo "$gpu_platform" | tr '[:lower:]' '[:upper:]')${NC}"
