@@ -7,7 +7,7 @@ This puzzle presents a crashing GPU program where your task is to identify the i
 **Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) to understand CUDA-GDB setup and basic debugging commands. Make sure you've run:
 
 ```bash
-pixi run setup-cuda-gdb
+pixi run -e nvidia setup-cuda-gdb
 ```
 
 This auto-detects your CUDA installation and sets up the necessary links for GPU debugging.
@@ -35,31 +35,15 @@ To experience the bug firsthand, run the following command in your terminal (`pi
 pixi run -e nvidia p09 --first-case
 ```
 
-You'll see output like when the program crashes with this error:
+You'll see output like this when the program crashes:
 
 ```txt
-CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
-[24326:24326:20250801,180816.333593:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)
-[24326:24326:20250801,180816.333653:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq: No such file or directory (2)
-Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
-Stack dump:
-0.      Program arguments: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo problems/p09/p09.mojo
-Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-0  mojo                      0x0000653a338d3d2b
-1  mojo                      0x0000653a338d158a
-2  mojo                      0x0000653a338d48d7
-3  libc.so.6                 0x00007cbc08442520
-4  libc.so.6                 0x00007cbc0851e88d syscall + 29
-5  libAsyncRTMojoBindings.so 0x00007cbc0ab68653
-6  libc.so.6                 0x00007cbc08442520
-7  libc.so.6                 0x00007cbc084969fc pthread_kill + 300
-8  libc.so.6                 0x00007cbc08442476 raise + 22
-9  libc.so.6                 0x00007cbc084287f3 abort + 211
-10 libAsyncRTMojoBindings.so 0x00007cbc097c7c7b
-11 libAsyncRTMojoBindings.so 0x00007cbc097c7c9e
-12 (error)                   0x00007cbb5c00600f
-mojo crashed!
-Please file a bug report.
+First Case: Try to identify what's wrong without looking at the code!
+
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 ```
 
 ## Your task: detective work

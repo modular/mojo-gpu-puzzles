@@ -11,11 +11,10 @@ Building on your [crash debugging skills from the First Case](./first_case.md), 
 
 This intermediate-level debugging challenge covers investigating **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
 
-**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you've run `pixi run setup-cuda-gdb` or similar symlink is available
+**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:
 
 ```bash
-ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+pixi run -e nvidia setup-cuda-gdb
 ```
 
 ## Key concepts
@@ -38,7 +37,7 @@ First, examine the kernel without looking at the complete code:
 To experience the bug firsthand, run the following command in your terminal (`pixi` only):
 
 ```bash
-pixi run p09 --second-case
+pixi run -e nvidia p09 --second-case
 ```
 
 You'll see output like this - **no crash, but wrong results**:
@@ -49,10 +48,10 @@ This program computes sliding window sums for each position...
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
-Expected: [1.0, 3.0, 6.0, 5.0]
-❌ Test FAILED - Sliding window sums are incorrect!
-Check the window indexing logic...
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 ```
 
 ## Your task: detective work
@@ -69,7 +68,7 @@ Check the window indexing logic...
 Start with:
 
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 ```
 
 ### GDB command shortcuts (faster debugging)
@@ -116,7 +115,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-
 #### Step 1: Start the debugger
 
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 ```
 
 #### Step 2: analyze the symptoms first
@@ -360,7 +359,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 - Focus on the algorithm logic rather than trying to inspect tensor contents
 - Use systematic reasoning to trace what each thread should vs actually accesses
 
-**💡 Key Insight**: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.
+**Key Insight**: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.
 
 </div>
 </details>
