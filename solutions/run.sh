@@ -34,6 +34,9 @@ NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33")
 # >= 9.0 (Hopper): SM90+ cluster programming (H100+)
 NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
+# Puzzles that are not supported on AMD GPUs
+AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
+
 # Puzzles that are not supported on Apple GPUs
 APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p16" "p19" "p20" "p21" "p22" "p28" "p29" "p30" "p31" "p32" "p33" "p34")
 
@@ -159,6 +162,25 @@ get_nvidia_puzzle_min_compute() {
     # No special compute requirement
     echo "0"
     return 0
+}
+
+should_skip_puzzle_for_amd() {
+    local puzzle_name="$1"
+    local gpu_platform=$(detect_gpu_platform)
+
+    # Only apply to AMD platforms
+    if [ "$gpu_platform" != "amd" ]; then
+        return 1  # Not restricted for non-AMD platforms
+    fi
+
+    # Check if puzzle is in the unsupported list
+    for unsupported_puzzle in "${AMD_UNSUPPORTED_PUZZLES[@]}"; do
+        if [[ "$puzzle_name" == *"$unsupported_puzzle"* ]]; then
+            return 0  # Should skip
+        fi
+    done
+
+    return 1  # Don't skip
 }
 
 should_skip_puzzle_for_apple() {
@@ -298,6 +320,16 @@ execute_or_skip_test() {
     local flag="$2"
     local cmd="$3"
     local full_name="${test_name}$([ -n "$flag" ] && echo " ($flag)" || echo "")"
+
+    # Check if this should be skipped for AMD GPU (always skip unsupported puzzles)
+    if should_skip_puzzle_for_amd "$test_name"; then
+        print_test_start "$test_name" "$flag"
+        echo -e "    ${YELLOW}${BULLET}${NC} ${YELLOW}SKIPPED${NC} ${GRAY}$full_name${NC} ${PURPLE}(not supported on AMD GPU)${NC}"
+        SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
+        SKIPPED_TESTS_LIST+=("$full_name (AMD unsupported)")
+        TOTAL_TESTS=$((TOTAL_TESTS + 1))
+        return 0  # Skipped successfully
+    fi
 
     # Check if this should be skipped for Apple GPU (always skip unsupported puzzles)
     if should_skip_puzzle_for_apple "$test_name"; then
@@ -648,6 +680,7 @@ print_startup_banner() {
                 fi
             fi
             echo -e "  ${BULLET} ROCm Support: ${GREEN}Available${NC}"
+            echo -e "  ${BULLET} Auto-Skip: ${YELLOW}Some puzzles unsupported${NC} ${GRAY}(7 puzzles will be skipped)${NC}"
             ;;
         "apple")
             echo -e "  ${BULLET} Metal Support: ${GREEN}Available${NC}"
