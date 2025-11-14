@@ -195,9 +195,8 @@
 <li><strong>[Third Case]</strong>: Program hangs forever → Investigate thread states → Find coordination bugs</li>
 </ul>
 <p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
-<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="./first_case.html">Detective Work: First Case</a>, and <a href="./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
-<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="./first_case.html">Detective Work: First Case</a>, and <a href="./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you run the setup:</p>
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
@@ -247,7 +246,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 </code></pre>
 <p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
-<pre><code class="language-bash">pixi run p09 --third-case
+<pre><code class="language-bash">pixi -e nvidia run p09 --third-case
 </code></pre>
 <p>You’ll see output like this - <strong>the program hangs indefinitely</strong>:</p>
 <pre><code class="language-txt">Third Case: Advanced collaborative filtering with shared memory...
@@ -271,7 +270,7 @@ Waiting for GPU computation to complete...
 <li>How can you combine systematic investigation (<a href="./first_case.html">First Case</a>) with execution flow analysis (<a href="./second_case.html">Second Case</a>) to debug coordination failures?</li>
 </ul>
 <p>Start with:</p>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 </code></pre>
 <h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
 <p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
@@ -306,7 +305,7 @@ Waiting for GPU computation to complete...
 <h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-step investigation with CUDA-GDB</a></h2>
 <h3 id="phase-1-launch-and-initial-setup"><a class="header" href="#phase-1-launch-and-initial-setup">Phase 1: launch and initial setup</a></h3>
 <h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: start the debugger</a></h4>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 </code></pre>
 <h4 id="step-2-analyze-the-hanging-behavior"><a class="header" href="#step-2-analyze-the-hanging-behavior">Step 2: analyze the hanging behavior</a></h4>
 <p>Before diving into debugging, let’s understand what we know:</p>

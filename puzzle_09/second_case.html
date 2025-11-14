@@ -194,9 +194,8 @@
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results that require detective work</li>
 </ul>
 <p>This intermediate-level debugging challenge covers investigating <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
-<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
-<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:</p>
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
@@ -229,7 +228,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 </code></pre>
 <p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
-<pre><code class="language-bash">pixi run p09 --second-case
+<pre><code class="language-bash">pixi run -e nvidia p09 --second-case
 </code></pre>
 <p>You’ll see output like this - <strong>no crash, but wrong results</strong>:</p>
 <pre><code class="language-txt">This program computes sliding window sums for each position...
@@ -237,10 +236,10 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
-Expected: [1.0, 3.0, 6.0, 5.0]
-❌ Test FAILED - Sliding window sums are incorrect!
-Check the window indexing logic...
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
 <p><strong>Challenge</strong>: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?</p>
@@ -252,7 +251,7 @@ Check the window indexing logic...
 <li>How can you apply the systematic investigation approach from <a href="./first_case.html">First Case</a> when there are no crash signals to guide you?</li>
 </ul>
 <p>Start with:</p>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 </code></pre>
 <h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
 <p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
@@ -287,7 +286,7 @@ Check the window indexing logic...
 <h2 id="step-by-step-investigation-with-cuda-gdb"><a class="header" href="#step-by-step-investigation-with-cuda-gdb">Step-by-step investigation with CUDA-GDB</a></h2>
 <h3 id="phase-1-launch-and-initial-analysis"><a class="header" href="#phase-1-launch-and-initial-analysis">Phase 1: Launch and initial analysis</a></h3>
 <h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: Start the debugger</a></h4>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 </code></pre>
 <h4 id="step-2-analyze-the-symptoms-first"><a class="header" href="#step-2-analyze-the-symptoms-first">Step 2: analyze the symptoms first</a></h4>
 <p>Before diving into the debugger, examine what we know:</p>
@@ -470,7 +469,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
 <li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
 </ul>
-<p><strong>💡 Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+<p><strong>Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
 </div>
 </details>
 <h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next steps: from logic bugs to coordination deadlocks</a></h2>

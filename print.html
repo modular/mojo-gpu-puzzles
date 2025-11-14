@@ -3754,7 +3754,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <h2 id="overview-16"><a class="header" href="#overview-16">Overview</a></h2>
 <p>This puzzle presents a crashing GPU program where your task is to identify the issue using only <code>(cuda-gdb)</code> debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!</p>
 <p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run:</p>
-<pre><code class="language-bash">pixi run setup-cuda-gdb
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <p>This auto-detects your CUDA installation and sets up the necessary links for GPU debugging.</p>
 <h2 id="key-concepts-16"><a class="header" href="#key-concepts-16">Key concepts</a></h2>
@@ -3779,29 +3779,13 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
 <pre><code class="language-bash">pixi run -e nvidia p09 --first-case
 </code></pre>
-<p>You’ll see output like when the program crashes with this error:</p>
-<pre><code class="language-txt">CUDA call failed: CUDA_ERROR_ILLEGAL_ADDRESS (an illegal memory access was encountered)
-[24326:24326:20250801,180816.333593:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)
-[24326:24326:20250801,180816.333653:ERROR file_io_posix.cc:144] open /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq: No such file or directory (2)
-Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
-Stack dump:
-0.      Program arguments: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo problems/p09/p09.mojo
-Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-0  mojo                      0x0000653a338d3d2b
-1  mojo                      0x0000653a338d158a
-2  mojo                      0x0000653a338d48d7
-3  libc.so.6                 0x00007cbc08442520
-4  libc.so.6                 0x00007cbc0851e88d syscall + 29
-5  libAsyncRTMojoBindings.so 0x00007cbc0ab68653
-6  libc.so.6                 0x00007cbc08442520
-7  libc.so.6                 0x00007cbc084969fc pthread_kill + 300
-8  libc.so.6                 0x00007cbc08442476 raise + 22
-9  libc.so.6                 0x00007cbc084287f3 abort + 211
-10 libAsyncRTMojoBindings.so 0x00007cbc097c7c7b
-11 libAsyncRTMojoBindings.so 0x00007cbc097c7c9e
-12 (error)                   0x00007cbb5c00600f
-mojo crashed!
-Please file a bug report.
+<p>You’ll see output like this when the program crashes:</p>
+<pre><code class="language-txt">First Case: Try to identify what's wrong without looking at the code!
+
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
 <p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
@@ -3930,9 +3914,8 @@ input_bufenqueue_fill(0)
 <li><strong>Second Case</strong>: No crashes, no error messages - just subtly wrong results that require detective work</li>
 </ul>
 <p>This intermediate-level debugging challenge covers investigating <strong>algorithmic errors</strong> using <code>LayoutTensor</code> operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.</p>
-<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="puzzle_09/./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
-<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a> and <a href="puzzle_09/./first_case.html">Detective Work: First Case</a> to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:</p>
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="key-concepts-17"><a class="header" href="#key-concepts-17">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
@@ -3965,7 +3948,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 </code></pre>
 <p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
-<pre><code class="language-bash">pixi run p09 --second-case
+<pre><code class="language-bash">pixi run -e nvidia p09 --second-case
 </code></pre>
 <p>You’ll see output like this - <strong>no crash, but wrong results</strong>:</p>
 <pre><code class="language-txt">This program computes sliding window sums for each position...
@@ -3973,10 +3956,10 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 Input array: [0, 1, 2, 3]
 Computing sliding window sums (window size = 3)...
 Each position should sum its neighbors: [left + center + right]
-Actual result: HostBuffer([0.0, 1.0, 3.0, 5.0])
-Expected: [1.0, 3.0, 6.0, 5.0]
-❌ Test FAILED - Sliding window sums are incorrect!
-Check the window indexing logic...
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
+To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="your-task-detective-work-1"><a class="header" href="#your-task-detective-work-1">Your task: detective work</a></h2>
 <p><strong>Challenge</strong>: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?</p>
@@ -3988,7 +3971,7 @@ Check the window indexing logic...
 <li>How can you apply the systematic investigation approach from <a href="puzzle_09/./first_case.html">First Case</a> when there are no crash signals to guide you?</li>
 </ul>
 <p>Start with:</p>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 </code></pre>
 <h3 id="gdb-command-shortcuts-faster-debugging"><a class="header" href="#gdb-command-shortcuts-faster-debugging">GDB command shortcuts (faster debugging)</a></h3>
 <p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
@@ -4023,7 +4006,7 @@ Check the window indexing logic...
 <h2 id="step-by-step-investigation-with-cuda-gdb-1"><a class="header" href="#step-by-step-investigation-with-cuda-gdb-1">Step-by-step investigation with CUDA-GDB</a></h2>
 <h3 id="phase-1-launch-and-initial-analysis"><a class="header" href="#phase-1-launch-and-initial-analysis">Phase 1: Launch and initial analysis</a></h3>
 <h4 id="step-1-start-the-debugger"><a class="header" href="#step-1-start-the-debugger">Step 1: Start the debugger</a></h4>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 </code></pre>
 <h4 id="step-2-analyze-the-symptoms-first"><a class="header" href="#step-2-analyze-the-symptoms-first">Step 2: analyze the symptoms first</a></h4>
 <p>Before diving into the debugger, examine what we know:</p>
@@ -4206,7 +4189,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li>Focus on the algorithm logic rather than trying to inspect tensor contents</li>
 <li>Use systematic reasoning to trace what each thread should vs actually accesses</li>
 </ul>
-<p><strong>💡 Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
+<p><strong>Key Insight</strong>: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.</p>
 </div>
 </details>
 <h2 id="next-steps-from-logic-bugs-to-coordination-deadlocks"><a class="header" href="#next-steps-from-logic-bugs-to-coordination-deadlocks">Next steps: from logic bugs to coordination deadlocks</a></h2>
@@ -4249,9 +4232,8 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 <li><strong>[Third Case]</strong>: Program hangs forever → Investigate thread states → Find coordination bugs</li>
 </ul>
 <p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
-<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="puzzle_09/./first_case.html">Detective Work: First Case</a>, and <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you’ve run <code>pixi run setup-cuda-gdb</code> or similar symlink is available</p>
-<pre><code class="language-bash">ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+<p><strong>Prerequisites</strong>: Complete <a href="puzzle_09/./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="puzzle_09/./first_case.html">Detective Work: First Case</a>, and <a href="puzzle_09/./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you run the setup:</p>
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="key-concepts-18"><a class="header" href="#key-concepts-18">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
@@ -4301,7 +4283,7 @@ ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-py
 
 </code></pre>
 <p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
-<pre><code class="language-bash">pixi run p09 --third-case
+<pre><code class="language-bash">pixi -e nvidia run p09 --third-case
 </code></pre>
 <p>You’ll see output like this - <strong>the program hangs indefinitely</strong>:</p>
 <pre><code class="language-txt">Third Case: Advanced collaborative filtering with shared memory...
@@ -4325,7 +4307,7 @@ Waiting for GPU computation to complete...
 <li>How can you combine systematic investigation (<a href="puzzle_09/./first_case.html">First Case</a>) with execution flow analysis (<a href="puzzle_09/./second_case.html">Second Case</a>) to debug coordination failures?</li>
 </ul>
 <p>Start with:</p>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 </code></pre>
 <h3 id="gdb-command-shortcuts-faster-debugging-1"><a class="header" href="#gdb-command-shortcuts-faster-debugging-1">GDB command shortcuts (faster debugging)</a></h3>
 <p><strong>Use these abbreviations</strong> to speed up your debugging session:</p>
@@ -4360,7 +4342,7 @@ Waiting for GPU computation to complete...
 <h2 id="step-by-step-investigation-with-cuda-gdb-2"><a class="header" href="#step-by-step-investigation-with-cuda-gdb-2">Step-by-step investigation with CUDA-GDB</a></h2>
 <h3 id="phase-1-launch-and-initial-setup"><a class="header" href="#phase-1-launch-and-initial-setup">Phase 1: launch and initial setup</a></h3>
 <h4 id="step-1-start-the-debugger-1"><a class="header" href="#step-1-start-the-debugger-1">Step 1: start the debugger</a></h4>
-<pre><code class="language-bash">pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 </code></pre>
 <h4 id="step-2-analyze-the-hanging-behavior"><a class="header" href="#step-2-analyze-the-hanging-behavior">Step 2: analyze the hanging behavior</a></h4>
 <p>Before diving into debugging, let’s understand what we know:</p>
