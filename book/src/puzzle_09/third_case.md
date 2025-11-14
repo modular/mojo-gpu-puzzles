@@ -11,11 +11,10 @@ You've learned debugging [memory crashes](./first_case.md) and [logic bugs](./se
 
 This advanced-level debugging challenge teaches you to investigate **thread coordination failures** using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.
 
-**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md), [Detective Work: First Case](./first_case.md), and [Detective Work: Second Case](./second_case.md) to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you've run `pixi run setup-cuda-gdb` or similar symlink is available
+**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md), [Detective Work: First Case](./first_case.md), and [Detective Work: Second Case](./second_case.md) to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you run the setup:
 
 ```bash
-ln -sf /usr/local/cuda/bin/cuda-gdb-minimal $CONDA_PREFIX/bin/cuda-gdb-minimal
-ln -sf /usr/local/cuda/bin/cuda-gdb-python3.12-tui $CONDA_PREFIX/bin/cuda-gdb-python3.12-tui
+pixi run -e nvidia setup-cuda-gdb
 ```
 
 ## Key concepts
@@ -37,7 +36,7 @@ First, examine the kernel without looking at the complete code:
 To experience the bug firsthand, run the following command in your terminal (`pixi` only):
 
 ```bash
-pixi run p09 --third-case
+pixi -e nvidia run p09 --third-case
 ```
 
 You'll see output like this - **the program hangs indefinitely**:
@@ -68,7 +67,7 @@ Waiting for GPU computation to complete...
 Start with:
 
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 ```
 
 ### GDB command shortcuts (faster debugging)
@@ -114,7 +113,7 @@ pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-c
 
 #### Step 1: start the debugger
 ```bash
-pixi run mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
 ```
 
 #### Step 2: analyze the hanging behavior
