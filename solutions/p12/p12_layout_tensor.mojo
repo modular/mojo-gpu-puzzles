@@ -20,7 +20,7 @@ fn dot_product[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = LayoutTensor[
         dtype,
@@ -39,7 +39,7 @@ fn dot_product[
     barrier()
 
     # Parallel reduction in shared memory
-    stride = TPB // 2
+    stride = UInt(TPB // 2)
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]
@@ -78,7 +78,7 @@ def main():
             out_tensor,
             a_tensor,
             b_tensor,
-            SIZE,
+            UInt(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

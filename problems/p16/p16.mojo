@@ -17,7 +17,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 
 fn naive_matmul[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -33,7 +33,7 @@ fn naive_matmul[
 
 # ANCHOR: single_block_matmul
 fn single_block_matmul[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -56,7 +56,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 fn matmul_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -114,7 +114,7 @@ def main():
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
-            alias kernel = naive_matmul[layout, SIZE]
+            alias kernel = naive_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -123,7 +123,7 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            alias kernel = single_block_matmul[layout, SIZE]
+            alias kernel = single_block_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -143,7 +143,7 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_tiled[layout_tiled, SIZE_TILED]
+            alias kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
