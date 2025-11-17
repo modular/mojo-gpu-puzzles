@@ -33,7 +33,7 @@ fn embedding_kernel_coalesced[
     """
 
     # Simple 1D indexing - each thread = one output element
-    global_idx = block_idx.x * block_dim.x + thread_idx.x
+    global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
     total_elements = batch_size * seq_len * embed_dim
 
     if global_idx >= total_elements:
@@ -77,8 +77,8 @@ fn embedding_kernel_2d[
     """
 
     # 2D grid indexing
-    batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
-    embed_idx = block_idx.y * block_dim.y + thread_idx.y
+    batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
     total_positions = batch_size * seq_len
 
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:

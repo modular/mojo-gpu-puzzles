@@ -16,7 +16,7 @@ alias dtype = DType.float32
 fn pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,
@@ -34,7 +34,7 @@ fn pooling(
         output[0] = shared[0]
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
-    elif 1 < global_i < size:
+    elif UInt(1) < global_i < size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -56,7 +56,7 @@ def main():
         ctx.enqueue_function_checked[pooling, pooling](
             out,
             a,
-            SIZE,
+            UInt(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

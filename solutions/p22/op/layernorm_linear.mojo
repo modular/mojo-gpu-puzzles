@@ -33,12 +33,12 @@ fn matmul_idiomatic_tiled[
     """Idiomatic tiled matrix multiplication from p19."""
     local_row = thread_idx.y
     local_col = thread_idx.x
-    tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
-    tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
+    tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
+    tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        block_idx.y, block_idx.x
+        Int(block_idx.y), Int(block_idx.x)
     )
     a_shared = LayoutTensor[
         dtype,
@@ -65,10 +65,10 @@ fn matmul_idiomatic_tiled[
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
         a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            block_idx.y, idx
+            Int(block_idx.y), idx
         )
         b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, block_idx.x
+            idx, Int(block_idx.x)
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -123,9 +123,9 @@ fn layernorm_kernel[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
-    hidden_idx = thread_idx.x
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
+    hidden_idx = Int(thread_idx.x)
 
     if (
         batch_idx >= batch_size
@@ -163,8 +163,8 @@ fn layernorm_kernel[
 fn transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
-    rows: Int,
-    cols: Int,
+    rows: UInt,
+    cols: UInt,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
@@ -218,9 +218,9 @@ fn add_bias_kernel[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
-    out_idx = thread_idx.x
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
+    out_idx = Int(thread_idx.x)
 
     if batch_idx >= batch_size or seq_idx >= seq_len or out_idx >= output_dim:
         return
@@ -257,8 +257,8 @@ fn minimal_fused_kernel[
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -330,8 +330,8 @@ fn minimal_fused_kernel_backward[
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -601,8 +601,8 @@ struct LayerNormLinearCustomOp:
                 alias kernel2 = transpose_kernel[
                     weight_layout,
                     transposed_weight_tensor.layout,
-                    output_dim,
-                    hidden_dim,
+                    UInt(output_dim),
+                    UInt(hidden_dim),
                 ]
                 gpu_ctx.enqueue_function_checked[kernel2, kernel2](
                     transposed_weight_tensor,

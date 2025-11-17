@@ -42,14 +42,14 @@ fn matmul_idiomatic_tiled[
     b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
-    tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
+    local_row = Int(thread_idx.y)
+    local_col = Int(thread_idx.x)
+    tiled_row = Int(block_idx.y) * MATMUL_BLOCK_DIM_XY + local_row
+    tiled_col = Int(block_idx.x) * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        block_idx.y, block_idx.x
+        Int(block_idx.y), Int(block_idx.x)
     )
     a_shared = LayoutTensor[
         dtype,
@@ -76,10 +76,10 @@ fn matmul_idiomatic_tiled[
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
         a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            block_idx.y, idx
+            Int(block_idx.y), idx
         )
         b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, block_idx.x
+            idx, Int(block_idx.x)
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -155,7 +155,7 @@ fn softmax_gpu_kernel[
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = thread_idx.x
+    global_i = Int(thread_idx.x)
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they

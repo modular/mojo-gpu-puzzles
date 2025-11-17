@@ -16,7 +16,7 @@ alias dtype = DType.float32
 fn add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,
@@ -48,7 +48,7 @@ def main():
         ctx.enqueue_function_checked[add_10_shared, add_10_shared](
             out,
             a,
-            SIZE,
+            UInt(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

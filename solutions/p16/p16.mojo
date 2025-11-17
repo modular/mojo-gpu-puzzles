@@ -15,7 +15,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 
 # ANCHOR: naive_matmul_solution
 fn naive_matmul[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -39,7 +39,7 @@ fn naive_matmul[
 
 # ANCHOR: single_block_matmul_solution
 fn single_block_matmul[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -90,7 +90,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 # ANCHOR: matmul_tiled_solution
 fn matmul_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -158,7 +158,7 @@ alias BLOCK_DIM_COUNT = 2
 
 
 fn matmul_idiomatic_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -170,7 +170,7 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
+    out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
@@ -194,8 +194,8 @@ fn matmul_idiomatic_tiled[
     @parameter
     for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](block_idx.y, idx)
-        b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+        a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
+        b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -264,7 +264,7 @@ def main():
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
-            alias kernel = naive_matmul[layout, SIZE]
+            alias kernel = naive_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -273,7 +273,7 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            alias kernel = single_block_matmul[layout, SIZE]
+            alias kernel = single_block_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -293,7 +293,7 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_tiled[layout_tiled, SIZE_TILED]
+            alias kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
@@ -312,7 +312,9 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_idiomatic_tiled[layout_tiled, SIZE_TILED]
+            alias kernel = matmul_idiomatic_tiled[
+                layout_tiled, UInt(SIZE_TILED)
+            ]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,

@@ -35,11 +35,13 @@ fn matmul_idiomatic_tiled[
 
     local_row = thread_idx.y
     local_col = thread_idx.x
-    tiled_row = block_idx.y * tile_size_y + local_row
-    tiled_col = block_idx.x * tile_size_x + local_col
+    tiled_row = Int(block_idx.y * tile_size_y + local_row)
+    tiled_col = Int(block_idx.x * tile_size_x + local_col)
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
+    out_tile = output.tile[TILE_SIZE, TILE_SIZE](
+        Int(block_idx.y), Int(block_idx.x)
+    )
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
@@ -62,8 +64,8 @@ fn matmul_idiomatic_tiled[
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
-        b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
+        a_tile = a.tile[TILE_SIZE, TILE_SIZE](Int(block_idx.y), idx)
+        b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -141,7 +143,7 @@ fn tensor_core_matrix_multiplication[
     alias N = C.shape[1]()
     alias K = A.shape[1]()
 
-    warp_id = thread_idx.x // WARP_SIZE
+    warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN
     warps_in_m = BM // WM
     warp_y = warp_id // warps_in_n
@@ -149,7 +151,7 @@ fn tensor_core_matrix_multiplication[
 
     warp_is_active = warp_y < warps_in_m
 
-    C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
+    C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
     C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
     mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
@@ -190,8 +192,8 @@ fn tensor_core_matrix_multiplication[
     for k_i in range(K // BK):
         barrier()
 
-        A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
-        B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
+        A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
+        B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
 
         copy_dram_to_sram_async[
             thread_layout = Layout.row_major(4, 8),
