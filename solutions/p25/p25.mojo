@@ -25,8 +25,8 @@ fn neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i < size:
         # Get current value
@@ -67,8 +67,8 @@ fn moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i < size:
         # Get current, next, and next+1 values
@@ -102,15 +102,15 @@ fn broadcast_shuffle_coordination[
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 computes block-local scaling factor
         var scale_factor: output.element_type = 0.0
         if lane == 0:
             # Compute average of first 4 elements in this block's data
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i < size:
@@ -147,14 +147,14 @@ fn basic_broadcast[
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
         var broadcast_value: output.element_type = 0.0
         if lane == 0:
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i < size:
@@ -182,14 +182,14 @@ fn conditional_broadcast[
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 analyzes block-local data and makes decision (find max of first 8 in block)
         var decision_value: output.element_type = 0.0
         if lane == 0:
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             decision_value = input[block_start] if block_start < size else 0.0
             for i in range(1, min(8, min(WARP_SIZE, size - block_start))):
                 if block_start + i < size:

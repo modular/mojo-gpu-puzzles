@@ -13,7 +13,7 @@ alias dtype = DType.float32
 fn add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     i = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -35,7 +35,7 @@ def main():
         ctx.enqueue_function_checked[add_10_guard, add_10_guard](
             out,
             a,
-            SIZE,
+            UInt(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

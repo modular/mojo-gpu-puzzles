@@ -13,7 +13,7 @@ alias dtype = DType.float32
 fn add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -43,7 +43,7 @@ def main():
         ctx.enqueue_function_checked[add_10_2d, add_10_2d](
             out,
             a,
-            SIZE,
+            UInt(SIZE),
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

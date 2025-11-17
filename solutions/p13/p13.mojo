@@ -25,7 +25,7 @@ fn conv_1d_simple[
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    local_i = Int(thread_idx.x)
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
@@ -91,8 +91,8 @@ fn conv_1d_block_boundary[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
     # first: need to account for padding
     shared_a = LayoutTensor[
         dtype,

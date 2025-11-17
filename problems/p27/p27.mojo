@@ -28,8 +28,8 @@ fn traditional_dot_product[
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i < size:
@@ -74,7 +74,7 @@ fn block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
@@ -104,8 +104,8 @@ fn block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
 
@@ -152,7 +152,7 @@ fn block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -335,7 +335,7 @@ def main():
                 # Execute histogram kernel for this specific bin
                 alias kernel = block_histogram_bin_extract[
                     in_layout, bin_layout, out_layout, TPB
-                ],
+                ]
                 ctx.enqueue_function_checked[kernel, kernel](
                     input_tensor,
                     bin_tensor,
@@ -409,9 +409,7 @@ def main():
             )
 
             # Execute vector normalization kernel
-            alias kernel = block_normalize_vector[
-                in_layout, vector_layout, TPB
-            ],
+            alias kernel = block_normalize_vector[in_layout, vector_layout, TPB]
             ctx.enqueue_function_checked[kernel, kernel](
                 input_tensor,
                 output_tensor,

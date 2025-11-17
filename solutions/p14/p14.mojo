@@ -20,7 +20,7 @@ fn prefix_sum_simple[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -35,7 +35,7 @@ fn prefix_sum_simple[
 
     barrier()
 
-    offset = 1
+    offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i >= offset and local_i < size:
@@ -71,7 +71,7 @@ fn prefix_sum_local_phase[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -102,7 +102,7 @@ fn prefix_sum_local_phase[
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
     #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
-    offset = 1
+    offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i >= offset and local_i < TPB:
@@ -134,7 +134,7 @@ fn prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 fn prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
     global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -179,7 +179,7 @@ def main():
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
-                size,
+                UInt(size),
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )
@@ -195,7 +195,7 @@ def main():
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
-                size,
+                UInt(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -204,7 +204,7 @@ def main():
             alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
             ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
-                size,
+                UInt(size),
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
