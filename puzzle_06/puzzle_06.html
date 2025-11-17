@@ -209,7 +209,7 @@ alias dtype = DType.float32
 fn add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -266,7 +266,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <pre><code class="language-mojo">fn add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:

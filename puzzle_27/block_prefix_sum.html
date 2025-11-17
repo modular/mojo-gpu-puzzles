@@ -251,8 +251,8 @@ fn block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
 
@@ -423,8 +423,8 @@ Bin 7 extracted elements:
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
     var my_value: Scalar[dtype] = 0.0

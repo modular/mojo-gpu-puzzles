@@ -217,7 +217,7 @@
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -232,7 +232,7 @@
 
     barrier()
 
-    offset = 1
+    offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; size:
@@ -301,7 +301,7 @@ output[global_i] = scan_result
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # FILL ME IN (roughly 4 lines)
 
@@ -398,7 +398,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
         current_val = input[global_i]
@@ -520,7 +520,7 @@ Cycle 3: Store results
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
         current_val = input[global_i]
@@ -616,7 +616,7 @@ pivot: 5.0
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
         current_val = input[global_i]

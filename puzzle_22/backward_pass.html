@@ -305,8 +305,8 @@ where:</p>
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -498,8 +498,8 @@ BACKWARD PASS Test Completed!
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    batch_idx = block_idx.x
-    seq_idx = block_idx.y
+    batch_idx = Int(block_idx.x)
+    seq_idx = Int(block_idx.y)
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return

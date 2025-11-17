@@ -234,7 +234,7 @@ fn axis_sum[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -293,7 +293,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
@@ -322,7 +322,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     barrier()
 
     # do reduction sum per each block
-    stride = TPB // 2
+    stride = UInt(TPB // 2)
     while stride &gt; 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0

@@ -228,8 +228,8 @@
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i &lt; size:
@@ -271,7 +271,7 @@
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -342,7 +342,7 @@ fn block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
@@ -421,7 +421,7 @@ Just like warp.sum() but for the entire block
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Each thread computes partial product

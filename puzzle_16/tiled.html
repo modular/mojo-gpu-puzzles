@@ -268,7 +268,7 @@ alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 fn matmul_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -376,7 +376,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">fn matmul_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -582,7 +582,7 @@ alias BLOCK_DIM_COUNT = 2
 
 
 fn matmul_idiomatic_tiled[
-    layout: Layout, size: Int
+    layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -594,7 +594,7 @@ fn matmul_idiomatic_tiled[
     tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
+    out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
     a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
@@ -618,8 +618,8 @@ fn matmul_idiomatic_tiled[
     @parameter
     for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](block_idx.y, idx)
-        b_tile = b.tile[TPB, TPB](idx, block_idx.x)
+        a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
+        b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[

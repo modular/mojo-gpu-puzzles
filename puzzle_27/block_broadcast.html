@@ -266,7 +266,7 @@ fn block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -418,7 +418,7 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Step 1: Each thread loads its element

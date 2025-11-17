@@ -566,19 +566,19 @@ Output vector norms:
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_row = thread_idx.y
-    local_col = thread_idx.x
+    local_row = Int(thread_idx.y)
+    local_col = Int(thread_idx.x)
 
-    global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
-    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
+    global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
-    out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
+    out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern

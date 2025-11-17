@@ -264,8 +264,8 @@ result = use_collective_value(collective_value)
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
     if global_i &lt; size:
         var broadcast_value: output.element_type = 0.0
 
@@ -350,14 +350,14 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
         var broadcast_value: output.element_type = 0.0
         if lane == 0:
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:
@@ -457,8 +457,8 @@ Cycle 3: Individual computation with broadcast value
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
     if global_i &lt; size:
         var decision_value: output.element_type = 0.0
 
@@ -556,14 +556,14 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 analyzes block-local data and makes decision (find max of first 8 in block)
         var decision_value: output.element_type = 0.0
         if lane == 0:
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             decision_value = input[block_start] if block_start &lt; size else 0.0
             for i in range(1, min(8, min(WARP_SIZE, size - block_start))):
                 if block_start + i &lt; size:
@@ -694,8 +694,8 @@ Step 3: Conditional execution per lane
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
     if global_i &lt; size:
         var scale_factor: output.element_type = 0.0
 
@@ -786,15 +786,15 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    lane = lane_id()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 computes block-local scaling factor
         var scale_factor: output.element_type = 0.0
         if lane == 0:
             # Compute average of first 4 elements in this block's data
-            block_start = block_idx.x * block_dim.x
+            block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:

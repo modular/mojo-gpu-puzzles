@@ -225,7 +225,7 @@ alias dtype = DType.float32
 fn add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,
@@ -294,7 +294,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">fn add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,

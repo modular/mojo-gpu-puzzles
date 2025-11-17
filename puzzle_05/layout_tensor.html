@@ -221,7 +221,7 @@ fn broadcast_add[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -281,7 +281,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

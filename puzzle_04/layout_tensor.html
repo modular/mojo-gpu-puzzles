@@ -214,7 +214,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -269,7 +269,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-mojo">fn add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

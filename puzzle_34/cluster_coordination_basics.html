@@ -231,7 +231,7 @@
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
@@ -348,7 +348,7 @@ Block coordination results:
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Check what's happening with cluster ranks

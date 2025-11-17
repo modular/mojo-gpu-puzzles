@@ -230,7 +230,7 @@ fn conv_1d_simple[
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 14 lines)
 
 
@@ -289,7 +289,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    local_i = Int(thread_idx.x)
     shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),

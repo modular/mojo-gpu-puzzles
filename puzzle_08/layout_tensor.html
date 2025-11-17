@@ -250,7 +250,7 @@ fn add_10_shared_layout_tensor[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using LayoutTensor with explicit address_space
     shared = LayoutTensor[
@@ -323,7 +323,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[

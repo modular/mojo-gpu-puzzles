@@ -196,7 +196,7 @@
 <pre><code class="language-mojo">fn add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -327,7 +327,7 @@ Running memory bug example (bounds checking issue)...
 <pre><code class="language-mojo">fn add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x

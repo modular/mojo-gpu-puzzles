@@ -221,7 +221,7 @@ fn add_10_blocks_2d[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
@@ -279,7 +279,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x

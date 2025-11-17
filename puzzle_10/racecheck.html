@@ -207,7 +207,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     row = thread_idx.y
     col = thread_idx.x
@@ -365,7 +365,7 @@ alias layout = Layout.row_major(SIZE, SIZE)
 fn shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
     row = thread_idx.y

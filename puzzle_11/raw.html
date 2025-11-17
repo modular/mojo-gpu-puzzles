@@ -221,7 +221,7 @@ alias dtype = DType.float32
 fn pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,
@@ -282,7 +282,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <pre><code class="language-mojo">fn pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     shared = stack_allocation[
         TPB,
@@ -300,7 +300,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
         output[0] = shared[0]
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
-    elif 1 &lt; global_i &lt; size:
+    elif UInt(1) &lt; global_i &lt; size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )

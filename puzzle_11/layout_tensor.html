@@ -225,7 +225,7 @@ fn pooling[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
@@ -292,7 +292,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: Int,
+    size: UInt,
 ):
     # Allocate shared memory using tensor builder
     shared = LayoutTensor[
@@ -318,7 +318,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
     # Handle general case
-    elif 1 &lt; global_i &lt; size:
+    elif UInt(1) &lt; global_i &lt; size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
