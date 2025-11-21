@@ -336,6 +336,28 @@ fn minimal_fused_kernel_backward[
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
 
+    # Initialize gradient tensors to zero (block 0,0 only to avoid UB with atomic ops)
+    if batch_idx == 0 and seq_idx == 0:
+        # Initialize grad_ln_weight and grad_ln_bias
+        @parameter
+        for h in range(hidden_dim):
+            grad_ln_weight.ptr.offset(h).init_pointee_copy(0)
+            grad_ln_bias.ptr.offset(h).init_pointee_copy(0)
+
+        # Initialize grad_weight and grad_bias
+        @parameter
+        for out_idx in range(output_dim):
+            grad_bias.ptr.offset(out_idx).init_pointee_copy(0)
+
+            @parameter
+            for h in range(hidden_dim):
+                grad_weight.ptr.offset(
+                    out_idx * hidden_dim + h
+                ).init_pointee_copy(0)
+
+    # Note: We cannot use barrier() here as it only synchronizes within a block.
+    # The atomic operations will handle synchronization across blocks.
+
     # Step 1: Recompute forward pass statistics (needed for gradients)
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
