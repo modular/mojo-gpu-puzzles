@@ -465,7 +465,8 @@ run_python_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'sys\.argv\[1\] == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
+        # Support both sys.argv[1] == "--flag" and argparse add_argument("--flag", ...) patterns
+        flags=$(grep -oE 'sys\.argv\[1\] == "--[^"]*"|"--[a-z-]+"' "$f" | grep -oE -- '--[a-z-]+' | sort -u | grep -v '^--demo')
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "python \"$f\""
