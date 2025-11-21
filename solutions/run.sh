@@ -30,7 +30,7 @@ IGNORE_LOW_COMPUTE_FAILURES=false
 
 # Puzzles that require higher compute capability on NVIDIA
 # >= 8.0 (Ampere): Tensor Cores, full async copy (RTX 30xx, A100+)
-NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p28" "p29" "p33")
+NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p22" "p28" "p29" "p33")
 # >= 9.0 (Hopper): SM90+ cluster programming (H100+)
 NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 
