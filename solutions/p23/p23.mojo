@@ -166,8 +166,9 @@ fn vectorize_within_tiles_elementwise_add[
         tile_end = min(tile_start + tile_size, size)
         actual_tile_size = tile_end - tile_start
 
-        @parameter
-        fn vectorized_add[width: Int](i: Int):
+        fn vectorized_add[
+            width: Int
+        ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
             if global_idx + width <= size:
                 a_vec = a.aligned_load[width](global_idx, 0)
@@ -176,7 +177,7 @@ fn vectorize_within_tiles_elementwise_add[
                 output.aligned_store[width](global_idx, 0, result)
 
         # Use vectorize within each tile
-        vectorize[vectorized_add, simd_width](actual_tile_size)
+        vectorize[simd_width](actual_tile_size, vectorized_add)
 
     num_tiles = (size + tile_size - 1) // tile_size
     elementwise[

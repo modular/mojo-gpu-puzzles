@@ -239,8 +239,9 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ### 2. **Vectorized function pattern**
 
 ```mojo
-@parameter
-fn vectorized_add[width: Int](i: Int):
+fn vectorized_add[
+  width: Int
+](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:  # Bounds checking
         # SIMD operations here
@@ -251,7 +252,7 @@ The `width` parameter is automatically determined by the vectorize function.
 ### 3. **Calling vectorize**
 
 ```mojo
-vectorize[vectorized_add, simd_width](actual_tile_size)
+vectorize[simd_width](actual_tile_size, vectorized_add)
 ```
 
 This automatically handles the vectorization loop with the provided SIMD width.
@@ -337,8 +338,9 @@ actual_tile_size = tile_end - tile_start
 **Automatic vectorization mechanism:**
 
 ```mojo
-@parameter
-fn vectorized_add[width: Int](i: Int):
+fn vectorized_add[
+  width: Int
+](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
     if global_idx + width <= size:
         # Automatic SIMD optimization
