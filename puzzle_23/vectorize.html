@@ -476,15 +476,16 @@ actual_tile_size = tile_end - tile_start
 </code></pre>
 <p>Handle cases where the last tile might be smaller than <code>tile_size</code>.</p>
 <h3 id="2-vectorized-function-pattern"><a class="header" href="#2-vectorized-function-pattern">2. <strong>Vectorized function pattern</strong></a></h3>
-<pre><code class="language-mojo">@parameter
-fn vectorized_add[width: Int](i: Int):
+<pre><code class="language-mojo">fn vectorized_add[
+  width: Int
+](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:  # Bounds checking
         # SIMD operations here
 </code></pre>
 <p>The <code>width</code> parameter is automatically determined by the vectorize function.</p>
 <h3 id="3-calling-vectorize"><a class="header" href="#3-calling-vectorize">3. <strong>Calling vectorize</strong></a></h3>
-<pre><code class="language-mojo">vectorize[vectorized_add, simd_width](actual_tile_size)
+<pre><code class="language-mojo">vectorize[simd_width](actual_tile_size, vectorized_add)
 </code></pre>
 <p>This automatically handles the vectorization loop with the provided SIMD width.</p>
 <h3 id="4-key-characteristics-1"><a class="header" href="#4-key-characteristics-1">4. <strong>Key characteristics</strong></a></h3>
@@ -553,8 +554,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         tile_end = min(tile_start + tile_size, size)
         actual_tile_size = tile_end - tile_start
 
-        @parameter
-        fn vectorized_add[width: Int](i: Int):
+        fn vectorized_add[
+            width: Int
+        ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
             if global_idx + width &lt;= size:
                 a_vec = a.aligned_load[width](global_idx, 0)
@@ -563,7 +565,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
                 output.aligned_store[width](global_idx, 0, result)
 
         # Use vectorize within each tile
-        vectorize[vectorized_add, simd_width](actual_tile_size)
+        vectorize[simd_width](actual_tile_size, vectorized_add)
 
     num_tiles = (size + tile_size - 1) // tile_size
     elementwise[
@@ -587,8 +589,9 @@ tile_end = min(tile_start + tile_size, size)
 actual_tile_size = tile_end - tile_start
 </code></pre>
 <p><strong>Automatic vectorization mechanism:</strong></p>
-<pre><code class="language-mojo">@parameter
-fn vectorized_add[width: Int](i: Int):
+<pre><code class="language-mojo">fn vectorized_add[
+  width: Int
+](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
     if global_idx + width &lt;= size:
         # Automatic SIMD optimization
