@@ -253,10 +253,10 @@ This profiling detective case demonstrates how memory access patterns create ord
 **p30.mojo Configuration Details:**
 
 ```mojo
-alias SIZE = 16 * 1024 * 1024          # 16M elements (64MB of float32 data)
-alias THREADS_PER_BLOCK = (1024, 1)    # 1024 threads per block
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 16,384 blocks total
-alias dtype = DType.float32             # 4 bytes per element
+comptime SIZE = 16 * 1024 * 1024          # 16M elements (64MB of float32 data)
+comptime THREADS_PER_BLOCK = (1024, 1)    # 1024 threads per block
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 16,384 blocks total
+comptime dtype = DType.float32             # 4 bytes per element
 ```
 
 **Why these settings matter:**

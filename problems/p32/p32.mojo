@@ -7,12 +7,12 @@ from testing import assert_almost_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: no_conflict_kernel
-alias SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
-alias TPB = 256  # Threads per block - divisible by 32 (warp size)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
+comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn no_conflict_kernel[
@@ -111,7 +111,7 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
+        comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         input_buf = ctx.enqueue_create_buffer[dtype](test_size)
@@ -126,7 +126,7 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
             input_buf.unsafe_ptr()
         )
 
-        alias kernel = no_conflict_kernel[layout]
+        comptime kernel = no_conflict_kernel[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -147,7 +147,7 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
+        comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         input_buf = ctx.enqueue_create_buffer[dtype](test_size)
@@ -162,7 +162,7 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
             input_buf.unsafe_ptr()
         )
 
-        alias kernel = two_way_conflict_kernel[layout]
+        comptime kernel = two_way_conflict_kernel[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -194,7 +194,7 @@ fn test_no_conflict() raises:
             input_buf.unsafe_ptr()
         )
 
-        alias kernel = no_conflict_kernel[layout]
+        comptime kernel = no_conflict_kernel[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -228,7 +228,7 @@ fn test_two_way_conflict() raises:
             input_buf.unsafe_ptr()
         )
 
-        alias kernel = two_way_conflict_kernel[layout]
+        comptime kernel = two_way_conflict_kernel[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             input_tensor,

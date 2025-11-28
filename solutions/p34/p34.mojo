@@ -12,12 +12,12 @@ from layout import Layout, LayoutTensor
 from sys import argv
 from testing import assert_equal, assert_almost_equal, assert_true
 
-alias SIZE = 1024
-alias TPB = 256
-alias CLUSTER_SIZE = 4
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+comptime SIZE = 1024
+comptime TPB = 256
+comptime CLUSTER_SIZE = 4
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 # ANCHOR: cluster_coordination_basics_solution
@@ -223,7 +223,7 @@ def main():
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](output_buf)
 
-            alias kernel = cluster_coordination_basics[
+            comptime kernel = cluster_coordination_basics[
                 in_layout, Layout.row_major(CLUSTER_SIZE), TPB
             ]
             ctx.enqueue_function_checked[kernel, kernel](
@@ -290,7 +290,7 @@ def main():
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](temp_buf)
 
-            alias kernel = cluster_collective_operations[
+            comptime kernel = cluster_collective_operations[
                 in_layout, out_layout, TPB
             ]
             ctx.enqueue_function_checked[kernel, kernel](
@@ -339,7 +339,7 @@ def main():
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](output_buf)
 
-            alias kernel = advanced_cluster_patterns[
+            comptime kernel = advanced_cluster_patterns[
                 in_layout, Layout.row_major(CLUSTER_SIZE), TPB
             ]
             ctx.enqueue_function_checked[kernel, kernel](

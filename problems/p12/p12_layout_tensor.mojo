@@ -7,13 +7,13 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 fn dot_product[
@@ -49,7 +49,7 @@ def main():
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
-        alias kernel = dot_product[layout, out_layout]
+        comptime kernel = dot_product[layout, out_layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,

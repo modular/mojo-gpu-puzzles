@@ -16,17 +16,17 @@ from testing import assert_true, assert_almost_equal
 
 # ANCHOR: multi_stage_pipeline
 
-alias TPB = 256  # Threads per block for pipeline stages
-alias SIZE = 1024  # Image size (1D for simplicity)
-alias BLOCKS_PER_GRID = (4, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 256  # Threads per block for pipeline stages
+comptime SIZE = 1024  # Image size (1D for simplicity)
+comptime BLOCKS_PER_GRID = (4, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 # Multi-stage processing configuration
-alias STAGE1_THREADS = TPB // 2
-alias STAGE2_THREADS = TPB // 2
-alias BLUR_RADIUS = 2
+comptime STAGE1_THREADS = TPB // 2
+comptime STAGE2_THREADS = TPB // 2
+comptime BLUR_RADIUS = 2
 
 
 fn multi_stage_image_blur_pipeline[
@@ -84,8 +84,8 @@ fn multi_stage_image_blur_pipeline[
 # ANCHOR: double_buffered_stencil
 
 # Double-buffered stencil configuration
-alias STENCIL_ITERATIONS = 3
-alias BUFFER_COUNT = 2
+comptime STENCIL_ITERATIONS = 3
+comptime BUFFER_COUNT = 2
 
 
 fn double_buffered_stencil_computation[
@@ -214,7 +214,7 @@ def test_multi_stage_pipeline():
         out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
-        alias kernel = multi_stage_image_blur_pipeline[layout]
+        comptime kernel = multi_stage_image_blur_pipeline[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
@@ -276,7 +276,7 @@ def test_double_buffered_stencil():
         out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
-        alias kernel = double_buffered_stencil_computation[layout]
+        comptime kernel = double_buffered_stencil_computation[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,

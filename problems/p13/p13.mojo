@@ -6,15 +6,15 @@ from sys import size_of, argv
 from testing import assert_equal
 
 # ANCHOR: conv_1d_simple
-alias TPB = 8
-alias SIZE = 6
-alias CONV = 3
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(SIZE)
-alias conv_layout = Layout.row_major(CONV)
+comptime TPB = 8
+comptime SIZE = 6
+comptime CONV = 3
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(SIZE)
+comptime conv_layout = Layout.row_major(CONV)
 
 
 fn conv_1d_simple[
@@ -32,13 +32,13 @@ fn conv_1d_simple[
 # ANCHOR_END: conv_1d_simple
 
 # ANCHOR: conv_1d_block_boundary
-alias SIZE_2 = 15
-alias CONV_2 = 4
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias in_2_layout = Layout.row_major(SIZE_2)
-alias out_2_layout = Layout.row_major(SIZE_2)
-alias conv_2_layout = Layout.row_major(CONV_2)
+comptime SIZE_2 = 15
+comptime CONV_2 = 4
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime in_2_layout = Layout.row_major(SIZE_2)
+comptime out_2_layout = Layout.row_major(SIZE_2)
+comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
 fn conv_1d_block_boundary[
@@ -87,7 +87,7 @@ def main():
             var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
             var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
             var b_tensor = LayoutTensor[dtype, conv_layout, ImmutAnyOrigin](b)
-            alias kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
+            comptime kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -101,7 +101,7 @@ def main():
             )
             var a_tensor = LayoutTensor[dtype, in_2_layout, ImmutAnyOrigin](a)
             var b_tensor = LayoutTensor[dtype, conv_2_layout, ImmutAnyOrigin](b)
-            alias kernel = conv_1d_block_boundary[
+            comptime kernel = conv_1d_block_boundary[
                 in_2_layout, out_2_layout, conv_2_layout, dtype
             ]
             ctx.enqueue_function_checked[kernel, kernel](

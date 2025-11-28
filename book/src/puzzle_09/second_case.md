@@ -325,7 +325,7 @@ With only 2 iterations (offset = 0, 1):
 Looking at the problem code, we find:
 
 ```mojo
-alias ITER = 2                       # ← BUG: Should be 3!
+comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
     idx = thread_id + offset - 1     # ← Missing offset = 2
@@ -335,7 +335,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 
 **🎯 ROOT CAUSE IDENTIFIED**: `ITER = 2` should be `ITER = 3` for a sliding window of size 3.
 
-**The Fix**: Change `alias ITER = 2` to `alias ITER = 3` in the source code.
+**The Fix**: Change `comptime ITER = 2` to `comptime ITER = 3` in the source code.
 
 ## Key debugging lessons
 

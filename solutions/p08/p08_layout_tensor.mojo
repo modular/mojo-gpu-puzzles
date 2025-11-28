@@ -5,12 +5,12 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from testing import assert_equal
 
-alias TPB = 4
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (2, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 4
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (2, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: add_10_shared_layout_tensor_solution
@@ -58,7 +58,7 @@ def main():
         out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
 
-        alias kernel = add_10_shared_layout_tensor[layout]
+        comptime kernel = add_10_shared_layout_tensor[layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,

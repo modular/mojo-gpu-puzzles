@@ -52,7 +52,7 @@ But with sophisticated vectorization strategies for maximum performance.
 ### 1. **Understanding chunk organization**
 
 ```mojo
-alias chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
+comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
 ```
 
 Each tile now contains multiple SIMD groups, not just sequential elements.
@@ -162,7 +162,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 **Architecture and memory layout:**
 
 ```mojo
-alias chunk_size = tile_size * simd_width  # 32 * 4 = 128
+comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 ```
 
 **Chunk organization visualization (TILE_SIZE=32, SIMD_WIDTH=4):**

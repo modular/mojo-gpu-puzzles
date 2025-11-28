@@ -4,12 +4,12 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from testing import assert_equal
 
-alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: pooling_layout_tensor_solution

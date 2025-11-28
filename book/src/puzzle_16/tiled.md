@@ -385,8 +385,8 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
 3. **Optimized memory access layouts**
 
    ```mojo
-   alias load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
-   alias load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
+   comptime load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
+   comptime load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
    # Note: Both matrices use the same layout for standard A × B multiplication
    ```
 
@@ -484,8 +484,8 @@ While this puzzle uses standard coalesced loading for both matrices, the layout 
 ```mojo
 # Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
-alias load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
-alias store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+comptime load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
+comptime store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 ```
 

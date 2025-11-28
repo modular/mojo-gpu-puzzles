@@ -6,12 +6,12 @@ from sys import size_of, argv
 from math import log2
 from testing import assert_equal
 
-alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: prefix_sum_simple_solution
@@ -55,12 +55,12 @@ fn prefix_sum_simple[
 # ANCHOR_END: prefix_sum_simple_solution
 
 
-alias SIZE_2 = 15
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-alias layout_2 = Layout.row_major(SIZE_2)
-alias extended_layout = Layout.row_major(EXTENDED_SIZE)
+comptime SIZE_2 = 15
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+comptime layout_2 = Layout.row_major(SIZE_2)
+comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 # ANCHOR: prefix_sum_complete_solution
 
@@ -175,7 +175,7 @@ def main():
             a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
             out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
 
-            alias kernel = prefix_sum_simple[layout]
+            comptime kernel = prefix_sum_simple[layout]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -191,7 +191,7 @@ def main():
 
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
-            alias kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -201,7 +201,7 @@ def main():
             )
 
             # Phase 2: Add block sums
-            alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
             ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
                 UInt(size),

@@ -4,10 +4,10 @@ from gpu.host import DeviceContext
 from testing import assert_equal
 
 # ANCHOR: add_10_2d
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn add_10_2d(

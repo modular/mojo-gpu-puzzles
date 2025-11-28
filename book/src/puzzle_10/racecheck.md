@@ -9,10 +9,10 @@ You have a GPU kernel that should accumulate values from multiple threads using 
 ## Configuration
 
 ```mojo
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
-alias dtype = DType.float32
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
+comptime dtype = DType.float32
 ```
 
 ## The failing kernel
