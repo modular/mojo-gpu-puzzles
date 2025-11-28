@@ -216,12 +216,12 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 3
-alias SIZE = 2
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, TPB)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime TPB = 3
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, TPB)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn naive_matmul[

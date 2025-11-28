@@ -214,11 +214,11 @@
 <p><em>Note: For this problem, you don’t need to worry about number of shared reads. We will
 handle that challenge later.</em></p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
 
 
 fn dot_product(

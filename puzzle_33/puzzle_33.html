@@ -368,8 +368,8 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -453,20 +453,20 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 </code></pre>
 <h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
 <pre><code class="language-mojo"># Block and warp tiling sizes
-alias BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
-alias BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
-alias BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
-alias WM = WARP_SIZE  # Warp tile M
-alias WN = WARP_SIZE  # Warp tile N
+comptime BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
+comptime BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
+comptime BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
+comptime WM = WARP_SIZE  # Warp tile M
+comptime WN = WARP_SIZE  # Warp tile N
 
 # MMA tile sizes for tensor cores
-alias MMA_M = 16
-alias MMA_N = 8
-alias MMA_K = 8
+comptime MMA_M = 16
+comptime MMA_N = 8
+comptime MMA_K = 8
 
-alias THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
+comptime THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
 # grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
-alias BLOCKS_PER_GRID_TENSOR_CORE = (
+comptime BLOCKS_PER_GRID_TENSOR_CORE = (
     (SIZE + BN - 1) // BN,
     (SIZE + BM - 1) // BM,
 )
@@ -490,9 +490,9 @@ fn tensor_core_matrix_multiplication[
     B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
     C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    alias M = C.shape[0]()
-    alias N = C.shape[1]()
-    alias K = A.shape[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN
@@ -694,9 +694,9 @@ ALL TESTS PASSED!
     B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
     C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    alias M = C.shape[0]()
-    alias N = C.shape[1]()
-    alias K = A.shape[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN

@@ -207,12 +207,12 @@ The principles you learn here apply to any parallel computing system where resou
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p><strong>GPU Occupancy</strong> is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.</p>
 <p><strong>SAXPY</strong> is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
-<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
-alias THREADS_PER_BLOCK = (1024, 1)
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-alias ALPHA = Float32(2.5)  # SAXPY coefficient
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
+comptime THREADS_PER_BLOCK = (1024, 1)
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+comptime ALPHA = Float32(2.5)  # SAXPY coefficient
 
 
 fn minimal_kernel[
@@ -398,9 +398,9 @@ fn minimal_kernel[
 <blockquote>
 <p><strong>⚠️ GPU compatibility note:</strong>
 The default configuration uses aggressive settings that may fail on older or lower-capability GPUs:</p>
-<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
-alias THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
+comptime THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
 </code></pre>
 <p><strong>If you encounter launch failures, reduce these values in <code>problems/p31/p31.mojo</code>:</strong></p>
 <ul>

@@ -230,7 +230,7 @@ for element in data:
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
 <p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
-<pre><code class="language-mojo">alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+<pre><code class="language-mojo">comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
 fn block_histogram_bin_extract[

@@ -271,17 +271,17 @@
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">
-alias TPB = 256  # Threads per block for pipeline stages
-alias SIZE = 1024  # Image size (1D for simplicity)
-alias BLOCKS_PER_GRID = (4, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 256  # Threads per block for pipeline stages
+comptime SIZE = 1024  # Image size (1D for simplicity)
+comptime BLOCKS_PER_GRID = (4, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 # Multi-stage processing configuration
-alias STAGE1_THREADS = TPB // 2
-alias STAGE2_THREADS = TPB // 2
-alias BLUR_RADIUS = 2
+comptime STAGE1_THREADS = TPB // 2
+comptime STAGE2_THREADS = TPB // 2
+comptime BLUR_RADIUS = 2
 
 
 fn multi_stage_image_blur_pipeline[

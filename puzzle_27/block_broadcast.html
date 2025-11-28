@@ -247,7 +247,7 @@ output[global_i] = my_value / mean
 <h3 id="complete-block-operations-workflow"><a class="header" href="#complete-block-operations-workflow">Complete block operations workflow</a></h3>
 <p>Implement sophisticated vector mean normalization using the full block operations toolkit:</p>
 <pre><code class="language-mojo">
-alias vector_layout = Layout.row_major(SIZE)
+comptime vector_layout = Layout.row_major(SIZE)
 
 
 fn block_normalize_vector[

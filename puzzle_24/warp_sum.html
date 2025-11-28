@@ -210,13 +210,13 @@
 </ul>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
 <p>Recall the complex approach from <a href="../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a> that required shared memory, barriers, and tree reduction:</p>
-<pre><code class="language-mojo">alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias SIMD_WIDTH = simd_width_of[dtype]()
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime SIMD_WIDTH = simd_width_of[dtype]()
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 fn traditional_dot_product_p12_style[

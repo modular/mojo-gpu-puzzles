@@ -211,15 +211,15 @@
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 6
-alias CONV = 3
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(SIZE)
-alias conv_layout = Layout.row_major(CONV)
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 6
+comptime CONV = 3
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(SIZE)
+comptime conv_layout = Layout.row_major(CONV)
 
 
 fn conv_1d_simple[

@@ -209,12 +209,12 @@
 <li><strong>Second kernel</strong> (<code>prefix_sum_block_sum_phase</code>): Adds previous block sums to elements in subsequent blocks</li>
 </ol>
 <p>The main function will handle the necessary host-side synchronization between these kernels.</p>
-<pre><code class="language-mojo">alias SIZE_2 = 15
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-alias layout_2 = Layout.row_major(SIZE_2)
-alias extended_layout = Layout.row_major(EXTENDED_SIZE)
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+comptime layout_2 = Layout.row_major(SIZE_2)
+comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
@@ -242,7 +242,7 @@ fn prefix_sum_block_sum_phase[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            alias kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -252,7 +252,7 @@ fn prefix_sum_block_sum_phase[
             )
 
             # Phase 2: Add block sums
-            alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
             ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
                 UInt(size),

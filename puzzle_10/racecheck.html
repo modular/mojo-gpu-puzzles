@@ -190,18 +190,18 @@
 <p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
 <p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
+comptime dtype = DType.float32
 </code></pre>
 <h2 id="the-failing-kernel"><a class="header" href="#the-failing-kernel">The failing kernel</a></h2>
 <pre><code class="language-mojo">
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(
@@ -355,11 +355,11 @@ AssertionError: `left == right` comparison failed:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(

@@ -231,7 +231,7 @@
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
-    alias chunk_size = tile_size * simd_width
+    comptime chunk_size = tile_size * simd_width
 
     @parameter
     @always_inline
@@ -259,7 +259,7 @@
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="1-understanding-chunk-organization"><a class="header" href="#1-understanding-chunk-organization">1. <strong>Understanding chunk organization</strong></a></h3>
-<pre><code class="language-mojo">alias chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
+<pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
 </code></pre>
 <p>Each tile now contains multiple SIMD groups, not just sequential elements.</p>
 <h3 id="2-global-index-calculation"><a class="header" href="#2-global-index-calculation">2. <strong>Global index calculation</strong></a></h3>
@@ -337,7 +337,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
-    alias chunk_size = tile_size * simd_width
+    comptime chunk_size = tile_size * simd_width
 
     @parameter
     @always_inline
@@ -378,7 +378,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <li><strong>Manual bounds management</strong>: You handle edge cases explicitly</li>
 </ul>
 <p><strong>Architecture and memory layout:</strong></p>
-<pre><code class="language-mojo">alias chunk_size = tile_size * simd_width  # 32 * 4 = 128
+<pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 </code></pre>
 <p><strong>Chunk organization visualization (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
 <pre><code>Original array: [0, 1, 2, 3, ..., 1023]

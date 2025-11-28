@@ -196,12 +196,12 @@
 <p><strong>Your mission:</strong> Use the profiling methodology you’ve learned to uncover this hidden performance trap and understand when bank conflicts matter in real-world GPU programming.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>Shared memory bank conflicts occur when multiple threads in a warp simultaneously access different addresses within the same memory bank. This detective case explores two kernels with contrasting access patterns:</p>
-<pre><code class="language-mojo">alias SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
-alias TPB = 256  # Threads per block - divisible by 32 (warp size)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
+comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn no_conflict_kernel[
@@ -298,9 +298,9 @@ fn no_conflict_kernel[
 <li>Understanding of shared memory banking concepts from the <a href="./shared_memory_bank.html">previous section</a></li>
 </ul>
 <p><strong>Kernel specifications:</strong></p>
-<pre><code class="language-mojo">alias SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
-alias TPB = 256            # 256 threads per block (8 warps)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
+<pre><code class="language-mojo">comptime SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
+comptime TPB = 256            # 256 threads per block (8 warps)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 </code></pre>
 <p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.</p>
 <h2 id="the-investigation"><a class="header" href="#the-investigation">The investigation</a></h2>

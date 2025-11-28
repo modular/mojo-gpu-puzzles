@@ -207,12 +207,12 @@
 <li><strong>Thread mapping</strong>: Each thread processes one matrix element</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 5
-alias BLOCKS_PER_GRID = (2, 2)
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(SIZE, SIZE)
+<pre><code class="language-mojo">comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = Layout.row_major(SIZE, SIZE)
+comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_blocks_2d[

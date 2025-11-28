@@ -215,11 +215,11 @@
 </blockquote>
 <p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 4
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (2, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime TPB = 4
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (2, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
 
 
 fn add_10_shared(

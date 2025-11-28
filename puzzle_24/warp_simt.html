@@ -400,13 +400,13 @@ else:
 <h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
 <h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture adaptation strategies</a></h3>
 <p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
-<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
-alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
+comptime ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 </code></pre>
 <p><em>Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)</em></p>
 <p><strong>❌ BROKEN: Never hardcode warp size</strong></p>
-<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
-alias REDUCTION_SIZE = 32           # Wrong on AMD!
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
+comptime REDUCTION_SIZE = 32           # Wrong on AMD!
 </code></pre>
 <p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
 <h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real hardware impact</a></h3>

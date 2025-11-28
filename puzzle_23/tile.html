@@ -212,7 +212,7 @@
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TILE_SIZE = 32
+<pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
 fn tiled_elementwise_add[
@@ -334,7 +334,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">alias TILE_SIZE = 32
+<pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
 fn tiled_elementwise_add[

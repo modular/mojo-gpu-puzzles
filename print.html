@@ -768,10 +768,10 @@ Your task is to implement a kernel that adds 10 to each element of vector <code>
 </li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 4
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = SIZE
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 4
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = SIZE
+comptime dtype = DType.float32
 
 
 fn add_10(
@@ -903,10 +903,10 @@ Thread 2:  a[2] + b[2] → output[2]
 </code></pre>
 <p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>output</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
 <h2 id="code-to-complete-1"><a class="header" href="#code-to-complete-1">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 4
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = SIZE
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 4
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = SIZE
+comptime dtype = DType.float32
 
 
 fn add(
@@ -1021,10 +1021,10 @@ Thread 5 (i=5):  if 5 &lt; size:  ❌ Skip (out of bounds)
 <li>Complex access patterns</li>
 </ul>
 <h2 id="code-to-complete-2"><a class="header" href="#code-to-complete-2">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 4
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (8, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 4
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (8, 1)
+comptime dtype = DType.float32
 
 
 fn add_10_guard(
@@ -1185,10 +1185,10 @@ if i &lt; height and j &lt; width and k &lt; depth and
 <li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than matrix elements \((2 \times 2)\)</li>
 </ul>
 <h2 id="code-to-complete-3"><a class="header" href="#code-to-complete-3">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn add_10_2d(
@@ -1304,9 +1304,9 @@ if row &lt; height and col &lt; width:
 <pre><code class="language-mojo">from layout import Layout, LayoutTensor
 
 # Define layout
-alias HEIGHT = 2
-alias WIDTH = 3
-alias layout = Layout.row_major(HEIGHT, WIDTH)
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 # Create tensor
 tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())
@@ -1325,10 +1325,10 @@ tensor[1, 2] = 2.0  # Last element
 <pre><code class="language-mojo">from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 
-alias HEIGHT = 2
-alias WIDTH = 3
-alias dtype = DType.float32
-alias layout = Layout.row_major(HEIGHT, WIDTH)
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 
 fn kernel[
@@ -1427,11 +1427,11 @@ After:
 <li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
 </ul>
 <h2 id="code-to-complete-4"><a class="header" href="#code-to-complete-4">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_2d(
@@ -1547,10 +1547,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <li><strong>Bounds checking</strong>: Guard against threads outside matrix dimensions</li>
 </ul>
 <h2 id="code-to-complete-5"><a class="header" href="#code-to-complete-5">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn broadcast_add(
@@ -1675,13 +1675,13 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
 </ul>
 <h2 id="code-to-complete-6"><a class="header" href="#code-to-complete-6">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(1, SIZE)
-alias b_layout = Layout.row_major(SIZE, 1)
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = Layout.row_major(SIZE, SIZE)
+comptime a_layout = Layout.row_major(1, SIZE)
+comptime b_layout = Layout.row_major(SIZE, 1)
 
 
 fn broadcast_add[
@@ -1810,10 +1810,10 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 </ul>
 <p>The key insight is understanding how blocks of threads work together to process data that’s larger than a single block’s capacity, while maintaining correct element-to-thread mapping.</p>
 <h2 id="code-to-complete-7"><a class="header" href="#code-to-complete-7">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 9
-alias BLOCKS_PER_GRID = (3, 1)
-alias THREADS_PER_BLOCK = (4, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 9
+comptime BLOCKS_PER_GRID = (3, 1)
+comptime THREADS_PER_BLOCK = (4, 1)
+comptime dtype = DType.float32
 
 
 fn add_10_blocks(
@@ -2008,10 +2008,10 @@ The block dimensions and indices work together to ensure:</p>
 <li><strong>Coverage</strong>: Ensuring all matrix elements are processed</li>
 </ul>
 <h2 id="code-to-complete-8"><a class="header" href="#code-to-complete-8">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 5
-alias BLOCKS_PER_GRID = (2, 2)
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
 
 
 fn add_10_blocks_2d(
@@ -2176,12 +2176,12 @@ Block (0,1)         Block (1,1)
 <li><strong>Thread mapping</strong>: Each thread processes one matrix element</li>
 </ul>
 <h2 id="code-to-complete-9"><a class="header" href="#code-to-complete-9">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 5
-alias BLOCKS_PER_GRID = (2, 2)
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(SIZE, SIZE)
+<pre><code class="language-mojo">comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = Layout.row_major(SIZE, SIZE)
+comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_blocks_2d[
@@ -2378,11 +2378,11 @@ row * size + col    tensor[row, col]
 </blockquote>
 <p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete-10"><a class="header" href="#code-to-complete-10">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 4
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (2, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime TPB = 4
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (2, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
 
 
 fn add_10_shared(
@@ -2607,12 +2607,12 @@ shared[local_i] = a[global_i]
 </blockquote>
 <p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete-11"><a class="header" href="#code-to-complete-11">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 4
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (2, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime TPB = 4
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (2, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn add_10_shared_layout_tensor[
@@ -4159,7 +4159,7 @@ No symbol "offset" in current context.
 <p><strong>Result</strong>: Thread 0 gets <code>window_sum = 0</code> instead of <code>window_sum = 0 + 1 = 1</code></p>
 <h3 id="phase-5-bug-confirmation"><a class="header" href="#phase-5-bug-confirmation">Phase 5: Bug confirmation</a></h3>
 <p>Looking at the problem code, we find:</p>
-<pre><code class="language-mojo">alias ITER = 2                       # ← BUG: Should be 3!
+<pre><code class="language-mojo">comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
     idx = thread_id + offset - 1     # ← Missing offset = 2
@@ -4167,7 +4167,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
         window_sum += input[idx]
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
-<p><strong>The Fix</strong>: Change <code>alias ITER = 2</code> to <code>alias ITER = 3</code> in the source code.</p>
+<p><strong>The Fix</strong>: Change <code>comptime ITER = 2</code> to <code>comptime ITER = 3</code> in the source code.</p>
 <h2 id="key-debugging-lessons-1"><a class="header" href="#key-debugging-lessons-1">Key debugging lessons</a></h2>
 <p><strong>When Variables Are Inaccessible</strong>:</p>
 <ol>
@@ -4878,18 +4878,18 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
 <p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>
 <h2 id="configuration-4"><a class="header" href="#configuration-4">Configuration</a></h2>
-<pre><code class="language-mojo">alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)  # 9 threads, but only 4 are active
+comptime dtype = DType.float32
 </code></pre>
 <h2 id="the-failing-kernel"><a class="header" href="#the-failing-kernel">The failing kernel</a></h2>
 <pre><code class="language-mojo">
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(
@@ -5043,11 +5043,11 @@ AssertionError: `left == right` comparison failed:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(
@@ -5212,11 +5212,11 @@ expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
 <li><strong>Thread sync</strong>: Coordination before window operations</li>
 </ul>
 <h2 id="code-to-complete-12"><a class="header" href="#code-to-complete-12">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
 
 
 fn pooling(
@@ -5411,12 +5411,12 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
 </ul>
 <h2 id="code-to-complete-13"><a class="header" href="#code-to-complete-13">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn pooling[
@@ -5653,11 +5653,11 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p><em>Note: For this problem, you don’t need to worry about number of shared reads. We will
 handle that challenge later.</em></p>
 <h2 id="code-to-complete-14"><a class="header" href="#code-to-complete-14">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
 
 
 fn dot_product(
@@ -5898,13 +5898,13 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 fn dot_product[
@@ -6183,15 +6183,15 @@ Then tackle the more challenging case where data needs to be shared across block
 <li><strong>Thread sync</strong>: Coordination before computation</li>
 </ul>
 <h2 id="code-to-complete-16"><a class="header" href="#code-to-complete-16">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 6
-alias CONV = 3
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(SIZE)
-alias conv_layout = Layout.row_major(CONV)
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 6
+comptime CONV = 3
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(SIZE)
+comptime conv_layout = Layout.row_major(CONV)
 
 
 fn conv_1d_simple[
@@ -6427,13 +6427,13 @@ if global_i &lt; SIZE:
 <li><strong>Synchronization</strong>: Proper thread coordination</li>
 </ul>
 <h2 id="code-to-complete-17"><a class="header" href="#code-to-complete-17">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE_2 = 15
-alias CONV_2 = 4
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias in_2_layout = Layout.row_major(SIZE_2)
-alias out_2_layout = Layout.row_major(SIZE_2)
-alias conv_2_layout = Layout.row_major(CONV_2)
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime CONV_2 = 4
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime in_2_layout = Layout.row_major(SIZE_2)
+comptime out_2_layout = Layout.row_major(SIZE_2)
+comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
 fn conv_1d_block_boundary[
@@ -6754,12 +6754,12 @@ Then tackle the more challenging case of handling larger arrays that span multip
 <li><strong>Type safety</strong>: Leveraging LayoutTensor’s type system</li>
 </ul>
 <h2 id="code-to-complete-18"><a class="header" href="#code-to-complete-18">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TPB = 8
-alias SIZE = 8
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn prefix_sum_simple[
@@ -6985,12 +6985,12 @@ output:       [0    1    3    6    10   15   21   28]
 <li><strong>Second kernel</strong> (<code>prefix_sum_block_sum_phase</code>): Adds previous block sums to elements in subsequent blocks</li>
 </ol>
 <p>The main function will handle the necessary host-side synchronization between these kernels.</p>
-<pre><code class="language-mojo">alias SIZE_2 = 15
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-alias layout_2 = Layout.row_major(SIZE_2)
-alias extended_layout = Layout.row_major(EXTENDED_SIZE)
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+comptime layout_2 = Layout.row_major(SIZE_2)
+comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
@@ -7018,7 +7018,7 @@ fn prefix_sum_block_sum_phase[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            alias kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -7028,7 +7028,7 @@ fn prefix_sum_block_sum_phase[
             )
 
             # Phase 2: Add block sums
-            alias kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
             ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tensor,
                 UInt(size),
@@ -7427,14 +7427,14 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 8
-alias BATCH = 4
-alias SIZE = 6
-alias BLOCKS_PER_GRID = (1, BATCH)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(BATCH, SIZE)
-alias out_layout = Layout.row_major(BATCH, 1)
+comptime TPB = 8
+comptime BATCH = 4
+comptime SIZE = 6
+comptime BLOCKS_PER_GRID = (1, BATCH)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(BATCH, SIZE)
+comptime out_layout = Layout.row_major(BATCH, 1)
 
 
 fn axis_sum[
@@ -7724,12 +7724,12 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 3
-alias SIZE = 2
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, TPB)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime TPB = 3
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, TPB)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn naive_matmul[
@@ -8374,10 +8374,10 @@ Synchronization required:
 * After computing each phase
 </code></pre>
 <h2 id="code-to-complete-23"><a class="header" href="#code-to-complete-23">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE_TILED = 9
-alias BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
-alias THREADS_PER_BLOCK_TILED = (TPB, TPB)
-alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+<pre><code class="language-mojo">comptime SIZE_TILED = 9
+comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
+comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
+comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 fn matmul_tiled[
@@ -8690,8 +8690,8 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 <pre><code class="language-mojo">from gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
-alias NUM_THREADS = TPB * TPB
-alias BLOCK_DIM_COUNT = 2
+comptime NUM_THREADS = TPB * TPB
+comptime BLOCK_DIM_COUNT = 2
 
 
 fn matmul_idiomatic_tiled[
@@ -8723,8 +8723,8 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -8823,8 +8823,8 @@ async_copy_wait_all()
 </li>
 <li>
 <p><strong>Optimized memory access layouts</strong></p>
-<pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
-alias load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
+<pre><code class="language-mojo">comptime load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
+comptime load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
 # Note: Both matrices use the same layout for standard A × B multiplication
 </code></pre>
 <p><strong>Memory Access Analysis for Current Implementation:</strong></p>
@@ -8905,8 +8905,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>While this puzzle uses standard coalesced loading for both matrices, the layout system’s flexibility enables powerful optimizations in other scenarios:</p>
 <pre><code class="language-mojo"># Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
-alias load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
-alias store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+comptime load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
+comptime store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 </code></pre>
 <p><strong>Use cases for transposed loading (not used in this puzzle):</strong></p>
@@ -8954,8 +8954,8 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 <h2 id="overview-34"><a class="header" href="#overview-34">Overview</a></h2>
 <p>In <a href="puzzle_17/../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
-<pre><code class="language-mojo">alias TPB = 15
-alias BLOCKS_PER_GRID = (2, 1)
+<pre><code class="language-mojo">comptime TPB = 15
+comptime BLOCKS_PER_GRID = (2, 1)
 
 
 fn conv1d_kernel[
@@ -9057,9 +9057,9 @@ struct Conv1DCustomOp:
         output_tensor = output.to_layout_tensor()
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
-        alias in_layout = input_tensor.layout
-        alias out_layout = output_tensor.layout
-        alias conv_layout = kernel_tensor.layout
+        comptime in_layout = input_tensor.layout
+        comptime out_layout = output_tensor.layout
+        comptime conv_layout = kernel_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -9128,7 +9128,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <summary></summary>
 <p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
-<pre><code class="language-mojo">            alias kernel = conv1d_kernel[
+<pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 in_layout, out_layout, conv_layout, input_size, conv_size
             ]
             gpu_ctx.enqueue_function_checked[kernel, kernel](
@@ -9376,11 +9376,11 @@ from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
 
-alias SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
-alias layout = Layout.row_major(SIZE)
-alias GRID_DIM_X = 1
+comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
+comptime layout = Layout.row_major(SIZE)
+comptime GRID_DIM_X = 1
 # Tree-based reduction require the number of threads to be the next power of two &gt;= SIZE for correctness.
-alias BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
+comptime BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
 
 
 fn softmax_gpu_kernel[
@@ -10081,40 +10081,40 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
-            alias layout_q_2d = Layout.row_major(1, d)
+            comptime layout_q_2d = Layout.row_major(1, d)
             # K^T is (d, seq_len)
-            alias layout_k_t = Layout.row_major(d, seq_len)
+            comptime layout_k_t = Layout.row_major(d, seq_len)
             # Scores as (1, seq_len)
-            alias layout_scores_2d = Layout.row_major(1, seq_len)
+            comptime layout_scores_2d = Layout.row_major(1, seq_len)
             # Weights as (1, seq_len)
-            alias layout_weights_2d = Layout.row_major(1, seq_len)
+            comptime layout_weights_2d = Layout.row_major(1, seq_len)
             # Result as (1, d)
-            alias layout_result_2d = Layout.row_major(1, d)
+            comptime layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (
+            comptime transpose_threads_per_block = (
                 TRANSPOSE_BLOCK_DIM_XY,
                 TRANSPOSE_BLOCK_DIM_XY,
             )
             # Tile over the K (seq_len, d) matrix
-            alias transpose_blocks_per_grid = (
+            comptime transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
                 (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
                 // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (
+            comptime matmul_threads_per_block = (
                 MATMUL_BLOCK_DIM_XY,
                 MATMUL_BLOCK_DIM_XY,
             )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (
+            comptime scores_blocks_per_grid = (
                 seq_len + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
-            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
-            alias softmax_blocks_per_grid = 1
+            comptime softmax_threads = SOFTMAX_BLOCK_DIM_X
+            comptime softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (
+            comptime result_blocks_per_grid = (
                 d + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
 
@@ -10335,7 +10335,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             q_2d = q_tensor.reshape[layout_q_2d]()
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
-            alias kernel = transpose_kernel[
+            comptime kernel = transpose_kernel[
                 layout_k, layout_k_t, seq_len, d, dtype
             ]
             gpu_ctx.enqueue_function_checked[kernel, kernel](
@@ -10351,7 +10351,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
                 scores_weights_buf
             )
-            alias kernel2 = matmul_idiomatic_tiled[
+            comptime kernel2 = matmul_idiomatic_tiled[
                 layout_q_2d,
                 layout_k_t,
                 layout_scores_2d,
@@ -10372,7 +10372,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
-            alias kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
+            comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
             gpu_ctx.enqueue_function_checked[kernel3, kernel3](
                 weights,
                 weights,
@@ -10386,7 +10386,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
-            alias kernel4 = matmul_idiomatic_tiled[
+            comptime kernel4 = matmul_idiomatic_tiled[
                 layout_weights_2d,
                 layout_v,
                 layout_result_2d,
@@ -10792,7 +10792,7 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 </ol>
 <h3 id="code-to-complete-28"><a class="header" href="#code-to-complete-28">Code to complete</a></h3>
 <p>You need to complete the missing parts in both embedding kernels:</p>
-<pre><code class="language-mojo">alias THREADS_PER_BLOCK = 256
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = 256
 
 
 fn embedding_kernel_coalesced[
@@ -10959,9 +10959,9 @@ struct EmbeddingCustomOp:
         indices_tensor = indices.to_layout_tensor()
         weights_tensor = weights.to_layout_tensor()
 
-        alias indices_layout = indices_tensor.layout
-        alias weights_layout = weights_tensor.layout
-        alias out_layout = output_tensor.layout
+        comptime indices_layout = indices_tensor.layout
+        comptime weights_layout = weights_tensor.layout
+        comptime out_layout = output_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -10985,7 +10985,7 @@ struct EmbeddingCustomOp:
             blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
 
             # Compile and launch optimized kernel
-            alias kernel = embedding_kernel_coalesced[
+            comptime kernel = embedding_kernel_coalesced[
                 indices_layout,
                 weights_layout,
                 out_layout,
@@ -11054,9 +11054,9 @@ struct Embedding2DCustomOp:
         indices_tensor = indices.to_layout_tensor()
         weights_tensor = weights.to_layout_tensor()
 
-        alias indices_layout = indices_tensor.layout
-        alias weights_layout = weights_tensor.layout
-        alias out_layout = output_tensor.layout
+        comptime indices_layout = indices_tensor.layout
+        comptime weights_layout = weights_tensor.layout
+        comptime out_layout = output_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -11077,13 +11077,13 @@ struct Embedding2DCustomOp:
 
             # Calculate 2D grid dimensions for non-coalesced access
             total_positions = batch_size * seq_len
-            alias BLOCK_X = 16  # batch*seq dimension
-            alias BLOCK_Y = 16  # embed dimension
+            comptime BLOCK_X = 16  # batch*seq dimension
+            comptime BLOCK_Y = 16  # embed dimension
             blocks_x = max(1, ceildiv(total_positions, BLOCK_X))
             blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
 
             # Compile and launch 2D kernel
-            alias kernel = embedding_kernel_2d[
+            comptime kernel = embedding_kernel_2d[
                 indices_layout,
                 weights_layout,
                 out_layout,
@@ -11767,10 +11767,10 @@ fn matmul_idiomatic_tiled[
     ].stack_allocation()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(
+    comptime load_a_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
-    alias load_b_layout = Layout.row_major(
+    comptime load_b_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
@@ -13419,11 +13419,11 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h2 id="code-to-complete-30"><a class="header" href="#code-to-complete-30">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 1024
-alias rank = 1
-alias layout = Layout.row_major(SIZE)
-alias dtype = DType.float32
-alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
+<pre><code class="language-mojo">comptime SIZE = 1024
+comptime rank = 1
+comptime layout = Layout.row_major(SIZE)
+comptime dtype = DType.float32
+comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 
 
 fn elementwise_add[
@@ -13669,7 +13669,7 @@ Result: Optimal memory controller utilization
 </ul>
 <h3 id="6-scaling-and-adaptability"><a class="header" href="#6-scaling-and-adaptability">6. <strong>Scaling and adaptability</strong></a></h3>
 <p><strong>Automatic Hardware Adaptation:</strong></p>
-<pre><code class="language-mojo">alias SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
+<pre><code class="language-mojo">comptime SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
 </code></pre>
 <ul>
 <li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware (e.g., 4 for some cards, 8 for RTX 4090, 16 for A100)</li>
@@ -13750,7 +13750,7 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h2 id="code-to-complete-31"><a class="header" href="#code-to-complete-31">Code to complete</a></h2>
-<pre><code class="language-mojo">alias TILE_SIZE = 32
+<pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
 fn tiled_elementwise_add[
@@ -13872,7 +13872,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h2 id="solution-33"><a class="header" href="#solution-33">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">alias TILE_SIZE = 32
+<pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
 fn tiled_elementwise_add[
@@ -14108,7 +14108,7 @@ Tiled:       Moderate parallelism, localized memory access
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
-    alias chunk_size = tile_size * simd_width
+    comptime chunk_size = tile_size * simd_width
 
     @parameter
     @always_inline
@@ -14136,7 +14136,7 @@ Tiled:       Moderate parallelism, localized memory access
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="1-understanding-chunk-organization"><a class="header" href="#1-understanding-chunk-organization">1. <strong>Understanding chunk organization</strong></a></h3>
-<pre><code class="language-mojo">alias chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
+<pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128 elements per chunk
 </code></pre>
 <p>Each tile now contains multiple SIMD groups, not just sequential elements.</p>
 <h3 id="2-global-index-calculation"><a class="header" href="#2-global-index-calculation">2. <strong>Global index calculation</strong></a></h3>
@@ -14214,7 +14214,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
-    alias chunk_size = tile_size * simd_width
+    comptime chunk_size = tile_size * simd_width
 
     @parameter
     @always_inline
@@ -14255,7 +14255,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <li><strong>Manual bounds management</strong>: You handle edge cases explicitly</li>
 </ul>
 <p><strong>Architecture and memory layout:</strong></p>
-<pre><code class="language-mojo">alias chunk_size = tile_size * simd_width  # 32 * 4 = 128
+<pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 </code></pre>
 <p><strong>Chunk organization visualization (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
 <pre><code>Original array: [0, 1, 2, 3, ..., 1023]
@@ -15333,13 +15333,13 @@ else:
 <h3 id="writing-portable-warp-code"><a class="header" href="#writing-portable-warp-code">Writing portable warp code</a></h3>
 <h3 id="architecture-adaptation-strategies"><a class="header" href="#architecture-adaptation-strategies">Architecture adaptation strategies</a></h3>
 <p><strong>✅ PORTABLE: Always use <code>WARP_SIZE</code></strong></p>
-<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
-alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
+comptime ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 </code></pre>
 <p><em>Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)</em></p>
 <p><strong>❌ BROKEN: Never hardcode warp size</strong></p>
-<pre><code class="language-mojo">alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
-alias REDUCTION_SIZE = 32           # Wrong on AMD!
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
+comptime REDUCTION_SIZE = 32           # Wrong on AMD!
 </code></pre>
 <p><em>Result: Suboptimal on AMD, potential correctness issues</em></p>
 <h3 id="real-hardware-impact"><a class="header" href="#real-hardware-impact">Real hardware impact</a></h3>
@@ -15448,13 +15448,13 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </ul>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
 <p>Recall the complex approach from <a href="puzzle_24/../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a> that required shared memory, barriers, and tree reduction:</p>
-<pre><code class="language-mojo">alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias SIMD_WIDTH = simd_width_of[dtype]()
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime SIMD_WIDTH = simd_width_of[dtype]()
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 fn traditional_dot_product_p12_style[
@@ -16234,11 +16234,11 @@ if lane &lt; WARP_SIZE - 1:
 <p><strong>Mathematical operation:</strong> Compute the discrete derivative (finite difference) for each element:
 \[\Large \text{output}[i] = \text{input}[i+1] - \text{input}[i]\]</p>
 <p>This transforms input data <code>[0, 1, 4, 9, 16, 25, ...]</code> (squares: <code>i * i</code>) into differences <code>[1, 3, 5, 7, 9, ...]</code> (odd numbers), effectively computing the discrete derivative of the quadratic function.</p>
-<pre><code class="language-mojo">alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn neighbor_difference[
@@ -16441,10 +16441,10 @@ Cycle 3: Difference computation (lanes 0-30 only)
 <li><strong>1-point window</strong>: \(\text{output}[i] = \text{input}[i]\) when no neighbors available</li>
 </ul>
 <p>This demonstrates how <code>shuffle_down()</code> enables efficient stencil operations with automatic boundary handling within warp limits.</p>
-<pre><code class="language-mojo">alias SIZE_2 = 64
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-alias layout_2 = Layout.row_major(SIZE_2)
+<pre><code class="language-mojo">comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 fn moving_average_3[
@@ -17993,10 +17993,10 @@ Final result: All lanes have max_val = 1000
 \min_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 1
 \end{cases}\]</p>
 <p><strong>Dual reduction pattern:</strong> Simultaneously track both maximum and minimum values through the butterfly tree, then conditionally output based on lane ID parity. This demonstrates how butterfly patterns can be extended for complex multi-value reductions.</p>
-<pre><code class="language-mojo">alias SIZE_2 = 64
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-alias layout_2 = Layout.row_major(SIZE_2)
+<pre><code class="language-mojo">comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 fn butterfly_conditional_max[
@@ -19210,12 +19210,12 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 <h2 id="code-to-complete-45"><a class="header" href="#code-to-complete-45">Code to complete</a></h2>
 <h3 id="blocksum-approach"><a class="header" href="#blocksum-approach"><code>block.sum()</code> approach</a></h3>
 <p>Transform the complex traditional approach into a simple block kernel using <code>block.sum()</code>:</p>
-<pre><code class="language-mojo">alias SIZE = 128
-alias TPB = 128
-alias NUM_BINS = 8
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 128
+comptime TPB = 128
+comptime NUM_BINS = 8
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
+comptime dtype = DType.float32
 
 
 fn block_sum_dot_product[
@@ -19509,7 +19509,7 @@ for element in data:
 <h2 id="code-to-complete-46"><a class="header" href="#code-to-complete-46">Code to complete</a></h2>
 <h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
 <p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
-<pre><code class="language-mojo">alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+<pre><code class="language-mojo">comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
 fn block_histogram_bin_extract[
@@ -19930,7 +19930,7 @@ output[global_i] = my_value / mean
 <h3 id="complete-block-operations-workflow"><a class="header" href="#complete-block-operations-workflow">Complete block operations workflow</a></h3>
 <p>Implement sophisticated vector mean normalization using the full block operations toolkit:</p>
 <pre><code class="language-mojo">
-alias vector_layout = Layout.row_major(SIZE)
+comptime vector_layout = Layout.row_major(SIZE)
 
 
 fn block_normalize_vector[
@@ -20587,17 +20587,17 @@ async_copy_wait_all()  # Wait only when both operations complete
 <li><strong>Overlapped operations:</strong> Load small kernel data while input transfers</li>
 <li><strong>Synchronization:</strong> Wait for transfers, then compute using shared memory</li>
 </ol>
-<pre><code class="language-mojo">alias VECTOR_SIZE = 16384
-alias CONV_TILE_SIZE = 256
-alias KERNEL_SIZE = 5
-alias HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
-alias BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-alias BLOCKS_PER_GRID_ASYNC = (
+<pre><code class="language-mojo">comptime VECTOR_SIZE = 16384
+comptime CONV_TILE_SIZE = 256
+comptime KERNEL_SIZE = 5
+comptime HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
+comptime BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
+comptime BLOCKS_PER_GRID_ASYNC = (
     VECTOR_SIZE + CONV_TILE_SIZE - 1
 ) // CONV_TILE_SIZE
-alias THREADS_PER_BLOCK_ASYNC = 256
-alias dtype = DType.float32
-alias layout_async = Layout.row_major(VECTOR_SIZE)
+comptime THREADS_PER_BLOCK_ASYNC = 256
+comptime dtype = DType.float32
+comptime layout_async = Layout.row_major(VECTOR_SIZE)
 
 
 fn async_copy_overlap_convolution[
@@ -20736,7 +20736,7 @@ fn async_copy_overlap_convolution[
     input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
 
     # Use async copy with thread layout matching p14 pattern
-    alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+    comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
     copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 
     # Phase 2: Load kernel synchronously (small data)
@@ -20771,7 +20771,7 @@ fn async_copy_overlap_convolution[
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-alias load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
@@ -21062,17 +21062,17 @@ By completing this chapter, you’ll have the foundation to design and implement
 </ul>
 <h2 id="code-to-complete-49"><a class="header" href="#code-to-complete-49">Code to complete</a></h2>
 <pre><code class="language-mojo">
-alias TPB = 256  # Threads per block for pipeline stages
-alias SIZE = 1024  # Image size (1D for simplicity)
-alias BLOCKS_PER_GRID = (4, 1)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime TPB = 256  # Threads per block for pipeline stages
+comptime SIZE = 1024  # Image size (1D for simplicity)
+comptime BLOCKS_PER_GRID = (4, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 # Multi-stage processing configuration
-alias STAGE1_THREADS = TPB // 2
-alias STAGE2_THREADS = TPB // 2
-alias BLUR_RADIUS = 2
+comptime STAGE1_THREADS = TPB // 2
+comptime STAGE2_THREADS = TPB // 2
+comptime BLUR_RADIUS = 2
 
 
 fn multi_stage_image_blur_pipeline[
@@ -21535,8 +21535,8 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <h2 id="code-to-complete-50"><a class="header" href="#code-to-complete-50">Code to complete</a></h2>
 <pre><code class="language-mojo">
 # Double-buffered stencil configuration
-alias STENCIL_ITERATIONS = 3
-alias BUFFER_COUNT = 2
+comptime STENCIL_ITERATIONS = 3
+comptime BUFFER_COUNT = 2
 
 
 fn double_buffered_stencil_computation[
@@ -22960,10 +22960,10 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <li><strong>Coalescing requirement</strong>: Adjacent threads should access adjacent memory</li>
 </ul>
 <p><strong>p30.mojo Configuration Details:</strong></p>
-<pre><code class="language-mojo">alias SIZE = 16 * 1024 * 1024          # 16M elements (64MB of float32 data)
-alias THREADS_PER_BLOCK = (1024, 1)    # 1024 threads per block
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 16,384 blocks total
-alias dtype = DType.float32             # 4 bytes per element
+<pre><code class="language-mojo">comptime SIZE = 16 * 1024 * 1024          # 16M elements (64MB of float32 data)
+comptime THREADS_PER_BLOCK = (1024, 1)    # 1024 threads per block
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 16,384 blocks total
+comptime dtype = DType.float32             # 4 bytes per element
 </code></pre>
 <p><strong>Why these settings matter:</strong></p>
 <ul>
@@ -23123,12 +23123,12 @@ The principles you learn here apply to any parallel computing system where resou
 <h2 id="overview-57"><a class="header" href="#overview-57">Overview</a></h2>
 <p><strong>GPU Occupancy</strong> is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.</p>
 <p><strong>SAXPY</strong> is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (<code>y[i] = alpha * x[i] + y[i]</code>) with identical math but different resource usage:</p>
-<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
-alias THREADS_PER_BLOCK = (1024, 1)
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
-alias ALPHA = Float32(2.5)  # SAXPY coefficient
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
+comptime THREADS_PER_BLOCK = (1024, 1)
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+comptime ALPHA = Float32(2.5)  # SAXPY coefficient
 
 
 fn minimal_kernel[
@@ -23314,9 +23314,9 @@ fn minimal_kernel[
 <blockquote>
 <p><strong>⚠️ GPU compatibility note:</strong>
 The default configuration uses aggressive settings that may fail on older or lower-capability GPUs:</p>
-<pre><code class="language-mojo">alias SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
-alias THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
+comptime THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
 </code></pre>
 <p><strong>If you encounter launch failures, reduce these values in <code>problems/p31/p31.mojo</code>:</strong></p>
 <ul>
@@ -23873,12 +23873,12 @@ ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 <p><strong>Your mission:</strong> Use the profiling methodology you’ve learned to uncover this hidden performance trap and understand when bank conflicts matter in real-world GPU programming.</p>
 <h2 id="overview-59"><a class="header" href="#overview-59">Overview</a></h2>
 <p>Shared memory bank conflicts occur when multiple threads in a warp simultaneously access different addresses within the same memory bank. This detective case explores two kernels with contrasting access patterns:</p>
-<pre><code class="language-mojo">alias SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
-alias TPB = 256  # Threads per block - divisible by 32 (warp size)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+<pre><code class="language-mojo">comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
+comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 fn no_conflict_kernel[
@@ -23975,9 +23975,9 @@ fn no_conflict_kernel[
 <li>Understanding of shared memory banking concepts from the <a href="puzzle_32/./shared_memory_bank.html">previous section</a></li>
 </ul>
 <p><strong>Kernel specifications:</strong></p>
-<pre><code class="language-mojo">alias SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
-alias TPB = 256            # 256 threads per block (8 warps)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
+<pre><code class="language-mojo">comptime SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
+comptime TPB = 256            # 256 threads per block (8 warps)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 </code></pre>
 <p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.</p>
 <h2 id="the-investigation-1"><a class="header" href="#the-investigation-1">The investigation</a></h2>
@@ -24433,8 +24433,8 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -24518,20 +24518,20 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 </code></pre>
 <h3 id="step-4-code-to-complete"><a class="header" href="#step-4-code-to-complete">Step 4: Code to complete</a></h3>
 <pre><code class="language-mojo"># Block and warp tiling sizes
-alias BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
-alias BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
-alias BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
-alias WM = WARP_SIZE  # Warp tile M
-alias WN = WARP_SIZE  # Warp tile N
+comptime BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
+comptime BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
+comptime BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
+comptime WM = WARP_SIZE  # Warp tile M
+comptime WN = WARP_SIZE  # Warp tile N
 
 # MMA tile sizes for tensor cores
-alias MMA_M = 16
-alias MMA_N = 8
-alias MMA_K = 8
+comptime MMA_M = 16
+comptime MMA_N = 8
+comptime MMA_K = 8
 
-alias THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
+comptime THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
 # grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
-alias BLOCKS_PER_GRID_TENSOR_CORE = (
+comptime BLOCKS_PER_GRID_TENSOR_CORE = (
     (SIZE + BN - 1) // BN,
     (SIZE + BM - 1) // BM,
 )
@@ -24555,9 +24555,9 @@ fn tensor_core_matrix_multiplication[
     B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
     C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    alias M = C.shape[0]()
-    alias N = C.shape[1]()
-    alias K = A.shape[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN
@@ -24759,9 +24759,9 @@ ALL TESTS PASSED!
     B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
     C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    alias M = C.shape[0]()
-    alias N = C.shape[1]()
-    alias K = A.shape[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN

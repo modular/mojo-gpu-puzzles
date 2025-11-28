@@ -439,7 +439,7 @@ No symbol "offset" in current context.
 <p><strong>Result</strong>: Thread 0 gets <code>window_sum = 0</code> instead of <code>window_sum = 0 + 1 = 1</code></p>
 <h3 id="phase-5-bug-confirmation"><a class="header" href="#phase-5-bug-confirmation">Phase 5: Bug confirmation</a></h3>
 <p>Looking at the problem code, we find:</p>
-<pre><code class="language-mojo">alias ITER = 2                       # ← BUG: Should be 3!
+<pre><code class="language-mojo">comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
     idx = thread_id + offset - 1     # ← Missing offset = 2
@@ -447,7 +447,7 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
         window_sum += input[idx]
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
-<p><strong>The Fix</strong>: Change <code>alias ITER = 2</code> to <code>alias ITER = 3</code> in the source code.</p>
+<p><strong>The Fix</strong>: Change <code>comptime ITER = 2</code> to <code>comptime ITER = 3</code> in the source code.</p>
 <h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
 <p><strong>When Variables Are Inaccessible</strong>:</p>
 <ol>

@@ -208,10 +208,10 @@ Thread 2:  a[2] + b[2] → output[2]
 </code></pre>
 <p>💡 <strong>Note</strong>: Notice how we’re now managing three arrays (<code>a</code>, <code>b</code>, <code>output</code>) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE = 4
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = SIZE
-alias dtype = DType.float32
+<pre><code class="language-mojo">comptime SIZE = 4
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = SIZE
+comptime dtype = DType.float32
 
 
 fn add(

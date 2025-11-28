@@ -261,10 +261,10 @@ Synchronization required:
 * After computing each phase
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE_TILED = 9
-alias BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
-alias THREADS_PER_BLOCK_TILED = (TPB, TPB)
-alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+<pre><code class="language-mojo">comptime SIZE_TILED = 9
+comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
+comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
+comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 fn matmul_tiled[
@@ -577,8 +577,8 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 <pre><code class="language-mojo">from gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
-alias NUM_THREADS = TPB * TPB
-alias BLOCK_DIM_COUNT = 2
+comptime NUM_THREADS = TPB * TPB
+comptime BLOCK_DIM_COUNT = 2
 
 
 fn matmul_idiomatic_tiled[
@@ -610,8 +610,8 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -710,8 +710,8 @@ async_copy_wait_all()
 </li>
 <li>
 <p><strong>Optimized memory access layouts</strong></p>
-<pre><code class="language-mojo">alias load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
-alias load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
+<pre><code class="language-mojo">comptime load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
+comptime load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
 # Note: Both matrices use the same layout for standard A × B multiplication
 </code></pre>
 <p><strong>Memory Access Analysis for Current Implementation:</strong></p>
@@ -792,8 +792,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>While this puzzle uses standard coalesced loading for both matrices, the layout system’s flexibility enables powerful optimizations in other scenarios:</p>
 <pre><code class="language-mojo"># Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
-alias load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
-alias store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+comptime load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
+comptime store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 </code></pre>
 <p><strong>Use cases for transposed loading (not used in this puzzle):</strong></p>

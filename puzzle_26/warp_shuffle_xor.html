@@ -625,10 +625,10 @@ Final result: All lanes have max_val = 1000
 \min_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 1
 \end{cases}\]</p>
 <p><strong>Dual reduction pattern:</strong> Simultaneously track both maximum and minimum values through the butterfly tree, then conditionally output based on lane ID parity. This demonstrates how butterfly patterns can be extended for complex multi-value reductions.</p>
-<pre><code class="language-mojo">alias SIZE_2 = 64
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-alias layout_2 = Layout.row_major(SIZE_2)
+<pre><code class="language-mojo">comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 fn butterfly_conditional_max[

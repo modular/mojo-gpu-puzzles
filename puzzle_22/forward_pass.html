@@ -391,10 +391,10 @@ fn matmul_idiomatic_tiled[
     ].stack_allocation()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(
+    comptime load_a_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
-    alias load_b_layout = Layout.row_major(
+    comptime load_b_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 

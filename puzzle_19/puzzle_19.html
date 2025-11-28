@@ -350,40 +350,40 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
-            alias layout_q_2d = Layout.row_major(1, d)
+            comptime layout_q_2d = Layout.row_major(1, d)
             # K^T is (d, seq_len)
-            alias layout_k_t = Layout.row_major(d, seq_len)
+            comptime layout_k_t = Layout.row_major(d, seq_len)
             # Scores as (1, seq_len)
-            alias layout_scores_2d = Layout.row_major(1, seq_len)
+            comptime layout_scores_2d = Layout.row_major(1, seq_len)
             # Weights as (1, seq_len)
-            alias layout_weights_2d = Layout.row_major(1, seq_len)
+            comptime layout_weights_2d = Layout.row_major(1, seq_len)
             # Result as (1, d)
-            alias layout_result_2d = Layout.row_major(1, d)
+            comptime layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (
+            comptime transpose_threads_per_block = (
                 TRANSPOSE_BLOCK_DIM_XY,
                 TRANSPOSE_BLOCK_DIM_XY,
             )
             # Tile over the K (seq_len, d) matrix
-            alias transpose_blocks_per_grid = (
+            comptime transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
                 (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
                 // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (
+            comptime matmul_threads_per_block = (
                 MATMUL_BLOCK_DIM_XY,
                 MATMUL_BLOCK_DIM_XY,
             )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (
+            comptime scores_blocks_per_grid = (
                 seq_len + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
-            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
-            alias softmax_blocks_per_grid = 1
+            comptime softmax_threads = SOFTMAX_BLOCK_DIM_X
+            comptime softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (
+            comptime result_blocks_per_grid = (
                 d + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
 
@@ -604,7 +604,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             q_2d = q_tensor.reshape[layout_q_2d]()
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
-            alias kernel = transpose_kernel[
+            comptime kernel = transpose_kernel[
                 layout_k, layout_k_t, seq_len, d, dtype
             ]
             gpu_ctx.enqueue_function_checked[kernel, kernel](
@@ -620,7 +620,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
                 scores_weights_buf
             )
-            alias kernel2 = matmul_idiomatic_tiled[
+            comptime kernel2 = matmul_idiomatic_tiled[
                 layout_q_2d,
                 layout_k_t,
                 layout_scores_2d,
@@ -641,7 +641,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
-            alias kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
+            comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
             gpu_ctx.enqueue_function_checked[kernel3, kernel3](
                 weights,
                 weights,
@@ -655,7 +655,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
             result_2d = output_tensor.reshape[layout_result_2d]()
-            alias kernel4 = matmul_idiomatic_tiled[
+            comptime kernel4 = matmul_idiomatic_tiled[
                 layout_weights_2d,
                 layout_v,
                 layout_result_2d,

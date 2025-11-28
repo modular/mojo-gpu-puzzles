@@ -204,13 +204,13 @@
 <li><strong>Synchronization</strong>: Proper thread coordination</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">alias SIZE_2 = 15
-alias CONV_2 = 4
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (TPB, 1)
-alias in_2_layout = Layout.row_major(SIZE_2)
-alias out_2_layout = Layout.row_major(SIZE_2)
-alias conv_2_layout = Layout.row_major(CONV_2)
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime CONV_2 = 4
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime in_2_layout = Layout.row_major(SIZE_2)
+comptime out_2_layout = Layout.row_major(SIZE_2)
+comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
 fn conv_1d_block_boundary[

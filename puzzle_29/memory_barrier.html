@@ -309,8 +309,8 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">
 # Double-buffered stencil configuration
-alias STENCIL_ITERATIONS = 3
-alias BUFFER_COUNT = 2
+comptime STENCIL_ITERATIONS = 3
+comptime BUFFER_COUNT = 2
 
 
 fn double_buffered_stencil_computation[
