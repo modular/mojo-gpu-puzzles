@@ -213,7 +213,9 @@ def main():
             out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Traditional approach: works perfectly when size == TPB
-            comptime kernel = traditional_dot_product[in_layout, out_layout, TPB]
+            comptime kernel = traditional_dot_product[
+                in_layout, out_layout, TPB
+            ]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -409,7 +411,9 @@ def main():
             )
 
             # Execute vector normalization kernel
-            comptime kernel = block_normalize_vector[in_layout, vector_layout, TPB]
+            comptime kernel = block_normalize_vector[
+                in_layout, vector_layout, TPB
+            ]
             ctx.enqueue_function_checked[kernel, kernel](
                 input_tensor,
                 output_tensor,

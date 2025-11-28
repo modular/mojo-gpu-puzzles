@@ -7,7 +7,10 @@ from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 comptime SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
 comptime THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block
-comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # Enough blocks to cover all elements
+comptime BLOCKS_PER_GRID = (
+    SIZE // 1024,
+    1,
+)  # Enough blocks to cover all elements
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 

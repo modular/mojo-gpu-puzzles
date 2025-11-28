@@ -187,7 +187,9 @@ fn benchmark_simple_warp_parameterized[
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        comptime kernel = simple_warp_dot_product[in_layout, out_layout, test_size]
+        comptime kernel = simple_warp_dot_product[
+            in_layout, out_layout, test_size
+        ]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
