@@ -8,17 +8,17 @@ from utils import Index
 from sys import size_of, argv
 from testing import assert_equal, assert_almost_equal
 
-alias dtype = DType.float32
-alias SIZE = 1024
-alias layout = Layout.row_major(SIZE, SIZE)
-alias BLOCK_DIM_COUNT = 2
+comptime dtype = DType.float32
+comptime SIZE = 1024
+comptime layout = Layout.row_major(SIZE, SIZE)
+comptime BLOCK_DIM_COUNT = 2
 
-alias TILE_SIZE = 32
-alias BLOCK_PER_GRID_TILED = (
+comptime TILE_SIZE = 32
+comptime BLOCK_PER_GRID_TILED = (
     (SIZE + TILE_SIZE - 1) // TILE_SIZE,
     (SIZE + TILE_SIZE - 1) // TILE_SIZE,
 )
-alias THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
+comptime THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 
 
 # ANCHOR: matmul_idiomatic_tiled_solution
@@ -57,8 +57,8 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TILE_SIZE)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -101,20 +101,20 @@ fn matmul_idiomatic_tiled[
 # ANCHOR_END: matmul_idiomatic_tiled_solution
 
 # Block and warp tiling sizes
-alias BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
-alias BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
-alias BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
-alias WM = WARP_SIZE  # Warp tile M
-alias WN = WARP_SIZE  # Warp tile N
+comptime BM = 4 * WARP_SIZE  # Block tile M (4 warps along M)
+comptime BN = 2 * WARP_SIZE  # Block tile N (2 warps along N)
+comptime BK = WARP_SIZE  # Block tile K (stay within SMEM limit)
+comptime WM = WARP_SIZE  # Warp tile M
+comptime WN = WARP_SIZE  # Warp tile N
 
 # MMA tile sizes for tensor cores
-alias MMA_M = 16
-alias MMA_N = 8
-alias MMA_K = 8
+comptime MMA_M = 16
+comptime MMA_N = 8
+comptime MMA_K = 8
 
-alias THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
+comptime THREADS_PER_BLOCK_TENSOR_CORE = (8 * WARP_SIZE, 1)  # 8 warps per block
 # grid_dim is (x, y). We want x to sweep N (columns) and y to sweep M (rows)
-alias BLOCKS_PER_GRID_TENSOR_CORE = (
+comptime BLOCKS_PER_GRID_TENSOR_CORE = (
     (SIZE + BN - 1) // BN,
     (SIZE + BM - 1) // BM,
 )
@@ -139,9 +139,9 @@ fn tensor_core_matrix_multiplication[
     B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
     C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
 ):
-    alias M = C.shape[0]()
-    alias N = C.shape[1]()
-    alias K = A.shape[1]()
+    comptime M = C.shape[0]()
+    comptime N = C.shape[1]()
+    comptime K = A.shape[1]()
 
     warp_id = Int(thread_idx.x) // WARP_SIZE
     warps_in_n = BN // WN
@@ -310,7 +310,7 @@ def main():
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")
-            alias kernel = tensor_core_matrix_multiplication[
+            comptime kernel = tensor_core_matrix_multiplication[
                 dtype,
                 layout,
                 layout,
@@ -345,7 +345,7 @@ def main():
             )
 
             # Run idiomatic tiled version with proper 2D block configuration
-            alias kernel = matmul_idiomatic_tiled[layout, SIZE]
+            comptime kernel = matmul_idiomatic_tiled[layout, SIZE]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tiled_layout,
                 a_tensor,
@@ -365,7 +365,7 @@ def main():
 
             # Test 1: Tensor Core vs CPU
             print("\n--- Test 1: Tensor Core vs CPU Reference ---")
-            alias kernel = tensor_core_matrix_multiplication[
+            comptime kernel = tensor_core_matrix_multiplication[
                 dtype,
                 layout,
                 layout,
@@ -450,7 +450,7 @@ def main():
                 out_tiled.unsafe_ptr()
             )
 
-            alias kernel2 = matmul_idiomatic_tiled[layout, SIZE]
+            comptime kernel2 = matmul_idiomatic_tiled[layout, SIZE]
             ctx.enqueue_function_checked[kernel2, kernel2](
                 out_tiled_layout,
                 a_tensor,

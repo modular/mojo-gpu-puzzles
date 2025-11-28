@@ -7,17 +7,17 @@ from sys import argv, info
 from testing import assert_equal, assert_almost_equal
 
 # ANCHOR: async_copy_overlap_convolution
-alias VECTOR_SIZE = 16384
-alias CONV_TILE_SIZE = 256
-alias KERNEL_SIZE = 5
-alias HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
-alias BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
-alias BLOCKS_PER_GRID_ASYNC = (
+comptime VECTOR_SIZE = 16384
+comptime CONV_TILE_SIZE = 256
+comptime KERNEL_SIZE = 5
+comptime HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
+comptime BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
+comptime BLOCKS_PER_GRID_ASYNC = (
     VECTOR_SIZE + CONV_TILE_SIZE - 1
 ) // CONV_TILE_SIZE
-alias THREADS_PER_BLOCK_ASYNC = 256
-alias dtype = DType.float32
-alias layout_async = Layout.row_major(VECTOR_SIZE)
+comptime THREADS_PER_BLOCK_ASYNC = 256
+comptime dtype = DType.float32
+comptime layout_async = Layout.row_major(VECTOR_SIZE)
 
 
 fn async_copy_overlap_convolution[
@@ -83,7 +83,7 @@ def test_async_copy_overlap_convolution():
             mut=False, dtype, Layout.row_major(KERNEL_SIZE)
         ](kernel_buf)
 
-        alias kernel = async_copy_overlap_convolution[dtype, layout_async]
+        comptime kernel = async_copy_overlap_convolution[dtype, layout_async]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,

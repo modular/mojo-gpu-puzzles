@@ -4,12 +4,12 @@ from layout import Layout, LayoutTensor
 from testing import assert_equal
 
 # ANCHOR: add_10_blocks_2d_layout_tensor
-alias SIZE = 5
-alias BLOCKS_PER_GRID = (2, 2)
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = Layout.row_major(SIZE, SIZE)
+comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
 fn add_10_blocks_2d[
@@ -49,7 +49,7 @@ def main():
 
         a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
 
-        alias kernel = add_10_blocks_2d[out_layout, a_layout]
+        comptime kernel = add_10_blocks_2d[out_layout, a_layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,

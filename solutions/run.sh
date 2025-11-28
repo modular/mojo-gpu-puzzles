@@ -87,7 +87,7 @@ detect_gpu_compute_capability() {
             # Check for known GPU families and their compute capabilities
             if echo "$gpu_name" | grep -qi "H100"; then
                 compute_capability="9.0"
-            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4"; then
+            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4\|RTX 2000 Ada Generation"; then
                 compute_capability="8.9"
             elif echo "$gpu_name" | grep -qi "RTX 30[0-9][0-9]\|RTX 3090\|RTX 3080\|RTX 3070\|RTX 3060\|A40\|A30\|A10"; then
                 compute_capability="8.6"

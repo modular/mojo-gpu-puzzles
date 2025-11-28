@@ -5,7 +5,7 @@ from layout import Layout, LayoutTensor
 from sys import size_of, argv
 from testing import assert_equal
 
-alias THREADS_PER_BLOCK = 256
+comptime THREADS_PER_BLOCK = 256
 
 
 # ANCHOR: embedding_kernel_coalesced_solution
@@ -145,9 +145,9 @@ struct EmbeddingCustomOp:
         indices_tensor = indices.to_layout_tensor()
         weights_tensor = weights.to_layout_tensor()
 
-        alias indices_layout = indices_tensor.layout
-        alias weights_layout = weights_tensor.layout
-        alias out_layout = output_tensor.layout
+        comptime indices_layout = indices_tensor.layout
+        comptime weights_layout = weights_tensor.layout
+        comptime out_layout = output_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -171,7 +171,7 @@ struct EmbeddingCustomOp:
             blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
 
             # Compile and launch optimized kernel
-            alias kernel = embedding_kernel_coalesced[
+            comptime kernel = embedding_kernel_coalesced[
                 indices_layout,
                 weights_layout,
                 out_layout,
@@ -234,9 +234,9 @@ struct Embedding2DCustomOp:
         indices_tensor = indices.to_layout_tensor()
         weights_tensor = weights.to_layout_tensor()
 
-        alias indices_layout = indices_tensor.layout
-        alias weights_layout = weights_tensor.layout
-        alias out_layout = output_tensor.layout
+        comptime indices_layout = indices_tensor.layout
+        comptime weights_layout = weights_tensor.layout
+        comptime out_layout = output_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -257,13 +257,13 @@ struct Embedding2DCustomOp:
 
             # Calculate 2D grid dimensions for non-coalesced access
             total_positions = batch_size * seq_len
-            alias BLOCK_X = 16  # batch*seq dimension
-            alias BLOCK_Y = 16  # embed dimension
+            comptime BLOCK_X = 16  # batch*seq dimension
+            comptime BLOCK_Y = 16  # embed dimension
             blocks_x = max(1, ceildiv(total_positions, BLOCK_X))
             blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
 
             # Compile and launch 2D kernel
-            alias kernel = embedding_kernel_2d[
+            comptime kernel = embedding_kernel_2d[
                 indices_layout,
                 weights_layout,
                 out_layout,

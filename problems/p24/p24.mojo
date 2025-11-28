@@ -22,13 +22,13 @@ from benchmark import (
 )
 
 # ANCHOR: traditional_approach_from_p12
-alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias SIMD_WIDTH = simd_width_of[dtype]()
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
+comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime SIMD_WIDTH = simd_width_of[dtype]()
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
 
 
 fn traditional_dot_product_p12_style[
@@ -159,11 +159,11 @@ fn check_result[
 fn benchmark_simple_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
-    alias n_warps = test_size // WARP_SIZE
-    alias in_layout = Layout.row_major(test_size)
-    alias out_layout = Layout.row_major(n_warps)
-    alias n_threads = WARP_SIZE
-    alias n_blocks = (ceildiv(test_size, n_threads), 1)
+    comptime n_warps = test_size // WARP_SIZE
+    comptime in_layout = Layout.row_major(test_size)
+    comptime out_layout = Layout.row_major(n_warps)
+    comptime n_threads = WARP_SIZE
+    comptime n_blocks = (ceildiv(test_size, n_threads), 1)
 
     bench_ctx = DeviceContext()
 
@@ -187,7 +187,9 @@ fn benchmark_simple_warp_parameterized[
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        alias kernel = simple_warp_dot_product[in_layout, out_layout, test_size]
+        comptime kernel = simple_warp_dot_product[
+            in_layout, out_layout, test_size
+        ]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,
@@ -209,9 +211,9 @@ fn benchmark_simple_warp_parameterized[
 fn benchmark_functional_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
-    alias n_warps = test_size // WARP_SIZE
-    alias in_layout = Layout.row_major(test_size)
-    alias out_layout = Layout.row_major(n_warps)
+    comptime n_warps = test_size // WARP_SIZE
+    comptime in_layout = Layout.row_major(test_size)
+    comptime out_layout = Layout.row_major(n_warps)
 
     bench_ctx = DeviceContext()
 
@@ -252,10 +254,10 @@ fn benchmark_functional_warp_parameterized[
 fn benchmark_traditional_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
-    alias n_warps = test_size // WARP_SIZE
-    alias in_layout = Layout.row_major(test_size)
-    alias out_layout = Layout.row_major(n_warps)
-    alias n_blocks = (ceildiv(test_size, WARP_SIZE), 1)
+    comptime n_warps = test_size // WARP_SIZE
+    comptime in_layout = Layout.row_major(test_size)
+    comptime out_layout = Layout.row_major(n_warps)
+    comptime n_blocks = (ceildiv(test_size, WARP_SIZE), 1)
 
     bench_ctx = DeviceContext()
 
@@ -303,7 +305,7 @@ def main():
         print("SIZE:", SIZE)
         print("WARP_SIZE:", WARP_SIZE)
         print("SIMD_WIDTH:", SIMD_WIDTH)
-        alias n_warps = SIZE // WARP_SIZE
+        comptime n_warps = SIZE // WARP_SIZE
         with DeviceContext() as ctx:
             out = ctx.enqueue_create_buffer[dtype](n_warps)
             out.enqueue_fill(0)

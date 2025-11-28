@@ -38,9 +38,9 @@ Shared memory bank conflicts occur when multiple threads in a warp simultaneousl
 **Kernel specifications:**
 
 ```mojo
-alias SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
-alias TPB = 256            # 256 threads per block (8 warps)
-alias BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
+comptime SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
+comptime TPB = 256            # 256 threads per block (8 warps)
+comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 ```
 
 **Key insight:** The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.

@@ -5,11 +5,11 @@ from bit import log2_ceil
 
 from op import softmax_gpu_kernel, softmax_cpu_kernel
 
-alias SIZE = 128
-alias layout = Layout.row_major(SIZE)
-alias GRID_DIM_X = 1
-alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
-alias dtype = DType.float32
+comptime SIZE = 128
+comptime layout = Layout.row_major(SIZE)
+comptime GRID_DIM_X = 1
+comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
+comptime dtype = DType.float32
 
 
 def test_softmax():
@@ -46,7 +46,7 @@ def test_softmax():
         )
 
         # Run GPU kernel
-        alias kernel = softmax_gpu_kernel[layout, SIZE, dtype]
+        comptime kernel = softmax_gpu_kernel[layout, SIZE, dtype]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,

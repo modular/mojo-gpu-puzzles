@@ -4,8 +4,8 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 # ANCHOR: conv1d_kernel
-alias TPB = 15
-alias BLOCKS_PER_GRID = (2, 1)
+comptime TPB = 15
+comptime BLOCKS_PER_GRID = (2, 1)
 
 
 fn conv1d_kernel[
@@ -93,9 +93,9 @@ struct Conv1DCustomOp:
         output_tensor = output.to_layout_tensor()
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
-        alias in_layout = input_tensor.layout
-        alias out_layout = output_tensor.layout
-        alias conv_layout = kernel_tensor.layout
+        comptime in_layout = input_tensor.layout
+        comptime out_layout = output_tensor.layout
+        comptime conv_layout = kernel_tensor.layout
 
         @parameter
         if target == "gpu":

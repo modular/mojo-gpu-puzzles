@@ -6,11 +6,11 @@ from sys import argv
 from testing import assert_equal, assert_almost_equal
 
 
-alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: neighbor_difference_solution
@@ -49,10 +49,10 @@ fn neighbor_difference[
 # ANCHOR_END: neighbor_difference_solution
 
 # Advanced setup for multi-block patterns
-alias SIZE_2 = 64
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-alias layout_2 = Layout.row_major(SIZE_2)
+comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 # ANCHOR: moving_average_3_solution
@@ -227,7 +227,7 @@ def test_neighbor_difference():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = neighbor_difference[layout, SIZE]
+        comptime kernel = neighbor_difference[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -272,7 +272,7 @@ def test_moving_average():
         input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
-        alias kernel = moving_average_3[layout_2, SIZE_2]
+        comptime kernel = moving_average_3[layout_2, SIZE_2]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -339,7 +339,7 @@ def test_broadcast_shuffle_coordination():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = broadcast_shuffle_coordination[layout, SIZE]
+        comptime kernel = broadcast_shuffle_coordination[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -390,7 +390,7 @@ def test_basic_broadcast():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = basic_broadcast[layout, SIZE]
+        comptime kernel = basic_broadcast[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -447,7 +447,7 @@ def test_conditional_broadcast():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = conditional_broadcast[layout, SIZE]
+        comptime kernel = conditional_broadcast[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,

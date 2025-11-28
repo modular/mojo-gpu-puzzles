@@ -48,9 +48,9 @@ Let's look at a few examples of what LayoutTensor can do. Don't worry about unde
 from layout import Layout, LayoutTensor
 
 # Define layout
-alias HEIGHT = 2
-alias WIDTH = 3
-alias layout = Layout.row_major(HEIGHT, WIDTH)
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 # Create tensor
 tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())

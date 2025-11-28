@@ -7,11 +7,11 @@ from sys import argv
 
 # ANCHOR: shared_memory_race
 
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn shared_memory_race(

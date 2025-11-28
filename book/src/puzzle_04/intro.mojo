@@ -1,10 +1,10 @@
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 
-alias HEIGHT = 2
-alias WIDTH = 3
-alias dtype = DType.float32
-alias layout = Layout.row_major(HEIGHT, WIDTH)
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 
 fn kernel[

@@ -302,8 +302,8 @@ from gpu.warp import WARP_SIZE
 **✅ PORTABLE: Always use `WARP_SIZE`**
 
 ```mojo
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
-alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # Adapts automatically
+comptime ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 ```
 
 *Result: Code works optimally on NVIDIA/AMD (32) and AMD (64)*
@@ -311,8 +311,8 @@ alias ELEMENTS_PER_WARP = WARP_SIZE        # Scales with hardware
 **❌ BROKEN: Never hardcode warp size**
 
 ```mojo
-alias THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
-alias REDUCTION_SIZE = 32           # Wrong on AMD!
+comptime THREADS_PER_BLOCK = (32, 1)  # Breaks on AMD GPUs!
+comptime REDUCTION_SIZE = 32           # Wrong on AMD!
 ```
 
 *Result: Suboptimal on AMD, potential correctness issues*

@@ -5,12 +5,12 @@ from layout import Layout, LayoutTensor
 from sys import size_of, argv
 from testing import assert_equal
 
-alias TPB = 3
-alias SIZE = 2
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, TPB)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime TPB = 3
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, TPB)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 # ANCHOR: naive_matmul_solution
@@ -82,10 +82,10 @@ fn single_block_matmul[
 # ANCHOR_END: single_block_matmul_solution
 
 
-alias SIZE_TILED = 9
-alias BLOCKS_PER_GRID_TILED = (3, 3)  # each block covers 3x3 elements
-alias THREADS_PER_BLOCK_TILED = (TPB, TPB)
-alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+comptime SIZE_TILED = 9
+comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block covers 3x3 elements
+comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
+comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 # ANCHOR: matmul_tiled_solution
@@ -153,8 +153,8 @@ fn matmul_tiled[
 from gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
-alias NUM_THREADS = TPB * TPB
-alias BLOCK_DIM_COUNT = 2
+comptime NUM_THREADS = TPB * TPB
+comptime BLOCK_DIM_COUNT = 2
 
 
 fn matmul_idiomatic_tiled[
@@ -186,8 +186,8 @@ fn matmul_idiomatic_tiled[
 
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
-    alias load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -264,7 +264,7 @@ def main():
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
-            alias kernel = naive_matmul[layout, UInt(SIZE)]
+            comptime kernel = naive_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -273,7 +273,7 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            alias kernel = single_block_matmul[layout, UInt(SIZE)]
+            comptime kernel = single_block_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -293,7 +293,7 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
+            comptime kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
@@ -312,7 +312,7 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_idiomatic_tiled[
+            comptime kernel = matmul_idiomatic_tiled[
                 layout_tiled, UInt(SIZE_TILED)
             ]
             ctx.enqueue_function_checked[kernel, kernel](
