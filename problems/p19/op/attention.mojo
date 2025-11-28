@@ -11,14 +11,14 @@ import compiler
 from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
-alias SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
-alias D = 16  # This must be equal to D in p19.py
+comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
+comptime D = 16  # This must be equal to D in p19.py
 
-alias TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
-alias MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
-alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
-alias MATMUL_BLOCK_DIM_COUNT = 2
-alias SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
+comptime TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
+comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
+comptime MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
+comptime MATMUL_BLOCK_DIM_COUNT = 2
+comptime SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
 
 
 # Tiled matrix multiplication (from p16), updated to:
@@ -65,10 +65,10 @@ fn matmul_idiomatic_tiled[
     ].stack_allocation()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(
+    comptime load_a_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
-    alias load_b_layout = Layout.row_major(
+    comptime load_b_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
@@ -270,11 +270,11 @@ struct AttentionCustomOp:
         ctx: DeviceContextPtr,
     ) raises:
         # Define layouts
-        alias layout_q = Layout.row_major(d)
-        alias layout_k = Layout.row_major(seq_len, d)
-        alias layout_v = Layout.row_major(seq_len, d)
-        alias layout_out = Layout.row_major(d)
-        alias layout_scores = Layout.row_major(seq_len)
+        comptime layout_q = Layout.row_major(d)
+        comptime layout_k = Layout.row_major(seq_len, d)
+        comptime layout_v = Layout.row_major(seq_len, d)
+        comptime layout_out = Layout.row_major(d)
+        comptime layout_scores = Layout.row_major(seq_len)
 
         # Convert to layout tensors
         var output_tensor = rebind[
@@ -297,40 +297,40 @@ struct AttentionCustomOp:
 
             # Define layouts for matrix multiplication
             # Q reshaped to (1, d)
-            alias layout_q_2d = Layout.row_major(1, d)
+            comptime layout_q_2d = Layout.row_major(1, d)
             # K^T is (d, seq_len)
-            alias layout_k_t = Layout.row_major(d, seq_len)
+            comptime layout_k_t = Layout.row_major(d, seq_len)
             # Scores as (1, seq_len)
-            alias layout_scores_2d = Layout.row_major(1, seq_len)
+            comptime layout_scores_2d = Layout.row_major(1, seq_len)
             # Weights as (1, seq_len)
-            alias layout_weights_2d = Layout.row_major(1, seq_len)
+            comptime layout_weights_2d = Layout.row_major(1, seq_len)
             # Result as (1, d)
-            alias layout_result_2d = Layout.row_major(1, d)
+            comptime layout_result_2d = Layout.row_major(1, d)
 
             # Transpose implementation limited to square (TRANSPOSE_BLOCK_DIM_XY x TRANSPOSE_BLOCK_DIM_XY) thread blocks
-            alias transpose_threads_per_block = (
+            comptime transpose_threads_per_block = (
                 TRANSPOSE_BLOCK_DIM_XY,
                 TRANSPOSE_BLOCK_DIM_XY,
             )
             # Tile over the K (seq_len, d) matrix
-            alias transpose_blocks_per_grid = (
+            comptime transpose_blocks_per_grid = (
                 (d + TRANSPOSE_BLOCK_DIM_XY - 1) // TRANSPOSE_BLOCK_DIM_XY,
                 (seq_len + TRANSPOSE_BLOCK_DIM_XY - 1)
                 // TRANSPOSE_BLOCK_DIM_XY,
             )
             # Matmul implementation limited to square (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) thread blocks
-            alias matmul_threads_per_block = (
+            comptime matmul_threads_per_block = (
                 MATMUL_BLOCK_DIM_XY,
                 MATMUL_BLOCK_DIM_XY,
             )
             # seq_len outputs ( Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len) ) with one thread per output
-            alias scores_blocks_per_grid = (
+            comptime scores_blocks_per_grid = (
                 seq_len + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
-            alias softmax_threads = SOFTMAX_BLOCK_DIM_X
-            alias softmax_blocks_per_grid = 1
+            comptime softmax_threads = SOFTMAX_BLOCK_DIM_X
+            comptime softmax_blocks_per_grid = 1
             # d outputs ( weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d) ) with one thread per output
-            alias result_blocks_per_grid = (
+            comptime result_blocks_per_grid = (
                 d + MATMUL_BLOCK_DIM_XY - 1
             ) // MATMUL_BLOCK_DIM_XY
 

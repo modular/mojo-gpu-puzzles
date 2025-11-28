@@ -3,13 +3,13 @@ from gpu.host import DeviceContext, HostBuffer
 from layout import Layout, LayoutTensor
 from testing import assert_equal
 
-alias SIZE = 2
-alias BLOCKS_PER_GRID = 1
-alias THREADS_PER_BLOCK = (3, 3)
-alias dtype = DType.float32
-alias out_layout = Layout.row_major(SIZE, SIZE)
-alias a_layout = Layout.row_major(1, SIZE)
-alias b_layout = Layout.row_major(SIZE, 1)
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = Layout.row_major(SIZE, SIZE)
+comptime a_layout = Layout.row_major(1, SIZE)
+comptime b_layout = Layout.row_major(SIZE, 1)
 
 
 # ANCHOR: broadcast_add_layout_tensor_solution
@@ -61,7 +61,7 @@ def main():
         a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, b_layout, ImmutAnyOrigin](b)
 
-        alias kernel = broadcast_add[out_layout, a_layout, b_layout]
+        comptime kernel = broadcast_add[out_layout, a_layout, b_layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             a_tensor,

@@ -62,9 +62,9 @@ Use profiling tools to investigate three kernels and answer analysis questions a
 > The default configuration uses aggressive settings that may fail on older or lower-capability GPUs:
 >
 > ```mojo
-> alias SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
-> alias THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
-> alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
+> comptime SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
+> comptime THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
+> comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
 > ```
 >
 > **If you encounter launch failures, reduce these values in `problems/p31/p31.mojo`:**

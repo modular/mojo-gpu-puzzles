@@ -10,11 +10,11 @@ from testing import assert_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: elementwise_add
-alias SIZE = 1024
-alias rank = 1
-alias layout = Layout.row_major(SIZE)
-alias dtype = DType.float32
-alias SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
+comptime SIZE = 1024
+comptime rank = 1
+comptime layout = Layout.row_major(SIZE)
+comptime dtype = DType.float32
+comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 
 
 fn elementwise_add[
@@ -41,7 +41,7 @@ fn elementwise_add[
 
 
 # ANCHOR: tiled_elementwise_add
-alias TILE_SIZE = 32
+comptime TILE_SIZE = 32
 
 
 fn tiled_elementwise_add[
@@ -93,7 +93,7 @@ fn manual_vectorized_tiled_elementwise_add[
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
-    alias chunk_size = tile_size * simd_width
+    comptime chunk_size = tile_size * simd_width
 
     @parameter
     @always_inline
@@ -171,7 +171,7 @@ fn benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
-    alias layout = Layout.row_major(test_size)
+    comptime layout = Layout.row_major(test_size)
     out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
     a = bench_ctx.enqueue_create_buffer[dtype](test_size)
@@ -212,7 +212,7 @@ fn benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
-    alias layout = Layout.row_major(test_size)
+    comptime layout = Layout.row_major(test_size)
     out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
     a = bench_ctx.enqueue_create_buffer[dtype](test_size)
@@ -247,7 +247,7 @@ fn benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
-    alias layout = Layout.row_major(test_size)
+    comptime layout = Layout.row_major(test_size)
     out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
     a = bench_ctx.enqueue_create_buffer[dtype](test_size)
@@ -282,7 +282,7 @@ fn benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
-    alias layout = Layout.row_major(test_size)
+    comptime layout = Layout.row_major(test_size)
     out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
     a = bench_ctx.enqueue_create_buffer[dtype](test_size)

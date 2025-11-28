@@ -5,11 +5,14 @@ from sys import argv
 from testing import assert_almost_equal
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
-alias SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
-alias THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block
-alias BLOCKS_PER_GRID = (SIZE // 1024, 1)  # Enough blocks to cover all elements
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
+comptime THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block
+comptime BLOCKS_PER_GRID = (
+    SIZE // 1024,
+    1,
+)  # Enough blocks to cover all elements
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: kernel1
@@ -78,7 +81,7 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel1_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
+        comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](test_size)
@@ -116,7 +119,7 @@ fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel2_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
+        comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](test_size)
@@ -154,7 +157,7 @@ fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     fn kernel3_workflow(ctx: DeviceContext) raises:
-        alias layout = Layout.row_major(test_size)
+        comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](test_size)

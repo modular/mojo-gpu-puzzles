@@ -9,10 +9,10 @@ from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 from utils import StaticTuple
 
-alias MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
-alias MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
-alias MATMUL_BLOCK_DIM_COUNT = 2
-alias TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
+comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
+comptime MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
+comptime MATMUL_BLOCK_DIM_COUNT = 2
+comptime TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
 
 
 # ANCHOR: matmul_idiomatic_tiled
@@ -54,10 +54,10 @@ fn matmul_idiomatic_tiled[
     ].stack_allocation()
     var acc: output.element_type = 0
 
-    alias load_a_layout = Layout.row_major(
+    comptime load_a_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
-    alias load_b_layout = Layout.row_major(
+    comptime load_b_layout = Layout.row_major(
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
@@ -502,11 +502,11 @@ struct LayerNormLinearCustomOp:
         linear_bias: InputTensor[dtype=dtype, rank=1],
         ctx: DeviceContextPtr,
     ) raises:
-        alias input_layout = input.static_spec.to_layout()
-        alias ln_params_layout = ln_weight.static_spec.to_layout()
-        alias weight_layout = linear_weight.static_spec.to_layout()
-        alias bias_layout = linear_bias.static_spec.to_layout()
-        alias output_layout = output.static_spec.to_layout()
+        comptime input_layout = input.static_spec.to_layout()
+        comptime ln_params_layout = ln_weight.static_spec.to_layout()
+        comptime weight_layout = linear_weight.static_spec.to_layout()
+        comptime bias_layout = linear_bias.static_spec.to_layout()
+        comptime output_layout = output.static_spec.to_layout()
 
         # Note: rebind is necessary now but it shouldn't be!
         output_tensor = rebind[
@@ -536,7 +536,7 @@ struct LayerNormLinearCustomOp:
             @parameter
             if algorithm == "fused":
                 # fused case - one thread per sequence position
-                alias kernel = minimal_fused_kernel[
+                comptime kernel = minimal_fused_kernel[
                     input_layout,
                     ln_params_layout,
                     weight_layout,
@@ -568,7 +568,7 @@ struct LayerNormLinearCustomOp:
                 ](normalized_buffer)
 
                 # Step 1: LayerNorm kernel
-                alias kernel = layernorm_kernel[
+                comptime kernel = layernorm_kernel[
                     input_layout,
                     ln_params_layout,
                     input_layout,
@@ -620,7 +620,7 @@ struct LayerNormLinearCustomOp:
                 transpose_blocks_y = (
                     output_dim + TRANSPOSE_BLOCK_DIM_XY - 1
                 ) // TRANSPOSE_BLOCK_DIM_XY
-                alias kernel2 = transpose_kernel[
+                comptime kernel2 = transpose_kernel[
                     weight_layout,
                     transposed_weight_tensor.layout,
                     UInt(output_dim),
@@ -641,7 +641,7 @@ struct LayerNormLinearCustomOp:
                     Layout.row_major(batch_size * seq_len, output_dim)
                 ]()
 
-                alias kernel3 = matmul_idiomatic_tiled[
+                comptime kernel3 = matmul_idiomatic_tiled[
                     flat_normalized.layout,
                     transposed_weight_tensor.layout,
                     flat_matmul.layout,
@@ -662,7 +662,7 @@ struct LayerNormLinearCustomOp:
                     Layout.row_major(batch_size, seq_len, output_dim)
                 ]()
 
-                alias kernel4 = add_bias_kernel[
+                comptime kernel4 = add_bias_kernel[
                     reshaped_matmul.layout,
                     bias_layout,
                     output_layout,
@@ -744,15 +744,15 @@ struct LayerNormLinearBackwardCustomOp:
         linear_weight: InputTensor[dtype=dtype, rank=2],
         ctx: DeviceContextPtr,
     ) raises:
-        alias grad_output_layout = grad_output.static_spec.to_layout()
-        alias input_layout = input.static_spec.to_layout()
-        alias ln_params_layout = ln_weight.static_spec.to_layout()
-        alias weight_layout = linear_weight.static_spec.to_layout()
-        alias grad_input_layout = grad_input.static_spec.to_layout()
-        alias grad_ln_weight_layout = grad_ln_weight.static_spec.to_layout()
-        alias grad_ln_bias_layout = grad_ln_bias.static_spec.to_layout()
-        alias grad_weight_layout = grad_weight.static_spec.to_layout()
-        alias grad_bias_layout = grad_bias.static_spec.to_layout()
+        comptime grad_output_layout = grad_output.static_spec.to_layout()
+        comptime input_layout = input.static_spec.to_layout()
+        comptime ln_params_layout = ln_weight.static_spec.to_layout()
+        comptime weight_layout = linear_weight.static_spec.to_layout()
+        comptime grad_input_layout = grad_input.static_spec.to_layout()
+        comptime grad_ln_weight_layout = grad_ln_weight.static_spec.to_layout()
+        comptime grad_ln_bias_layout = grad_ln_bias.static_spec.to_layout()
+        comptime grad_weight_layout = grad_weight.static_spec.to_layout()
+        comptime grad_bias_layout = grad_bias.static_spec.to_layout()
 
         grad_input_tensor = rebind[
             LayoutTensor[dtype, grad_input_layout, MutAnyOrigin]
@@ -790,7 +790,7 @@ struct LayerNormLinearBackwardCustomOp:
             gpu_ctx = ctx.get_device_context()
 
             # Launch backward kernel
-            alias kernel = minimal_fused_kernel_backward[
+            comptime kernel = minimal_fused_kernel_backward[
                 grad_output_layout,
                 input_layout,
                 ln_params_layout,

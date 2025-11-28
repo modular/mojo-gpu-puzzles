@@ -6,8 +6,8 @@ from layout import Layout, LayoutTensor
 from sys import size_of, argv
 from testing import assert_equal
 
-alias TPB = 15
-alias BLOCKS_PER_GRID = (2, 1)
+comptime TPB = 15
+comptime BLOCKS_PER_GRID = (2, 1)
 
 
 # ANCHOR: conv1d_kernel
@@ -96,9 +96,9 @@ struct Conv1DCustomOp:
         out_tensor = output.to_layout_tensor()
         input_tensor = input.to_layout_tensor()
         kernel_tensor = kernel.to_layout_tensor()
-        alias in_layout = input_tensor.layout
-        alias out_layout = out_tensor.layout
-        alias conv_layout = kernel_tensor.layout
+        comptime in_layout = input_tensor.layout
+        comptime out_layout = out_tensor.layout
+        comptime conv_layout = kernel_tensor.layout
 
         @parameter
         if target == "gpu":
@@ -115,7 +115,7 @@ struct Conv1DCustomOp:
                 ),
                 0,
             )
-            alias kernel = conv1d_kernel[
+            comptime kernel = conv1d_kernel[
                 in_layout, out_layout, conv_layout, input_size, conv_size
             ],
             gpu_ctx.enqueue_function_checked[kernel, kernel](

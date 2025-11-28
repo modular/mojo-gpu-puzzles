@@ -9,12 +9,12 @@ from sys import argv
 from testing import assert_equal
 from math import floor
 
-alias SIZE = 128
-alias TPB = 128
-alias NUM_BINS = 8
-alias in_layout = Layout.row_major(SIZE)
-alias out_layout = Layout.row_major(1)
-alias dtype = DType.float32
+comptime SIZE = 128
+comptime TPB = 128
+comptime NUM_BINS = 8
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
+comptime dtype = DType.float32
 
 
 # ANCHOR: block_sum_dot_product_solution
@@ -96,7 +96,7 @@ fn traditional_dot_product[
 
 # ANCHOR_END: traditional_dot_product_solution
 
-alias bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
 # ANCHOR: block_histogram_solution
@@ -160,7 +160,7 @@ fn block_histogram_bin_extract[
 
 # ANCHOR_END: block_histogram_solution
 
-alias vector_layout = Layout.row_major(SIZE)  # For full vector output
+comptime vector_layout = Layout.row_major(SIZE)  # For full vector output
 
 
 # ANCHOR: block_normalize_solution
@@ -247,7 +247,9 @@ def main():
             out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Traditional approach: works perfectly when size == TPB
-            alias kernel = traditional_dot_product[in_layout, out_layout, TPB]
+            comptime kernel = traditional_dot_product[
+                in_layout, out_layout, TPB
+            ]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -289,7 +291,7 @@ def main():
             out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
             # Block.sum(): Same result with dramatically simpler code!
-            alias kernel = block_sum_dot_product[in_layout, out_layout, TPB]
+            comptime kernel = block_sum_dot_product[in_layout, out_layout, TPB]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -367,7 +369,7 @@ def main():
                 ](bin_count)
 
                 # Execute histogram kernel for this specific bin
-                alias kernel = block_histogram_bin_extract[
+                comptime kernel = block_histogram_bin_extract[
                     in_layout, bin_layout, out_layout, TPB
                 ]
                 ctx.enqueue_function_checked[kernel, kernel](
@@ -443,7 +445,9 @@ def main():
             )
 
             # Execute vector normalization kernel
-            alias kernel = block_normalize_vector[in_layout, vector_layout, TPB]
+            comptime kernel = block_normalize_vector[
+                in_layout, vector_layout, TPB
+            ]
             ctx.enqueue_function_checked[kernel, kernel](
                 input_tensor,
                 output_tensor,

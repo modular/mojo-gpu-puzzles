@@ -6,11 +6,11 @@ from sys import argv
 from testing import assert_equal, assert_almost_equal
 
 
-alias SIZE = WARP_SIZE
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (WARP_SIZE, 1)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE)
+comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: butterfly_pair_swap_solution
@@ -75,10 +75,10 @@ fn butterfly_parallel_max[
 # ANCHOR_END: butterfly_parallel_max_solution
 
 
-alias SIZE_2 = 64
-alias BLOCKS_PER_GRID_2 = (2, 1)
-alias THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-alias layout_2 = Layout.row_major(SIZE_2)
+comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 # ANCHOR: butterfly_conditional_max_solution
@@ -236,7 +236,7 @@ def test_butterfly_pair_swap():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = butterfly_pair_swap[layout, SIZE]
+        comptime kernel = butterfly_pair_swap[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -283,7 +283,7 @@ def test_butterfly_parallel_max():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = butterfly_parallel_max[layout, SIZE]
+        comptime kernel = butterfly_parallel_max[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -325,7 +325,7 @@ def test_butterfly_conditional_max():
         input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
-        alias kernel = butterfly_conditional_max[layout_2, SIZE_2]
+        comptime kernel = butterfly_conditional_max[layout_2, SIZE_2]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -381,7 +381,7 @@ def test_warp_inclusive_prefix_sum():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = warp_inclusive_prefix_sum[layout, SIZE]
+        comptime kernel = warp_inclusive_prefix_sum[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -427,7 +427,7 @@ def test_warp_partition():
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
-        alias kernel = warp_partition[layout, SIZE]
+        comptime kernel = warp_partition[layout, SIZE]
         ctx.enqueue_function_checked[kernel, kernel](
             output_tensor,
             input_tensor,

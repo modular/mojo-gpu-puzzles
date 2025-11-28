@@ -8,11 +8,11 @@ from bit import log2_ceil
 from utils.numerics import max_finite, min_finite
 
 
-alias SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
-alias layout = Layout.row_major(SIZE)
-alias GRID_DIM_X = 1
+comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
+comptime layout = Layout.row_major(SIZE)
+comptime GRID_DIM_X = 1
 # Tree-based reduction require the number of threads to be the next power of two >= SIZE for correctness.
-alias BLOCK_DIM_X = 1 << log2_ceil(SIZE)
+comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 
 # ANCHOR: softmax_gpu_kernel_solution
@@ -153,7 +153,7 @@ struct SoftmaxCustomOp:
                 0,
             )
 
-            alias kernel = softmax_gpu_kernel[layout, input_size, dtype]
+            comptime kernel = softmax_gpu_kernel[layout, input_size, dtype]
             gpu_ctx.enqueue_function_checked[kernel, kernel](
                 output_tensor,
                 input_tensor,

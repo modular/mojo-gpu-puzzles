@@ -8,12 +8,12 @@ from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
-alias TPB = 3
-alias SIZE = 2
-alias BLOCKS_PER_GRID = (1, 1)
-alias THREADS_PER_BLOCK = (TPB, TPB)
-alias dtype = DType.float32
-alias layout = Layout.row_major(SIZE, SIZE)
+comptime TPB = 3
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, TPB)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 fn naive_matmul[
@@ -49,10 +49,10 @@ fn single_block_matmul[
 # ANCHOR_END: single_block_matmul
 
 # ANCHOR: matmul_tiled
-alias SIZE_TILED = 9
-alias BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
-alias THREADS_PER_BLOCK_TILED = (TPB, TPB)
-alias layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+comptime SIZE_TILED = 9
+comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
+comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
+comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 fn matmul_tiled[
@@ -114,7 +114,7 @@ def main():
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
-            alias kernel = naive_matmul[layout, UInt(SIZE)]
+            comptime kernel = naive_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -123,7 +123,7 @@ def main():
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            alias kernel = single_block_matmul[layout, UInt(SIZE)]
+            comptime kernel = single_block_matmul[layout, UInt(SIZE)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -143,7 +143,7 @@ def main():
                 inp2
             )
 
-            alias kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
+            comptime kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
             ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,

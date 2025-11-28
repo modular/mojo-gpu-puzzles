@@ -7,7 +7,7 @@
             aliases: ['mojo', '🔥'],
             keywords: {
                 keyword:
-                    'struct fn var let def trait alias for while if else return continue break ' +
+                    'struct fn var let def trait comptime for while if else return continue break ' +
                     'and or not in as is self Self trait ' +
                     'owned in borrowed mut ' +
                     'raises ' +

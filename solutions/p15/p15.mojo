@@ -5,14 +5,14 @@ from layout import Layout, LayoutTensor
 from sys import size_of
 from testing import assert_equal
 
-alias TPB = 8
-alias BATCH = 4
-alias SIZE = 6
-alias BLOCKS_PER_GRID = (1, BATCH)
-alias THREADS_PER_BLOCK = (TPB, 1)
-alias dtype = DType.float32
-alias in_layout = Layout.row_major(BATCH, SIZE)
-alias out_layout = Layout.row_major(BATCH, 1)
+comptime TPB = 8
+comptime BATCH = 4
+comptime SIZE = 6
+comptime BLOCKS_PER_GRID = (1, BATCH)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime in_layout = Layout.row_major(BATCH, SIZE)
+comptime out_layout = Layout.row_major(BATCH, 1)
 
 
 # ANCHOR: axis_sum_solution
@@ -88,7 +88,7 @@ def main():
         out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
         inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
-        alias kernel = axis_sum[in_layout, out_layout]
+        comptime kernel = axis_sum[in_layout, out_layout]
         ctx.enqueue_function_checked[kernel, kernel](
             out_tensor,
             inp_tensor,
