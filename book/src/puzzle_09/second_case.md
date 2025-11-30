@@ -187,35 +187,35 @@ Cannot access memory at address 0x0
 **❌ Problem**: `window_sum` is not accessible.
 
 ```bash
-(cuda-gdb) p input[0]
+(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 ```
 
 **❌ Problem**: Direct LayoutTensor indexing doesn't work.
 
 ```bash
-(cuda-gdb) p input.ptr[0]
+(cuda-gdb) p a.ptr[0]
 $2 = {0}
-(cuda-gdb) p input.ptr[0]@4
+(cuda-gdb) p a.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 ```
 
-**🎯 BREAKTHROUGH**: `input.ptr[0]@4` shows the full input array! This is how we can inspect LayoutTensor data.
+**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can inspect LayoutTensor data.
 
 ### Phase 3: The critical loop investigation
 
 #### Step 6: Set up loop monitoring
 
 ```bash
-(cuda-gdb) b 39
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
+(cuda-gdb) b 42
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
    <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:39
-39              idx = thread_id + offset - 1
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
+42              idx = thread_id + offset - 1
 ```
 
 **🔍 We're now inside the loop body. Let's count iterations manually.**
@@ -224,12 +224,12 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-40              if 0 <= idx < SIZE:
+43              if 0 <= idx < SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 ```
 
-**First iteration complete**: Loop went from line 39 → 40 → back to 38. The loop continues.
+**First iteration complete**: Loop went from line 42 → 43 → back to 41. The loop continues.
 
 #### Step 8: Second loop iteration (offset = 1)
 
@@ -237,29 +237,29 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-39              idx = thread_id + offset - 1
+42              idx = thread_id + offset - 1
 (cuda-gdb) n
-40              if 0 <= idx < SIZE:
+43              if 0 <= idx < SIZE:
 (cuda-gdb) n
-41                  value = rebind[Scalar[dtype]](input[idx])
+44                  value = rebind[Scalar[dtype]](input[idx])
 (cuda-gdb) n
-42                  window_sum += value
+45                  window_sum += value
 (cuda-gdb) n
-40              if 0 <= idx < SIZE:
+43              if 0 <= idx < SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 ```
 
-**Second iteration complete**: This time it went through the if-block (lines 41-42).
+**Second iteration complete**: This time it went through the if-block (lines 44-45).
 
 #### Step 9: testing for third iteration
 
 ```bash
 (cuda-gdb) n
-44          output[thread_id] = window_sum
+47          output[thread_id] = window_sum
 ```
 
-**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.
+**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.
 
 **Conclusion**: The loop ran exactly **2 iterations** and then exited.
 
@@ -267,7 +267,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-28      fn process_sliding_window(
+31      fn process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -328,9 +328,10 @@ Looking at the problem code, we find:
 comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
-    idx = thread_id + offset - 1     # ← Missing offset = 2
+    idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 <= idx < SIZE:
-        window_sum += input[idx]
+        value = rebind[Scalar[dtype]](a[idx])
+        window_sum += value
 ```
 
 **🎯 ROOT CAUSE IDENTIFIED**: `ITER = 2` should be `ITER = 3` for a sliding window of size 3.
