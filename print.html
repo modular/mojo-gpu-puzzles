@@ -3938,7 +3938,7 @@ input_bufenqueue_fill(0)
 
     # Sum elements in sliding window: [i-1, i, i+1]
     for offset in range(ITER):
-        idx = thread_id + offset - 1
+        idx = Int(thread_id) + offset - 1
         if 0 &lt;= idx &lt; SIZE:
             value = rebind[Scalar[dtype]](a[idx])
             window_sum += value
