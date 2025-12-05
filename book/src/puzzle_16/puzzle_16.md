@@ -8,7 +8,8 @@ For matrices \\(A_{m\\times k}\\) and \\(B_{k\\times n}\\), each element of the 
 
 \\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \\cdot B_{lj} \\]
 
-![Matrix Multiply visualization](./media/videos/720p30/puzzle_16_viz.gif)
+<img src="./media/16-w.png" alt="Matmul visualization" class="light-mode-img">
+<img src="./media/16-b.png" alt="Matmul visualization" class="dark-mode-img">
 
 This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:
 

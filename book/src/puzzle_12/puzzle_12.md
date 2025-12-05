@@ -14,7 +14,8 @@ For example, if you have two vectors:
 
 **Note:** _You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block._
 
-![Dot product visualization](./media/videos/720p30/puzzle_12_viz.gif)
+<img src="./media/12-w.png" alt="Dot product visualization" class="light-mode-img">
+<img src="./media/12-b.png" alt="Dot product visualization" class="dark-mode-img">
 
 ## Implementation approaches
 

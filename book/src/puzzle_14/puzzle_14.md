@@ -8,7 +8,8 @@ Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and store
 
 **Note:** _If the size of `a` is greater than the block size, only store the sum of each block._
 
-![Prefix sum](./media/videos/720p30/puzzle_14_viz.gif)
+<img src="./media/14-w.gif" alt="Prefix sum visualization" class="light-mode-img">
+<img src="./media/14-b.gif" alt="Prefix sum visualization" class="dark-mode-img">
 
 ## Key concepts
 
