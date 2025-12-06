@@ -4,7 +4,8 @@
 
 Implement a kernel that computes a sum over each row of 2D matrix `a` and stores it in `output` using LayoutTensor.
 
-![Axis Sum visualization](./media/videos/720p30/puzzle_15_viz.gif)
+<img src="./media/15-w.png" alt="Axis sum visualization" class="light-mode-img">
+<img src="./media/15-b.png" alt="Axis sum visualization" class="dark-mode-img">
 
 ## Key concepts
 

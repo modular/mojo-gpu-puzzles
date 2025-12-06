@@ -6,7 +6,8 @@ Implement a kernel that computes the running sum of the last 3 positions of vect
 
 **Note:** _You have 1 thread per position. You only need 1 global read and 1 global write per thread._
 
-![Pooling visualization](./media/videos/720p30/puzzle_11_viz.gif)
+<img src="./media/11-w.png" alt="Pooling visualization" class="light-mode-img">
+<img src="./media/11-b.png" alt="Pooling visualization" class="dark-mode-img">
 
 ## Implementation approaches
 
