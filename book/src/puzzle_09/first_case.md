@@ -91,26 +91,26 @@ When CUDA-GDB stops, it immediately shows valuable clues:
 
 ```
 (cuda-gdb) run
-CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
+CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
 31          i = thread_idx.x
 ```
 
-**🔍 First Clue**: The function signature shows `(result=0x302000000, input=0x0)`
+**🔍 First Clue**: The function signature shows `(output=0x302000000, a=0x0)`
 
-- `result` has a valid GPU memory address
-- `input` is `0x0` - this is a null pointer!
+- `output` has a valid GPU memory address
+- `a` is `0x0` - this is a null pointer!
 
 ### Systematic variable inspection
 
 ```
 (cuda-gdb) next
-32          result[i] = input[i] + 10.0
+32          output[i] = a[i] + 10.0
 (cuda-gdb) print i
 $1 = 0
-(cuda-gdb) print result
+(cuda-gdb) print output
 $2 = (!pop.scalar<f32> * @register) 0x302000000
-(cuda-gdb) print input
+(cuda-gdb) print a
 $3 = (!pop.scalar<f32> * @register) 0x0
 ```
 
@@ -123,7 +123,7 @@ $3 = (!pop.scalar<f32> * @register) 0x0
 ### Confirm the Problem
 
 ```
-(cuda-gdb) print input[i]
+(cuda-gdb) print a[i]
 Cannot access memory at address 0x0
 ```
 
@@ -134,14 +134,15 @@ Cannot access memory at address 0x0
 **The Problem**: Now if we look at the [code](../../../problems/p09/p09.mojo) for `--first-crash`, we see that the host code creates a null pointer instead of allocating proper GPU memory:
 
 ```mojo
-input_ptr = {}  # Creates NULL pointer!
+ input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
 ```
 
 **Why This Crashes**:
 
-1. `{}` creates an uninitialized pointer (null)
-2. This null pointer gets passed to the GPU kernel
-3. When kernel tries `input[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
+1. `ctx.enqueue_create_buffer[dtype](0)` creates a `DeviceBuffer` with zero (0) elements.
+2. since there are no elements for which to allocate memory, this returns a null pointer.
+3. This null pointer gets passed to the GPU kernel
+5. When kernel tries `a[i]`, it dereferences null → `CUDA_ERROR_ILLEGAL_ADDRESS`
 
 ## The fix
 
@@ -149,7 +150,7 @@ Replace null pointer creation with proper buffer allocation:
 
 ```mojo
 # Wrong: Creates null pointer
-input_ptr = {}
+input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
