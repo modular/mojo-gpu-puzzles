@@ -208,7 +208,8 @@
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<p><img src="./media/videos/720p30/puzzle_13_viz.gif" alt="1D Convolution" /></p>
+<img src="./media/13-w.gif" alt="1D convolution visualization" class="light-mode-img">
+<img src="./media/13-b.gif" alt="1D convolution visualization" class="dark-mode-img">
 <p>For those new to convolution, think of it as a weighted sliding window operation. At each position, we multiply the kernel values with the corresponding input values and sum the results. In mathematical notation, this is often written as:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>In pseudocode, 1D convolution is:</p>

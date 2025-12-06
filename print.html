@@ -5179,7 +5179,8 @@ expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
 <h2 id="overview-21"><a class="header" href="#overview-21">Overview</a></h2>
 <p>Implement a kernel that computes the running sum of the last 3 positions of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
-<p><img src="puzzle_11/./media/videos/720p30/puzzle_11_viz.gif" alt="Pooling visualization" /></p>
+<img src="puzzle_11/./media/11-w.png" alt="Pooling visualization" class="light-mode-img">
+<img src="puzzle_11/./media/11-b.png" alt="Pooling visualization" class="dark-mode-img">
 <h2 id="implementation-approaches-4"><a class="header" href="#implementation-approaches-4">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach-5"><a class="header" href="#-raw-memory-approach-5"><a href="puzzle_11/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to implement sliding window operations with manual memory management and synchronization.</p>
@@ -5617,7 +5618,8 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 <p>​Their dot product is:
 \[a \cdot b = a_{1}b_{1} +  a_{2}b_{2} + … + a_{n}b_{n}\]</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
-<p><img src="puzzle_12/./media/videos/720p30/puzzle_12_viz.gif" alt="Dot product visualization" /></p>
+<img src="puzzle_12/./media/12-w.png" alt="Dot product visualization" class="light-mode-img">
+<img src="puzzle_12/./media/12-b.png" alt="Dot product visualization" class="dark-mode-img">
 <h2 id="implementation-approaches-5"><a class="header" href="#implementation-approaches-5">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach-6"><a class="header" href="#-raw-memory-approach-6"><a href="puzzle_12/./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how to implement the reduction with manual memory management and synchronization.</p>
@@ -6136,7 +6138,8 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>In signal processing and image analysis, convolution is a fundamental operation that combines two sequences to produce a third sequence. This puzzle challenges you to implement a 1D convolution on the GPU, where each output element is computed by sliding a kernel over an input array.</p>
 <p>Implement a kernel that computes a 1D convolution between vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> using the <code>LayoutTensor</code> abstraction.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
-<p><img src="puzzle_13/./media/videos/720p30/puzzle_13_viz.gif" alt="1D Convolution" /></p>
+<img src="puzzle_13/./media/13-w.gif" alt="1D convolution visualization" class="light-mode-img">
+<img src="puzzle_13/./media/13-b.gif" alt="1D convolution visualization" class="dark-mode-img">
 <p>For those new to convolution, think of it as a weighted sliding window operation. At each position, we multiply the kernel values with the corresponding input values and sum the results. In mathematical notation, this is often written as:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>In pseudocode, 1D convolution is:</p>
@@ -6702,7 +6705,8 @@ Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
-<p><img src="puzzle_14/./media/videos/720p30/puzzle_14_viz.gif" alt="Prefix sum" /></p>
+<img src="puzzle_14/./media/14-w.gif" alt="Prefix sum visualization" class="light-mode-img">
+<img src="puzzle_14/./media/14-b.gif" alt="Prefix sum visualization" class="dark-mode-img">
 <h2 id="key-concepts-24"><a class="header" href="#key-concepts-24">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
@@ -7396,7 +7400,8 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-15-axis-sum"><a class="header" href="#puzzle-15-axis-sum">Puzzle 15: Axis Sum</a></h1>
 <h2 id="overview-29"><a class="header" href="#overview-29">Overview</a></h2>
 <p>Implement a kernel that computes a sum over each row of 2D matrix <code>a</code> and stores it in <code>output</code> using LayoutTensor.</p>
-<p><img src="puzzle_15/./media/videos/720p30/puzzle_15_viz.gif" alt="Axis Sum visualization" /></p>
+<img src="puzzle_15/./media/15-w.png" alt="Axis sum visualization" class="light-mode-img">
+<img src="puzzle_15/./media/15-b.png" alt="Axis sum visualization" class="dark-mode-img">
 <h2 id="key-concepts-25"><a class="header" href="#key-concepts-25">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -7668,7 +7673,8 @@ while stride &gt; 0:
 <p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
 <p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
-<p><img src="puzzle_16/./media/videos/720p30/puzzle_16_viz.gif" alt="Matrix Multiply visualization" /></p>
+<img src="puzzle_16/./media/16-w.png" alt="Matmul visualization" class="light-mode-img">
+<img src="puzzle_16/./media/16-b.png" alt="Matmul visualization" class="dark-mode-img">
 <p>This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:</p>
 <ul>
 <li>

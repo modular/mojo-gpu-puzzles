@@ -190,7 +190,8 @@
 <p>Prefix sum (also known as <em>scan</em>) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!</p>
 <p>Implement a kernel that computes a prefix-sum over 1D LayoutTensor <code>a</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, only store the sum of each block.</em></p>
-<p><img src="./media/videos/720p30/puzzle_14_viz.gif" alt="Prefix sum" /></p>
+<img src="./media/14-w.gif" alt="Prefix sum visualization" class="light-mode-img">
+<img src="./media/14-b.gif" alt="Prefix sum visualization" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
