@@ -251,23 +251,23 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
 <pre><code>(cuda-gdb) run
-CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
+CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
 31          i = thread_idx.x
 </code></pre>
-<p><strong>🔍 First Clue</strong>: The function signature shows <code>(result=0x302000000, input=0x0)</code></p>
+<p><strong>🔍 First Clue</strong>: The function signature shows <code>(output=0x302000000, a=0x0)</code></p>
 <ul>
-<li><code>result</code> has a valid GPU memory address</li>
-<li><code>input</code> is <code>0x0</code> - this is a null pointer!</li>
+<li><code>output</code> has a valid GPU memory address</li>
+<li><code>a</code> is <code>0x0</code> - this is a null pointer!</li>
 </ul>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code>(cuda-gdb) next
-32          result[i] = input[i] + 10.0
+32          output[i] = a[i] + 10.0
 (cuda-gdb) print i
 $1 = 0
-(cuda-gdb) print result
+(cuda-gdb) print output
 $2 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
-(cuda-gdb) print input
+(cuda-gdb) print a
 $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 </code></pre>
 <p><strong>Evidence Gathering</strong>:</p>
@@ -277,24 +277,25 @@ $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 <li>❌ Input pointer <code>0x0</code> is null</li>
 </ul>
 <h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
-<pre><code>(cuda-gdb) print input[i]
+<pre><code>(cuda-gdb) print a[i]
 Cannot access memory at address 0x0
 </code></pre>
 <p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
-<pre><code class="language-mojo">input_ptr = {}  # Creates NULL pointer!
+<pre><code class="language-mojo"> input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
-<li><code>{}</code> creates an uninitialized pointer (null)</li>
+<li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0) elements.</li>
+<li>since there are no elements for which to allocate memory, this returns a null pointer.</li>
 <li>This null pointer gets passed to the GPU kernel</li>
-<li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
+<li>When kernel tries <code>a[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
 <pre><code class="language-mojo"># Wrong: Creates null pointer
-input_ptr = {}
+input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)

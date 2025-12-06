@@ -329,9 +329,9 @@ Waiting for GPU computation to complete...
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
-    output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
-52          input: LayoutTensor[mut=False, dtype, vector_layout],
+    output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
+56          a: LayoutTensor[mut=False, dtype, vector_layout],
 </code></pre>
 <p><strong>🔍 Key Observations</strong>:</p>
 <ul>
@@ -342,75 +342,75 @@ CUDA thread hit application kernel entry function breakpoint, p09_collaborative_
 </ul>
 <h4 id="step-4-navigate-through-initialization"><a class="header" href="#step-4-navigate-through-initialization">Step 4: navigate through initialization</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-51          output: LayoutTensor[mut=True, dtype, vector_layout],
+55          output: LayoutTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
-54          thread_id = thread_idx.x
+58          thread_id = thread_idx.x
 (cuda-gdb) n
-57          shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+66          ].stack_allocation()
 (cuda-gdb) n
-60          if thread_id &lt; SIZE - 1:
+69          if thread_id &lt; SIZE - 1:
 (cuda-gdb) p thread_id
 $1 = 0
 </code></pre>
 <p><strong>✅ Thread 0 state</strong>: <code>thread_id = 0</code>, about to check condition <code>0 &lt; 3</code> → <strong>True</strong></p>
 <h4 id="step-5-trace-through-phase-1"><a class="header" href="#step-5-trace-through-phase-1">Step 5: trace through phase 1</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-61              shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+70              shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 (cuda-gdb) n
-60          if thread_id &lt; SIZE - 1:
+69          if thread_id &lt; SIZE - 1:
 (cuda-gdb) n
-62          barrier()
+71          barrier()
 </code></pre>
 <p><strong>Phase 1 Complete</strong>: Thread 0 executed the initialization and reached the first barrier.</p>
 <h3 id="phase-3-the-critical-barrier-investigation"><a class="header" href="#phase-3-the-critical-barrier-investigation">Phase 3: the critical barrier investigation</a></h3>
 <h4 id="step-6-examine-the-first-barrier"><a class="header" href="#step-6-examine-the-first-barrier">Step 6: examine the first barrier</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-65          if thread_id &lt; SIZE - 1:
+74          if thread_id &lt; SIZE - 1:
 (cuda-gdb) info cuda threads
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
-*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    65
+*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    74
 </code></pre>
-<p><strong>✅ Good</strong>: All 4 threads are at line 65 (after the first barrier). The first barrier worked correctly.</p>
+<p><strong>✅ Good</strong>: All 4 threads are at line 74 (after the first barrier). The first barrier worked correctly.</p>
 <p><strong>🔍 Critical Point</strong>: Now we’re entering Phase 2 with another conditional statement.</p>
 <h4 id="step-7-trace-through-phase-2---thread-0-perspective"><a class="header" href="#step-7-trace-through-phase-2---thread-0-perspective">Step 7: trace through phase 2 - thread 0 perspective</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-67              if thread_id &gt; 0:
+76              if thread_id &gt; 0:
 </code></pre>
 <p><strong>Thread 0 Analysis</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Thread 0 enters the Phase 2 block</p>
 <pre><code class="language-bash">(cuda-gdb) n
-69              barrier()
+78              barrier()
 </code></pre>
-<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 69</p>
-<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 69.</p>
+<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 78</p>
+<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 78.</p>
 <pre><code class="language-bash">(cuda-gdb) n # &lt;-- if you run it the program hangs!
 [HANGS HERE - Program never proceeds beyond this point]
 </code></pre>
 <h4 id="step-8-investigate-other-threads"><a class="header" href="#step-8-investigate-other-threads">Step 8: investigate other threads</a></h4>
 <pre><code class="language-bash">(cuda-gdb) cuda thread (1,0,0)
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-69              barrier()
+78              barrier()
 (cuda-gdb) p thread_id
 $2 = 1
 (cuda-gdb) info cuda threads
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
-*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    69
-   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    72
+*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    78
+   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    81
 </code></pre>
 <p><strong>SMOKING GUN DISCOVERED</strong>:</p>
 <ul>
-<li><strong>Threads 0, 1, 2</strong>: All waiting at line 69 (barrier inside the conditional block)</li>
-<li><strong>Thread 3</strong>: At line 72 (after the conditional block, never reached the barrier!)</li>
+<li><strong>Threads 0, 1, 2</strong>: All waiting at line 78 (barrier inside the conditional block)</li>
+<li><strong>Thread 3</strong>: At line 81 (after the conditional block, never reached the barrier!)</li>
 </ul>
 <h4 id="step-9-analyze-thread-3s-execution-path"><a class="header" href="#step-9-analyze-thread-3s-execution-path">Step 9: analyze thread 3’s execution path</a></h4>
 <p><strong>🔍 Thread 3 Analysis from the info output</strong>:</p>
 <ul>
-<li><strong>Thread 3</strong>: Located at line 72 (PC: 0x00007fffd3273b10)</li>
+<li><strong>Thread 3</strong>: Located at line 81 (PC: 0x00007fffd3273b10)</li>
 <li><strong>Phase 2 condition</strong>: <code>thread_id &lt; SIZE - 1</code> → <code>3 &lt; 3</code> → <strong>False</strong></li>
-<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 65-69)</li>
-<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 69</li>
-<li><strong>Current state</strong>: Thread 3 is at line 72 (final barrier), while threads 0,1,2 are stuck at line 69</li>
+<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 74-78)</li>
+<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 78</li>
+<li><strong>Current state</strong>: Thread 3 is at line 81 (final barrier), while threads 0,1,2 are stuck at line 78</li>
 </ul>
 <h3 id="phase-4-root-cause-analysis"><a class="header" href="#phase-4-root-cause-analysis">Phase 4: root cause analysis</a></h3>
 <h4 id="step-10-deadlock-mechanism-identified"><a class="header" href="#step-10-deadlock-mechanism-identified">Step 10: deadlock mechanism identified</a></h4>
@@ -446,14 +446,14 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
 <pre><code class="language-mojo">fn collaborative_filter(
     output: LayoutTensor[mut=True, dtype, vector_layout],
-    input: LayoutTensor[mut=False, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
     shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -469,7 +469,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
     if thread_id &lt; SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 </code></pre>
 <h2 id="key-debugging-lessons"><a class="header" href="#key-debugging-lessons">Key debugging lessons</a></h2>
 <p><strong>Barrier deadlock detection</strong>:</p>

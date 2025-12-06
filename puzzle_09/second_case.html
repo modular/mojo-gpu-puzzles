@@ -336,62 +336,62 @@ $1 = 0
 Cannot access memory at address 0x0
 </code></pre>
 <p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
-<pre><code class="language-bash">(cuda-gdb) p input[0]
+<pre><code class="language-bash">(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 </code></pre>
 <p><strong>❌ Problem</strong>: Direct LayoutTensor indexing doesn’t work.</p>
-<pre><code class="language-bash">(cuda-gdb) p input.ptr[0]
+<pre><code class="language-bash">(cuda-gdb) p a.ptr[0]
 $2 = {0}
-(cuda-gdb) p input.ptr[0]@4
+(cuda-gdb) p a.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 </code></pre>
-<p><strong>🎯 BREAKTHROUGH</strong>: <code>input.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>a.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
 <h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
 <h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 39
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
+<pre><code class="language-bash">(cuda-gdb) b 42
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:39
-39              idx = thread_id + offset - 1
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
+42              idx = thread_id + offset - 1
 </code></pre>
 <p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
 <h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 </code></pre>
-<p><strong>First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 42 → 43 → back to 41. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-39              idx = thread_id + offset - 1
+42              idx = thread_id + offset - 1
 (cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41                  value = rebind[Scalar[dtype]](input[idx])
+44                  value = rebind[Scalar[dtype]](input[idx])
 (cuda-gdb) n
-42                  window_sum += value
+45                  window_sum += value
 (cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 </code></pre>
-<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 44-45).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-44          output[thread_id] = window_sum
+47          output[thread_id] = window_sum
 </code></pre>
-<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-28      fn process_sliding_window(
+31      fn process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -442,9 +442,10 @@ No symbol "offset" in current context.
 <pre><code class="language-mojo">comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
-    idx = thread_id + offset - 1     # ← Missing offset = 2
+    idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 &lt;= idx &lt; SIZE:
-        window_sum += input[idx]
+        value = rebind[Scalar[dtype]](a[idx])
+        window_sum += value
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
 <p><strong>The Fix</strong>: Change <code>comptime ITER = 2</code> to <code>comptime ITER = 3</code> in the source code.</p>

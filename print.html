@@ -3816,23 +3816,23 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
 <pre><code>(cuda-gdb) run
-CUDA thread hit breakpoint, p09_add_10_... (result=0x302000000, input=0x0)
+CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
 31          i = thread_idx.x
 </code></pre>
-<p><strong>🔍 First Clue</strong>: The function signature shows <code>(result=0x302000000, input=0x0)</code></p>
+<p><strong>🔍 First Clue</strong>: The function signature shows <code>(output=0x302000000, a=0x0)</code></p>
 <ul>
-<li><code>result</code> has a valid GPU memory address</li>
-<li><code>input</code> is <code>0x0</code> - this is a null pointer!</li>
+<li><code>output</code> has a valid GPU memory address</li>
+<li><code>a</code> is <code>0x0</code> - this is a null pointer!</li>
 </ul>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
 <pre><code>(cuda-gdb) next
-32          result[i] = input[i] + 10.0
+32          output[i] = a[i] + 10.0
 (cuda-gdb) print i
 $1 = 0
-(cuda-gdb) print result
+(cuda-gdb) print output
 $2 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
-(cuda-gdb) print input
+(cuda-gdb) print a
 $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 </code></pre>
 <p><strong>Evidence Gathering</strong>:</p>
@@ -3842,24 +3842,25 @@ $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 <li>❌ Input pointer <code>0x0</code> is null</li>
 </ul>
 <h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
-<pre><code>(cuda-gdb) print input[i]
+<pre><code>(cuda-gdb) print a[i]
 Cannot access memory at address 0x0
 </code></pre>
 <p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
 <p><strong>The Problem</strong>: Now if we look at the <a href="puzzle_09/../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
-<pre><code class="language-mojo">input_ptr = {}  # Creates NULL pointer!
+<pre><code class="language-mojo"> input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
-<li><code>{}</code> creates an uninitialized pointer (null)</li>
+<li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0) elements.</li>
+<li>since there are no elements for which to allocate memory, this returns a null pointer.</li>
 <li>This null pointer gets passed to the GPU kernel</li>
-<li>When kernel tries <code>input[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
+<li>When kernel tries <code>a[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
 <h2 id="the-fix"><a class="header" href="#the-fix">The fix</a></h2>
 <p>Replace null pointer creation with proper buffer allocation:</p>
 <pre><code class="language-mojo"># Wrong: Creates null pointer
-input_ptr = {}
+input_buf = ctx.enqueue_create_buffer[dtype](0)
 
 # Correct: Allocates and initialize actual GPU memory for safe processing
 input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -4056,62 +4057,62 @@ $1 = 0
 Cannot access memory at address 0x0
 </code></pre>
 <p><strong>❌ Problem</strong>: <code>window_sum</code> is not accessible.</p>
-<pre><code class="language-bash">(cuda-gdb) p input[0]
+<pre><code class="language-bash">(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 </code></pre>
 <p><strong>❌ Problem</strong>: Direct LayoutTensor indexing doesn’t work.</p>
-<pre><code class="language-bash">(cuda-gdb) p input.ptr[0]
+<pre><code class="language-bash">(cuda-gdb) p a.ptr[0]
 $2 = {0}
-(cuda-gdb) p input.ptr[0]@4
+(cuda-gdb) p a.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 </code></pre>
-<p><strong>🎯 BREAKTHROUGH</strong>: <code>input.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
+<p><strong>🎯 BREAKTHROUGH</strong>: <code>a.ptr[0]@4</code> shows the full input array! This is how we can inspect LayoutTensor data.</p>
 <h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
 <h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 39
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 39.
+<pre><code class="language-bash">(cuda-gdb) b 42
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:39
-39              idx = thread_id + offset - 1
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
+42              idx = thread_id + offset - 1
 </code></pre>
 <p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
 <h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 </code></pre>
-<p><strong>First iteration complete</strong>: Loop went from line 39 → 40 → back to 38. The loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 42 → 43 → back to 41. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-39              idx = thread_id + offset - 1
+42              idx = thread_id + offset - 1
 (cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41                  value = rebind[Scalar[dtype]](input[idx])
+44                  value = rebind[Scalar[dtype]](input[idx])
 (cuda-gdb) n
-42                  window_sum += value
+45                  window_sum += value
 (cuda-gdb) n
-40              if 0 &lt;= idx &lt; SIZE:
+43              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-38          for offset in range(ITER):
+41          for offset in range(ITER):
 </code></pre>
-<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 41-42).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 44-45).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-44          output[thread_id] = window_sum
+47          output[thread_id] = window_sum
 </code></pre>
-<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 44 instead of hitting our breakpoint at line 39 again.</p>
+<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-28      fn process_sliding_window(
+31      fn process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -4162,9 +4163,10 @@ No symbol "offset" in current context.
 <pre><code class="language-mojo">comptime ITER = 2                       # ← BUG: Should be 3!
 
 for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
-    idx = thread_id + offset - 1     # ← Missing offset = 2
+    idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
     if 0 &lt;= idx &lt; SIZE:
-        window_sum += input[idx]
+        value = rebind[Scalar[dtype]](a[idx])
+        window_sum += value
 </code></pre>
 <p><strong>🎯 ROOT CAUSE IDENTIFIED</strong>: <code>ITER = 2</code> should be <code>ITER = 3</code> for a sliding window of size 3.</p>
 <p><strong>The Fix</strong>: Change <code>comptime ITER = 2</code> to <code>comptime ITER = 3</code> in the source code.</p>
@@ -4366,9 +4368,9 @@ Waiting for GPU computation to complete...
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
-    output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:52
-52          input: LayoutTensor[mut=False, dtype, vector_layout],
+    output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
+56          a: LayoutTensor[mut=False, dtype, vector_layout],
 </code></pre>
 <p><strong>🔍 Key Observations</strong>:</p>
 <ul>
@@ -4379,75 +4381,75 @@ CUDA thread hit application kernel entry function breakpoint, p09_collaborative_
 </ul>
 <h4 id="step-4-navigate-through-initialization"><a class="header" href="#step-4-navigate-through-initialization">Step 4: navigate through initialization</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-51          output: LayoutTensor[mut=True, dtype, vector_layout],
+55          output: LayoutTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
-54          thread_id = thread_idx.x
+58          thread_id = thread_idx.x
 (cuda-gdb) n
-57          shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+66          ].stack_allocation()
 (cuda-gdb) n
-60          if thread_id &lt; SIZE - 1:
+69          if thread_id &lt; SIZE - 1:
 (cuda-gdb) p thread_id
 $1 = 0
 </code></pre>
 <p><strong>✅ Thread 0 state</strong>: <code>thread_id = 0</code>, about to check condition <code>0 &lt; 3</code> → <strong>True</strong></p>
 <h4 id="step-5-trace-through-phase-1"><a class="header" href="#step-5-trace-through-phase-1">Step 5: trace through phase 1</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-61              shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+70              shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 (cuda-gdb) n
-60          if thread_id &lt; SIZE - 1:
+69          if thread_id &lt; SIZE - 1:
 (cuda-gdb) n
-62          barrier()
+71          barrier()
 </code></pre>
 <p><strong>Phase 1 Complete</strong>: Thread 0 executed the initialization and reached the first barrier.</p>
 <h3 id="phase-3-the-critical-barrier-investigation"><a class="header" href="#phase-3-the-critical-barrier-investigation">Phase 3: the critical barrier investigation</a></h3>
 <h4 id="step-6-examine-the-first-barrier"><a class="header" href="#step-6-examine-the-first-barrier">Step 6: examine the first barrier</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-65          if thread_id &lt; SIZE - 1:
+74          if thread_id &lt; SIZE - 1:
 (cuda-gdb) info cuda threads
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
-*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    65
+*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    74
 </code></pre>
-<p><strong>✅ Good</strong>: All 4 threads are at line 65 (after the first barrier). The first barrier worked correctly.</p>
+<p><strong>✅ Good</strong>: All 4 threads are at line 74 (after the first barrier). The first barrier worked correctly.</p>
 <p><strong>🔍 Critical Point</strong>: Now we’re entering Phase 2 with another conditional statement.</p>
 <h4 id="step-7-trace-through-phase-2---thread-0-perspective"><a class="header" href="#step-7-trace-through-phase-2---thread-0-perspective">Step 7: trace through phase 2 - thread 0 perspective</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-67              if thread_id &gt; 0:
+76              if thread_id &gt; 0:
 </code></pre>
 <p><strong>Thread 0 Analysis</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → Thread 0 enters the Phase 2 block</p>
 <pre><code class="language-bash">(cuda-gdb) n
-69              barrier()
+78              barrier()
 </code></pre>
-<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 69</p>
-<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 69.</p>
+<p><strong>Thread 0 Path</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → Thread 0 skips the inner computation but reaches the barrier at line 78</p>
+<p><strong>CRITICAL MOMENT</strong>: Thread 0 is now waiting at the barrier on line 78.</p>
 <pre><code class="language-bash">(cuda-gdb) n # &lt;-- if you run it the program hangs!
 [HANGS HERE - Program never proceeds beyond this point]
 </code></pre>
 <h4 id="step-8-investigate-other-threads"><a class="header" href="#step-8-investigate-other-threads">Step 8: investigate other threads</a></h4>
 <pre><code class="language-bash">(cuda-gdb) cuda thread (1,0,0)
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-69              barrier()
+78              barrier()
 (cuda-gdb) p thread_id
 $2 = 1
 (cuda-gdb) info cuda threads
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
-*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    69
-   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    72
+*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    78
+   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    81
 </code></pre>
 <p><strong>SMOKING GUN DISCOVERED</strong>:</p>
 <ul>
-<li><strong>Threads 0, 1, 2</strong>: All waiting at line 69 (barrier inside the conditional block)</li>
-<li><strong>Thread 3</strong>: At line 72 (after the conditional block, never reached the barrier!)</li>
+<li><strong>Threads 0, 1, 2</strong>: All waiting at line 78 (barrier inside the conditional block)</li>
+<li><strong>Thread 3</strong>: At line 81 (after the conditional block, never reached the barrier!)</li>
 </ul>
 <h4 id="step-9-analyze-thread-3s-execution-path"><a class="header" href="#step-9-analyze-thread-3s-execution-path">Step 9: analyze thread 3’s execution path</a></h4>
 <p><strong>🔍 Thread 3 Analysis from the info output</strong>:</p>
 <ul>
-<li><strong>Thread 3</strong>: Located at line 72 (PC: 0x00007fffd3273b10)</li>
+<li><strong>Thread 3</strong>: Located at line 81 (PC: 0x00007fffd3273b10)</li>
 <li><strong>Phase 2 condition</strong>: <code>thread_id &lt; SIZE - 1</code> → <code>3 &lt; 3</code> → <strong>False</strong></li>
-<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 65-69)</li>
-<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 69</li>
-<li><strong>Current state</strong>: Thread 3 is at line 72 (final barrier), while threads 0,1,2 are stuck at line 69</li>
+<li><strong>Result</strong>: Thread 3 <strong>NEVER entered</strong> the Phase 2 block (lines 74-78)</li>
+<li><strong>Consequence</strong>: Thread 3 <strong>NEVER reached</strong> the barrier at line 78</li>
+<li><strong>Current state</strong>: Thread 3 is at line 81 (final barrier), while threads 0,1,2 are stuck at line 78</li>
 </ul>
 <h3 id="phase-4-root-cause-analysis-1"><a class="header" href="#phase-4-root-cause-analysis-1">Phase 4: root cause analysis</a></h3>
 <h4 id="step-10-deadlock-mechanism-identified"><a class="header" href="#step-10-deadlock-mechanism-identified">Step 10: deadlock mechanism identified</a></h4>
@@ -4483,14 +4485,14 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
 <pre><code class="language-mojo">fn collaborative_filter(
     output: LayoutTensor[mut=True, dtype, vector_layout],
-    input: LayoutTensor[mut=False, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
     shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
-        shared_workspace[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
 
     # Phase 2: Collaborative processing
@@ -4506,7 +4508,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
     if thread_id &lt; SIZE - 1:
         output[thread_id] = shared_workspace[thread_id]
     else:
-        output[thread_id] = rebind[Scalar[dtype]](input[thread_id])
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
 </code></pre>
 <h2 id="key-debugging-lessons-2"><a class="header" href="#key-debugging-lessons-2">Key debugging lessons</a></h2>
 <p><strong>Barrier deadlock detection</strong>:</p>
