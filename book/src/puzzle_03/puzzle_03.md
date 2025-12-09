@@ -1,5 +1,7 @@
 # Puzzle 3: Guards
 
+{{ youtube YFKutZbRYSM }}
+
 ## Overview
 
 Implement a kernel that adds 10 to each position of vector `a` and stores it in vector `output`.

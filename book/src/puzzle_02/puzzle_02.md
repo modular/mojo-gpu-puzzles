@@ -1,5 +1,7 @@
 # Puzzle 2: Zip
 
+{{ youtube SlpgR685oGA }}
+
 ## Overview
 
 Implement a kernel that adds together each position of vector `a` and vector `b` and stores it in `output`.

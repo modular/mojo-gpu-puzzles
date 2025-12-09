@@ -1,5 +1,7 @@
 # Puzzle 1: Map
 
+{{ youtube rLhjprX8Nck }}
+
 ## Overview
 
 This puzzle introduces the fundamental concept of GPU parallelism: mapping individual threads to data elements for concurrent processing.
