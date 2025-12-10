@@ -1,10 +1,14 @@
 # Puzzle 3: Guards
 
+{{ youtube YFKutZbRYSM breakpoint-lg }}
+
 ## Overview
 
 Implement a kernel that adds 10 to each position of vector `a` and stores it in vector `output`.
 
 **Note**: _You have more threads than positions. This means you need to protect against out-of-bounds memory access._
+
+{{ youtube YFKutZbRYSM breakpoint-sm }}
 
 <img src="./media/03.png" alt="Guard" class="light-mode-img">
 <img src="./media/03d.png" alt="Guard" class="dark-mode-img">

@@ -66,3 +66,7 @@ index = false
 # Enables use of {{#include file.md}} to include other files
 renderers = ["html"]
 some-attribute = "value"
+
+[preprocessor.youtube]
+# Custom preprocessor for YouTube embeds
+command = "python ../scripts/youtube_preprocessor.py"

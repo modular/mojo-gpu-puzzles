@@ -74,7 +74,8 @@
 html {
   scroll-padding-top: var(--modular-header-height);
   font-family: "Inter", sans-serif;
-  font-feature-settings: "dlig" 1, "cv05" 1, "ss03" 1, "ss07" 1, "ss08" 1, "ss01" 0;
+  font-feature-settings: "dlig" 1, "cv05" 1, "ss03" 1, "ss07" 1, "ss08" 1,
+    "ss01" 0;
   border-right: 1px solid var(--modular-border);
 
   -moz-osx-font-smoothing: grayscale;
@@ -1085,4 +1086,43 @@ details:last-child {
 main .content {
   max-width: var(--content-max-width);
   padding: 0 var(--page-padding);
+}
+
+/* YouTube Video Embeds */
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 1rem 4rem;
+  float: right;
+  clear: right;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+}
+
+@media (min-width: 997px) {
+  .video-container.breakpoint-sm {
+    display: none;
+  }
+}
+
+@media (max-width: 996px) {
+  .video-container {
+    float: none;
+    margin: 1.5rem auto;
+    max-width: 100%;
+  }
+
+  .video-container.breakpoint-lg {
+    display: none;
+  }
 }

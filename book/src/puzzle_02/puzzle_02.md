@@ -1,10 +1,14 @@
 # Puzzle 2: Zip
 
+{{ youtube SlpgR685oGA breakpoint-lg }}
+
 ## Overview
 
 Implement a kernel that adds together each position of vector `a` and vector `b` and stores it in `output`.
 
 **Note:** _You have 1 thread per position._
+
+{{ youtube SlpgR685oGA breakpoint-sm }}
 
 <img src="./media/02.png" alt="Zip" class="light-mode-img">
 <img src="./media/02d.png" alt="Zip" class="dark-mode-img">
