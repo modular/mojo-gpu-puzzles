@@ -282,6 +282,8 @@ The script automatically detects CUDA from multiple common locations:
 
 See [`scripts/setup-cuda-gdb.sh`](https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh) for implementation details.
 
+**Special note for WSL users**: Both debug tools we will use in Part II (namely cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL, but require you to add the registry key `HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface` and set it to `(DWORD) 1`. More details on supported platforms and their OS specific behavior can be found here: [cuda-gdb](https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms) and [compute-sanatizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior)
+
 ---
 
 ## Hands-on tutorial: Your first GPU debugging session
