@@ -1,6 +1,6 @@
 # Puzzle 1: Map
 
-{{ youtube rLhjprX8Nck }}
+{{ youtube rLhjprX8Nck breakpoint-lg }}
 
 ## Overview
 
@@ -8,6 +8,8 @@ This puzzle introduces the fundamental concept of GPU parallelism: mapping indiv
 Your task is to implement a kernel that adds 10 to each element of vector `a`, storing the results in vector `output`.
 
 **Note:** _You have 1 thread per position._
+
+{{ youtube rLhjprX8Nck breakpoint-sm }}
 
 <img src="./media/01.png" alt="Map" class="light-mode-img">
 <img src="./media/01d.png" alt="Map" class="dark-mode-img">

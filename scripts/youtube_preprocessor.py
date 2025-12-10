@@ -4,11 +4,16 @@ import sys
 
 
 def process_content(content):
-    pattern = r"\{\{\s*youtube\s+(\S+)\s*\}\}"
-    replacement = r"""<div class="video-container">
-<iframe src="https://www.youtube.com/embed/\1" allowfullscreen></iframe>
+    pattern = r"\{\{\s*youtube\s+(\S+)(?:\s+(\S+))?\s*\}\}"
+
+    def replace(match):
+        video_id = match.group(1)
+        size_class = match.group(2) or ""
+        return f"""<div class="video-container {size_class}">
+<iframe src="https://www.youtube.com/embed/{video_id}" allowfullscreen></iframe>
 </div>"""
-    return re.sub(pattern, replacement, content)
+
+    return re.sub(pattern, replace, content)
 
 
 def process_items(items):

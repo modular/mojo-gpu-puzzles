@@ -1109,11 +1109,20 @@ main .content {
   border-radius: 8px;
 }
 
-/* Mobile: center video, no float */
+@media (min-width: 997px) {
+  .video-container.breakpoint-sm {
+    display: none;
+  }
+}
+
 @media (max-width: 996px) {
   .video-container {
     float: none;
     margin: 1.5rem auto;
     max-width: 100%;
+  }
+
+  .video-container.breakpoint-lg {
+    display: none;
   }
 }
