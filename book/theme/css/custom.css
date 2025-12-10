@@ -1094,9 +1094,10 @@ main .content {
   width: 100%;
   max-width: 480px;
   aspect-ratio: 16 / 9;
-  margin: 0 0 1rem 4rem;
+  margin: 0 0 6rem 4rem;
   float: right;
   clear: right;
+  shape-outside: margin-box;
 }
 
 .video-container iframe {
@@ -1118,7 +1119,8 @@ main .content {
 @media (max-width: 996px) {
   .video-container {
     float: none;
-    margin: 1.5rem auto;
+    width: auto;
+    margin: 2.5rem 1.5rem;
     max-width: 100%;
   }
 
