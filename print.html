@@ -3134,6 +3134,7 @@ pixi run cuda-gdb --version
 <li>System PATH (via <code>which cuda-gdb</code>)</li>
 </ul>
 <p>See <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh"><code>scripts/setup-cuda-gdb.sh</code></a> for implementation details.</p>
+<p><strong>Special note for WSL users</strong>: Both debug tools we will use in Part II (namely cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL, but require you to add the registry key <code>HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface</code> and set it to <code>(DWORD) 1</code>. More details on supported platforms and their OS specific behavior can be found here: <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms">cuda-gdb</a> and <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior">compute-sanatizer</a></p>
 <hr />
 <h2 id="hands-on-tutorial-your-first-gpu-debugging-session"><a class="header" href="#hands-on-tutorial-your-first-gpu-debugging-session">Hands-on tutorial: Your first GPU debugging session</a></h2>
 <p>Theory is great, but nothing beats hands-on experience. Let’s debug a real program using Puzzle 01 - the simple “add 10 to each array element” kernel you know well.</p>
