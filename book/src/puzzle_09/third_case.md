@@ -36,7 +36,7 @@ First, examine the kernel without looking at the complete code:
 To experience the bug firsthand, run the following command in your terminal (`pixi` only):
 
 ```bash
-pixi -e nvidia run p09 --third-case
+pixi run -e nvidia p09 --third-case
 ```
 
 You'll see output like this - **the program hangs indefinitely**:
