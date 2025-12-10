@@ -721,10 +721,16 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 </ol>
 <p>Currently, we can ship stickers to addresses within <strong>North America</strong>. If you’re located elsewhere, please still submit your solutions – we’re working on expanding our shipping reach and would love to recognize your achievements when possible.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-1-map"><a class="header" href="#puzzle-1-map">Puzzle 1: Map</a></h1>
+<div class="video-container breakpoint-lg">
+<iframe src="https://www.youtube.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
+</div>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>This puzzle introduces the fundamental concept of GPU parallelism: mapping individual threads to data elements for concurrent processing.
 Your task is to implement a kernel that adds 10 to each element of vector <code>a</code>, storing the results in vector <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
+<div class="video-container breakpoint-sm">
+<iframe src="https://www.youtube.com/embed/rLhjprX8Nck" allowfullscreen></iframe>
+</div>
 <img src="puzzle_01/./media/01.png" alt="Map" class="light-mode-img">
 <img src="puzzle_01/./media/01d.png" alt="Map" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
@@ -881,9 +887,15 @@ output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: While direct indexing works for simple cases, we’ll soon need more sophisticated tools for complex GPU programming patterns.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-2-zip"><a class="header" href="#puzzle-2-zip">Puzzle 2: Zip</a></h1>
+<div class="video-container breakpoint-lg">
+<iframe src="https://www.youtube.com/embed/SlpgR685oGA" allowfullscreen></iframe>
+</div>
 <h2 id="overview-1"><a class="header" href="#overview-1">Overview</a></h2>
 <p>Implement a kernel that adds together each position of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have 1 thread per position.</em></p>
+<div class="video-container breakpoint-sm">
+<iframe src="https://www.youtube.com/embed/SlpgR685oGA" allowfullscreen></iframe>
+</div>
 <img src="puzzle_02/./media/02.png" alt="Zip" class="light-mode-img">
 <img src="puzzle_02/./media/02d.png" alt="Zip" class="dark-mode-img">
 <h2 id="key-concepts-2"><a class="header" href="#key-concepts-2">Key concepts</a></h2>
@@ -990,9 +1002,15 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 </ul>
 <p>These questions will be addressed when we <a href="puzzle_02/../puzzle_04/">introduce LayoutTensor in Puzzle 4</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-3-guards"><a class="header" href="#puzzle-3-guards">Puzzle 3: Guards</a></h1>
+<div class="video-container breakpoint-lg">
+<iframe src="https://www.youtube.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
+</div>
 <h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in vector <code>output</code>.</p>
 <p><strong>Note</strong>: <em>You have more threads than positions. This means you need to protect against out-of-bounds memory access.</em></p>
+<div class="video-container breakpoint-sm">
+<iframe src="https://www.youtube.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
+</div>
 <img src="puzzle_03/./media/03.png" alt="Guard" class="light-mode-img">
 <img src="puzzle_03/./media/03d.png" alt="Guard" class="dark-mode-img">
 <h2 id="key-concepts-3"><a class="header" href="#key-concepts-3">Key concepts</a></h2>
