@@ -16,7 +16,11 @@ fn add(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
-    # FILL ME IN (roughly 1 line)
+    output[i] = a[i] + b[i]
+    # While this direct indexing works for simple element-wise operations, consider:
+    # What if arrays have different layouts?
+    # What if we need to broadcast one array to another?
+    # How to ensure coalesced access across multiple arrays?
 
 
 # ANCHOR_END: add

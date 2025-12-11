@@ -18,7 +18,12 @@ fn add_10_2d(
 ):
     row = thread_idx.y
     col = thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    # Using a layout tensor I didn't have to worry about the index mapping/offset
+    # However number of threads are still > than size of the tensor
+    # This is why we still need to check the bounds
+    # So depedency on knowing the grid / block / threads_per_block still exists
+    if row < size and col < size:
+        output[row, col] = a[row, col] + 10
 
 
 # ANCHOR_END: add_10_2d_layout_tensor

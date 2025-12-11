@@ -14,7 +14,11 @@ fn add_10(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
     i = thread_idx.x
-    # FILL ME IN (roughly 1 line)
+    # Need to better understand what points 2 and 3 below mean
+    # Handle 2D or 3D data?
+    # Deal with different memory layouts?
+    # Ensure coalesced memory access?
+    output[i] = a[i] + 10
 
 
 # ANCHOR_END: add_10

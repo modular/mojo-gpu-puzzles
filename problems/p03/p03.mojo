@@ -16,6 +16,14 @@ fn add_10_guard(
     size: UInt,
 ):
     i = thread_idx.x
+    # Interesting on Apple GPU this code worked even without the conditional
+    # Not sure about other GPUs but the key learning here is that our thread block size is bigger than SIZE of the input
+    # that is why we need to guard against out of bounds access
+    # What about 2D/3D array boundaries?
+    # How to handle different shapes efficiently?
+    # What if we need padding or edge handling?
+    if i < size:
+        output[i] = a[i] + 10
     # FILL ME IN (roughly 2 lines)
 
 

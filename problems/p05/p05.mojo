@@ -18,7 +18,9 @@ fn broadcast_add(
 ):
     row = thread_idx.y
     col = thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    # Why I need bound check is clear. In this case if we don't have a bound check we will have a runtime error which we will lead to undefined behaviour
+    if row < size and col < size:
+        output[row * size + col] = a[col] + b[row]
 
 
 # ANCHOR_END: broadcast_add

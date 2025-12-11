@@ -24,8 +24,35 @@ fn dot_product[
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    # FILL ME IN (roughly 13 lines)
-    ...
+    # Allocate shared memory using tensor builder
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    # local data into shared memory
+    if global_i < size:
+        shared[local_i] = a[global_i] * b[global_i]
+
+    # wait for all threads to complete
+    # works within a thread block
+    barrier()
+
+    stride = UInt(TPB // 2)
+    while stride > 0:
+        if local_i < stride:
+            shared[local_i] += shared[local_i + stride]
+            # Let threads finish before coalescing further
+            barrier()
+        stride = stride // 2
+
+    if thread_idx.x == 0:
+        output[0] = shared[0]
+
 
 
 # ANCHOR_END: dot_product_layout_tensor

@@ -16,7 +16,12 @@ fn add_10_blocks(
     size: UInt,
 ):
     i = block_dim.x * block_idx.x + thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    # block_dim is the number of threads per block not number of blocks, I had a confusion regarding this
+    # print("block_dim", block_dim.x, "block:", block_idx.x, "thread:", thread_idx.x, "i:", i)
+    # As long as the final index you are generating is less than size of the input
+    # then you have mapped it correctly, simple
+    if i < size:
+        output[i] = a[i] + 10
 
 
 # ANCHOR_END: add_10_blocks

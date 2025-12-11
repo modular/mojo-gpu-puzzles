@@ -32,8 +32,10 @@ fn add_10_shared(
     # wait for all threads to complete
     # works within a thread block
     barrier()
-
-    # FILL ME IN (roughly 2 lines)
+    # In general, in this case you don't have to need shared memory but it is just teaching us the way to allocate it.
+    # This problem is same as p06 where # of threads per block are less than number of elements in input
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10
 
 
 # ANCHOR_END: add_10_shared
