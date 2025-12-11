@@ -111,7 +111,7 @@ Test Configuration:
 - Convolution kernel: CONV_2 = 4 elements
 
 Block 0 shared memory:  [0 1 2 3 4 5 6 7|8 9 10]  // TPB(8) + (CONV_2-1)(3) padding
-Block 1 shared memory:  [8 9 10 11 12 13 14|0 0]  // Second block with padding
+Block 1 shared memory:  [8 9 10 11 12 13 14 0|0 0 0]  // Second block. data(7) + padding to fill grid(1) + (CONV_2-1)(3) padding
 
 Size calculation:
 - Main data: TPB elements (8)
@@ -137,6 +137,8 @@ Size calculation:
    # Main block data
    if global_i < SIZE_2:
        shared_a[local_i] = a[global_i]
+   else:
+       shared_a[local_i] = 0
 
    # Boundary data from next block
    if local_i < CONV_2 - 1:
@@ -192,12 +194,15 @@ Size calculation:
    ```
 
 2. **Block 1 Access Pattern**:
-
+Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False` and hence iterations are skipped.
    ```txt
-   Thread 0: [8 9 10 11] × [0 1 2 3]
+   Thread 0: [8  9 10 11] × [0 1 2 3]
    Thread 1: [9 10 11 12] × [0 1 2 3]
    ...
-   Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
+   Thread 4: [12 13 14] × [0 1 2]       // Zero padding at end
+   Thread 5: [13 14]    × [0 1]
+   Thread 6: [14]       × [0]
+   Thread 7: skipped                    // global_i + j < SIZE_2 evaluates to false for all j, no computation
    ```
 
 ### Performance optimizations
