@@ -336,7 +336,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 - Convolution kernel: CONV_2 = 4 elements
 
 Block 0 shared memory:  [0 1 2 3 4 5 6 7|8 9 10]  // TPB(8) + (CONV_2-1)(3) padding
-Block 1 shared memory:  [8 9 10 11 12 13 14|0 0]  // Second block with padding
+Block 1 shared memory:  [8 9 10 11 12 13 14 0|0 0 0]  // Second block. data(7) + padding to fill grid(1) + (CONV_2-1)(3) padding
 
 Size calculation:
 - Main data: TPB elements (8)
@@ -358,6 +358,8 @@ shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_s
 <pre><code class="language-mojo"># Main block data
 if global_i &lt; SIZE_2:
     shared_a[local_i] = a[global_i]
+else:
+    shared_a[local_i] = 0
 
 # Boundary data from next block
 if local_i &lt; CONV_2 - 1:
@@ -414,11 +416,15 @@ Thread 7: [7 8 9 10] × [0 1 2 3]  // Uses overlap data
 </code></pre>
 </li>
 <li>
-<p><strong>Block 1 Access Pattern</strong>:</p>
-<pre><code class="language-txt">Thread 0: [8 9 10 11] × [0 1 2 3]
+<p><strong>Block 1 Access Pattern</strong>:
+Note how starting from thread 4, <code>global_i + j &lt; SIZE_2</code> evaluates to <code>False</code> and hence iterations are skipped.</p>
+<pre><code class="language-txt">Thread 0: [8  9 10 11] × [0 1 2 3]
 Thread 1: [9 10 11 12] × [0 1 2 3]
 ...
-Thread 7: [14 0 0 0] × [0 1 2 3]  // Zero padding at end
+Thread 4: [12 13 14] × [0 1 2]       // Zero padding at end
+Thread 5: [13 14]    × [0 1]
+Thread 6: [14]       × [0]
+Thread 7: skipped                    // global_i + j &lt; SIZE_2 evaluates to false for all j, no computation
 </code></pre>
 </li>
 </ol>
