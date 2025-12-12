@@ -119,10 +119,8 @@ def main():
                 block_dim=THREADS_PER_BLOCK_2,
             )
 
-            # Wait for all `blocks` to complete with using host `ctx.synchronize()`
-            # Note this is in contrast with using `barrier()` in the kernel
-            # which is a synchronization point for all threads in the same block and not across blocks.
-            ctx.synchronize()
+            # Note: kernel2 starts when kernel1 is finished due to Mojo's DeviceContext using a single execution stream
+            # No explicit ctx.synchronize() needed in this case.
 
             # Phase 2: Add block sums
             comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
