@@ -299,8 +299,8 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
@@ -395,9 +395,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutAnyOrigin](
-                k_t_buf.unsafe_ptr()
-            )
+            k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             # FILL ME IN 1 line
@@ -406,7 +404,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             # FILL ME IN 1 function call
 
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
-            # GPU: Uses matrix multiplication to compute all Q · K[i] scores in parallel
+            # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
             # FILL ME IN 2 lines
 
