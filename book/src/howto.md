@@ -267,7 +267,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | **Part IV: MAX Graph** | | | | |
 | 17 - Custom Op | ✅ | ✅ | ✅ | MAX Graph integration |
 | 18 - Softmax | ✅ | ✅ | ✅ | MAX Graph integration |
-| 19 - Attention | ✅ | ✅ | ❌ | MAX Graph integration |
+| 19 - Attention | ✅ | ✅ | ✅ | MAX Graph integration |
 | **Part V: PyTorch Integration** | | | | |
 | 20 - Torch Bridge | ✅ | ✅ | ❌ | PyTorch integration |
 | 21 - Autograd | ✅ | ✅ | ❌ | PyTorch integration |
@@ -281,7 +281,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | **Part VIII: Block Programming** | | | | |
 | 27 - Block Operations | ✅ | ✅ | ✅ | Block-level patterns |
 | **Part IX: Memory Systems** | | | | |
-| 28 - Async Memory | ✅ | ✅ | ❌ | Advanced memory operations |
+| 28 - Async Memory | ✅ | ✅ | ✅ | Advanced memory operations |
 | 29 - Barriers | ✅ | ✅ | ❌ | Advanced synchronization |
 | **Part X: Performance Analysis** | | | | |
 | 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA profiling tools (NSight) |
