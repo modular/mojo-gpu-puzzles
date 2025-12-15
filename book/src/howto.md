@@ -282,7 +282,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | 27 - Block Operations | ✅ | ✅ | ✅ | Block-level patterns |
 | **Part IX: Memory Systems** | | | | |
 | 28 - Async Memory | ✅ | ✅ | ✅ | Advanced memory operations |
-| 29 - Barriers | ✅ | ✅ | ❌ | Advanced synchronization |
+| 29 - Barriers | ✅ | ❌ | ❌ | Advanced NVIIDA-only synchronization |
 | **Part X: Performance Analysis** | | | | |
 | 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA profiling tools (NSight) |
 | 31 - Occupancy | ✅ | ❌ | ❌ | NVIDIA profiling tools |
