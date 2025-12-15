@@ -274,6 +274,7 @@ Proper synchronization ensures correctness without sacrificing performance.
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -287,6 +288,13 @@ pixi run p28
 
 ```bash
 pixi run -e amd p28
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p28
 ```
 
   </div>
