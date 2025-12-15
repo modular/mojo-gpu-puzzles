@@ -595,7 +595,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td><strong>Part IV: MAX Graph</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
 <tr><td>18 - Softmax</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
-<tr><td>19 - Attention</td><td>✅</td><td>✅</td><td>❌</td><td>MAX Graph integration</td></tr>
+<tr><td>19 - Attention</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
 <tr><td><strong>Part V: PyTorch Integration</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>20 - Torch Bridge</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
 <tr><td>21 - Autograd</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch integration</td></tr>
@@ -609,7 +609,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td><strong>Part VIII: Block Programming</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>✅</td><td>Block-level patterns</td></tr>
 <tr><td><strong>Part IX: Memory Systems</strong></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory operations</td></tr>
+<tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>✅</td><td>Advanced memory operations</td></tr>
 <tr><td>29 - Barriers</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced synchronization</td></tr>
 <tr><td><strong>Part X: Performance Analysis</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>30 - Profiling</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools (NSight)</td></tr>
@@ -10194,6 +10194,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -10202,6 +10203,10 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p19
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p19
 </code></pre>
   </div>
   <div class="tab-content">
@@ -20716,6 +20721,7 @@ fn async_copy_overlap_convolution[
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -20724,6 +20730,10 @@ fn async_copy_overlap_convolution[
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p28
 </code></pre>
   </div>
   <div class="tab-content">
