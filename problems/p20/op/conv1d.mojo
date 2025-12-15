@@ -23,8 +23,8 @@ fn conv1d_kernel[
     input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
     kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
     # first: need to account for padding
     shared_a = LayoutTensor[
         dtype,
@@ -87,9 +87,9 @@ struct Conv1DCustomOp:
         conv_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1],
-        input: InputTensor[dtype = output.dtype, rank = output.rank],
-        kernel: InputTensor[dtype = output.dtype, rank = output.rank],
+        output: OutputTensor[dtype=dtype, rank=1],
+        input: InputTensor[dtype=dtype, rank = output.rank],
+        kernel: InputTensor[dtype=dtype, rank = output.rank],
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:
@@ -117,7 +117,7 @@ struct Conv1DCustomOp:
             )
             comptime kernel = conv1d_kernel[
                 in_layout, out_layout, conv_layout, input_size, conv_size
-            ],
+            ]
             gpu_ctx.enqueue_function_checked[kernel, kernel](
                 out_tensor,
                 input_tensor,

@@ -22,8 +22,8 @@ fn conv1d_kernel[
     input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
     kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
     # first: need to account for padding
     shared_a = LayoutTensor[
         dtype,
