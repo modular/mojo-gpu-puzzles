@@ -66,6 +66,7 @@ To test your solution, run the following command in your terminal:
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -79,6 +80,13 @@ pixi run p16 --single-block
 
 ```bash
 pixi run -e amd p16 --single-block
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p16 --single-block
 ```
 
   </div>
