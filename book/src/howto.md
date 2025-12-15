@@ -263,7 +263,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | 13 - Pool | ✅ | ✅ | ✅ | Basic GPU kernels |
 | 14 - Conv | ✅ | ✅ | ✅ | Basic GPU kernels |
 | 15 - Matmul | ✅ | ✅ | ✅ | Basic GPU kernels |
-| 16 - Flashdot | ✅ | ✅ | ❌ | Advanced memory patterns |
+| 16 - Flashdot | ✅ | ✅ | ✅ | Advanced memory patterns |
 | **Part IV: MAX Graph** | | | | |
 | 17 - Custom Op | ✅ | ✅ | ✅ | MAX Graph integration |
 | 18 - Softmax | ✅ | ✅ | ✅ | MAX Graph integration |
@@ -282,7 +282,7 @@ The following table shows GPU platform compatibility for each puzzle. Different 
 | 27 - Block Operations | ✅ | ✅ | ✅ | Block-level patterns |
 | **Part IX: Memory Systems** | | | | |
 | 28 - Async Memory | ✅ | ✅ | ✅ | Advanced memory operations |
-| 29 - Barriers | ✅ | ❌ | ❌ | Advanced NVIIDA-only synchronization |
+| 29 - Barriers | ✅ | ❌ | ❌ | Advanced NVIDIA-only synchronization |
 | **Part X: Performance Analysis** | | | | |
 | 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA profiling tools (NSight) |
 | 31 - Occupancy | ✅ | ❌ | ❌ | NVIDIA profiling tools |
