@@ -37,9 +37,9 @@ fn matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, b_layout, MutAnyOrigin],
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
+    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
     local_row = Int(thread_idx.y)
@@ -124,8 +124,8 @@ fn transpose_kernel[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[mut=False, dtype, layout_in, MutAnyOrigin],
+    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
+    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
@@ -140,8 +140,8 @@ fn softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
     shared_max = LayoutTensor[
         dtype,
@@ -215,7 +215,7 @@ fn attention_cpu_kernel[
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
     q: LayoutTensor[dtype, layout_q, MutAnyOrigin],
-    k: LayoutTensor[dtype, layout_k, MutAnyOrigin],
+    k: LayoutTensor[dtype, layout_k, ImmutAnyOrigin],
     v: LayoutTensor[dtype, layout_v, MutAnyOrigin],
 ):
     """CPU implementation of vector attention."""
@@ -225,7 +225,7 @@ fn attention_cpu_kernel[
         scores.append(0.0)
         weights.append(0.0)
 
-    # CPU: Compute attention scores K[i] · Q directly for each row i of K
+    # Compute attention scores: Q · K[i] for each row i of K
     for i in range(seq_len):
         var score: Float32 = 0.0
         for dim in range(d):
@@ -283,7 +283,7 @@ struct AttentionCustomOp:
         var q_tensor = rebind[LayoutTensor[dtype, layout_q, MutAnyOrigin]](
             q.to_layout_tensor()
         )
-        var k_tensor = rebind[LayoutTensor[dtype, layout_k, MutAnyOrigin]](
+        var k_tensor = rebind[LayoutTensor[dtype, layout_k, ImmutAnyOrigin]](
             k.to_layout_tensor()
         )
         var v_tensor = rebind[LayoutTensor[dtype, layout_v, MutAnyOrigin]](
@@ -342,9 +342,7 @@ struct AttentionCustomOp:
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[mut=True, dtype, layout_k_t, MutAnyOrigin](
-                k_t_buf.unsafe_ptr()
-            )
+            k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             # FILL ME IN 1 line
@@ -353,7 +351,7 @@ struct AttentionCustomOp:
             # FILL ME IN 1 function call
 
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len)
-            # GPU: Uses matrix multiplication to compute all Q · K[i] scores in parallel
+            # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
             # FILL ME IN 2 lines
 
