@@ -199,7 +199,7 @@
 <ul>
 <li><strong>Multiple blocks</strong>: When the input array is larger than one block, we need a multi-phase approach</li>
 <li><strong>Block-level sync</strong>: Within a block, use <code>barrier()</code> to synchronize threads</li>
-<li><strong>Host-level sync</strong>: Between blocks, use <code>ctx.synchronize()</code> at the host level</li>
+<li><strong>Host-level sync</strong>: Between blocks, Mojo’s <code>DeviceContext</code> ensures kernel launches are ordered, which means they start in the order they where scheduled and wait for the previous kernel to finish before starting. You may need to use <code>ctx.synchronize()</code> to ensure all GPU work is complete before reading results back to the host.</li>
 <li><strong>Auxiliary storage</strong>: Use extra space to store block sums for cross-block communication</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
@@ -240,7 +240,7 @@ fn prefix_sum_block_sum_phase[
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
-<p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to use host-level synchronization:</p>
+<p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to enqueue multiple kernels that run sequentially on the device:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
             comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
             ctx.enqueue_function_checked[kernel, kernel](
@@ -260,6 +260,7 @@ fn prefix_sum_block_sum_phase[
                 block_dim=THREADS_PER_BLOCK_2,
             )
 </code></pre>
+<p>Note how the two kernels are enqueued sequentially, but <code>out_tensor</code> is not transferred back to the host until both kernels complete their work. It’s Mojo’s <code>DeviceContext</code> using a single execution stream that ensures all enqueued kernels execute sequentially. You can use <code>ctx.synchronize()</code> to explicitly wait for all GPU work to finish, for example before reading results back to the host.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
@@ -291,13 +292,14 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <li><strong>Different layouts</strong>: Input and output may have different shapes</li>
 <li><strong>Boundary handling</strong>: Always check <code>global_i &lt; size</code> for array bounds</li>
 <li><strong>Thread role specialization</strong>: Only specific threads (e.g., last thread) should store block sums</li>
-<li><strong>Two kernel synchronization</strong>: Use <code>ctx.synchronize()</code> between kernel launches</li>
+<li><strong>Two kernel synchronization</strong>: It must be ensured that the second kernel runs only after the first kernel completes.</li>
 </ul>
 <h3 id="5-debugging-strategy"><a class="header" href="#5-debugging-strategy">5. Debugging Strategy</a></h3>
 <p>If you encounter issues, try visualizing the intermediate state after the first phase:</p>
 <pre><code>After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
 </code></pre>
 <p>Where <code>???</code> should contain your block sums that will be used in the second phase.</p>
+<p>Remember, to inspect intermediate results you need to explicitly ensure that the device has completed its work.</p>
 </div>
 </details>
 <h3 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h3>
@@ -603,7 +605,7 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <p><strong>Cross-block synchronization</strong>: The algorithm uses two levels of synchronization:</p>
 <ul>
 <li><strong>Intra-block</strong>: <code>barrier()</code> synchronizes threads within each block during local prefix sum computation</li>
-<li><strong>Inter-block</strong>: <code>ctx.synchronize()</code> synchronizes between kernel launches to ensure Phase 1 completes before Phase 2 begins</li>
+<li><strong>Inter-block</strong>: The <code>DeviceContext</code> context manager that launches enqueued kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To explicitly enforce host-device synchronization before reading results, <code>ctx.synchronize()</code> is used.</li>
 </ul>
 <p><strong>Race condition prevention</strong>: The explicit read-write separation in the local phase prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations during parallel reduction.</p>
 <ol>
