@@ -591,7 +591,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td>13 - Pool</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
 <tr><td>14 - Conv</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
 <tr><td>15 - Matmul</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
-<tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>❌</td><td>Advanced memory patterns</td></tr>
+<tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>✅</td><td>Advanced memory patterns</td></tr>
 <tr><td><strong>Part IV: MAX Graph</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>17 - Custom Op</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
 <tr><td>18 - Softmax</td><td>✅</td><td>✅</td><td>✅</td><td>MAX Graph integration</td></tr>
@@ -610,7 +610,7 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <tr><td>27 - Block Operations</td><td>✅</td><td>✅</td><td>✅</td><td>Block-level patterns</td></tr>
 <tr><td><strong>Part IX: Memory Systems</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>28 - Async Memory</td><td>✅</td><td>✅</td><td>✅</td><td>Advanced memory operations</td></tr>
-<tr><td>29 - Barriers</td><td>✅</td><td>❌</td><td>❌</td><td>Advanced NVIIDA-only synchronization</td></tr>
+<tr><td>29 - Barriers</td><td>✅</td><td>❌</td><td>❌</td><td>Advanced NVIDIA-only synchronization</td></tr>
 <tr><td><strong>Part X: Performance Analysis</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>30 - Profiling</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools (NSight)</td></tr>
 <tr><td>31 - Occupancy</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA profiling tools</td></tr>
@@ -7798,6 +7798,7 @@ fn naive_matmul[
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -7806,6 +7807,10 @@ fn naive_matmul[
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p16 --naive
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p16 --naive
 </code></pre>
   </div>
   <div class="tab-content">
@@ -8093,6 +8098,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -8101,6 +8107,10 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p16 --single-block
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p16 --single-block
 </code></pre>
   </div>
   <div class="tab-content">
@@ -8501,6 +8511,7 @@ Thread(1,2) in Block(1,0):
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -8509,6 +8520,10 @@ Thread(1,2) in Block(1,0):
   </div>
   <div class="tab-content">
 <pre><code class="language-bash">pixi run -e amd p16 --tiled
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p16 --tiled
 </code></pre>
   </div>
   <div class="tab-content">
