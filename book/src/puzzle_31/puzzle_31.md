@@ -49,7 +49,7 @@ The principles you learn here apply to any parallel computing system where resou
 
 Use profiling tools to investigate three kernels and answer analysis questions about occupancy optimization. The kernels compute identical results but use resources very differently - your job is to discover why performance and occupancy behave counterintuitively!
 
-> The specific numerical results shown in this puzzle are based on **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4), but the **fundamental concepts, methodology, and insights remain universally applicable** across modern GPUs. Use `pixi run gpu-specs` to get your specific hardware values.
+> The specific numerical results shown in this puzzle are based on **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5), but the **fundamental concepts, methodology, and insights remain universally applicable** across modern GPUs. Use `pixi run gpu-specs` to get your specific hardware values.
 
 ## Configuration
 
