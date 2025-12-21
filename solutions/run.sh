@@ -435,7 +435,7 @@ run_mojo_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
+        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "mojo \"$f\""
