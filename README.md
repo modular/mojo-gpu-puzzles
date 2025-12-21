@@ -122,6 +122,11 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 We use `pixi` for development as it includes `uv` and also supports conda packages (like `mdbook` from the `conda-forge` channel) needed for development workflows.
 
+> **WSL Users**: Before running `pixi run book`, install the required browser integration package:
+> ```bash
+> sudo apt update && sudo apt install wslu
+> ```
+
 ```bash
 # Build and serve the book
 pixi run book
