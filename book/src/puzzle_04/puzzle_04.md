@@ -1,9 +1,14 @@
 # Puzzle 4: 2D Map
 
+{{ youtube EjmBmwgdAT0 breakpoint-lg }}
+
 ## Overview
 Implement a kernel that adds 10 to each position of 2D square matrix `a` and stores it in 2D square matrix `output`.
 
 **Note:** _You have more threads than positions_.
+
+{{ youtube EjmBmwgdAT0 breakpoint-sm }}
+
 <img src="./media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
 <img src="./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img">
 
