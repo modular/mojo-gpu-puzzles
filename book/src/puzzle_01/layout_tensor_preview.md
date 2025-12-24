@@ -32,7 +32,7 @@ idx = (batch * padded_height + row) * padded_width + col
 
 ### LayoutTensor preview
 
-[LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/) will help us handle these cases more elegantly:
+[LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/) will help us handle these cases more elegantly:
 
 ```mojo
 # Future preview - don't worry about this syntax yet!
