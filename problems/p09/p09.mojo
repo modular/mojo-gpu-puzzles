@@ -65,7 +65,7 @@ fn collaborative_filter(
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    # Phase 1: Initialize shared workspace (all threads participate)
+    #Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
         shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
     barrier()
