@@ -156,6 +156,7 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
     <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
@@ -169,6 +170,13 @@ pixi run p19
 
 ```bash
 pixi run -e amd p19
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p19
 ```
 
   </div>

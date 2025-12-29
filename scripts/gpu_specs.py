@@ -346,6 +346,9 @@ def get_apple_silicon_specs() -> GPUSpecs:
             else:
                 arch = "Apple M4 GPU"
                 gpu_cores = 10
+        elif "M5" in chip_name:
+            arch = "Apple M5 GPU"
+            gpu_cores = 10
 
         return GPUSpecs(
             vendor="Apple",

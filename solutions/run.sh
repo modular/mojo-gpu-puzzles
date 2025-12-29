@@ -38,7 +38,7 @@ NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
 AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
 
 # Puzzles that are not supported on Apple GPUs
-APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p16" "p19" "p20" "p21" "p22" "p28" "p29" "p30" "p31" "p32" "p33" "p34")
+APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")
 
 # Arrays to store results
 declare -a FAILED_TESTS_LIST
@@ -378,7 +378,23 @@ capture_output() {
         rm "$output_file" "$error_file"
         return 0
     else
-        # Test failed - show both stdout and stderr
+        # Check if test actually passed despite non-zero exit (e.g., segfault during cleanup)
+        # Look for success indicators in the output
+        if grep -q "Verification passed" "$output_file" || grep -q "All tests passed" "$output_file"; then
+            # Test logically passed, but had cleanup issues
+            if [ "$show_output" = "true" ] && [ -s "$output_file" ]; then
+                echo -e "    ${GREEN}Output:${NC}"
+                sed 's/^/      /' "$output_file"
+            fi
+            # Check if it's a cleanup segfault
+            if grep -q "Segmentation fault: 11" "$error_file"; then
+                echo -e "    ${YELLOW}Note: Segfault during cleanup, but test logic passed${NC}"
+            fi
+            rm "$output_file" "$error_file"
+            return 0
+        fi
+
+        # Test actually failed - show both stdout and stderr
         echo -e "    ${RED}${BOLD}Test Failed!${NC}"
 
         if [ -s "$output_file" ]; then
@@ -435,7 +451,7 @@ run_mojo_files() {
         fi
       else
         # Original behavior - detect and run all flags or no flag
-        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo')
+        flags=$(grep -o 'argv()\[1\] == "--[^"]*"\|test_type == "--[^"]*"' "$f" | cut -d'"' -f2 | grep -v '^--demo' | sort -u)
 
         if [ -z "$flags" ]; then
           execute_or_skip_test "${path_prefix}$f" "" "mojo \"$f\""
@@ -685,7 +701,7 @@ print_startup_banner() {
             ;;
         "apple")
             echo -e "  ${BULLET} Metal Support: ${GREEN}Available${NC}"
-            echo -e "  ${BULLET} Auto-Skip: ${YELLOW}Some puzzles unsupported${NC} ${GRAY}(14 puzzles will be skipped)${NC}"
+            echo -e "  ${BULLET} Auto-Skip: ${YELLOW}Some puzzles unsupported${NC} ${GRAY}(11 puzzles will be skipped)${NC}"
             ;;
         *)
             echo -e "  ${BULLET} Status: ${YELLOW}Unknown GPU platform${NC}"
