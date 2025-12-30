@@ -18,7 +18,8 @@ fn add(
     i = thread_idx.x
     # FILL ME IN (roughly 1 line)
     output[i] = a[i] + b[i]
-    # ANCHOR_END: add
+    
+# ANCHOR_END: add
 
 
 def main():
