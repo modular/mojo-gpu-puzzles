@@ -18,6 +18,8 @@ fn add_10_blocks_2d(
     row = block_dim.y * block_idx.y + thread_idx.y
     col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
+    if row < size and col < size:
+        output[row * size + col] = a[row * size + col] + 10.0
 
 
 # ANCHOR_END: add_10_blocks_2d
@@ -38,7 +40,7 @@ def main():
                     k = j * SIZE + i
                     a_host[k] = k
                     expected[k] = k + 10
-
+        print(a)
         ctx.enqueue_function_checked[add_10_blocks_2d, add_10_blocks_2d](
             out,
             a,
@@ -46,6 +48,7 @@ def main():
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
+        print(out)
 
         ctx.synchronize()
 
