@@ -29,9 +29,12 @@ fn shared_memory_race(
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    if row < size and col < size:
-        shared_sum[0] += a[row, col]
-
+    if row == 0 and col == 0:
+        local_sum = Scalar[dtype](0.0)
+        for r in range(size):
+            for c in range(size):
+                local_sum += rebind[Scalar[dtype]](a[r, c])
+        shared_sum[0] = local_sum
     barrier()
 
     if row < size and col < size:
@@ -59,8 +62,7 @@ fn add_10_2d(
 def main():
     if len(argv()) != 2:
         print(
-            "Expected one command-line argument: '--memory-bug' or"
-            " '--race-condition'"
+            "Expected one command-line argument: '--memory-bug' or '--race-condnition."
         )
         return
 
