@@ -12,7 +12,7 @@ comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = SIZE
 comptime dtype = DType.float32
 comptime vector_layout = Layout.row_major(SIZE)
-comptime ITER = 2
+comptime ITER = 3
 
 
 # ANCHOR: first_crash
