@@ -24,7 +24,7 @@ fn minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    i = block_dim.x * block_idx.x + thread_idx.x
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i < size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -53,7 +53,7 @@ fn sophisticated_kernel[
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    i = block_dim.x * block_idx.x + thread_idx.x
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     if i < size:
@@ -150,7 +150,7 @@ fn balanced_kernel[
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    i = block_dim.x * block_idx.x + thread_idx.x
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     if i < size:

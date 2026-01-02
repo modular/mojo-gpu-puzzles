@@ -36,7 +36,7 @@ fn no_conflict_kernel[
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # Load from global memory to shared memory - no conflicts
@@ -79,7 +79,7 @@ fn two_way_conflict_kernel[
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = thread_idx.x
 
     # CONFLICT: stride-2 access creates 2-way bank conflicts
