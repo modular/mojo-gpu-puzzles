@@ -27,6 +27,36 @@ fn conv_1d_simple[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 14 lines)
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    if global_i < SIZE:
+        shared_a[local_i] = a[global_i]
+
+    if global_i < CONV:
+        shared_b[local_i] = b[global_i]
+
+    barrier()
+
+    if global_i < SIZE:
+        var local_sum: output.element_type = 0
+        @parameter
+        for j in range(CONV):
+            if local_i + j < SIZE:
+                local_sum += shared_a[local_i + j] * shared_b[j]
+
+        output[global_i] = local_sum
 
 
 # ANCHOR_END: conv_1d_simple
