@@ -40,16 +40,19 @@ fn prefix_sum_simple[
     offset = UInt(1)
     
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.element_type = shared[local_i - offset]
+        var current_val: output.element_type = 0
+        if local_i >= offset and local_i < size:
+            current_val = shared[local_i - offset]
         barrier()
+        
         if local_i >= offset and local_i < size:
             shared[local_i] += current_val
         barrier()
+        
         offset *= 2
-
+        
     if global_i < size:
         output[global_i] = shared[local_i]
-
 
 # ANCHOR_END: prefix_sum_simple
 
