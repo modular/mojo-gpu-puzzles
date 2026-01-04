@@ -25,6 +25,30 @@ fn prefix_sum_simple[
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED
+    ].stack_allocation()
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+    
+    barrier()
+
+    offset = UInt(1)
+    
+    for i in range(Int(log2(Scalar[dtype](TPB)))):
+        var current_val: output.element_type = shared[local_i - offset]
+        barrier()
+        if local_i >= offset and local_i < size:
+            shared[local_i] += current_val
+        barrier()
+        offset *= 2
+
+    if global_i < size:
+        output[global_i] = shared[local_i]
 
 
 # ANCHOR_END: prefix_sum_simple
