@@ -791,12 +791,6 @@ mark {
     width: 60px;
   }
 
-  .social-buttons {
-    flex-wrap: wrap;
-    img {
-      margin: 0;
-    }
-  }
   #sidebar-toggle {
     top: 22px;
     left: 18px;
@@ -1114,6 +1108,12 @@ main .content {
   .video-container.breakpoint-sm {
     display: none;
   }
+
+  .video-container.full-width {
+    max-width: 100%;
+    float: none;
+    margin: 4rem auto;
+  }
 }
 
 @media (max-width: 996px) {
@@ -1126,5 +1126,36 @@ main .content {
 
   .video-container.breakpoint-lg {
     display: none;
+  }
+}
+
+/* Introduction + Social Buttons */
+.social-buttons {
+  display: flex;
+  justify-content: left;
+  gap: 8px;
+  margin: 0 auto;
+}
+
+@media (min-width: 997px) {
+  h1:has(+ .social-buttons) {
+    margin-bottom: 0;
+  }
+
+  h1 + .social-buttons {
+    margin-top: 0;
+  }
+
+  .social-buttons + blockquote {
+    margin-bottom: 2em;
+  }
+}
+
+@media (max-width: 996px) {
+  .social-buttons {
+    flex-wrap: wrap;
+    img {
+      margin: 0;
+    }
   }
 }
