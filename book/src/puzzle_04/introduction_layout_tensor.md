@@ -1,7 +1,7 @@
 # Introduction to LayoutTensor
 
 Let's take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
-🥁 ... the **[LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/)**.
+🥁 ... the **[LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)**.
 
 > 💡 _This is a motivational overview of LayoutTensor's capabilities. Don't worry about understanding everything now - we'll explore each feature in depth as we progress through the puzzles_.
 
