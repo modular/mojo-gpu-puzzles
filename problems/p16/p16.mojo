@@ -52,7 +52,34 @@ fn single_block_matmul[
     local_row = thread_idx.y
     local_col = thread_idx.x
     # FILL ME IN (roughly 12 lines)
+    a_shared = LayoutTensor[
+        dtype,
+        layout.row_major(TPB, TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    b_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB, TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
+    if row < size and col < size:
+        a_shared[local_row, local_col] = a[row, col]
+        b_shared[local_row, local_col] = b[row, col]
+    
+    barrier()
+
+    if row < size and col < size:
+        var acc: output.element_type = 0
+
+        @parameter 
+        for k in range(size):
+            acc += a_shared[local_row, k] * b_shared[k, local_col]
+        
+        output[row, col] = acc
+        
 
 # ANCHOR_END: single_block_matmul
 
