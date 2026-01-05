@@ -107,9 +107,7 @@ struct Conv1DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    rebind[LegacyUnsafePointer[Scalar[output.dtype]]](
-                        out_tensor.ptr
-                    ),
+                    out_tensor.ptr,
                     input_size,
                     owning=False,
                 ),
