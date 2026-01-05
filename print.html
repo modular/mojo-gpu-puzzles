@@ -874,7 +874,7 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
 <h3 id="layouttensor-preview"><a class="header" href="#layouttensor-preview">LayoutTensor preview</a></h3>
-<p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
+<p><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
 output[i, j] = a[i, j] + 10.0  # 2D indexing
 output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
@@ -1145,11 +1145,17 @@ if i &lt; height and j &lt; width and k &lt; depth and
 </code></pre>
 <p>These boundary handling patterns will become more elegant when we <a href="puzzle_03/../puzzle_04/">learn about LayoutTensor in Puzzle 4</a>, which provides built-in shape management.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="puzzle-4-2d-map"><a class="header" href="#puzzle-4-2d-map">Puzzle 4: 2D Map</a></h1>
+<div class="video-container breakpoint-lg">
+<iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
+</div>
 <h2 id="overview-3"><a class="header" href="#overview-3">Overview</a></h2>
 <p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You have more threads than positions</em>.
+<p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
+<div class="video-container breakpoint-sm">
+<iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
+</div>
 <img src="puzzle_04/./media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
-<img src="puzzle_04/./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img"></p>
+<img src="puzzle_04/./media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img">
 <h2 id="key-concepts-4"><a class="header" href="#key-concepts-4">Key concepts</a></h2>
 <ul>
 <li>2D thread indexing</li>
@@ -1287,7 +1293,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </details>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction-to-layouttensor"><a class="header" href="#introduction-to-layouttensor">Introduction to LayoutTensor</a></h1>
 <p>Let’s take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
-🥁 … the <strong><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a></strong>.</p>
+🥁 … the <strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a></strong>.</p>
 <blockquote>
 <p>💡 <em>This is a motivational overview of LayoutTensor’s capabilities. Don’t worry about understanding everything now - we’ll explore each feature in depth as we progress through the puzzles</em>.</p>
 </blockquote>
@@ -6142,7 +6148,7 @@ Thread 1: shared[1] = 26 + 58 = 84
 <p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches to GPU memory management:</p>
 <ol>
 <li>Raw memory management with direct pointer manipulation using <a href="https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a></li>
-<li>The more structured <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> with its powerful address_space parameter for memory allocation</li>
+<li>The more structured <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> with its powerful address_space parameter for memory allocation</li>
 </ol>
 <p>Starting from this puzzle, we’re transitioning exclusively to using <code>LayoutTensor</code>. This abstraction provides several benefits:</p>
 <ul>

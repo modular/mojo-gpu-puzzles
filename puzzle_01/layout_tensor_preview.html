@@ -209,7 +209,7 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
 <h3 id="layouttensor-preview"><a class="header" href="#layouttensor-preview">LayoutTensor preview</a></h3>
-<p><a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
+<p><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
 output[i, j] = a[i, j] + 10.0  # 2D indexing
 output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
