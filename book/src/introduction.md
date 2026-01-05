@@ -18,8 +18,8 @@
   </a>
 </p>
 
-> _"For the things we have to learn before we can do them, we learn by doing them."_
-> Aristotle, (Nicomachean Ethics)
+> _"For the things we have to learn before we can do them, we learn by doing them."_  
+> Aristotle (Nicomachean Ethics)
 
 Welcome to our hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
 
