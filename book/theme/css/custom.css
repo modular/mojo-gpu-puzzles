@@ -28,9 +28,12 @@
   --modular-sidebar-active: #e1e6fb;
   --modular-text-inactive: #9a9eaa;
   --modular-menu-border: var(--links);
+  --Elements-Twilight-70-20: #353d42;
   --Elements-Twilight-60-50: #676d71;
   --Elements-Twilight-40-60: #b3b8c2;
   --Elements-Twilight-30-70: #d4dae4;
+  --Elements-Twilight-20-80: #e5e9ef;
+  --Elements-Twilight-0-90: #fff;
   --mono-font: "Roboto Mono";
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23020c13" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23262c30" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
@@ -60,9 +63,12 @@
   --modular-nav-bg: #141920;
   --modular-sidebar-active: #262c30;
   --modular-menu-border: #9199c7;
+  --Elements-Twilight-70-20: #e5e9ef;
   --Elements-Twilight-60-50: #9a9eaa;
   --Elements-Twilight-40-60: #676d71;
   --Elements-Twilight-30-70: #353d42;
+  --Elements-Twilight-20-80: #262c30;
+  --Elements-Twilight-0-90: #181c1f;
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23ffffff" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23d4dae4" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
   --eye-icon: url("/puzzles_images/eye-dark.svg");
@@ -1135,7 +1141,7 @@ main .content {
 .content .social-buttons {
   display: flex;
   justify-content: left;
-  gap: 12px;
+  gap: 6px;
   margin-top: 12px;
   margin-bottom: 48px;
 
@@ -1149,7 +1155,30 @@ main .content {
     justify-content: center;
     gap: 10px;
     border-radius: 2px;
-    border: 1px solid var(--Elements-twilight-30-70, #d4dae4);
+    border: 1px solid var(--Elements-Twilight-30-70);
+
+    &:hover {
+      border-color: var(--Elements-Twilight-40-60);
+    }
+  }
+
+  .secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-left: 8px;
+
+    a {
+      position: relative;
+      border: none;
+      border-radius: 4px;
+      padding: 0;
+
+      &:hover {
+        background-color: var(--Elements-Twilight-20-80);
+      }
+    }
   }
 
   .icon {
@@ -1171,6 +1200,24 @@ main .content {
     width: 19px;
     height: 15px;
   }
+
+  .icon-discord {
+    mask-image: url("/puzzles_images/discord.svg");
+    width: 24px;
+    height: 24px;
+  }
+
+  .icon-discourse {
+    mask-image: url("/puzzles_images/discourse.svg");
+    width: 24px;
+    height: 24px;
+  }
+
+  .icon-mail {
+    mask-image: url("/puzzles_images/mail.svg");
+    width: 24px;
+    height: 24px;
+  }
 }
 
 @media (min-width: 997px) {
@@ -1190,4 +1237,50 @@ main .content {
       margin: 0;
     }
   }
+}
+
+/* Tooltip for secondary icons */
+.social-buttons .secondary a::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+
+  background-color: var(--Elements-Twilight-70-20);
+  color: var(--Elements-Twilight-0-90);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+/* Tooltip arrow */
+.social-buttons .secondary a::before {
+  content: "";
+  position: absolute;
+  bottom: 80%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--Elements-Twilight-70-20);
+  z-index: 3;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+/* Show on hover */
+.social-buttons .secondary a:hover::after,
+.social-buttons .secondary a:hover::before {
+  opacity: 1;
+  visibility: visible;
 }
