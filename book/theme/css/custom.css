@@ -30,6 +30,7 @@
   --modular-menu-border: var(--links);
   --Elements-Twilight-60-50: #676d71;
   --Elements-Twilight-40-60: #b3b8c2;
+  --Elements-Twilight-30-70: #d4dae4;
   --mono-font: "Roboto Mono";
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23020c13" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23262c30" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
@@ -61,6 +62,7 @@
   --modular-menu-border: #9199c7;
   --Elements-Twilight-60-50: #9a9eaa;
   --Elements-Twilight-40-60: #676d71;
+  --Elements-Twilight-30-70: #353d42;
   --arrow-caret: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="%23ffffff" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
   --copy-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"  width="18px" height="18px" viewBox="0 0 24 24"><path fill="%23d4dae4" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg>');
   --eye-icon: url("/puzzles_images/eye-dark.svg");
@@ -1130,11 +1132,45 @@ main .content {
 }
 
 /* Introduction + Social Buttons */
-.social-buttons {
+.content .social-buttons {
   display: flex;
   justify-content: left;
-  gap: 8px;
-  margin: 0 auto;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 48px;
+
+  a {
+    color: var(--Elements-Twilight-60-50);
+    font-size: 14px;
+    text-decoration: none;
+    padding: 6px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 2px;
+    border: 1px solid var(--Elements-twilight-30-70, #d4dae4);
+  }
+
+  .icon {
+    display: inline-block;
+    background-color: var(--Elements-Twilight-40-60);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+  }
+
+  .icon-github {
+    mask-image: url("/puzzles_images/github.svg");
+    width: 18px;
+    height: 18px;
+  }
+
+  .icon-book {
+    mask-image: url("/puzzles_images/open-book.svg");
+    width: 19px;
+    height: 15px;
+  }
 }
 
 @media (min-width: 997px) {
@@ -1145,14 +1181,10 @@ main .content {
   h1 + .social-buttons {
     margin-top: 0;
   }
-
-  .social-buttons + blockquote {
-    margin-bottom: 2em;
-  }
 }
 
 @media (max-width: 996px) {
-  .social-buttons {
+  .content .social-buttons {
     flex-wrap: wrap;
     img {
       margin: 0;

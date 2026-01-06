@@ -1,22 +1,15 @@
 # Mojo 🔥 GPU Puzzles, Edition 1
 
-<p class="social-buttons">
+<div class="social-buttons">
   <a href="https://github.com/modular/mojo-gpu-puzzles">
-    <img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub Repository">
+    Puzzles Repo
+    <span class="icon icon-github"></span>
   </a>
-  <a href="https://docs.modular.com/mojo">
-    <img src="https://img.shields.io/badge/Powered%20by-Mojo-FF5F1F" alt="Powered by Mojo">
+  <a href="https://github.com/modular/mojo-gpu-puzzles">
+    Mojo Manual
+    <span class="icon icon-book"></span>
   </a>
-  <a href="https://docs.modular.com/max/get-started/#stay-in-touch">
-    <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
-  </a>
-  <a href="https://forum.modular.com/c/">
-    <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular Forum">
-  </a>
-  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
-    <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
-  </a>
-</p>
+</div>
 
 > _"For the things we have to learn before we can do them, we learn by doing them."_  
 > Aristotle (Nicomachean Ethics)
