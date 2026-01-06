@@ -202,7 +202,78 @@
 <p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
 <p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. After setup, you can verify your GPU compatibility using the <code>gpu-specs</code> command (see Quick Start section below).</p>
-<h4 id="macos-apple-sillicon-early-preview"><a class="header" href="#macos-apple-sillicon-early-preview">macOS Apple Sillicon (Early preview)</a></h4>
+<h2 id="operating-system"><a class="header" href="#operating-system">Operating System</a></h2>
+<blockquote>
+<p>[!NOTE]
+Here is some documentation how to setup GPU support in your OS for</p>
+<ul>
+<li><a href="#windows-wsl2-for-linux-with-nvidia">Windows WSL2 for Linux with NVIDIA</a></li>
+<li><a href="#linux-native-with-nvidia">Linux native with NVIDIA</a></li>
+<li><a href="#macos-apple-sillicon">macOS Apple Sillicon</a></li>
+</ul>
+</blockquote>
+<h3 id="windows-wsl2-for-linux-with-nvidia"><a class="header" href="#windows-wsl2-for-linux-with-nvidia">Windows WSL2 for Linux with NVIDIA</a></h3>
+<p>To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu please follow the <a href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">NVIDIA CUDA on WLS Guide</a>.</p>
+<p>The important information is to install the NVIDIA Windows CUDA Driver for <em>Windows</em> because they fully support WSL2.
+Once a Windows NVIDIA GPU driver is installed on the system, CUDA becomes available within WSL 2.
+The CUDA driver installed on Windows host will be stubbed inside the WSL 2 as libcuda.so, therefore users must not install any NVIDIA GPU Linux driver within WSL 2.</p>
+<p>Once you have installed the drivers please test the installation</p>
+<p>Verify from Windows: Open PowerShell (not WSL)</p>
+<pre><code class="language-bash">nvidia-smi
+</code></pre>
+<p>Verify from inside WSL: (first start WLS e.g. via wsl -d Ubuntu)</p>
+<pre><code class="language-bash">ls -l /usr/lib/wsl/lib/nvidia-smi
+/usr/lib/wsl/lib/nvidia-smi
+</code></pre>
+<p>Check setup from Pixi optionally install missing requirements e.g. for cuda-gdb debugging</p>
+<pre><code class="language-bash">pixi run nvidia-smi
+pixi run setup-cuda-gdb
+pixi run mojo debug --help
+pixi run cuda-gdb --version
+</code></pre>
+<p>For WSL you can install VSCode as your Editor</p>
+<ul>
+<li>Install VS Code on Windows from <a href="https://code.visualstudio.com/">https://code.visualstudio.com/</a>.</li>
+<li>Then install the Remote - WSL extension.</li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+All puzzles 1-15 are working on WSL and Linux.</p>
+</blockquote>
+<h3 id="linux-native-with-nvidia"><a class="header" href="#linux-native-with-nvidia">Linux native with NVIDIA</a></h3>
+<p>Check GPU + Ubuntu version (Supported Ubuntu LTS: 20.04, 22.04, 24.04)</p>
+<pre><code class="language-bash">lspci | grep -i nvidia
+lsb_release -a
+</code></pre>
+<p>Install NVIDIA driver (mandatory)</p>
+<pre><code class="language-bash">sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+sudo reboot
+</code></pre>
+<p>For Linux you can install VSCode as your Editor</p>
+<ul>
+<li>Install VS Code in Linux via VS Code APT repository</li>
+</ul>
+<p>Import Microsoft GPG key</p>
+<pre><code class="language-bash">wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+  | gpg --dearmor \
+  | sudo tee /usr/share/keyrings/packages.microsoft.gpg &gt; /dev/null
+</code></pre>
+<p>Add VS Code APT repository</p>
+<pre><code class="language-bash">echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+| sudo tee /etc/apt/sources.list.d/vscode.list
+</code></pre>
+<p>Install VS Code and verify installation</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install code
+code --version
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+All puzzles 1-15 are working on Linux.</p>
+</blockquote>
+<h3 id="macos-apple-sillicon"><a class="header" href="#macos-apple-sillicon">macOS Apple Sillicon</a></h3>
 <p>For <code>osx-arm64</code> users, you’ll need:</p>
 <ul>
 <li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code> and if it fails you’d need to upgrade.</li>
@@ -213,9 +284,10 @@
 </code></pre>
 <p>and then <code>xcrun -sdk macosx metal</code>, should give you the <code>no input files error</code>.</p>
 <blockquote>
-<p><strong>Note</strong>: Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
+<p>[!NOTE]
+Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
 </blockquote>
-<h3 id="programming-knowledge"><a class="header" href="#programming-knowledge">Programming knowledge</a></h3>
+<h2 id="programming-knowledge"><a class="header" href="#programming-knowledge">Programming knowledge</a></h2>
 <p>Basic knowledge of:</p>
 <ul>
 <li>Programming fundamentals (variables, loops, conditionals, functions)</li>
