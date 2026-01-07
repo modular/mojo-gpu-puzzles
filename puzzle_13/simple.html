@@ -240,7 +240,7 @@ fn conv_1d_simple[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>tb[dtype]().row_major[SIZE]().shared().alloc()</code> for shared memory allocation</li>
+<li>Use <code>LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory allocation</li>
 <li>Load input to <code>shared_a[local_i]</code> and kernel to <code>shared_b[local_i]</code></li>
 <li>Call <code>barrier()</code> after loading</li>
 <li>Sum products within bounds: <code>if local_i + j &lt; SIZE</code></li>

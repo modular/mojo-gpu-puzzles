@@ -4585,7 +4585,12 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
     a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
-    shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+    shared_workspace = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE-1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
@@ -6314,7 +6319,7 @@ fn conv_1d_simple[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>tb[dtype]().row_major[SIZE]().shared().alloc()</code> for shared memory allocation</li>
+<li>Use <code>LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory allocation</li>
 <li>Load input to <code>shared_a[local_i]</code> and kernel to <code>shared_b[local_i]</code></li>
 <li>Call <code>barrier()</code> after loading</li>
 <li>Sum products within bounds: <code>if local_i + j &lt; SIZE</code></li>
@@ -15141,7 +15146,12 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = partial_product
 barrier()
 
@@ -16200,7 +16210,12 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 </blockquote>
 <h3 id="performance-transformation-example-1"><a class="header" href="#performance-transformation-example-1"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
 if local_i &lt; WARP_SIZE - 1:
@@ -17569,7 +17584,12 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 </blockquote>
 <h3 id="performance-transformation-example-2"><a class="header" href="#performance-transformation-example-2"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex parallel reduction (traditional approach - from Puzzle 14):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
 offset = 1
