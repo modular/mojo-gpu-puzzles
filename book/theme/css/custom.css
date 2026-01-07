@@ -1234,8 +1234,13 @@ main .content {
   .content .social-buttons {
     flex-wrap: wrap;
     margin-bottom: 24px;
+
     img {
       margin: 0;
+    }
+
+    h1:has(+ .social-buttons) {
+      margin-bottom: 0;
     }
   }
 }
