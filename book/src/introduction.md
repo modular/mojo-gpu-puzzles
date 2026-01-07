@@ -1,33 +1,44 @@
-<p align="center">
-  <img src="puzzles_images/puzzle-mark.svg" alt="Mojo GPU Puzzles Logo" width="150" class="puzzle-image">
-</p>
+# Mojo 🔥 GPU Puzzles, Edition 1
 
-<p align="center">
-  <h1 align="center">Mojo🔥 GPU Puzzles</h1>
-</p>
+<div class="social-buttons">
+  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
+    <span class="title">Puzzles Repo</span>
+    <span class="icon icon-github"></span>
+  </a>
+  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
+    <span class="title">Mojo Manual</span>
+    <span class="icon icon-book"></span>
+  </a>
+  <div class="secondary">
+    <a href="https://discord.com/channels/1087530497313357884/1098713601386233997" 
+      data-tooltip="Chat on Discord"
+      aria-label="Discord"
+      target="_blank">
+      <span class="icon icon-discord"></span>
+    </a>
+    <a href="https://forum.modular.com/c"
+      data-tooltip="Join the forum"
+      aria-label="Forum"
+      target="_blank">
+      <span class="icon icon-discourse"></span>
+    </a>
+    <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
+      data-tooltip="Subscribe to newsletter"
+      aria-label="Newsletter"
+      target="_blank">
+      <span class="icon icon-mail"></span>
+    </a>
+  </div>
+</div>
 
-<p align="center" class="social-buttons" style="display: flex; justify-content: center; gap: 8px;">
-  <a href="https://github.com/modular/mojo-gpu-puzzles">
-    <img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub Repository">
-  </a>
-  <a href="https://docs.modular.com/mojo">
-    <img src="https://img.shields.io/badge/Powered%20by-Mojo-FF5F1F" alt="Powered by Mojo">
-  </a>
-  <a href="https://docs.modular.com/max/get-started/#stay-in-touch">
-    <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="Subscribe for Updates">
-  </a>
-  <a href="https://forum.modular.com/c/">
-    <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular Forum">
-  </a>
-  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
-    <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
-  </a>
-</p>
+> _"For the things we have to learn before we can do them, we learn by doing them."_  
+> Aristotle (Nicomachean Ethics)
 
-> _"For the things we have to learn before we can do them, we learn by doing them."_
-> Aristotle, (Nicomachean Ethics)
+Welcome to our hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
 
-Welcome to **Mojo 🔥 GPU Puzzles, Edition 1**, a hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
+Start with this overview video, or continue reading below.
+
+{{ youtube -VsP4kT6DjA full-width }}
 
 ## Why GPU programming?
 
@@ -50,8 +61,7 @@ Mojo provides a practical approach to GPU programming, making this parallelism m
 - **Improved Safety** over traditional C/C++ GPU programming
 - **Lower Barrier to Entry** for more programmers to access GPU power
 
-> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.**
->**By expanding on Python's familiar syntax while adding direct GPU access, Mojo allows programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.**
+> **Mojo🔥 aims to fuel innovation by democratizing GPU programming.** >**By expanding on Python's familiar syntax while adding direct GPU access, Mojo allows programmers with minimal specialized knowledge to build high-performance, heterogeneous (CPU, GPU-enabled) applications.**
 
 ## Why learn through puzzles?
 
@@ -70,8 +80,8 @@ This book uses a different approach: immediate engagement with practical problem
 The methodology emphasizes discovery over memorization. Concepts emerge naturally through experimentation, creating deeper understanding and practical competency.
 
 > **Acknowledgement**: The Part I and III of this book are heavily inspired by [GPU Puzzles](https://github.com/srush/GPU-Puzzles), an interactive
-NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo's abstractions and performance capabilities, while
-expanding on advanced topics with Mojo-specific optimizations.
+> NVIDIA GPU learning project. This adaptation reimplements these concepts using Mojo's abstractions and performance capabilities, while
+> expanding on advanced topics with Mojo-specific optimizations.
 
 ## The GPU programming mindset
 
@@ -126,19 +136,19 @@ This book takes you on a journey from first principles to advanced GPU programmi
 
 ### Your current learning path
 
-| Essential Skill | Status | Puzzles |
-|-----------------|--------|---------|
-| Thread/Block basics | ✅ **Available** | Part I (1-8) |
-| Debugging GPU Programs | ✅ **Available** | Part II (9-10) |
-| Core algorithms | ✅ **Available** | Part III (11-16) |
-| MAX Graph integration | ✅ **Available** | Part IV (17-19) |
-| PyTorch integration | ✅ **Available** | Part V (20-22) |
-| Functional patterns & benchmarking | ✅ **Available** | Part VI (23) |
-| Warp programming | ✅ **Available** | Part VII (24-26) |
-| Block-level programming | ✅ **Available** | Part VIII (27) |
-| Advanced memory operations | ✅ **Available** | Part IX (28-29) |
-| Performance analysis | ✅ **Available** | Part X (30-32) |
-| Modern GPU features | ✅ **Available** | Part XI (33-34) |
+| Essential Skill                    | Status           | Puzzles          |
+| ---------------------------------- | ---------------- | ---------------- |
+| Thread/Block basics                | ✅ **Available** | Part I (1-8)     |
+| Debugging GPU Programs             | ✅ **Available** | Part II (9-10)   |
+| Core algorithms                    | ✅ **Available** | Part III (11-16) |
+| MAX Graph integration              | ✅ **Available** | Part IV (17-19)  |
+| PyTorch integration                | ✅ **Available** | Part V (20-22)   |
+| Functional patterns & benchmarking | ✅ **Available** | Part VI (23)     |
+| Warp programming                   | ✅ **Available** | Part VII (24-26) |
+| Block-level programming            | ✅ **Available** | Part VIII (27)   |
+| Advanced memory operations         | ✅ **Available** | Part IX (28-29)  |
+| Performance analysis               | ✅ **Available** | Part X (30-32)   |
+| Modern GPU features                | ✅ **Available** | Part XI (33-34)  |
 
 ### Detailed learning objectives
 
