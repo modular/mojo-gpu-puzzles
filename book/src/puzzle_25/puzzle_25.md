@@ -48,7 +48,12 @@ Learn the core communication primitives from `gpu.warp`:
 
 ```mojo
 # Complex neighbor access pattern (traditional approach):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = input[global_i]
 barrier()
 if local_i < WARP_SIZE - 1:
