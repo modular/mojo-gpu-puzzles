@@ -49,7 +49,12 @@ Learn the core warp primitives from `gpu.warp`:
 ```mojo
 # 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = partial_product
 barrier()
 

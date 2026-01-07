@@ -41,7 +41,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `tb[dtype]().row_major[SIZE]().shared().alloc()` for shared memory allocation
+1. Use `LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory allocation
 2. Load input to `shared_a[local_i]` and kernel to `shared_b[local_i]`
 3. Call `barrier()` after loading
 4. Sum products within bounds: `if local_i + j < SIZE`

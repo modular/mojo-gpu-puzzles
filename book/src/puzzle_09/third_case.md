@@ -293,7 +293,12 @@ fn collaborative_filter(
     a: LayoutTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
-    shared_workspace = tb[dtype]().row_major[SIZE-1]().shared().alloc()
+    shared_workspace = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE-1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
