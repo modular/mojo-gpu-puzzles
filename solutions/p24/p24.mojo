@@ -1,7 +1,7 @@
 from math import ceildiv
 from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from gpu.memory import AddressSpace
 from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor

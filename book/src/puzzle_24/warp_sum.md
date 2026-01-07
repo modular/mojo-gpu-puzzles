@@ -301,7 +301,7 @@ if lane_id() == 0:
 
 ```mojo
 from gpu import lane_id
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
