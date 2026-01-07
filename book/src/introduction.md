@@ -1,28 +1,31 @@
 # Mojo 🔥 GPU Puzzles, Edition 1
 
 <div class="social-buttons">
-  <a href="https://github.com/modular/mojo-gpu-puzzles">
+  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://github.com/modular/mojo-gpu-puzzles">
+  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
   <div class="secondary">
     <a href="https://discord.com/channels/1087530497313357884/1098713601386233997" 
       data-tooltip="Chat on Discord"
-      aria-label="Discord">
+      aria-label="Discord"
+      target="_blank">
       <span class="icon icon-discord"></span>
     </a>
     <a href="https://forum.modular.com/c"
       data-tooltip="Join the forum"
-      aria-label="Forum">
+      aria-label="Forum"
+      target="_blank">
       <span class="icon icon-discourse"></span>
     </a>
     <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
       data-tooltip="Subscribe to newsletter"
-      aria-label="Newsletter">
+      aria-label="Newsletter"
+      target="_blank">
       <span class="icon icon-mail"></span>
     </a>
   </div>
