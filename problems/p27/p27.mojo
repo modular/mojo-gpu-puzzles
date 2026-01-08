@@ -1,6 +1,6 @@
 from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from os.atomic import Atomic
-from gpu.warp import WARP_SIZE
+from gpu.primitives.warp import WARP_SIZE
 from gpu import block
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
