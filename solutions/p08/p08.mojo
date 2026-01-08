@@ -51,7 +51,7 @@ def main():
         out.enqueue_fill(0)
         a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(1)
-        ctx.enqueue_function_checked[add_10_shared, add_10_shared](
+        ctx.enqueue_function[add_10_shared, add_10_shared](
             out,
             a,
             UInt(SIZE),

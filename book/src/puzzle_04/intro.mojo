@@ -24,7 +24,7 @@ def main():
     a.enqueue_fill(0)
     tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function_checked[kernel[dtype, layout], kernel[dtype, layout]](
+    ctx.enqueue_function[kernel[dtype, layout], kernel[dtype, layout]](
         tensor, grid_dim=1, block_dim=1
     )
 

@@ -39,7 +39,7 @@ def main():
                 a_host[i] = i
                 b_host[i] = i
 
-        ctx.enqueue_function_checked[dot_product, dot_product](
+        ctx.enqueue_function[dot_product, dot_product](
             out,
             a,
             b,

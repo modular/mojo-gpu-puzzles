@@ -74,7 +74,7 @@ def main():
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         comptime kernel = dot_product[layout, out_layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
             b_tensor,
