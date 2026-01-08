@@ -229,9 +229,7 @@ def main():
             print("Each thread cooperates with neighbors for smoothing...")
 
             # This will likely hang due to barrier deadlock
-            ctx.enqueue_function[
-                collaborative_filter, collaborative_filter
-            ](
+            ctx.enqueue_function[collaborative_filter, collaborative_filter](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,

@@ -122,9 +122,7 @@ def main():
             for i in range(SIZE * SIZE):
                 expected[i] = total_sum
 
-            ctx.enqueue_function[
-                shared_memory_race, shared_memory_race
-            ](
+            ctx.enqueue_function[shared_memory_race, shared_memory_race](
                 out_tensor,
                 a_tensor,
                 UInt(SIZE),
