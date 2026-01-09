@@ -71,7 +71,7 @@
 
 - [Puzzle 20: 1D Convolution Op](./puzzle_20/puzzle_20.md)
 - [Puzzle 21: Embedding Op](./puzzle_21/puzzle_21.md)
-  - [🔰 Coaleasced vs non-Coaleasced Kernel](./puzzle_21/simple_embedding_kernel.md)
+  - [🔰 Coalesced vs Non-Coalesced Kernel](./puzzle_21/simple_embedding_kernel.md)
   - [📊 Performance Comparison](./puzzle_21/performance.md)
 - [Puzzle 22: Kernel Fusion and Custom Backward Pass](./puzzle_22/puzzle_22.md)
   - [⚛️ Fused vs Unfused Kernels](./puzzle_22/forward_pass.md)
