@@ -210,7 +210,7 @@ fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -246,7 +246,7 @@ fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -282,7 +282,7 @@ fn benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -317,7 +317,7 @@ def test_minimal():
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -360,7 +360,7 @@ def test_sophisticated():
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,
@@ -404,7 +404,7 @@ def test_balanced():
         x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             y_tensor,
             x_tensor,
             ALPHA,

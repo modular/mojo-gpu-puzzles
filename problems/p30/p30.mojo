@@ -98,7 +98,7 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
-        ctx.enqueue_function_checked[kernel1[layout], kernel1[layout]](
+        ctx.enqueue_function[kernel1[layout], kernel1[layout]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -136,7 +136,7 @@ fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
-        ctx.enqueue_function_checked[kernel2[layout], kernel2[layout]](
+        ctx.enqueue_function[kernel2[layout], kernel2[layout]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -174,7 +174,7 @@ fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
-        ctx.enqueue_function_checked[kernel3[layout], kernel3[layout]](
+        ctx.enqueue_function[kernel3[layout], kernel3[layout]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -211,7 +211,7 @@ def test_kernel1():
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
-        ctx.enqueue_function_checked[kernel1[layout], kernel1[layout]](
+        ctx.enqueue_function[kernel1[layout], kernel1[layout]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -254,7 +254,7 @@ def test_kernel2():
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
-        ctx.enqueue_function_checked[kernel2[layout], kernel2[layout]](
+        ctx.enqueue_function[kernel2[layout], kernel2[layout]](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -300,7 +300,7 @@ def test_kernel3():
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
         b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
-        ctx.enqueue_function_checked[kernel3[layout], kernel3[layout]](
+        ctx.enqueue_function[kernel3[layout], kernel3[layout]](
             out_tensor,
             a_tensor,
             b_tensor,

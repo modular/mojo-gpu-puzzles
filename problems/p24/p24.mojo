@@ -190,7 +190,7 @@ fn benchmark_simple_warp_parameterized[
         comptime kernel = simple_warp_dot_product[
             in_layout, out_layout, test_size
         ]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -281,7 +281,7 @@ fn benchmark_traditional_parameterized[
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        ctx.enqueue_function_checked[
+        ctx.enqueue_function[
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
         ](
@@ -326,7 +326,7 @@ def main():
                     b_host[i] = i
 
             if argv()[1] == "--traditional":
-                ctx.enqueue_function_checked[
+                ctx.enqueue_function[
                     traditional_dot_product_p12_style[
                         in_layout, out_layout, SIZE
                     ],
@@ -341,7 +341,7 @@ def main():
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--kernel":
-                ctx.enqueue_function_checked[
+                ctx.enqueue_function[
                     simple_warp_dot_product[in_layout, out_layout, SIZE],
                     simple_warp_dot_product[in_layout, out_layout, SIZE],
                 ](

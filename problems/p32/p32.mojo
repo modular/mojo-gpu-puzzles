@@ -127,7 +127,7 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         )
 
         comptime kernel = no_conflict_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -163,7 +163,7 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         )
 
         comptime kernel = two_way_conflict_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
             test_size,
@@ -195,7 +195,7 @@ fn test_no_conflict() raises:
         )
 
         comptime kernel = no_conflict_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
             SIZE,
@@ -229,7 +229,7 @@ fn test_two_way_conflict() raises:
         )
 
         comptime kernel = two_way_conflict_kernel[layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
             SIZE,

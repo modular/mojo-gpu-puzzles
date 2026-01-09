@@ -32,7 +32,7 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        ctx.enqueue_function_checked[add_10_guard, add_10_guard](
+        ctx.enqueue_function[add_10_guard, add_10_guard](
             out,
             a,
             UInt(SIZE),

@@ -40,7 +40,7 @@ def main():
                     a_host[k] = k
                     expected[k] = k + 10
 
-        ctx.enqueue_function_checked[add_10_blocks_2d, add_10_blocks_2d](
+        ctx.enqueue_function[add_10_blocks_2d, add_10_blocks_2d](
             out,
             a,
             UInt(SIZE),

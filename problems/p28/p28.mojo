@@ -84,7 +84,7 @@ def test_async_copy_overlap_convolution():
         ](kernel_buf)
 
         comptime kernel = async_copy_overlap_convolution[dtype, layout_async]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             kernel_tensor,

@@ -179,9 +179,9 @@ struct EmbeddingCustomOp:
                 embed_dim,
                 output.dtype,
             ]
-            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
-            gpu_ctx.enqueue_function_checked(
+            gpu_ctx.enqueue_function(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,
@@ -270,9 +270,9 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
-            gpu_ctx.enqueue_function_checked(
+            gpu_ctx.enqueue_function(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,

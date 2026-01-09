@@ -38,7 +38,7 @@ def main():
                 b_host[i] = i
                 expected[i] = a_host[i] + b_host[i]
 
-        ctx.enqueue_function_checked[add, add](
+        ctx.enqueue_function[add, add](
             out,
             a,
             b,
