@@ -67,10 +67,10 @@ while stride > 0:
     barrier()
     stride //= 2
 
-# 2. Reduction using warp primatives
-# Safe tree reduction using warp primatives does not require shared memory or a barrier
+# 2. Reduction using warp primitives
+# Safe tree reduction using warp primitives does not require shared memory or a barrier
 # after each reduction phase.
-# Mojo's warp-level sum operation uses warp primatives under the hood and hides all this
+# Mojo's warp-level sum operation uses warp primitives under the hood and hides all this
 # complexity:
 total = sum(partial_product)  # Internally no barriers, no race conditions!
 ```
