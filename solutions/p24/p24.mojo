@@ -68,7 +68,7 @@ fn traditional_dot_product_p12_style[
         output[global_i // WARP_SIZE] = shared[0]
 
 
-# ANCHOR_END: traditional_approach_from_p10
+# ANCHOR_END: traditional_approach_from_p12
 
 
 # ANCHOR: simple_warp_kernel_solution
