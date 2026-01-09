@@ -1455,7 +1455,7 @@ def main():
     a.enqueue_fill(0)
     tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function_checked[kernel[dtype, layout], kernel[dtype, layout]](
+    ctx.enqueue_function[kernel[dtype, layout], kernel[dtype, layout]](
         tensor, grid_dim=1, block_dim=1
     )
 
@@ -7144,7 +7144,7 @@ fn prefix_sum_block_sum_phase[
 <p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to enqueue multiple kernels that run sequentially on the device:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
             comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 UInt(size),
@@ -7154,7 +7154,7 @@ fn prefix_sum_block_sum_phase[
 
             # Phase 2: Add block sums
             comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
-            ctx.enqueue_function_checked[kernel2, kernel2](
+            ctx.enqueue_function[kernel2, kernel2](
                 out_tensor,
                 UInt(size),
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -7458,10 +7458,10 @@ shared[7] = 22 + 6 = 28
 <h2 id="host-device-synchronization-when-its-actually-needed"><a class="header" href="#host-device-synchronization-when-its-actually-needed">Host-device synchronization: When it’s actually needed</a></h2>
 <p>The two kernel phases execute sequentially <strong>without any explicit synchronization</strong> between them:</p>
 <pre><code class="language-mojo"># Phase 1: Local prefix sums
-ctx.enqueue_function_checked[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
+ctx.enqueue_function[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
-ctx.enqueue_function_checked[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
+ctx.enqueue_function[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
 </code></pre>
 <p><strong>Key insight</strong>: Mojo’s <code>DeviceContext</code> uses a single execution stream (CUDA stream on NVIDIA GPUs, HIP stream on AMD ROCm GPUs), which guarantees that kernel launches execute in the exact order they are enqueued. No explicit synchronization is needed between kernels.</p>
 <p><strong>When <code>ctx.synchronize()</code> is needed</strong>:</p>
@@ -9273,7 +9273,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 in_layout, out_layout, conv_layout, input_size, conv_size
             ]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 kernel_tensor,
@@ -9367,7 +9367,7 @@ kernel_tensor = kernel.to_layout_tensor()
 <p><strong>Device Context Usage</strong>:</p>
 <pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
 gpu_ctx.enqueue_memset(...)  # Zero output buffer
-gpu_ctx.enqueue_function_checked[..., ...](...) # Schedule kernel
+gpu_ctx.enqueue_function[..., ...](...) # Schedule kernel
 </code></pre>
 <ul>
 <li>Device context manages GPU resources</li>
@@ -10483,7 +10483,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             comptime kernel = transpose_kernel[
                 layout_k, layout_k_t, seq_len, d, dtype
             ]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -10505,7 +10505,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 d,
                 dtype,
             ]
-            gpu_ctx.enqueue_function_checked[kernel2, kernel2](
+            gpu_ctx.enqueue_function[kernel2, kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -10518,7 +10518,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 
             # Step 5: Apply softmax to get attention weights
             comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
-            gpu_ctx.enqueue_function_checked[kernel3, kernel3](
+            gpu_ctx.enqueue_function[kernel3, kernel3](
                 weights,
                 weights,
                 grid_dim=softmax_blocks_per_grid,
@@ -10540,7 +10540,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
                 seq_len,
                 dtype,
             ]
-            gpu_ctx.enqueue_function_checked[kernel4, kernel4](
+            gpu_ctx.enqueue_function[kernel4, kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,
@@ -11138,9 +11138,9 @@ struct EmbeddingCustomOp:
                 embed_dim,
                 output.dtype,
             ]
-            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
-            gpu_ctx.enqueue_function_checked(
+            gpu_ctx.enqueue_function(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,
@@ -11235,9 +11235,9 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            compiled_kernel = gpu_ctx.compile_function_checked[kernel, kernel]()
+            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
-            gpu_ctx.enqueue_function_checked(
+            gpu_ctx.enqueue_function(
                 compiled_kernel,
                 output_tensor,
                 indices_tensor,

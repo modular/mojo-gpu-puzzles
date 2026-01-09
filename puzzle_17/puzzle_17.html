@@ -375,7 +375,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 in_layout, out_layout, conv_layout, input_size, conv_size
             ]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 kernel_tensor,
@@ -469,7 +469,7 @@ kernel_tensor = kernel.to_layout_tensor()
 <p><strong>Device Context Usage</strong>:</p>
 <pre><code class="language-mojo">gpu_ctx = ctx.get_device_context()
 gpu_ctx.enqueue_memset(...)  # Zero output buffer
-gpu_ctx.enqueue_function_checked[..., ...](...) # Schedule kernel
+gpu_ctx.enqueue_function[..., ...](...) # Schedule kernel
 </code></pre>
 <ul>
 <li>Device context manages GPU resources</li>
