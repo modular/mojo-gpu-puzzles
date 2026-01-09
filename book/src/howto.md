@@ -30,14 +30,14 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 > Here is some documentation how to setup GPU support in your OS for
 > - [Windows WSL2 for Linux with NVIDIA](#windows-wsl2-for-linux-with-nvidia)
 > - [Linux native with NVIDIA](#linux-native-with-nvidia)
-> - [macOS Apple Sillicon](#macos-apple-sillicon)
+> - [macOS Apple Silicon](#macos-apple-silicon)
 
 ### Windows WSL2 for Linux with NVIDIA
 
 To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu please follow the [NVIDIA CUDA on WLS Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 
-The important information is to install the NVIDIA Windows CUDA Driver for *Windows* because they fully support WSL2. 
-Once a Windows NVIDIA GPU driver is installed on the system, CUDA becomes available within WSL 2. 
+The important information is to install the NVIDIA Windows CUDA Driver for *Windows* because they fully support WSL2.
+Once a Windows NVIDIA GPU driver is installed on the system, CUDA becomes available within WSL 2.
 The CUDA driver installed on Windows host will be stubbed inside the WSL 2 as libcuda.so, therefore users must not install any NVIDIA GPU Linux driver within WSL 2.
 
 Once you have installed the drivers please test the installation
@@ -112,7 +112,7 @@ code --version
 > All puzzles 1-15 are working on Linux.
 
 
-### macOS Apple Sillicon
+### macOS Apple Silicon
 
 For `osx-arm64` users, you'll need:
 - **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos` and if it fails you'd need to upgrade.
