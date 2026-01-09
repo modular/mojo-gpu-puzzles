@@ -341,19 +341,17 @@ fn minimal_fused_kernel_backward[
         # Initialize grad_ln_weight and grad_ln_bias
         @parameter
         for h in range(hidden_dim):
-            grad_ln_weight.ptr.offset(h).init_pointee_copy(0)
-            grad_ln_bias.ptr.offset(h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).init_pointee_copy(0)
+            (grad_ln_bias.ptr + h).init_pointee_copy(0)
 
         # Initialize grad_weight and grad_bias
         @parameter
         for out_idx in range(output_dim):
-            grad_bias.ptr.offset(out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).init_pointee_copy(0)
 
             @parameter
             for h in range(hidden_dim):
-                grad_weight.ptr.offset(
-                    out_idx * hidden_dim + h
-                ).init_pointee_copy(0)
+                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(0)
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -375,7 +373,7 @@ fn minimal_fused_kernel_backward[
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
     @parameter
     for out_idx in range(output_dim):
-        grad_bias_ptr = grad_bias.ptr.offset(out_idx)
+        grad_bias_ptr = grad_bias.ptr + out_idx
         _ = Atomic[dtype].fetch_add(
             grad_bias_ptr,
             rebind[Scalar[dtype]](grad_output[batch_idx, seq_idx, out_idx]),
@@ -397,9 +395,7 @@ fn minimal_fused_kernel_backward[
             var grad_w = (
                 grad_output[batch_idx, seq_idx, out_idx] * ln_output_val
             )
-            var grad_weight_ptr = grad_weight.ptr.offset(
-                out_idx * hidden_dim + h
-            )
+            var grad_weight_ptr = grad_weight.ptr + out_idx * hidden_dim + h
             _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
@@ -419,8 +415,8 @@ fn minimal_fused_kernel_backward[
             )
 
         # Atomic accumulation of LayerNorm parameter gradients
-        grad_ln_weight_ptr = grad_ln_weight.ptr.offset(h)
-        grad_ln_bias_ptr = grad_ln_bias.ptr.offset(h)
+        grad_ln_weight_ptr = grad_ln_weight.ptr + h
+        grad_ln_bias_ptr = grad_ln_bias.ptr + h
         _ = Atomic[dtype].fetch_add(
             grad_ln_weight_ptr, rebind[Scalar[dtype]](grad_ln_out * normalized)
         )
