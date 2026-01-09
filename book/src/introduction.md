@@ -5,12 +5,12 @@
     <span class="title">Puzzles Repo</span>
     <span class="icon icon-github"></span>
   </a>
-  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
+  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
     <span class="title">Mojo Manual</span>
     <span class="icon icon-book"></span>
   </a>
   <div class="secondary">
-    <a href="https://discord.com/channels/1087530497313357884/1098713601386233997" 
+    <a href="https://discord.com/channels/1087530497313357884/1098713601386233997"
       data-tooltip="Chat on Discord"
       aria-label="Discord"
       target="_blank">
@@ -31,7 +31,7 @@
   </div>
 </div>
 
-> _"For the things we have to learn before we can do them, we learn by doing them."_  
+> _"For the things we have to learn before we can do them, we learn by doing them."_
 > Aristotle (Nicomachean Ethics)
 
 Welcome to our hands-on guide to GPU programming using [Mojo](https://docs.modular.com/mojo/manual/) 🔥, the programming language that combines Python syntax with systems-level performance.
