@@ -1,0 +1,258 @@
+# Mojo Deprecation Patterns Configuration
+# Based on https://docs.modular.com/mojo/changelog/
+
+[metadata]
+title = "Mojo GPU Puzzles Deprecation Patterns"
+mojo_version_min = "24.0"
+last_updated = "2026-01-07"
+
+# Pattern format:
+# [category.pattern_name]
+# pattern = "regex pattern to search for"
+# description = "What was deprecated/removed"
+# removed_in = "Mojo version"
+# replacement = "What to use instead"
+# severity = "high|medium|low"
+# file_types = ["mojo", "md"]  # file extensions to scan
+
+# =============================================================================
+# POINTER TYPES
+# =============================================================================
+
+[pointers.DTypePointer]
+pattern = '\bDTypePointer\b'
+description = "DTypePointer has been removed"
+removed_in = "24.4"
+replacement = "Use UnsafePointer instead"
+severity = "high"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v244-2024-08-08"
+
+[pointers.LegacyPointer]
+pattern = '\bLegacyPointer\b'
+description = "LegacyPointer has been removed"
+removed_in = "24.4"
+replacement = "Use UnsafePointer instead"
+severity = "high"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v244-2024-08-08"
+
+# =============================================================================
+# LAYOUT TENSOR (Already fixed in PR #193)
+# =============================================================================
+
+[layout.LayoutTensorBuild]
+pattern = 'tb\[dtype\]\(\)\.row_major\['
+description = "LayoutTensorBuild builder pattern removed"
+removed_in = "25.7"
+replacement = "Use LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space=AddressSpace.SHARED].stack_allocation()"
+severity = "high"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#25-7-removed"
+fixed_in_pr = 193
+
+# =============================================================================
+# GPU MODULE REORGANIZATION
+# =============================================================================
+
+[gpu_imports.gpu_id]
+pattern = 'from gpu\.id import'
+description = "Deprecated import path for GPU IDs"
+removed_in = "25.7"
+replacement = "from gpu import block_idx, thread_idx"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_mma]
+pattern = 'from gpu\.mma import'
+description = "Deprecated import path for MMA operations"
+removed_in = "25.7"
+replacement = "from gpu.compute.mma import"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_cluster]
+pattern = 'from gpu\.cluster import'
+description = "Deprecated import path for cluster operations"
+removed_in = "25.7"
+replacement = "from gpu import cluster_sync"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_warp]
+pattern = 'from gpu\.warp import'
+description = "Deprecated import path for warp operations"
+removed_in = "25.7"
+replacement = "from gpu.primitives.warp import"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_semaphore]
+pattern = 'from gpu\.semaphore import'
+description = "Deprecated import path for semaphores"
+removed_in = "25.7"
+replacement = "from gpu.sync.semaphore import Semaphore"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_mma_sm100]
+pattern = 'from gpu\.mma_sm100 import'
+description = "Deprecated import path for SM100 MMA"
+removed_in = "25.7"
+replacement = "from gpu.compute.mma_sm100 import"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_imports.gpu_tcgen05]
+pattern = 'from gpu\.tcgen05 import'
+description = "Deprecated import path for TCGen05"
+removed_in = "25.7"
+replacement = "from gpu.compute.tcgen05 import"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+# =============================================================================
+# GPU ADDRESS SPACE
+# =============================================================================
+
+[gpu_types._GPUAddressSpace]
+pattern = '\b_GPUAddressSpace\b'
+description = "_GPUAddressSpace type removed"
+removed_in = "25.7"
+replacement = "Use AddressSpace directly (part of prelude)"
+severity = "high"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+[gpu_types.GPUAddressSpace]
+pattern = '\bGPUAddressSpace\b'
+description = "GPUAddressSpace alias removed"
+removed_in = "25.7"
+replacement = "Use AddressSpace directly"
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+# =============================================================================
+# TMA (Tensor Memory Accelerator)
+# =============================================================================
+
+[gpu_tma.old_import]
+pattern = 'from gpu\.host\._nvidia_cuda import.*TMA'
+description = "TMA types moved to dedicated module"
+removed_in = "25.7"
+replacement = "from gpu.host.nvidia.tma import TMADescriptor, create_tma_descriptor, etc."
+severity = "medium"
+file_types = ["mojo", "md"]
+changelog_url = "https://docs.modular.com/mojo/changelog/#v257-2024-12-19"
+
+# =============================================================================
+# PYTHON INTEROP
+# =============================================================================
+
+[python.to_float64]
+pattern = '\.to_float64\(\)'
+description = "PythonObject.to_float64() method removed"
+removed_in = "24.0+"
+replacement = "Use Float64() constructor instead"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+[python.from_borrowed_ptr]
+pattern = '\.from_borrowed_ptr\('
+description = "PythonObject.from_borrowed_ptr() method removed"
+removed_in = "24.0+"
+replacement = "Use constructor with from_borrowed_ptr keyword argument"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+# =============================================================================
+# TRAITS
+# =============================================================================
+
+[traits.ImplicitlyIntable]
+pattern = '\bImplicitlyIntable\b'
+description = "ImplicitlyIntable trait removed"
+removed_in = "25.0+"
+replacement = "Use explicit Int() conversion via Intable trait"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+[traits.ImplicitlyCopyable]
+pattern = '\bImplicitlyCopyable\b'
+description = "ImplicitlyCopyable trait (check for removal/deprecation)"
+removed_in = "TBD"
+replacement = "Check current documentation"
+severity = "low"
+file_types = ["mojo", "md"]
+
+# =============================================================================
+# KEYWORDS AND DECORATORS
+# =============================================================================
+
+[keywords.value_decorator]
+pattern = '@value\b'
+description = "@value decorator removed"
+removed_in = "25.6"
+replacement = "Remove decorator, functionality is automatic"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+[keywords.let_keyword]
+pattern = '\blet\s+\w+\s*='
+description = "let keyword removed"
+removed_in = "24.0+"
+replacement = "Use var instead"
+severity = "high"
+file_types = ["mojo"]  # Only check code, not prose
+
+[keywords.disable_del]
+pattern = '__disable_del'
+description = "__disable_del removed"
+removed_in = "25.0+"
+replacement = "Use modern lifecycle management"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+# =============================================================================
+# TYPE RENAMES
+# =============================================================================
+
+[types.AnyRegType]
+pattern = '\bAnyRegType\b'
+description = "AnyRegType renamed"
+removed_in = "25.0+"
+replacement = "Use AnyTrivialRegType instead"
+severity = "medium"
+file_types = ["mojo", "md"]
+
+# =============================================================================
+# SCAN CONFIGURATION
+# =============================================================================
+
+[scan_config]
+# Directories to exclude from scanning
+exclude_dirs = [".git", "node_modules", "__pycache__", ".pytest_cache"]
+
+# Files to exclude
+exclude_files = [
+    "DEPRECATION_AUDIT.md",
+    "scan_deprecations.sh",
+    "scan_deprecations_comprehensive.sh",
+    "SCANNER_README.md",
+    "PR_DESCRIPTION.md",
+    "scan_report.md"
+]
+
+# Report format options
+report_format = "markdown"  # markdown, json, or text
+show_line_context = true
+max_context_lines = 2
+group_by_category = true
