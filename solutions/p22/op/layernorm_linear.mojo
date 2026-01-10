@@ -351,7 +351,9 @@ fn minimal_fused_kernel_backward[
 
             @parameter
             for h in range(hidden_dim):
-                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(0)
+                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
+                    0
+                )
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
