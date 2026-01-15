@@ -1,6 +1,6 @@
 ## Why consider LayoutTensor?
 
-Looking at our traditional implementation above, you might notice some potential issues:
+Looking at our traditional implementation below, you might notice some potential issues:
 
 ### Current approach
 
