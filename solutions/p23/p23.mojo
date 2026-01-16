@@ -34,13 +34,13 @@ fn elementwise_add[
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.aligned_load[width=simd_width](idx, 0)
-        b_simd = b.aligned_load[width=simd_width](idx, 0)
+        a_simd = a.aligned_load[width=simd_width](idx)
+        b_simd = b.aligned_load[width=simd_width](idx)
         ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
-        output.aligned_store[simd_width](idx, 0, ret)
+        output.aligned_store[simd_width](idx, ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
 
@@ -123,12 +123,12 @@ fn manual_vectorized_tiled_elementwise_add[
         for i in range(tile_size):
             global_start = tile_id * chunk_size + i * simd_width
 
-            a_vec = a.aligned_load[simd_width](global_start, 0)
-            b_vec = b.aligned_load[simd_width](global_start, 0)
+            a_vec = a.aligned_load[simd_width](global_start)
+            b_vec = b.aligned_load[simd_width](global_start)
             ret = a_vec + b_vec
             # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
 
-            output.aligned_store[simd_width](global_start, 0, ret)
+            output.aligned_store[simd_width](global_start, ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     num_tiles = (size + chunk_size - 1) // chunk_size
@@ -171,10 +171,10 @@ fn vectorize_within_tiles_elementwise_add[
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
             if global_idx + width <= size:
-                a_vec = a.aligned_load[width](global_idx, 0)
-                b_vec = b.aligned_load[width](global_idx, 0)
+                a_vec = a.aligned_load[width](global_idx)
+                b_vec = b.aligned_load[width](global_idx)
                 result = a_vec + b_vec
-                output.aligned_store[width](global_idx, 0, result)
+                output.aligned_store[width](global_idx, result)
 
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)

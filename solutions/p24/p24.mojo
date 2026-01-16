@@ -121,8 +121,8 @@ fn functional_warp_dot_product[
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            a_val = a.load[1](idx, 0)
-            b_val = b.load[1](idx, 0)
+            a_val = a.load[1](idx)
+            b_val = b.load[1](idx)
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -132,7 +132,7 @@ fn functional_warp_dot_product[
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](idx // WARP_SIZE, 0, total)
+            output.store[1](idx // WARP_SIZE, total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
