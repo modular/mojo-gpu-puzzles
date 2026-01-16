@@ -53,12 +53,12 @@ tests = { cmd = "bash solutions/run.sh" }
 # Setup CUDA-GDB by linking system CUDA installation to conda environment
 setup-cuda-gdb = { cmd = "bash scripts/setup-cuda-gdb.sh", description = "Auto-detect and link system CUDA-GDB binaries to conda environment" }
 
-set-buffer-cache = { cmd = "export MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0" }
-memcheck = { cmd = "bash solutions/sanitizer.sh memcheck", depends-on = ["set-buffer-cache"] }
-racecheck = { cmd = "bash solutions/sanitizer.sh racecheck", depends-on = ["set-buffer-cache"] }
-synccheck = { cmd = "bash solutions/sanitizer.sh synccheck", depends-on = ["set-buffer-cache"] }
-initcheck = { cmd = "bash solutions/sanitizer.sh initcheck", depends-on = ["set-buffer-cache"] }
-sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["set-buffer-cache"] }
+zero-memory-manager = { cmd = "export MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0" }
+memcheck = { cmd = "bash solutions/sanitizer.sh memcheck", depends-on = ["zero-memory-manager"] }
+racecheck = { cmd = "bash solutions/sanitizer.sh racecheck", depends-on = ["zero-memory-manager"] }
+synccheck = { cmd = "bash solutions/sanitizer.sh synccheck", depends-on = ["zero-memory-manager"] }
+initcheck = { cmd = "bash solutions/sanitizer.sh initcheck", depends-on = ["zero-memory-manager"] }
+sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["zero-memory-manager"] }
 
 build-book = "cd book && mdbook build"
 book = { cmd = "cd book && mdbook serve --open", depends-on = ["build-book"] }
