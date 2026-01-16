@@ -1,9 +1,21 @@
 #!/bin/bash
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+# Source shared configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config.sh"
+
+# Detect GPU platform and compute capability at startup
+GPU_PLATFORM=$(detect_gpu_platform)
+GPU_COMPUTE_CAP=$(detect_gpu_compute_capability)
+
+if [ "$GPU_PLATFORM" != "nvidia" ]; then
+    echo -e "${RED}Error: compute-sanitizer is only available for NVIDIA GPUs${NC}"
+    echo "Detected platform: $GPU_PLATFORM"
+    exit 1
+fi
+
+echo "Detected NVIDIA GPU with compute capability: ${GPU_COMPUTE_CAP:-unknown}"
+echo ""
 
 # Usage function
 usage() {
@@ -18,6 +30,8 @@ usage() {
     echo "  $0 racecheck                              # Run racecheck on all puzzles"
     echo "  $0 racecheck p25                          # Run racecheck on p25 with all flags"
     echo "  $0 racecheck p25 --async-copy-overlap     # Run racecheck on p25 with specific flag"
+    echo "  $0 all                                    # Run all sanitizers on all puzzles"
+    echo "  $0 all p25                                # Run all sanitizers on p25 with all flags"
     echo "  $0 all p25 --tma-coordination             # Run all sanitizers on p25 with specific flag"
 }
 
@@ -45,17 +59,29 @@ case "$TOOL" in
         ;;
 esac
 
-# Handle "all" tool option - run all sanitizers on specific puzzle
+# Handle "all" tool option - run all sanitizers on all puzzles or specific puzzle
 if [ "$TOOL" = "all" ]; then
-    if [ -z "$SPECIFIC_PUZZLE" ]; then
-        echo "Error: 'all' tool requires a specific puzzle name"
-        echo "Usage: $0 all <puzzle_name>"
-        echo "Example: $0 all p25"
-        exit 1
-    fi
-
     TOOLS=("memcheck" "racecheck" "synccheck" "initcheck")
 
+    if [ -z "$SPECIFIC_PUZZLE" ]; then
+        # Run all sanitizers on all puzzles
+        echo "Running all compute-sanitizer tools on ALL puzzles"
+        echo "======================================================================="
+
+        for CURRENT_TOOL in "${TOOLS[@]}"; do
+            echo ""
+            echo "Running $CURRENT_TOOL on all puzzles..."
+            echo "-----------------------------------"
+            bash "$0" "$CURRENT_TOOL"
+            echo ""
+        done
+
+        echo "======================================================================="
+        echo "All sanitizer tools completed for all puzzles"
+        exit 0
+    fi
+
+    # Run all sanitizers on specific puzzle
     if [ -n "$SPECIFIC_FLAG" ]; then
         echo "Running all compute-sanitizer tools on $SPECIFIC_PUZZLE with flag: $SPECIFIC_FLAG"
     else
@@ -186,9 +212,22 @@ run_mojo_files_with_sanitizer() {
 
 cd solutions || exit 1
 
+SKIPPED_PUZZLES=0
+
 # Function to test a specific directory
 test_puzzle_directory() {
     local dir="$1"
+    # Extract puzzle name (remove trailing slash)
+    local puzzle_name="${dir%/}"
+
+    # Check compute capability requirements
+    local skip_reason=$(should_skip_puzzle "$puzzle_name" "$GPU_COMPUTE_CAP")
+    if [ -n "$skip_reason" ]; then
+        echo -e "${YELLOW}=== SKIPPING ${puzzle_name}: ${skip_reason} ===${NC}"
+        SKIPPED_PUZZLES=$((SKIPPED_PUZZLES + 1))
+        return 0
+    fi
+
     if [ -n "$SPECIFIC_FLAG" ]; then
         echo "=== Running compute-sanitizer $TOOL on solutions in ${dir} with flag: $SPECIFIC_FLAG ==="
     else
@@ -224,11 +263,14 @@ cd ..
 
 echo ""
 echo "========================================"
+if [ "$SKIPPED_PUZZLES" -gt 0 ]; then
+  echo -e "${YELLOW}SKIPPED PUZZLES: $SKIPPED_PUZZLES (insufficient compute capability)${NC}"
+fi
 if [ "$TOTAL_ERRORS" -gt 0 ]; then
   echo -e "${RED}TOTAL ERRORS FOUND: $TOTAL_ERRORS${NC}"
   echo -e "${YELLOW}Please review the errors above and fix them.${NC}"
   exit 1
 else
-  echo -e "${GREEN}✅ NO ERRORS FOUND! All tests passed clean.${NC}"
+  echo -e "${GREEN}NO ERRORS FOUND! All tests passed clean.${NC}"
   exit 0
 fi

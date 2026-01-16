@@ -1,16 +1,8 @@
 #!/bin/bash
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
-GRAY='\033[0;90m'
-NC='\033[0m' # No Color
-BOLD='\033[1m'
+# Source shared configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/config.sh"
 
 # Unicode symbols
 CHECK_MARK="✓"
@@ -28,54 +20,13 @@ SKIPPED_TESTS=0
 VERBOSE_MODE=true
 IGNORE_LOW_COMPUTE_FAILURES=false
 
-# Puzzles that require higher compute capability on NVIDIA
-# >= 8.0 (Ampere): Tensor Cores, full async copy (RTX 30xx, A100+)
-NVIDIA_COMPUTE_80_REQUIRED_PUZZLES=("p16" "p19" "p22" "p28" "p29" "p33")
-# >= 9.0 (Hopper): SM90+ cluster programming (H100+)
-NVIDIA_COMPUTE_90_REQUIRED_PUZZLES=("p34")
-
-# Puzzles that are not supported on AMD GPUs
-AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
-
-# Puzzles that are not supported on Apple GPUs
-APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")
-
 # Arrays to store results
 declare -a FAILED_TESTS_LIST
 declare -a PASSED_TESTS_LIST
 declare -a SKIPPED_TESTS_LIST
 declare -a IGNORED_LOW_COMPUTE_TESTS_LIST
 
-# GPU detection functions
-detect_gpu_platform() {
-    # Detect GPU platform: nvidia, amd, apple, or unknown
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null | head -1)
-        if [ -n "$gpu_name" ]; then
-            echo "nvidia"
-            return
-        fi
-    fi
-
-    # Check for AMD ROCm
-    if command -v rocm-smi >/dev/null 2>&1; then
-        if rocm-smi --showproductname >/dev/null 2>&1; then
-            echo "amd"
-            return
-        fi
-    fi
-
-    # Check for Apple Silicon (macOS)
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        if system_profiler SPDisplaysDataType 2>/dev/null | grep -q "Apple"; then
-            echo "apple"
-            return
-        fi
-    fi
-
-    echo "unknown"
-}
-
+# Extended GPU compute capability detection (supplements config.sh)
 detect_gpu_compute_capability() {
     # Try to detect NVIDIA GPU compute capability
     local compute_capability=""
