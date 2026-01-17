@@ -131,7 +131,7 @@ This solution:
 
 > You might wonder why it passes the test even without the bound-check!
 > Always remember that passing the tests doesn't necessarily mean the code
-> is sound and free of Undefined Behavoirs. In [puzzle 10](../puzzle_10/puzzle_10.md) we'll examine such cases and use some tools to catch such
+> is sound and free of Undefined Behaviors. In [puzzle 10](../puzzle_10/puzzle_10.md) we'll examine such cases and use some tools to catch such
 > soundness bugs.
 
 </div>
@@ -159,4 +159,4 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-These boundary handling patterns will become more elegant when we [learn about LayoutTensor in Puzzle 4](../puzzle_04/), which provides built-in shape management.
+These boundary handling patterns will become more elegant when we [learn about LayoutTensor in Puzzle 4](../puzzle_04/introduction_layout_tensor.md), which provides built-in shape management.
