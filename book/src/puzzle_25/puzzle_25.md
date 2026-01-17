@@ -35,7 +35,7 @@ Lane 0 ──broadcast──> All lanes (0, 1, 2, ..., 31)
 
 ### **Warp communication operations in Mojo**
 
-Learn the core communication primitives from `gpu.warp`:
+Learn the core communication primitives from `gpu.primitives.warp`:
 
 1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)**: Get value from lane at higher index (neighbor access)
 2. **[`broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)**: Share lane 0's value with all other lanes (one-to-many)

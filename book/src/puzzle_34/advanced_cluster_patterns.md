@@ -92,7 +92,7 @@ Real-world GPU algorithms often require **hierarchical coordination** where diff
 
 ## Advanced cluster APIs
 
-**From [`gpu.cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/) module:**
+**From [`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/) module:**
 
 - **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: Warp-level thread election for efficient computation
 - **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**: Signal completion for staged cluster coordination

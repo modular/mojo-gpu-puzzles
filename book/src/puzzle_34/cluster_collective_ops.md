@@ -2,7 +2,7 @@
 
 ## Overview
 
-Building on basic cluster coordination from the previous section, this challenge teaches you to implement **cluster-wide collective operations** - extending the familiar [`block.sum`](https://docs.modular.com/mojo/stdlib/gpu/block/sum) pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across **multiple thread blocks**.
+Building on basic cluster coordination from the previous section, this challenge teaches you to implement **cluster-wide collective operations** - extending the familiar [`block.sum`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across **multiple thread blocks**.
 
 **The Challenge**: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.
 
@@ -89,11 +89,11 @@ Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
 
 ## Cluster APIs reference
 
-**From [`gpu.cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/) module:**
+**From [`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/) module:**
 
-- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)**: Full cluster synchronization - stronger than arrive/wait pattern
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: Elects single thread within warp for efficient coordination
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster)**: Returns unique block identifier within cluster
+- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync)**: Full cluster synchronization - stronger than arrive/wait pattern
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync)**: Elects single thread within warp for efficient coordination
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster)**: Returns unique block identifier within cluster
 
 ## Tree reduction pattern
 

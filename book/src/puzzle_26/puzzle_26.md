@@ -36,7 +36,7 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 
 ### **Advanced warp operations in Mojo**
 
-Learn the sophisticated communication primitives from `gpu.warp`:
+Learn the sophisticated communication primitives from `gpu.primitives.warp`:
 
 1. **[`shuffle_xor(value, mask)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor)**: XOR-based butterfly communication for tree algorithms
 2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum)**: Hardware-accelerated parallel scan operations
