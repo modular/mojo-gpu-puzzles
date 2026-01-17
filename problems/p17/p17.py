@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
+from max.driver import CPU, Accelerator, Device, Buffer
 from max.dtype import DType
 from max.engine import InferenceSession
 from max.graph import DeviceRef, Graph, TensorType, ops
@@ -13,12 +13,12 @@ def conv_1d(
     kernel: NDArray[np.float32],
     session: InferenceSession,
     device: Device,
-) -> Tensor:
+) -> Buffer:
     dtype = DType.float32
 
     # Create driver tensors from the input arrays and move them to the target device
-    input_tensor = Tensor.from_numpy(input).to(device)
-    kernel_tensor = Tensor.from_numpy(kernel).to(device)
+    input_tensor = Buffer.from_numpy(input).to(device)
+    kernel_tensor = Buffer.from_numpy(kernel).to(device)
 
     # Path to the directory containing our Mojo operations
     mojo_kernels = Path(__file__).parent / "op"
@@ -73,7 +73,7 @@ def conv_1d(
     result = model.execute(input_tensor, kernel_tensor)[0]
 
     # Copy values back to the CPU to be read
-    assert isinstance(result, Tensor)
+    assert isinstance(result, Buffer)
     return result.to(CPU())
 
 

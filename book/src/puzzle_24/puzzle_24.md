@@ -36,7 +36,7 @@ GPU Block (e.g., 256 threads)
 
 ### **Warp operations available in Mojo**
 
-Learn the core warp primitives from `gpu.warp`:
+Learn the core warp primitives from `gpu.primitives.warp`:
 
 1. **`sum(value)`**: Sum all values across warp lanes
 2. **`shuffle_idx(value, lane)`**: Get value from specific lane

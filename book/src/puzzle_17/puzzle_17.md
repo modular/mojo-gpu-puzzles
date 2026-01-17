@@ -129,7 +129,7 @@ Let's break down how this works in the larger context:
 1. **Python side (<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p17/p17.py" class="filename">problems/p17/p17.py</a>)**:
    - Creates NumPy arrays for input and kernel
    - Calls `conv_1d()` function which wraps our operation in MAX Graph
-   - Converts NumPy arrays to [MAX driver](https://docs.modular.com/max/api/python/driver) Tensors with `Tensor.from_numpy(input).to(device)`
+   - Converts NumPy arrays to [MAX driver](https://docs.modular.com/max/api/python/driver) Buffers with `Buffer.from_numpy(input).to(device)`
    - Loads the custom operation package with `custom_extensions=[mojo_kernels]`
 
 2. **Graph building**:

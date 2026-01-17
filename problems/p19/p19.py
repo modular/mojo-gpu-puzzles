@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Tensor
+from max.driver import CPU, Accelerator, Device, Buffer
 from max.dtype import DType
 from max.engine import InferenceSession
 from max.graph import DeviceRef, Graph, TensorType, ops
@@ -14,7 +14,7 @@ def attention(
     v: NDArray[np.float32],
     session: InferenceSession,
     device: Device,
-) -> Tensor:
+) -> Buffer:
     """
     Compute vector attention: Attention(Q, K, V) = softmax(Q · K^T) @ V
 
@@ -32,9 +32,9 @@ def attention(
     seq_len, d = k.shape
 
     # Convert inputs to tensors
-    q_tensor = Tensor.from_numpy(q).to(device)
-    k_tensor = Tensor.from_numpy(k).to(device)
-    v_tensor = Tensor.from_numpy(v).to(device)
+    q_tensor = Buffer.from_numpy(q).to(device)
+    k_tensor = Buffer.from_numpy(k).to(device)
+    v_tensor = Buffer.from_numpy(v).to(device)
 
     mojo_kernels = Path(__file__).parent / "op"
 
@@ -87,7 +87,7 @@ def attention(
     print(f"Executing attention on {device}")
     print("=" * 100)
     result = model.execute(q_tensor, k_tensor, v_tensor)[0]
-    assert isinstance(result, Tensor)
+    assert isinstance(result, Buffer)
     return result.to(CPU()) if device == Accelerator() else result
 
 

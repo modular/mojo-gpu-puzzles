@@ -290,10 +290,10 @@ else:
 total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](idx // WARP_SIZE, 0, total)
+    output.store[1](Index(idx // WARP_SIZE), total)
 ```
 
-**Storage pattern:** `output.store[1](idx // WARP_SIZE, 0, total)` stores 1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
+**Storage pattern:** `output.store[1](Index(idx // WARP_SIZE), 0, total)` stores 1 element at position `(idx // WARP_SIZE, 0)` in the output tensor.
 
 **Same warp logic:** `warp_sum()` and lane 0 writing work identically in functional approach.
 
@@ -301,7 +301,7 @@ if lane_id() == 0:
 
 ```mojo
 from gpu import lane_id
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1

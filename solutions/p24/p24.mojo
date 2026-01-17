@@ -1,11 +1,11 @@
 from math import ceildiv
 from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from gpu.memory import AddressSpace
 from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from utils import IndexList
+from utils import Index, IndexList
 from sys import argv, simd_width_of, size_of, align_of
 from testing import assert_equal
 from random import random_float64
@@ -121,8 +121,8 @@ fn functional_warp_dot_product[
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            a_val = a.load[1](idx, 0)
-            b_val = b.load[1](idx, 0)
+            a_val = a.load[1](Index(idx))
+            b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -132,7 +132,7 @@ fn functional_warp_dot_product[
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](idx // WARP_SIZE, 0, total)
+            output.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)

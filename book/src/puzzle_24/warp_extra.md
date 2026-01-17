@@ -45,12 +45,12 @@
 ### ✅ Perfect for warps
 ```mojo
 # Reduction operations
-from gpu.warp import sum, max
+from gpu.primitives.warp import sum, max
 var total = sum(partial_values)
 var maximum = max(partial_values)
 
 # Communication patterns
-from gpu.warp import shuffle_idx, prefix_sum
+from gpu.primitives.warp import shuffle_idx, prefix_sum
 var broadcast = shuffle_idx(my_value, 0)
 var running_sum = prefix_sum(my_value)
 ```
