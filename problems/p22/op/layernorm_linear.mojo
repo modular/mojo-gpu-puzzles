@@ -301,19 +301,19 @@ fn minimal_fused_kernel_backward[
         # Initialize grad_ln_weight and grad_ln_bias
         @parameter
         for h in range(hidden_dim):
-            grad_ln_weight.ptr.offset(h).init_pointee_copy(0)
-            grad_ln_bias.ptr.offset(h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).init_pointee_copy(0)
+            (grad_ln_bias.ptr + h).init_pointee_copy(0)
 
         # Initialize grad_weight and grad_bias
         @parameter
         for out_idx in range(output_dim):
-            grad_bias.ptr.offset(out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).init_pointee_copy(0)
 
             @parameter
             for h in range(hidden_dim):
-                grad_weight.ptr.offset(
-                    out_idx * hidden_dim + h
-                ).init_pointee_copy(0)
+                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
+                    0
+                )
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
