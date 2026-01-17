@@ -9297,7 +9297,7 @@ This single line does several important things:
 <ul>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
-<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Tensors with <code>Tensor.from_numpy(input).to(device)</code></li>
+<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffers with <code>Buffer.from_numpy(input).to(device)</code></li>
 <li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
 </ul>
 </li>
@@ -9604,7 +9604,7 @@ Skipped: 0 (0.00%)
 <h3 id="3-complete-the-graph-definition-in-p18py"><a class="header" href="#3-complete-the-graph-definition-in-p18py">3. Complete the graph definition in <code>p18.py</code></a></h3>
 <pre><code class="language-python">from pathlib import Path
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
+from max.driver import CPU, Accelerator, Device, Buffer
 from max.dtype import DType
 from max.engine import InferenceSession
 from max.graph import DeviceRef, Graph, TensorType, ops
@@ -9616,9 +9616,9 @@ def softmax(
     input: NDArray[np.float32],
     session: InferenceSession,
     device: Device,
-) -&gt; Tensor:
+) -&gt; Buffer:
     dtype = DType.float32
-    input_tensor = Tensor.from_numpy(input).to(device)
+    input_tensor = Buffer.from_numpy(input).to(device)
     mojo_kernels = Path(__file__).parent / "op"
 
     with Graph(
@@ -13615,8 +13615,8 @@ fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing
 <li>And so on…</li>
 </ul>
 <h3 id="3-simd-loading-pattern"><a class="header" href="#3-simd-loading-pattern">3. <strong>SIMD loading pattern</strong></a></h3>
-<pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
-b_simd = b.aligned_load[simd_width](idx, 0)  # Load 4 consecutive floats (GPU-dependent)
+<pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
+b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
 <p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of elements loaded depends on your GPU’s SIMD capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
@@ -13700,13 +13700,13 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.aligned_load[width=simd_width](idx, 0)
-        b_simd = b.aligned_load[width=simd_width](idx, 0)
+        a_simd = a.aligned_load[width=simd_width](Index(idx))
+        b_simd = b.aligned_load[width=simd_width](Index(idx))
         ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
-        output.aligned_store[simd_width](idx, 0, ret)
+        output.store[simd_width](Index(idx), ret)
 
     elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
 
@@ -13748,10 +13748,10 @@ fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; Non
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
 <pre><code class="language-mojo">idx = indices[0]                                  # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
-a_simd = a.aligned_load[simd_width](idx, 0)       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
-b_simd = b.aligned_load[simd_width](idx, 0)       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
+a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
+b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
-output.aligned_store[simd_width](idx, 0, ret)     # Store: 4 results simultaneously (GPU-dependent)
+output.store[simd_width](Index(global_start), ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -13773,7 +13773,7 @@ output.aligned_store[simd_width](idx, 0, ret)     # Store: 4 results simultaneou
 </ul>
 <p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for RTX 4090, 16 for A100).</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
-<pre><code class="language-mojo">a.aligned_load[simd_width](idx, 0)  // Coalesced memory access
+<pre><code class="language-mojo">a.aligned_load[simd_width](Index(idx))  // Coalesced memory access
 </code></pre>
 <p><strong>Memory Coalescing Benefits:</strong></p>
 <ul>
@@ -14040,10 +14040,10 @@ fn tiled_elementwise_add[
 
         @parameter
         for i in range(tile_size):
-            a_vec = a_tile.load[simd_width](i, 0)
-            b_vec = b_tile.load[simd_width](i, 0)
+            a_vec = a_tile.load[simd_width](Index(i))
+            b_vec = b_tile.load[simd_width](Index(i))
             ret = a_vec + b_vec
-            output_tile.store[simd_width](i, 0, ret)
+            output_tile.store[simd_width](Index(i), ret)
 
     num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
@@ -14370,12 +14370,12 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         for i in range(tile_size):
             global_start = tile_id * chunk_size + i * simd_width
 
-            a_vec = a.aligned_load[simd_width](global_start, 0)
-            b_vec = b.aligned_load[simd_width](global_start, 0)
+            a_vec = a.aligned_load[simd_width](Index(global_start))
+            b_vec = b.aligned_load[simd_width](Index(global_start))
             ret = a_vec + b_vec
             # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
 
-            output.aligned_store[simd_width](global_start, 0, ret)
+            output.store[simd_width](Index(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     num_tiles = (size + chunk_size - 1) // chunk_size
@@ -14575,10 +14575,10 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
             if global_idx + width &lt;= size:
-                a_vec = a.aligned_load[width](global_idx, 0)
-                b_vec = b.aligned_load[width](global_idx, 0)
+                a_vec = a.aligned_load[width](Index(global_idx))
+                b_vec = b.aligned_load[width](Index(global_idx))
                 result = a_vec + b_vec
-                output.aligned_store[width](global_idx, 0, result)
+                output.store[width](Index(global_idx), result)
 
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
@@ -15144,7 +15144,7 @@ benchmark_tiled_parameterized[256, 64]  # Large tiles
 <li><strong>Zero synchronization cost</strong>: Warp operations happen instantly within each warp</li>
 </ul>
 <h3 id="warp-operations-available-in-mojo"><a class="header" href="#warp-operations-available-in-mojo"><strong>Warp operations available in Mojo</strong></a></h3>
-<p>Learn the core warp primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core warp primitives from <code>gpu.primitives.warp</code>:</p>
 <ol>
 <li><strong><code>sum(value)</code></strong>: Sum all values across warp lanes</li>
 <li><strong><code>shuffle_idx(value, lane)</code></strong>: Get value from specific lane</li>
@@ -15267,7 +15267,7 @@ if lane_id() == 0:
 <h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
 <p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
 <p><strong>Simple example:</strong></p>
-<pre><code class="language-mojo">from gpu.warp import sum
+<pre><code class="language-mojo">from gpu.primitives.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
 var warp_total = sum(my_value)         # All contribute to one sum
@@ -15295,7 +15295,7 @@ var result = a + b # Add 8 pairs simultaneously
 </code></pre>
 <p><strong>GPU SIMT approach (Mojo):</strong></p>
 <pre><code class="language-mojo"># Thread-based code that becomes vector operations
-from gpu.warp import sum
+from gpu.primitives.warp import sum
 
 var my_data = input[thread_id]         # Each thread gets its element
 var partial = my_data * coefficient    # All threads compute simultaneously
@@ -15366,7 +15366,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 <h3 id="lane-numbering-and-identity"><a class="header" href="#lane-numbering-and-identity">Lane numbering and identity</a></h3>
 <p>Each thread within a warp has a <strong>lane ID</strong> from 0 to <code>WARP_SIZE-1</code>:</p>
 <pre><code class="language-mojo">from gpu import lane_id
-from gpu.warp import WARP_SIZE
+from gpu.primitives.warp import WARP_SIZE
 
 # Within a kernel function:
 my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
@@ -15382,7 +15382,7 @@ barrier()  # Explicit synchronization required
 var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
 
 # 2. Warp approach:
-from gpu.warp import sum
+from gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
 </code></pre>
@@ -15462,7 +15462,7 @@ else:
 <p><em>Performance: Warp efficiency destroyed</em></p>
 <h2 id="cross-architecture-compatibility"><a class="header" href="#cross-architecture-compatibility">Cross-architecture compatibility</a></h2>
 <h3 id="nvidia-vs-amd-warp-sizes"><a class="header" href="#nvidia-vs-amd-warp-sizes">NVIDIA vs AMD warp sizes</a></h3>
-<pre><code class="language-mojo">from gpu.warp import WARP_SIZE
+<pre><code class="language-mojo">from gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)
@@ -15872,13 +15872,13 @@ else:
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](idx // WARP_SIZE, 0, total)
+    output.store[1](Index(idx // WARP_SIZE), total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>output.store[1](idx // WARP_SIZE, 0, total)</code> stores 1 element at position <code>(idx // WARP_SIZE, 0)</code> in the output tensor.</p>
+<p><strong>Storage pattern:</strong> <code>output.store[1](Index(idx // WARP_SIZE), 0, total)</code> stores 1 element at position <code>(idx // WARP_SIZE, 0)</code> in the output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
 <pre><code class="language-mojo">from gpu import lane_id
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
@@ -15938,8 +15938,8 @@ expected: 10416.0
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx &lt; size:
-            a_val = a.load[1](idx, 0)
-            b_val = b.load[1](idx, 0)
+            a_val = a.load[1](Index(idx))
+            b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -15949,7 +15949,7 @@ expected: 10416.0
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](idx // WARP_SIZE, 0, total)
+            output.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
@@ -16136,12 +16136,12 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <h2 id="code-examples"><a class="header" href="#code-examples">Code examples</a></h2>
 <h3 id="-perfect-for-warps"><a class="header" href="#-perfect-for-warps">✅ Perfect for warps</a></h3>
 <pre><code class="language-mojo"># Reduction operations
-from gpu.warp import sum, max
+from gpu.primitives.warp import sum, max
 var total = sum(partial_values)
 var maximum = max(partial_values)
 
 # Communication patterns
-from gpu.warp import shuffle_idx, prefix_sum
+from gpu.primitives.warp import shuffle_idx, prefix_sum
 var broadcast = shuffle_idx(my_value, 0)
 var running_sum = prefix_sum(my_value)
 </code></pre>
@@ -16207,7 +16207,7 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
-<p>Learn the core communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core communication primitives from <code>gpu.primitives.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: Get value from lane at higher index (neighbor access)</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast"><code>broadcast(value)</code></a></strong>: Share lane 0’s value with all other lanes (one-to-many)</li>
@@ -17582,7 +17582,7 @@ Output: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
 <li><strong>Single-cycle operations</strong>: Complex reductions happen in specialized hardware</li>
 </ul>
 <h3 id="advanced-warp-operations-in-mojo"><a class="header" href="#advanced-warp-operations-in-mojo"><strong>Advanced warp operations in Mojo</strong></a></h3>
-<p>Learn the sophisticated communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the sophisticated communication primitives from <code>gpu.primitives.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: XOR-based butterfly communication for tree algorithms</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: Hardware-accelerated parallel scan operations</li>
@@ -19073,11 +19073,11 @@ Cross-warp coordination:
 <li><strong>Logarithmic complexity</strong>: \(O(\log n)\) algorithms with single-instruction simplicity</li>
 </ul>
 <h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
-<p>Learn the complete parallel programming toolkit from <code>gpu.block</code>:</p>
+<p>Learn the complete parallel programming toolkit from <code>gpu.primitives.block</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum(value)</code></a></strong>: All-to-one reduction for totals, averages, maximum/minimum values</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: All-to-each scan for parallel filtering and extraction</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast"><code>block.broadcast(value)</code></a></strong>: One-to-all distribution for parameter sharing and coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>: All-to-one reduction for totals, averages, maximum/minimum values</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: All-to-each scan for parallel filtering and extraction</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>: One-to-all distribution for parameter sharing and coordination</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like statistical computations, histogram binning, and normalization workflows that would otherwise require dozens of lines of complex shared memory coordination code.</p>
@@ -19227,8 +19227,8 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
 <p><strong>Recommended approach:</strong> Complete the three parts in sequence, as each builds on concepts from the previous parts. The progression from simple reduction → advanced partitioning → complete workflow provides the optimal learning path for understanding block-level GPU programming.</p>
 <p>💡 <strong>Key insight</strong>: Block operations represent the sweet spot between programmer productivity and hardware performance - they provide the simplicity of high-level operations with the efficiency of carefully optimized low-level implementations. This puzzle teaches you to think at the right abstraction level for modern GPU programming.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blocksum-essentials---block-level-dot-product"><a class="header" href="#blocksum-essentials---block-level-dot-product">block.sum() Essentials - Block-Level Dot Product</a></h1>
-<p>Implement the dot product we saw in <a href="puzzle_27/../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="puzzle_27/block_sum.html#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
+<p>Implement the dot product we saw in <a href="puzzle_27/../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="puzzle_27/block_sum.html#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
 <h2 id="key-concepts-45"><a class="header" href="#key-concepts-45">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -19433,7 +19433,7 @@ Just like warp.sum() but for the entire block
 <p>Each thread should handle one element pair from vectors <code>a</code> and <code>b</code>. What operation combines these into a “partial result” that can be summed across threads?</p>
 <h3 id="3-layouttensor-indexing-patterns"><a class="header" href="#3-layouttensor-indexing-patterns">3. <strong>LayoutTensor indexing patterns</strong></a></h3>
 <p>When accessing <code>LayoutTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
-<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum()</a> API concepts</strong></a></h3>
+<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>A template parameter specifying the block size</li>
@@ -19619,8 +19619,8 @@ Block-level: block.sum() across 128 threads (multiple warps)
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: Block operations extend warp programming concepts to entire thread blocks, providing optimized primitives that replace complex synchronization patterns while working across multiple warps simultaneously. Just like <code>warp.sum()</code> simplified warp-level reductions, <code>block.sum()</code> simplifies block-level reductions without sacrificing performance.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
-<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
 <h2 id="key-concepts-46"><a class="header" href="#key-concepts-46">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -20023,8 +20023,8 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 </ul>
 <p>💡 <strong>Key Takeaway</strong>: Block prefix sum operations transform GPU programming from simple parallel computations to sophisticated parallel algorithms. While <code>block.sum()</code> simplified reductions, <code>block.prefix_sum()</code> enables advanced data reorganization patterns essential for high-performance parallel algorithms.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="blockbroadcast-vector-normalization"><a class="header" href="#blockbroadcast-vector-normalization">block.broadcast() Vector Normalization</a></h1>
-<p>Implement vector mean normalization by combining <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum">block.sum</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast</a> operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast()</a> operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
+<p>Implement vector mean normalization by combining <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast</a> operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast()</a> operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
 <h2 id="key-concepts-47"><a class="header" href="#key-concepts-47">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -20158,7 +20158,7 @@ if local_i == 0:
     # Compute mean from total_sum and size
 </code></pre>
 <p><strong>Why thread 0?</strong> Consistent with <code>block.sum()</code> pattern where thread 0 receives the result.</p>
-<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
+<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>Template parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
@@ -25634,7 +25634,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 <p><strong>Next step</strong>: Ready for more advanced coordination? Continue to <strong><a href="puzzle_34/./cluster_collective_ops.html">Cluster-Wide Collective Operations</a></strong> to learn how to extend <a href="puzzle_34/../puzzle_27/block_sum.html"><code>block.sum()</code> patterns from Puzzle 27</a> to cluster scale, building on <a href="puzzle_34/../puzzle_24/warp_sum.html">warp-level reductions from Puzzle 24</a>!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-cluster-wide-collective-operations-1"><a class="header" href="#-cluster-wide-collective-operations-1">☸️ Cluster-Wide Collective Operations</a></h1>
 <h2 id="overview-61"><a class="header" href="#overview-61">Overview</a></h2>
-<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum</code></a> pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
+<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum"><code>block.sum</code></a> pattern from <a href="puzzle_34/../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
 <p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.</p>
 <p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
 <h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
@@ -25719,11 +25719,11 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </div>
 </details>
 <h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
 </ul>
 <h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
 <p>Recall the <strong>tree reduction pattern</strong> from <a href="puzzle_34/../puzzle_27/puzzle_27.html">Puzzle 27’s traditional dot product</a>:</p>
@@ -26027,7 +26027,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </div>
 </details>
 <h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
 <ul>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>

@@ -190,7 +190,7 @@
 <h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
 <p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
 <p><strong>Simple example:</strong></p>
-<pre><code class="language-mojo">from gpu.warp import sum
+<pre><code class="language-mojo">from gpu.primitives.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
 var warp_total = sum(my_value)         # All contribute to one sum
@@ -218,7 +218,7 @@ var result = a + b # Add 8 pairs simultaneously
 </code></pre>
 <p><strong>GPU SIMT approach (Mojo):</strong></p>
 <pre><code class="language-mojo"># Thread-based code that becomes vector operations
-from gpu.warp import sum
+from gpu.primitives.warp import sum
 
 var my_data = input[thread_id]         # Each thread gets its element
 var partial = my_data * coefficient    # All threads compute simultaneously
@@ -289,7 +289,7 @@ var broadcasted = shuffle_idx(my_value, 0)
 <h3 id="lane-numbering-and-identity"><a class="header" href="#lane-numbering-and-identity">Lane numbering and identity</a></h3>
 <p>Each thread within a warp has a <strong>lane ID</strong> from 0 to <code>WARP_SIZE-1</code>:</p>
 <pre><code class="language-mojo">from gpu import lane_id
-from gpu.warp import WARP_SIZE
+from gpu.primitives.warp import WARP_SIZE
 
 # Within a kernel function:
 my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
@@ -305,7 +305,7 @@ barrier()  # Explicit synchronization required
 var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # Sum reduction
 
 # 2. Warp approach:
-from gpu.warp import sum
+from gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
 </code></pre>
@@ -385,7 +385,7 @@ else:
 <p><em>Performance: Warp efficiency destroyed</em></p>
 <h2 id="cross-architecture-compatibility"><a class="header" href="#cross-architecture-compatibility">Cross-architecture compatibility</a></h2>
 <h3 id="nvidia-vs-amd-warp-sizes"><a class="header" href="#nvidia-vs-amd-warp-sizes">NVIDIA vs AMD warp sizes</a></h3>
-<pre><code class="language-mojo">from gpu.warp import WARP_SIZE
+<pre><code class="language-mojo">from gpu.primitives.warp import WARP_SIZE
 
 # NVIDIA GPUs:     WARP_SIZE = 32
 # AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 mode)

@@ -186,8 +186,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="blockprefix_sum-parallel-histogram-binning"><a class="header" href="#blockprefix_sum-parallel-histogram-binning">block.prefix_sum() Parallel Histogram Binning</a></h1>
-<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
+<p>This puzzle implements parallel histogram binning using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum">block.prefix_sum</a> operations for advanced parallel filtering and extraction. Each thread determines its element’s target bin, then applies <code>block.prefix_sum()</code> to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum">block.prefix_sum()</a> operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>

@@ -340,7 +340,7 @@ Skipped: 0 (0.00%)
 <h3 id="3-complete-the-graph-definition-in-p18py"><a class="header" href="#3-complete-the-graph-definition-in-p18py">3. Complete the graph definition in <code>p18.py</code></a></h3>
 <pre><code class="language-python">from pathlib import Path
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Tensor, accelerator_count
+from max.driver import CPU, Accelerator, Device, Buffer
 from max.dtype import DType
 from max.engine import InferenceSession
 from max.graph import DeviceRef, Graph, TensorType, ops
@@ -352,9 +352,9 @@ def softmax(
     input: NDArray[np.float32],
     session: InferenceSession,
     device: Device,
-) -&gt; Tensor:
+) -&gt; Buffer:
     dtype = DType.float32
-    input_tensor = Tensor.from_numpy(input).to(device)
+    input_tensor = Buffer.from_numpy(input).to(device)
     mojo_kernels = Path(__file__).parent / "op"
 
     with Graph(

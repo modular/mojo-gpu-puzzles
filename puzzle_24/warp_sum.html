@@ -490,13 +490,13 @@ else:
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 
 if lane_id() == 0:
-    output.store[1](idx // WARP_SIZE, 0, total)
+    output.store[1](Index(idx // WARP_SIZE), total)
 </code></pre>
-<p><strong>Storage pattern:</strong> <code>output.store[1](idx // WARP_SIZE, 0, total)</code> stores 1 element at position <code>(idx // WARP_SIZE, 0)</code> in the output tensor.</p>
+<p><strong>Storage pattern:</strong> <code>output.store[1](Index(idx // WARP_SIZE), 0, total)</code> stores 1 element at position <code>(idx // WARP_SIZE, 0)</code> in the output tensor.</p>
 <p><strong>Same warp logic:</strong> <code>warp_sum()</code> and lane 0 writing work identically in functional approach.</p>
 <h3 id="4-available-functions-from-imports"><a class="header" href="#4-available-functions-from-imports">4. <strong>Available functions from imports</strong></a></h3>
 <pre><code class="language-mojo">from gpu import lane_id
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 
 # Inside your function:
 my_lane = lane_id()           # 0 to WARP_SIZE-1
@@ -556,8 +556,8 @@ expected: 10416.0
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx &lt; size:
-            a_val = a.load[1](idx, 0)
-            b_val = b.load[1](idx, 0)
+            a_val = a.load[1](Index(idx))
+            b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -567,7 +567,7 @@ expected: 10416.0
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](idx // WARP_SIZE, 0, total)
+            output.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)

@@ -187,7 +187,7 @@
                     <main>
                         <h1 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations">☸️ Cluster-Wide Collective Operations</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/block/sum"><code>block.sum</code></a> pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
+<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum"><code>block.sum</code></a> pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
 <p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.</p>
 <p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
 <h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
@@ -272,11 +272,11 @@
 </div>
 </details>
 <h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.cluster</code></a> module:</strong></p>
+<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
 </ul>
 <h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
 <p>Recall the <strong>tree reduction pattern</strong> from <a href="../puzzle_27/puzzle_27.html">Puzzle 27’s traditional dot product</a>:</p>

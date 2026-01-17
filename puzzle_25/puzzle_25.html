@@ -211,7 +211,7 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 <li><strong>Single-cycle operations</strong>: Communication happens in one instruction cycle</li>
 </ul>
 <h3 id="warp-communication-operations-in-mojo"><a class="header" href="#warp-communication-operations-in-mojo"><strong>Warp communication operations in Mojo</strong></a></h3>
-<p>Learn the core communication primitives from <code>gpu.warp</code>:</p>
+<p>Learn the core communication primitives from <code>gpu.primitives.warp</code>:</p>
 <ol>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: Get value from lane at higher index (neighbor access)</li>
 <li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast"><code>broadcast(value)</code></a></strong>: Share lane 0’s value with all other lanes (one-to-many)</li>

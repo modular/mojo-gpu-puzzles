@@ -399,7 +399,7 @@ This single line does several important things:
 <ul>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
-<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Tensors with <code>Tensor.from_numpy(input).to(device)</code></li>
+<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffers with <code>Buffer.from_numpy(input).to(device)</code></li>
 <li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
 </ul>
 </li>
