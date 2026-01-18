@@ -1,5 +1,5 @@
-from gpu import thread_idx, block_dim, block_idx
-from gpu.host import DeviceContext, HostBuffer
+from gpu import thread_idx
+from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 from testing import assert_equal
 
