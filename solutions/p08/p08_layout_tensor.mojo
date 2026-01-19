@@ -1,4 +1,3 @@
-from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
@@ -35,10 +34,10 @@ fn add_10_shared_layout_tensor[
     if global_i < size:
         shared[local_i] = a[global_i]
 
-    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
-    # However, it's included to teach proper shared memory synchronization patterns
-    # for more complex scenarios where threads need to coordinate access to shared data.
-    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     if global_i < size:

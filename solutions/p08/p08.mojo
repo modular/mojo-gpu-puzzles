@@ -1,8 +1,7 @@
-from memory import UnsafePointer, stack_allocation
+from memory import stack_allocation
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
-from sys import size_of
 from testing import assert_equal
 
 comptime TPB = 4
@@ -25,16 +24,15 @@ fn add_10_shared(
     ]()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # local data into shared memory
+    # Load local data into shared memory
     if global_i < size:
         shared[local_i] = a[global_i]
 
-    # wait for all threads to complete
-    # works within a thread block
-    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
-    # However, it's included to teach proper shared memory synchronization patterns
-    # for more complex scenarios where threads need to coordinate access to shared data.
-    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
+    # Wait for all threads to complete (works within a thread block).
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     # process using shared memory
