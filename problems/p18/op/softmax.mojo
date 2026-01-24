@@ -26,9 +26,61 @@ fn softmax_gpu_kernel[
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 31 lines)
-    ...
+    shared_max = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED
+    ].stack_allocation()
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(BLOCK_DIM_X),
+        MutAnyOrigin,
+        address_space=AddressSpace.SHARED
+    ].stack_allocation()
+    global_i = Int(thread_idx.x)
 
 
+    var val: Scalar[dtype] = min_finite[dtype]()
+    if global_i <  input_size:
+        val = rebind[Scalar[dtype]](input[global_i])
+    shared_max[global_i] = val   
+
+    barrier()
+
+    stride = BLOCK_DIM_X // 2
+    while stride > 0:
+        if global_i < stride:
+            shared_max[global_i] = max(
+                shared_max[global_i], shared_max[global_i + stride]
+            )
+
+        barrier()
+        stride = stride // 2
+
+    block_max = shared_max[0]
+
+    var exp_val: Scalar[dtype] = 0.0
+    if global_i < input_size:
+        exp_val = rebind[Scalar[dtype]](exp(val - block_max))
+    shared_max[global_i] = val
+    
+    barrier()
+
+    stride = BLOCK_DIM_X // 2
+    while stride > 0:
+        if global_i < stride:
+            shared_max[global_i] = max(
+                shared_max[global_i], shared_max[global_i + stride]
+            )
+
+        barrier()
+        stride = stride // 2
+        
+    block_sum = shared_sum[0]
+
+    if  global_i < input_size:
+        output[global_i] = exp_val / block_sum
 # ANCHOR_END: softmax_gpu_kernel
 
 
@@ -42,8 +94,18 @@ fn softmax_cpu_kernel[
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # FILL IN (roughly 10 lines)
-    ...
+    var max_val : Scalar[dtype] = min_finite[dtype]()  
+    for i in range(input_size):
+        max_val = max(max_val, rebind[Scalar[dtype]](input[i]))
 
+    var sum_exp: Scalar[dtype] = 0.0
+    for i in range(input_size):
+        var exp_val = rebind[Scalar[dtype]](exp(input[i] - max_val))
+        output[i] = exp_val
+        sum_exp += exp_val
+    
+    for i in range(input_size):
+        output[i] = output[i] / sum_exp
 
 # ANCHOR_END: softmax_cpu_kernel
 
