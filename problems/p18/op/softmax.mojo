@@ -42,9 +42,9 @@ fn softmax_gpu_kernel[
 
 
     var val: Scalar[dtype] = min_finite[dtype]()
-    if global_i <  input_size:
+    if global_i < input_size:
         val = rebind[Scalar[dtype]](input[global_i])
-    shared_max[global_i] = val   
+    shared_max[global_i] = val
 
     barrier()
 
@@ -63,20 +63,20 @@ fn softmax_gpu_kernel[
     var exp_val: Scalar[dtype] = 0.0
     if global_i < input_size:
         exp_val = rebind[Scalar[dtype]](exp(val - block_max))
-    shared_max[global_i] = val
+    shared_sum[global_i] = exp_val
     
     barrier()
 
     stride = BLOCK_DIM_X // 2
     while stride > 0:
         if global_i < stride:
-            shared_max[global_i] = max(
-                shared_max[global_i], shared_max[global_i + stride]
+            shared_sum[global_i] = (
+                shared_sum[global_i] + shared_sum[global_i + stride]
             )
 
         barrier()
         stride = stride // 2
-        
+
     block_sum = shared_sum[0]
 
     if  global_i < input_size:
