@@ -137,7 +137,7 @@ fn matmul_tiled[
         if tiled_row < size and tiled_col < size:
 
             @parameter
-            for k in range(min(TPB, size - tile * TPB)):
+            for k in range(min(Int(TPB), Int(size - tile * TPB))):
                 acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
