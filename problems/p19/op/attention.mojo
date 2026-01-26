@@ -128,8 +128,28 @@ fn transpose_kernel[
     inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
-    ...
+    shared_tile = LayoutTenso[
+        dtype,
+        Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
+        MutAnyOrigin, 
+        address_space = AddressSpace.shared
+    ].stack_allocation()
 
+    local_row = thread_idx.y, local_col = thread_idx.x 
+    local_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
+
+    global_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
+
+
+    if global_row < rows and global_col < cols:
+        shared_tile[local_row, local_col] = inp[global_row, global_col]
+    
+    barrier()
+
+
+    
+   
 
 # ANCHOR_END: transpose_kernel
 
