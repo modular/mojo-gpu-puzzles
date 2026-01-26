@@ -113,7 +113,7 @@ def main():
             result_buf.enqueue_fill(0)
 
             # Enqueue function
-            ctx.enqueue_function_checked[add_10, add_10](
+            ctx.enqueue_function[add_10, add_10](
                 result_buf,
                 input_buf,
                 grid_dim=BLOCKS_PER_GRID,
@@ -156,7 +156,7 @@ def main():
                 " right]"
             )
 
-            ctx.enqueue_function_checked[
+            ctx.enqueue_function[
                 process_sliding_window, process_sliding_window
             ](
                 output_tensor,
@@ -231,9 +231,7 @@ def main():
             print("Each thread cooperates with neighbors for smoothing...")
 
             # This will likely hang due to barrier deadlock
-            ctx.enqueue_function_checked[
-                collaborative_filter, collaborative_filter
-            ](
+            ctx.enqueue_function[collaborative_filter, collaborative_filter](
                 output_tensor,
                 input_tensor,
                 grid_dim=BLOCKS_PER_GRID,

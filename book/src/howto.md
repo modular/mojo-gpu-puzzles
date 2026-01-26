@@ -24,10 +24,97 @@ Make sure your system meets our [system requirements](https://docs.modular.com/m
 
 You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the puzzles. After setup, you can verify your GPU compatibility using the `gpu-specs` command (see Quick Start section below).
 
-#### macOS Apple Sillicon (Early preview)
+## Operating System
+
+> [!NOTE]
+> Here is some documentation how to setup GPU support in your OS for
+> - [Windows WSL2 for Linux with NVIDIA](#windows-wsl2-for-linux-with-nvidia)
+> - [Linux native with NVIDIA](#linux-native-with-nvidia)
+> - [macOS Apple Silicon](#macos-apple-silicon)
+
+### Windows WSL2 for Linux with NVIDIA
+
+To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu please follow the [NVIDIA CUDA on WLS Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
+
+The important information is to install the NVIDIA Windows CUDA Driver for *Windows* because they fully support WSL2.
+Once a Windows NVIDIA GPU driver is installed on the system, CUDA becomes available within WSL 2.
+The CUDA driver installed on Windows host will be stubbed inside the WSL 2 as libcuda.so, therefore users must not install any NVIDIA GPU Linux driver within WSL 2.
+
+Once you have installed the drivers please test the installation
+
+Verify from Windows: Open PowerShell (not WSL)
+```bash
+nvidia-smi
+```
+
+Verify from inside WSL: (first start WLS e.g. via wsl -d Ubuntu)
+```bash
+ls -l /usr/lib/wsl/lib/nvidia-smi
+/usr/lib/wsl/lib/nvidia-smi
+```
+
+Check setup from Pixi optionally install missing requirements e.g. for cuda-gdb debugging
+```bash
+pixi run nvidia-smi
+pixi run setup-cuda-gdb
+pixi run mojo debug --help
+pixi run cuda-gdb --version
+```
+
+For WSL you can install VSCode as your Editor
+- Install VS Code on Windows from [https://code.visualstudio.com/](https://code.visualstudio.com/).
+- Then install the Remote - WSL extension.
+
+> [!NOTE]
+> All puzzles 1-15 are working on WSL and Linux.
+
+
+### Linux native with NVIDIA
+
+Check GPU + Ubuntu version (Supported Ubuntu LTS: 20.04, 22.04, 24.04)
+```bash
+lspci | grep -i nvidia
+lsb_release -a
+```
+
+Install NVIDIA driver (mandatory)
+```bash
+sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+sudo reboot
+```
+
+For Linux you can install VSCode as your Editor
+- Install VS Code in Linux via VS Code APT repository
+
+Import Microsoft GPG key
+```bash
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+  | gpg --dearmor \
+  | sudo tee /usr/share/keyrings/packages.microsoft.gpg > /dev/null
+```
+
+Add VS Code APT repository
+```bash
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+| sudo tee /etc/apt/sources.list.d/vscode.list
+```
+
+Install VS Code and verify installation
+```bash
+sudo apt update
+sudo apt install code
+code --version
+```
+
+> [!NOTE]
+> All puzzles 1-15 are working on Linux.
+
+
+### macOS Apple Silicon
 
 For `osx-arm64` users, you'll need:
-
 - **macOS 15.0 or later** for optimal compatibility. Run `pixi run check-macos` and if it fails you'd need to upgrade.
 - **Xcode 16 or later** (minimum required). Use `xcodebuild -version` to check.
 
@@ -39,9 +126,10 @@ xcodebuild -downloadComponent MetalToolchain
 
 and then `xcrun -sdk macosx metal`, should give you the `no input files error`.
 
-> **Note**: Currently the puzzles 1-8 and 11-15 are working on macOS. We're working to enable more. Please stay tuned!
+> [!NOTE]
+> Currently the puzzles 1-8 and 11-15 are working on macOS. We're working to enable more. Please stay tuned!
 
-### Programming knowledge
+## Programming knowledge
 
 Basic knowledge of:
 

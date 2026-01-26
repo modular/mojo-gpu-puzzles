@@ -52,7 +52,7 @@ def main():
         a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
 
         comptime kernel = add_10_blocks_2d[out_layout, a_layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
             UInt(SIZE),

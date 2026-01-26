@@ -376,7 +376,7 @@ struct AttentionCustomOp:
             comptime kernel = transpose_kernel[
                 layout_k, layout_k_t, seq_len, d, dtype
             ]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -398,7 +398,7 @@ struct AttentionCustomOp:
                 d,
                 dtype,
             ]
-            gpu_ctx.enqueue_function_checked[kernel2, kernel2](
+            gpu_ctx.enqueue_function[kernel2, kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -411,7 +411,7 @@ struct AttentionCustomOp:
 
             # Step 5: Apply softmax to get attention weights
             comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
-            gpu_ctx.enqueue_function_checked[kernel3, kernel3](
+            gpu_ctx.enqueue_function[kernel3, kernel3](
                 weights,
                 weights,
                 grid_dim=softmax_blocks_per_grid,
@@ -433,7 +433,7 @@ struct AttentionCustomOp:
                 seq_len,
                 dtype,
             ]
-            gpu_ctx.enqueue_function_checked[kernel4, kernel4](
+            gpu_ctx.enqueue_function[kernel4, kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,

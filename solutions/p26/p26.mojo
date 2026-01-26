@@ -1,6 +1,6 @@
 from gpu import thread_idx, block_idx, block_dim, lane_id
 from gpu.host import DeviceContext
-from gpu.warp import shuffle_xor, prefix_sum, WARP_SIZE
+from gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
 from layout import Layout, LayoutTensor
 from sys import argv
 from testing import assert_equal, assert_almost_equal
@@ -237,7 +237,7 @@ def test_butterfly_pair_swap():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_pair_swap[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -284,7 +284,7 @@ def test_butterfly_parallel_max():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_parallel_max[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -326,7 +326,7 @@ def test_butterfly_conditional_max():
         output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_conditional_max[layout_2, SIZE_2]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID_2,
@@ -382,7 +382,7 @@ def test_warp_inclusive_prefix_sum():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = warp_inclusive_prefix_sum[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -428,7 +428,7 @@ def test_warp_partition():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = warp_partition[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             pivot_value,

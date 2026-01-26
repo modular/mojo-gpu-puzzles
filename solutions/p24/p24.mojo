@@ -1,11 +1,11 @@
 from math import ceildiv
 from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.warp import sum as warp_sum, WARP_SIZE
+from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from gpu.memory import AddressSpace
 from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from utils import IndexList
+from utils import Index, IndexList
 from sys import argv, simd_width_of, size_of, align_of
 from testing import assert_equal
 from random import random_float64
@@ -68,7 +68,7 @@ fn traditional_dot_product_p12_style[
         output[global_i // WARP_SIZE] = shared[0]
 
 
-# ANCHOR_END: traditional_approach_from_p10
+# ANCHOR_END: traditional_approach_from_p12
 
 
 # ANCHOR: simple_warp_kernel_solution
@@ -121,8 +121,8 @@ fn functional_warp_dot_product[
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            a_val = a.load[1](idx, 0)
-            b_val = b.load[1](idx, 0)
+            a_val = a.load[1](Index(idx))
+            b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -132,7 +132,7 @@ fn functional_warp_dot_product[
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](idx // WARP_SIZE, 0, total)
+            output.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
@@ -215,7 +215,7 @@ fn benchmark_simple_warp_parameterized[
         comptime kernel = simple_warp_dot_product[
             in_layout, out_layout, test_size
         ]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -306,7 +306,7 @@ fn benchmark_traditional_parameterized[
     @parameter
     @always_inline
     fn traditional_workflow(ctx: DeviceContext) raises:
-        ctx.enqueue_function_checked[
+        ctx.enqueue_function[
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
         ](
@@ -351,7 +351,7 @@ def main():
                     b_host[i] = i
 
             if argv()[1] == "--traditional":
-                ctx.enqueue_function_checked[
+                ctx.enqueue_function[
                     traditional_dot_product_p12_style[
                         in_layout, out_layout, SIZE
                     ],
@@ -366,7 +366,7 @@ def main():
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--kernel":
-                ctx.enqueue_function_checked[
+                ctx.enqueue_function[
                     simple_warp_dot_product[in_layout, out_layout, SIZE],
                     simple_warp_dot_product[in_layout, out_layout, SIZE],
                 ](

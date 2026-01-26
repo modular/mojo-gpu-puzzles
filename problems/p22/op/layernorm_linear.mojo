@@ -301,19 +301,19 @@ fn minimal_fused_kernel_backward[
         # Initialize grad_ln_weight and grad_ln_bias
         @parameter
         for h in range(hidden_dim):
-            grad_ln_weight.ptr.offset(h).init_pointee_copy(0)
-            grad_ln_bias.ptr.offset(h).init_pointee_copy(0)
+            (grad_ln_weight.ptr + h).init_pointee_copy(0)
+            (grad_ln_bias.ptr + h).init_pointee_copy(0)
 
         # Initialize grad_weight and grad_bias
         @parameter
         for out_idx in range(output_dim):
-            grad_bias.ptr.offset(out_idx).init_pointee_copy(0)
+            (grad_bias.ptr + out_idx).init_pointee_copy(0)
 
             @parameter
             for h in range(hidden_dim):
-                grad_weight.ptr.offset(
-                    out_idx * hidden_dim + h
-                ).init_pointee_copy(0)
+                (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
+                    0
+                )
 
     # Note: We cannot use barrier() here as it only synchronizes within a block.
     # The atomic operations will handle synchronization across blocks.
@@ -415,7 +415,7 @@ struct LayerNormLinearCustomOp:
                     hidden_dim,
                     output_dim,
                 ]
-                gpu_ctx.enqueue_function_checked[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel, kernel](
                     output_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -444,7 +444,7 @@ struct LayerNormLinearCustomOp:
                     seq_len,
                     hidden_dim,
                 ]
-                gpu_ctx.enqueue_function_checked[kernel, kernel](
+                gpu_ctx.enqueue_function[kernel, kernel](
                     normalized_tensor,
                     input_tensor,
                     ln_weight_tensor,
@@ -489,7 +489,7 @@ struct LayerNormLinearCustomOp:
                     UInt(output_dim),
                     UInt(hidden_dim),
                 ]
-                gpu_ctx.enqueue_function_checked[kernel2, kernel2](
+                gpu_ctx.enqueue_function[kernel2, kernel2](
                     transposed_weight_tensor,
                     linear_weight_tensor,
                     grid_dim=(transpose_blocks_x, transpose_blocks_y),
@@ -512,7 +512,7 @@ struct LayerNormLinearCustomOp:
                     output_dim,
                     hidden_dim,
                 ]
-                gpu_ctx.enqueue_function_checked[kernel3, kernel3](
+                gpu_ctx.enqueue_function[kernel3, kernel3](
                     flat_matmul,
                     flat_normalized,
                     transposed_weight_tensor,
@@ -533,7 +533,7 @@ struct LayerNormLinearCustomOp:
                     seq_len,
                     output_dim,
                 ]
-                gpu_ctx.enqueue_function_checked[kernel4, kernel4](
+                gpu_ctx.enqueue_function[kernel4, kernel4](
                     output_tensor,
                     reshaped_matmul,
                     linear_bias_tensor,
@@ -667,7 +667,7 @@ struct LayerNormLinearBackwardCustomOp:
                 hidden_dim,
                 output_dim,
             ]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 grad_input_tensor,
                 grad_ln_weight_tensor,
                 grad_ln_bias_tensor,

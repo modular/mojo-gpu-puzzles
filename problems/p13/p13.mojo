@@ -153,7 +153,7 @@ def main():
             var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
             var b_tensor = LayoutTensor[dtype, conv_layout, ImmutAnyOrigin](b)
             comptime kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -169,7 +169,7 @@ def main():
             comptime kernel = conv_1d_block_boundary[
                 in_2_layout, out_2_layout, conv_2_layout, dtype
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,

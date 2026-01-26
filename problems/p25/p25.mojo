@@ -1,6 +1,6 @@
 from gpu import thread_idx, block_idx, block_dim, lane_id
 from gpu.host import DeviceContext
-from gpu.warp import shuffle_down, broadcast, WARP_SIZE
+from gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import Layout, LayoutTensor
 from sys import argv
 from testing import assert_equal, assert_almost_equal
@@ -149,7 +149,7 @@ def test_neighbor_difference():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = neighbor_difference[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -193,7 +193,7 @@ def test_moving_average():
         output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
         comptime kernel = moving_average_3[layout_2, SIZE_2]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID_2,
@@ -259,7 +259,7 @@ def test_broadcast_shuffle_coordination():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = broadcast_shuffle_coordination[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -309,7 +309,7 @@ def test_basic_broadcast():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = basic_broadcast[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -365,7 +365,7 @@ def test_conditional_broadcast():
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = conditional_broadcast[layout, SIZE]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,

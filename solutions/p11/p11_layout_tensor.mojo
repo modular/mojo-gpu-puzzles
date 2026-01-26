@@ -67,7 +67,7 @@ def main():
         out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
 
-        ctx.enqueue_function_checked[pooling[layout], pooling[layout]](
+        ctx.enqueue_function[pooling[layout], pooling[layout]](
             out_tensor,
             a_tensor,
             UInt(SIZE),

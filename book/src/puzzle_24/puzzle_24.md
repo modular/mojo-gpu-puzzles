@@ -36,7 +36,7 @@ GPU Block (e.g., 256 threads)
 
 ### **Warp operations available in Mojo**
 
-Learn the core warp primitives from `gpu.warp`:
+Learn the core warp primitives from `gpu.primitives.warp`:
 
 1. **`sum(value)`**: Sum all values across warp lanes
 2. **`shuffle_idx(value, lane)`**: Get value from specific lane
@@ -49,7 +49,12 @@ Learn the core warp primitives from `gpu.warp`:
 ```mojo
 # 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = tb[dtype]().row_major[WARP_SIZE]().shared().alloc()
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
 shared[local_i] = partial_product
 barrier()
 
@@ -62,10 +67,10 @@ while stride > 0:
     barrier()
     stride //= 2
 
-# 2. Reduction using warp primatives
-# Safe tree reduction using warp primatives does not require shared memory or a barrier
+# 2. Reduction using warp primitives
+# Safe tree reduction using warp primitives does not require shared memory or a barrier
 # after each reduction phase.
-# Mojo's warp-level sum operation uses warp primatives under the hood and hides all this
+# Mojo's warp-level sum operation uses warp primitives under the hood and hides all this
 # complexity:
 total = sum(partial_product)  # Internally no barriers, no race conditions!
 ```

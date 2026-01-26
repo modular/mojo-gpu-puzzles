@@ -61,7 +61,7 @@ Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
 ## Getting Started
 
-### Prerequisits
+### Prerequisites
 
 You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the examples.
 
@@ -75,7 +75,7 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 3. Install a package manager to run the Mojo🔥 programs:
 
-   ### **Option 1 (Hightly recommended)**: [pixi](https://pixi.sh/latest/#installation)
+   ### **Option 1 (Highly recommended)**: [pixi](https://pixi.sh/latest/#installation)
 
     `pixi` is the **recommended option** for this project because:
     - Easy access to Modular's MAX/Mojo packages

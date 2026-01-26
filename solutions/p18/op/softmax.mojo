@@ -144,9 +144,7 @@ struct SoftmaxCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](
                     gpu_ctx,
-                    rebind[LegacyUnsafePointer[Scalar[output_tensor.dtype]]](
-                        output_tensor.ptr
-                    ),
+                    output_tensor.ptr,
                     input_size,
                     owning=False,
                 ),
@@ -154,7 +152,7 @@ struct SoftmaxCustomOp:
             )
 
             comptime kernel = softmax_gpu_kernel[layout, input_size, dtype]
-            gpu_ctx.enqueue_function_checked[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 grid_dim=1,

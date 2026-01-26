@@ -155,7 +155,7 @@ def main():
             out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
 
             comptime kernel = prefix_sum_simple[layout]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 UInt(size),
@@ -171,7 +171,7 @@ def main():
             # ANCHOR: prefix_sum_complete_block_level_sync
             # Phase 1: Local prefix sums
             comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 UInt(size),
@@ -184,7 +184,7 @@ def main():
 
             # Phase 2: Add block sums
             comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
-            ctx.enqueue_function_checked[kernel2, kernel2](
+            ctx.enqueue_function[kernel2, kernel2](
                 out_tensor,
                 UInt(size),
                 grid_dim=BLOCKS_PER_GRID_2,

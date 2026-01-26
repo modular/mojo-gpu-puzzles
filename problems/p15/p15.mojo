@@ -78,7 +78,7 @@ def main():
         inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
         comptime kernel = axis_sum[in_layout, out_layout]
-        ctx.enqueue_function_checked[kernel, kernel](
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             inp_tensor,
             UInt(SIZE),

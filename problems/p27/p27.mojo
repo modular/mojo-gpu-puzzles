@@ -1,7 +1,7 @@
 from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from os.atomic import Atomic
-from gpu.warp import WARP_SIZE
-from gpu import block
+from gpu.primitives.warp import WARP_SIZE
+from gpu.primitives import block
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
@@ -216,7 +216,7 @@ def main():
             comptime kernel = traditional_dot_product[
                 in_layout, out_layout, TPB
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -258,7 +258,7 @@ def main():
 
             # Block.sum(): Same result with dramatically simpler code!
             comptime kernel = block_sum_dot_product[in_layout, out_layout, TPB]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -338,7 +338,7 @@ def main():
                 comptime kernel = block_histogram_bin_extract[
                     in_layout, bin_layout, out_layout, TPB
                 ]
-                ctx.enqueue_function_checked[kernel, kernel](
+                ctx.enqueue_function[kernel, kernel](
                     input_tensor,
                     bin_tensor,
                     count_tensor,
@@ -414,7 +414,7 @@ def main():
             comptime kernel = block_normalize_vector[
                 in_layout, vector_layout, TPB
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 input_tensor,
                 output_tensor,
                 SIZE,

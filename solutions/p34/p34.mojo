@@ -1,6 +1,6 @@
 from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
-from gpu.cluster import (
+from gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
     cluster_arrive,
@@ -226,7 +226,7 @@ def main():
             comptime kernel = cluster_coordination_basics[
                 in_layout, Layout.row_major(CLUSTER_SIZE), TPB
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,
@@ -293,7 +293,7 @@ def main():
             comptime kernel = cluster_collective_operations[
                 in_layout, out_layout, TPB
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 temp_tensor,
@@ -342,7 +342,7 @@ def main():
             comptime kernel = advanced_cluster_patterns[
                 in_layout, Layout.row_major(CLUSTER_SIZE), TPB
             ]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,

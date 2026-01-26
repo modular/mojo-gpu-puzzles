@@ -34,7 +34,7 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        ctx.enqueue_function_checked[add_10_blocks, add_10_blocks](
+        ctx.enqueue_function[add_10_blocks, add_10_blocks](
             out,
             a,
             UInt(SIZE),

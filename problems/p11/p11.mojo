@@ -54,7 +54,7 @@ def main():
             for i in range(SIZE):
                 a_host[i] = i
 
-        ctx.enqueue_function_checked[pooling, pooling](
+        ctx.enqueue_function[pooling, pooling](
             out,
             a,
             UInt(SIZE),

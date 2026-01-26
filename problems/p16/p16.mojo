@@ -189,7 +189,7 @@ def main():
 
         if argv()[1] == "--naive":
             comptime kernel = naive_matmul[layout, UInt(SIZE)]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -198,7 +198,7 @@ def main():
             )
         elif argv()[1] == "--single-block":
             comptime kernel = single_block_matmul[layout, UInt(SIZE)]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -218,7 +218,7 @@ def main():
             )
 
             comptime kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
-            ctx.enqueue_function_checked[kernel, kernel](
+            ctx.enqueue_function[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
                 b_tensor_tiled,

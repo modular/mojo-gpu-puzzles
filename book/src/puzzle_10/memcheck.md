@@ -2,7 +2,7 @@
 
 ## Overview
 
-Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA's `compute-sanitizer` (avaible through `pixi`) with the `memcheck` tool, you'll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.
+Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA's `compute-sanitizer` (available through `pixi`) with the `memcheck` tool, you'll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.
 
 **Key insight**: A GPU program can produce "correct" results while simultaneously performing illegal memory accesses.
 
@@ -38,10 +38,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 **Wrong!** Let's see what `compute-sanitizer` reveals:
 
 ```bash
-MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
-**Note**: `MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0` is a command-line environment variable setting that disables a device context's buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.
+**Note**: `MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0` is a command-line environment variable setting that disables a device context's buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.
 
 ```txt
 ========= COMPUTE-SANITIZER
@@ -163,7 +163,7 @@ The fix is simple: **always validate thread indices against data dimensions** be
 
 ```bash
 # Fix the bounds checking in your copy of p10.mojo, then run:
-MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
+MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
 ```txt
@@ -197,7 +197,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ### Compute-sanitizer best practices
 
 ```bash
-MODULAR_DEVICE_CONTEXT_BUFFER_CACHE_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
+MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 ```
 
 **Note**: You may see Mojo runtime warnings in the sanitizer output. Focus on the `========= Invalid` and `========= ERROR SUMMARY` lines for actual memory violations.
