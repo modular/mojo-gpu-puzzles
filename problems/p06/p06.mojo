@@ -1,3 +1,4 @@
+from memory import UnsafePointer
 from gpu import thread_idx, block_idx, block_dim
 from gpu.host import DeviceContext
 from testing import assert_equal
