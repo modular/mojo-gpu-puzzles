@@ -1,6 +1,6 @@
 from memory import UnsafePointer
-from gpu import thread_idx, block_dim, block_idx
-from gpu.host import DeviceContext, HostBuffer
+from gpu import thread_idx
+from gpu.host import DeviceContext
 from testing import assert_equal
 
 comptime SIZE = 2

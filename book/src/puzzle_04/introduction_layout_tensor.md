@@ -35,8 +35,8 @@ if row < height and col < width:
 LayoutTensor will help us tackle these challenges with elegant solutions. Here's a glimpse of what's coming:
 
 1. **Natural Indexing**: Use `tensor[i, j]` instead of manual offset calculations
-3. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled organizations
-4. **Performance Optimization**: Efficient memory access patterns for GPU
+2. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled organizations
+3. **Performance Optimization**: Efficient memory access patterns for GPU
 
 ## A taste of what's ahead
 
