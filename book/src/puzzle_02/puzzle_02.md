@@ -130,4 +130,4 @@ While this direct indexing works for simple element-wise operations, consider:
 - What if we need to broadcast one array to another?
 - How to ensure coalesced access across multiple arrays?
 
-These questions will be addressed when we [introduce LayoutTensor in Puzzle 4](../puzzle_04/).
+These questions will be addressed when we [introduce LayoutTensor in Puzzle 4](../puzzle_04/introduction_layout_tensor.md).
