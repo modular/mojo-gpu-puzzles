@@ -428,7 +428,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
         if tiled_row &lt; size and tiled_col &lt; size:
 
             @parameter
-            for k in range(min(TPB, size - tile * TPB)):
+            for k in range(min(Int(TPB), Int(size - tile * TPB))):
                 acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
