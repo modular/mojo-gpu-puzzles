@@ -206,7 +206,7 @@
 <h2 id="key-differences-from-raw-approach"><a class="header" href="#key-differences-from-raw-approach">Key differences from raw approach</a></h2>
 <ol>
 <li>
-<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
+<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
@@ -339,10 +339,10 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
-    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
-    # However, it's included to teach proper shared memory synchronization patterns
-    # for more complex scenarios where threads need to coordinate access to shared data.
-    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     if global_i &lt; size:

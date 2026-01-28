@@ -2481,7 +2481,7 @@ row * size + col    tensor[row, col]
 <li><strong>Access pattern</strong>: Local vs global indexing</li>
 </ul>
 <blockquote>
-<p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/">barrier</a> to ensure that threads do not cross.</p>
+<p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> to ensure that threads do not cross.</p>
 </blockquote>
 <p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete-10"><a class="header" href="#code-to-complete-10">Code to complete</a></h2>
@@ -2504,7 +2504,7 @@ fn add_10_shared(
     ]()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # local data into shared memory
+    # Load local data into shared memory
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -2573,16 +2573,15 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     ]()
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = thread_idx.x
-    # local data into shared memory
+    # Load local data into shared memory
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
-    # wait for all threads to complete
-    # works within a thread block
-    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
-    # However, it's included to teach proper shared memory synchronization patterns
-    # for more complex scenarios where threads need to coordinate access to shared data.
-    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
+    # Wait for all threads to complete (works within a thread block).
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     # process using shared memory
@@ -2683,7 +2682,7 @@ Block 1 output: [11 11 11 11]
 <h2 id="key-differences-from-raw-approach"><a class="header" href="#key-differences-from-raw-approach">Key differences from raw approach</a></h2>
 <ol>
 <li>
-<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
+<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
 shared = stack_allocation[TPB, Scalar[dtype]]()
 
@@ -2816,10 +2815,10 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
-    # Note: barrier is not strictly needed here since each thread only accesses its own shared memory location.
-    # However, it's included to teach proper shared memory synchronization patterns
-    # for more complex scenarios where threads need to coordinate access to shared data.
-    # For this specific puzzle, we can remove the barrier since each thread only accesses its own shared memory location.
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
     barrier()
 
     if global_i &lt; size:
