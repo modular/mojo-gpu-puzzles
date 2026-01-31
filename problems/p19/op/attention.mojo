@@ -11,6 +11,7 @@ import compiler
 from runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
+
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
 comptime D = 16  # This must be equal to D in p19.py
 
@@ -143,6 +144,9 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
+    __comptime_assert (
+        dtype.is_floating_point()
+    ), "dtype must be a floating-point type"
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
