@@ -167,6 +167,9 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, MutAnyOrigin],
 ):
+    __comptime_assert (
+        dtype.is_floating_point()
+    ), "dtype must be a floating-point type"
     shared_max = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
