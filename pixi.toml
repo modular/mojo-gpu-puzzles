@@ -60,9 +60,15 @@ synccheck = { cmd = "bash solutions/sanitizer.sh synccheck", depends-on = ["zero
 initcheck = { cmd = "bash solutions/sanitizer.sh initcheck", depends-on = ["zero-memory-manager"] }
 sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["zero-memory-manager"] }
 
-build-book = "cd book && mdbook build"
-book = { cmd = "cd book && mdbook serve --open", depends-on = ["build-book"] }
-clean = { cmd = "cd book && mdbook clean" }
+build-book = { depends-on = ["build-book-en", "build-book-ko"] }
+build-book-en = "cd book && mdbook build"
+build-book-ko = { cmd = "mdbook build book/i18n/ko && cp -r book/html/theme book/html/ko/", depends-on = ["build-book-en"] }
+
+book = { cmd = "python -m http.server 3000 -d book/html", depends-on = ["build-book"] }
+book-en = { cmd = "cd book && mdbook serve --open", depends-on = ["build-book-en"] }
+book-ko = { cmd = "mdbook serve book/i18n/ko --open", depends-on = ["build-book-ko"] }
+
+clean = { cmd = "cd book && mdbook clean && rm -rf html/ko" }
 
 p01 = "mojo problems/p01/p01.mojo"
 viz01 = "cd book/src/puzzle_01 && python puzzle_01_viz.py"
