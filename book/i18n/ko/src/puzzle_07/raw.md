@@ -1,51 +1,51 @@
-## Overview
+## 개요
 
-Implement a kernel that adds 10 to each position of matrix `a` and stores it in `output`.
+행렬 `a`의 각 위치에 10을 더해 `output`에 저장하는 kernel을 구현해 보세요.
 
-**Note:** _You have fewer threads per block than the size of `a` in both directions._
+**참고:** _블록당 스레드 수가 `a`의 행과 열 크기보다 모두 작습니다._
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배울 내용:
 
-- Working with 2D block and thread arrangements
-- Handling matrix data larger than block size
-- Converting between 2D and linear memory access
+- 2D 블록과 스레드 배치 다루기
+- 블록 크기보다 큰 행렬 데이터 처리하기
+- 2D 인덱스와 선형 메모리 접근 간 변환하기
 
-The key insight is understanding how to coordinate multiple blocks of threads to process a 2D matrix that's larger than a single block's dimensions.
+핵심은 하나의 블록보다 큰 2D 행렬을 처리할 때 여러 블록의 스레드들이 어떻게 함께 작동하는지 이해하는 것입니다.
 
-## Configuration
+## 구성
 
-- **Matrix size**: \\(5 \times 5\\) elements
-- **2D blocks**: Each block processes a \\(3 \times 3\\) region
-- **Grid layout**: Blocks arranged in \\(2 \times 2\\) grid
-- **Total threads**: \\(36\\) for \\(25\\) elements
-- **Memory pattern**: Row-major storage for 2D data
-- **Coverage**: Ensuring all matrix elements are processed
+- **행렬 크기**: \\(5 \times 5\\) 원소
+- **2D 블록**: 각 블록이 \\(3 \times 3\\) 영역 처리
+- **그리드 레이아웃**: \\(2 \times 2\\) 그리드에 블록 배치
+- **총 스레드 수**: \\(25\\)개 원소에 대해 \\(36\\)개
+- **메모리 패턴**: 2D 데이터를 row-major로 저장
+- **커버리지**: 모든 행렬 원소가 빠짐없이 처리되도록 보장
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p07/p07.mojo:add_10_blocks_2d}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07.mojo" class="filename">View full file: problems/p07/p07.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07.mojo" class="filename">전체 코드 보기: problems/p07/p07.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Calculate global indices: `row = block_dim.y * block_idx.y + thread_idx.y`, `col = block_dim.x * block_idx.x + thread_idx.x`
-2. Add guard: `if row < size and col < size`
-3. Inside guard: think about how to add 10 in row-major way!
+1. 전역 인덱스 계산: `row = block_dim.y * block_idx.y + thread_idx.y`, `col = block_dim.x * block_idx.x + thread_idx.x`
+2. 가드 추가: `if row < size and col < size`
+3. 가드 내부: row-major 방식으로 10을 더하는 방법을 생각해 보세요!
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -84,14 +84,14 @@ uv run poe p07
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -102,15 +102,15 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates key concepts of 2D block-based processing with raw memory:
+raw 메모리로 2D 블록 기반 처리를 구현할 때의 핵심 개념을 보여주는 솔루션입니다:
 
-1. **2D thread indexing**
-   - Global row: `block_dim.y * block_idx.y + thread_idx.y`
-   - Global col: `block_dim.x * block_idx.x + thread_idx.x`
-   - Maps thread grid to matrix elements:
+1. **2D 스레드 인덱싱**
+   - 전역 row: `block_dim.y * block_idx.y + thread_idx.y`
+   - 전역 col: `block_dim.x * block_idx.x + thread_idx.x`
+   - 스레드 그리드를 행렬 원소에 매핑:
 
      ```txt
-     5×5 matrix with 3×3 blocks:
+     3×3 블록으로 구성된 5×5 행렬:
 
      Block (0,0)         Block (1,0)
      [(0,0) (0,1) (0,2)] [(0,3) (0,4)    *  ]
@@ -123,14 +123,14 @@ This solution demonstrates key concepts of 2D block-based processing with raw me
      [  *     *     *  ] [  *     *      *  ]
      ```
 
-     (* = thread exists but outside matrix bounds)
+     (* = 스레드는 존재하지만 행렬 경계 밖)
 
-2. **Memory layout**
-   - Row-major linear memory: `index = row * size + col`
-   - Example for 5×5 matrix:
+2. **메모리 레이아웃**
+   - Row-major 선형 메모리: `index = row * size + col`
+   - 5×5 행렬 예시:
 
      ```txt
-     2D indices:    Linear memory:
+     2D 인덱스:       선형 메모리:
      (2,1) -> 11   [00 01 02 03 04]
                    [05 06 07 08 09]
                    [10 11 12 13 14]
@@ -138,18 +138,18 @@ This solution demonstrates key concepts of 2D block-based processing with raw me
                    [20 21 22 23 24]
      ```
 
-3. **Bounds checking**
-   - Guard `row < size and col < size` handles:
-     - Excess threads in partial blocks
-     - Edge cases at matrix boundaries
-     - 2×2 block grid with 3×3 threads each = 36 threads for 25 elements
+3. **경계 검사**
+   - 가드 `row < size and col < size`가 처리하는 경우:
+     - 부분 블록에서 남는 스레드
+     - 행렬 경계의 엣지 케이스
+     - 3×3 스레드 블록의 2×2 그리드 = 25개 원소에 36개 스레드
 
-4. **Block coordination**
-   - Each 3×3 block processes part of 5×5 matrix
-   - 2×2 grid of blocks ensures full coverage
-   - Overlapping threads handled by bounds check
-   - Efficient parallel processing across blocks
+4. **블록 조율**
+   - 각 3×3 블록이 5×5 행렬의 일부분을 담당
+   - 2×2 블록 그리드로 전체를 빠짐없이 커버
+   - 경계 검사로 겹치는 스레드 처리
+   - 블록들이 함께 효율적으로 병렬 처리
 
-This pattern shows how to handle 2D data larger than block size while maintaining efficient memory access and thread coordination.
+이 패턴은 블록 크기보다 큰 2D 데이터를 다룰 때 효율적인 메모리 접근과 스레드 조율을 어떻게 유지하는지 보여줍니다.
 </div>
 </details>

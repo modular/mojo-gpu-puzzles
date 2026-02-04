@@ -2,36 +2,36 @@
 
 {{ youtube rLhjprX8Nck breakpoint-lg }}
 
-## Overview
+## 개요
 
-This puzzle introduces the fundamental concept of GPU parallelism: mapping individual threads to data elements for concurrent processing.
-Your task is to implement a kernel that adds 10 to each element of vector `a`, storing the results in vector `output`.
+이 퍼즐에서는 GPU 병렬 처리의 기본 개념을 다룹니다. 각 스레드가 데이터 요소 하나를 맡아 동시에 처리하는 방식을 배웁니다.
+벡터 `a`의 각 요소에 10을 더해 `output`에 저장하는 Kernel을 구현해 보세요.
 
-**Note:** _You have 1 thread per position._
+**참고:** _각 위치마다 스레드 1개가 배정됩니다._
 
 {{ youtube rLhjprX8Nck breakpoint-sm }}
 
-<img src="./../../../../src/puzzle_01/media/01.png" alt="Map" class="light-mode-img">
-<img src="./../../../../src/puzzle_01/media/01d.png" alt="Map" class="dark-mode-img">
+<img src="/puzzle_01/media/01.png" alt="Map" class="light-mode-img">
+<img src="/puzzle_01/media/01d.png" alt="Map" class="dark-mode-img">
 
-## Key concepts
+## 핵심 개념
 
-- Basic GPU kernel structure
-- One-to-one thread to data mapping
-- Memory access patterns
-- Array operations on GPU
+- GPU Kernel의 기본 구조
+- 스레드와 데이터 간 일대일 매핑
+- 메모리 접근 패턴
+- GPU에서의 배열 연산
 
-For each position \\(i\\):
+각 위치 \\(i\\)에 대해:
 \\[\Large output[i] = a[i] + 10\\]
 
-## What we cover
+## 다루는 내용
 
-### [🔰 Raw Memory Approach](./raw.md)
+### [🔰 Raw 메모리 방식](./raw.md)
 
-Start with direct memory manipulation to understand GPU fundamentals.
+직접 메모리를 다루며 GPU의 기본 원리를 익힙니다.
 
-### [💡 Preview: Modern Approach with LayoutTensor](./layout_tensor_preview.md)
+### [💡 미리보기: LayoutTensor를 활용한 현대적 방식](./layout_tensor_preview.md)
 
-See how LayoutTensor simplifies GPU programming with safer, cleaner code.
+LayoutTensor가 GPU 프로그래밍을 어떻게 단순화하는지 살펴봅니다. 더 안전하고 깔끔한 코드를 작성할 수 있습니다.
 
-💡 **Tip**: Understanding both approaches leads to better appreciation of modern GPU programming patterns.
+💡 **팁**: 두 방식을 모두 익히면 현대적인 GPU 프로그래밍 패턴을 더 깊이 이해할 수 있습니다.

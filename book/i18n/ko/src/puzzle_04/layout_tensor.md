@@ -1,49 +1,49 @@
-# LayoutTensor Version
+# LayoutTensor 버전
 
-## Overview
+## 개요
 
-Implement a kernel that adds 10 to each position of 2D _LayoutTensor_ `a` and stores it in 2D _LayoutTensor_ `output`.
+2D _LayoutTensor_ `a`의 각 위치에 10을 더해 2D _LayoutTensor_ `output`에 저장하는 Kernel을 구현해 보세요.
 
-**Note:** _You have more threads than positions_.
+**참고**: _스레드 수가 행렬의 위치 수보다 많습니다_.
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배울 내용:
 
-- Using `LayoutTensor` for 2D array access
-- Direct 2D indexing with `tensor[i, j]`
-- Handling bounds checking with `LayoutTensor`
+- 2D 배열 접근에 `LayoutTensor` 사용하기
+- `tensor[i, j]`로 직접 2D 인덱싱하기
+- `LayoutTensor`에서 경계 검사 처리하기
 
-The key insight is that `LayoutTensor` provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.
+핵심은 `LayoutTensor`가 자연스러운 2D 인덱싱 인터페이스를 제공하여 내부 메모리 레이아웃을 추상화한다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.
 
-- **2D access**: Natural \\((i,j)\\) indexing with `LayoutTensor`
-- **Memory abstraction**: No manual row-major calculation needed
-- **Guard condition**: Still need bounds checking in both dimensions
-- **Thread bounds**: More threads \\((3 \times 3)\\) than tensor elements \\((2 \times 2)\\)
+- **2D 접근**: `LayoutTensor`로 자연스러운 \\((i,j)\\) 인덱싱
+- **메모리 추상화**: 수동 row-major 계산 불필요
+- **가드 조건**: 두 차원 모두 경계 검사 필요
+- **스레드 범위**: 스레드 \\((3 \times 3)\\)가 텐서 원소 \\((2 \times 2)\\)보다 많음
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p04/p04_layout_tensor.mojo" class="filename">View full file: problems/p04/p04_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p04/p04_layout_tensor.mojo" class="filename">전체 코드 보기: problems/p04/p04_layout_tensor.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
-2. Add guard: `if row < size and col < size`
-3. Inside guard add 10 to `a[row, col]`
+1. 2D 인덱스 가져오기: `row = thread_idx.y`, `col = thread_idx.x`
+2. 가드 추가: `if row < size and col < size`
+3. 가드 내부에서 `a[row, col]`에 10 더하기
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -82,14 +82,14 @@ uv run poe p04_layout_tensor
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -100,11 +100,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 
 <div class="solution-explanation">
 
-This solution:
+이 솔루션은:
 
-- Gets 2D thread indices with `row = thread_idx.y`, `col = thread_idx.x`
-- Guards against out-of-bounds with `if row < size and col < size`
-- Uses `LayoutTensor`'s 2D indexing: `output[row, col] = a[row, col] + 10.0`
+- `row = thread_idx.y`, `col = thread_idx.x`로 2D 스레드 인덱스를 가져옴
+- `if row < size and col < size`로 범위를 벗어난 접근 방지
+- `LayoutTensor`의 2D 인덱싱 사용: `output[row, col] = a[row, col] + 10.0`
 
 </div>
 </details>

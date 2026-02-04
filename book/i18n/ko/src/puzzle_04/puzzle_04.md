@@ -2,52 +2,59 @@
 
 {{ youtube EjmBmwgdAT0 breakpoint-lg }}
 
-## Overview
-Implement a kernel that adds 10 to each position of 2D square matrix `a` and stores it in 2D square matrix `output`.
+## 개요
 
-**Note:** _You have more threads than positions_.
+2D 정사각 행렬 `a`의 각 위치에 10을 더해 2D 정사각 행렬 `output`에 저장하는 Kernel을 구현해 보세요.
+
+**참고**: _스레드 수가 행렬의 위치 수보다 많습니다_.
 
 {{ youtube EjmBmwgdAT0 breakpoint-sm }}
 
-<img src="./../../../../src/puzzle_04/media/04a.png" alt="2D Matrix Mapping" class="light-mode-img">
-<img src="./../../../../src/puzzle_04/media/04ad.png" alt="2D Matrix Mapping" class="dark-mode-img">
+<img src="/puzzle_04/media/04a.png" alt="2D 행렬 매핑" class="light-mode-img">
+<img src="/puzzle_04/media/04ad.png" alt="2D 행렬 매핑" class="dark-mode-img">
 
-## Key concepts
-- 2D thread indexing
-- Matrix operations on GPU
-- Handling excess threads
-- Memory layout patterns
+## 핵심 개념
 
-For each position \\((i,j)\\):
+- 2D 스레드 인덱싱
+- GPU에서의 행렬 연산
+- 초과 스레드 처리
+- 메모리 레이아웃 패턴
+
+각 위치 \\((i,j)\\)에 대해:
 \\[\Large output[i,j] = a[i,j] + 10\\]
 
-> ## Thread indexing convention
+> ## 스레드 인덱싱 규칙
 >
-> When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:
-> - `thread_idx.y` corresponds to the row index
-> - `thread_idx.x` corresponds to the column index
-> <img src="./../../../../src/puzzle_04/media/04b.png" alt="2D thread indexing" class="light-mode-img">
-> <img src="./../../../../src/puzzle_04/media/04bd.png" alt="2D thread indexing" class="dark-mode-img">
+> GPU 프로그래밍에서 2D 행렬을 다룰 때는 스레드 인덱스와 행렬 좌표 사이의 자연스러운 매핑을 따릅니다:
 >
-> This convention aligns with:
+> - `thread_idx.y`는 행(row) 인덱스
+> - `thread_idx.x`는 열(column) 인덱스
 >
-> 1. The standard mathematical notation where matrix positions are specified as (row, column)
-> 2. The visual representation of matrices where rows go top-to-bottom (y-axis) and columns go left-to-right (x-axis)
-> 3. Common GPU programming patterns where thread blocks are organized in a 2D grid matching the matrix structure
+> <img src="/puzzle_04/media/04b.png" alt="2D 스레드 인덱싱" class="light-mode-img">
+> <img src="/puzzle_04/media/04bd.png" alt="2D 스레드 인덱싱" class="dark-mode-img">
 >
-> ### Historical origins
+> 이 규칙은 다음과 잘 맞습니다:
 >
-> While graphics and image processing typically use \\((x,y)\\) coordinates, matrix operations in computing have historically used (row, column) indexing. This comes from how early computers stored and processed 2D data: line by line, top to bottom, with each line read left to right. This row-major memory layout proved efficient for both CPUs and GPUs, as it matches how they access memory sequentially. When GPU programming adopted thread blocks for parallel processing, it was natural to map `thread_idx.y` to rows and `thread_idx.x` to columns, maintaining consistency with established matrix indexing conventions.
+> 1. 행렬 위치를 (row, column)으로 쓰는 표준 수학 표기법
+> 2. 행은 위에서 아래로(y축), 열은 왼쪽에서 오른쪽으로(x축) 가는 행렬의 시각적 구조
+> 3. 스레드 블록을 행렬 구조에 맞춰 2D 그리드로 구성하는 일반적인 GPU 프로그래밍 패턴
+>
+> ### 역사적 배경
+>
+> 그래픽이나 이미지 처리에서는 보통 \\((x,y)\\) 좌표를 쓰지만, 행렬 연산에서는 전통적으로 (row, column) 인덱싱을 써왔습니다. 초기 컴퓨터가 2D 데이터를 저장하고 처리하던 방식에서 비롯된 것입니다: 위에서 아래로 한 줄씩, 각 줄은 왼쪽에서 오른쪽으로 읽었죠. 이런 row-major 메모리 레이아웃은 메모리를 순차적으로 접근하는 방식과 맞아서 CPU와 GPU 모두에서 효율적임이 입증되었습니다. GPU 프로그래밍에서 병렬 처리용 스레드 블록이 도입됐을 때, `thread_idx.y`를 행에, `thread_idx.x`를 열에 매핑한 건 기존에 확립된 행렬 인덱싱 규칙과 일관성을 유지하려는 자연스러운 선택이었습니다.
 
-## Implementation approaches
+## 구현 방식
 
-### [🔰 Raw memory approach](./raw.md)
-Learn how 2D indexing works with manual memory management.
+### [🔰 Raw 메모리 방식](./raw.md)
 
-### [📚 Learn about LayoutTensor](./introduction_layout_tensor.md)
-Discover a powerful abstraction that simplifies multi-dimensional array operations and memory management on GPU.
+수동으로 메모리를 관리하면서 2D 인덱싱이 어떻게 동작하는지 알아봅니다.
 
-### [🚀 Modern 2D operations](./layout_tensor.md)
-Put LayoutTensor into practice with natural 2D indexing and automatic bounds checking.
+### [📚 LayoutTensor 알아보기](./introduction_layout_tensor.md)
 
-💡 **Note**: From this puzzle onward, we'll primarily use LayoutTensor for cleaner, safer GPU code.
+GPU에서 다차원 배열 연산과 메모리 관리를 간편하게 해주는 강력한 추상화를 소개합니다.
+
+### [🚀 현대적 2D 연산](./layout_tensor.md)
+
+자연스러운 2D 인덱싱과 자동 경계 검사를 갖춘 LayoutTensor를 직접 써봅니다.
+
+💡 **참고**: 이 퍼즐부터는 더 깔끔하고 안전한 GPU 코드를 위해 LayoutTensor를 주로 사용합니다.

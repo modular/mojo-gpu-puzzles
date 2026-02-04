@@ -1,39 +1,39 @@
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배우는 내용:
 
-- Basic GPU kernel structure
-- Thread indexing with `thread_idx.x`
-- Simple parallel operations
+- 기본 GPU Kernel 구조
+- `thread_idx.x`를 사용한 스레드 인덱싱
+- 간단한 병렬 연산
 
-- **Parallelism**: Each thread executes independently
-- **Thread indexing**: Access element at position `i = thread_idx.x`
-- **Memory access**: Read from `a[i]` and write to `output[i]`
-- **Data independence**: Each output depends only on its corresponding input
+- **병렬성**: 각 스레드가 독립적으로 실행됩니다
+- **스레드 인덱싱**: `i = thread_idx.x` 위치의 요소에 접근합니다
+- **메모리 접근**: `a[i]`에서 읽고 `output[i]`에 씁니다
+- **데이터 독립성**: 각 출력은 해당 입력에만 의존합니다
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p01/p01.mojo:add_10}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p01/p01.mojo" class="filename">View full file: problems/p01/p01.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p01/p01.mojo" class="filename">전체 코드 보기: problems/p01/p01.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Store `thread_idx.x` in `i`
-2. Add 10 to `a[i]`
-3. Store result in `output[i]`
+1. `thread_idx.x`를 `i`에 저장합니다
+2. `a[i]`에 10을 더합니다
+3. 결과를 `output[i]`에 저장합니다
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -72,14 +72,14 @@ uv run poe p01
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -90,10 +90,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 
 <div class="solution-explanation">
 
-This solution:
+이 솔루션은:
 
-- Gets thread index with `i = thread_idx.x`
-- Adds 10 to input value: `output[i] = a[i] + 10.0`
+- `i = thread_idx.x`로 스레드 인덱스를 가져옵니다
+- 입력값에 10을 더합니다: `output[i] = a[i] + 10.0`
 
 </div>
 </details>

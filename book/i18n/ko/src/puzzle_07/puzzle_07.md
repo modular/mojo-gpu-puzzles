@@ -1,32 +1,33 @@
 # Puzzle 7: 2D Blocks
 
-## Overview
+## 개요
 
-Implement a kernel that adds 10 to each position of matrix `a` and stores it in `output`.
+행렬 `a`의 각 위치에 10을 더해 `output`에 저장하는 kernel을 구현해 보세요.
 
-**Note:** _You have fewer threads per block than the size of `a` in both directions._
+**참고:** _블록당 스레드 수가 `a`의 행과 열 크기보다 모두 작습니다._
 
-<img src="./../../../../src/puzzle_07/media/07.png" alt="Blocks 2D visualization" class="light-mode-img">
-<img src="./../../../../src/puzzle_07/media/07d.png" alt="Blocks 2D visualization" class="dark-mode-img">
+<img src="/puzzle_07/media/07.png" alt="2D Blocks 시각화" class="light-mode-img">
+<img src="/puzzle_07/media/07d.png" alt="2D Blocks 시각화" class="dark-mode-img">
 
-## Key concepts
+## 핵심 개념
 
-- Block-based processing
-- Grid-block coordination
-- Multi-block indexing
-- Memory access patterns
+- 블록 기반 처리
+- 그리드와 블록의 조율
+- 여러 블록에 걸친 인덱싱
+- 메모리 접근 패턴
 
-> 🔑 **2D thread indexing convention**
+> 🔑 **2D 스레드 인덱싱 방식**
 >
-> We extend the block-based indexing from [puzzle 4](../puzzle_04/puzzle_04.md) to 2D:
+> [Puzzle 4: 2D Map](../puzzle_04/puzzle_04.md)의 블록 기반 인덱싱을 2D로 확장합니다:
 >
 > ```txt
-> Global position calculation:
+> 전역 위치 계산:
 > row = block_dim.y * block_idx.y + thread_idx.y
 > col = block_dim.x * block_idx.x + thread_idx.x
 > ```
 >
-> For example, with 2×2 blocks in a 4×4 grid:
+> 예를 들어, 4×4 그리드에서 2×2 블록을 사용하면:
+>
 > ```txt
 > Block (0,0):   Block (1,0):
 > [0,0  0,1]     [0,2  0,3]
@@ -37,18 +38,21 @@ Implement a kernel that adds 10 to each position of matrix `a` and stores it in 
 > [3,0  3,1]     [3,2  3,3]
 > ```
 >
-> Each position shows (row, col) for that thread's global index.
-> The block dimensions and indices work together to ensure:
-> - Continuous coverage of the 2D space
-> - No overlap between blocks
-> - Efficient memory access patterns
+> 각 위치는 해당 스레드의 전역 인덱스 (row, col)를 나타냅니다.
+> 블록 차원과 인덱스가 함께 작동하여 다음을 보장합니다:
+>
+> - 2D 공간 전체를 빈틈없이 처리
+> - 블록 간 겹침 없음
+> - 효율적인 메모리 접근 패턴
 
-## Implementation approaches
+## 구현 방식
 
-### [🔰 Raw memory approach](./raw.md)
-Learn how to handle multi-block operations with manual indexing.
+### [🔰 Raw 메모리 방식](./raw.md)
 
-### [📐 LayoutTensor Version](./layout_tensor.md)
-Use LayoutTensor features to elegantly handle block-based processing.
+수동 인덱싱으로 여러 블록에 걸친 연산을 처리하는 방법을 알아봅니다.
 
-💡 **Note**: See how LayoutTensor simplifies block coordination and memory access patterns.
+### [📐 LayoutTensor 버전](./layout_tensor.md)
+
+LayoutTensor 기능을 활용해 블록 기반 처리를 깔끔하게 구현합니다.
+
+💡 **참고**: LayoutTensor가 블록 간 조율과 메모리 접근 패턴을 얼마나 단순화하는지 확인해 보세요.

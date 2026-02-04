@@ -1,61 +1,61 @@
-## Overview
+## 개요
 
-Implement a kernel that adds 10 to each position of a vector `a` and stores it in `output`.
+벡터 `a`의 각 위치에 10을 더해 `output`에 저장하는 kernel을 구현해 보세요.
 
-**Note:** _You have fewer threads per block than the size of `a`._
+**참고:** _블록당 스레드 수가 `a`의 크기보다 작습니다._
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배울 내용:
 
-- Using shared memory within thread blocks
-- Synchronizing threads with barriers
-- Managing block-local data storage
+- 스레드 블록 내에서 공유 메모리 사용하기
+- barrier로 스레드 동기화하기
+- 블록 로컬 데이터 저장소 관리하기
 
-The key insight is understanding how shared memory provides fast, block-local storage that all threads in a block can access, requiring careful coordination between threads.
+핵심은 공유 메모리가 블록 내 모든 스레드가 접근할 수 있는 빠른 로컬 저장소라는 점, 그리고 이를 사용할 때 스레드 간 조율이 필요하다는 점을 이해하는 것입니다.
 
-## Configuration
+## 구성
 
-- Array size: `SIZE = 8` elements
-- Threads per block: `TPB = 4`
-- Number of blocks: 2
-- Shared memory: `TPB` elements per block
+- 배열 크기: `SIZE = 8` 원소
+- 블록당 스레드 수: `TPB = 4`
+- 블록 수: 2
+- 공유 메모리: 블록당 `TPB`개 원소
 
-Notes:
+참고:
 
-- **Shared memory**: Fast storage shared by threads in a block
-- **Thread sync**: Coordination using `barrier()`
-- **Memory scope**: Shared memory only visible within block
-- **Access pattern**: Local vs global indexing
+- **공유 메모리**: 블록 내 스레드들이 함께 사용하는 빠른 저장소
+- **스레드 동기화**: `barrier()`를 사용한 조율
+- **메모리 범위**: 공유 메모리는 블록 내에서만 보임
+- **접근 패턴**: 로컬 인덱스 vs 전역 인덱스
 
-> **Warning**: Each block can only have a _constant_ amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call [barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) to ensure that threads do not cross.
+> **주의**: 각 블록이 가질 수 있는 공유 메모리 크기는 _상수_ 로 정해져야 합니다. 이 값은 변수가 아닌 리터럴 Python 상수여야 합니다. 공유 메모리에 쓴 후에는 [barrier](https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/)를 호출하여 스레드들이 서로 앞서가지 않도록 해야 합니다.
 
-**Educational Note**: In this specific puzzle, the `barrier()` isn't strictly necessary since each thread only accesses its own shared memory location. However, it's included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.
+**학습 참고**: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로 `barrier()`가 엄밀히 필요하지 않습니다. 하지만 더 복잡한 상황에서 필요한 올바른 동기화 패턴을 익히기 위해 포함되어 있습니다.
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p08/p08.mojo:add_10_shared}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08.mojo" class="filename">전체 코드 보기: problems/p08/p08.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Wait for shared memory load with `barrier()` (educational - not strictly needed here)
-2. Use `local_i` to access shared memory: `shared[local_i]`
-3. Use `global_i` for output: `output[global_i]`
-4. Add guard: `if global_i < size`
+1. `barrier()`로 공유 메모리 로드 완료 대기 (학습용 - 여기서는 엄밀히 필요하지 않음)
+2. `local_i`로 공유 메모리 접근: `shared[local_i]`
+3. `global_i`로 출력: `output[global_i]`
+4. 가드 추가: `if global_i < size`
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -94,14 +94,14 @@ uv run poe p08
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -112,55 +112,55 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates key concepts of shared memory usage in GPU programming:
+GPU 프로그래밍에서 공유 메모리 사용의 핵심 개념을 보여주는 솔루션입니다:
 
-1. **Memory hierarchy**
-   - Global memory: `a` and `output` arrays (slow, visible to all blocks)
-   - Shared memory: `shared` array (fast, thread-block local)
-   - Example for 8 elements with 4 threads per block:
+1. **메모리 계층 구조**
+   - 글로벌 메모리: `a`와 `output` 배열 (느림, 모든 블록에서 보임)
+   - 공유 메모리: `shared` 배열 (빠름, 스레드 블록 로컬)
+   - 블록당 4개 스레드로 8개 원소를 처리하는 예시:
 
      ```txt
-     Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
+     글로벌 배열 a: [1 1 1 1 | 1 1 1 1]  # 입력: 모두 1
 
      Block (0):      Block (1):
      shared[0..3]    shared[0..3]
      [1 1 1 1]       [1 1 1 1]
      ```
 
-2. **Thread coordination**
-   - Load phase:
+2. **스레드 조율**
+   - 로드 단계:
 
      ```txt
      Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
      Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
-     barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
+     barrier()    ↓         ↓        ↓         ↓   # 모든 로드 완료 대기
      ```
 
-   - Process phase: Each thread adds 10 to its shared memory value
-   - Result: `output[i] = shared[local_i] + 10 = 11`
+   - 처리 단계: 각 스레드가 자신의 공유 메모리 값에 10을 더함
+   - 결과: `output[i] = shared[local_i] + 10 = 11`
 
-   **Note**: In this specific case, the `barrier()` isn't strictly necessary since each thread only writes to and reads from its own shared memory location (`shared[local_i]`). However, it's included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other's data.
+   **참고**: 이 경우에는 각 스레드가 자신의 공유 메모리 위치(`shared[local_i]`)에만 쓰고 읽으므로 `barrier()`가 엄밀히 필요하지 않습니다. 하지만 스레드들이 서로의 데이터에 접근하는 상황에서 필수적인 동기화 패턴을 익히기 위해 포함되어 있습니다.
 
-3. **Index mapping**
-   - Global index: `block_dim.x * block_idx.x + thread_idx.x`
+3. **인덱스 매핑**
+   - 전역 인덱스: `block_dim.x * block_idx.x + thread_idx.x`
 
      ```txt
-     Block 0 output: [11 11 11 11]
-     Block 1 output: [11 11 11 11]
+     Block 0 출력: [11 11 11 11]
+     Block 1 출력: [11 11 11 11]
      ```
 
-   - Local index: `thread_idx.x` for shared memory access
+   - 로컬 인덱스: 공유 메모리 접근에 `thread_idx.x` 사용
 
      ```txt
-     Both blocks process: 1 + 10 = 11
+     두 블록 모두 처리: 1 + 10 = 11
      ```
 
-4. **Memory access pattern**
-   - Load: Global → Shared (coalesced reads of 1s)
-   - Sync: `barrier()` ensures all loads complete
-   - Process: Add 10 to shared values
-   - Store: Write 11s back to global memory
+4. **메모리 접근 패턴**
+   - 로드: 글로벌 → 공유 (coalesced 읽기로 1 값들 로드)
+   - 동기화: `barrier()`로 모든 로드 완료 보장
+   - 처리: 공유 메모리 값에 10 더하기
+   - 저장: 결과(11)를 글로벌 메모리에 쓰기
 
-This pattern shows how to use shared memory to optimize data access while maintaining thread coordination within blocks.
+이 패턴은 블록 내 스레드 조율을 유지하면서 공유 메모리로 데이터 접근을 최적화하는 방법을 보여줍니다.
 </div>
 </details>

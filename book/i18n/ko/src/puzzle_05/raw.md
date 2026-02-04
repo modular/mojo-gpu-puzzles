@@ -1,47 +1,47 @@
-## Overview
+## 개요
 
-Implement a kernel that broadcast adds vector `a` and vector `b` and stores it in 2D matrix `output`.
+벡터 `a`와 `b`를 broadcast로 더해 2D 행렬 `output`에 저장하는 kernel을 구현해 보세요.
 
-**Note:** _You have more threads than positions._
+**참고**: _스레드 수가 행렬의 위치 수보다 많습니다._
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배울 내용:
 
-- Broadcasting 1D vectors across different dimensions
-- Using 2D thread indices for broadcast operations
-- Handling boundary conditions in broadcast patterns
+- 1D 벡터를 각각 다른 차원 방향으로 broadcast하기
+- 2D 스레드 인덱스로 broadcast 연산 수행하기
+- broadcast 패턴에서 경계 조건 처리하기
 
-The key insight is understanding how to map elements from two 1D vectors to create a 2D output matrix through broadcasting, while handling thread bounds correctly.
+핵심은 두 1D 벡터의 원소들을 broadcast로 2D 출력 행렬에 매핑하는 방법을 이해하고, 스레드 경계를 올바르게 처리하는 것입니다.
 
-- **Broadcasting**: Each element of `a` combines with each element of `b`
-- **Thread mapping**: 2D thread grid \\((3 \times 3)\\) for \\(2 \times 2\\) output
-- **Vector access**: Different access patterns for `a` and `b`
-- **Bounds checking**: Guard against threads outside matrix dimensions
+- **Broadcast**: `a`의 각 원소가 `b`의 각 원소와 결합
+- **스레드 매핑**: \\(2 \times 2\\) 출력에 \\((3 \times 3)\\) 스레드 그리드 사용
+- **벡터 접근**: `a`와 `b`는 서로 다른 접근 패턴 사용
+- **경계 검사**: 행렬 범위를 벗어나는 스레드를 guard로 처리
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p05/p05.mojo:broadcast_add}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">전체 코드 보기: problems/p05/p05.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Get 2D indices: `row = thread_idx.y`, `col = thread_idx.x`
-2. Add guard: `if row < size and col < size`
-3. Inside guard: think about how to broadcast values of `a` and `b`
+1. 2D 인덱스 가져오기: `row = thread_idx.y`, `col = thread_idx.x`
+2. 가드 추가: `if row < size and col < size`
+3. 가드 내부: `a`와 `b` 값을 어떻게 broadcast할지 생각해 보세요
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -80,14 +80,14 @@ uv run poe p05
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -98,28 +98,28 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates fundamental GPU broadcasting concepts without LayoutTensor abstraction:
+LayoutTensor 추상화 없이 GPU broadcast의 기본 개념을 보여주는 솔루션입니다:
 
-1. **Thread to matrix mapping**
-   - Uses `thread_idx.y` for row access and `thread_idx.x` for column access
-   - Direct mapping from 2D thread grid to output matrix elements
-   - Handles excess threads (3×3 grid) for 2×2 output matrix
+1. **스레드에서 행렬로 매핑**
+   - `thread_idx.y`로 행, `thread_idx.x`로 열에 접근
+   - 2D 스레드 그리드를 출력 행렬 원소에 직접 매핑
+   - 3×3 그리드의 초과 스레드를 2×2 출력에 맞게 처리
 
-2. **Broadcasting mechanics**
-   - Vector `a` broadcasts horizontally: same `a[col]` used across each row
-   - Vector `b` broadcasts vertically: same `b[row]` used across each column
-   - Output combines both vectors through addition
+2. **Broadcast 작동 방식**
+   - 벡터 `a`는 수평 방향으로 broadcast: 각 행에서 동일한 `a[col]` 사용
+   - 벡터 `b`는 수직 방향으로 broadcast: 각 열에서 동일한 `b[row]` 사용
+   - 두 벡터를 더해 출력 생성
 
    ```txt
    [ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
                  [ b1 ]     [ a0+b1  a1+b1 ]
    ```
 
-3. **Bounds checking**
-   - Single guard condition `row < size and col < size` handles both dimensions
-   - Prevents out-of-bounds access for both input vectors and output matrix
-   - Required due to 3×3 thread grid being larger than 2×2 data
+3. **경계 검사**
+   - 단일 guard 조건 `row < size and col < size`로 두 차원 모두 처리
+   - 입력 벡터와 출력 행렬의 범위 초과 접근 방지
+   - 3×3 스레드 그리드가 2×2 데이터보다 크므로 반드시 필요
 
-Compare this with the LayoutTensor version to see how the abstraction simplifies broadcasting operations while maintaining the same underlying concepts.
+LayoutTensor 버전과 비교해서 동일한 기본 개념을 유지하면서 추상화가 broadcast 연산을 얼마나 단순하게 만드는지 확인해 보세요.
 </div>
 </details>
