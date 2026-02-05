@@ -24,7 +24,7 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    __comptime_assert (
+    comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     shared_max = LayoutTensor[
@@ -99,7 +99,7 @@ fn softmax_cpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    __comptime_assert (
+    comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     var max_val: Scalar[dtype] = min_finite[dtype]()

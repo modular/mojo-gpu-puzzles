@@ -25,7 +25,7 @@ fn softmax_gpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    __comptime_assert (
+    comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     # FILL IN (roughly 31 lines)
@@ -44,7 +44,7 @@ fn softmax_cpu_kernel[
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    __comptime_assert (
+    comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     # FILL IN (roughly 10 lines)
