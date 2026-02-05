@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 9ac1b899ca05c1be26f2d9ee77fe97503d00cc0f -->
+
 ## 개요
 
 1D LayoutTensor `a`의 각 위치에 10을 더해 1D LayoutTensor `output`에 저장하는 kernel을 구현해 보세요.

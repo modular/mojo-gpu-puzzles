@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+
 # block.prefix_sum() Parallel Histogram Binning
 
 This puzzle implements parallel histogram binning using block-level [block.prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum) operations for advanced parallel filtering and extraction. Each thread determines its element's target bin, then applies `block.prefix_sum()` to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.

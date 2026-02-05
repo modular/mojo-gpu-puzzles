@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
+
 # Puzzle 22: Kernel Fusion and Custom Backward Pass
 
 > ## Kernel fusion and autograd integration

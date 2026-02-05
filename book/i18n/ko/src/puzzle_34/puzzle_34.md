@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: b9266f4ff3b8ee0a7f5d253dff9e704b63fe480b -->
+
 # Puzzle 34: GPU Cluster Programming (SM90+)
 
 ## Introduction

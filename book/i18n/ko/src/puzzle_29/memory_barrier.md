@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 # Double-Buffered Stencil Computation
 
 > **🔬 Fine-Grained Synchronization: mbarrier vs barrier()**

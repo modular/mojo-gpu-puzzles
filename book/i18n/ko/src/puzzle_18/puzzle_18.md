@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+
 # Puzzle 18: Softmax Op
 
 ## Overview

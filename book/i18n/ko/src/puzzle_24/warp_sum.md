@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+
 # warp.sum() Essentials - Warp-Level Dot Product
 
 Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using Mojo's warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use `warp.sum()` to combine results automatically, demonstrating how warp programming transforms GPU synchronization.

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+
 # block.sum() Essentials - Block-Level Dot Product
 
 Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using block-level [sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use `block.sum()` to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.

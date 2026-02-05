@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 682d932e25a4853e788236c40c9d23d6e9ec64ab -->
+
 # 📚 Understanding Shared Memory Banks
 
 ## Building on what you've learned

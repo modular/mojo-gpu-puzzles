@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 57737da18dd9c8036cbfee1d3b0de509a3b46944 -->
+
 # Understanding GPU Performance: The Roofline Model
 
 Having implemented the naive matrix multiplication, you might be wondering: *How well is our kernel actually performing?* Is it limited by the GPU's computational power, or is something else holding it back?

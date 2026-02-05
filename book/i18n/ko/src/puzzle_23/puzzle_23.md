@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+
 # Puzzle 23: GPU Functional Programming Patterns
 
 ## Overview

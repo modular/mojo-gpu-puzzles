@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: a6f8350359da1569bc39e376bc26580246e61653 -->
+
 # 📚 Mojo GPU Debugging Essentials
 
 Welcome to the world of GPU debugging! After learning GPU programming concepts through puzzles 1-8, you're now ready to learn the most critical skill for any GPU programmer: **how to debug when things go wrong**.

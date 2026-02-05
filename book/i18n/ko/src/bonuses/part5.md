@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+
 # 🎯 Performance Bonus Challenge
 
 ## The discovery

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 08367c0bf8d5dce82c5cd30526d2924f809cecb1 -->
+
 # 📚 NVIDIA Profiling Basics
 
 ## Overview

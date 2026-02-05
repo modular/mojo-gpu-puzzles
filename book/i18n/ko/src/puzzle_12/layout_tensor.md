@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+
 ## Overview
 
 Implement a kernel that computes the dot product of 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output` (single number).

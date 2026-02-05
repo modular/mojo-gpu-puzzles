@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+
 # `warp.broadcast()` One-to-Many Communication
 
 For warp-level coordination we can use `broadcast()` to share data from one lane to all other lanes within a warp. This powerful primitive enables efficient block-level computations, conditional logic coordination, and one-to-many communication patterns without shared memory or explicit synchronization.

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+
 # Puzzle 27: Block-Level Programming
 
 ## Overview

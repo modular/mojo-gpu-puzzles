@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 88f1de7b3de457cc54820fd71512acbcadf073d9 -->
+
 # 👮🏼‍♂️ The Silent Memory Corruption
 
 ## Overview

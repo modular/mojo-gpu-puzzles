@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 8726393ce8f2ba4d52d2ceec6352706da1f1806a -->
+
 # Puzzle 5: Broadcast
 
 ## 개요

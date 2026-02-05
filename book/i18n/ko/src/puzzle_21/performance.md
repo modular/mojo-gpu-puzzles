@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
+
 # Performance: Coalesced vs non-coalesced memory access
 
 Understanding memory access patterns is crucial for GPU performance optimization. This section explains why coalesced memory access patterns typically outperform non-coalesced patterns, particularly for memory-bound operations like embedding lookups.

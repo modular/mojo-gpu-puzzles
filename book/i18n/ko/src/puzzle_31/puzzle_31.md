@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 27670ce1d5fb537c6d9404b9fdb39dfc64468e3f -->
+
 # Puzzle 31: GPU Occupancy Optimization
 
 ## Why this puzzle matters

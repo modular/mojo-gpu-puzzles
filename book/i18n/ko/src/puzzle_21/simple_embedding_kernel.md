@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 704b538202746549a7731989c173fdc49f00c5c2 -->
+
 # Embedding Kernels: Coalesced vs Non-Coalesced
 
 In this puzzle, you'll implement two different GPU kernels for embedding operations that produce identical results but use different memory access patterns, demonstrating the critical importance of memory coalescing in GPU performance.

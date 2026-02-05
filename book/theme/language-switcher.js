@@ -55,10 +55,7 @@
         button.setAttribute('aria-label', 'Select language');
         button.setAttribute('aria-haspopup', 'true');
         button.setAttribute('aria-expanded', 'false');
-        button.innerHTML = `
-            <span class="lang-current-label">${LANGUAGES[currentLang].label}</span>
-            <i class="fa fa-caret-down"></i>
-        `;
+        button.innerHTML = `<span class="material-symbols-outlined">language</span>`;
 
         const dropdown = document.createElement('ul');
         dropdown.className = 'lang-dropdown';
@@ -106,17 +103,17 @@
         return container;
     }
 
-    // Insert the language switcher into the page (after search button)
+    // Insert the language switcher into the page
     function insertLanguageSwitcher() {
-        const rightButtons = document.querySelector('.right-buttons');
-        if (rightButtons) {
+        // Skip if already exists
+        if (document.querySelector('.language-switcher')) {
+            return;
+        }
+
+        const placeholder = document.getElementById('language-switcher-placeholder');
+        if (placeholder) {
             const switcher = createLanguageSwitcher();
-            const searchToggle = document.getElementById('search-toggle');
-            if (searchToggle && searchToggle.nextSibling) {
-                rightButtons.insertBefore(switcher, searchToggle.nextSibling);
-            } else {
-                rightButtons.appendChild(switcher);
-            }
+            placeholder.replaceWith(switcher);
         }
     }
 

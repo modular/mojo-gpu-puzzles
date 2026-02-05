@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 ## Overview
 
 Implement a kernel that compute the running sum of the last 3 positions of vector `a` and stores it in vector `output`.

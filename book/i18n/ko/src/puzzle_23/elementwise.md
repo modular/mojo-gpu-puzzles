@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+
 # Elementwise - Basic GPU Functional Operations
 
 This puzzle implements vector addition using Mojo's functional `elementwise` pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+
 # Puzzle 9: GPU Debugging Workflow
 
 > ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 # Simple Version
 
 Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.

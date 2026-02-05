@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
+
 # Puzzle 21: Embedding Op
 
 > ## Memory access patterns and performance

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+
 # `warp.shuffle_down()` One-to-One Communication
 
 For warp-level neighbor communication we can use `shuffle_down()` to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.

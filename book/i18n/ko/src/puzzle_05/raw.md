@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 ## 개요
 
 벡터 `a`와 `b`를 broadcast로 더해 2D 행렬 `output`에 저장하는 kernel을 구현해 보세요.

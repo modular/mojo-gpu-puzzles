@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+
 # `warp.prefix_sum()` Hardware-Optimized Parallel Scan
 
 For warp-level parallel scan operations we can use `prefix_sum()` to replace complex shared memory algorithms with hardware-optimized primitives. This powerful operation enables efficient cumulative computations, parallel partitioning, and advanced coordination algorithms that would otherwise require dozens of lines of shared memory and synchronization code.

@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 29894ca396ed4e90fc447bf66b8e2a216576d8a8 -->
+
 # Block Boundary Version
 
 Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output`.

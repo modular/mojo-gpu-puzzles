@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
+
 # Conflict-Free Patterns
 
 > **Note: This section is specific to NVIDIA GPUs**

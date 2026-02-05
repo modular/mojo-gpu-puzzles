@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+
 ## Overview
 
 Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.

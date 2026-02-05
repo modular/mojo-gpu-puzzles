@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+
 # `warp.shuffle_xor()` Butterfly Communication
 
 For warp-level butterfly communication we can use `shuffle_xor()` to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.

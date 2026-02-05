@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: b45a36a83148aa53ca8b3cf4b96304e3cc742518 -->
+
 # Puzzle 3: Guards
 
 {{ youtube YFKutZbRYSM breakpoint-lg }}

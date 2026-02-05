@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 ## Overview
 
 Implement a kernel that computes the dot product of vector `a` and vector `b` and stores it in `output` (single number).

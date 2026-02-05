@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 9ac1b899ca05c1be26f2d9ee77fe97503d00cc0f -->
+
 # LayoutTensor 알아보기
 
 퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를 미리 살펴봅시다:

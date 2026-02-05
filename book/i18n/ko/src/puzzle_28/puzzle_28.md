@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 2bb7071f5afbc671e252b0dc6902b520793c11d5 -->
+
 # Puzzle 28: Async Memory Operations & Copy Overlap
 
 **The GPU Memory Bottleneck:** Most real-world GPU algorithms hit a frustrating wall - they're not limited by compute power, but by **memory bandwidth**. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.

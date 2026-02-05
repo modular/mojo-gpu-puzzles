@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 1cd13cbe87682d50679d452938efab4cc79ddb78 -->
+
 # Simple Case with Single Block
 
 Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output`.

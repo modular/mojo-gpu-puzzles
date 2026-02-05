@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 0a990e59524b1bfe14d9910bb95a22b04281d446 -->
+
 # 🔍 Detective Work: Second Case
 
 ## Overview

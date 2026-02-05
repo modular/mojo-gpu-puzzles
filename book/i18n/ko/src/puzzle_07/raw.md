@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+
 ## 개요
 
 행렬 `a`의 각 위치에 10을 더해 `output`에 저장하는 kernel을 구현해 보세요.

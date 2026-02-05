@@ -1,3 +1,5 @@
+<!-- i18n-source-commit: 7a8e8be1635ae0615b896ce069f6c241d562343a -->
+
 # Bonus Challenges
 
 ## Challenge I: advanced softmax implementations

@@ -1,3 +1,21 @@
+/* Material Symbols for language icon */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=language');
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+}
+
 /* Language Switcher Dropdown Styles */
 
 .language-switcher {
@@ -29,14 +47,6 @@
     background-color: var(--modular-color-emphasis);
 }
 
-.lang-dropdown-btn i {
-    font-size: 10px;
-    transition: transform 0.2s;
-}
-
-.language-switcher.open .lang-dropdown-btn i {
-    transform: rotate(180deg);
-}
 
 .lang-dropdown {
     display: none;
