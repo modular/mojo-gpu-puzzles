@@ -1,48 +1,48 @@
 <!-- i18n-source-commit: 0a990e59524b1bfe14d9910bb95a22b04281d446 -->
 
-# 🔍 Detective Work: Second Case
+# 🔍 탐정 수사: 두 번째 사례
 
-## Overview
+## 개요
 
-Building on your [crash debugging skills from the First Case](./first_case.md), you'll now face a completely different challenge: a **logic bug** that produces incorrect results without crashing.
+[첫 번째 사례에서 익힌 크래시 디버깅 스킬](./first_case.md)을 바탕으로, 이번에는 전혀 다른 유형의 도전을 마주합니다: 크래시 없이 잘못된 결과를 내는 **로직 버그**입니다.
 
-**The debugging shift:**
+**디버깅 관점의 전환:**
 
-- **First Case**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
-- **Second Case**: No crashes, no error messages - just subtly wrong results that require detective work
+- **첫 번째 사례**: 명확한 크래시 신호(`CUDA_ERROR_ILLEGAL_ADDRESS`)가 조사를 안내함
+- **두 번째 사례**: 크래시도 없고 에러 메시지도 없음 - 탐정처럼 파헤쳐야 하는 미묘하게 잘못된 결과만 있음
 
-This intermediate-level debugging challenge covers investigating **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
+이번 중급 디버깅 챌린지에서는 `LayoutTensor` 연산을 사용하는 **알고리즘 오류**를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.
 
-**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:
+**사전 준비**: [Mojo GPU 디버깅의 핵심](./essentials.md)과 [탐정 수사: 첫 번째 사례](./first_case.md)를 먼저 완료해서 CUDA-GDB 워크플로우와 체계적인 디버깅 기법을 익혀두세요. 아래 명령을 실행했는지 확인하세요:
 
 ```bash
 pixi run -e nvidia setup-cuda-gdb
 ```
 
-## Key concepts
+## 핵심 개념
 
-In this debugging challenge, you'll learn about:
+이번 디버깅 챌린지에서 배울 내용:
 
-- **LayoutTensor debugging**: Investigating structured data access patterns
-- **Logic bug detection**: Finding algorithmic errors that don't crash
-- **Loop boundary analysis**: Understanding iteration count problems
-- **Result pattern analysis**: Using output data to trace back to root causes
+- **LayoutTensor 디버깅**: 구조화된 데이터 접근 패턴 조사하기
+- **로직 버그 탐지**: 크래시하지 않는 알고리즘 오류 찾기
+- **반복 경계 분석**: 반복 횟수 문제 이해하기
+- **결과 패턴 분석**: 출력 데이터로 근본 원인까지 거슬러 올라가기
 
-## Running the code
+## 코드 실행
 
-First, examine the kernel without looking at the complete code:
+먼저 전체 코드를 보지 않고 kernel만 살펴봅시다:
 
 ```mojo
 {{#include ../../../../../problems/p09/p09.mojo:second_crash}}
 ```
 
-To experience the bug firsthand, run the following command in your terminal (`pixi` only):
+버그를 직접 경험하려면 터미널에서 다음 명령을 실행하세요 (`pixi` 전용):
 
 ```bash
 pixi run -e nvidia p09 --second-case
 ```
 
-You'll see output like this - **no crash, but wrong results**:
+다음과 같은 출력이 나타납니다 - **크래시 없이 잘못된 결과**:
 
 ```txt
 This program computes sliding window sums for each position...
@@ -56,29 +56,29 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 ```
 
-## Your task: detective work
+## 과제: 탐정 수사
 
-**Challenge**: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?
+**도전**: 프로그램은 크래시 없이 실행되지만 일정한 패턴으로 잘못된 결과를 냅니다. 코드를 보지 않은 상태에서, 이 로직 버그를 조사하기 위한 체계적인 접근 방식은 무엇일까요?
 
-**Think about:**
+**생각해 볼 점:**
 
-- What pattern do you see in the wrong results?
-- How would you investigate a loop that might not be running correctly?
-- What debugging strategy works when you can't inspect variables directly?
-- How can you apply the systematic investigation approach from [First Case](./first_case.md) when there are no crash signals to guide you?
+- 잘못된 결과에서 어떤 패턴이 보이나요?
+- 제대로 돌지 않는 것 같은 반복문은 어떻게 조사할 건가요?
+- 변수를 직접 검사할 수 없을 때 어떤 디버깅 전략이 효과적일까요?
+- 조사를 안내해 줄 크래시 신호가 없을 때, [첫 번째 사례](./first_case.md)의 체계적인 조사 방법을 어떻게 적용할 수 있을까요?
 
-Start with:
+다음 명령으로 시작해 보세요:
 
 ```bash
 pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 ```
 
-### GDB command shortcuts (faster debugging)
+### GDB 명령어 단축키 (빠른 디버깅)
 
-**Use these abbreviations** to speed up your debugging session:
+**이 단축키들**을 사용하면 디버깅 세션 속도를 높일 수 있습니다:
 
-| Short | Full | Usage Example |
-|-------|------|---------------|
+| 단축 | 전체 | 사용 예시 |
+|------|------|-----------|
 | `r` | `run` | `(cuda-gdb) r` |
 | `n` | `next` | `(cuda-gdb) n` |
 | `c` | `continue` | `(cuda-gdb) c` |
@@ -86,63 +86,63 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 | `p` | `print` | `(cuda-gdb) p thread_id` |
 | `q` | `quit` | `(cuda-gdb) q` |
 
-**All debugging commands below use these shortcuts for efficiency!**
+**아래 모든 디버깅 명령어는 효율을 위해 이 단축키를 사용합니다!**
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. **Pattern analysis first** - Look at the relationship between expected and actual results (what's the mathematical pattern in the differences?)
-2. **Focus on execution flow** - Count loop iterations when variables aren't accessible
-3. **Use simple breakpoints** - Complex debugging commands often fail with optimized code
-4. **Mathematical reasoning** - Work out what each thread should access vs what it actually accesses
-5. **Missing data investigation** - If results are consistently smaller than expected, what might be missing?
-6. **Host output verification** - The final results often reveal the pattern of the bug
-7. **Algorithm boundary analysis** - Check if loops are processing the right number of elements
-8. **Cross-validate with working cases** - Why does thread 3 work correctly but others don't?
+1. **패턴 분석부터** - 기대값과 실제 결과의 관계를 살펴보세요 (차이에 어떤 수학적 패턴이 있나요?)
+2. **실행 흐름에 집중** - 변수에 접근할 수 없으면 반복 횟수를 세어보세요
+3. **단순한 브레이크포인트 사용** - 최적화된 코드에서는 복잡한 디버깅 명령이 실패하기 쉽습니다
+4. **수학적 추론** - 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 따져보세요
+5. **누락된 데이터 조사** - 결과가 일관되게 기대보다 작다면, 무엇이 빠졌을까요?
+6. **호스트 출력 검증** - 최종 결과에서 버그의 패턴이 드러나는 경우가 많습니다
+7. **알고리즘 경계 분석** - 반복문이 올바른 개수의 요소를 처리하는지 확인하세요
+8. **작동하는 케이스와 교차 검증** - 스레드 3은 정확하게 작동하는데 다른 것들은 왜 안 될까요?
 
 </div>
 </details>
 
 <details class="solution-details">
-<summary><strong>💡 Investigation & Solution</strong></summary>
+<summary><strong>💡 조사 과정과 해결책</strong></summary>
 
 <div class="solution-explanation">
 
-## Step-by-step investigation with CUDA-GDB
+## CUDA-GDB로 단계별 조사
 
-### Phase 1: Launch and initial analysis
+### 1단계: 실행과 초기 분석
 
-#### Step 1: Start the debugger
+#### Step 1: 디버거 실행
 
 ```bash
 pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
 ```
 
-#### Step 2: analyze the symptoms first
+#### Step 2: 증상부터 분석
 
-Before diving into the debugger, examine what we know:
+디버거로 들어가기 전에, 이미 알고 있는 것을 정리합니다:
 
 ```txt
-Actual result: [0.0, 1.0, 3.0, 5.0]
-Expected: [1.0, 3.0, 6.0, 5.0]
+실제 결과: [0.0, 1.0, 3.0, 5.0]
+기대값: [1.0, 3.0, 6.0, 5.0]
 ```
 
-**🔍 Pattern Recognition**:
+**🔍 패턴 인식**:
 
-- Thread 0: Got 0.0, Expected 1.0 → Missing 1.0
-- Thread 1: Got 1.0, Expected 3.0 → Missing 2.0
-- Thread 2: Got 3.0, Expected 6.0 → Missing 3.0
-- Thread 3: Got 5.0, Expected 5.0 → ✅ Correct
+- 스레드 0: 0.0 얻음, 기대값 1.0 → 1.0 누락
+- 스레드 1: 1.0 얻음, 기대값 3.0 → 2.0 누락
+- 스레드 2: 3.0 얻음, 기대값 6.0 → 3.0 누락
+- 스레드 3: 5.0 얻음, 기대값 5.0 → ✅ 정확
 
-**Initial Hypothesis**: Each thread is missing some data, but thread 3 works correctly.
+**초기 가설**: 각 스레드가 일부 데이터를 누락하고 있는데, 스레드 3만 정확하게 작동합니다.
 
-### Phase 2: Entering the kernel
+### 2단계: Kernel 진입
 
-#### Step 3: Observe the breakpoint entry
+#### Step 3: 브레이크포인트 진입 확인
 
-Based on the real debugging session, here's what happens:
+실제 디버깅 세션에서는 다음과 같이 진행됩니다:
 
 ```bash
 (cuda-gdb) r
@@ -161,7 +161,7 @@ CUDA thread hit application kernel entry function breakpoint, p09_process_slidin
 30          input: LayoutTensor[mut=False, dtype, vector_layout],
 ```
 
-#### Step 4: Navigate to the main logic
+#### Step 4: 메인 로직으로 이동
 
 ```bash
 (cuda-gdb) n
@@ -172,28 +172,28 @@ CUDA thread hit application kernel entry function breakpoint, p09_process_slidin
 38          for offset in range(ITER):
 ```
 
-#### Step 5: Test variable accessibility - crucial discovery
+#### Step 5: 변수 접근성 테스트 - 중요한 발견
 
 ```bash
 (cuda-gdb) p thread_id
 $1 = 0
 ```
 
-**✅ Good**: Thread ID is accessible.
+**✅ 좋음**: Thread ID에 접근 가능합니다.
 
 ```bash
 (cuda-gdb) p window_sum
 Cannot access memory at address 0x0
 ```
 
-**❌ Problem**: `window_sum` is not accessible.
+**❌ 문제**: `window_sum`에 접근할 수 없습니다.
 
 ```bash
 (cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 ```
 
-**❌ Problem**: Direct LayoutTensor indexing doesn't work.
+**❌ 문제**: LayoutTensor 직접 인덱싱이 작동하지 않습니다.
 
 ```bash
 (cuda-gdb) p a.ptr[0]
@@ -202,11 +202,11 @@ $2 = {0}
 $3 = {{0}, {1}, {2}, {3}}
 ```
 
-**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can inspect LayoutTensor data.
+**🎯 돌파구**: `a.ptr[0]@4`로 전체 입력 배열을 볼 수 있습니다! 이것이 LayoutTensor 데이터를 검사하는 방법입니다.
 
-### Phase 3: The critical loop investigation
+### 3단계: 핵심 반복문 조사
 
-#### Step 6: Set up loop monitoring
+#### Step 6: 반복문 모니터링 설정
 
 ```bash
 (cuda-gdb) b 42
@@ -220,9 +220,9 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 42              idx = thread_id + offset - 1
 ```
 
-**🔍 We're now inside the loop body. Let's count iterations manually.**
+**🔍 이제 반복문 본문 안에 있습니다. 직접 반복 횟수를 세어봅시다.**
 
-#### Step 7: First loop iteration (offset = 0)
+#### Step 7: 첫 번째 반복 (offset = 0)
 
 ```bash
 (cuda-gdb) n
@@ -231,9 +231,9 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 41          for offset in range(ITER):
 ```
 
-**First iteration complete**: Loop went from line 42 → 43 → back to 41. The loop continues.
+**첫 번째 반복 완료**: 반복문이 42번 줄 → 43번 줄 → 41번 줄로 돌아왔습니다. 반복문이 계속됩니다.
 
-#### Step 8: Second loop iteration (offset = 1)
+#### Step 8: 두 번째 반복 (offset = 1)
 
 ```bash
 (cuda-gdb) n
@@ -252,20 +252,20 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 41          for offset in range(ITER):
 ```
 
-**Second iteration complete**: This time it went through the if-block (lines 44-45).
+**두 번째 반복 완료**: 이번에는 if 블록(44-45번 줄)을 통과했습니다.
 
-#### Step 9: testing for third iteration
+#### Step 9: 세 번째 반복 테스트
 
 ```bash
 (cuda-gdb) n
 47          output[thread_id] = window_sum
 ```
 
-**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.
+**결정적 발견**: 반복문이 2번만 돌고 종료되었습니다! 42번 줄의 브레이크포인트에 다시 걸리지 않고 47번 줄로 바로 넘어갔습니다.
 
-**Conclusion**: The loop ran exactly **2 iterations** and then exited.
+**결론**: 반복문이 정확히 **2번** 돌고 종료되었습니다.
 
-#### Step 10: Complete kernel execution and context loss
+#### Step 10: Kernel 실행 완료와 컨텍스트 손실
 
 ```bash
 (cuda-gdb) n
@@ -279,124 +279,124 @@ No symbol "output" in current context.
 No symbol "offset" in current context.
 ```
 
-**🔍 Context Lost**: After kernel completion, we lose access to kernel variables. This is normal behavior.
+**🔍 컨텍스트 손실**: Kernel 실행이 끝나면 kernel 변수에 더 이상 접근할 수 없습니다. 정상적인 동작입니다.
 
-### Phase 4: Root cause analysis
+### 4단계: 근본 원인 분석
 
-#### Step 11: Algorithm analysis from observed execution
+#### Step 11: 관찰된 실행에서 알고리즘 분석
 
-From our debugging session, we observed:
+디버깅 세션에서 관찰한 것:
 
-1. **Loop Iterations**: Only 2 iterations (offset = 0, offset = 1)
-2. **Expected**: A sliding window of size 3 should require 3 iterations (offset = 0, 1, 2)
-3. **Missing**: The third iteration (offset = 2)
+1. **반복 횟수**: 2번만 반복 (offset = 0, offset = 1)
+2. **기대값**: 크기 3의 슬라이딩 윈도우는 3번 반복해야 함 (offset = 0, 1, 2)
+3. **누락**: 세 번째 반복 (offset = 2)
 
-Looking at what each thread should compute:
+각 스레드가 계산해야 할 것:
 
-- **Thread 0**: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0
-- **Thread 1**: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0
-- **Thread 2**: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0
-- **Thread 3**: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0
+- **스레드 0**: window_sum = input[-1] + input[0] + input[1] = (경계) + 0 + 1 = 1.0
+- **스레드 1**: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0
+- **스레드 2**: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0
+- **스레드 3**: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (경계) = 5.0
 
-#### Step 12: Trace the actual execution for thread 0
+#### Step 12: 스레드 0의 실제 실행 추적
 
-With only 2 iterations (offset = 0, 1):
+2번만 반복할 경우 (offset = 0, 1):
 
-**Iteration 1 (offset = 0)**:
+**반복 1 (offset = 0)**:
 
 - `idx = thread_id + offset - 1 = 0 + 0 - 1 = -1`
 - `if 0 <= idx < SIZE:` → `if 0 <= -1 < 4:` → **False**
-- Skip the sum operation
+- 합산 연산 건너뜀
 
-**Iteration 2 (offset = 1)**:
+**반복 2 (offset = 1)**:
 
 - `idx = thread_id + offset - 1 = 0 + 1 - 1 = 0`
 - `if 0 <= idx < SIZE:` → `if 0 <= 0 < 4:` → **True**
 - `window_sum += input[0]` → `window_sum += 0`
 
-**Missing Iteration 3 (offset = 2)**:
+**누락된 반복 3 (offset = 2)**:
 
 - `idx = thread_id + offset - 1 = 0 + 2 - 1 = 1`
 - `if 0 <= idx < SIZE:` → `if 0 <= 1 < 4:` → **True**
-- `window_sum += input[1]` → `window_sum += 1` ← **THIS NEVER HAPPENS**
+- `window_sum += input[1]` → `window_sum += 1` ← **이 연산이 실행되지 않음**
 
-**Result**: Thread 0 gets `window_sum = 0` instead of `window_sum = 0 + 1 = 1`
+**결과**: 스레드 0은 `window_sum = 0 + 1 = 1` 대신 `window_sum = 0`을 얻습니다
 
-### Phase 5: Bug confirmation
+### 5단계: 버그 확인
 
-Looking at the problem code, we find:
+문제 코드를 보면:
 
 ```mojo
-comptime ITER = 2                       # ← BUG: Should be 3!
+comptime ITER = 2                       # ← 버그: 3이어야 함!
 
-for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
-    idx = Int(thread_id) + offset - 1     # ← Missing offset = 2
+for offset in range(ITER):           # ← 2번만 반복: [0, 1]
+    idx = Int(thread_id) + offset - 1     # ← offset = 2 누락
     if 0 <= idx < SIZE:
         value = rebind[Scalar[dtype]](a[idx])
         window_sum += value
 ```
 
-**🎯 ROOT CAUSE IDENTIFIED**: `ITER = 2` should be `ITER = 3` for a sliding window of size 3.
+**🎯 근본 원인 확인**: 크기 3의 슬라이딩 윈도우를 위해 `ITER = 2`가 `ITER = 3`이어야 합니다.
 
-**The Fix**: Change `comptime ITER = 2` to `comptime ITER = 3` in the source code.
+**수정 방법**: 소스 코드에서 `comptime ITER = 2`를 `comptime ITER = 3`으로 변경합니다.
 
-## Key debugging lessons
+## 핵심 디버깅 교훈
 
-**When Variables Are Inaccessible**:
+**변수에 접근할 수 없을 때**:
 
-1. **Focus on execution flow** - Count breakpoint hits and loop iterations
-2. **Use mathematical reasoning** - Work out what should happen vs what does happen
-3. **Pattern analysis** - Let the wrong results guide your investigation
-4. **Cross-validation** - Test your hypothesis against multiple data points
+1. **실행 흐름에 집중** - 브레이크포인트가 몇 번 걸리는지, 반복이 몇 번 도는지 세어보세요
+2. **수학적 추론 사용** - 일어나야 할 일과 실제로 일어나는 일을 따져보세요
+3. **패턴 분석** - 잘못된 결과가 조사를 이끌도록 하세요
+4. **교차 검증** - 여러 데이터 포인트에 대해 가설을 테스트하세요
 
-**Professional GPU Debugging Reality**:
+**전문적인 GPU 디버깅의 현실**:
 
-- **Variable inspection often fails** due to compiler optimizations
-- **Execution flow analysis** is more reliable than data inspection
-- **Host output patterns** provide crucial debugging clues
-- **Source code reasoning** complements limited debugger capabilities
+- 컴파일러 최적화 때문에 **변수 검사가 실패하는 경우가 많습니다**
+- **실행 흐름 분석**이 데이터 검사보다 더 신뢰할 수 있습니다
+- **호스트 출력 패턴**이 중요한 디버깅 단서를 제공합니다
+- **소스 코드 추론**이 제한된 디버거 기능을 보완합니다
 
-**LayoutTensor Debugging**:
+**LayoutTensor 디버깅**:
 
-- Even with LayoutTensor abstractions, underlying algorithmic bugs still manifest
-- Focus on the algorithm logic rather than trying to inspect tensor contents
-- Use systematic reasoning to trace what each thread should vs actually accesses
+- LayoutTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다
+- 텐서 내용을 검사하려 하기보다 알고리즘 로직에 집중하세요
+- 체계적인 추론으로 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 추적하세요
 
-**Key Insight**: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.
+**💡 핵심 통찰**: 이런 유형의 off-by-one (_역주: 경계값이 1만큼 어긋나는 오류_) 반복문 버그는 GPU 프로그래밍에서 매우 흔합니다. 여기서 배운 체계적인 접근법 - 제한된 디버거 정보에 수학적 분석과 패턴 인식을 결합하는 것 - 은 도구에 한계가 있을 때 전문 GPU 개발자들이 디버깅하는 방식 그대로입니다.
 
 </div>
 </details>
 
-## Next steps: from logic bugs to coordination deadlocks
+## 다음 단계: 로직 버그에서 데드락으로
 
-**You've learned logic bug debugging!** You can now:
+**로직 버그 디버깅을 익혔습니다!** 이제 할 수 있습니다:
 
-- ✅ **Investigate algorithmic errors** without crashes or obvious symptoms
-- ✅ **Use pattern analysis** to trace wrong results back to root causes
-- ✅ **Debug with limited variable access** using execution flow analysis
-- ✅ **Apply mathematical reasoning** when debugger tools have limitations
+- ✅ 크래시나 뚜렷한 증상 없이도 **알고리즘 오류 조사**
+- ✅ **패턴 분석**으로 잘못된 결과에서 근본 원인까지 추적
+- ✅ 실행 흐름 분석으로 **변수 접근이 제한된 상황에서 디버깅**
+- ✅ 디버거 도구에 한계가 있을 때 **수학적 추론 적용**
 
-### Your final challenge: [Detective Work: Third Case](./third_case.md)
+### 마지막 도전: [탐정 수사: 세 번째 사례](./third_case.md)
 
-**But what if your program doesn't crash AND doesn't finish?** What if it just **hangs forever**?
+**그런데 프로그램이 크래시하지도 않고 끝나지도 않는다면요?** **그냥 영원히 멈춰버린다면요?**
 
-The [Third Case](./third_case.md) presents the ultimate debugging challenge:
+[세 번째 사례](./third_case.md)는 궁극의 디버깅 도전을 제시합니다:
 
-- ❌ **No crash messages** (like First Case)
-- ❌ **No wrong results** (like Second Case)
-- ❌ **No completion at all** - just infinite hanging
-- ✅ **Silent deadlock** requiring advanced thread coordination analysis
+- ❌ **크래시 메시지 없음** (첫 번째 사례처럼)
+- ❌ **잘못된 결과 없음** (두 번째 사례처럼)
+- ❌ **완료 자체가 없음** - 그냥 무한히 멈춤
+- ✅ 고급 스레드 조정 분석이 필요한 **조용한 데드락**
 
-**New skills you'll develop:**
+**새롭게 익히게 될 스킬:**
 
-- **Barrier deadlock detection** - Finding coordination failures in parallel threads
-- **Multi-thread state analysis** - Examining all threads simultaneously
-- **Synchronization debugging** - Understanding thread cooperation breakdowns
+- **Barrier 데드락 탐지** - 병렬 스레드에서 조정 실패 찾기
+- **멀티 스레드 상태 분석** - 모든 스레드를 동시에 검사하기
+- **동기화 디버깅** - 스레드 협력 실패 이해하기
 
-**The debugging evolution:**
+**디버깅 진화:**
 
-1. **First Case**: Follow crash signals → Find memory bugs
-2. **Second Case**: Analyze result patterns → Find logic bugs
-3. **Third Case**: Investigate thread states → Find coordination bugs
+1. **첫 번째 사례**: 크래시 신호 따라가기 → 메모리 버그 찾기
+2. **두 번째 사례**: 결과 패턴 분석하기 → 로직 버그 찾기
+3. **세 번째 사례**: 스레드 상태 조사하기 → 조정 버그 찾기
 
-The systematic investigation skills from both previous cases - hypothesis formation, evidence gathering, pattern analysis - become crucial when debugging the most challenging GPU issue: threads that coordinate incorrectly and wait forever.
+이전 두 사례에서 배운 체계적인 조사 스킬 - 가설 수립, 증거 수집, 패턴 분석 - 은 가장 어려운 GPU 문제를 디버깅할 때 핵심이 됩니다: 조정이 어긋나 영원히 서로를 기다리는 스레드들.

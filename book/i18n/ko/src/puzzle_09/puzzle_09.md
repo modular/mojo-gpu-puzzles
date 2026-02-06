@@ -1,146 +1,146 @@
 <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 
-# Puzzle 9: GPU Debugging Workflow
+# Puzzle 9: GPU 디버깅 워크플로우
 
-> ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.
+> ⚠️ 이 퍼즐은 호환되는 **NVIDIA GPU**에서만 작동합니다. 다른 GPU 벤더 지원을 위한 도구 개발이 진행 중입니다.
 
-## When GPU programs fail
+## GPU 프로그램이 실패할 때
 
-You've written GPU kernels, worked with shared memory, and coordinated thousands of parallel threads. Your code compiles. You run it expecting correct results, and then:
+지금까지 GPU Kernel을 작성하고, 공유 메모리를 다루고, 수천 개의 병렬 스레드를 조율해 왔습니다. 코드가 컴파일됩니다. 올바른 결과를 기대하며 실행하면:
 
-- **CRASH**
-- **Wrong results**
-- **Infinite hang**
+- **크래시**
+- **잘못된 결과**
+- **무한 정지**
 
-This is GPU programming reality: **debugging parallel code running on thousands of threads simultaneously**. This is where theory meets practice, where algorithmic knowledge meets investigative skills.
+GPU 프로그래밍의 현실이 바로 이것입니다. **수천 개의 스레드에서 동시에 실행되는 병렬 코드를 디버깅**해야 하죠. 이론과 실전이 만나고, 알고리즘 지식과 조사 능력이 교차하는 영역입니다.
 
-## Why GPU debugging is challenging
+## GPU 디버깅이 어려운 이유
 
-Unlike traditional CPU debugging where you follow a single thread through sequential execution, GPU debugging requires you to:
+단일 스레드의 순차 실행을 따라가는 전통적인 CPU 디버깅과 달리, GPU 디버깅은 다음을 요구합니다:
 
-- **Think in parallel**: Thousands of threads executing simultaneously, each potentially doing something different
-- **Navigate multiple memory spaces**: Global memory, shared memory, registers, constant memory
-- **Handle coordination failures**: Race conditions, barrier deadlocks, memory access violations
-- **Debug optimized code**: JIT compilation, variable optimization, limited symbol information
-- **Use specialized tools**: CUDA-GDB for kernel inspection, thread navigation, parallel state analysis
+- **병렬로 사고하기**: 수천 개의 스레드가 동시에 실행되며, 각각 다른 작업을 수행할 수 있음
+- **여러 메모리 공간 탐색**: 글로벌 메모리, 공유 메모리, 레지스터, 상수 메모리
+- **조율 실패 처리**: 경쟁 상태, barrier 데드락, 메모리 접근 위반
+- **최적화된 코드 디버깅**: JIT 컴파일, 변수 최적화, 제한된 심볼 정보
+- **전문 도구 사용**: Kernel 검사, 스레드 탐색, 병렬 상태 분석을 위한 CUDA-GDB
 
-**GPU debugging skills provide deep understanding of parallel computing fundamentals**.
+**GPU 디버깅을 익히면 병렬 컴퓨팅의 기초를 깊이 이해하게 됩니다**.
 
-## What you'll learn in this puzzle
+## 이 퍼즐에서 배울 내용
 
-This puzzle teaches you to debug GPU code systematically. You'll learn the approaches, tools, and techniques that GPU developers use daily to solve complex parallel programming challenges.
+이 퍼즐에서는 GPU 코드를 체계적으로 디버깅하는 방법을 배웁니다. GPU 개발자들이 복잡한 병렬 프로그래밍 문제를 해결하기 위해 매일 사용하는 접근법, 도구, 기법을 익히게 됩니다.
 
-### **Essential skills you'll develop**
+### **익히게 될 핵심 기술**
 
-1. **Professional debugging workflow** - The systematic approach professionals use
-2. **Tool proficiency** - LLDB for host code, CUDA-GDB for GPU kernels
-3. **Pattern recognition** - Common GPU bug types and symptoms
-4. **Investigation techniques** - Finding root causes when variables are optimized out
-5. **Thread coordination debugging** - Advanced GPU debugging skills
+1. **전문적인 디버깅 워크플로우** - 전문가들이 사용하는 체계적인 접근법
+2. **도구 숙련도** - 호스트 코드용 LLDB, GPU Kernel용 CUDA-GDB
+3. **패턴 인식** - 흔한 GPU 버그 유형과 증상
+4. **조사 기법** - 변수가 최적화로 제거되었을 때 근본 원인 찾기
+5. **스레드 조율 디버깅** - 고급 GPU 디버깅 기술
 
-### **Real-world debugging scenarios**
+### **실제 디버깅 시나리오**
 
-You'll tackle the three most common GPU programming failures:
+가장 흔한 세 가지 GPU 프로그래밍 실패 상황을 다룹니다:
 
-- **Memory crashes** - Null pointers, illegal memory access, segmentation faults
-- **Logic bugs** - Correct execution with wrong results, algorithmic errors
-- **Coordination deadlocks** - Barrier synchronization failures, infinite hangs
+- **메모리 크래시** - Null 포인터, 잘못된 메모리 접근, segmentation fault
+- **로직 버그** - 정상 실행되지만 결과가 틀림, 알고리즘 오류
+- **조율 데드락** - barrier 동기화 실패, 무한 정지
 
-Each scenario teaches different investigation techniques and builds debugging intuition.
+각 시나리오는 서로 다른 조사 기법을 가르치고 디버깅 감각을 길러줍니다.
 
-## Your debugging journey
+## 디버깅 여정
 
-This puzzle takes you through a carefully designed progression from basic debugging concepts to advanced parallel coordination failures:
+이 퍼즐은 기본 디버깅 개념부터 고급 병렬 조율 실패까지, 체계적으로 설계된 과정을 안내합니다:
 
-### 📚 **Step 1: [Mojo GPU Debugging Essentials](./essentials.md)**
+### 📚 **Step 1: [Mojo GPU 디버깅의 핵심](./essentials.md)**
 
-**Foundation building** - Learn the tools and workflow
+**기초 다지기** - 도구와 워크플로우 배우기
 
-- Set up your debugging environment with `pixi` and CUDA-GDB
-- Learn the four debugging approaches: JIT vs binary, CPU vs GPU
-- Learn essential CUDA-GDB commands for GPU kernel inspection
-- Practice with hands-on examples using familiar code from previous puzzles
-- Understand when to use each debugging approach
+- `pixi`와 CUDA-GDB로 디버깅 환경 설정
+- 네 가지 디버깅 접근법 배우기: JIT vs 바이너리, CPU vs GPU
+- GPU Kernel 검사를 위한 필수 CUDA-GDB 명령어 학습
+- 이전 퍼즐의 익숙한 코드로 실습
+- 각 디버깅 접근법을 언제 사용해야 하는지 이해
 
-**Key outcome**: Professional debugging workflow and tool proficiency
+**목표**: 전문적인 디버깅 워크플로우와 도구 숙련도
 
-### 🧐 **Step 2: [Detective Work: First Case](./first_case.md)**
+### 🧐 **Step 2: [탐정 수사: 첫 번째 사례](./first_case.md)**
 
-**Memory crash investigation** - Debug a GPU program that crashes
+**메모리 크래시 조사** - 크래시가 발생하는 GPU 프로그램 디버깅
 
-- Investigate `CUDA_ERROR_ILLEGAL_ADDRESS` crashes
-- Learn systematic pointer inspection techniques
-- Learn null pointer detection and validation
-- Practice professional crash analysis workflow
-- Understand GPU memory access failures
+- `CUDA_ERROR_ILLEGAL_ADDRESS` 크래시 조사
+- 체계적인 포인터 검사 기법 학습
+- Null 포인터 탐지 및 검증 학습
+- 전문적인 크래시 분석 워크플로우 실습
+- GPU 메모리 접근 실패 이해
 
-**Key outcome**: Ability to debug GPU memory crashes and pointer issues
+**목표**: GPU 메모리 크래시와 포인터 문제 디버깅 능력
 
-### 🔍 **Step 3: [Detective Work: Second Case](./second_case.md)**
+### 🔍 **Step 3: [탐정 수사: 두 번째 사례](./second_case.md)**
 
-**Logic bug investigation** - Debug a program with wrong results
+**로직 버그 조사** - 결과가 틀린 프로그램 디버깅
 
-- Investigate LayoutTensor-based algorithmic errors
-- Learn execution flow analysis when variables are optimized out
-- Learn loop boundary analysis and iteration counting
-- Practice pattern recognition in incorrect results
-- Debug without direct variable inspection
+- LayoutTensor 기반의 알고리즘 오류 조사
+- 최적화로 변수가 사라졌을 때 실행 흐름 분석하기
+- 루프 경계와 반복 횟수 분석하기
+- 틀린 결과에서 패턴 찾아내기
+- 변수를 직접 확인하지 않고 디버깅하기
 
-**Key outcome**: Ability to debug algorithmic errors and logic bugs in GPU kernels
+**목표**: GPU Kernel의 알고리즘 오류와 로직 버그 디버깅 능력
 
-### 🕵️ **Step 4: [Detective Work: Third Case](./third_case.md)**
+### 🕵️ **Step 4: [탐정 수사: 세 번째 사례](./third_case.md)**
 
-**Barrier deadlock investigation** - Debug a program that hangs forever
+**barrier 데드락 조사** - 영원히 멈추는 프로그램 디버깅
 
-- Investigate barrier synchronization failures
-- Learn multi-thread state analysis across parallel execution
-- Learn conditional execution path tracing
-- Practice thread coordination debugging
-- Understand the most challenging GPU debugging scenario
+- barrier 동기화 실패 조사
+- 병렬 실행 전반의 멀티 스레드 상태 분석 학습
+- 조건부 실행 경로 추적 학습
+- 스레드 조율 디버깅 실습
+- 가장 어려운 GPU 디버깅 시나리오 이해
 
-**Key outcome**: Advanced thread coordination debugging - the pinnacle of GPU debugging skills
+**목표**: 고급 스레드 조율 디버깅 - GPU 디버깅 기술의 정점
 
-## The detective mindset
+## 탐정의 마인드셋
 
-GPU debugging requires a different mindset than traditional programming. You become a **detective** investigating a crime scene where:
+GPU 디버깅은 일반적인 프로그래밍과 다른 사고방식을 요구합니다. 여러분은 범죄 현장을 조사하는 **탐정**이 됩니다:
 
-- **The evidence is limited** - Variables are optimized out, symbols are mangled
-- **Multiple suspects exist** - Thousands of threads, any could be the culprit
-- **The timeline is complex** - Parallel execution, race conditions, timing dependencies
-- **The tools are specialized** - CUDA-GDB, thread navigation, GPU memory inspection
+- **단서가 부족함** - 변수는 최적화로 사라지고, 심볼명은 알아보기 어려움
+- **용의자가 넘침** - 수천 개의 스레드, 누구든 범인일 수 있음
+- **타임라인이 복잡함** - 병렬 실행, 경쟁 상태, 타이밍 의존성
+- **전문 도구가 필요함** - CUDA-GDB, 스레드 탐색, GPU 메모리 검사
 
-But like any good detective, you'll learn to:
+하지만 훌륭한 탐정이 그렇듯, 여러분도 다음을 배우게 됩니다:
 
-- **Follow the clues systematically** - Error messages, crash patterns, thread states
-- **Form hypotheses** - What could cause this specific behavior?
-- **Test theories** - Use debugging commands to verify or disprove ideas
-- **Trace back to root causes** - From symptoms to the actual source of problems
+- **단서를 체계적으로 추적** - 에러 메시지, 크래시 패턴, 스레드 상태
+- **가설 수립** - 이 동작을 일으킬 수 있는 원인은 무엇일까?
+- **이론 검증** - 디버깅 명령어로 아이디어를 확인하거나 반증
+- **근본 원인 추적** - 증상에서 실제 문제의 원인까지
 
-## Prerequisites and expectations
+## 시작하기 전에
 
-**What you need to know**:
+**알아야 할 것**:
 
-- GPU programming concepts from Puzzles 1-8 (thread indexing, memory management, barriers)
-- Basic command-line comfort (you'll use terminal-based debugging tools)
-- Patience and systematic thinking (GPU debugging requires methodical investigation)
+- Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (스레드 인덱싱, 메모리 관리, barrier)
+- 기본적인 명령줄 사용에 익숙함 (터미널 기반 디버깅 도구를 사용합니다)
+- 인내심과 체계적 사고 (GPU 디버깅은 꼼꼼한 조사가 필요합니다)
 
-**What you'll gain**:
+**목표**:
 
-- **Professional debugging skills** used in GPU development teams
-- **Deep parallel computing understanding** that comes from seeing execution at the thread level
-- **Problem-solving confidence** for the most challenging GPU programming scenarios
-- **Tool proficiency** that will serve you throughout your GPU programming career
+- GPU 개발팀에서 사용하는 **전문 디버깅 기술**
+- 스레드 수준의 실행을 관찰하며 얻는 **병렬 컴퓨팅에 대한 깊은 이해**
+- 가장 까다로운 GPU 프로그래밍 상황에서도 **문제를 해결할 수 있다는 자신감**
+- GPU 프로그래밍 커리어 전반에 도움이 될 **도구 숙련도**
 
-## Ready to begin?
+## 시작할 준비가 되셨나요?
 
-GPU debugging is where you transition from *writing* GPU programs to *understanding* them deeply. Every professional GPU developer has spent countless hours debugging parallel code, learning to think in thousands of simultaneous threads, and developing the patience to investigate complex coordination failures.
+GPU 디버깅은 GPU 프로그램을 *작성하는* 것에서 *깊이 이해하는* 것으로 나아가는 과정입니다. 전문 GPU 개발자라면 누구나 병렬 코드를 디버깅하고, 수천 개의 스레드로 동시에 사고하는 법을 익히고, 복잡한 조율 실패를 끈기 있게 조사하며 수많은 시간을 보냈습니다.
 
-This is your opportunity to join that elite group.
+지금이 바로 그 전문가 그룹에 합류할 기회입니다.
 
-**Start your debugging journey**: [Mojo GPU Debugging Essentials](./essentials.md)
+**디버깅 여정 시작하기**: [Mojo GPU 디버깅의 핵심](./essentials.md)
 
 ---
 
-*"Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it."* - Brian Kernighan
+*"디버깅은 코드 작성보다 두 배는 어렵다. 따라서 최대한 영리하게 코드를 작성했다면, 정의상 그것을 디버깅할 만큼 똑똑하지 않다는 뜻이다."* - Brian Kernighan
 
-*In GPU programming, this wisdom is amplified by a factor of thousands - the number of parallel threads you're debugging simultaneously.*
+*GPU 프로그래밍에서는 이 말이 수천 배로 와닿습니다. 동시에 디버깅해야 할 병렬 스레드 수만큼요.*

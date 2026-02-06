@@ -1,27 +1,28 @@
 <!-- i18n-source-commit: 88f1de7b3de457cc54820fd71512acbcadf073d9 -->
 
-# 👮🏼‍♂️ The Silent Memory Corruption
+# 👮🏼‍♂️ 메모리 위반 탐지
 
-## Overview
+## 개요
 
-Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA's `compute-sanitizer` (available through `pixi`) with the `memcheck` tool, you'll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.
+테스트가 통과하는 것처럼 보여도 GPU 프로그램을 조용히 손상시킬 수 있는 메모리 위반을 탐지하는 방법을 배웁니다. NVIDIA의 `compute-sanitizer`(`pixi`를 통해 사용 가능)와 `memcheck` 도구를 사용하여, GPU 코드에서 예측 불가능한 동작을 일으킬 수 있는 숨은 메모리 버그를 발견하게 됩니다.
 
-**Key insight**: A GPU program can produce "correct" results while simultaneously performing illegal memory accesses.
+**핵심 통찰**: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에 "올바른" 결과를 만들어낼 수 있습니다.
 
-**Prerequisites**: Understanding of [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md) and basic GPU memory concepts.
+**선행 학습**: [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md)와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.
 
-## The silent memory bug discovery
+## 조용한 메모리 버그의 발견
 
-### Test passes, but is my code actually correct?
+### 테스트는 통과했지만, 코드가 정말 올바른 걸까?
 
-Let's start with a seemingly innocent program that appears to work perfectly (this is [Puzzle 04](../puzzle_04/layout_tensor.md) without guards):
+얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (guard가 없는 [Puzzle 04](../puzzle_04/layout_tensor.md)입니다):
 
 ```mojo
 {{#include ../../../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
 ```
+
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a>
 
-When you run this program normally, everything looks fine:
+이 프로그램을 일반적으로 실행하면, 모든 것이 정상으로 보입니다:
 
 ```bash
 pixi run p10 --memory-bug
@@ -35,15 +36,15 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ✅ Memory test PASSED! (memcheck may find bounds violations)
 ```
 
-✅ **Test PASSED!** The output matches expected results perfectly. Case closed, right?
+✅ **테스트 통과!** 출력이 예상 결과와 완벽하게 일치합니다. 사건 종결, 맞죠?
 
-**Wrong!** Let's see what `compute-sanitizer` reveals:
+**아닙니다!** `compute-sanitizer`가 무엇을 보여주는지 봅시다:
 
 ```bash
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
-**Note**: `MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0` is a command-line environment variable setting that disables a device context's buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.
+**참고**: `MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0`은 디바이스 컨텍스트의 버퍼 캐시를 비활성화하는 명령줄 환경 변수 설정입니다. 이 설정은 일반적인 캐싱 동작에 의해 숨겨지던 경계 위반 같은 메모리 문제를 드러낼 수 있습니다. (_역주: 버퍼 캐시가 활성화되면 해제된 메모리를 즉시 반환하지 않고 재사용을 위해 보관합니다. 이 때문에 범위를 벗어난 접근이 아직 유효한 캐시 영역에 닿아 오류가 드러나지 않을 수 있습니다. 비활성화하면 메모리가 즉시 반환되어 위반이 감지됩니다._)
 
 ```txt
 ========= COMPUTE-SANITIZER
@@ -81,90 +82,99 @@ Running memory bug example (bounds checking issue)...
 ========= ERROR SUMMARY: 7 errors
 ```
 
-The program has **7 total errors** despite passing all tests:
-- **4 memory violations** (Invalid __global__ read)
-- **3 runtime errors** (caused by the memory violations)
+모든 테스트를 통과했음에도 프로그램에는 **총 7개의 오류**가 있습니다:
 
+- **4개의 메모리 위반** (Invalid **global** read)
+- **3개의 런타임 오류** (메모리 위반으로 인해 발생)
 
-## Understanding the hidden bug
+## 숨겨진 버그 이해하기
 
-### Root cause analysis
+### 근본 원인 분석
 
-**The Problem:**
-- **Tensor size**: 2×2 (valid indices: 0, 1)
-- **Thread grid**: 3×3 (thread indices: 0, 1, 2)
-- **Out-of-bounds threads**: `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` access invalid memory
-- **Missing bounds check**: No validation of `thread_idx` against tensor dimensions
+**문제:**
 
-### Understanding the 7 total errors
+- **텐서 크기**: 2×2 (유효한 인덱스: 0, 1)
+- **스레드 그리드**: 3×3 (스레드 인덱스: 0, 1, 2)
+- **범위 초과 스레드**: `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)`가 잘못된 메모리에 접근
+- **경계 검사 누락**: 텐서 차원에 대한 `thread_idx` 검증이 없음
 
-**4 Memory Violations:**
-- Each out-of-bounds thread `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)` caused an "Invalid __global__ read"
+### 7개 오류 전체 이해하기
 
-**3 CUDA Runtime Errors:**
-- `cuStreamSynchronize` failed due to kernel launch failure
-- `cuEventCreate` failed during cleanup
-- `cuMemFreeAsync` failed during memory deallocation
+**4개의 메모리 위반:**
 
-**Key Insight**: Memory violations have cascading effects - one bad memory access causes multiple downstream CUDA API failures.
+- 각 범위 초과 스레드 `(2,1)`, `(0,2)`, `(1,2)`, `(2,2)`가 "Invalid **global** read"를 발생시킴
 
-**Why tests still passed:**
-- Valid threads `(0,0)`, `(0,1)`, `(1,0)`, `(1,1)` wrote correct results
-- Test only checked valid output locations
-- Out-of-bounds accesses didn't immediately crash the program
+**3개의 CUDA 런타임 오류:**
 
-## Understanding undefined behavior (UB)
+- Kernel 실행 실패로 인해 `cuStreamSynchronize` 실패
+- 정리 과정에서 `cuEventCreate` 실패
+- 메모리 해제 과정에서 `cuMemFreeAsync` 실패
 
-### What is undefined behavior?
+**핵심 통찰**: 메모리 위반은 연쇄 효과를 일으킵니다 - 하나의 잘못된 메모리 접근이 여러 후속 CUDA API 실패를 야기합니다.
 
-**Undefined Behavior (UB)** occurs when a program performs operations that have no defined meaning according to the language specification. Out-of-bounds memory access is a classic example of undefined behavior.
+**그럼에도 테스트가 통과한 이유:**
 
-**Key characteristics of UB:**
-- The program can do **literally anything**: crash, produce wrong results, appear to work, or corrupt memory
-- **No guarantees**: Behavior may change between compilers, hardware, drivers, or even different runs
+- 유효한 스레드 `(0,0)`, `(0,1)`, `(1,0)`, `(1,1)`이 올바른 결과를 기록함
+- 테스트가 유효한 출력 위치만 검사함
+- 범위 초과 접근이 프로그램을 즉시 크래시시키지 않음
 
-### Why undefined behavior is especially dangerous
+## 미정의 동작(UB) 이해하기
 
-**Correctness issues:**
-- **Unpredictable results**: Your program may work during testing but fail in production
-- **Non-deterministic behavior**: Same code can produce different results on different runs
-- **Silent corruption**: UB can corrupt data without any visible errors
-- **Compiler optimizations**: Compilers assume no UB occurs and may optimize in unexpected ways
+### 미정의 동작이란?
 
-**Security vulnerabilities:**
-- **Buffer overflows**: Classic source of security exploits in systems programming
-- **Memory corruption**: Can lead to privilege escalation and code injection attacks
-- **Information leakage**: Out-of-bounds reads can expose sensitive data
-- **Control flow hijacking**: UB can be exploited to redirect program execution
+**미정의 동작(Undefined Behavior, UB)** 은 프로그램이 언어 명세상 정의되지 않은 연산을 수행할 때 발생합니다. 범위 초과 메모리 접근이 대표적인 예입니다.
 
-### GPU-specific undefined behavior dangers
+**UB의 주요 특성:**
 
-**Massive scale impact:**
-- **Thread divergence**: One thread's UB can affect entire warps (32 threads)
-- **Memory coalescing**: Out-of-bounds access can corrupt neighboring threads' data
-- **Kernel failures**: UB can cause entire GPU kernels to fail catastrophically
+- 프로그램이 **말 그대로 무슨 짓이든** 할 수 있음: 크래시, 잘못된 결과, 정상 동작하는 것처럼 보이기, 메모리 손상
+- **어떤 보장도 없음**: 컴파일러, 하드웨어, 드라이버, 심지어 실행할 때마다 동작이 달라질 수 있음
 
-**Hardware variations:**
-- **Different GPU architectures**: UB may manifest differently on different GPU models
-- **Driver differences**: Same UB may behave differently across driver versions
-- **Memory layout changes**: GPU memory allocation patterns can change UB manifestation
+### 미정의 동작이 특히 위험한 이유
 
-## Fixing the memory violation
+**정확성 문제:**
 
-### The solution
+- **예측 불가능한 결과**: 테스트 중에는 동작하다가 프로덕션에서 실패할 수 있음
+- **비결정적 동작**: 같은 코드가 다른 실행에서 다른 결과를 낼 수 있음
+- **조용한 손상**: UB는 가시적인 오류 없이 데이터를 손상시킬 수 있음
+- **컴파일러 최적화**: 컴파일러는 UB가 없다고 가정하고 예상치 못한 방식으로 최적화할 수 있음
 
-As we saw in [Puzzle 04](../puzzle_04/layout_tensor.md), we need to bound-check as follows:
+**보안 취약점:**
+
+- **버퍼 오버플로우**: 시스템 프로그래밍에서 보안 공격의 고전적인 원인
+- **메모리 손상**: 권한 상승이나 코드 인젝션 공격으로 이어질 수 있음
+- **정보 유출**: 범위를 벗어난 읽기로 민감한 데이터가 노출될 수 있음
+- **제어 흐름 하이재킹**: UB를 악용해 프로그램 실행 흐름을 탈취할 수 있음
+
+### GPU 특유의 미정의 동작 위험성
+
+**대규모 영향:**
+
+- **스레드 분기**: 한 스레드의 UB가 전체 Warp(32개 스레드)에 영향을 줄 수 있음
+- **메모리 병합(coalescing)**: 범위 초과 접근이 인접 스레드의 데이터를 손상시킬 수 있음
+- **Kernel 실패**: UB가 GPU Kernel 전체를 완전히 망가뜨릴 수 있음
+
+**하드웨어 차이:**
+
+- **다른 GPU 아키텍처**: UB가 다른 GPU 모델에서 다르게 나타날 수 있음
+- **드라이버 차이**: 같은 UB가 드라이버 버전에 따라 다르게 동작할 수 있음
+- **메모리 레이아웃 변경**: GPU 메모리 할당 패턴에 따라 UB가 다르게 나타날 수 있음
+
+## 메모리 위반 수정하기
+
+### 해결책
+
+[Puzzle 04](../puzzle_04/layout_tensor.md)에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:
 
 ```mojo
 {{#include ../../../../../solutions/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor_solution}}
 ```
 
-The fix is simple: **always validate thread indices against data dimensions** before accessing memory.
+해결책은 간단합니다: **메모리에 접근하기 전에 항상 스레드 인덱스를 데이터 차원에 대해 검증**하세요.
 
-### Verification with compute-sanitizer
+### compute-sanitizer로 검증
 
 ```bash
-# Fix the bounds checking in your copy of p10.mojo, then run:
+# p10.mojo 복사본에서 경계 검사를 수정한 후 실행:
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 ```
 
@@ -178,28 +188,28 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ========= ERROR SUMMARY: 0 errors
 ```
 
-**✅ SUCCESS:** No memory violations detected!
+**✅ 성공:** 메모리 위반이 탐지되지 않았습니다!
 
-## Key learning points
+## 핵심 학습 포인트
 
-### Why manual bounds checking matters
+### 수동 경계 검사가 중요한 이유
 
-1. **Clarity**: Makes the safety requirements explicit in the code
-2. **Control**: You decide exactly what happens for out-of-bounds cases
-3. **Debugging**: Easier to reason about when memory violations occur
+1. **명확성**: 코드에서 안전 요구사항을 명시적으로 표현
+2. **제어**: 범위 초과 케이스에서 정확히 어떤 일이 일어날지 직접 결정
+3. **디버깅**: 메모리 위반이 발생할 때 추론하기 쉬움
 
-### GPU memory safety rules
+### GPU 메모리 안전 규칙
 
-1. **Always validate thread indices** against data dimensions
-2. **Avoid undefined behavior (UB) at all costs** - out-of-bounds access is UB and can break everything
-3. **Use compute-sanitizer** during development and testing
-4. **Never assume "it works" without memory checking**
-5. **Test with different grid/block configurations** to catch undefined behavior (UB) that manifests inconsistently
+1. **항상 스레드 인덱스를 검증**하여 데이터 차원과 비교
+2. **미정의 동작(UB)을 어떤 대가를 치르더라도 피하기** - 범위 초과 접근은 UB이며 모든 것을 망가뜨릴 수 있음
+3. **개발과 테스트 중 compute-sanitizer 사용**
+4. **메모리 검사 없이 "동작한다"고 절대 가정하지 않기**
+5. **다양한 그리드/블록 구성으로 테스트**하여 일관성 없이 나타나는 미정의 동작(UB) 포착
 
-### Compute-sanitizer best practices
+### compute-sanitizer 모범 사례
 
 ```bash
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 ```
 
-**Note**: You may see Mojo runtime warnings in the sanitizer output. Focus on the `========= Invalid` and `========= ERROR SUMMARY` lines for actual memory violations.
+**참고**: sanitizer 출력에서 Mojo 런타임 경고를 볼 수 있습니다. 실제 메모리 위반을 확인하려면 `========= Invalid`와 `========= ERROR SUMMARY` 라인에 집중하세요.

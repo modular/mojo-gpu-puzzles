@@ -1,359 +1,359 @@
 <!-- i18n-source-commit: a6f8350359da1569bc39e376bc26580246e61653 -->
 
-# 📚 Mojo GPU Debugging Essentials
+# 📚 Mojo GPU 디버깅의 핵심
 
-Welcome to the world of GPU debugging! After learning GPU programming concepts through puzzles 1-8, you're now ready to learn the most critical skill for any GPU programmer: **how to debug when things go wrong**.
+GPU 디버깅의 세계에 오신 것을 환영합니다! Puzzle 1-8을 통해 GPU 프로그래밍 개념을 배웠으니, 이제 모든 GPU 프로그래머에게 가장 중요한 기술을 배울 준비가 되었습니다: **문제가 발생했을 때 디버깅하는 방법**.
 
-GPU debugging can seem intimidating at first - you're dealing with thousands of threads running in parallel, different memory spaces, and hardware-specific behaviors. But with the right tools and workflow, debugging GPU code becomes systematic and manageable.
+GPU 디버깅은 처음에는 어려워 보일 수 있습니다. 수천 개의 스레드가 병렬로 실행되고, 다양한 메모리 공간이 있으며, 하드웨어별 동작도 다루어야 합니다. 하지만 적절한 도구와 워크플로우만 있으면 GPU 코드 디버깅도 체계적으로 다룰 수 있습니다.
 
-In this guide, you'll learn to debug both the **CPU host code** (where you set up your GPU operations) and the **GPU kernel code** (where the parallel computation happens). We'll use real examples, actual debugger output, and step-by-step workflows that you can immediately apply to your own projects.
+이 가이드에서는 **CPU 호스트 코드**(GPU 작업을 설정하는 부분)와 **GPU 커널 코드**(병렬 연산이 실행되는 부분) 모두를 디버깅하는 방법을 배웁니다. 실제 예제, 실제 디버거 출력, 그리고 여러분의 프로젝트에 바로 적용할 수 있는 단계별 워크플로우를 사용합니다.
 
-**Note**: The following content focuses on command-line debugging for universal IDE compatibility. If you prefer VS Code debugging, refer to the [Mojo debugging documentation](https://docs.modular.com/mojo/tools/debugging) for VS Code-specific setup and workflows.
+**참고**: 다음 내용은 범용 IDE 호환성을 위해 명령줄 디버깅에 초점을 맞춥니다. VS Code 디버깅을 선호한다면 [Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)에서 VS Code 전용 설정과 워크플로우를 참조하세요.
 
-## Why GPU debugging is different
+## GPU 디버깅이 다른 이유
 
-Before diving into tools, consider what makes GPU debugging unique:
+도구로 들어가기 전에, GPU 디버깅이 특별한 이유를 살펴보겠습니다:
 
-- **Traditional CPU debugging**: One thread, sequential execution, straightforward memory model
-- **GPU debugging**: Thousands of threads, parallel execution, multiple memory spaces, race conditions
+- **전통적인 CPU 디버깅**: 단일 스레드, 순차 실행, 단순한 메모리 모델
+- **GPU 디버깅**: 수천 개의 스레드, 병렬 실행, 여러 메모리 공간, 경쟁 상태
 
-This means you need specialized tools that can:
+이는 다음을 할 수 있는 전문 도구가 필요하다는 의미입니다:
 
-- Switch between different GPU threads
-- Inspect thread-specific variables and memory
-- Handle the complexity of parallel execution
-- Debug both CPU setup code and GPU kernel code
+- 서로 다른 GPU 스레드 간 전환
+- 스레드별 변수와 메모리 검사
+- 병렬 실행의 복잡성 처리
+- CPU 설정 코드와 GPU 커널 코드 모두 디버깅
 
-## Your debugging toolkit
+## 디버깅 도구 모음
 
-Mojo's GPU debugging capabilities currently is limited to NVIDIA GPUs. The [Mojo debugging documentation](https://docs.modular.com/mojo/tools/debugging) explains that the Mojo package includes:
+Mojo의 GPU 디버깅 기능은 현재 NVIDIA GPU로 제한됩니다. [Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)에 따르면 Mojo 패키지에는 다음이 포함됩니다:
 
-- **LLDB debugger** with Mojo plugin for CPU-side debugging
-- **CUDA-GDB integration** for GPU kernel debugging
-- **Command-line interface** via `mojo debug` for universal IDE compatibility
+- CPU 측 디버깅을 위한 Mojo 플러그인이 포함된 **LLDB 디버거**
+- GPU 커널 디버깅을 위한 **CUDA-GDB 통합**
+- 범용 IDE 호환성을 위한 `mojo debug`를 통한 **명령줄 인터페이스**
 
-For GPU-specific debugging, the [Mojo GPU debugging guide](https://docs.modular.com/mojo/tools/gpu-debugging) provides additional technical details.
+GPU 전용 디버깅에 대해서는 [Mojo GPU 디버깅 가이드](https://docs.modular.com/mojo/tools/gpu-debugging)에서 추가 기술 세부 사항을 제공합니다.
 
-This architecture provides the best of both worlds: familiar debugging commands with GPU-specific capabilities.
+이 아키텍처는 익숙한 디버깅 명령어와 GPU 전용 기능, 두 가지 장점을 모두 제공합니다.
 
-## The debugging workflow: From problem to solution
+## 디버깅 워크플로우: 문제에서 해결까지
 
-When your GPU program crashes, produces wrong results, or behaves unexpectedly, follow this systematic approach:
+GPU 프로그램이 크래시하거나, 잘못된 결과를 내거나, 예상치 못한 동작을 할 때 다음의 체계적인 접근법을 따르세요:
 
-1. **Prepare your code for debugging** (disable optimizations, add debug symbols)
-2. **Choose the right debugger** (CPU host code vs GPU kernel debugging)
-3. **Set strategic breakpoints** (where you suspect the problem lies)
-4. **Execute and inspect** (step through code, examine variables)
-5. **Analyze patterns** (memory access, thread behavior, race conditions)
+1. **디버깅을 위한 코드 준비** (최적화 비활성화, 디버그 심볼 추가)
+2. **적절한 디버거 선택** (CPU 호스트 코드 vs GPU 커널 디버깅)
+3. **전략적 브레이크포인트 설정** (문제가 의심되는 위치에)
+4. **실행 및 검사** (코드를 단계별로 실행하며 변수 검사)
+5. **패턴 분석** (메모리 접근, 스레드 동작, 경쟁 상태)
 
-This workflow works whether you're debugging a simple array operation from Puzzle 01 or complex shared memory code from Puzzle 08.
+이 워크플로우는 Puzzle 01의 간단한 배열 연산이든 Puzzle 08의 복잡한 공유 메모리 코드든 상관없이 작동합니다.
 
-## Step 1: Preparing your code for debugging
+## Step 1: 디버깅을 위한 코드 준비
 
-**🥇 The golden rule**: Never debug _optimized_ code. Optimizations can reorder instructions, eliminate variables, and inline functions, making debugging nearly impossible.
+**🥇 철칙**: _최적화된_ 코드는 절대 디버깅하지 마세요. 최적화는 명령어 순서를 바꾸고, 변수를 제거하고, 함수를 인라인화하여 디버깅을 거의 불가능하게 만듭니다.
 
-### Building with debug information
+### 디버그 정보로 빌드하기
 
-When building Mojo programs for debugging, always include debug symbols:
+디버깅용 Mojo 프로그램을 빌드할 때는 항상 디버그 심볼을 포함하세요:
 
 ```bash
-# Build with full debug information
+# 전체 디버그 정보로 빌드
 mojo build -O0 -g your_program.mojo -o your_program_debug
 ```
 
-**What these flags do:**
+**이 플래그들이 하는 일:**
 
-- `-O0`: Disables all optimizations, preserving your original code structure
-- `-g`: Includes debug symbols so the debugger can map machine code back to your Mojo source
-- `-o`: Creates a named output file for easier identification
+- `-O0`: 모든 최적화를 비활성화하여 원래 코드 구조를 보존
+- `-g`: 디버거가 머신 코드를 Mojo 소스에 매핑할 수 있도록 디버그 심볼 포함
+- `-o`: 쉬운 식별을 위해 명명된 출력 파일 생성
 
-### Why this matters
+### 이것이 중요한 이유
 
-Without debug symbols, your debugging session looks like this:
+디버그 심볼 없이는 디버깅 세션이 이렇게 보입니다:
 
 ```
 (lldb) print my_variable
 error: use of undeclared identifier 'my_variable'
 ```
 
-With debug symbols, you get:
+디버그 심볼이 있으면 다음과 같이 됩니다:
 
 ```
 (lldb) print my_variable
 (int) $0 = 42
 ```
 
-## Step 2: Choosing your debugging approach
+## Step 2: 디버깅 접근법 선택
 
-Here's where GPU debugging gets interesting. You have **four different combinations** to choose from, and picking the right one saves you time:
+여기서 GPU 디버깅이 흥미로워집니다. **네 가지 다른 조합** 중에서 선택할 수 있으며, 적절한 것을 고르면 시간을 절약할 수 있습니다:
 
-### The four debugging combinations
+### 네 가지 디버깅 조합
 
-**Quick reference:**
+**빠른 참조:**
 
 ```bash
-# 1. JIT + LLDB: Debug CPU host code directly from source
+# 1. JIT + LLDB: 소스에서 직접 CPU 호스트 코드 디버깅
 pixi run mojo debug your_gpu_program.mojo
 
-# 2. JIT + CUDA-GDB: Debug GPU kernels directly from source
+# 2. JIT + CUDA-GDB: 소스에서 직접 GPU 커널 디버깅
 pixi run mojo debug --cuda-gdb --break-on-launch your_gpu_program.mojo
 
-# 3. Binary + LLDB: Debug CPU host code from pre-compiled binary
+# 3. 바이너리 + LLDB: 미리 컴파일된 바이너리에서 CPU 호스트 코드 디버깅
 pixi run mojo build -O0 -g your_gpu_program.mojo -o your_program_debug
 pixi run mojo debug your_program_debug
 
-# 4. Binary + CUDA-GDB: Debug GPU kernels from pre-compiled binary
+# 4. 바이너리 + CUDA-GDB: 미리 컴파일된 바이너리에서 GPU 커널 디버깅
 pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 ```
 
-### When to use each approach
+### 각 접근법을 언제 사용할까
 
-**For learning and quick experiments:**
+**학습과 빠른 실험용:**
 
-- Use **JIT debugging** - no build step required, faster iteration
+- **JIT 디버깅** 사용 - 빌드 단계가 필요 없어 더 빠르게 반복 가능
 
-**For serious debugging sessions:**
+**본격적인 디버깅 세션용:**
 
-- Use **binary debugging** - more predictable, cleaner debugger output
+- **바이너리 디버깅** 사용 - 더 예측 가능하고 깔끔한 디버거 출력
 
-**For CPU-side issues** (buffer allocation, host memory, program logic):
+**CPU 측 문제용** (버퍼 할당, 호스트 메모리, 프로그램 로직):
 
-- Use **LLDB mode** - perfect for debugging your `main()` function and setup code
+- **LLDB 모드** 사용 - `main()` 함수와 설정 코드 디버깅에 적합
 
-**For GPU kernel issues** (thread behavior, GPU memory, kernel crashes):
+**GPU 커널 문제용** (스레드 동작, GPU 메모리, 커널 크래시):
 
-- Use **CUDA-GDB mode** - the only way to inspect individual GPU threads
+- **CUDA-GDB 모드** 사용 - 개별 GPU 스레드를 검사하는 유일한 방법
 
-The beauty is that you can mix and match. Start with JIT + LLDB to debug your setup code, then switch to JIT + CUDA-GDB to debug the actual kernel.
+장점은 다양하게 조합해서 사용할 수 있다는 점입니다. JIT + LLDB로 설정 코드를 디버깅한 다음, JIT + CUDA-GDB로 전환해서 실제 커널을 디버깅할 수 있습니다.
 
 ---
 
-## Understanding GPU kernel debugging with CUDA-GDB
+## CUDA-GDB로 GPU 커널 디버깅 이해하기
 
-Next comes GPU kernel debugging - the most powerful (and complex) part of your debugging toolkit.
+이제 GPU 커널 디버깅입니다 - 디버깅 도구 모음에서 가장 강력하면서도 복잡한 부분입니다.
 
-When you use `--cuda-gdb`, Mojo integrates with NVIDIA's [CUDA-GDB debugger](https://docs.nvidia.com/cuda/cuda-gdb/index.html). This isn't just another debugger - it's specifically designed for the parallel, multi-threaded world of GPU computing.
+`--cuda-gdb`를 사용하면 Mojo는 NVIDIA의 [CUDA-GDB 디버거](https://docs.nvidia.com/cuda/cuda-gdb/index.html)와 통합됩니다. 이것은 단순한 디버거가 아닙니다 - GPU 컴퓨팅의 병렬 멀티스레드 세계를 위해 특별히 설계되었습니다.
 
-### What makes CUDA-GDB special
+### CUDA-GDB가 특별한 이유
 
-**Regular GDB** debugs one thread at a time, stepping through sequential code.
-**CUDA-GDB** debugs thousands of GPU threads simultaneously, each potentially executing different instructions.
+**일반 GDB**는 한 번에 하나의 스레드를 디버깅하며 순차 코드를 단계별로 실행합니다.
+**CUDA-GDB**는 수천 개의 GPU 스레드를 동시에 디버깅하며, 각각이 서로 다른 명령어를 실행할 수 있습니다.
 
-This means you can:
+이는 다음을 할 수 있다는 의미입니다:
 
-- **Set breakpoints inside GPU kernels** - pause execution when any thread hits your breakpoint
-- **Switch between GPU threads** - examine what different threads are doing at the same moment
-- **Inspect thread-specific data** - see how the same variable has different values across threads
-- **Debug memory access patterns** - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10)
-- **Analyze parallel execution** - understand how your threads interact and synchronize
+- **GPU 커널 내부에 브레이크포인트 설정** - 어떤 스레드든 브레이크포인트에 도달하면 실행을 일시 정지
+- **GPU 스레드 간 전환** - 같은 순간에 서로 다른 스레드가 무엇을 하는지 검사
+- **스레드별 데이터 검사** - 같은 변수가 스레드마다 다른 값을 가지는 것을 확인
+- **메모리 접근 패턴 디버깅** - 범위 초과 접근, 경쟁 상태, 메모리 손상 포착 (이런 문제 감지에 대해서는 Puzzle 10에서 더 자세히)
+- **병렬 실행 분석** - 스레드들이 어떻게 상호작용하고 동기화하는지 이해
 
-### Connecting to concepts from previous puzzles
+### 이전 퍼즐의 개념과 연결
 
-Remember the GPU programming concepts you learned in puzzles 1-8? CUDA-GDB lets you inspect all of them at runtime:
+Puzzle 1-8에서 배운 GPU 프로그래밍 개념을 기억하시나요? CUDA-GDB로 런타임에 모든 것을 검사할 수 있습니다:
 
-#### Thread hierarchy debugging
+#### 스레드 계층 구조 디버깅
 
-Back in puzzles 1-8, you wrote code like this:
+Puzzle 1-8에서 다음과 같은 코드를 작성했습니다:
 
 ```mojo
-# From puzzle 1: Basic thread indexing
-i = thread_idx.x  # Each thread gets a unique index
+# Puzzle 1에서: 기본 스레드 인덱싱
+i = thread_idx.x  # 각 스레드가 고유한 인덱스를 얻음
 
-# From puzzle 7: 2D thread indexing
-row = thread_idx.y  # 2D grid of threads
+# Puzzle 7에서: 2D 스레드 인덱싱
+row = thread_idx.y  # 2D 스레드 그리드
 col = thread_idx.x
 ```
 
-With CUDA-GDB, you can **actually see these thread coordinates in action**:
+CUDA-GDB로 **이 스레드 좌표들이 실제로 동작하는 것을 볼 수 있습니다**:
 
 ```gdb
 (cuda-gdb) info cuda threads
 ```
 
-outputs
+출력:
 
 ```
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
-Kernel 0
+kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffcf26fed0 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    13
 ```
 
-and jump to a specific thread to see what it's doing
+그리고 특정 스레드로 이동해서 무엇을 하는지 볼 수 있습니다:
 
 ```gdb
 (cuda-gdb) cuda thread (1,0,0)
 ```
 
-shows
+출력:
 
 ```
 [Switching to CUDA thread (1,0,0)]
 ```
 
-This is incredibly powerful - you can literally **watch your parallel algorithm execute across different threads**.
+정말 강력한 기능입니다 - 말 그대로 **병렬 알고리즘이 여러 스레드에서 실행되는 것을 직접 지켜볼 수 있습니다**.
 
-#### Memory space debugging
+#### 메모리 공간 디버깅
 
-Remember puzzle 8 where you learned about different types of GPU memory? CUDA-GDB lets you inspect all of them:
+다양한 유형의 GPU 메모리에 대해 배운 Puzzle 8을 기억하시나요? CUDA-GDB로 모든 것을 검사할 수 있습니다:
 
 ```gdb
-# Examine global memory (the arrays from puzzles 1-5)
+# 글로벌 메모리 검사 (Puzzle 1-5의 배열들)
 (cuda-gdb) print input_array[0]@4
-$1 = {{1}, {2}, {3}, {4}}   # Mojo scalar format
+$1 = {{1}, {2}, {3}, {4}}   # Mojo 스칼라 형식
 
-# Examine shared memory using local variables (thread_idx.x doesn't work)
-(cuda-gdb) print shared_data[i]   # Use local variable 'i' instead
+# 로컬 변수를 사용해 공유 메모리 검사 (thread_idx.x는 작동하지 않음)
+(cuda-gdb) print shared_data[i]   # thread_idx.x 대신 로컬 변수 'i' 사용
 $2 = {42}
 ```
 
-The debugger shows you exactly what each thread sees in memory - perfect for catching race conditions or memory access bugs.
+디버거는 각 스레드가 메모리에서 정확히 무엇을 보는지 보여줍니다. 이는 경쟁 상태나 메모리 접근 버그를 잡기에 완벽합니다.
 
-#### Strategic breakpoint placement
+#### 전략적 브레이크포인트 배치
 
-CUDA-GDB breakpoints are much more powerful than regular breakpoints because they work with parallel execution:
+CUDA-GDB 브레이크포인트는 병렬 실행과 함께 작동하기 때문에 일반 브레이크포인트보다 훨씬 강력합니다:
 
 ```gdb
-# Break when ANY thread enters your kernel
+# 어떤 스레드든 커널에 진입할 때 중단
 (cuda-gdb) break add_kernel
 
-# Break only for specific threads (great for isolating issues)
+# 특정 스레드에 대해서만 중단 (문제 격리에 좋음)
 (cuda-gdb) break add_kernel if thread_idx.x == 0
 
-# Break on memory access violations
+# 메모리 접근 위반 시 중단
 (cuda-gdb) watch input_array[thread_idx.x]
 
-# Break on specific data conditions
+# 특정 데이터 조건에서 중단
 (cuda-gdb) break add_kernel if input_array[thread_idx.x] > 100.0
 ```
 
-This lets you focus on exactly the threads and conditions you care about, instead of drowning in output from thousands of threads.
+이를 통해 수천 개 스레드의 출력에 파묻히지 않고 정확히 관심 있는 스레드와 조건에 집중할 수 있습니다.
 
 ---
 
-## Getting your environment ready
+## 환경 준비하기
 
-Before you can start debugging, ensure your development environment is properly configured. If you've been working through the earlier puzzles, most of this is already set up!
+디버깅을 시작하기 전에 개발 환경이 제대로 구성되어 있는지 확인하세요. 이전 퍼즐들을 진행해왔다면 대부분 이미 설정되어 있을 것입니다!
 
-**Note**: Without `pixi`, you would need to manually install CUDA Toolkit from [NVIDIA's official resources](https://developer.nvidia.com/cuda-toolkit), manage driver compatibility, configure environment variables, and handle version conflicts between components. `pixi` eliminates this complexity by automatically managing all CUDA dependencies, versions, and environment configuration for you.
+**참고**: `pixi` 없이는 [NVIDIA 공식 리소스](https://developer.nvidia.com/cuda-toolkit)에서 CUDA Toolkit을 수동으로 설치하고, 드라이버 호환성을 관리하고, 환경 변수를 구성하고, 컴포넌트 간 버전 충돌을 처리해야 합니다. `pixi`는 모든 CUDA 의존성, 버전, 환경 구성을 자동으로 관리하여 이 복잡성을 제거합니다.
 
-### Why `pixi` matters for debugging
+### `pixi`가 디버깅에 중요한 이유
 
-**The challenge**: GPU debugging requires precise coordination between CUDA toolkit, GPU drivers, Mojo compiler, and debugger components. Version mismatches can lead to frustrating "debugger not found" errors.
+**문제점**: GPU 디버깅은 CUDA 툴킷, GPU 드라이버, Mojo 컴파일러, 디버거 컴포넌트 간의 정밀한 조율이 필요합니다. 버전 불일치는 "디버거를 찾을 수 없음" 오류로 이어질 수 있습니다.
 
-**The solution**: Using `pixi` ensures all these components work together harmoniously. When you run `pixi run mojo debug --cuda-gdb`, pixi automatically:
+**해결책**: `pixi`를 사용하면 이 모든 컴포넌트가 조화롭게 작동합니다. `pixi run mojo debug --cuda-gdb`를 실행하면 pixi가 자동으로:
 
-- Sets up CUDA toolkit paths
-- Loads the correct GPU drivers
-- Configures Mojo debugging plugins
-- Manages environment variables consistently
+- CUDA 툴킷 경로 설정
+- 올바른 GPU 드라이버 로드
+- Mojo 디버깅 플러그인 구성
+- 환경 변수를 일관되게 관리
 
-### Verifying your setup
+### 설정 확인
 
-Let's check that everything is working:
+모든 것이 작동하는지 확인해 봅시다:
 
 ```bash
-# 1. Verify GPU hardware is accessible
+# 1. GPU 하드웨어 접근 가능 여부 확인
 pixi run nvidia-smi
-# Should show your GPU(s) and driver version
+# GPU와 드라이버 버전이 표시되어야 함
 
-# 2. Set up CUDA-GDB integration (required for GPU debugging)
+# 2. CUDA-GDB 통합 설정 (GPU 디버깅에 필요)
 pixi run setup-cuda-gdb
-# Links system CUDA-GDB binaries to conda environment
+# 시스템 CUDA-GDB 바이너리를 conda 환경에 링크
 
-# 3. Verify Mojo debugger is available
+# 3. Mojo 디버거 사용 가능 여부 확인
 pixi run mojo debug --help
-# Should show debugging options including --cuda-gdb
+# --cuda-gdb를 포함한 디버깅 옵션이 표시되어야 함
 
-# 4. Test CUDA-GDB integration
+# 4. CUDA-GDB 통합 테스트
 pixi run cuda-gdb --version
-# Should show NVIDIA CUDA-GDB version information
+# NVIDIA CUDA-GDB 버전 정보가 표시되어야 함
 ```
 
-If any of these commands fail, double-check your `pixi.toml` configuration and ensure the CUDA toolkit feature is enabled.
+이 명령어 중 하나라도 실패하면 `pixi.toml` 구성을 다시 확인하고 CUDA 툴킷 기능이 활성화되어 있는지 확인하세요.
 
-**Important**: The `pixi run setup-cuda-gdb` command is required because conda's `cuda-gdb` package only provides a wrapper script. This command auto-detects and links the actual CUDA-GDB binaries from your system CUDA installation to the conda environment, enabling full GPU debugging capabilities.
+**중요**: conda의 `cuda-gdb` 패키지는 래퍼 스크립트만 제공하기 때문에 `pixi run setup-cuda-gdb` 명령이 필요합니다. 이 명령은 시스템 CUDA 설치에서 실제 CUDA-GDB 바이너리를 자동 감지하고 conda 환경에 링크하여 전체 GPU 디버깅 기능을 활성화합니다.
 
-**What this command does:**
+**이 명령이 하는 일:**
 
-The script automatically detects CUDA from multiple common locations:
+스크립트는 여러 일반적인 위치에서 CUDA를 자동 감지합니다:
 
-- `$CUDA_HOME` environment variable
-- `/usr/local/cuda` (Ubuntu/Debian default)
-- `/opt/cuda` (ArchLinux and other distributions)
-- System PATH (via `which cuda-gdb`)
+- `$CUDA_HOME` 환경 변수
+- `/usr/local/cuda` (Ubuntu/Debian 기본값)
+- `/opt/cuda` (ArchLinux 및 기타 배포판)
+- 시스템 PATH (`which cuda-gdb` 통해)
 
-See [`scripts/setup-cuda-gdb.sh`](https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh) for implementation details.
+구현 세부 사항은 [`scripts/setup-cuda-gdb.sh`](https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh)를 참조하세요.
 
-**Special note for WSL users**: Both debug tools we will use in Part II (namely cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL, but require you to add the registry key `HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface` and set it to `(DWORD) 1`. More details on supported platforms and their OS specific behavior can be found here: [cuda-gdb](https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms) and [compute-sanatizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior)
+**WSL 사용자를 위한 특별 참고사항**: Part II에서 사용할 두 가지 디버그 도구(cuda-gdb와 compute-sanitizer)는 WSL에서 CUDA 애플리케이션 디버깅을 지원하지만, 레지스트리 키 `HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface`를 추가하고 `(DWORD) 1`로 설정해야 합니다. 지원되는 플랫폼과 OS별 동작에 대한 자세한 내용은 [cuda-gdb](https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms)와 [compute-sanitizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior)를 참조하세요.
 
 ---
 
-## Hands-on tutorial: Your first GPU debugging session
+## 실습 튜토리얼: 첫 GPU 디버깅 세션
 
-Theory is great, but nothing beats hands-on experience. Let's debug a real program using Puzzle 01 - the simple "add 10 to each array element" kernel you know well.
+이론도 좋지만 직접 경험하는 것만 한 게 없습니다. Puzzle 01 - 여러분이 잘 아는 간단한 "배열 각 요소에 10 더하기" 커널을 사용해서 실제 프로그램을 디버깅해 봅시다.
 
-**Why Puzzle 01?** It's the perfect debugging tutorial because:
+**왜 Puzzle 01인가?** 다음 이유로 완벽한 디버깅 튜토리얼입니다:
 
-- **Simple enough** to understand what _should_ happen
-- **Real GPU code** with actual kernel execution
-- **Contains both** CPU setup code and GPU kernel code
-- **Short execution time** so you can iterate quickly
+- **충분히 단순해서** 무엇이 _일어나야 하는지_ 이해할 수 있음
+- 실제 커널 실행이 있는 **진짜 GPU 코드**
+- CPU 설정 코드와 GPU 커널 코드 **모두 포함**
+- **짧은 실행 시간**으로 빠른 반복 가능
 
-By the end of this tutorial, you'll have debugged the same program using all four debugging approaches, seen real debugger output, and learned the essential debugging commands you'll use daily.
+이 튜토리얼이 끝나면 네 가지 디버깅 접근법 모두로 같은 프로그램을 디버깅하고, 실제 디버거 출력을 보고, 매일 사용할 필수 디버깅 명령어를 배우게 됩니다.
 
-### Learning path through the debugging approaches
+### 디버깅 접근법 학습 경로
 
-We'll explore the [four debugging combinations](#the-four-debugging-combinations) using Puzzle 01 as our example. **Learning path**: We'll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful).
+Puzzle 01을 예제로 [네 가지 디버깅 조합](#네-가지-디버깅-조합)을 탐색합니다. **학습 경로**: JIT + LLDB(가장 쉬움)로 시작해서 CUDA-GDB(가장 강력함)로 진행합니다.
 
-**⚠️ Important for GPU debugging**:
+**⚠️ GPU 디버깅 시 중요사항**:
 
-- The `--break-on-launch` flag is **required** for CUDA-GDB approaches
-- **Pre-compiled binaries** (Approaches 3 & 4) preserve local variables like `i` for debugging
-- **JIT compilation** (Approaches 1 & 2) optimizes away most local variables
-- For serious GPU debugging, use **Approach 4** (Binary + CUDA-GDB)
+- `--break-on-launch` 플래그는 CUDA-GDB 접근법에서 **필수**
+- **미리 컴파일된 바이너리** (접근법 3 & 4)는 디버깅을 위해 `i` 같은 로컬 변수를 보존
+- **JIT 컴파일** (접근법 1 & 2)은 대부분의 로컬 변수를 최적화로 제거
+- 본격적인 GPU 디버깅에는 **접근법 4** (바이너리 + CUDA-GDB) 사용
 
-## Tutorial step 1: CPU debugging with LLDB
+## 튜토리얼 Step 1: LLDB로 CPU 디버깅
 
-Let's begin with the most common debugging scenario: **your program crashes or behaves unexpectedly, and you need to see what's happening in your `main()` function**.
+가장 일반적인 디버깅 시나리오로 시작합시다: **프로그램이 크래시하거나 예상치 못한 동작을 해서 `main()` 함수에서 무슨 일이 일어나는지 봐야 할 때**.
 
-**The mission**: Debug the CPU-side setup code in Puzzle 01 to understand how Mojo initializes GPU memory and launches kernels.
+**미션**: Puzzle 01의 CPU 측 설정 코드를 디버깅하여 Mojo가 GPU 메모리를 초기화하고 커널을 실행하는 방법을 파악합니다.
 
-### Launch the debugger
+### 디버거 실행
 
-Fire up the LLDB debugger with JIT compilation:
+JIT 컴파일로 LLDB 디버거를 시작합니다:
 
 ```bash
-# This compiles and debugs p01.mojo in one step
+# 한 단계로 p01.mojo를 컴파일하고 디버깅
 pixi run mojo debug solutions/p01/p01.mojo
 ```
 
-You'll see the LLDB prompt: `(lldb)`. You're now inside the debugger, ready to inspect your program's execution!
+LLDB 프롬프트가 보입니다: `(lldb)`. 이제 디버거 안에서 프로그램 실행을 검사할 준비가 되었습니다!
 
-### Your first debugging commands
+### 첫 디버깅 명령어들
 
-Let's trace through what happens when Puzzle 01 runs. **Type these commands exactly as shown** and observe the output:
+Puzzle 01이 실행될 때 무슨 일이 일어나는지 추적해 봅시다. **보여드린 대로 정확히 이 명령어들을 입력**하고 출력을 관찰하세요:
 
-**Step 1: Set a breakpoint at the main function**
+**Step 1: main 함수에 브레이크포인트 설정**
 
 ```bash
 (lldb) br set -n main
 ```
 
-Output:
+출력:
 
 ```
 Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 ```
 
-The debugger found your main function and will pause execution there.
+디버거가 main 함수를 찾았고 거기서 실행을 일시 정지합니다.
 
-**Step 2: Start your program**
+**Step 2: 프로그램 시작**
 
 ```bash
 (lldb) run
 ```
 
-Output:
+출력:
 
 ```
 Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
@@ -366,16 +366,16 @@ mojo`main:
     ...
 ```
 
-The program has stopped at your breakpoint. You're currently viewing **assembly code**, which is normal - the debugger starts at the low-level machine code before reaching your high-level Mojo source.
+프로그램이 브레이크포인트에서 멈췄습니다. 현재 **어셈블리 코드**를 보고 있는데 이는 정상입니다 - 디버거가 고수준 Mojo 소스에 도달하기 전에 저수준 머신 코드에서 시작합니다.
 
-**Step 3: Navigate through the startup process**
+**Step 3: 시작 과정 탐색**
 
 ```bash
-# Try stepping through one instruction
+# 명령어 하나를 단계별 실행 시도
 (lldb) next
 ```
 
-Output:
+출력:
 
 ```
 Process 186951 stopped
@@ -387,16 +387,16 @@ mojo`main:
     ...
 ```
 
-Stepping through assembly can be tedious. Let's proceed to the more relevant parts.
+어셈블리를 단계별로 실행하는 것은 지루할 수 있습니다. 더 관련 있는 부분으로 진행합시다.
 
-**Step 4: Continue to reach your Mojo source code**
+**Step 4: Mojo 소스 코드에 도달하기 위해 계속**
 
 ```bash
-# Skip through the startup assembly to get to your actual code
+# 시작 어셈블리를 건너뛰어 실제 코드로 이동
 (lldb) continue
 ```
 
-Output:
+출력:
 
 ```
 Process 186951 resuming
@@ -407,16 +407,16 @@ Process 186951 stopped
     frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`stdlib::builtin::_startup::__mojo_main_prototype(argc=([0] = 1), argv=0x00007fffffffa858) at _startup.mojo:95:4
 ```
 
-Mojo's runtime is initializing. The `_startup.mojo` indicates Mojo's internal startup code. The `SIGCHLD` signal is normal - it's how Mojo manages its internal processes.
+Mojo의 런타임이 초기화 중입니다. `_startup.mojo`는 Mojo의 내부 시작 코드를 나타냅니다. `SIGCHLD` 시그널은 정상입니다 - Mojo가 내부 프로세스를 관리하는 방식입니다.
 
-**Step 5: Continue to your actual code**
+**Step 5: 실제 코드로 계속**
 
 ```bash
-# One more continue to reach your p01.mojo code!
+# 한 번 더 continue해서 p01.mojo 코드에 도달!
 (lldb) continue
 ```
 
-Output:
+출력:
 
 ```
 Process 186951 resuming
@@ -432,20 +432,20 @@ Process 186951 stopped
    27           a = ctx.enqueue_create_buffer[dtype](SIZE)
 ```
 
-You can now view your actual Mojo source code. Notice:
+이제 실제 Mojo 소스 코드를 볼 수 있습니다. 주목할 점:
 
-- **Line numbers 21-27** from your p01.mojo file
-- **Current line 24**: `with DeviceContext() as ctx:`
-- **JIT compilation**: The `JIT(0x7fff5c075000)` indicates Mojo compiled your code just-in-time
+- p01.mojo 파일의 **21-27번 줄**
+- **현재 줄 24**: `with DeviceContext() as ctx:`
+- **JIT 컴파일**: `JIT(0x7fff5c075000)`은 Mojo가 코드를 즉석에서 컴파일했음을 나타냄
 
-**Step 6: Let the program complete**
+**Step 6: 프로그램 완료**
 
 ```bash
-# Let the program run to completion
+# 프로그램을 완료까지 실행
 (lldb) continue
 ```
 
-Output:
+출력:
 
 ```
 Process 186951 resuming
@@ -454,145 +454,145 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 Process 186951 exited with status = 0 (0x00000000)
 ```
 
-### What you just learned
+### 배운 내용
 
-🎓 **Congratulations!** You've just completed your first GPU program debugging session. Here's what happened:
+🎓 **축하합니다!** 첫 GPU 프로그램 디버깅 세션을 완료했습니다. 무슨 일이 있었는지 살펴보겠습니다:
 
-**The debugging journey you took:**
+**거쳐온 디버깅 여정:**
 
-1. **Started with assembly** - Normal for low-level debugging, shows how the debugger works at machine level
-2. **Navigated through Mojo startup** - Learned that Mojo has internal initialization code
-3. **Reached your source code** - Saw your actual p01.mojo lines 21-27 with syntax highlighting
-4. **Watched JIT compilation** - Observed Mojo compiling your code on-the-fly
-5. **Verified successful execution** - Confirmed your program produces the expected output
+1. **어셈블리로 시작** - 저수준 디버깅에서는 정상적인 현상이며, 디버거가 머신 수준에서 어떻게 작동하는지 보여줌
+2. **Mojo 시작 과정 탐색** - Mojo에 내부 초기화 코드가 있음을 학습
+3. **소스 코드 도달** - 구문 강조가 된 실제 p01.mojo 21-27번 줄 확인
+4. **JIT 컴파일 관찰** - Mojo가 코드를 즉석에서 컴파일하는 것을 관찰
+5. **성공적인 실행 확인** - 프로그램이 예상된 출력을 생성함을 확인
 
-**LLDB debugging provides:**
+**LLDB 디버깅이 제공하는 것:**
 
-- ✅ **CPU-side visibility**: See your `main()` function, buffer allocation, memory setup
-- ✅ **Source code inspection**: View your actual Mojo code with line numbers
-- ✅ **Variable examination**: Check values of host-side variables (CPU memory)
-- ✅ **Program flow control**: Step through your setup logic line by line
-- ✅ **Error investigation**: Debug crashes in device setup, memory allocation, etc.
+- ✅ **CPU 측 가시성**: `main()` 함수, 버퍼 할당, 메모리 설정 확인
+- ✅ **소스 코드 검사**: 줄 번호가 있는 실제 Mojo 코드 보기
+- ✅ **변수 검사**: 호스트 측 변수(CPU 메모리) 값 확인
+- ✅ **프로그램 흐름 제어**: 설정 로직을 줄 단위로 단계별 실행
+- ✅ **오류 조사**: 장치 설정, 메모리 할당 등의 크래시 디버깅
 
-**What LLDB cannot do:**
+**LLDB가 할 수 없는 것:**
 
-- ❌ **GPU kernel inspection**: Cannot step into `add_10` function execution
-- ❌ **Thread-level debugging**: Cannot see individual GPU thread behavior
-- ❌ **GPU memory access**: Cannot examine data as GPU threads see it
-- ❌ **Parallel execution analysis**: Cannot debug race conditions or synchronization
+- ❌ **GPU 커널 검사**: `add_10` 함수 실행 내부로 진입 불가능
+- ❌ **스레드 수준 디버깅**: 개별 GPU 스레드 동작 확인 불가
+- ❌ **GPU 메모리 접근**: GPU 스레드가 보는 데이터 검사 불가
+- ❌ **병렬 실행 분석**: 경쟁 상태나 동기화 디버깅 불가
 
-**When to use LLDB debugging:**
+**LLDB 디버깅을 사용할 때:**
 
-- Your program crashes before the GPU code runs
-- Buffer allocation or memory setup issues
-- Understanding program initialization and flow
-- Learning how Mojo applications start up
-- Quick prototyping and experimenting with code changes
+- GPU 코드가 실행되기 전에 프로그램이 크래시할 때
+- 버퍼 할당이나 메모리 설정 문제
+- 프로그램 초기화와 흐름 이해
+- Mojo 애플리케이션이 어떻게 시작되는지 학습
+- 빠른 프로토타이핑과 코드 변경 실험
 
-**Key insight**: LLDB is perfect for **host-side debugging** - everything that happens on your CPU before and after GPU execution. For the actual GPU kernel debugging, you need our next approach...
+**핵심 통찰**: LLDB는 **호스트 측 디버깅**에 완벽합니다 - GPU 실행 전후에 CPU에서 일어나는 모든 것. 실제 GPU 커널 디버깅에는 다음 접근법이 필요합니다...
 
-## Tutorial step 2: Binary debugging
+## 튜토리얼 Step 2: 바이너리 디버깅
 
-You've learned JIT debugging - now let's explore the **professional approach** used in production environments.
+JIT 디버깅을 배웠으니 이제 프로덕션 환경에서 사용하는 **전문적인 접근법**을 탐색합시다.
 
-**The scenario**: You're debugging a complex application with multiple files, or you need to debug the same program repeatedly. Building a binary first provides more control and faster debugging iterations.
+**시나리오**: 여러 파일이 있는 복잡한 애플리케이션을 디버깅하거나 같은 프로그램을 반복적으로 디버깅해야 합니다. 먼저 바이너리를 빌드하면 더 많은 제어와 빠른 디버깅 반복이 가능합니다.
 
-### Build your debug binary
+### 디버그 바이너리 빌드
 
-**Step 1: Compile with debug information**
+**Step 1: 디버그 정보로 컴파일**
 
 ```bash
-# Create a debug build (notice the clear naming)
+# 디버그 빌드 생성 (명확한 명명에 주목)
 pixi run mojo build -O0 -g solutions/p01/p01.mojo -o solutions/p01/p01_debug
 ```
 
-**What happens here:**
+**여기서 일어나는 일:**
 
-- 🔧 **`-O0`**: Disables optimizations (critical for accurate debugging)
-- 🔍 **`-g`**: Includes debug symbols mapping machine code to source code
-- 📁 **`-o p01_debug`**: Creates a clearly named debug binary
+- 🔧 **`-O0`**: 최적화 비활성화 (정확한 디버깅에 반드시 필요)
+- 🔍 **`-g`**: 머신 코드를 소스 코드에 매핑하는 디버그 심볼 포함
+- 📁 **`-o p01_debug`**: 명확하게 이름 지은 디버그 바이너리 생성
 
-**Step 2: Debug the binary**
+**Step 2: 바이너리 디버깅**
 
 ```bash
-# Debug the pre-built binary
+# 미리 빌드된 바이너리 디버깅
 pixi run mojo debug solutions/p01/p01_debug
 ```
 
-### What's different (and better)
+### 무엇이 다른가 (그리고 더 나은가)
 
-**Startup comparison:**
+**시작 비교:**
 
-| JIT Debugging | Binary Debugging |
-|---------------|------------------|
-| Compile + debug in one step | Build once, debug many times |
-| Slower startup (compilation overhead) | Faster startup |
-| Compilation messages mixed with debug output | Clean debugger output |
-| Debug symbols generated during debugging | Fixed debug symbols |
+| JIT 디버깅 | 바이너리 디버깅 |
+|-----------|----------------|
+| 한 단계로 컴파일 + 디버깅 | 한 번 빌드, 여러 번 디버깅 |
+| 느린 시작 (컴파일 오버헤드) | 빠른 시작 |
+| 컴파일 메시지가 디버그 출력과 섞임 | 깔끔한 디버거 출력 |
+| 디버깅 중 생성되는 디버그 심볼 | 고정된 디버그 심볼 |
 
-**When you run the same LLDB commands** (`br set -n main`, `run`, `continue`), you'll notice:
+**같은 LLDB 명령어**(`br set -n main`, `run`, `continue`)를 실행하면 다음과 같은 차이를 느낄 수 있습니다:
 
-- **Faster startup** - no compilation delay
-- **Cleaner output** - no JIT compilation messages
-- **More predictable** - debug symbols don't change between runs
-- **Professional workflow** - this is how production debugging works
+- **빠른 시작** - 컴파일 지연 없음
+- **깔끔한 출력** - JIT 컴파일 메시지 없음
+- **더 예측 가능** - 디버그 심볼이 실행 간에 변하지 않음
+- **전문적인 워크플로우** - 프로덕션 디버깅이 이렇게 작동함
 
 ---
 
-## Tutorial step 3: Debugging the GPU kernel
+## 튜토리얼 Step 3: GPU 커널 디버깅
 
-So far, you've debugged the **CPU host code** - the setup, memory allocation, and initialization. But what about the actual **GPU kernel** where the parallel computation happens?
+지금까지는 **CPU 호스트 코드** - 설정, 메모리 할당, 초기화를 디버깅했습니다. 하지만 병렬 연산이 일어나는 실제 **GPU 커널**은 어떨까요?
 
-**The challenge**: Your `add_10` kernel runs on the GPU with potentially thousands of threads executing simultaneously. LLDB can't reach into the GPU's parallel execution environment.
+**문제점**: `add_10` 커널은 잠재적으로 수천 개의 스레드가 동시에 실행되는 GPU에서 실행됩니다. LLDB는 GPU의 병렬 실행 환경에 접근할 수 없습니다.
 
-**The solution**: CUDA-GDB - a specialized debugger that understands GPU threads, GPU memory, and parallel execution.
+**해결책**: CUDA-GDB - GPU 스레드, GPU 메모리, 병렬 실행을 이해하는 전문 디버거입니다.
 
-### Why you need CUDA-GDB
+### CUDA-GDB가 필요한 이유
 
-Let's understand what makes GPU debugging fundamentally different:
+GPU 디버깅이 근본적으로 다른 이유를 이해합시다:
 
-**CPU debugging (LLDB):**
+**CPU 디버깅 (LLDB):**
 
-- One thread executing sequentially
-- Single call stack to follow
-- Straightforward memory model
-- Variables have single values
+- 순차적으로 실행되는 단일 스레드
+- 추적할 콜 스택이 하나뿐
+- 단순한 메모리 모델
+- 변수가 단일 값을 가짐
 
-**GPU debugging (CUDA-GDB):**
+**GPU 디버깅 (CUDA-GDB):**
 
-- Thousands of threads executing in parallel
-- Multiple call stacks (one per thread)
-- Complex memory hierarchy (global, shared, local, registers)
-- Same variable has different values across threads
+- 병렬로 실행되는 수천 개의 스레드
+- 여러 콜 스택 (스레드당 하나)
+- 복잡한 메모리 계층 구조 (글로벌, 공유, 로컬, 레지스터)
+- 같은 변수가 스레드마다 다른 값을 가짐
 
-**Real example**: In your `add_10` kernel, the variable `thread_idx.x` has a **different value in every thread** - thread 0 sees `0`, thread 1 sees `1`, etc. Only CUDA-GDB can show you this parallel reality.
+**실제 예**: `add_10` 커널에서 `thread_idx.x` 변수는 **각 스레드마다 다른 값**을 가집니다 - 스레드 0은 `0`을, 스레드 1은 `1`을 보는 식입니다. CUDA-GDB만이 이 병렬 현실을 보여줄 수 있습니다.
 
-### Launch CUDA-GDB debugger
+### CUDA-GDB 디버거 실행
 
-**Step 1: Start GPU kernel debugging**
+**Step 1: GPU 커널 디버깅 시작**
 
-Choose your approach:
+접근법을 선택하세요:
 
 ```bash
-# Make sure you've run this already (once is enough)
+# 이미 실행했는지 확인 (한 번이면 충분)
 pixi run setup-cuda-gdb
 
-# We'll use JIT + CUDA-GDB (Approach 2 from above)
+# JIT + CUDA-GDB 사용 (위의 접근법 2)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 ```
 
-We'll use the **JIT + CUDA-GDB approach** since it's perfect for learning and quick iterations.
+학습과 빠른 반복에 적합한 **JIT + CUDA-GDB 접근법**을 사용합니다.
 
-**Step 2: Launch and automatically stop at GPU kernel entry**
+**Step 2: 실행하고 GPU 커널 진입 시 자동 정지**
 
-The CUDA-GDB prompt looks like: `(cuda-gdb)`. Start the program:
+CUDA-GDB 프롬프트는 이렇게 보입니다: `(cuda-gdb)`. 프로그램을 시작합니다:
 
 ```gdb
-# Run the program - it automatically stops when the GPU kernel launches
+# 프로그램 실행 - GPU 커널이 실행될 때 자동으로 정지
 (cuda-gdb) run
 ```
 
-Output:
+출력:
 
 ```
 Starting program: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo...
@@ -605,40 +605,40 @@ CUDA thread hit application kernel entry function breakpoint, p01_add_10_UnsafeP
 16          i = thread_idx.x
 ```
 
-**Success! You're automatically stopped inside the GPU kernel!** The `--break-on-launch` flag caught the kernel launch and you're now at line 16 where `i = thread_idx.x` executes.
+**성공! GPU 커널 내부에서 자동으로 정지했습니다!** `--break-on-launch` 플래그가 커널 실행을 감지했고 이제 `i = thread_idx.x`가 실행되는 16번 줄에 있습니다.
 
-**Important**: You **don't** need to manually set breakpoints like `break add_10` - the kernel entry breakpoint is automatic. GPU kernel functions have mangled names in CUDA-GDB (like `p01_add_10_UnsafePointer...`), but you're already inside the kernel and can start debugging immediately.
+**중요**: `break add_10`처럼 수동으로 브레이크포인트를 설정할 **필요 없습니다** - 커널 진입 브레이크포인트는 자동입니다. GPU 커널 함수는 CUDA-GDB에서 맹글링된 이름(`p01_add_10_UnsafePointer...` 같은)을 가지지만, 이미 커널 안에 있으므로 바로 디버깅을 시작할 수 있습니다.
 
-**Step 3: Explore the parallel execution**
+**Step 3: 병렬 실행 탐색**
 
 ```gdb
-# See all the GPU threads that are paused at your breakpoint
+# 브레이크포인트에서 일시 정지된 모든 GPU 스레드 보기
 (cuda-gdb) info cuda threads
 ```
 
-Output:
+출력:
 
 ```
   BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
-Kernel 0
+kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd326fb70 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    16
 ```
 
-Perfect! This shows you **all 4 parallel GPU threads** from Puzzle 01:
+완벽합니다! Puzzle 01의 **모든 4개 병렬 GPU 스레드**를 보여줍니다:
 
-- **`*` marks your current thread**: `(0,0,0)` - the thread you're debugging
-- **Thread range**: From `(0,0,0)` to `(3,0,0)` - all 4 threads in the block
-- **Count**: `4` - matches `THREADS_PER_BLOCK = 4` from the code
-- **Same location**: All threads are paused at line 16 in `p01.mojo`
+- **`*`가 현재 스레드 표시**: `(0,0,0)` - 디버깅 중인 스레드
+- **스레드 범위**: `(0,0,0)`에서 `(3,0,0)`까지 - 블록의 모든 4개 스레드
+- **Count**: `4` - 코드의 `THREADS_PER_BLOCK = 4`와 일치
+- **같은 위치**: 모든 스레드가 `p01.mojo`의 16번 줄에서 일시 정지
 
-**Step 4: Step through the kernel and examine variables**
+**Step 4: 커널을 단계별 실행하고 변수 검사**
 
 ```gdb
-# Use 'next' to step through code (not 'step' which goes into internals)
+# 'next'로 코드 단계별 실행 ('step'은 내부로 들어감)
 (cuda-gdb) next
 ```
 
-Output:
+출력:
 
 ```
 p01_add_10_UnsafePointer... at p01.mojo:17
@@ -646,158 +646,158 @@ p01_add_10_UnsafePointer... at p01.mojo:17
 ```
 
 ```gdb
-# Local variables work with pre-compiled binaries!
+# 로컬 변수는 미리 컴파일된 바이너리에서 작동!
 (cuda-gdb) print i
 ```
 
-Output:
+출력:
 
 ```
-$1 = 0                    # This thread's index (captures thread_idx.x value)
+$1 = 0                    # 이 스레드의 인덱스 (thread_idx.x 값 캡처)
 ```
 
 ```gdb
-# GPU built-ins don't work, but you don't need them
+# GPU 내장 변수는 작동하지 않지만 필요 없음
 (cuda-gdb) print thread_idx.x
 ```
 
-Output:
+출력:
 
 ```
 No symbol "thread_idx" in current context.
 ```
 
 ```gdb
-# Access thread-specific data using local variables
-(cuda-gdb) print a[i]     # This thread's input: a[0]
+# 로컬 변수를 사용해 스레드별 데이터 접근
+(cuda-gdb) print a[i]     # 이 스레드의 입력: a[0]
 ```
 
-Output:
+출력:
 
 ```
-$2 = {0}                  # Input value (Mojo scalar format)
-```
-
-```gdb
-(cuda-gdb) print output[i] # This thread's output BEFORE computation
-```
-
-Output:
-
-```
-$3 = {0}                  # Still zero - computation hasn't executed yet!
+$2 = {0}                  # 입력 값 (Mojo 스칼라 형식)
 ```
 
 ```gdb
-# Execute the computation line
+(cuda-gdb) print output[i] # 연산 전 이 스레드의 출력
+```
+
+출력:
+
+```
+$3 = {0}                  # 아직 0 - 연산이 아직 실행되지 않음!
+```
+
+```gdb
+# 연산 줄 실행
 (cuda-gdb) next
 ```
 
-Output:
+출력:
 
 ```
-13      fn add_10(         # Steps to function signature line after computation
+13      fn add_10(         # 연산 후 함수 시그니처 줄로 이동
 ```
 
 ```gdb
-# Now check the result
+# 이제 결과 확인
 (cuda-gdb) print output[i]
 ```
 
-Output:
+출력:
 
 ```
-$4 = {10}                 # Now shows the computed result: 0 + 10 = 10
+$4 = {10}                 # 이제 계산된 결과 표시: 0 + 10 = 10
 ```
 
 ```gdb
-# Function parameters are still available
+# 함수 파라미터는 여전히 사용 가능
 (cuda-gdb) print a
 ```
 
-Output:
+출력:
 
 ```
 $5 = (!pop.scalar<f32> * @register) 0x302000200
 ```
 
-**Step 5: Navigate between parallel threads**
+**Step 5: 병렬 스레드 간 이동**
 
 ```gdb
-# Switch to a different thread to see its execution
+# 다른 스레드로 전환해서 실행 확인
 (cuda-gdb) cuda thread (1,0,0)
 ```
 
-Output:
+출력:
 
 ```
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-13      fn add_10(         # Thread 1 is also at function signature
+13      fn add_10(         # 스레드 1도 함수 시그니처에 있음
 ```
 
 ```gdb
-# Check the thread's local variable
+# 스레드의 로컬 변수 확인
 (cuda-gdb) print i
 ```
 
-Output:
+출력:
 
 ```
-$5 = 1                    # Thread 1's index (different from Thread 0!)
-```
-
-```gdb
-# Examine what this thread processes
-(cuda-gdb) print a[i]     # This thread's input: a[1]
-```
-
-Output:
-
-```
-$6 = {1}                  # Input value for thread 1
+$5 = 1                    # 스레드 1의 인덱스 (스레드 0과 다름!)
 ```
 
 ```gdb
-# Thread 1's computation is already done (parallel execution!)
-(cuda-gdb) print output[i] # This thread's output: output[1]
+# 이 스레드가 처리하는 것 검사
+(cuda-gdb) print a[i]     # 이 스레드의 입력: a[1]
 ```
 
-Output:
+출력:
 
 ```
-$7 = {11}                 # 1 + 10 = 11 (already computed)
+$6 = {1}                  # 스레드 1의 입력 값
 ```
 
 ```gdb
-# BEST TECHNIQUE: View all thread results at once
+# 스레드 1의 연산은 이미 완료 (병렬 실행!)
+(cuda-gdb) print output[i] # 이 스레드의 출력: output[1]
+```
+
+출력:
+
+```
+$7 = {11}                 # 1 + 10 = 11 (이미 계산됨)
+```
+
+```gdb
+# 최고의 기법: 모든 스레드 결과를 한 번에 보기
 (cuda-gdb) print output[0]@4
 ```
 
-Output:
+출력:
 
 ```
-$8 = {{10}, {11}, {12}, {13}}     # All 4 threads' results in one command!
+$8 = {{10}, {11}, {12}, {13}}     # 모든 4개 스레드의 결과를 한 명령어로!
 ```
 
 ```gdb
 (cuda-gdb) print a[0]@4
 ```
 
-Output:
+출력:
 
 ```
-$9 = {{0}, {1}, {2}, {3}}         # All input values for comparison
+$9 = {{0}, {1}, {2}, {3}}         # 비교를 위한 모든 입력 값
 ```
 
 ```gdb
-# Don't step too far or you'll lose CUDA context
+# 너무 많이 진행하면 CUDA 컨텍스트를 잃습니다
 (cuda-gdb) next
 ```
 
-Output:
+출력:
 
 ```
-[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # Back to host thread
+[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # 호스트 스레드로 복귀
 0x00007fffeca3f831 in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
 ```
 
@@ -805,344 +805,344 @@ Output:
 (cuda-gdb) print output[i]
 ```
 
-Output:
+출력:
 
 ```
-No symbol "output" in current context.  # Lost GPU context!
+No symbol "output" in current context.  # GPU 컨텍스트를 잃음!
 ```
 
-**Key insights from this debugging session:**
+**이 디버깅 세션의 핵심 통찰:**
 
-- 🤯 **Parallel execution is real** - when you switch to thread (1,0,0), its computation is already done!
-- **Each thread has different data** - `i=0` vs `i=1`, `a[i]={0}` vs `a[i]={1}`, `output[i]={10}` vs `output[i]={11}`
-- **Array inspection is powerful** - `print output[0]@4` shows all threads' results: `{{10}, {11}, {12}, {13}}`
-- **GPU context is fragile** - stepping too far switches back to host thread and loses GPU variables
+- 🤯 **병렬 실행은 진짜입니다** - 스레드 (1,0,0)으로 전환하면 이미 연산이 완료되어 있습니다!
+- **각 스레드는 서로 다른 데이터를 가집니다** - `i=0` vs `i=1`, `a[i]={0}` vs `a[i]={1}`, `output[i]={10}` vs `output[i]={11}`
+- **배열 검사가 강력합니다** - `print output[0]@4`로 모든 스레드의 결과를 확인할 수 있습니다: `{{10}, {11}, {12}, {13}}`
+- **GPU 컨텍스트는 깨지기 쉽습니다** - 너무 많이 진행하면 호스트 스레드로 돌아가고 GPU 변수를 잃습니다
 
-This demonstrates the fundamental nature of parallel computing: **same code, different data per thread, executing simultaneously.**
+이것이 바로 병렬 컴퓨팅의 본질입니다: **같은 코드, 스레드마다 다른 데이터, 동시 실행.**
 
-### What you've learned with CUDA-GDB
+### CUDA-GDB로 배운 내용
 
-You've completed GPU kernel execution debugging with **pre-compiled binaries**. Here's what actually works:
+**미리 컴파일된 바이너리**로 GPU 커널 실행 디버깅을 완료했습니다. 다음은 실제로 작동하는 기능들입니다:
 
-**GPU debugging capabilities you gained:**
+**습득한 GPU 디버깅 능력:**
 
-- ✅ **Debug GPU kernels automatically** - `--break-on-launch` stops at kernel entry
-- ✅ **Navigate between GPU threads** - switch contexts with `cuda thread`
-- ✅ **Access local variables** - `print i` works with `-O0 -g` compiled binaries
-- ✅ **Inspect thread-specific data** - each thread shows different `i`, `a[i]`, `output[i]` values
-- ✅ **View all thread results** - `print output[0]@4` shows `{{10}, {11}, {12}, {13}}` in one command
-- ✅ **Step through GPU code** - `next` executes computation and shows results
-- ✅ **See parallel execution** - threads execute simultaneously (other threads already computed when you switch)
-- ✅ **Access function parameters** - examine `output` and `a` pointers
-- ❌ **GPU built-ins unavailable** - `thread_idx.x`, `blockIdx.x` etc. don't work (but local variables do!)
-- 📊 **Mojo scalar format** - values display as `{10}` instead of `10.0`
-- ⚠️ **Fragile GPU context** - stepping too far loses access to GPU variables
+- ✅ **GPU 커널 자동 디버깅** - `--break-on-launch`가 커널 진입 시점에서 정지합니다
+- ✅ **GPU 스레드 간 이동** - `cuda thread`로 컨텍스트를 전환합니다
+- ✅ **로컬 변수 접근** - `-O0 -g`로 컴파일된 바이너리에서 `print i`가 작동합니다
+- ✅ **스레드별 데이터 검사** - 각 스레드가 서로 다른 `i`, `a[i]`, `output[i]` 값을 보여줍니다
+- ✅ **모든 스레드 결과 보기** - `print output[0]@4`로 `{{10}, {11}, {12}, {13}}`을 한 번에 표시합니다
+- ✅ **GPU 코드 단계별 실행** - `next`가 연산을 실행하고 결과를 보여줍니다
+- ✅ **병렬 실행 확인** - 스레드가 동시에 실행됩니다 (전환하면 다른 스레드는 이미 계산 완료)
+- ✅ **함수 파라미터 접근** - `output`과 `a` 포인터를 검사할 수 있습니다
+- ❌ **GPU 내장 변수 사용 불가** - `thread_idx.x`, `blockIdx.x` 등은 작동하지 않습니다 (하지만 로컬 변수는 작동합니다!)
+- 📊 **Mojo 스칼라 형식** - 값이 `10.0` 대신 `{10}`으로 표시됩니다
+- ⚠️ **깨지기 쉬운 GPU 컨텍스트** - 너무 많이 진행하면 GPU 변수 접근을 잃습니다
 
-**Key insights**:
+**핵심 통찰:**
 
-- **Pre-compiled binaries** (`mojo build -O0 -g`) are essential - local variables preserved
-- **Array inspection with `@N`** - most efficient way to see all parallel results at once
-- **GPU built-ins are missing** - but local variables like `i` capture what you need
-- **Mojo uses `{value}` format** - scalars display as `{10}` instead of `10.0`
-- **Be careful with stepping** - easy to lose GPU context and return to host thread
+- **미리 컴파일된 바이너리** (`mojo build -O0 -g`)는 필수입니다 - 로컬 변수가 보존됩니다
+- **`@N`을 사용한 배열 검사** - 모든 병렬 결과를 한 번에 보는 가장 효율적인 방법입니다
+- **GPU 내장 변수는 없습니다** - 하지만 `i` 같은 로컬 변수가 필요한 정보를 담고 있습니다
+- **Mojo는 `{value}` 형식을 사용합니다** - 스칼라가 `10.0` 대신 `{10}`으로 표시됩니다
+- **단계별 실행에 주의하세요** - GPU 컨텍스트를 잃고 호스트 스레드로 돌아가기 쉽습니다
 
-**Real-world debugging techniques**
+**실제 디버깅 기법들**
 
-Now let's explore practical debugging scenarios you'll encounter in real GPU programming:
+이제 실제 GPU 프로그래밍에서 마주치게 될 실용적인 디버깅 시나리오를 살펴봅시다:
 
-#### Technique 1: Verifying thread boundaries
+#### 기법 1: 스레드 경계 확인
 
 ```gdb
-# Check if all 4 threads computed correctly
+# 모든 4개 스레드가 올바르게 계산했는지 확인
 (cuda-gdb) print output[0]@4
 ```
 
-Output:
+출력:
 
 ```
-$8 = {{10}, {11}, {12}, {13}}    # All 4 threads computed correctly
+$8 = {{10}, {11}, {12}, {13}}    # 모든 4개 스레드가 올바르게 계산
 ```
 
 ```gdb
-# Check beyond valid range to detect out-of-bounds issues
+# 유효 범위를 넘어 확인하여 범위 초과 문제 감지
 (cuda-gdb) print output[0]@5
 ```
 
-Output:
+출력:
 
 ```
-$9 = {{10}, {11}, {12}, {13}, {0}}  # Element 4 is uninitialized (good!)
+$9 = {{10}, {11}, {12}, {13}, {0}}  # 요소 4는 초기화되지 않음 (좋음!)
 ```
 
 ```gdb
-# Compare with input to verify computation
+# 입력과 비교하여 연산 검증
 (cuda-gdb) print a[0]@4
 ```
 
-Output:
+출력:
 
 ```
-$10 = {{0}, {1}, {2}, {3}}       # Input values: 0+10=10, 1+10=11, etc.
+$10 = {{0}, {1}, {2}, {3}}       # 입력 값: 0+10=10, 1+10=11 등
 ```
 
-**Why this matters**: Out-of-bounds access is the #1 cause of GPU crashes. These debugging steps catch it early.
+**이것이 중요한 이유**: 범위 초과 접근은 GPU 크래시의 가장 흔한 원인입니다. 이런 디버깅 단계로 일찍 발견할 수 있습니다.
 
-#### Technique 2: Understanding thread organization
+#### 기법 2: 스레드 구성 이해
 
 ```gdb
-# See how your threads are organized into blocks
+# 스레드가 블록으로 어떻게 구성되는지 보기
 (cuda-gdb) info cuda blocks
 ```
 
-Output:
+출력:
 
 ```
   BlockIdx To BlockIdx Count   State
-Kernel 0
+kernel 0
 *  (0,0,0)     (0,0,0)     1 running
 ```
 
 ```gdb
-# See all threads in the current block
+# 현재 블록의 모든 스레드 보기
 (cuda-gdb) info cuda threads
 ```
 
-Output shows which threads are active, stopped, or have errors.
+출력은 어떤 스레드가 활성 상태인지, 정지되었는지, 오류가 있는지 보여줍니다.
 
-**Why this matters**: Understanding thread block organization helps debug synchronization and shared memory issues.
+**이것이 중요한 이유**: 스레드 블록 구성을 이해하면 동기화와 공유 메모리 문제를 디버깅하는 데 도움이 됩니다.
 
-#### Technique 3: Memory access pattern analysis
+#### 기법 3: 메모리 접근 패턴 분석
 
 ```gdb
-# Check GPU memory addresses:
-(cuda-gdb) print a               # Input array GPU pointer
+# GPU 메모리 주소 확인:
+(cuda-gdb) print a               # 입력 배열 GPU 포인터
 ```
 
-Output:
+출력:
 
 ```
 $9 = (!pop.scalar<f32> * @register) 0x302000200
 ```
 
 ```gdb
-(cuda-gdb) print output          # Output array GPU pointer
+(cuda-gdb) print output          # 출력 배열 GPU 포인터
 ```
 
-Output:
+출력:
 
 ```
 $10 = (!pop.scalar<f32> * @register) 0x302000000
 ```
 
 ```gdb
-# Verify memory access pattern using local variables:
-(cuda-gdb) print a[i]            # Each thread accesses its own element using 'i'
+# 로컬 변수를 사용해 메모리 접근 패턴 확인:
+(cuda-gdb) print a[i]            # 각 스레드가 'i'를 사용해 자신의 요소에 접근
 ```
 
-Output:
+출력:
 
 ```
-$11 = {0}                        # Thread's input data
+$11 = {0}                        # 스레드의 입력 데이터
 ```
 
-**Why this matters**: Memory access patterns affect performance and correctness. Wrong patterns cause race conditions or crashes.
+**이것이 중요한 이유**: 메모리 접근 패턴은 성능과 정확성에 영향을 미칩니다. 잘못된 패턴은 경쟁 상태나 크래시를 초래합니다.
 
-#### Technique 4: Results verification and completion
+#### 기법 4: 결과 검증 및 완료
 
 ```gdb
-# After stepping through kernel execution, verify the final results
+# 커널 실행을 단계별로 실행한 후 최종 결과 확인
 (cuda-gdb) print output[0]@4
 ```
 
-Output:
+출력:
 
 ```
-$11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
+$11 = {10.0, 11.0, 12.0, 13.0}    # 완벽! 각 요소가 10 증가
 ```
 
 ```gdb
-# Let the program complete normally
+# 프로그램을 정상적으로 완료
 (cuda-gdb) continue
 ```
 
-Output:
+출력:
 
 ```
-...Program output shows success...
+...프로그램 출력이 성공 표시...
 ```
 
 ```gdb
-# Exit the debugger
+# 디버거 종료
 (cuda-gdb) exit
 ```
 
-You've completed debugging a GPU kernel execution from setup to results.
+설정부터 결과까지 GPU 커널 실행 디버깅을 완료했습니다.
 
-## Your GPU debugging progress: key insights
+## GPU 디버깅 여정: 핵심 통찰
 
-You've completed a comprehensive GPU debugging tutorial. Here's what you discovered about parallel computing:
+포괄적인 GPU 디버깅 튜토리얼을 완료했습니다. 병렬 컴퓨팅에 대해 발견한 내용입니다:
 
-### Deep insights about parallel execution
+### 병렬 실행에 대한 깊은 통찰
 
-1. **Thread indexing in action**: You **saw** `thread_idx.x` have different values (0, 1, 2, 3...) across parallel threads - not just read about it in theory
+1. **스레드 인덱싱의 실제**: `thread_idx.x`가 병렬 스레드마다 다른 값(0, 1, 2, 3...)을 갖는 것을 이론이 아닌 **직접 확인**했습니다
 
-2. **Memory access patterns revealed**: Each thread accesses `a[thread_idx.x]` and writes to `output[thread_idx.x]`, creating perfect data parallelism with no conflicts
+2. **메모리 접근 패턴 파악**: 각 스레드가 `a[thread_idx.x]`에서 읽고 `output[thread_idx.x]`에 쓰며, 충돌 없이 완벽한 데이터 병렬성을 만들어냅니다
 
-3. **Parallel execution demystified**: Thousands of threads executing the **same kernel code** simultaneously, but each processing **different data elements**
+3. **병렬 실행의 이해**: 수천 개의 스레드가 **동일한 커널 코드**를 동시에 실행하면서 각각 **서로 다른 데이터 요소**를 처리합니다
 
-4. **GPU memory hierarchy**: Arrays live in global GPU memory, accessible by all threads but with thread-specific indexing
+4. **GPU 메모리 계층 구조**: 배열은 글로벌 GPU 메모리에 있어 모든 스레드가 접근할 수 있지만, 스레드별 인덱싱을 사용합니다
 
-### Debugging techniques that transfer to all puzzles
+### 모든 퍼즐에 적용되는 디버깅 기법
 
-**From Puzzle 01 to Puzzle 08 and beyond**, you now have techniques that work universally:
+**Puzzle 01부터 Puzzle 08, 그리고 그 이후까지** 보편적으로 적용되는 기법을 습득했습니다:
 
-- **Start with LLDB** for CPU-side issues (device setup, memory allocation)
-- **Switch to CUDA-GDB** for GPU kernel issues (thread behavior, memory access)
-- **Use conditional breakpoints** to focus on specific threads or data conditions
-- **Navigate between threads** to understand parallel execution patterns
-- **Verify memory access patterns** to catch race conditions and out-of-bounds errors
+- CPU 측 문제(장치 설정, 메모리 할당)는 **LLDB로 시작**합니다
+- GPU 커널 문제(스레드 동작, 메모리 접근)는 **CUDA-GDB로 전환**합니다
+- 특정 스레드나 데이터 조건에 집중하려면 **조건부 브레이크포인트**를 사용합니다
+- 병렬 실행 패턴을 이해하려면 **스레드 간 이동**을 활용합니다
+- 경쟁 상태와 범위 초과 오류를 잡으려면 **메모리 접근 패턴**을 확인합니다
 
-**Scalability**: These same techniques work whether you're debugging:
+**확장성**: 이 기법들은 다음 모든 상황에서 동일하게 작동합니다:
 
-- **Puzzle 01**: 4-element arrays with simple addition
-- **Puzzle 08**: Complex shared memory operations with thread synchronization
-- **Production code**: Million-element arrays with sophisticated algorithms
-
----
-
-## Essential debugging commands reference
-
-Now that you've learned the debugging workflow, here's your **quick reference guide** for daily debugging sessions. Bookmark this section!
-
-### GDB command abbreviations (save time!)
-
-**Most commonly used shortcuts** for faster debugging:
-
-| Abbreviation | Full Command | Function |
-|-------------|-------------|----------|
-| `r` | `run` | Start/launch the program |
-| `c` | `continue` | Resume execution |
-| `n` | `next` | Step over (same level) |
-| `s` | `step` | Step into functions |
-| `b` | `break` | Set breakpoint |
-| `p` | `print` | Print variable value |
-| `l` | `list` | Show source code |
-| `q` | `quit` | Exit debugger |
-
-**Examples:**
-
-```bash
-(cuda-gdb) r                    # Instead of 'run'
-(cuda-gdb) b 39                 # Instead of 'break 39'
-(cuda-gdb) p thread_id          # Instead of 'print thread_id'
-(cuda-gdb) n                    # Instead of 'next'
-(cuda-gdb) c                    # Instead of 'continue'
-```
-
-**⚡ Pro tip**: Use abbreviations for 3-5x faster debugging sessions!
-
-## LLDB commands (CPU host code debugging)
-
-**When to use**: Debugging device setup, memory allocation, program flow, host-side crashes
-
-### Execution control
-
-```bash
-(lldb) run                    # Launch your program
-(lldb) continue              # Resume execution (alias: c)
-(lldb) step                  # Step into functions (source level)
-(lldb) next                  # Step over functions (source level)
-(lldb) finish                # Step out of current function
-```
-
-### Breakpoint management
-
-```bash
-(lldb) br set -n main        # Set breakpoint at main function
-(lldb) br set -n function_name     # Set breakpoint at any function
-(lldb) br list               # Show all breakpoints
-(lldb) br delete 1           # Delete breakpoint #1
-(lldb) br disable 1          # Temporarily disable breakpoint #1
-```
-
-### Variable inspection
-
-```bash
-(lldb) print variable_name   # Show variable value
-(lldb) print pointer[offset]        # Dereference pointer
-(lldb) print array[0]@4      # Show first 4 array elements
-```
-
-## CUDA-GDB commands (GPU kernel debugging)
-
-**When to use**: Debugging GPU kernels, thread behavior, parallel execution, GPU memory issues
-
-### GPU state inspection
-
-```bash
-(cuda-gdb) info cuda threads    # Show all GPU threads and their state
-(cuda-gdb) info cuda blocks     # Show all thread blocks
-(cuda-gdb) cuda kernel          # List active GPU kernels
-```
-
-### Thread navigation (The most powerful feature!)
-
-```bash
-(cuda-gdb) cuda thread (0,0,0)  # Switch to specific thread coordinates
-(cuda-gdb) cuda block (0,0)     # Switch to specific block
-(cuda-gdb) cuda thread          # Show current thread coordinates
-```
-
-### Thread-specific variable inspection
-
-```bash
-# Local variables and function parameters:
-(cuda-gdb) print i              # Local thread index variable
-(cuda-gdb) print output         # Function parameter pointers
-(cuda-gdb) print a              # Function parameter pointers
-```
-
-### GPU memory access
-
-```bash
-# Array inspection using local variables (what actually works):
-(cuda-gdb) print array[i]       # Thread-specific array access using local variable
-(cuda-gdb) print array[0]@4     # View multiple elements: {{val1}, {val2}, {val3}, {val4}}
-```
-
-### Advanced GPU debugging
-
-```bash
-# Memory watching
-(cuda-gdb) watch array[i]     # Break on memory changes
-(cuda-gdb) rwatch array[i]    # Break on memory reads
-```
+- **Puzzle 01**: 간단한 덧셈을 하는 4개 요소 배열
+- **Puzzle 08**: 스레드 동기화가 필요한 복잡한 공유 메모리 연산
+- **프로덕션 코드**: 정교한 알고리즘을 사용하는 백만 개 요소 배열
 
 ---
 
-## Quick reference: Debugging decision tree
+## 필수 디버깅 명령어 참조
 
-**🤔 What type of issue are you debugging?**
+디버깅 워크플로우를 배웠으니, 일상적인 디버깅 세션에서 쓸 **빠른 참조 가이드**를 드립니다. 이 섹션을 북마크하세요!
 
-### Program crashes before GPU code runs
+### GDB 명령어 약어 (시간 절약!)
 
-→ **Use LLDB debugging**
+**가장 많이 사용하는 단축키**로 더 빠른 디버깅:
+
+| 약어 | 전체 명령어 | 기능 |
+|-----|-----------|------|
+| `r` | `run` | 프로그램 시작/실행 |
+| `c` | `continue` | 실행 재개 |
+| `n` | `next` | 스텝 오버 (같은 레벨) |
+| `s` | `step` | 함수 내부로 진입 |
+| `b` | `break` | 브레이크포인트 설정 |
+| `p` | `print` | 변수 값 출력 |
+| `l` | `list` | 소스 코드 표시 |
+| `q` | `quit` | 디버거 종료 |
+
+**예시:**
+
+```bash
+(cuda-gdb) r                    # 'run' 대신
+(cuda-gdb) b 39                 # 'break 39' 대신
+(cuda-gdb) p thread_id          # 'print thread_id' 대신
+(cuda-gdb) n                    # 'next' 대신
+(cuda-gdb) c                    # 'continue' 대신
+```
+
+**⚡ Pro 팁**: 약어를 사용하면 디버깅 속도가 3-5배 빨라집니다!
+
+## LLDB 명령어 (CPU 호스트 코드 디버깅)
+
+**언제 사용**: 장치 설정, 메모리 할당, 프로그램 흐름, 호스트 측 크래시 디버깅
+
+### 실행 제어
+
+```bash
+(lldb) run                   # 프로그램 실행
+(lldb) continue              # 실행 재개 (별칭: c)
+(lldb) step                  # 함수 내부로 진입 (소스 레벨)
+(lldb) next                  # 함수 건너뛰기 (소스 레벨)
+(lldb) finish                # 현재 함수에서 나가기
+```
+
+### 브레이크포인트 관리
+
+```bash
+(lldb) br set -n main        # main 함수에 브레이크포인트 설정
+(lldb) br set -n function_name     # 어떤 함수에든 브레이크포인트 설정
+(lldb) br list               # 모든 브레이크포인트 표시
+(lldb) br delete 1           # 브레이크포인트 #1 삭제
+(lldb) br disable 1          # 브레이크포인트 #1 임시 비활성화
+```
+
+### 변수 검사
+
+```bash
+(lldb) print variable_name   # 변수 값 표시
+(lldb) print pointer[offset]        # 포인터 역참조
+(lldb) print array[0]@4      # 첫 4개 배열 요소 표시
+```
+
+## CUDA-GDB 명령어 (GPU 커널 디버깅)
+
+**언제 사용**: GPU 커널, 스레드 동작, 병렬 실행, GPU 메모리 문제 디버깅
+
+### GPU 상태 검사
+
+```bash
+(cuda-gdb) info cuda threads    # 모든 GPU 스레드와 상태 표시
+(cuda-gdb) info cuda blocks     # 모든 스레드 블록 표시
+(cuda-gdb) cuda kernel          # 활성 GPU 커널 나열
+```
+
+### 스레드 탐색 (가장 강력한 기능!)
+
+```bash
+(cuda-gdb) cuda thread (0,0,0)  # 특정 스레드 좌표로 전환
+(cuda-gdb) cuda block (0,0)     # 특정 블록으로 전환
+(cuda-gdb) cuda thread          # 현재 스레드 좌표 표시
+```
+
+### 스레드별 변수 검사
+
+```bash
+# 로컬 변수와 함수 파라미터:
+(cuda-gdb) print i              # 로컬 스레드 인덱스 변수
+(cuda-gdb) print output         # 함수 파라미터 포인터
+(cuda-gdb) print a              # 함수 파라미터 포인터
+```
+
+### GPU 메모리 접근
+
+```bash
+# 로컬 변수를 사용한 배열 검사 (실제로 작동하는 것):
+(cuda-gdb) print array[i]       # 로컬 변수를 사용한 스레드별 배열 접근
+(cuda-gdb) print array[0]@4     # 여러 요소 보기: {{val1}, {val2}, {val3}, {val4}}
+```
+
+### 고급 GPU 디버깅
+
+```bash
+# 메모리 감시
+(cuda-gdb) watch array[i]     # 메모리 변경 시 중단
+(cuda-gdb) rwatch array[i]    # 메모리 읽기 시 중단
+```
+
+---
+
+## 빠른 참조: 디버깅 결정 트리
+
+**🤔 어떤 유형의 문제를 디버깅하고 있나요?**
+
+### GPU 코드 실행 전에 프로그램이 크래시
+
+→ **LLDB 디버깅 사용**
 
 ```bash
 pixi run mojo debug your_program.mojo
 ```
 
-### GPU kernel produces wrong results
+### GPU 커널이 잘못된 결과 생성
 
-→ **Use CUDA-GDB with conditional breakpoints**
+→ **조건부 브레이크포인트와 함께 CUDA-GDB 사용**
 
 ```bash
 pixi run mojo debug --cuda-gdb --break-on-launch your_program.mojo
 ```
 
-### Performance issues or race conditions
+### 성능 문제나 경쟁 상태
 
-→ **Use binary debugging for repeatability**
+→ **재현성을 위해 바이너리 디버깅 사용**
 
 ```bash
 pixi run mojo build -O0 -g your_program.mojo -o debug_binary
@@ -1151,80 +1151,80 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 
 ---
 
-## You've learned the essentials of GPU debugging
+## GPU 디버깅의 핵심을 배웠습니다
 
-You've completed a comprehensive tutorial on GPU debugging fundamentals. Here's what you've accomplished:
+GPU 디버깅 기초에 대한 포괄적인 튜토리얼을 완료했습니다. 다음은 달성한 내용입니다:
 
-### Skills you've learned
+### 습득한 기술
 
-**Multi-level debugging knowledge**:
+**다중 레벨 디버깅 지식**:
 
-- ✅ **CPU host debugging** with LLDB - debug device setup, memory allocation, program flow
-- ✅ **GPU kernel debugging** with CUDA-GDB - debug parallel threads, GPU memory, race conditions
-- ✅ **JIT vs binary debugging** - choose the right approach for different scenarios
-- ✅ **Environment management** with pixi - ensure consistent, reliable debugging setups
+- ✅ LLDB로 **CPU 호스트 디버깅** - 장치 설정, 메모리 할당, 프로그램 흐름 디버깅
+- ✅ CUDA-GDB로 **GPU 커널 디버깅** - 병렬 스레드, GPU 메모리, 경쟁 상태 디버깅
+- ✅ **JIT vs 바이너리 디버깅** - 상황에 맞는 접근법 선택
+- ✅ pixi로 **환경 관리** - 일관되고 신뢰할 수 있는 디버깅 설정 보장
 
-**Real parallel programming insights**:
+**실제 병렬 프로그래밍 통찰**:
 
-- **Saw threads in action** - witnessed `thread_idx.x` having different values across parallel threads
-- **Understood memory hierarchy** - debugged global GPU memory, shared memory, thread-local variables
-- **Learned thread navigation** - jumped between thousands of parallel threads efficiently
+- **스레드의 실제 동작 확인** - 병렬 스레드마다 `thread_idx.x`가 다른 값을 갖는 것을 직접 목격했습니다
+- **메모리 계층 구조 이해** - 글로벌 GPU 메모리, 공유 메모리, 스레드 로컬 변수를 디버깅했습니다
+- **스레드 탐색 학습** - 수천 개의 병렬 스레드 사이를 효율적으로 이동했습니다
 
-### From theory to practice
+### 이론에서 실전으로
 
-You didn't just read about GPU debugging - you **experienced it**:
+GPU 디버깅에 대해 읽기만 한 것이 아니라 **경험했습니다**:
 
-- **Debugged real code**: Puzzle 01's `add_10` kernel with actual GPU execution
-- **Saw real debugger output**: LLDB assembly, CUDA-GDB thread states, memory addresses
-- **Used professional tools**: The same CUDA-GDB used in production GPU development
-- **Solved real scenarios**: Out-of-bounds access, race conditions, kernel launch failures
+- **실제 코드 디버깅**: 실제 GPU 실행으로 Puzzle 01의 `add_10` 커널을 디버깅했습니다
+- **실제 디버거 출력 확인**: LLDB 어셈블리, CUDA-GDB 스레드 상태, 메모리 주소를 직접 확인했습니다
+- **전문 도구 사용**: 프로덕션 GPU 개발에서 사용하는 것과 동일한 CUDA-GDB를 사용했습니다
+- **실제 시나리오 해결**: 범위 초과 접근, 경쟁 상태, 커널 실행 실패 문제를 다뤘습니다
 
-### Your debugging toolkit
+### 디버깅 도구 모음
 
-**Quick decision guide** (keep this handy!):
+**빠른 결정 가이드** (항상 가까이 두세요!):
 
-| Problem Type | Tool | Command |
-|-------------|------|---------|
-| **Program crashes before GPU** | LLDB | `pixi run mojo debug program.mojo` |
-| **GPU kernel issues** | CUDA-GDB | `pixi run mojo debug --cuda-gdb --break-on-launch program.mojo` |
-| **Race conditions** | CUDA-GDB + thread nav | `(cuda-gdb) cuda thread (0,0,0)` |
+| 문제 유형 | 도구 | 명령어 |
+|----------|------|--------|
+| **GPU 전에 프로그램 크래시** | LLDB | `pixi run mojo debug program.mojo` |
+| **GPU 커널 문제** | CUDA-GDB | `pixi run mojo debug --cuda-gdb --break-on-launch program.mojo` |
+| **경쟁 상태** | CUDA-GDB + 스레드 탐색 | `(cuda-gdb) cuda thread (0,0,0)` |
 
-**Essential commands** (for daily debugging):
+**필수 명령어** (일상 디버깅용):
 
 ```bash
-# GPU thread inspection
-(cuda-gdb) info cuda threads          # See all threads
-(cuda-gdb) cuda thread (0,0,0)        # Switch threads
-(cuda-gdb) print i                    # Local thread index (thread_idx.x equivalent)
+# GPU 스레드 검사
+(cuda-gdb) info cuda threads          # 모든 스레드 보기
+(cuda-gdb) cuda thread (0,0,0)        # 스레드 전환
+(cuda-gdb) print i                    # 로컬 스레드 인덱스 (thread_idx.x 등가)
 
-# Smart breakpoints (using local variables since GPU built-ins don't work)
-(cuda-gdb) break kernel if i == 0      # Focus on thread 0
-(cuda-gdb) break kernel if array[i] > 100  # Focus on data conditions
+# 스마트 브레이크포인트 (GPU 내장 변수가 작동하지 않으므로 로컬 변수 사용)
+(cuda-gdb) break kernel if i == 0      # 스레드 0에 집중
+(cuda-gdb) break kernel if array[i] > 100  # 데이터 조건에 집중
 
-# Memory debugging
-(cuda-gdb) print array[i]              # Thread-specific data using local variable
-(cuda-gdb) print array[0]@4            # Array segments: {{val1}, {val2}, {val3}, {val4}}
+# 메모리 디버깅
+(cuda-gdb) print array[i]              # 로컬 변수를 사용한 스레드별 데이터
+(cuda-gdb) print array[0]@4            # 배열 세그먼트: {{val1}, {val2}, {val3}, {val4}}
 ```
 
 ---
 
-### Summary
+### 요약
 
-GPU debugging involves thousands of parallel threads, complex memory hierarchies, and specialized tools. You now have:
+GPU 디버깅에는 수천 개의 병렬 스레드, 복잡한 메모리 계층 구조, 전문 도구가 관여합니다. 이제 다음을 갖추게 되었습니다:
 
-- **Systematic workflows** that work for any GPU program
-- **Professional tools** familiarity with LLDB and CUDA-GDB
-- **Real experience** debugging actual parallel code
-- **Practical strategies** for handling complex scenarios
-- **Foundation** to tackle GPU debugging challenges
+- 어떤 GPU 프로그램에도 적용할 수 있는 **체계적인 워크플로우**
+- LLDB와 CUDA-GDB **전문 도구**에 대한 친숙함
+- 실제 병렬 코드를 디버깅한 **실전 경험**
+- 복잡한 상황을 처리하기 위한 **실용적인 전략**
+- GPU 디버깅 과제를 해결할 **기초**
 
 ---
 
-## Additional resources
+## 추가 자료
 
-- [Mojo Debugging Documentation](https://docs.modular.com/mojo/tools/debugging)
-- [Mojo GPU Debugging Guide](https://docs.modular.com/mojo/tools/gpu-debugging)
-- [NVIDIA CUDA-GDB User Guide](https://docs.nvidia.com/cuda/cuda-gdb/index.html)
-- [CUDA-GDB Command Reference](https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference)
+- [Mojo 디버깅 문서](https://docs.modular.com/mojo/tools/debugging)
+- [Mojo GPU 디버깅 가이드](https://docs.modular.com/mojo/tools/gpu-debugging)
+- [NVIDIA CUDA-GDB 사용자 가이드](https://docs.nvidia.com/cuda/cuda-gdb/index.html)
+- [CUDA-GDB 명령어 참조](https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference)
 
-**Note**: GPU debugging requires patience and systematic investigation. The workflow and commands in this puzzle provide the foundation for debugging complex GPU issues you'll encounter in real applications.
+**참고**: GPU 디버깅에는 인내심과 체계적인 조사가 필요합니다. 이 퍼즐에서 다룬 워크플로우와 명령어는 실제 애플리케이션에서 마주치게 될 복잡한 GPU 문제를 디버깅하는 기초가 됩니다.

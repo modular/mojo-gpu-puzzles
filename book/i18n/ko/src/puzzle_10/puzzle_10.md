@@ -1,135 +1,135 @@
 <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 
-# Puzzle 10: Memory Error Detection & Race Conditions with Sanitizers
+# Puzzle 10: Sanitizer로 메모리 오류와 경쟁 상태 찾기
 
-> ⚠️ This puzzle works on compatible **NVIDIA GPU** only. We are working to enable tooling support for other GPU vendors.
+> ⚠️ 이 퍼즐은 호환되는 **NVIDIA GPU**에서만 작동합니다. 다른 GPU 벤더 지원을 위한 도구 개발이 진행 중입니다.
 
-## The moment every GPU developer dreads
+## 모든 GPU 개발자가 두려워하는 순간
 
-You've written what looks like perfect GPU code. Your algorithm is sound, your memory management seems correct, and your thread coordination appears flawless. You run your tests with confidence and...
+완벽해 보이는 GPU 코드를 작성했습니다. 알고리즘은 정확하고, 메모리 관리도 올바른 것 같고, 스레드 조율도 흠잡을 데 없어 보입니다. 자신 있게 테스트를 실행하면...
 
-- **✅ ALL TESTS PASS**
-- **✅ Performance looks great**
-- **✅ Output matches expected results**
+- **✅ 모든 테스트 통과**
+- **✅ 성능도 훌륭함**
+- **✅ 출력이 예상 결과와 일치**
 
-You ship your code to production, feeling proud of your work. Then weeks later, you get the call:
+뿌듯하게 코드를 프로덕션에 배포합니다. 그런데 몇 주 후, 연락이 옵니다:
 
-- **"The application crashed in production"**
-- **"Results are inconsistent between runs"**
-- **"Memory corruption detected"**
+- **"프로덕션에서 애플리케이션이 크래시됐어요"**
+- **"실행할 때마다 결과가 달라요"**
+- **"메모리 손상이 감지됐어요"**
 
-Welcome to the insidious world of **silent GPU bugs** - errors that hide in the shadows of massive parallelism, waiting to strike when you least expect them. These bugs can pass all your tests, produce correct results 99% of the time, and then catastrophically fail when it matters most.
+**조용히 숨어드는 GPU 버그**의 세계에 오신 것을 환영합니다. 대규모 병렬 처리의 그늘에 숨어 있다가 가장 예상치 못한 순간에 튀어나오는 오류들이죠. 이런 버그들은 모든 테스트를 통과하고, 99%의 경우 올바른 결과를 내다가, 가장 중요한 순간에 치명적으로 실패합니다.
 
-**Important note**: This puzzle requires NVIDIA GPU hardware and is only available through `pixi`, as `compute-sanitizer` is part of NVIDIA's CUDA toolkit.
+**중요**: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요하며, `compute-sanitizer`가 NVIDIA CUDA toolkit에 포함되어 있어 `pixi`를 통해서만 사용할 수 있습니다.
 
-## Why GPU bugs are uniquely sinister
+## GPU 버그가 유난히 교활한 이유
 
-Unlike CPU programs where bugs usually announce themselves with immediate crashes or wrong results, GPU bugs are **experts at hiding**:
+CPU 프로그램에서는 버그가 보통 즉각적인 크래시나 잘못된 결과로 자신의 존재를 알립니다. 하지만 GPU 버그는 **숨기의 달인**입니다:
 
-**Silent corruption patterns:**
+**조용히 데이터를 손상시키는 패턴:**
 
-- **Memory violations that don't crash**: Out-of-bounds access to "lucky" memory locations
-- **Race conditions that work "most of the time"**: Timing-dependent bugs that appear random
-- **Thread coordination failures**: Deadlocks that only trigger under specific load conditions
+- **크래시 없는 메모리 위반**: 우연히 유효한 메모리 위치를 건드리는 범위 초과 접근
+- **"대부분은 잘 동작하는" 경쟁 상태**: 타이밍에 따라 무작위처럼 나타나는 버그
+- **스레드 조율 실패**: 특정 부하 조건에서만 발생하는 deadlock
 
-**Massive scale amplification:**
+**대규모 병렬 처리에서 증폭되는 문제:**
 
-- **One thread's bug affects thousands**: A single memory violation can corrupt entire warps
-- **Race conditions multiply exponentially**: More threads = more opportunities for corruption
-- **Hardware variations mask problems**: Same bug behaves differently across GPU architectures
+- **한 스레드의 버그가 수천 개에 영향**: 메모리 위반 하나가 전체 warp를 손상시킬 수 있음
+- **경쟁 상태의 기하급수적 증가**: 스레드가 많을수록 손상 가능성도 커짐
+- **하드웨어 차이가 문제를 은폐**: 같은 버그가 GPU 아키텍처마다 다르게 동작
 
-But here's the exciting part: **once you learn GPU sanitization tools, you'll catch these elusive bugs before they ever reach production**.
+하지만 희소식이 있습니다: **GPU 검사 도구를 익히면, 이렇게 찾기 어려운 버그들을 프로덕션에 도달하기 전에 잡아낼 수 있습니다**.
 
-## Your sanitization toolkit: NVIDIA compute-sanitizer
+## Sanitizer 도구 모음: NVIDIA compute-sanitizer
 
-**NVIDIA compute-sanitizer** is your specialized weapon against GPU bugs. It can detect:
+**NVIDIA compute-sanitizer**는 GPU 버그에 맞서 싸우는 여러분의 비밀 무기입니다. 다음을 탐지할 수 있습니다:
 
-- **Memory violations**: Out-of-bounds access, invalid pointers, memory leaks
-- **Race conditions**: Shared memory hazards between threads
-- **Synchronization bugs**: Deadlocks, barrier misuse, improper thread coordination
-- **And more**: Check `pixi run compute-sanitizer --help`
+- **메모리 위반**: 범위 초과 접근, 잘못된 포인터, 메모리 누수
+- **경쟁 상태**: 스레드 간 공유 메모리 hazard
+- **동기화 버그**: Deadlock, barrier 오용, 부적절한 스레드 조율
+- **그 외**: `pixi run compute-sanitizer --help`로 확인
 
-📖 **Official documentation**: [NVIDIA Compute Sanitizer User Guide](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html)
+📖 **공식 문서**: [NVIDIA Compute Sanitizer User Guide](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html)
 
-Think of it as **X-ray vision for your GPU programs** - revealing hidden problems that normal testing can't see.
+**GPU 프로그램의 X-ray**라고 생각하면 됩니다. 일반 테스트로는 볼 수 없는 숨겨진 문제까지 드러내 줍니다.
 
-## What you'll learn in this puzzle
+## 이 퍼즐에서 배울 내용
 
-This puzzle teaches you to systematically find and fix the most elusive GPU bugs. You'll learn the detective skills that distinguish competent GPU developers from exceptional ones.
+이 퍼즐에서는 가장 찾기 어려운 GPU 버그를 체계적으로 찾아 수정하는 방법을 배웁니다. 유능한 GPU 개발자와 뛰어난 개발자를 구분 짓는 탐정 기술을 익히게 됩니다.
 
-### **Critical skills you'll develop**
+### **익히게 될 핵심 기술**
 
-1. **Silent bug detection** - Find problems that tests don't catch
-2. **Memory corruption investigation** - Track down undefined behavior before it strikes
-3. **Race condition detection** - Identify and eliminate concurrency hazards
-4. **Tool selection expertise** - Know exactly which sanitizer to use when
-5. **Production debugging confidence** - Catch bugs before they reach users
+1. **숨은 버그 찾기** - 테스트로는 잡히지 않는 문제 발견
+2. **메모리 손상 조사** - 피해가 발생하기 전에 미정의 동작 추적
+3. **경쟁 상태 탐지** - 동시성 위험 요소를 찾아내고 제거
+4. **도구 선택 능력** - 상황에 맞는 sanitizer 선택
+5. **프로덕션 디버깅 자신감** - 사용자에게 도달하기 전에 버그 포착
 
-### **Real-world bug hunting scenarios**
+### **실전 버그 사냥 시나리오**
 
-You'll investigate the two most dangerous classes of GPU bugs:
+가장 위험한 두 종류의 GPU 버그를 조사합니다:
 
-- **Memory violations** - The silent killers that corrupt data without warning
-- **Race conditions** - The chaos creators that make results unpredictable
+- **메모리 위반** - 경고 없이 데이터를 망가뜨리는 조용한 암살자
+- **경쟁 상태** - 결과를 예측 불가능하게 만드는 혼돈의 씨앗
 
-Each scenario teaches you to think like a GPU bug detective, following clues that are invisible to normal testing.
+각 시나리오에서 일반 테스트로는 보이지 않는 단서를 따라가며, GPU 버그 탐정처럼 사고하는 법을 배웁니다.
 
-## Your bug hunting journey
+## 버그 사냥 여정
 
-This puzzle takes you through a carefully designed progression from discovering silent corruption to learning parallel debugging:
+이 퍼즐은 조용한 손상을 발견하는 것부터 병렬 디버깅을 배우는 것까지, 체계적으로 설계된 과정을 안내합니다:
 
-### 👮🏼‍♂️ [The Silent Corruption Mystery](./memcheck.md)
+### 👮🏼‍♂️ [메모리 위반 탐지](./memcheck.md)
 
-**Memory violation investigation** - When tests pass but memory lies
+**메모리 위반 조사** - 테스트는 통과해도 메모리는 거짓말을 할 때
 
-- Investigate programs that pass tests while committing memory crimes
-- Learn to spot the telltale signs of undefined behavior (UB)
-- Learn `memcheck` - your memory violation detector
-- Understand why GPU hardware masks memory errors
-- Practice systematic memory access validation
+- 테스트를 통과하면서도 메모리 범죄를 저지르는 프로그램 조사
+- 미정의 동작(UB)의 징후를 알아보는 법 익히기
+- `memcheck` 학습 - 메모리 위반을 잡아내는 탐지기
+- GPU 하드웨어가 메모리 오류를 숨기는 이유 이해
+- 체계적인 메모리 접근 검증 실습
 
-**Key outcome**: Ability to detect memory violations that would otherwise go unnoticed until production
+**목표**: 방치하면 프로덕션까지 발견되지 않았을 메모리 위반 탐지 능력
 
-### 🏁 [The Race Condition Hunt](./racecheck.md)
+### 🏁 [경쟁 상태 디버깅](./racecheck.md)
 
-**Concurrency bug investigation** - When threads turn against each other
+**동시성 버그 조사** - 스레드들이 서로 발목을 잡을 때
 
-- Investigate programs that fail randomly due to thread timing
-- Learn to identify shared memory hazards before they corrupt data
-- Learn `racecheck` - your race condition detector
-- Compare `racecheck` vs `synccheck` for different concurrency bugs
-- Practice thread synchronization strategies
+- 스레드 타이밍 때문에 무작위로 실패하는 프로그램 조사
+- 데이터가 손상되기 전에 공유 메모리 위험 요소 식별법 익히기
+- `racecheck` 학습 - 경쟁 상태를 잡아내는 탐지기
+- 다양한 동시성 버그에 대해 `racecheck` vs `synccheck` 비교
+- 스레드 동기화 전략 실습
 
-**Key outcome**: Advanced concurrency debugging - the ability to tame thousands of parallel threads
+**목표**: 고급 동시성 디버깅 - 수천 개의 병렬 스레드를 길들이는 능력
 
-## The GPU detective mindset
+## GPU 탐정 마인드셋
 
-GPU sanitization requires you to become a **parallel program detective** investigating crimes where:
+GPU 검사를 하려면 **병렬 프로그램 탐정**이 되어야 합니다. 다음과 같은 사건을 조사하게 됩니다:
 
-- **The evidence is hidden** - Bugs occur in parallel execution you can't directly observe
-- **Multiple suspects exist** - Thousands of threads, any combination could be guilty
-- **The crime is intermittent** - Race conditions and timing-dependent failures
-- **The tools are specialized** - Sanitizers that see what normal debugging can't
+- **증거가 숨겨져 있다** - 직접 관찰할 수 없는 병렬 실행 속에서 버그가 발생
+- **용의자가 수없이 많다** - 수천 개의 스레드 중 어떤 조합이든 범인일 수 있음
+- **범행이 간헐적이다** - 경쟁 상태와 타이밍에 따른 실패
+- **전문 도구가 필요하다** - 일반 디버깅으로는 볼 수 없는 것을 sanitizer가 보여줌
 
-But like any good detective, you'll learn to:
+하지만 훌륭한 탐정처럼, 여러분도 다음을 배우게 됩니다:
 
-- **Follow invisible clues** - Memory access patterns, thread timing, synchronization points
-- **Think in parallel** - Consider how thousands of threads interact simultaneously
-- **Prevent future crimes** - Build sanitization into your development workflow
-- **Trust your tools** - Let sanitizers reveal what manual testing cannot
+- **보이지 않는 단서 따라가기** - 메모리 접근 패턴, 스레드 타이밍, 동기화 지점
+- **병렬적으로 사고하기** - 수천 개의 스레드가 동시에 어떻게 상호작용하는지 고려
+- **미래의 범죄 예방하기** - 개발 워크플로우에 검사 도구 통합
+- **도구 믿기** - 수동 테스트로는 드러낼 수 없는 것을 sanitizer에 맡기기
 
-## Prerequisites and expectations
+## 시작하기 전에
 
-**What you need to know**:
+**알아야 할 것**:
 
-- GPU programming concepts from Puzzles 1-8 (memory management, thread coordination, barriers)
-- **[Compatible NVIDIA GPU hardware](https://docs.modular.com/max/faq#gpu-requirements)**
-- Environment setup with `pixi` package manager for accessing `compute-sanitizer`
-- **Prior puzzles**: Familiarity with [Puzzle 4](../puzzle_04/introduction_layout_tensor.md) and [Puzzle 8](../puzzle_08/layout_tensor.md) are recommended
+- Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, barrier)
+- **[호환 NVIDIA GPU 하드웨어](https://docs.modular.com/max/faq#gpu-requirements)**
+- `compute-sanitizer` 접근을 위한 `pixi` 패키지 매니저 환경 설정
+- **선행 퍼즐**: [Puzzle 4](../puzzle_04/introduction_layout_tensor.md)와 [Puzzle 8](../puzzle_08/layout_tensor.md) 숙지 권장
 
-**What you'll gain**:
+**목표**:
 
-- **Production-ready debugging skills** used by professional GPU development teams
-- **Silent bug detection skills** that prevent costly production failures
-- **Parallel debugging confidence** for the most challenging concurrency scenarios
-- **Tool expertise** that will serve you throughout your GPU programming career
+- 전문 GPU 개발팀에서 사용하는 **프로덕션급 디버깅 기술**
+- 비용이 큰 프로덕션 장애를 예방하는 **숨은 버그 탐지 기술**
+- 가장 까다로운 동시성 시나리오에서도 **병렬 디버깅 자신감**
+- GPU 프로그래밍 커리어 전반에 도움이 될 **도구 전문성**
