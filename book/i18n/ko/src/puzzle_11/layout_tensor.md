@@ -11,7 +11,7 @@
 이 퍼즐에서 배울 내용:
 
 - LayoutTensor로 슬라이딩 윈도우 연산 구현하기
-- [Puzzle 8](../puzzle_08/layout_tensor.md)에서 다룬 LayoutTensor address_space로 공유 메모리 관리하기
+- [Puzzle 8](../puzzle_08/layout_tensor.md)에서 다룬 LayoutTensor 주소 공간(address_space)으로 공유 메모리 관리하기
 - 효율적인 이웃 접근 패턴
 - 경계 조건 처리
 
@@ -44,7 +44,7 @@
 
 <div class="solution-tips">
 
-1. LayoutTensor와 address_space로 공유 메모리 생성
+1. LayoutTensor와 주소 공간(address_space)으로 공유 메모리 생성
 2. 자연스러운 인덱싱으로 데이터 로드: `shared[local_i] = a[global_i]`
 3. 처음 두 위치를 특수 케이스로 처리
 4. 윈도우 연산에 공유 메모리 활용
@@ -115,7 +115,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 LayoutTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:
 
 1. **공유 메모리 설정**
-   - LayoutTensor가 address_space로 블록 로컬 저장소를 생성:
+   - LayoutTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:
 
      ```txt
      shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()

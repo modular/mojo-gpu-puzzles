@@ -11,7 +11,7 @@
 이 퍼즐에서 배울 내용:
 
 - [Puzzle 8](../puzzle_08/layout_tensor.md), [Puzzle 11](../puzzle_11/layout_tensor.md)에서 이어지는 LayoutTensor 기반 병렬 reduction
-- address_space를 활용한 공유 메모리 관리
+- 주소 공간(address_space)을 활용한 공유 메모리 관리
 - 여러 스레드가 협력해 하나의 결과를 만들어가는 과정
 - 레이아웃을 인식하는 텐서 연산
 
@@ -45,7 +45,7 @@
 
 <div class="solution-tips">
 
-1. LayoutTensor와 address_space로 공유 메모리 생성
+1. LayoutTensor와 주소 공간(address_space)으로 공유 메모리 생성
 2. `shared[local_i]`에 `a[global_i] * b[global_i]`를 저장
 3. `barrier()`와 함께 병렬 reduction 패턴 적용
 4. 스레드 0이 최종 결과를 `output[0]`에 기록
@@ -143,7 +143,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 ### 구현의 핵심 특징
 
 1. **메모리 관리**:
-   - address_space 파라미터 하나로 공유 메모리를 깔끔하게 할당
+   - 주소 공간(address_space) 파라미터 하나로 공유 메모리를 깔끔하게 할당
    - 타입 안전한 연산이 보장되고
    - 경계 검사가 자동으로 따라오며
    - 인덱싱도 레이아웃을 인식

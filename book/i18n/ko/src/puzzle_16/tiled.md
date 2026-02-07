@@ -1,35 +1,35 @@
 <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
 
-# Tiled Matrix Multiplication
+# Tiled 버전
 
-## Overview
+## 개요
 
-Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).
+LayoutTensor를 사용한 tiled 행렬 곱셈으로 정방 행렬 \\(A\\)와 \\(B\\)를 곱하는 kernel을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.
 
-## Key concepts
+## 핵심 개념
 
-- Matrix tiling with LayoutTensor for efficient computation
-- Multi-block coordination with proper layouts
-- Efficient shared memory usage through TensorBuilder
-- Boundary handling for tiles with LayoutTensor indexing
+- LayoutTensor를 사용한 행렬 tiling으로 효율적인 연산
+- 적절한 레이아웃을 사용한 멀티 블록 조율
+- TensorBuilder를 통한 효율적인 공유 메모리 활용
+- LayoutTensor 인덱싱을 사용한 타일 경계 처리
 
-## Configuration
+## 구성
 
-- Matrix size: \\(\\text{SIZE\_TILED} = 9\\)
-- Threads per block: \\(\\text{TPB} \times \\text{TPB} = 3 \times 3\\)
-- Grid dimensions: \\(3 \times 3\\) blocks
-- Shared memory: Two \\(\\text{TPB} \times \\text{TPB}\\) LayoutTensors per block
+- 행렬 크기: \\(\\text{SIZE\_TILED} = 9\\)
+- 블록당 스레드 수: \\(\\text{TPB} \times \\text{TPB} = 3 \times 3\\)
+- 그리드 차원: \\(3 \times 3\\) 블록
+- 공유 메모리: 블록당 \\(\\text{TPB} \times \\text{TPB}\\) LayoutTensor 2개
 
-Layout configuration:
+레이아웃 구성:
 
-- Input A: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- Input B: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- Output: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- Shared Memory: Two `TPB × TPB` LayoutTensors using TensorBuilder
+- 입력 A: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
+- 입력 B: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
+- 출력: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
+- 공유 메모리: TensorBuilder를 사용한 `TPB × TPB` LayoutTensor 2개
 
-## Tiling strategy
+## Tiling 전략
 
-### Block organization
+### 블록 구성
 
 ```txt
 Grid Layout (3×3):           Thread Layout per Block (3×3):
@@ -37,20 +37,20 @@ Grid Layout (3×3):           Thread Layout per Block (3×3):
 [B10][B11][B12]               [T10 T11 T12]
 [B20][B21][B22]               [T20 T21 T22]
 
-Each block processes a tile using LayoutTensor indexing
+각 블록은 LayoutTensor 인덱싱을 사용하여 하나의 타일을 처리
 ```
 
-### Tile processing steps
+### 타일 처리 단계
 
-1. Calculate global and local indices for thread position
-2. Allocate shared memory for A and B tiles
-3. For each tile:
-   - Load tile from matrix A and B
-   - Compute partial products
-   - Accumulate results in registers
-4. Write final accumulated result
+1. 스레드 위치에 대한 전역 인덱스와 로컬 인덱스 계산
+2. A와 B 타일을 위한 공유 메모리 할당
+3. 각 타일에 대해:
+   - 행렬 A와 B에서 타일 로드
+   - 부분 곱 계산
+   - 레지스터에 결과 누적
+4. 최종 누적 결과 기록
 
-### Memory access pattern
+### 메모리 접근 패턴
 
 ```txt
 Matrix A (8×8)                 Matrix B (8×8)               Matrix C (8×8)
@@ -82,40 +82,40 @@ Synchronization required:
 * After computing each phase
 ```
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p16/p16.mojo:matmul_tiled}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p16/p16.mojo" class="filename">View full file: problems/p16/p16.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p16/p16.mojo" class="filename">전체 파일 보기: problems/p16/p16.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Use the standard indexing convention: `local_row = thread_idx.y` and `local_col = thread_idx.x`
-2. Calculate global positions:
+1. 표준 인덱싱 규칙을 사용하세요: `local_row = thread_idx.y`, `local_col = thread_idx.x`
+2. 전역 위치 계산:
 
    ```
    global_row = block_idx.y * TPB + local_row
    ```
 
-   and
+   그리고
 
    ```
    global_col = block_idx.x * TPB + local_col
    ```
 
-   **Understanding the global indexing formula:**
-   - Each block processes a `TPB × TPB` tile of the matrix
-   - `block_idx.y` tells us which row of blocks we're in (0, 1, 2...)
-   - `block_idx.y * TPB` gives us the starting row of our block's tile
-   - `local_row` (0 to TPB-1) is our thread's offset within the block
-   - Adding them gives our thread's actual row in the full matrix
+   **전역 인덱싱 공식 이해하기:**
+   - 각 블록은 행렬의 `TPB × TPB` 타일을 처리합니다
+   - `block_idx.y`는 현재 몇 번째 블록 행인지를 나타냅니다 (0, 1, 2...)
+   - `block_idx.y * TPB`는 해당 블록 타일의 시작 행입니다
+   - `local_row` (0~TPB-1)은 블록 내 스레드의 offset입니다
+   - 둘을 더하면 전체 행렬에서의 실제 행 위치가 됩니다
 
-       **Example with TPB=3:**
+       **TPB=3 예시:**
 
     ```txt
     Block Layout:        Global Matrix (9×9):
@@ -134,19 +134,19 @@ Synchronization required:
     Thread(1,2) in Block(1,0):
     - block_idx.y = 1, local_row = 1
     - global_row = 1 * 3 + 1 = 4
-    - This thread handles row 4 of the matrix
+    - 이 스레드는 행렬의 4번째 행을 담당
     ```
 
-3. Allocate shared memory (now pre-initialized with `.fill(0)`)
-4. With 9×9 perfect tiling, no bounds checking needed!
-5. Accumulate results across tiles with proper synchronization
+3. 공유 메모리 할당 (`.fill(0)`으로 사전 초기화됨)
+4. 9×9 완벽한 tiling이므로 경계 검사가 불필요!
+5. 적절한 동기화와 함께 타일 간 결과를 누적
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -185,14 +185,14 @@ uv run poe p16 --tiled
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:
 
 ```txt
 out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 4176.0, 4248.0, 9504.0, 9738.0, 9972.0, 10206.0, 10440.0, 10674.0, 10908.0, 11142.0, 11376.0, 15336.0, 15732.0, 16128.0, 16524.0, 16920.0, 17316.0, 17712.0, 18108.0, 18504.0, 21168.0, 21726.0, 22284.0, 22842.0, 23400.0, 23958.0, 24516.0, 25074.0, 25632.0, 27000.0, 27720.0, 28440.0, 29160.0, 29880.0, 30600.0, 31320.0, 32040.0, 32760.0, 32832.0, 33714.0, 34596.0, 35478.0, 36360.0, 37242.0, 38124.0, 39006.0, 39888.0, 38664.0, 39708.0, 40752.0, 41796.0, 42840.0, 43884.0, 44928.0, 45972.0, 47016.0, 44496.0, 45702.0, 46908.0, 48114.0, 49320.0, 50526.0, 51732.0, 52938.0, 54144.0, 50328.0, 51696.0, 53064.0, 54432.0, 55800.0, 57168.0, 58536.0, 59904.0, 61272.0])
 ```
 
-## Solution: Manual tiling
+## 솔루션: 수동 tiling
 
 <details class="solution-details">
 <summary></summary>
@@ -203,12 +203,12 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 <div class="solution-explanation">
 
-The tiled matrix multiplication implementation demonstrates efficient handling of matrices \\((9 \times 9)\\) using small tiles \\((3 \times 3)\\). Here's how it works:
+tiled 행렬 곱셈 구현은 작은 타일 \\((3 \times 3)\\)을 사용하여 큰 행렬 \\((9 \times 9)\\)을 효율적으로 처리하는 방법을 보여줍니다. 동작 방식은 다음과 같습니다:
 
-1. **Shared memory allocation**
+1. **공유 메모리 할당**
 
    ```txt
-   Input matrices (9×9) - Perfect fit for (3×3) tiling:
+   Input matrices (9×9) - (3×3) tiling에 딱 맞는 크기:
    A = [0  1  2  3  4  5  6  7  8 ]    B = [0  2  4  6  8  10 12 14 16]
        [9  10 11 12 13 14 15 16 17]        [18 20 22 24 26 28 30 32 34]
        [18 19 20 21 22 23 24 25 26]        [36 38 40 42 44 46 48 50 52]
@@ -219,46 +219,46 @@ The tiled matrix multiplication implementation demonstrates efficient handling o
        [63 64 65 66 67 68 69 70 71]        [126 128 130 132 134 136 138 140 142]
        [72 73 74 75 76 77 78 79 80]        [144 146 148 150 152 154 156 158 160]
 
-   Shared memory per block (3×3):
+   블록당 공유 메모리 (3×3):
    a_shared[TPB, TPB]  b_shared[TPB, TPB]
    ```
 
-2. **Tile processing loop**
+2. **타일 처리 루프**
 
    ```txt
-   Number of tiles = 9 // 3 = 3 tiles (perfect division!)
+   타일 수 = 9 // 3 = 3개 (나머지 없이 딱 나눠짐!)
 
-   For each tile:
-   1. Load tile from A and B
-   2. Compute partial products
-   3. Accumulate in register
+   각 타일에 대해:
+   1. A와 B에서 타일 로드
+   2. 부분 곱 계산
+   3. 레지스터에 누적
    ```
 
-3. **Memory loading pattern**
-   - With perfect \\((9 \times 9)\\) tiling, bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.
+3. **메모리 로딩 패턴**
+   - \\((9 \times 9)\\)이 딱 나눠지므로 경계 검사가 기술적으로는 불필요하지만, 방어적 프로그래밍과 다른 행렬 크기에도 대응할 수 있도록 포함합니다.
 
      ```mojo
-        # Load A tile - global row stays the same, col determined by tile
+        # A 타일 로드 - 전역 행은 그대로, 열은 타일에 의해 결정
         if tiled_row < size and (tile * TPB + local_col) < size:
             a_shared[local_row, local_col] = a[
                 tiled_row, tile * TPB + local_col
             ]
 
-        # Load B tile - row determined by tile, global col stays the same
+        # B 타일 로드 - 행은 타일에 의해 결정, 전역 열은 그대로
         if (tile * TPB + local_row) < size and tiled_col < size:
             b_shared[local_row, local_col] = b[
                 tile * TPB + local_row, tiled_col
             ]
      ```
 
-4. **Computation within tile**
+4. **타일 내 연산**
 
    ```mojo
    for k in range(min(TPB, size - tile * TPB)):
        acc += a_shared[local_row, k] * b_shared[k, local_col]
    ```
 
-   - Avoids shared memory bank conflicts:
+   - 공유 메모리 bank conflict 회피:
 
      ```txt
      Bank Conflict Free (Good):        Bank Conflicts (Bad):
@@ -266,67 +266,67 @@ The tiled matrix multiplication implementation demonstrates efficient handling o
      Thread1: a_shared[0,k] b_shared[k,1]  Thread1: a_shared[k,0] b_shared[1,k]
      Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
      ↓                                     ↓
-     Parallel access to different banks    Serialized access to same bank of b_shared
-     (or broadcast for a_shared)           if shared memory was column-major
+     서로 다른 뱅크에 병렬 접근             b_shared가 column-major였다면
+     (a_shared는 broadcast)               같은 뱅크에 직렬 접근
      ```
 
-     **Shared memory bank conflicts explained:**
-     - **Left (Good)**: `b_shared[k,threadIdx.x]` accesses different banks, `a_shared[0,k]` broadcasts to all threads
-     - **Right (Bad)**: If b_shared were column-major, threads would access same bank simultaneously
-     - **Key insight**: This is about shared memory access patterns, not global memory coalescing
-     - **Bank structure**: Shared memory has 32 banks; conflicts occur when multiple threads access different addresses in the same bank simultaneously
+     **공유 메모리 bank conflict 설명:**
+     - **왼쪽 (Good)**: `b_shared[k,threadIdx.x]`는 서로 다른 뱅크에 접근하고, `a_shared[0,k]`는 모든 스레드에 broadcast됩니다
+     - **오른쪽 (Bad)**: b_shared가 column-major였다면 스레드들이 동시에 같은 뱅크에 접근하게 됩니다
+     - **핵심**: 이것은 글로벌 메모리 coalescing이 아닌 공유 메모리 접근 패턴에 관한 것입니다
+     - **뱅크 구조**: 공유 메모리는 32개 뱅크로 구성되어 있으며, 여러 스레드가 동시에 같은 뱅크의 다른 주소에 접근할 때 충돌이 발생합니다
 
-5. **Synchronization points**
+5. **동기화 지점**
 
    ```txt
-   barrier() after:
-   1. Tile loading
-   2. Tile computation
+   barrier() 호출 시점:
+   1. 타일 로딩 후
+   2. 타일 연산 후
    ```
 
-Key performance features:
+주요 성능 특성:
 
-- Processes \\((9 \times 9)\\) matrix using \\((3 \times 3)\\) tiles (perfect fit!)
-- Uses shared memory for fast tile access
-- Minimizes global memory transactions with coalesced memory access
-- Optimized shared memory layout and access pattern to avoid shared memory bank conflicts
+- \\((3 \times 3)\\) 타일로 \\((9 \times 9)\\) 행렬 처리 (딱 맞는 크기!)
+- 공유 메모리로 빠른 타일 접근
+- 병합된 메모리 접근으로 글로벌 메모리 트랜잭션 최소화
+- Bank conflict를 피하도록 최적화된 공유 메모리 레이아웃과 접근 패턴
 
-6. **Result writing**:
+1. **결과 기록**:
 
    ```mojo
    if tiled_row < size and tiled_col < size:
       output[tiled_row, tiled_col] = acc
    ```
 
-   - Defensive bounds checking included for other matrix sizes and tiling strategies
-   - Direct assignment to output matrix
-   - All threads write valid results
+   - 다른 행렬 크기와 tiling 전략을 위한 방어적 경계 검사 포함
+   - 출력 행렬에 직접 대입
+   - 모든 스레드가 유효한 결과를 기록
 
-### Key optimizations
+### 주요 최적화
 
-1. **Layout optimization**:
-   - Row-major layout for all tensors
-   - Efficient 2D indexing
+1. **레이아웃 최적화**:
+   - 모든 tensor에 row-major 레이아웃
+   - 효율적인 2D 인덱싱
 
-2. **Memory access**:
-   - Coalesced global memory loads
-   - Efficient shared memory usage
+2. **메모리 접근**:
+   - 병합된 글로벌 메모리 로드
+   - 효율적인 공유 메모리 활용
 
-3. **Computation**:
-   - Register-based accumulation i.e. `var acc: output.element_type = 0`
-   - Compile-time loop unrolling via `@parameter`
+3. **연산**:
+   - 레지스터 기반 누적, 즉 `var acc: output.element_type = 0`
+   - `@parameter`를 통한 컴파일 타임 루프 전개
 
-This implementation achieves high performance through:
+이 구현은 다음을 통해 높은 성능을 달성합니다:
 
-- Efficient use of LayoutTensor for memory access
-- Optimal tiling strategy
-- Proper thread synchronization
-- Careful boundary handling
+- LayoutTensor를 활용한 효율적인 메모리 접근
+- 최적의 tiling 전략
+- 적절한 스레드 동기화
+- 세심한 경계 처리
 
 </div>
 </details>
 
-## Solution: Idiomatic LayoutTensor tiling
+## 솔루션: 관용적 LayoutTensor tiling
 
 <details class="solution-details">
 <summary></summary>
@@ -337,26 +337,26 @@ This implementation achieves high performance through:
 
 <div class="solution-explanation">
 
-The idiomatic tiled matrix multiplication leverages Mojo's LayoutTensor API and asynchronous memory operations for a beautifully clean implementation.
+관용적 tiled 행렬 곱셈은 Mojo의 LayoutTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.
 
-**🔑 Key Point: This implementation performs standard matrix multiplication A × B using coalesced loading for both matrices.**
+**핵심 포인트: 이 구현은 두 행렬 모두 병합 로딩을 사용하여 표준 A × B 행렬 곱셈을 수행합니다.**
 
-**What this implementation does:**
+**이 구현이 하는 것:**
 
-- **Matrix operation**: Standard \\(A \times B\\) multiplication (not \\(A \times B^T\\))
-- **Loading pattern**: Both matrices use `Layout.row_major(1, TPB)` for coalesced access
-- **Computation**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
-- **Data layout**: No transposition during loading - both matrices loaded in same orientation
+- **행렬 연산**: 표준 \\(A \times B\\) 곱셈 (\\(A \times B^T\\)가 아님)
+- **로딩 패턴**: 두 행렬 모두 `Layout.row_major(1, TPB)`로 병합 접근
+- **연산**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
+- **데이터 레이아웃**: 로딩 시 전치 없음 - 두 행렬을 같은 방향으로 로드
 
-**What this implementation does NOT do:**
+**이 구현이 하지 않는 것:**
 
-- Does NOT perform \\(A \times B^T\\) multiplication
-- Does NOT use transposed loading patterns
-- Does NOT transpose data during copy operations
+- \\(A \times B^T\\) 곱셈을 수행하지 않음
+- 전치 로딩 패턴을 사용하지 않음
+- 복사 과정에서 데이터를 전치하지 않음
 
-With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates all boundary checks:
+\\((9 \times 9)\\) 행렬 크기에서는 완벽한 tiling이 이루어져 모든 경계 검사가 불필요합니다:
 
-1. **LayoutTensor tile API**
+1. **LayoutTensor 타일 API**
 
    ```mojo
    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
@@ -364,9 +364,9 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
    b_tile = b.tile[TPB, TPB](idx, block_idx.x)
    ```
 
-   This directly expresses "get the tile at position (block_idx.y, block_idx.x)" without manual coordinate calculation. See the [documentation](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile) for more details.
+   수동 좌표 계산 없이 "(block_idx.y, block_idx.x) 위치의 타일을 가져온다"를 직접 표현합니다. 자세한 내용은 [문서](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile)를 참고하세요.
 
-2. **Asynchronous memory operations**
+2. **비동기 메모리 연산**
 
    ```mojo
    copy_dram_to_sram_async[
@@ -382,153 +382,153 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
    async_copy_wait_all()
    ```
 
-   These operations:
-   - Use dedicated copy engines that bypass registers and enable compute-memory overlap via [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
-   - Use specialized thread layouts for optimal memory access patterns
-   - Eliminate the need for manual memory initialization
-   - **Important**:
-      - Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass
-      - `copy_dram_to_sram_async` assumes that you are using a 1d thread block (`block_dim.y == block_dim.z == 1`) and all the threads from a thread block participate in the copy unless you specify otherwise.  This behaviour in overridden by specifying:
-         - `block_dim_count`: the dimensionality of the thread block (`2` for the 2d thread block `THREADS_PER_BLOCK_TILED = (TPB, TPB)`)
-         - `num_threads`: the number of threads in the thread block (`TPB*TPB == 9`)
+   이 연산들은:
+   - 레지스터를 우회하는 전용 복사 엔진을 사용하여 연산과 메모리 전송의 중첩을 가능하게 합니다 ([copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/) 참고)
+   - 최적의 메모리 접근 패턴을 위한 특화된 스레드 레이아웃을 사용합니다
+   - 수동 메모리 초기화가 불필요합니다
+   - **중요**:
+      - 표준 GPU 로드는 이미 비동기적입니다. 이 함수들은 더 나은 리소스 활용과 레지스터 우회를 제공합니다
+      - `copy_dram_to_sram_async`는 기본적으로 1D 스레드 블록(`block_dim.y == block_dim.z == 1`)을 가정하며, 별도 지정이 없으면 스레드 블록의 모든 스레드가 복사에 참여합니다. 다음을 지정하여 이 동작을 변경할 수 있습니다:
+         - `block_dim_count`: 스레드 블록의 차원 수 (2D 스레드 블록 `THREADS_PER_BLOCK_TILED = (TPB, TPB)`의 경우 `2`)
+         - `num_threads`: 스레드 블록의 스레드 수 (`TPB*TPB == 9`)
 
-3. **Optimized memory access layouts**
+3. **최적화된 메모리 접근 레이아웃**
 
    ```mojo
-   comptime load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
-   comptime load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
-   # Note: Both matrices use the same layout for standard A × B multiplication
+   comptime load_a_layout = Layout.row_major(1, TPB)    # 병합 로딩
+   comptime load_b_layout = Layout.row_major(1, TPB)    # 병합 로딩
+   # 참고: 표준 A × B 곱셈에서 두 행렬 모두 같은 레이아웃을 사용
    ```
 
-   **Memory Access Analysis for Current Implementation:**
+   **현재 구현의 메모리 접근 분석:**
 
-   Both matrices use `Layout.row_major(1, TPB)` for coalesced loading from global memory:
-   - `load_a_layout`: Threads cooperate to load consecutive elements from matrix A rows
-   - `load_b_layout`: Threads cooperate to load consecutive elements from matrix B rows
-   - **Key insight**: Thread layout determines how threads cooperate during copy, not the final data layout
+   두 행렬 모두 글로벌 메모리에서 병합 로딩을 위해 `Layout.row_major(1, TPB)`를 사용합니다:
+   - `load_a_layout`: 스레드들이 협력하여 행렬 A 행의 연속 원소를 로드
+   - `load_b_layout`: 스레드들이 협력하여 행렬 B 행의 연속 원소를 로드
+   - **핵심**: 스레드 레이아웃은 복사 시 스레드 간 협력 방식을 결정하며, 최종 데이터 레이아웃과는 별개입니다
 
-   **Actual Computation Pattern (proves this is A × B):**
+   **실제 연산 패턴 (A × B임을 증명):**
 
    ```mojo
-   # This is the actual computation in the current implementation
+   # 현재 구현의 실제 연산
    acc += a_shared[local_row, k] * b_shared[k, local_col]
 
-   # This corresponds to: C[i,j] = Σ(A[i,k] * B[k,j])
-   # Which is standard matrix multiplication A × B
+   # 이것은 C[i,j] = Σ(A[i,k] * B[k,j])에 해당
+   # 즉, 표준 행렬 곱셈 A × B
    ```
 
-   **Why both matrices use the same coalesced loading pattern:**
+   **두 행렬이 같은 병합 로딩 패턴을 사용하는 이유:**
 
    ```txt
-   Loading tiles from global memory:
-   - Matrix A tile: threads load A[block_row, k], A[block_row, k+1], A[block_row, k+2]... (consecutive)
-   - Matrix B tile: threads load B[k, block_col], B[k, block_col+1], B[k, block_col+2]... (consecutive)
+   글로벌 메모리에서 타일 로딩:
+   - Matrix A 타일: 스레드들이 A[block_row, k], A[block_row, k+1], A[block_row, k+2]... 로드 (연속)
+   - Matrix B 타일: 스레드들이 B[k, block_col], B[k, block_col+1], B[k, block_col+2]... 로드 (연속)
 
-   Both patterns are coalesced with Layout.row_major(1, TPB)
+   Layout.row_major(1, TPB)로 두 패턴 모두 병합
    ```
 
-   **Three separate memory concerns:**
-   1. **Global-to-shared coalescing**: `Layout.row_major(1, TPB)` ensures coalesced global memory access
-   2. **Shared memory computation**: `a_shared[local_row, k] * b_shared[k, local_col]` avoids bank conflicts
-   3. **Matrix operation**: The computation pattern determines this is A × B, not A × B^T
+   **세 가지 별개의 메모리 고려사항:**
+   1. **글로벌→공유 coalescing**: `Layout.row_major(1, TPB)`로 병합 글로벌 메모리 접근 보장
+   2. **공유 메모리 연산**: `a_shared[local_row, k] * b_shared[k, local_col]`로 bank conflict 회피
+   3. **행렬 연산**: 연산 패턴이 A × B를 결정 (A × B^T가 아님)
 
-4. **Perfect tiling eliminates boundary checks**
+4. **완벽한 tiling으로 경계 검사 불필요**
 
    ```mojo
    @parameter
-   for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
+   for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
    ```
 
-   With \\((9 \times 9)\\) matrices and \\((3 \times 3)\\) tiles, every tile is exactly full-sized. No boundary checking needed!
+   \\((9 \times 9)\\) 행렬과 \\((3 \times 3)\\) 타일에서는 모든 타일이 정확히 꽉 차기 때문에 경계 검사가 필요 없습니다!
 
-5. **Clean tile processing with defensive bounds checking**
+5. **방어적 경계 검사를 포함한 깔끔한 타일 처리**
 
    ```mojo
-   # Defensive bounds checking included even with perfect tiling
+   # 완벽한 tiling에서도 방어적 경계 검사 포함
    if tiled_row < size and tiled_col < size:
        out_tile[local_row, local_col] = acc
    ```
 
-   With perfect \\((9 \times 9)\\) tiling, this bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.
+   \\((9 \times 9)\\)의 완벽한 tiling에서는 이 경계 검사가 기술적으로 불필요하지만, 방어적 프로그래밍과 다른 행렬 크기와의 일관성을 위해 포함합니다.
 
-### Performance considerations
+### 성능 고려사항
 
-The idiomatic implementation maintains the performance benefits of tiling while providing cleaner abstractions:
+관용적 구현은 tiling의 성능 이점을 유지하면서 더 깔끔한 추상화를 제공합니다:
 
-1. **Memory locality**: Exploits spatial and temporal locality through tiling
-2. **Coalesced access**: Specialized load layouts ensure coalesced memory access patterns
-3. **Compute-memory overlap**: Potential overlap through asynchronous memory operations
-4. **Shared memory efficiency**: No redundant initialization of shared memory
-5. **Register pressure**: Uses accumulation registers for optimal compute throughput
+1. **메모리 지역성**: tiling을 통해 공간적, 시간적 지역성을 활용
+2. **병합 접근**: 특화된 로드 레이아웃으로 병합 메모리 접근 패턴 보장
+3. **연산-메모리 중첩**: 비동기 메모리 연산을 통한 중첩 가능
+4. **공유 메모리 효율**: 불필요한 공유 메모리 초기화 없음
+5. **레지스터 압력**: 최적의 연산 처리량을 위한 누적 레지스터 사용
 
-This implementation shows how high-level abstractions can express complex GPU algorithms without sacrificing performance. It's a prime example of Mojo's philosophy: combining high-level expressiveness with low-level performance control.
+이 구현은 고수준 추상화로도 성능 저하 없이 복잡한 GPU 알고리즘을 표현할 수 있음을 보여줍니다. 고수준의 표현력과 저수준의 성능 제어를 결합하는 Mojo의 철학을 잘 보여주는 예시입니다.
 
-### Key differences from manual tiling
+### 수동 tiling과의 주요 차이점
 
-| Feature | Manual Tiling | Idiomatic Tiling |
+| 기능 | 수동 Tiling | 관용적 Tiling |
 |---------|--------------|------------------|
-| Memory access | Direct indexing with bounds checks | LayoutTensor tile API |
-| Tile loading | Explicit element-by-element copying | Dedicated copy engine bulk transfers |
-| Shared memory | Manual initialization (defensive) | Managed by copy functions |
-| Code complexity | More verbose with explicit indexing | More concise with higher-level APIs |
-| Bounds checking | Multiple checks during loading and computing | Single defensive check at final write |
-| Matrix orientation | Both A and B in same orientation (standard A × B) | Both A and B in same orientation (standard A × B) |
-| Performance | Explicit control over memory patterns | Optimized layouts with register bypass |
+| 메모리 접근 | 경계 검사가 있는 직접 인덱싱 | LayoutTensor 타일 API |
+| 타일 로딩 | 원소별 명시적 복사 | 전용 복사 엔진의 벌크 전송 |
+| 공유 메모리 | 수동 초기화 (방어적) | 복사 함수가 관리 |
+| 코드 복잡도 | 명시적 인덱싱으로 다소 장황 | 고수준 API로 더 간결 |
+| 경계 검사 | 로딩과 연산 중 다수의 검사 | 최종 기록 시 단일 방어적 검사 |
+| 행렬 방향 | A와 B 모두 같은 방향 (표준 A × B) | A와 B 모두 같은 방향 (표준 A × B) |
+| 성능 | 메모리 패턴의 명시적 제어 | 레지스터 우회를 포함한 최적화된 레이아웃 |
 
-The idiomatic approach is not just cleaner but also potentially more performant due to the use of specialized memory layouts and asynchronous operations.
+관용적 접근 방식은 단순히 더 깔끔할 뿐 아니라, 특화된 메모리 레이아웃과 비동기 연산 덕분에 성능도 더 좋을 수 있습니다.
 
-### Educational: When would transposed loading be useful?
+### 참고: 전치 로딩은 언제 유용할까?
 
-The current implementation does NOT use transposed loading. This section is purely educational to show what's possible with the layout system.
+현재 구현은 전치 로딩을 사용하지 않습니다. 이 섹션은 레이아웃 시스템으로 할 수 있는 것을 보여주기 위한 교육적 내용입니다.
 
-**Current implementation recap:**
+**현재 구현 요약:**
 
-- Uses `Layout.row_major(1, TPB)` for both matrices
-- Performs standard A × B multiplication
-- No data transposition during copy
+- 두 행렬 모두 `Layout.row_major(1, TPB)` 사용
+- 표준 A × B 곱셈 수행
+- 복사 중 데이터 전치 없음
 
-**Educational scenarios where you WOULD use transposed loading:**
+**전치 로딩을 사용하는 교육적 시나리오:**
 
-While this puzzle uses standard coalesced loading for both matrices, the layout system's flexibility enables powerful optimizations in other scenarios:
+이 퍼즐은 두 행렬 모두 표준 병합 로딩을 사용하지만, 레이아웃 시스템의 유연성은 다른 시나리오에서 강력한 최적화를 가능하게 합니다:
 
 ```mojo
-# Example: Loading pre-transposed matrix B^T to compute A × B
-# (This is NOT what the current implementation does)
-comptime load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
-comptime store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+# 예시: A × B를 계산하기 위해 사전 전치된 행렬 B^T를 로드
+# (현재 구현에서는 이렇게 하지 않음)
+comptime load_b_layout = Layout.row_major(TPB, 1)   # B^T를 병합 접근으로 로드
+comptime store_b_layout = Layout.row_major(1, TPB)  # 공유 메모리에 B로 저장
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 ```
 
-**Use cases for transposed loading (not used in this puzzle):**
+**전치 로딩의 활용 사례 (이 퍼즐에서는 사용하지 않음):**
 
-1. **Pre-transposed input matrices**: When \\(B\\) is already stored transposed in global memory
-2. **Different algorithms**: Computing \\(A^T \times B\\), \\(A \times B^T\\), or \\(A^T \times B^T\\)
-3. **Memory layout conversion**: Converting between row-major and column-major layouts
-4. **Avoiding transpose operations**: Loading data directly in the required orientation
+1. **이미 전치된 입력 행렬**: \\(B\\)가 글로벌 메모리에 전치 상태로 저장되어 있는 경우
+2. **다른 알고리즘**: \\(A^T \times B\\), \\(A \times B^T\\), 또는 \\(A^T \times B^T\\) 계산
+3. **메모리 레이아웃 변환**: row-major와 column-major 레이아웃 간 변환
+4. **별도 전치 연산 없이 로드**: 필요한 방향으로 데이터를 직접 로드
 
-**Key distinction:**
+**핵심 구분:**
 
-- **Current implementation**: Both matrices use `Layout.row_major(1, TPB)` for standard \\(A \times B\\) multiplication
-- **Transposed loading example**: Would use different layouts to handle pre-transposed data or different matrix operations
+- **현재 구현**: 두 행렬 모두 표준 \\(A \times B\\) 곱셈에 `Layout.row_major(1, TPB)` 사용
+- **전치 로딩 예시**: 이미 전치된 데이터나 다른 행렬 연산을 처리할 때 다른 레이아웃 사용
 
-This demonstrates Mojo's philosophy: providing low-level control when needed while maintaining high-level abstractions for common cases.
+이것은 Mojo의 철학을 보여줍니다: 일반적인 경우에 고수준 추상화를 유지하면서도, 필요할 때 저수준 제어를 제공합니다.
 
 ---
 
-## Summary: Key takeaways
+## 요약: 핵심 정리
 
-**What the idiomatic tiled implementation actually does:**
+**관용적 tiled 구현이 실제로 하는 것:**
 
-1. **Matrix Operation**: Standard A × B multiplication
-2. **Memory Loading**: Both matrices use `Layout.row_major(1, TPB)` for coalesced access
-3. **Computation Pattern**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
-4. **Data Layout**: No transposition during loading
+1. **행렬 연산**: 표준 A × B 곱셈
+2. **메모리 로딩**: 두 행렬 모두 `Layout.row_major(1, TPB)`로 병합 접근
+3. **연산 패턴**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
+4. **데이터 레이아웃**: 로딩 시 전치 없음
 
-**Why this is optimal:**
+**이것이 최적인 이유:**
 
-- **Coalesced global memory access**: `Layout.row_major(1, TPB)` ensures efficient loading
-- **Bank conflict avoidance**: Shared memory access pattern avoids conflicts
-- **Standard algorithm**: Implements the most common matrix multiplication pattern
+- **병합 글로벌 메모리 접근**: `Layout.row_major(1, TPB)`로 효율적인 로딩 보장
+- **Bank conflict 회피**: 공유 메모리 접근 패턴이 충돌을 방지
+- **표준 알고리즘**: 가장 일반적인 행렬 곱셈 패턴을 구현
 
 </div>
 </details>

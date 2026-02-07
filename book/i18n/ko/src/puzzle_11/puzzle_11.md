@@ -8,8 +8,8 @@
 
 **참고:** _각 위치마다 스레드 1개가 있습니다. 스레드당 global read 1회, global write 1회만 필요합니다._
 
-<img src="./media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
-<img src="./media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
+<img src="/puzzle_11/media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
+<img src="/puzzle_11/media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
 
 ## 구현 방식
 

@@ -1,35 +1,36 @@
 <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
 
-# Puzzle 16: Matrix Multiplication (MatMul)
+# Puzzle 16: 행렬 곱셈 (MatMul)
 
-## Overview
+## 개요
 
-Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \\(A\\) and \\(B\\), we want to compute their product \\(C = A \\times B.\\)
+행렬 곱셈은 과학 계산, 머신 러닝, 그래픽스에서 가장 기본이 되는 연산입니다. 두 행렬 \\(A\\)와 \\(B\\)가 주어졌을 때, 이들의 곱 \\(C = A \\times B\\)를 구하고자 합니다.
 
-For matrices \\(A_{m\\times k}\\) and \\(B_{k\\times n}\\), each element of the result \\(C_{m\\times n}\\) is computed as:
+행렬 \\(A_{m\\times k}\\)와 \\(B_{k\\times n}\\)에 대해, 결과 \\(C_{m\\times n}\\)의 각 원소는 다음과 같이 계산됩니다:
 
 \\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \\cdot B_{lj} \\]
 
-<img src="./../../../../src/puzzle_16/media/16-w.png" alt="Matmul visualization" class="light-mode-img">
-<img src="./../../../../src/puzzle_16/media/16-b.png" alt="Matmul visualization" class="dark-mode-img">
+<img src="/puzzle_16/media/16-w.png" alt="행렬 곱셈 시각화" class="light-mode-img">
+<img src="/puzzle_16/media/16-b.png" alt="행렬 곱셈 시각화" class="dark-mode-img">
 
-This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:
+이 퍼즐에서는 GPU에서 행렬 곱셈을 구현하는 여러 접근법을 살펴봅니다. 각 버전은 서로 다른 성능 특성을 가지고 있습니다:
 
-- [Naive Version](./naïve.md)
-  The straightforward implementation where each thread computes one element of the output matrix. While simple to understand, this approach makes many redundant memory accesses.
+- [글로벌 메모리를 사용한 기본 버전](./naïve.md)
+  각 스레드가 출력 행렬의 원소 하나를 계산하는 직관적인 구현입니다. 이해하기 쉽지만, 중복된 메모리 접근이 많다는 단점이 있습니다.
 
-- [Shared Memory Version](./shared_memory.md)
-  Improves performance by loading blocks of input matrices into fast shared memory, reducing global memory accesses. Each thread still computes one output element but reads from shared memory.
+- [공유 메모리 버전](./shared_memory.md)
+  입력 행렬의 블록을 빠른 공유 메모리에 올려 글로벌 메모리 접근을 줄입니다. 각 스레드가 출력 원소 하나를 계산하는 것은 같지만, 데이터를 공유 메모리에서 읽습니다.
 
-- [Tiled Version](./tiled.md)
-  Further optimizes by dividing the computation into tiles, allowing threads to cooperate on loading and computing blocks of the output matrix. This approach better utilizes memory hierarchy and thread cooperation.
+- [Tiled 버전](./tiled.md)
+  연산을 타일 단위로 나누어 스레드들이 출력 행렬의 블록을 함께 로드하고 계산합니다. 메모리 계층 구조와 스레드 협력을 한층 효과적으로 활용하는 방식입니다.
 
-Each version builds upon the previous one, introducing new optimization techniques common in GPU programming. You'll learn how different memory access patterns and thread cooperation strategies affect performance.
+각 버전은 이전 버전 위에 쌓아 올리면서 GPU 프로그래밍에서 자주 사용되는 새로운 최적화 기법을 소개합니다. 서로 다른 메모리 접근 패턴과 스레드 협력 전략이 성능에 어떤 영향을 미치는지 배울 수 있습니다.
 
-The progression illustrates a common pattern in GPU optimization:
-1. Start with a correct but naive implementation
-2. Reduce global memory access with shared memory
-3. Improve data locality and thread cooperation with tiling
-4. Use high-level abstractions while maintaining performance
+이 단계적 진행 과정은 GPU 최적화의 대표적인 패턴을 보여줍니다:
 
-Choose a version to begin your matrix multiplication journey!
+1. 정확하지만 단순한 기본 구현에서 출발
+2. 공유 메모리로 글로벌 메모리 접근 줄이기
+3. Tiling으로 데이터 지역성과 스레드 협력 개선
+4. 고수준 추상화를 활용하면서도 성능 유지
+
+원하는 버전을 골라 행렬 곱셈 여정을 시작해 보세요!

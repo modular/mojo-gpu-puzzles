@@ -2,47 +2,47 @@
 
 # Puzzle 14: Prefix Sum
 
-## Overview
+## 개요
 
-Prefix sum (also known as _scan_) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!
+Prefix sum(_scan_이라고도 합니다)은 시퀀스의 누적 합을 구하는 기본적인 병렬 알고리즘입니다. 정렬 알고리즘부터 과학 시뮬레이션까지 수많은 병렬 응용의 핵심에 자리하고 있으며, 숫자 시퀀스를 누적 합으로 변환하는 역할을 합니다. 순차적으로 계산하기는 간단하지만, GPU에서 효율적으로 만들려면 기발한 병렬적 사고가 필요합니다!
 
-Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
+1D LayoutTensor `a`에 대해 prefix sum을 계산하고 결과를 1D LayoutTensor `output`에 저장하는 kernel을 구현하세요.
 
-**Note:** _If the size of `a` is greater than the block size, only store the sum of each block._
+**참고:** _`a`의 크기가 블록 크기보다 큰 경우, 각 블록의 합계만 저장합니다._
 
-<img src="./../../../../src/puzzle_14/media/14-w.gif" alt="Prefix sum visualization" class="light-mode-img">
-<img src="./../../../../src/puzzle_14/media/14-b.gif" alt="Prefix sum visualization" class="dark-mode-img">
+<img src="/puzzle_14/media/14-w.gif" alt="Prefix sum 시각화" class="light-mode-img">
+<img src="/puzzle_14/media/14-b.gif" alt="Prefix sum 시각화" class="dark-mode-img">
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서 배울 내용:
 
-- Parallel algorithms with logarithmic complexity
-- Shared memory coordination patterns
-- Multi-phase computation strategies
+- 로그 복잡도를 가진 병렬 알고리즘
+- 공유 메모리 협력 패턴
+- 다단계 연산 전략
 
-The key insight is understanding how to transform a sequential operation into an efficient parallel algorithm using shared memory.
+핵심 통찰은 순차 연산을 공유 메모리를 활용한 효율적인 병렬 알고리즘으로 변환하는 방법을 이해하는 것입니다.
 
-For example, given an input sequence \\([3, 1, 4, 1, 5, 9]\\), the prefix sum would produce:
+예를 들어, 입력 시퀀스 \\([3, 1, 4, 1, 5, 9]\\)가 주어지면, prefix sum은 다음과 같이 만들어집니다:
 
-- \\([3]\\) (just the first element)
+- \\([3]\\) (첫 번째 원소 그대로)
 - \\([3, 4]\\) (3 + 1)
-- \\([3, 4, 8]\\) (previous sum + 4)
-- \\([3, 4, 8, 9]\\) (previous sum + 1)
-- \\([3, 4, 8, 9, 14]\\) (previous sum + 5)
-- \\([3, 4, 8, 9, 14, 23]\\) (previous sum + 9)
+- \\([3, 4, 8]\\) (이전 합 + 4)
+- \\([3, 4, 8, 9]\\) (이전 합 + 1)
+- \\([3, 4, 8, 9, 14]\\) (이전 합 + 5)
+- \\([3, 4, 8, 9, 14, 23]\\) (이전 합 + 9)
 
-Mathematically, for a sequence \\([x_0, x_1, ..., x_n]\\), the prefix sum produces:
+수학적으로, 시퀀스 \\([x_0, x_1, ..., x_n]\\)에 대한 prefix sum은 다음을 생성합니다:
 \\[ [x_0, x_0+x_1, x_0+x_1+x_2, ..., \sum_{i=0}^n x_i] \\]
 
-While a sequential algorithm would need \\(O(n)\\) steps, our parallel approach will use a clever two-phase algorithm that completes in \\(O(\log n)\\) steps! Here's a visualization of this process:
+순차 알고리즘이라면 \\(O(n)\\) 단계가 필요하겠지만, 여기서는 영리한 2단계 병렬 알고리즘으로 \\(O(\log n)\\) 단계만에 완료합니다! 위의 애니메이션에서 이 과정을 확인할 수 있습니다.
 
-This puzzle is split into two parts to help you learn the concept:
+이 퍼즐은 개념을 단계적으로 익힐 수 있도록 두 파트로 나뉩니다:
 
-- [Simple Version](./simple.md)
-  Start with a single block implementation where all data fits in shared memory. This helps understand the core parallel algorithm.
+- [🔰 기본 버전](./simple.md)
+  모든 데이터가 공유 메모리에 들어가는 단일 블록 구현부터 시작합니다. 핵심 병렬 알고리즘의 원리를 파악하는 데 좋습니다.
 
-- [Complete Version](./complete.md)
-  Then tackle the more challenging case of handling larger arrays that span multiple blocks, requiring coordination between blocks.
+- [⭐ 완성 버전](./complete.md)
+  이어서 여러 블록에 걸치는 큰 배열을 처리하는 더 까다로운 경우에 도전합니다. 블록 간 조율이 필요합니다.
 
-Each version builds on the previous one, helping you develop a deep understanding of parallel prefix sum computation. The simple version establishes the fundamental algorithm, while the complete version shows how to scale it to larger datasets - a common requirement in real-world GPU applications.
+각 버전은 이전 버전 위에 쌓아 올리는 방식으로, 병렬 prefix sum 연산에 대한 이해를 깊이 있게 발전시켜 줍니다. 기본 버전에서 핵심 알고리즘을 다지고, 완성 버전에서는 더 큰 데이터셋으로 확장하는 방법을 배웁니다 — 실제 GPU 애플리케이션에서 자주 마주치는 과제입니다.

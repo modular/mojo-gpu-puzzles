@@ -1,149 +1,151 @@
 <!-- i18n-source-commit: 57737da18dd9c8036cbfee1d3b0de509a3b46944 -->
 
-# Understanding GPU Performance: The Roofline Model
+# GPU 성능 이해하기: Roofline 모델
 
-Having implemented the naive matrix multiplication, you might be wondering: *How well is our kernel actually performing?* Is it limited by the GPU's computational power, or is something else holding it back?
+기본 행렬 곱셈을 구현했으니, 이런 궁금증이 생길 수 있습니다: *우리 kernel은 실제로 얼마나 잘 동작하고 있을까?* GPU의 연산 능력에 의해 제한되는 걸까, 아니면 다른 무언가가 발목을 잡고 있는 걸까?
 
-The **roofline model** is your compass for GPU optimization—it reveals which hardware bottleneck limits your kernel's performance and guides you toward the most impactful optimizations. Rather than guessing at improvements, the roofline model shows you exactly where to focus your efforts.
+**Roofline 모델**(_역주: roofline은 "상한선"이라는 뜻으로, 성능이 넘을 수 없는 한계를 지붕 선에 비유한 이름입니다_)은 GPU 최적화의 나침반입니다. kernel의 성능을 제한하는 하드웨어 병목이 무엇인지 알려주고, 가장 효과적인 최적화 방향으로 안내합니다. 감으로 개선하는 대신, roofline 모델이 정확히 어디에 집중해야 하는지 보여줍니다.
 
-## 1. Two ceilings for every GPU kernel
+## 1. 모든 GPU kernel의 두 가지 성능 상한
 
-Every GPU kernel operates under two fundamental constraints:
+모든 GPU kernel은 두 가지 근본적인 제약 아래에서 동작합니다:
 
-- **Compute ceiling** – how quickly the cores can execute floating-point operations (peak FLOPs/s)
-- **Memory ceiling** – how quickly the memory system can feed those cores with data (peak bytes/s)
+- **연산 상한(compute ceiling)** – 코어가 부동소수점 연산을 얼마나 빠르게 수행할 수 있는가 (최대 FLOPs/s)
+- **메모리 상한(memory ceiling)** – 메모리 시스템이 코어에 데이터를 얼마나 빠르게 공급할 수 있는가 (최대 bytes/s)
 
-Understanding which ceiling constrains your kernel is crucial for optimization strategy. The roofline model visualizes this relationship by plotting two key metrics:
+어떤 상한이 kernel을 제약하는지 파악하는 것이 최적화 전략의 핵심입니다. Roofline 모델은 두 가지 핵심 지표를 그래프로 표현하여 이 관계를 시각화합니다:
 
-**X-axis: Arithmetic Intensity** – How much computation you extract per byte of data
+**X축: 산술 강도(Arithmetic Intensity)** – 데이터 1바이트당 수행하는 연산량
 
 \\[\Large I = \frac{\text{Total FLOPs}}{\text{Total Bytes from Memory}} \quad [\text{FLOP/B}]\\]
 
-**Y-axis: Sustained Performance** – How fast your kernel actually runs
+**Y축: 실측 성능(Sustained Performance)** – kernel이 실제로 달성하는 속도
 
 \\[\Large P_{\text{sustained}} = \frac{\text{Total FLOPs}}{\text{Elapsed Time}} \quad [\text{GFLOP/s}]\\]
 
-Two "roofs" bound all achievable performance:
+두 개의 "상한(roof)"이 달성 가능한 성능의 상한을 정합니다:
 
-| Roof             | Equation                         | Meaning                                            |
+| 상한 | 수식 | 의미 |
 | ---------------- | -------------------------------- | -------------------------------------------------- |
-| **Memory roof**  | \\(P = B_{\text{peak}} \cdot I\\) | Sloped line; performance limited by memory bandwidth |
-| **Compute roof** | \\(P = P_{\text{peak}}\\)         | Horizontal line; performance limited by compute throughput |
+| **메모리 상한** | \\(P = B_{\text{peak}} \cdot I\\) | 기울어진 직선. 메모리 대역폭에 의해 성능이 제한됨 |
+| **연산 상한** | \\(P = P_{\text{peak}}\\) | 수평선. 연산 처리량에 의해 성능이 제한됨 |
 
-The **critical intensity**
+**임계 강도(critical intensity)**
 
 \\[\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\\]
 
-marks where a kernel transitions from memory-bound (\\(I < I^* \\)) to compute-bound (\\(I > I^* \\)).
+는 kernel이 메모리 바운드(\\(I < I^*\\))에서 연산 바운드(\\(I > I^*\\))로 전환되는 지점입니다.
 
-## 2. Hardware example: NVIDIA A100 specifications
+## 2. 하드웨어 예시: NVIDIA A100 사양
 
-Let's ground this theory in concrete numbers using the NVIDIA A100:
+이론을 NVIDIA A100의 구체적인 숫자로 확인해 보겠습니다:
 
-**Peak FP32 throughput**
+**최대 FP32 처리량**
 \\[\Large P_{\text{peak}} = 19.5 \text{ TFLOP/s} = 19{,}500 \text{ GFLOP/s}\\]
 
-**Peak HBM2 bandwidth**
+**최대 HBM2 대역폭**
 \\[\Large B_{\text{peak}} = 1{,}555 \text{ GB/s}\\]
 
-**Critical intensity**
+**임계 강도**
 \\[\Large I^* = \frac{19{,}500}{1{,}555} \approx 12.5 \text{ FLOP/B}\\]
 
-*Source: [NVIDIA A100 Tensor Core GPU Architecture](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf)*
+*출처: [NVIDIA A100 Tensor Core GPU Architecture](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf)*
 
-This means kernels with arithmetic intensity below 12.5 FLOP/B are memory-bound, while those above are compute-bound.
+이는 산술 강도가 12.5 FLOP/B 미만인 kernel은 메모리 바운드, 그 이상인 kernel은 연산 바운드임을 뜻합니다.
 
-## 3. Visualizing our matrix multiplication implementations
+## 3. 행렬 곱셈 구현의 시각화
 
-The animation below shows how our puzzle implementations map onto the A100's roofline model:
+아래 애니메이션은 이 퍼즐의 구현들이 A100의 roofline 모델에 어떻게 대응하는지 보여줍니다:
 
-![Roofline Model Visualization](../../../../src/puzzle_16/media/videos/720p30/roofline_model_viz.gif)
+![Roofline 모델 시각화](/puzzle_16/media/videos/720p30/roofline_model_viz.gif)
 
-The visualization demonstrates the optimization journey we'll take in this puzzle:
+이 시각화는 이 퍼즐에서 거치게 될 최적화 과정을 보여줍니다:
 
-1. **Hardware constraints** – The red memory roof and blue compute roof define performance limits
-2. **Our starting point** – The naive implementation (orange dot) sitting firmly on the memory roof
-3. **Optimization target** – The shared memory version (teal dot) with improved arithmetic intensity
-4. **Ultimate goal** – The golden arrow pointing toward the critical intensity where kernels become compute-bound
+1. **하드웨어 제약** – 빨간색 메모리 상한과 파란색 연산 상한이 성능 한계를 정의
+2. **출발점** – 기본 구현(주황색 점)이 메모리 상한 위에 위치
+3. **최적화 목표** – 공유 메모리 버전(청록색 점)으로 산술 강도가 개선됨
+4. **궁극적 목표** – 금색 화살표는 kernel이 연산 바운드가 되는 임계 강도 지점을 가리킴
 
-## 4. Analyzing our naive implementation
+## 4. 기본 구현 분석
 
-Let's examine why our naive kernel from the previous section performs as it does. For our \\(2 \times 2\\) matrix multiplication:
+이전 섹션의 기본 kernel이 왜 이런 성능을 보이는지 살펴보겠습니다. \\(2 \times 2\\) 행렬 곱셈의 경우:
 
-**Computation per output element**: \\(\text{SIZE} + (\text{SIZE}-1) = 3 \text{ FLOPs }\\)
+**출력 원소당 연산량**: \\(\text{SIZE} + (\text{SIZE}-1) = 3 \text{ FLOPs }\\)
 
- > Each element requires \\(\text{SIZE}\\) multiplications and \\(\text{SIZE} - 1\\) additions:
+ > 각 원소에는 \\(\text{SIZE}\\)번의 곱셈과 \\(\text{SIZE} - 1\\)번의 덧셈이 필요합니다:
  > \\[C_{00} = A_{00} \cdot B_{00} + A_{01} \cdot B_{10}\\]
- > For \\(\text{SIZE} = 2\\) it is 2 multiplications + 1 addition = 3 FLOPs
+ > \\(\text{SIZE} = 2\\)일 때 곱셈 2회 + 덧셈 1회 = 3 FLOPs
 
-**Memory accesses per output element**:
-- Row from matrix A: \\(2 \times 4 = 8\\) bytes (FP32)
-- Column from matrix B: \\(2 \times 4 = 8\\) bytes (FP32)
-- Total: \\(16\\) bytes per output element
+**출력 원소당 메모리 접근**:
 
-**Arithmetic intensity**:
+- 행렬 A의 행: \\(2 \times 4 = 8\\) bytes (FP32)
+- 행렬 B의 열: \\(2 \times 4 = 8\\) bytes (FP32)
+- 합계: 출력 원소당 \\(16\\) bytes
+
+**산술 강도**:
 \\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\\]
 
-This arithmetic intensity is far below the compute roof of an A100, indicating that our naive kernel is **severely memory-bound**.
+이 산술 강도는 A100의 임계 강도에 한참 못 미치므로, 기본 kernel은 **심각한 메모리 바운드** 상태입니다.
 
 \\[\Large I_{\text{naive}} = 0.1875 \ll I^* = 12.5\\]
 
-**Expected performance**:
+**예상 성능**:
 \\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\\]
 
-This represents only \\(\frac{292}{19{,}500} \approx 1.5\%\\) of the GPU's computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we're nowhere near the compute ceiling.
+이는 GPU 연산 잠재력의 \\(\frac{292}{19{,}500} \approx 1.5\%\\)에 불과합니다! 시각화에서 노란색 점이 메모리 상한 위에 놓인 것이 이를 잘 보여줍니다 — 연산 상한에는 한참 미치지 못하는 수준입니다.
 
-## 5. The path forward: shared memory optimization
+## 5. 다음 단계: 공유 메모리 최적화
 
-The roofline model reveals our optimization strategy: **increase arithmetic intensity** by reducing redundant memory accesses. This is exactly what the shared memory approach accomplishes:
+Roofline 모델이 알려주는 최적화 전략은 명확합니다: 중복 메모리 접근을 줄여 **산술 강도를 높이는 것**입니다. 공유 메모리 접근법이 바로 이를 달성합니다:
 
-**Shared memory benefits**:
-- **Cooperative loading**: Threads work together to load matrix blocks into fast shared memory
-- **Data reuse**: Each loaded element serves multiple computations
-- **Reduced global memory traffic**: Fewer accesses to slow global memory
+**공유 메모리의 이점**:
 
-**Expected arithmetic intensity improvement**:
+- **협력적 로딩**: 스레드들이 함께 행렬 블록을 빠른 공유 메모리에 로드
+- **데이터 재사용**: 로드한 원소 하나를 여러 연산에 활용
+- **글로벌 메모리 트래픽 감소**: 느린 글로벌 메모리에 대한 접근 횟수 감소
+
+**산술 강도 개선 예상치**:
 \\[\Large I_{\text{shared}} = \frac{12 \text{ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\\]
 
-While still memory-bound for our small \\(2 \times 2\\) case, this 2× improvement in arithmetic intensity scales dramatically for larger matrices where shared memory tiles can be reused many more times.
+작은 \\(2 \times 2\\) 규모에서는 여전히 메모리 바운드이지만, 이 2배의 산술 강도 향상은 공유 메모리 타일을 훨씬 더 많이 재사용할 수 있는 큰 행렬에서 극적인 효과를 발휘합니다.
 
-## 6. Optimization strategies revealed by the roofline
+## 6. Roofline이 알려주는 최적화 전략
 
-The roofline model not only diagnoses current performance but also illuminates optimization paths. Here are the key techniques we'll explore in later puzzles:
+Roofline 모델은 현재 성능을 진단할 뿐 아니라, 최적화 방향까지 알려줍니다. 이후 퍼즐에서 살펴볼 핵심 기법은 다음과 같습니다:
 
-| Technique                       | Roofline effect                                               | Implementation approach                                        |
+| 기법 | Roofline 효과 | 구현 방법 |
 | ------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------- |
-| **Shared memory tiling**        | ↑ Arithmetic intensity through data reuse                    | Cooperative loading, block-wise computation                    |
-| **Register blocking**           | Reduce memory traffic with register accumulation             | Loop unrolling with register variables                         |
-| **Kernel fusion**              | More FLOPs per byte by combining operations                   | Single kernel handling multiple computation stages             |
-| **Memory coalescing**          | Maximize effective bandwidth utilization                      | Structured access patterns, proper thread organization         |
-| **Asynchronous memory copies** | Dedicated copy engine enables compute-memory overlap          | `copy_dram_to_sram_async` with computation overlap            |
-| **Mixed precision**            | Smaller data types reduce memory pressure                     | FP16/BF16 input with FP32 accumulation                        |
+| **공유 메모리 tiling** | 데이터 재사용으로 산술 강도 ↑ | 협력적 로딩, 블록 단위 연산 |
+| **레지스터 블로킹** | 레지스터 누적으로 메모리 트래픽 감소 | 레지스터 변수와 루프 전개 |
+| **Kernel fusion** | 연산 결합으로 바이트당 FLOPs 증가 | 단일 kernel에서 여러 연산 단계 처리 |
+| **메모리 병합(coalescing)** | 실효 대역폭 활용 극대화 | 구조화된 접근 패턴, 적절한 스레드 구성 |
+| **비동기 메모리 복사** | 전용 복사 엔진으로 연산-메모리 중첩 | `copy_dram_to_sram_async`와 연산 중첩 |
+| **Mixed precision** | 작은 데이터 타입으로 메모리 부하 감소 | FP16/BF16 입력 + FP32 누적 |
 
-Each technique moves kernels along the roofline—either up the memory roof (better bandwidth utilization) or rightward toward the compute roof (higher arithmetic intensity).
+각 기법은 kernel을 roofline 위에서 이동시킵니다 — 메모리 상한을 따라 위로(대역폭 활용 개선), 또는 오른쪽 연산 상한을 향해(산술 강도 향상).
 
-**Note on asynchronous operations**: Standard GPU memory loads (`ld.global`) are already asynchronous - warps continue executing until they need the loaded data. Specialized async copy instructions like `cp.async` (CUDA) or [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/) (Mojo) provide additional benefits by using dedicated copy engines, bypassing registers, and enabling better resource utilization rather than simply making synchronous operations asynchronous.
+**비동기 연산에 대한 참고**: 표준 GPU 메모리 로드(`ld.global`)는 이미 비동기입니다 — Warp는 로드한 데이터가 실제로 필요해질 때까지 계속 실행됩니다. `cp.async`(CUDA)나 [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)(Mojo) 같은 전용 비동기 복사 명령은 여기서 한 걸음 더 나아가, 전용 복사 엔진을 사용하고 레지스터를 우회하여 자원 활용을 높입니다. 단순히 동기 연산을 비동기로 바꾸는 것과는 다릅니다.
 
-## 7. Beyond simple rooflines
+## 7. 단순한 roofline을 넘어서
 
-**Multi-level memory**: Advanced rooflines include separate ceilings for L2 cache, shared memory, and register bandwidth to identify which memory hierarchy level constrains performance.
+**다단계 메모리**: 고급 roofline은 L2 캐시, 공유 메모리, 레지스터 대역폭에 대해 별도의 상한을 포함하여 어떤 메모리 계층이 성능을 제약하는지 식별합니다.
 
-**Communication rooflines**: For multi-GPU applications, replace memory bandwidth with interconnect bandwidth (NVLink, InfiniBand) to analyze scaling efficiency.
+**통신 roofline**: 멀티 GPU 애플리케이션에서는 메모리 대역폭 대신 인터커넥트 대역폭(NVLink, InfiniBand)을 사용하여 스케일링 효율을 분석합니다.
 
-**Specialized units**: Modern GPUs include tensor cores with their own performance characteristics, requiring specialized roofline analysis.
+**전용 유닛**: 최신 GPU는 고유한 성능 특성을 가진 tensor core를 포함하며, 별도의 roofline 분석이 필요합니다.
 
-## 8. Using the roofline in practice
+## 8. 실전에서 roofline 활용하기
 
-1. **Profile your kernel**: Use tools like Nsight Compute to measure actual FLOPs and memory traffic
-2. **Plot the data point**: Calculate arithmetic intensity and sustained performance
-3. **Identify the bottleneck**: Memory-bound kernels sit on the memory roof; compute-bound kernels approach the compute roof
-4. **Choose optimizations**: Focus on bandwidth improvements for memory-bound kernels, algorithmic changes for compute-bound ones
-5. **Measure and iterate**: Verify that optimizations move kernels in the expected direction
+1. **Kernel profiling**: Nsight Compute 같은 도구로 실제 FLOPs와 메모리 트래픽 측정
+2. **데이터 포인트 표시**: 산술 강도와 실측 성능 계산
+3. **병목 식별**: 메모리 바운드 kernel은 메모리 상한 위에, 연산 바운드 kernel은 연산 상한에 근접
+4. **최적화 선택**: 메모리 바운드 kernel에는 대역폭 개선에, 연산 바운드 kernel에는 알고리즘 변경에 집중
+5. **측정과 반복**: 최적화가 kernel을 기대한 방향으로 이동시키는지 검증
 
-## Connection to our shared memory puzzle
+## 공유 메모리 퍼즐과의 연결
 
-In the next section, we'll implement the **shared memory optimization** that begins moving our kernel up the roofline. As the visualization shows, this takes us from the orange dot (naive) to the teal dot (shared memory)—a clear performance improvement through better data reuse.
+다음 섹션에서는 kernel을 roofline 위로 끌어올리기 시작하는 **공유 메모리 최적화**를 구현합니다. 시각화에서 볼 수 있듯이, 주황색 점(기본)에서 청록색 점(공유 메모리)으로 이동하게 됩니다 — 데이터 재사용 개선을 통한 확실한 성능 향상입니다.
 
-While our \\(2 \times 2\\) example won't reach the compute roof, you'll see how the same principles scale to larger matrices where shared memory becomes crucial for performance. The roofline model provides the theoretical foundation for understanding **why** shared memory helps and **how much** improvement to expect.
+\\(2 \times 2\\) 예제에서는 연산 상한에 도달하지 못하지만, 공유 메모리가 성능에 결정적인 역할을 하는 큰 행렬에서 동일한 원리가 어떻게 확장되는지 확인할 수 있습니다. Roofline 모델은 공유 메모리가 **왜** 도움이 되고 **얼마나** 개선을 기대할 수 있는지 이해하기 위한 이론적 토대를 제공합니다.
 
-Understanding the roofline model transforms GPU optimization from guesswork into systematic engineering. Every optimization technique in this book can be understood through its effect on this simple but powerful performance model.
+Roofline 모델을 이해하면 GPU 최적화가 추측에서 체계적인 엔지니어링으로 바뀝니다. 이 책의 모든 최적화 기법은 이 단순하지만 강력한 성능 모델에 대한 효과로 이해할 수 있습니다.

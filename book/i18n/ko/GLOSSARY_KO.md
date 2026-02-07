@@ -38,6 +38,7 @@
 | LayoutTensor | Mojo의 다차원 배열 추상화 타입 |
 | memory fence | 메모리 작업 순서가 뒤바뀌지 않도록 보장하는 장치 |
 | memcheck | compute-sanitizer의 메모리 위반 탐지 도구 |
+| mixed precision | FP16/BF16 입력 + FP32 누적처럼 정밀도를 혼합하는 기법 |
 | occupancy | GPU를 얼마나 활용하고 있는지 나타내는 비율 |
 | off-by-one | 경계값이 1만큼 어긋나는 프로그래밍 오류. 반복문에서 흔히 발생 |
 | offset | 메모리 시작 위치로부터의 거리. 인덱스 계산에 사용 |
@@ -55,6 +56,7 @@
 | stack trace | 오류 발생 시점까지의 함수 호출 경로 |
 | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
 | stencil | 이웃 데이터를 참조하는 연산 패턴 |
+| stride | 메모리 접근이나 반복의 간격. reduction에서 매 단계마다 절반으로 줄이는 보폭 |
 | synccheck | compute-sanitizer의 동기화 버그 탐지 도구 |
 | tensor core | GPU의 행렬 연산 전용 하드웨어 |
 | tiling | 큰 데이터를 작은 조각으로 나눠서 처리하는 방법 |
@@ -66,12 +68,16 @@
 
 | English | 한글 | 비고 |
 | --- | --- | --- |
+| address space | 주소 공간 | 메모리 영역 구분. Mojo에서 `AddressSpace.SHARED` 등으로 지정 |
+| arithmetic intensity | 산술 강도 | 데이터 1바이트당 수행하는 연산량 (FLOP/B). Roofline 모델의 X축 |
 | backward pass | 역전파 | 신경망에서 기울기를 뒤로 전달하는 과정 |
 | binary | 바이너리 | 컴파일된 실행 파일 |
 | binning | 구간 분류 | 데이터를 구간으로 나누는 것. 히스토그램 구간 분류 |
 | boundary (check) | 경계 (검사) | 배열 인덱스가 유효한 경계 내에 있는지 확인하는 것 |
 | block | 블록 | 공유 메모리를 함께 쓰고 서로 동기화할 수 있는 스레드 묶음 |
 | buffer overflow | 버퍼 오버플로우 | 버퍼 경계를 넘어서 데이터를 쓰는 메모리 오류 |
+| compute-bound | 연산 바운드 | 연산 처리량에 의해 성능이 제한되는 상태 |
+| data locality | 데이터 지역성 | 자주 쓰는 데이터를 가까운 메모리에 두는 것 |
 | dereference | 역참조 | 포인터가 가리키는 메모리의 값에 접근하는 것 |
 | dot product | 내적 | 두 벡터의 원소별 곱의 합 |
 | element-wise | 요소별 | 배열의 각 요소에 개별적으로 수행하는 연산 |
@@ -80,7 +86,9 @@
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |
 | host code | 호스트 코드 | CPU에서 실행되는 코드. GPU 작업을 설정하는 부분 |
 | kernel code | 커널 코드 | GPU에서 병렬로 실행되는 코드 |
+| loop unrolling | 루프 전개 | 반복문을 펼쳐서 반복 오버헤드를 줄이는 컴파일러 최적화 기법 |
 | matrix multiplication | 행렬 곱셈 | 두 행렬을 곱하는 연산 |
+| memory-bound | 메모리 바운드 | 메모리 대역폭에 의해 성능이 제한되는 상태 |
 | memory bandwidth | 메모리 대역폭 | 단위 시간당 전송할 수 있는 데이터 양 |
 | memory alignment | 메모리 정렬 | 데이터를 특정 바이트 경계에 맞춰 배치하는 것 |
 | memory hierarchy | 메모리 계층 구조 | GPU 메모리의 계층적 구조 (글로벌 → 공유 → 레지스터) |
@@ -89,16 +97,20 @@
 | memory violation | 메모리 위반 | 잘못된 메모리 영역에 접근하는 오류 |
 | normalization | 정규화 | 값을 일정 범위로 조정하는 것 |
 | overlap | 중첩 | 여러 작업을 동시에 수행하는 것. 복사 중첩 |
+| padding | 패딩 | 배열 끝을 0이나 특정 값으로 채워 크기를 맞추는 것 |
 | parallel | 병렬 | 여러 작업을 동시에 처리하는 방식 |
 | partial block | 부분 블록 | 데이터 끝에서 블록 크기를 다 채우지 못한 블록 |
 | primitive | 기본 요소 | 프로그래밍의 기본 도구. 동기화 기본 요소 |
 | race condition | 경쟁 상태 | 여러 스레드가 같은 데이터에 동시에 접근해서 생기는 오류 |
+| register blocking | 레지스터 블로킹 | 레지스터에 값을 누적하여 메모리 트래픽을 줄이는 최적화 기법 |
 | shared memory | 공유 메모리 | 같은 블록 안의 스레드들이 함께 쓰는 빠른 메모리 |
 | sliding window | 슬라이딩 윈도우 | 데이터 위를 이동하며 처리하는 고정 크기 창 |
 | single writer pattern | 단일 writer 패턴 | 하나의 스레드만 쓰기를 담당하는 동기화 패턴 |
 | synchronization | 동기화 | 스레드들이 발맞춰 실행되도록 맞추는 것 |
 | thread | 스레드 | 하나의 데이터를 처리하는 가장 작은 실행 단위 |
+| transpose | 전치 | 행렬의 행과 열을 뒤바꾸는 연산. \\(A^T\\)로 표기 |
 | Undefined Behavior | 미정의 동작 | 프로그램의 동작이 정의되지 않은 상태 |
+| zero padding | 제로 패딩 | 배열 경계 밖을 0으로 채우는 기법. convolution 경계 처리에 사용 |
 | zero-cost abstraction | 제로 코스트 추상화 | 추상화해도 성능 손실 없이 머신 코드로 컴파일됨 |
 
 ---
