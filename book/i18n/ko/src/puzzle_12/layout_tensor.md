@@ -1,61 +1,61 @@
 <!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
 
-## Overview
+## 개요
 
-Implement a kernel that computes the dot product of 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output` (single number).
+1D LayoutTensor `a`와 1D LayoutTensor `b`의 내적을 계산하여 1D LayoutTensor `output`(단일 값)에 저장하는 kernel을 구현하세요.
 
-**Note:** _You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block._
+**참고:** _각 위치마다 스레드 1개가 있습니다. 스레드당 global read 2회, 블록당 global write 1회만 필요합니다._
 
-## Key concepts
+## 핵심 개념
 
-This puzzle covers:
+이 퍼즐에서 배울 내용:
 
-- Similar to the [puzzle 8](../puzzle_08/layout_tensor.md) and [puzzle 11](../puzzle_11/layout_tensor.md), implementing parallel reduction with LayoutTensor
-- Managing shared memory using LayoutTensor with address_space
-- Coordinating threads for collective operations
-- Using layout-aware tensor operations
+- [Puzzle 8](../puzzle_08/layout_tensor.md), [Puzzle 11](../puzzle_11/layout_tensor.md)에서 이어지는 LayoutTensor 기반 병렬 reduction
+- address_space를 활용한 공유 메모리 관리
+- 여러 스레드가 협력해 하나의 결과를 만들어가는 과정
+- 레이아웃을 인식하는 텐서 연산
 
-The key insight is how LayoutTensor simplifies memory management while maintaining efficient parallel reduction patterns.
+핵심은 LayoutTensor가 메모리 관리를 간소화하면서도, 병렬 reduction의 효율은 그대로 살리는 방식을 이해하는 것입니다.
 
-## Configuration
+## 구성
 
-- Vector size: `SIZE = 8` elements
-- Threads per block: `TPB = 8`
-- Number of blocks: 1
-- Output size: 1 element
-- Shared memory: `TPB` elements
+- 벡터 크기: `SIZE = 8`
+- 블록당 스레드 수: `TPB = 8`
+- 블록 수: 1
+- 출력 크기: 1
+- 공유 메모리: `TPB`개
 
-Notes:
+참고:
 
-- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
-- **Element access**: Natural indexing with bounds checking
-- **Layout handling**: Separate layouts for input and output
-- **Thread coordination**: Same synchronization patterns with `barrier()`
+- **LayoutTensor 할당**: `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` 사용
+- **요소 접근**: 경계 검사가 자동으로 따라오는 자연스러운 인덱싱
+- **레이아웃 처리**: 입력용과 출력용 레이아웃을 따로 구성
+- **스레드 조율**: Raw 버전과 동일하게 `barrier()`로 동기화
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p12/p12_layout_tensor.mojo:dot_product_layout_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_layout_tensor.mojo" class="filename">View full file: problems/p12/p12_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_layout_tensor.mojo" class="filename">전체 파일 보기: problems/p12/p12_layout_tensor.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. Create shared memory with LayoutTensor using address_space
-2. Store `a[global_i] * b[global_i]` in `shared[local_i]`
-3. Use parallel reduction pattern with `barrier()`
-4. Let thread 0 write final result to `output[0]`
+1. LayoutTensor와 address_space로 공유 메모리 생성
+2. `shared[local_i]`에 `a[global_i] * b[global_i]`를 저장
+3. `barrier()`와 함께 병렬 reduction 패턴 적용
+4. 스레드 0이 최종 결과를 `output[0]`에 기록
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -94,14 +94,14 @@ uv run poe p12_layout_tensor
   </div>
 </div>
 
-Your output will look like this if the puzzle isn't solved yet:
+퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:
 
 ```txt
 out: HostBuffer([0.0])
 expected: HostBuffer([140.0])
 ```
 
-## Solution
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -112,22 +112,22 @@ expected: HostBuffer([140.0])
 
 <div class="solution-explanation">
 
-The solution implements a parallel reduction for dot product using LayoutTensor. Here's the detailed breakdown:
+LayoutTensor를 활용한 병렬 reduction으로 내적을 계산하는 솔루션입니다. 단계별로 살펴보겠습니다:
 
-### Phase 1: Element-wise Multiplication
+### 1단계: 요소별 곱셈
 
-Each thread performs one multiplication with natural indexing:
+각 스레드가 직관적인 인덱싱으로 곱셈 연산을 하나씩 처리합니다:
 
 ```mojo
 shared[local_i] = a[global_i] * b[global_i]
 ```
 
-### Phase 2: Parallel Reduction
+### 2단계: 병렬 Reduction
 
-Tree-based reduction with layout-aware operations:
+레이아웃을 인식하는 트리 기반 reduction입니다:
 
 ```txt
-Initial:  [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
+초기값:    [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
         = [0    1    4    9    16   25   36   49]
 
 Step 1:   [0+16 1+25 4+36 9+49  16   25   36   49]
@@ -140,20 +140,20 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
         = [140   84   40   58   16   25   36   49]
 ```
 
-### Key implementation features
+### 구현의 핵심 특징
 
-1. **Memory Management**:
-   - Clean shared memory allocation with LayoutTensor address_space parameter
-   - Type-safe operations with LayoutTensor
-   - Automatic bounds checking
-   - Layout-aware indexing
+1. **메모리 관리**:
+   - address_space 파라미터 하나로 공유 메모리를 깔끔하게 할당
+   - 타입 안전한 연산이 보장되고
+   - 경계 검사가 자동으로 따라오며
+   - 인덱싱도 레이아웃을 인식
 
-2. **Thread Synchronization**:
-   - `barrier()` after initial multiplication
-   - `barrier()` between reduction steps
-   - Safe thread coordination
+2. **스레드 동기화**:
+   - 초기 곱셈이 끝나면 `barrier()`
+   - Reduction 단계 사이마다 `barrier()`
+   - 스레드 간 안전한 조율 보장
 
-3. **Reduction Logic**:
+3. **Reduction 로직**:
 
    ```mojo
    stride = TPB // 2
@@ -164,67 +164,67 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
        stride //= 2
    ```
 
-4. **Performance Benefits**:
-   - \\(O(\log n)\\) time complexity
-   - Coalesced memory access
-   - Minimal thread divergence
-   - Efficient shared memory usage
+4. **성능상 이점**:
+   - \\(O(\log n)\\) 시간 복잡도
+   - 병합(coalesced) 메모리 접근
+   - 최소한의 스레드 분기
+   - 공유 메모리의 효율적 활용
 
-The LayoutTensor version maintains the same efficient parallel reduction while providing:
+LayoutTensor 버전은 병렬 reduction의 효율은 그대로 유지하면서, 여기에 더해:
 
-- Better type safety
-- Cleaner memory management
-- Layout awareness
-- Natural indexing syntax
+- 타입 안전성이 한층 강화되고
+- 메모리 관리가 더 깔끔해지며
+- 레이아웃을 자동으로 인식하고
+- 인덱싱 문법도 자연스러워집니다
 
-### Barrier synchronization importance
+### Barrier 동기화의 중요성
 
-The `barrier()` between reduction steps is critical for correctness. Here's why:
+Reduction 단계 사이의 `barrier()`는 정확한 결과를 위해 반드시 필요합니다. 그 이유를 살펴보겠습니다:
 
-Without `barrier()`, race conditions occur:
+`barrier()`가 없으면 경쟁 상태가 발생합니다:
 
 ```text
-Initial shared memory: [0 1 4 9 16 25 36 49]
+초기 공유 메모리: [0 1 4 9 16 25 36 49]
 
 Step 1 (stride = 4):
-Thread 0 reads: shared[0] = 0, shared[4] = 16
-Thread 1 reads: shared[1] = 1, shared[5] = 25
-Thread 2 reads: shared[2] = 4, shared[6] = 36
-Thread 3 reads: shared[3] = 9, shared[7] = 49
+Thread 0 읽기: shared[0] = 0, shared[4] = 16
+Thread 1 읽기: shared[1] = 1, shared[5] = 25
+Thread 2 읽기: shared[2] = 4, shared[6] = 36
+Thread 3 읽기: shared[3] = 9, shared[7] = 49
 
-Without barrier:
-- Thread 0 writes: shared[0] = 0 + 16 = 16
-- Thread 1 starts next step (stride = 2) before Thread 0 finishes
-  and reads old value shared[0] = 0 instead of 16!
+barrier 없이:
+- Thread 0 쓰기: shared[0] = 0 + 16 = 16
+- Thread 1이 Thread 0보다 먼저 다음 단계(stride = 2)로 넘어가서
+  16이 아닌 이전 값 shared[0] = 0을 읽어버립니다!
 ```
 
-With `barrier()`:
+`barrier()`가 있으면:
 
 ```text
 Step 1 (stride = 4):
-All threads write their sums:
+모든 스레드가 합을 기록:
 [16 26 40 58 16 25 36 49]
-barrier() ensures ALL threads see these values
+barrier()가 모든 스레드에게 이 값들이 보이도록 보장
 
 Step 2 (stride = 2):
-Now threads safely read the updated values:
+이제 업데이트된 값을 안전하게 읽을 수 있음:
 Thread 0: shared[0] = 16 + 40 = 56
 Thread 1: shared[1] = 26 + 58 = 84
 ```
 
-The `barrier()` ensures:
+`barrier()`는 다음을 보장합니다:
 
-1. All writes from current step complete
-2. All threads see updated values
-3. No thread starts next iteration early
-4. Consistent shared memory state
+1. 현재 단계의 모든 쓰기가 끝난 뒤에야 다음으로 넘어감
+2. 모든 스레드가 최신 값을 볼 수 있음
+3. 어떤 스레드도 앞서 나가지 않음
+4. 공유 메모리가 항상 일관된 상태를 유지
 
-Without these synchronization points, we could get:
+이런 동기화 지점이 없으면:
 
-- Memory race conditions
-- Threads reading stale values
-- Non-deterministic results
-- Incorrect final sum
+- 경쟁 상태가 발생하고
+- 스레드가 이미 지난 값을 읽게 되며
+- 실행할 때마다 결과가 달라지고
+- 최종 합계가 틀어질 수 있습니다
 
 </div>
 </details>
