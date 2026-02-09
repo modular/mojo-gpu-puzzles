@@ -89,7 +89,7 @@ This arithmetic intensity is far below the compute roof of an A100, indicating t
 **Expected performance**:
 \\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\\]
 
-This represents only \\(\frac{292}{19{,}500} \approx 1.5\%\\) of the GPU's computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we're nowhere near the compute ceiling.
+This represents only \\(\frac{292}{19{,}500} \approx 1.5\\%\\) of the GPU's computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we're nowhere near the compute ceiling.
 
 ## 5. The path forward: shared memory optimization
 
