@@ -248,7 +248,7 @@ For \(\text{SIZE} = 2\) it is 2 multiplications + 1 addition = 3 FLOPs</p>
 <p>\[\Large I_{\text{naive}} = 0.1875 \ll I^* = 12.5\]</p>
 <p><strong>Expected performance</strong>:
 \[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\]</p>
-<p>This represents only \(\frac{292}{19{,}500} \approx 1.5%\) of the GPU’s computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we’re nowhere near the compute ceiling.</p>
+<p>This represents only \(\frac{292}{19{,}500} \approx 1.5\%\) of the GPU’s computational potential! The visualization clearly shows this as the yellow dot sitting squarely on the memory roof—we’re nowhere near the compute ceiling.</p>
 <h2 id="5-the-path-forward-shared-memory-optimization"><a class="header" href="#5-the-path-forward-shared-memory-optimization">5. The path forward: shared memory optimization</a></h2>
 <p>The roofline model reveals our optimization strategy: <strong>increase arithmetic intensity</strong> by reducing redundant memory accesses. This is exactly what the shared memory approach accomplishes:</p>
 <p><strong>Shared memory benefits</strong>:</p>
