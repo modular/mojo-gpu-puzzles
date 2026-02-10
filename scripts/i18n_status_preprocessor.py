@@ -43,7 +43,7 @@ def get_source_commit(source_file: str, book_root: Path) -> str | None:
     relative_path = f"src/{source_file}"
     try:
         result = subprocess.run(
-            ["git", "log", "-1", "--format=%H", "--", relative_path],
+            ["git", "log", "main", "-1", "--format=%H", "--", relative_path],
             capture_output=True,
             text=True,
             cwd=book_root,
