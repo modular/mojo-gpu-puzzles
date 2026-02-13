@@ -2,7 +2,7 @@ from math import ceildiv
 from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from sys import size_of, argv
+from sys import argv
 from testing import assert_equal
 
 # ANCHOR: embedding_kernel_coalesced

@@ -8,7 +8,7 @@ from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import size_of, argv, info
+from sys import argv, info
 from testing import assert_true, assert_almost_equal
 
 comptime TPB = 256  # Threads per block for pipeline stages
