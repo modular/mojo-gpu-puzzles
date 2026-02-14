@@ -1,74 +1,74 @@
 <!-- i18n-source-commit: 7a8e8be1635ae0615b896ce069f6c241d562343a -->
 
-# Bonus Challenges
+# 보너스 챌린지
 
-## Challenge I: advanced softmax implementations
+## 챌린지 I: 고급 softmax 구현
 
-*This challenge extends [Puzzle 18: Softmax Op](../puzzle_18/puzzle_18.md)*
+*이 챌린지는 [Puzzle 18: Softmax Op](../puzzle_18/puzzle_18.md)의 확장입니다*
 
-Here are some advanced challenges to extend your softmax implementation:
+Softmax 구현을 확장하는 고급 챌린지들입니다:
 
-### 1. Large-scale softmax: Handling `TPB < SIZE`
+### 1. 대규모 softmax: `TPB < SIZE` 처리
 
-When the input size exceeds the number of threads per block (`TPB < SIZE`), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:
+입력 크기가 블록당 스레드 수를 초과하면(`TPB < SIZE`), 단일 블록이 전체 배열을 처리할 수 없어 현재 구현이 동작하지 않습니다. 이를 해결하는 두 가지 접근법이 있습니다:
 
-#### 1.1 Buffer reduction
+#### 1.1 버퍼 reduction
 
-- Store block-level results (max and sum) in device memory
-- Use a second kernel to perform reduction across these intermediate results
-- Implement a final normalization pass that uses the global max and sum
+- 블록 단위 결과(최댓값과 합계)를 디바이스 메모리에 저장합니다
+- 두 번째 kernel을 사용하여 이 중간 결과들에 대해 reduction을 수행합니다
+- 전역 최댓값과 합계를 사용하는 최종 정규화 단계를 구현합니다
 
 #### 1.2 Two-pass softmax
 
-- First pass: Each block calculates its local max value
-- Synchronize and compute global max
-- Second pass: Calculate \\(e^{x-max}\\) and local sum
-- Synchronize and compute global sum
-- Final pass: Normalize using global sum
+- 첫 번째 패스: 각 블록이 로컬 최댓값을 계산합니다
+- 동기화 후 전역 최댓값을 계산합니다
+- 두 번째 패스: \\(e^{x-max}\\)와 로컬 합계를 계산합니다
+- 동기화 후 전역 합계를 계산합니다
+- 최종 패스: 전역 합계를 사용하여 정규화합니다
 
-### 2. Batched softmax
+### 2. 배치 softmax
 
-Implement softmax for a batch of vectors (2D input tensor) with these variants:
+벡터 배치(2D 입력 텐서)에 대한 softmax를 다음 변형으로 구현합니다:
 
-- Row-wise softmax: Apply softmax independently to each row
-- Column-wise softmax: Apply softmax independently to each column
-- Compare performance differences between these implementations
+- 행 단위 softmax: 각 행에 독립적으로 softmax를 적용합니다
+- 열 단위 softmax: 각 열에 독립적으로 softmax를 적용합니다
+- 두 구현 간의 성능 차이를 비교합니다
 
-## Challenge II: advanced attention mechanisms
+## 챌린지 II: 고급 어텐션 메커니즘
 
-*This challenge extends [Puzzle 19: Attention Op](../puzzle_19/puzzle_19.md)*
+*이 챌린지는 [Puzzle 19: Attention Op](../puzzle_19/puzzle_19.md)의 확장입니다*
 
-Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:
+벡터 어텐션 구현을 기반으로, 어텐션 메커니즘의 한계를 넓혀보는 고급 챌린지들입니다:
 
-### 1. Larger sequence lengths
+### 1. 더 긴 시퀀스 길이
 
-Extend the attention mechanism to handle longer sequences using the existing kernels:
+기존 kernel을 사용하여 더 긴 시퀀스를 처리하도록 어텐션 메커니즘을 확장합니다:
 
-#### 1.1 Sequence length scaling
+#### 1.1 시퀀스 길이 확장
 
-- Modify the attention implementation to handle `SEQ_LEN = 32` and `SEQ_LEN = 64`
-- Update the `TPB` (threads per block) parameter accordingly
-- Ensure the transpose kernel handles the larger matrix sizes correctly
+- `SEQ_LEN = 32`와 `SEQ_LEN = 64`를 처리하도록 어텐션 구현을 수정합니다
+- `TPB`(블록당 스레드 수) 파라미터를 그에 맞게 업데이트합니다
+- 전치 kernel이 더 큰 행렬 크기를 올바르게 처리하는지 확인합니다
 
-#### 1.2 Dynamic sequence lengths
+#### 1.2 동적 시퀀스 길이
 
-- Implement attention that can handle variable sequence lengths at runtime
-- Add bounds checking in the kernels to handle sequences shorter than `SEQ_LEN`
-- Compare performance with fixed vs. dynamic sequence length handling
+- 런타임에 가변 시퀀스 길이를 처리할 수 있는 어텐션을 구현합니다
+- `SEQ_LEN`보다 짧은 시퀀스를 처리하기 위해 kernel에 경계 검사를 추가합니다
+- 고정 시퀀스 길이 처리와 동적 시퀀스 길이 처리의 성능을 비교합니다
 
-### 2. Batched vector attention
+### 2. 배치 벡터 어텐션
 
-Extend to process multiple attention computations simultaneously:
+여러 어텐션 연산을 동시에 처리하도록 확장합니다:
 
-#### 2.1 Batch processing
+#### 2.1 배치 처리
 
-- Modify the attention operation to handle multiple query vectors at once
-- Input shapes: Q(batch_size, d), K(seq_len, d), V(seq_len, d)
-- Output shape: (batch_size, d)
-- Reuse the existing kernels with proper indexing
+- 여러 쿼리 벡터를 한 번에 처리하도록 어텐션 연산을 수정합니다
+- 입력 shape: Q(batch_size, d), K(seq_len, d), V(seq_len, d)
+- 출력 shape: (batch_size, d)
+- 적절한 인덱싱으로 기존 kernel을 재사용합니다
 
-#### 2.2 Memory optimization for batches
+#### 2.2 배치를 위한 메모리 최적화
 
-- Minimize memory allocations by reusing buffers across batch elements
-- Compare performance with different batch sizes (2, 4, 8)
-- Analyze memory usage patterns
+- 배치 요소 간 버퍼를 재사용하여 메모리 할당을 최소화합니다
+- 다양한 배치 크기(2, 4, 8)에서 성능을 비교합니다
+- 메모리 사용 패턴을 분석합니다

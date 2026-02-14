@@ -52,6 +52,7 @@
 | sanitizer | GPU 코드의 메모리 오류, 경쟁 상태 등을 탐지하는 검사 도구 |
 | segmentation fault | 접근 권한이 없는 메모리 영역에 접근할 때 발생하는 오류 |
 | shuffle | Warp 내 스레드 간 데이터 교환 |
+| softmax | 벡터를 확률 분포로 정규화하는 함수 |
 | SIMD | Single Instruction Multiple Data. 벡터 연산 방식 |
 | stack trace | 오류 발생 시점까지의 함수 호출 경로 |
 | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
@@ -85,6 +86,7 @@
 | global memory | 글로벌 메모리 | GPU 어디서든 접근할 수 있는 메모리 |
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |
 | host code | 호스트 코드 | CPU에서 실행되는 코드. GPU 작업을 설정하는 부분 |
+| in-place (computation) | 직접 저장 (연산) | 별도 메모리를 할당하지 않고 기존 버퍼에 결과를 직접 기록하는 방식 |
 | kernel code | 커널 코드 | GPU에서 병렬로 실행되는 코드 |
 | loop unrolling | 루프 전개 | 반복문을 펼쳐서 반복 오버헤드를 줄이는 컴파일러 최적화 기법 |
 | matrix multiplication | 행렬 곱셈 | 두 행렬을 곱하는 연산 |
@@ -108,6 +110,7 @@
 | single writer pattern | 단일 writer 패턴 | 하나의 스레드만 쓰기를 담당하는 동기화 패턴 |
 | synchronization | 동기화 | 스레드들이 발맞춰 실행되도록 맞추는 것 |
 | thread | 스레드 | 하나의 데이터를 처리하는 가장 작은 실행 단위 |
+| thread divergence | 스레드 분기 | 같은 Warp 내 스레드들이 서로 다른 분기를 타는 현상 |
 | transpose | 전치 | 행렬의 행과 열을 뒤바꾸는 연산. \\(A^T\\)로 표기 |
 | Undefined Behavior | 미정의 동작 | 프로그램의 동작이 정의되지 않은 상태 |
 | zero padding | 제로 패딩 | 배열 경계 밖을 0으로 채우는 기법. convolution 경계 처리에 사용 |
