@@ -18,6 +18,7 @@
 | English | 비고 |
 | --- | --- |
 | atomic | 중간 상태 없이 완전히 실행되거나 전혀 실행되지 않는 연산 |
+| autograd | PyTorch의 자동 미분 시스템. 역전파 기울기를 자동 계산 |
 | bank conflict | 여러 스레드가 공유 메모리의 같은 뱅크에 한꺼번에 접근해서 생기는 충돌 |
 | barrier | 스레드들이 특정 지점에서 만나는 동기화 장벽 |
 | broadcast | 1. 작은 차원의 데이터를 큰 차원으로 확장하여 연산. 예: 벡터를 행렬로 확장<br>2. 데이터를 여러 스레드에 복사하는 연산 (`warp.broadcast()`) |
@@ -28,6 +29,7 @@
 | convolution | 합성곱. 이미지나 신경망에서 필터를 씌우는 연산 |
 | deadlock | 스레드들이 서로를 기다리며 영원히 멈춘 상태 |
 | double-buffering | 두 버퍼를 번갈아 쓰는 최적화 기법 |
+| embedding | 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환하는 연산 |
 | fusion | kernel을 합쳐서 실행하는 최적화 기법 |
 | guard | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | hazard | 스레드 간 메모리 접근 충돌. read-after-write, write-after-write 등 |
@@ -79,6 +81,7 @@
 | buffer overflow | 버퍼 오버플로우 | 버퍼 경계를 넘어서 데이터를 쓰는 메모리 오류 |
 | compute-bound | 연산 바운드 | 연산 처리량에 의해 성능이 제한되는 상태 |
 | data locality | 데이터 지역성 | 자주 쓰는 데이터를 가까운 메모리에 두는 것 |
+| dense vector | 밀집 벡터 | 대부분의 원소가 0이 아닌 벡터. embedding의 출력 형태 |
 | dereference | 역참조 | 포인터가 가리키는 메모리의 값에 접근하는 것 |
 | dot product | 내적 | 두 벡터의 원소별 곱의 합 |
 | element-wise | 요소별 | 배열의 각 요소에 개별적으로 수행하는 연산 |

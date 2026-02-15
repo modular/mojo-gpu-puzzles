@@ -2,36 +2,36 @@
 
 # Puzzle 20: 1D Convolution Op
 
-> ## From MAX Graph to PyTorch custom ops
+> ## MAX Graph에서 PyTorch 커스텀 Op으로
 >
-> We're now entering Part V of our GPU puzzle journey: **PyTorch Custom Operations**.
+> GPU 퍼즐 여정의 Part V에 진입했습니다: **PyTorch 커스텀 Op 통합하기**.
 >
-> In [Puzzle 17](../puzzle_17/puzzle_17.md), we learned how to integrate Mojo GPU kernels with Python using MAX Graph. Now we'll explore how to:
+> [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)에서 MAX Graph를 사용하여 Mojo GPU 커널을 Python과 연동하는 방법을 배웠습니다. 이제부터는 다음을 알아봅니다:
 >
-> - Use the same Mojo kernel with PyTorch's CustomOpLibrary
-> - Integrate with PyTorch's tensor system and autograd
-> - Compare MAX Graph vs PyTorch approaches for custom operations
-> - Understand the critical pattern of explicit output tensor allocation
+> - 동일한 Mojo 커널을 PyTorch의 CustomOpLibrary로 사용하기
+> - PyTorch의 텐서 시스템 및 autograd와 통합하기
+> - MAX Graph와 PyTorch 방식의 커스텀 연산 비교하기
+> - 명시적 출력 텐서 할당이라는 핵심 패턴 이해하기
 >
-> This transition shows how the same optimized GPU kernel can work with different Python integration approaches.
+> 이 전환을 통해 동일한 최적화된 GPU 커널이 서로 다른 Python 통합 방식에서 어떻게 동작하는지 확인할 수 있습니다.
 
-## Overview
+## 개요
 
-In this puzzle, we'll take the exact same 1D convolution kernel from [Puzzle 17](../puzzle_17/puzzle_17.md) and integrate it with PyTorch using the [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/CustomOpLibrary/) instead of MAX Graph.
+이 퍼즐에서는 [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)의 1D convolution kernel을 그대로 가져와서, MAX Graph 대신 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/CustomOpLibrary/)를 사용하여 PyTorch와 통합합니다.
 
-The key learning here is that **the same Mojo kernel works unchanged** - only the Python integration layer differs between MAX Graph and PyTorch approaches.
+여기서 핵심은 **동일한 Mojo 커널이 수정 없이 그대로 동작한다**는 것입니다. MAX Graph와 PyTorch 방식 사이에서 달라지는 것은 Python 통합 레이어뿐입니다.
 
-## Code to complete
+## 완성할 코드
 
-To complete this puzzle, you need to fill in one line to call the custom operation:
+이 퍼즐을 완성하려면 커스텀 연산을 호출하는 한 줄만 채우면 됩니다:
 
 ```python
 {{#include ../../../../../problems/p20/p20.py:conv1d_pytorch}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p20/p20.py" class="filename">View full file: problems/p20/p20.py</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p20/p20.py" class="filename">전체 파일 보기: problems/p20/p20.py</a>
 
-You can run the puzzle with:
+다음 명령으로 퍼즐을 실행할 수 있습니다:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -62,7 +62,7 @@ uv run poe p20
   </div>
 </div>
 
-When successful, you should see output similar to:
+성공하면 다음과 비슷한 출력을 볼 수 있습니다:
 
 ```
 Puzzle 20: From MAX Graph to PyTorch Custom Ops
@@ -84,12 +84,12 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 ✅ PyTorch and MAX Graph results MATCH
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
 
-The solution requires calling the compiled custom operation with the proper arguments:
+컴파일된 커스텀 연산을 적절한 인자와 함께 호출하면 됩니다:
 
 ```python
 {{#include ../../../../../solutions/p20/p20.py:conv1d_pytorch_call}}
@@ -97,98 +97,98 @@ The solution requires calling the compiled custom operation with the proper argu
 
 <div class="solution-explanation">
 
-This solution demonstrates several critical concepts:
+이 풀이는 몇 가지 핵심 개념을 보여줍니다:
 
-### 1. **torch.compile() integration**
+### 1. **torch.compile() 통합**
 
-The solution shows `torch.compile` integration
+`torch.compile` 통합 방식은 다음과 같습니다:
 
 ```python
 torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 ```
 
-### 2. **Explicit Output Tensor Allocation**
+### 2. **명시적 출력 텐서 할당**
 
 ```python
 output_tensor = torch.empty_like(input_tensor)
 ```
 
-- Unlike MAX Graph which handles output allocation automatically
-- PyTorch CustomOpLibrary requires **pre-allocated output tensors**
-- The Mojo operation signature expects `(out, input, kernel)` order
+- MAX Graph는 출력 할당을 자동으로 처리하지만
+- PyTorch CustomOpLibrary는 **미리 할당된 출력 텐서**가 필요합니다
+- Mojo 연산 시그니처는 `(out, input, kernel)` 순서를 기대합니다
 
-### 3. **Parameter Dictionary**
+### 3. **파라미터 딕셔너리**
 
 ```python
 ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shape[0]}]
 ```
 
-- Parameters are passed as a dictionary to the operation
-- These become compile-time parameters in the Mojo kernel
-- Must match the parameter names in the Mojo `@staticmethod fn execute` signature
+- 파라미터는 딕셔너리 형태로 연산에 전달됩니다
+- 이 값들은 Mojo 커널의 컴파일 타임 파라미터가 됩니다
+- Mojo `@staticmethod fn execute` 시그니처의 파라미터 이름과 일치해야 합니다
 
-### 4. **Same Kernel, Different Integration**
+### 4. **같은 커널, 다른 통합 방식**
 
-The underlying Mojo kernel (`conv1d_kernel`) is identical to Puzzle 17:
+내부의 Mojo 커널(`conv1d_kernel`)은 Puzzle 17과 동일합니다:
 
-- Same GPU kernel code
-- Same memory access patterns
-- Same computational logic
-- Only the Python wrapper layer changes
+- 동일한 GPU 커널 코드
+- 동일한 메모리 접근 패턴
+- 동일한 연산 로직
+- Python 래퍼 레이어만 달라짐
 
 </div>
 
 </details>
 
-## Key concepts
+## 핵심 개념
 
-This puzzle illustrates several important patterns for PyTorch custom operations:
+이 퍼즐은 PyTorch 커스텀 연산의 주요 패턴을 보여줍니다:
 
-| Concept | MAX Graph (p15) | PyTorch CustomOpLibrary (p18) |
+| 개념 | MAX Graph (p15) | PyTorch CustomOpLibrary (p18) |
 |---------|-----------------|-------------------------------|
-| **Output Allocation** | Automatic | Manual (`torch.empty_like()`) |
-| **Operation Call** | `ops.custom(...)` | `torch.compile(op)(...)` |
-| **Parameter Passing** | `parameters={...}` | `op[{...}]` |
-| **Device Management** | Explicit device context | PyTorch tensor device |
-| **Memory Management** | MAX Graph tensors | PyTorch tensors |
+| **출력 할당** | 자동 | 수동 (`torch.empty_like()`) |
+| **연산 호출** | `ops.custom(...)` | `torch.compile(op)(...)` |
+| **파라미터 전달** | `parameters={...}` | `op[{...}]` |
+| **디바이스 관리** | 명시적 device context | PyTorch 텐서의 device |
+| **메모리 관리** | MAX Graph 텐서 | PyTorch 텐서 |
 
-### Critical pattern: Explicit output tensor allocation
+### 핵심 패턴: 명시적 출력 텐서 할당
 
-The most important difference is that PyTorch CustomOpLibrary requires **explicit output tensor allocation**:
+가장 중요한 차이점은 PyTorch CustomOpLibrary가 **명시적 출력 텐서 할당**을 요구한다는 것입니다:
 
 ```python
-# ❌ This won't work - no output tensor
+# ❌ 동작하지 않음 - 출력 텐서 없음
 result = torch.compile(conv1d)(input_tensor, kernel_tensor)
 
-# ✅ This works - pre-allocated output tensor
+# ✅ 동작함 - 미리 할당된 출력 텐서
 output_tensor = torch.empty_like(input_tensor)
 torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 ```
 
-This pattern ensures:
+이 패턴이 보장하는 것들:
 
-- Memory is allocated on the correct device
-- Output tensor has the right shape and dtype
-- The Mojo kernel can write directly to the output buffer
+- 올바른 디바이스에 메모리 할당
+- 출력 텐서의 shape과 dtype이 정확
+- Mojo 커널이 출력 버퍼에 직접 쓰기 가능
 
-### torch.compile() integration
+### torch.compile() 통합
 
-`torch.compile()` is essential because it:
+`torch.compile()`이 필수적인 이유:
 
-- Handles memory layout conversion between PyTorch and Mojo
-- Manages device synchronization (CPU ↔ GPU)
-- Optimizes tensor format conversion
-- Provides proper error handling for memory operations
+- PyTorch와 Mojo 사이의 메모리 레이아웃 변환 처리
+- 디바이스 동기화 관리 (CPU ↔ GPU)
+- 텐서 포맷 변환 최적화
+- 메모리 연산에 대한 적절한 오류 처리 제공
 
-_Note: Without `torch.compile()`, you might encounter `std::bad_alloc` errors because the raw operation can't handle PyTorch's tensor memory management._
+_참고: `torch.compile()` 없이 사용하면 `std::bad_alloc` 오류가 발생할 수 있습니다. 이는 raw 연산이 PyTorch의 텐서 메모리 관리를 처리하지 못하기 때문입니다._
 
-## Debugging custom operations
+## 커스텀 연산 디버깅
 
-Common issues and solutions:
+자주 발생하는 문제와 해결 방법:
 
-1. **Memory Allocation Errors**: Always use `torch.compile()`
-2. **Wrong Output Shape**: Ensure output tensor matches expected dimensions
-3. **Device Mismatch**: All tensors must be on the same device
-4. **Parameter Errors**: Verify parameter names match Mojo operation signature
+1. **메모리 할당 오류**: 항상 `torch.compile()`을 사용하세요
+2. **잘못된 출력 Shape**: 출력 텐서가 기대하는 차원과 일치하는지 확인하세요
+3. **디바이스 불일치**: 모든 텐서가 같은 디바이스에 있어야 합니다
+4. **파라미터 오류**: 파라미터 이름이 Mojo 연산 시그니처와 일치하는지 확인하세요
 
-The debug approach: Compare your PyTorch results with the MAX Graph reference implementation that runs the same kernel.
+디버깅 접근법: PyTorch 결과를 동일한 커널을 실행하는 MAX Graph 레퍼런스 구현과 비교해 보세요.

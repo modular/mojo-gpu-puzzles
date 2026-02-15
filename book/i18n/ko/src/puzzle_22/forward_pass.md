@@ -2,31 +2,31 @@
 
 # ⚛️ Fused vs Unfused Kernels
 
-## Overview
+## 개요
 
-In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the [LayerNorm](https://arxiv.org/abs/1607.06450) and Linear operation:
+이 퍼즐에서는 [LayerNorm](https://arxiv.org/abs/1607.06450)과 Linear 연산에 대한 두 가지 접근 방식을 구현하고 비교하며, kernel fusion의 성능 이점을 탐구합니다:
 
-1. **Unfused approach**: Executes LayerNorm and Linear as separate operations
-2. **Fused kernel**: Combines LayerNorm and Linear operations into a single GPU kernel
+1. **Unfused 방식**: LayerNorm과 Linear를 별도의 연산으로 실행
+2. **Fused 커널**: LayerNorm과 Linear 연산을 하나의 GPU 커널로 결합
 
-This comparison demonstrates how kernel fusion can significantly improve performance by:
+이 비교를 통해 kernel fusion이 다음과 같은 방법으로 성능을 크게 개선할 수 있음을 보여줍니다:
 
-- Reducing memory bandwidth usage
-- Minimizing kernel launch overhead
-- Improving cache utilization
-- Eliminating intermediate memory allocations
+- 메모리 대역폭 사용량 절감
+- 커널 실행 오버헤드 최소화
+- 캐시 활용도 향상
+- 중간 결과 저장을 위한 메모리 할당 제거
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn:
+이 퍼즐에서 배울 내용:
 
-- **Kernel fusion techniques** for combining multiple operations
-- **Memory bandwidth optimization** through fused operations
-- **Performance benchmarking** of different kernel implementations
-- **Numerical stability** in fused operations
-- **PyTorch custom operation integration**
+- 여러 연산을 결합하는 **kernel fusion 기법**
+- Fused 연산을 통한 **메모리 대역폭 최적화**
+- 서로 다른 커널 구현의 **성능 벤치마킹**
+- Fused 연산에서의 **수치 안정성**
+- **PyTorch 커스텀 연산 통합**
 
-The mathematical operations we're fusing are:
+결합할 수학적 연산은 다음과 같습니다:
 
 1. LayerNorm:
 \\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
@@ -34,183 +34,183 @@ The mathematical operations we're fusing are:
 2. Linear:
 \\[\Large \text{Linear}(x) = Wx + b \\]
 
-When fused, we compute:
+Fused 연산으로 결합하면 다음을 계산합니다:
 \\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \\]
 
-## Understanding LayerNorm
+## LayerNorm 이해하기
 
-LayerNorm is a normalization technique that helps stabilize and accelerate the training of deep neural networks. Let's break down its components and parameters:
+LayerNorm은 deep neural networks의 학습을 안정화하고 가속하는 정규화 기법입니다. 구성 요소와 파라미터를 하나씩 살펴보겠습니다:
 
-### What LayerNorm does
+### LayerNorm이 하는 일
 
-1. **Normalization**: LayerNorm normalizes the activations across the features (hidden dimensions) for each sample independently. This means:
-   - For each sequence position, it computes statistics across the hidden dimension
-   - Each sample in the batch is normalized independently
-   - This is different from [BatchNorm](https://arxiv.org/abs/1502.03167), which normalizes across the batch dimension
+1. **정규화**: LayerNorm은 각 샘플의 특성(hidden 차원) 전체에 걸쳐 활성화 값을 독립적으로 정규화합니다. 구체적으로:
+   - 각 시퀀스 위치에서 hidden 차원에 대한 통계량을 계산합니다
+   - 배치의 각 샘플은 독립적으로 정규화됩니다
+   - 배치 차원에 대해 정규화하는 [BatchNorm](https://arxiv.org/abs/1502.03167)과는 다릅니다
 
-2. **Parameters**:
-   - \\(\gamma\\) (scale): A learnable parameter vector that allows the network to learn the optimal scale for each feature
-   - \\(\beta\\) (shift): A learnable parameter vector that allows the network to learn the optimal shift for each feature
-   - \\(\epsilon\\): A small constant (1e-5) added to the variance to prevent division by zero
+2. **파라미터**:
+   - \\(\gamma\\) (scale): 네트워크가 각 특성의 최적 스케일을 학습할 수 있게 하는 학습 가능한 파라미터 벡터
+   - \\(\beta\\) (shift): 네트워크가 각 특성의 최적 이동량을 학습할 수 있게 하는 학습 가능한 파라미터 벡터
+   - \\(\epsilon\\): 0으로 나누는 것을 방지하기 위해 분산에 더하는 작은 상수 (1e-5)
 
-### What LayerNorm does in practice
+### LayerNorm의 실제 역할
 
-LayerNorm performs several crucial functions in deep neural networks:
+LayerNorm은 deep neural networks에서 여러 중요한 기능을 수행합니다:
 
-1. **Feature standardization**:
-   - Transforms each feature to have zero mean and unit variance
-   - Makes the network's learning process more stable
-   - Helps prevent the "internal covariate shift" problem where the distribution of layer inputs changes during training
+1. **특성 표준화**:
+   - 각 특성을 평균 0, 분산 1로 변환합니다
+   - 네트워크의 학습 과정을 더 안정적으로 만듭니다
+   - 학습 중 레이어 입력의 분포가 변하는 "내부 공변량 이동(internal covariate shift)" 문제를 방지합니다
 
-2. **Gradient flow**:
-   - Improves gradient flow through the network
-   - Prevents vanishing/exploding gradients
-   - Makes training more efficient by allowing higher learning rates
+2. **기울기 흐름**:
+   - 네트워크를 통한 기울기 흐름을 개선합니다
+   - 기울기 소실/폭발 문제를 방지합니다
+   - 더 높은 학습률을 사용할 수 있어 학습 효율이 향상됩니다
 
-3. **Regularization effect**:
-   - Acts as a form of implicit regularization
-   - Helps prevent overfitting by normalizing the feature distributions
-   - Makes the network more robust to input variations
+3. **정규화 효과**:
+   - 암묵적인 정규화 역할을 합니다
+   - 특성 분포를 정규화하여 과적합을 방지합니다
+   - 입력 변동에 대한 네트워크의 강건성을 높입니다
 
-4. **Sequence modeling**:
-   - Particularly effective in transformer architectures
-   - Helps maintain consistent signal magnitude across different sequence lengths
-   - Enables better handling of variable-length sequences
+4. **시퀀스 모델링**:
+   - 트랜스포머 아키텍처에서 특히 효과적입니다
+   - 서로 다른 시퀀스 길이에서도 일관된 신호 크기를 유지합니다
+   - 가변 길이 시퀀스를 더 잘 처리할 수 있게 합니다
 
-5. **Training dynamics**:
-   - Accelerates training convergence
-   - Reduces the need for careful learning rate tuning
-   - Makes the network less sensitive to weight initialization
+5. **학습 역학**:
+   - 학습 수렴을 가속합니다
+   - 세밀한 학습률 조정의 필요성을 줄입니다
+   - 가중치 초기화에 대한 네트워크의 민감도를 낮춥니다
 
-### Mathematical components
+### 수학적 구성 요소
 
-1. **Mean Calculation** (\\(\mu\\)):
+1. **평균 계산** (\\(\mu\\)):
    \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
-   - Computes the mean across the hidden dimension (H)
-   - Each sequence position has its own mean
+   - Hidden 차원(H)에 걸쳐 평균을 계산합니다
+   - 각 시퀀스 위치마다 고유한 평균을 가집니다
 
-2. **Variance Calculation** (\\(\sigma^2\\)):
+2. **분산 계산** (\\(\sigma^2\\)):
    \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
-   - Computes the variance across the hidden dimension
-   - Used to scale the normalized values
+   - Hidden 차원에 걸쳐 분산을 계산합니다
+   - 정규화된 값의 스케일링에 사용됩니다
 
-3. **Normalization and Scaling**:
+3. **정규화와 스케일링**:
    \\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
-   - First normalizes the input to have zero mean and unit variance
-   - Then applies learnable scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters
-   - The \\(\odot\\) symbol represents elementwise multiplication (Hadamard product)
-   - For example, if \\(\gamma = [1.2, 0.8, 1.5]\\)  and normalized input is \\([0.5, -0.3, 0.7]\\), then \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)
+   - 먼저 입력을 평균 0, 분산 1로 정규화합니다
+   - 그런 다음 학습 가능한 scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를 적용합니다
+   - \\(\odot\\) 기호는 요소별 곱셈(아다마르 곱)을 나타냅니다
+   - 예를 들어, \\(\gamma = [1.2, 0.8, 1.5]\\)이고 정규화된 입력이 \\([0.5, -0.3, 0.7]\\)이면, \\(\gamma \odot x = [0.6, -0.24, 1.05]\\)입니다
 
-### Why LayerNorm is important
+### LayerNorm이 중요한 이유
 
-1. **Training Stability**:
-   - Prevents activations from growing too large or small
-   - Helps maintain consistent signal magnitude throughout the network
+1. **학습 안정성**:
+   - 활성화 값이 너무 크거나 작아지는 것을 방지합니다
+   - 네트워크 전체에 걸쳐 일관된 신호 크기를 유지합니다
 
-2. **Feature Learning**:
-   - The scale (\\(\gamma\\)) and shift (\\(\beta\\)) parameters allow the network to learn which features are important
-   - Can effectively learn to ignore or emphasize certain features
+2. **특성 학습**:
+   - scale (\\(\gamma\\))과 shift (\\(\beta\\)) 파라미터를 통해 어떤 특성이 중요한지 학습할 수 있습니다
+   - 특정 특성을 무시하거나 강조하는 것을 효과적으로 학습할 수 있습니다
 
-3. **Independence**:
-   - Unlike BatchNorm, LayerNorm's statistics are computed independently for each sample
-   - Makes it more suitable for variable-length sequences and small batch sizes
+3. **독립성**:
+   - BatchNorm과 달리, LayerNorm의 통계량은 각 샘플에 대해 독립적으로 계산됩니다
+   - 가변 길이 시퀀스와 작은 배치 크기에 더 적합합니다
 
-## Configuration
+## 구성
 
-- Batch size: `BATCH_SIZE = 4`
-- Sequence length: `SEQ_LEN = 4`
-- Hidden dimension: `HIDDEN_DIM = 8`
-- Output dimension: `OUTPUT_DIM = 16`
+- 배치 크기: `BATCH_SIZE = 4`
+- 시퀀스 길이: `SEQ_LEN = 4`
+- Hidden 차원: `HIDDEN_DIM = 8`
+- 출력 차원: `OUTPUT_DIM = 16`
 - Epsilon: `EPS = 1e-5`
-- Data type: `DType.float32`
+- 데이터 타입: `DType.float32`
 
-## Implementation approaches
+## 구현 방식
 
-### 1. Unfused implementation
+### 1. Unfused 구현
 
-The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:
+Unfused 방식은 여러 커널을 사용하여 연산을 개별적으로 실행합니다. 이전 챕터에서 작성한 커널들을 살펴보겠습니다:
 
-#### Matrix multiplication kernel
+#### 행렬 곱셈 커널
 
-From [Puzzle 16](../puzzle_16/puzzle_16.md), we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:
+[Puzzle 16: 행렬 곱셈 (MatMul)](../puzzle_16/puzzle_16.md)에서 사용한 tiled 행렬 곱셈 커널을 선형 변환에 재사용합니다. 이 커널은 다양한 행렬 크기를 안전하게 처리하기 위한 경계 검사를 포함합니다:
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:matmul_idiomatic_tiled}}
 ```
 
-#### Transpose kernel
+#### 전치 커널
 
-For efficient memory access patterns, we use a transpose kernel with shared memory tiling:
+효율적인 메모리 접근 패턴을 위해 공유 메모리 tiling을 사용하는 전치 커널입니다:
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:transpose_kernel}}
 ```
 
-#### Bias addition kernel
+#### Bias 합산 커널
 
-A simple elementwise addition kernel for adding the bias term:
+Bias 항을 더하는 간단한 요소별 합산 커널입니다:
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:add_bias_kernel}}
 ```
 
-#### LayerNorm kernel
+#### LayerNorm 커널
 
-Now complete this kernel to implement the LayerNorm operation. You'll need to:
+이제 이 커널을 완성하여 LayerNorm 연산을 구현합니다. 다음이 필요합니다:
 
-1. Compute mean \\(\mu\\) and variance \\(\sigma^2\\) for each sequence position
-2. Normalize the input using these statistics
-3. Apply the scale \\(\gamma\\) and shift \\(\beta\\) parameters
+1. 각 시퀀스 위치에 대한 평균 \\(\mu\\)과 분산 \\(\sigma^2\\) 계산
+2. 이 통계량을 사용하여 입력 정규화
+3. Scale \\(\gamma\\)과 shift \\(\beta\\) 파라미터 적용
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:layernorm_kernel}}
 ```
 
-**Implementation steps:**
+**구현 단계:**
 
-1. First, compute mean and variance using parallel reduction
-2. Then normalize the input using these statistics
-3. Finally, apply the scale and shift parameters
+1. 먼저, 병렬 reduction을 사용하여 평균과 분산을 계산합니다
+2. 그런 다음, 이 통계량으로 입력을 정규화합니다
+3. 마지막으로, scale과 shift 파라미터를 적용합니다
 
-**Characteristics of unfused approach:**
+**Unfused 방식의 특성:**
 
-- Multiple kernel launches (LayerNorm → MatMul → Bias)
-- Intermediate tensor allocations between operations
-- More memory bandwidth usage due to separate passes
-- Simpler implementation with clear separation of concerns
-- Easier to debug as each operation is isolated
+- 여러 번의 커널 실행 (LayerNorm → MatMul → Bias)
+- 연산 간 중간 텐서 할당
+- 별도의 패스로 인한 메모리 대역폭 사용량 증가
+- 관심사 분리가 명확한 간결한 구현
+- 각 연산이 격리되어 디버깅이 용이
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. **Thread organization**:
-   - Use one thread block per sequence position (grid: `[batch_size, seq_len]`)
-   - Each thread handles one hidden dimension element
-   - Avoid redundant computation by computing statistics once per sequence
+1. **스레드 구성**:
+   - 시퀀스 위치당 하나의 스레드 블록 사용 (그리드: `[batch_size, seq_len]`)
+   - 각 스레드가 하나의 hidden 차원 요소를 처리
+   - 시퀀스당 통계량을 한 번만 계산하여 중복 연산 방지
 
-2. **Memory access**:
-   - Access input tensor with `[batch_idx, seq_idx, hidden_idx]`
-   - Access output tensor with `[batch_idx, seq_idx, hidden_idx]`
-   - Access LayerNorm parameters with `[hidden_idx]`
+2. **메모리 접근**:
+   - 입력 텐서: `[batch_idx, seq_idx, hidden_idx]`로 접근
+   - 출력 텐서: `[batch_idx, seq_idx, hidden_idx]`로 접근
+   - LayerNorm 파라미터: `[hidden_idx]`로 접근
 
-3. **Numerical stability**:
-   - Add epsilon (1e-5) before taking square root
-   - Use `rebind[Scalar[dtype]]` for proper type casting
-   - Compute variance as (sq_sum / hidden_dim) - (mean * mean)
+3. **수치 안정성**:
+   - 제곱근을 취하기 전에 epsilon(1e-5)을 더합니다
+   - 적절한 타입 캐스팅을 위해 `rebind[Scalar[dtype]]` 사용
+   - 분산은 (sq_sum / hidden_dim) - (mean * mean)으로 계산
 
-4. **Performance**:
-   - Compute mean and variance in a single pass
-   - Reuse computed statistics for all elements in sequence
-   - Avoid unnecessary memory barriers
+4. **성능**:
+   - 한 번의 패스로 평균과 분산을 동시에 계산
+   - 계산된 통계량을 시퀀스 내 모든 요소에 재사용
+   - 불필요한 메모리 barrier 방지
 
 </div>
 </details>
 
-### Running the code
+### 코드 실행
 
-To test your unfused implementation, run:
+Unfused 구현을 테스트하려면 다음을 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -241,7 +241,7 @@ uv run poe p22 --unfused
   </div>
 </div>
 
-Your output will look like this:
+출력은 다음과 같습니다:
 
 ```txt
 Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
@@ -291,7 +291,7 @@ Benchmarking CPU vs GPU UNFUSED
 UNFUSED Algorithm Test Completed!
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -302,9 +302,9 @@ UNFUSED Algorithm Test Completed!
 
 <div class="solution-explanation">
 
-The unfused implementation follows a straightforward approach where each thread handles one element of the output tensor. Let's break down the key components:
+Unfused 구현은 각 스레드가 출력 텐서의 하나의 요소를 처리하는 직관적인 방식을 따릅니다. 핵심 구성 요소를 하나씩 살펴보겠습니다:
 
-1. **Thread and Block Organization**:
+1. **스레드와 블록 구성**:
 
    ```mojo
    batch_idx = block_idx.x
@@ -312,17 +312,17 @@ The unfused implementation follows a straightforward approach where each thread 
    hidden_idx = thread_idx.x
    ```
 
-   - Each thread block handles one sequence position in the batch
-   - Grid dimensions: `[batch_size, seq_len]`
-   - Each thread processes one element in the hidden dimension
-   - Early return if indices are out of bounds:
+   - 각 스레드 블록이 배치 내 하나의 시퀀스 위치를 처리합니다
+   - 그리드 차원: `[batch_size, seq_len]`
+   - 각 스레드가 hidden 차원의 하나의 요소를 처리합니다
+   - 인덱스가 범위를 벗어나면 조기 반환합니다:
 
      ```mojo
      if (batch_idx >= batch_size or seq_idx >= seq_len or hidden_idx >= hidden_dim):
          return
      ```
 
-2. **Statistics Computation**:
+2. **통계량 계산**:
 
    ```mojo
    var sum_val: Scalar[dtype] = 0
@@ -335,10 +335,10 @@ The unfused implementation follows a straightforward approach where each thread 
        sq_sum += rebind[Scalar[dtype]](val * val)
    ```
 
-   - Compute sum and squared sum in a single pass
-   - Use `@parameter` for compile-time loop unrolling
-   - Proper type casting with `rebind[Scalar[dtype]]`
-   - Calculate mean and variance:
+   - 한 번의 패스로 합계와 제곱합을 동시에 계산합니다
+   - 컴파일 타임 루프 전개를 위해 `@parameter`를 사용합니다
+   - `rebind[Scalar[dtype]]`로 적절한 타입 캐스팅을 수행합니다
+   - 평균과 분산을 계산합니다:
 
      ```mojo
      mean_val = sum_val / hidden_dim
@@ -346,7 +346,7 @@ The unfused implementation follows a straightforward approach where each thread 
      inv_std = 1.0 / sqrt(var_val + 1e-5)
      ```
 
-3. **Normalization and Scaling**:
+3. **정규화와 스케일링**:
 
    ```mojo
    input_val = input[batch_idx, seq_idx, hidden_idx]
@@ -356,102 +356,102 @@ The unfused implementation follows a straightforward approach where each thread 
    output[batch_idx, seq_idx, hidden_idx] = normalized
    ```
 
-   - Apply normalization: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
-   - Scale with learnable parameter `γ` (ln_weight)
-   - Add learnable bias `β` (ln_bias)
-   - Store result in output tensor
+   - 정규화를 적용합니다: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+   - 학습 가능한 파라미터 `γ` (ln_weight)로 스케일링합니다
+   - 학습 가능한 bias `β` (ln_bias)를 더합니다
+   - 결과를 출력 텐서에 저장합니다
 
-4. **Performance Characteristics**:
-   - Each thread computes statistics independently
-   - No shared memory usage (simple but less efficient)
-   - Memory access pattern:
-     - Input: `[batch_idx, seq_idx, h]`
-     - Output: `[batch_idx, seq_idx, hidden_idx]`
-     - Parameters: `[hidden_idx]`
-   - Numerical stability ensured by:
-     - Adding epsilon (1e-5) before square root
-     - Using proper type casting
-     - Computing variance in a numerically stable way
+4. **성능 특성**:
+   - 각 스레드가 독립적으로 통계량을 계산합니다
+   - 공유 메모리 사용 없음 (간단하지만 덜 효율적)
+   - 메모리 접근 패턴:
+     - 입력: `[batch_idx, seq_idx, h]`
+     - 출력: `[batch_idx, seq_idx, hidden_idx]`
+     - 파라미터: `[hidden_idx]`
+   - 다음을 통해 수치 안정성을 보장합니다:
+     - 제곱근 전에 epsilon(1e-5) 추가
+     - 적절한 타입 캐스팅 사용
+     - 수치적으로 안정적인 방식으로 분산 계산
 
-5. **Implementation Details**:
-   - **Type Safety**:
-     - Use `Scalar[dtype]` for intermediate calculations
-     - `rebind[Scalar[dtype]]` for proper type casting
-     - Ensures consistent floating-point precision
+5. **구현 세부 사항**:
+   - **타입 안전성**:
+     - 중간 계산에 `Scalar[dtype]` 사용
+     - 적절한 타입 캐스팅을 위해 `rebind[Scalar[dtype]]` 사용
+     - 일관된 부동소수점 정밀도 보장
 
-   - **Memory Access**:
-     - Coalesced reads from input tensor
-     - Coalesced writes to output tensor
-     - Sequential access to LayerNorm parameters
+   - **메모리 접근**:
+     - 입력 텐서에서 병합 읽기
+     - 출력 텐서에 병합 쓰기
+     - LayerNorm 파라미터에 순차적 접근
 
-   - **Computation Flow**:
-     - Statistics computation: \\[\Large O(H) \text{ operations per thread} \\]
-     - Normalization: \\[\Large O(1) \text{ operations per thread} \\]
-     - Total complexity: \\[\Large O(H) \text{ per output element} \\]
+   - **연산 흐름**:
+     - 통계량 계산: \\[\Large O(H) \text{ operations per thread} \\]
+     - 정규화: \\[\Large O(1) \text{ operations per thread} \\]
+     - 전체 복잡도: \\[\Large O(H) \text{ per output element} \\]
 
-   - **Limitations**:
-     - Redundant computation of statistics
-     - No shared memory for intermediate results
-     - High memory bandwidth usage
-     - Multiple kernel launches required
+   - **한계점**:
+     - 통계량의 중복 계산
+     - 중간 결과를 위한 공유 메모리 없음
+     - 높은 메모리 대역폭 사용량
+     - 여러 번의 커널 실행 필요
 
-This implementation is correct but not optimal for performance, as shown in the benchmark results where it's slightly slower than the CPU version. The fused implementation will address these performance limitations by:
+이 구현은 정확하지만 성능 면에서 최적이 아니며, 벤치마크 결과에서 CPU 버전보다 약간 느린 것을 확인할 수 있습니다. Fused 구현에서는 다음을 통해 이러한 성능 한계를 해결합니다:
 
-- Computing statistics once per sequence
-- Reusing normalized values
-- Reducing memory traffic
-- Eliminating intermediate tensor allocations
+- 시퀀스당 통계량을 한 번만 계산
+- 정규화된 값 재사용
+- 메모리 트래픽 감소
+- 중간 텐서 할당 제거
 
 </div>
 </details>
 
-### 2. Fused kernel implementation
+### 2. Fused 커널 구현
 
-The fused kernel combines LayerNorm and Linear operations into a single GPU kernel:
+Fused 커널은 LayerNorm과 Linear 연산을 하나의 GPU 커널로 결합합니다:
 
 ```mojo
 {{#include ../../../../../problems/p22/op/layernorm_linear.mojo:minimal_fused_forward_kernel}}
 ```
 
-**Key optimizations:**
+**핵심 최적화:**
 
-- Single kernel launch instead of two
-- Shared memory for intermediate results
-- Coalesced memory access patterns
-- Reduced memory bandwidth usage
-- No intermediate tensor allocations
+- 두 번 대신 한 번의 커널 실행
+- 중간 결과를 위한 공유 메모리 활용
+- 병합 메모리 접근 패턴
+- 메모리 대역폭 사용량 절감
+- 중간 텐서 할당 불필요
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-1. **Thread organization**:
-   - One thread block per sequence position (grid: `[batch_size, seq_len]`)
-   - Single thread per sequence position to avoid redundancy
-   - Compute all outputs for each sequence position in one thread
+1. **스레드 구성**:
+   - 시퀀스 위치당 하나의 스레드 블록 (그리드: `[batch_size, seq_len]`)
+   - 중복을 방지하기 위해 시퀀스 위치당 단일 스레드
+   - 각 시퀀스 위치의 모든 출력을 하나의 스레드에서 계산
 
-2. **Memory access**:
-   - Access input tensor with `[batch_idx, seq_idx, h]`
-   - Access output tensor with `[batch_idx, seq_idx, out_idx]`
-   - Access weights with `[out_idx, h]` for linear layer
+2. **메모리 접근**:
+   - 입력 텐서: `[batch_idx, seq_idx, h]`로 접근
+   - 출력 텐서: `[batch_idx, seq_idx, out_idx]`로 접근
+   - 가중치: 선형 레이어에서 `[out_idx, h]`로 접근
 
-3. **Computation flow**:
-   - Compute LayerNorm statistics once per sequence
-   - Reuse normalized values for all output dimensions
-   - Combine normalization and linear transformation
+3. **연산 흐름**:
+   - 시퀀스당 LayerNorm 통계량을 한 번만 계산
+   - 모든 출력 차원에 정규화된 값을 재사용
+   - 정규화와 선형 변환을 결합
 
-4. **Performance**:
-   - Avoid redundant computation of statistics
-   - Minimize memory traffic by fusing operations
-   - Use proper type casting with `rebind[Scalar[dtype]]`
+4. **성능**:
+   - 통계량의 중복 계산 방지
+   - 연산을 결합하여 메모리 트래픽 최소화
+   - `rebind[Scalar[dtype]]`로 적절한 타입 캐스팅 사용
 
 </div>
 </details>
 
-### Running the code
+### 코드 실행
 
-To test your fused implementation, run:
+Fused 구현을 테스트하려면 다음을 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -482,7 +482,7 @@ uv run poe p22 --fused
   </div>
 </div>
 
-Your output will look like this:
+출력은 다음과 같습니다:
 
 ```txt
 Testing with dimensions: [4, 4, 8] -> [4, 4, 16]
@@ -532,7 +532,7 @@ Correctness Summary:
 FUSED Algorithm Test Completed!
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -543,95 +543,95 @@ FUSED Algorithm Test Completed!
 
 <div class="solution-explanation">
 
-The fused implementation combines operations efficiently:
+Fused 구현은 연산들을 효율적으로 결합합니다:
 
-1. **Thread organization**:
-   - One thread block per sequence position (grid: `[batch_size, seq_len]`)
-   - Single thread per sequence position
-   - Thread indices: `batch_idx = block_idx.x`, `seq_idx = block_idx.y`
+1. **스레드 구성**:
+   - 시퀀스 위치당 하나의 스레드 블록 (그리드: `[batch_size, seq_len]`)
+   - 시퀀스 위치당 단일 스레드
+   - 스레드 인덱스: `batch_idx = block_idx.x`, `seq_idx = block_idx.y`
 
-2. **LayerNorm phase**:
-   - Compute sum and squared sum for the sequence position
-   - Calculate mean: \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
-   - Calculate variance: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
-   - Compute inverse standard deviation: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
+2. **LayerNorm 단계**:
+   - 시퀀스 위치에 대한 합계와 제곱합 계산
+   - 평균 계산: \\[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \\]
+   - 분산 계산: \\[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \\]
+   - 역표준편차 계산: \\[\Large \text{inv\_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \\]
 
-3. **Linear phase**:
-   - For each output dimension:
-     - Compute normalized value: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
-     - Multiply with linear weight and accumulate: \\[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
-     - Add linear bias: \\[\Large \text{output} = \text{acc} + b_{out} \\]
-   - Store result in `output[batch_idx, seq_idx, out_idx]`
+3. **Linear 단계**:
+   - 각 출력 차원에 대해:
+     - 정규화된 값 계산: \\[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \\]
+     - 선형 가중치와 곱하고 누적: \\[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}_h \cdot W_{out,h} \\]
+     - 선형 bias 추가: \\[\Large \text{output} = \text{acc} + b_{out} \\]
+   - 결과를 `output[batch_idx, seq_idx, out_idx]`에 저장
 
-4. **Performance optimizations**:
-   - Single kernel launch for both operations
-   - Reuse computed statistics
-   - Minimize memory traffic
-   - No intermediate tensor allocations
-   - Efficient memory access patterns
+4. **성능 최적화**:
+   - 두 연산을 위한 단일 커널 실행
+   - 계산된 통계량 재사용
+   - 메모리 트래픽 최소화
+   - 중간 텐서 할당 불필요
+   - 효율적인 메모리 접근 패턴
 
-This implementation achieves better performance than the unfused version by reducing memory bandwidth usage and kernel launch overhead.
+이 구현은 메모리 대역폭 사용량과 커널 실행 오버헤드를 줄여 unfused 버전보다 더 나은 성능을 달성합니다.
 </div>
 </details>
 
-## Advantages of kernel fusion
+## Kernel fusion의 장점
 
-In this puzzle, we've explored two approaches to implementing LayerNorm + Linear operations:
+이 퍼즐에서 LayerNorm + Linear 연산을 구현하는 두 가지 방식을 살펴보았습니다:
 
-1. **Unfused implementation**:
-   - Separate kernels for LayerNorm and Linear
-   - Simpler implementation but less efficient
-   - Higher memory bandwidth usage
-   - Multiple kernel launches
-   - Benchmark results: 3183.57ms (GPU)
+1. **Unfused 구현**:
+   - LayerNorm과 Linear를 별도의 커널로 실행
+   - 구현이 간단하지만 덜 효율적
+   - 높은 메모리 대역폭 사용량
+   - 여러 번의 커널 실행
+   - 벤치마크 결과: 3183.57ms (GPU)
 
-2. **Fused implementation**:
-   - Single kernel combining both operations
-   - More complex but significantly more efficient
-   - Reduced memory bandwidth usage
-   - Single kernel launch
-   - Benchmark results: 3116.11ms (GPU)
+2. **Fused 구현**:
+   - 두 연산을 결합한 단일 커널
+   - 더 복잡하지만 훨씬 효율적
+   - 메모리 대역폭 사용량 절감
+   - 단일 커널 실행
+   - 벤치마크 결과: 3116.11ms (GPU)
 
-### Memory bandwidth optimization
+### 메모리 대역폭 최적화
 
-1. **Eliminated memory traffic**:
-   - No intermediate tensor allocations between operations
-   - Reduced global memory reads/writes
-   - Reuse of normalized values for linear transformation
-   - Memory bandwidth reduction: \\[\Large \text{reduction} = \frac{\text{unfused\_bandwidth} - \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
+1. **메모리 트래픽 제거**:
+   - 연산 간 중간 텐서 할당 불필요
+   - 글로벌 메모리 읽기/쓰기 감소
+   - 선형 변환을 위한 정규화된 값 재사용
+   - 메모리 대역폭 절감률: \\[\Large \text{reduction} = \frac{\text{unfused\_bandwidth} - \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
 
-2. **Cache efficiency**:
-   - Better L1/L2 cache utilization
-   - Reduced cache misses
-   - Improved memory access patterns
-   - Higher arithmetic intensity
+2. **캐시 효율**:
+   - L1/L2 캐시 활용도 향상
+   - 캐시 미스 감소
+   - 개선된 메모리 접근 패턴
+   - 더 높은 산술 강도
 
-### Reduced overhead
+### 오버헤드 감소
 
-1. **Kernel launch optimization**:
-   - Single kernel launch instead of multiple
-   - Lower driver overhead
-   - Reduced synchronization points
-   - Fewer memory allocations
+1. **커널 실행 최적화**:
+   - 여러 번 대신 단일 커널 실행
+   - 드라이버 오버헤드 감소
+   - 동기화 지점 감소
+   - 메모리 할당 횟수 감소
 
-2. **Resource management**:
-   - Shared memory reuse between operations
-   - Better register utilization
-   - Improved thread occupancy
-   - Higher GPU utilization
+2. **리소스 관리**:
+   - 연산 간 공유 메모리 재사용
+   - 레지스터 활용도 향상
+   - 스레드 점유율 개선
+   - GPU 활용률 향상
 
-### Performance characteristics
+### 성능 특성
 
-1. **Scalability**:
-   - Better performance scaling with input size
-   - Reduced memory bandwidth bottleneck
-   - More efficient use of GPU resources
-   - Improved throughput for large models
+1. **확장성**:
+   - 입력 크기에 따른 성능 확장성 향상
+   - 메모리 대역폭 병목 감소
+   - GPU 리소스의 더 효율적인 활용
+   - 대규모 모델에서 처리량 향상
 
-2. **Numerical efficiency**:
-   - Maintained numerical stability
-   - Reduced rounding errors
-   - Better precision in intermediate results
-   - Optimized computation order
+2. **수치적 효율**:
+   - 수치 안정성 유지
+   - 반올림 오차 감소
+   - 중간 결과의 정밀도 향상
+   - 최적화된 연산 순서
 
-💡 **Key insight**: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.
+💡 **핵심 통찰**: Kernel fusion은 트랜스포머 아키텍처의 LayerNorm + Linear처럼 neural networks에서 자주 함께 사용되는 연산에 특히 유리합니다. 입력 크기가 크고 모델이 복잡할수록 성능 이점은 더욱 커집니다.
