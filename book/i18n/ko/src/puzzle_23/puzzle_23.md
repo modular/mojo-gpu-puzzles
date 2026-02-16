@@ -1,171 +1,171 @@
 <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 
-# Puzzle 23: GPU Functional Programming Patterns
+# Puzzle 23: GPU 함수형 프로그래밍 패턴
 
-## Overview
+## 개요
 
-**Part VI: Functional GPU Programming** introduces Mojo's high-level programming patterns for GPU computation. You'll learn functional approaches that automatically handle vectorization, memory optimization, and performance tuning, replacing manual GPU kernel programming.
+**Part VI: 함수형 GPU 프로그래밍**에서는 GPU 연산을 위한 Mojo의 고수준 프로그래밍 패턴을 소개합니다. 벡터화, 메모리 최적화, 성능 튜닝을 자동으로 처리하는 함수형 접근 방식을 배우며, 수동 GPU 커널 프로그래밍을 대체합니다.
 
-**Key insight:** _Modern GPU programming doesn't require sacrificing elegance for performance - Mojo's functional patterns give you both._
+**핵심 통찰:** _현대 GPU 프로그래밍은 성능을 위해 우아함을 포기할 필요가 없습니다 - Mojo의 함수형 패턴은 두 가지를 모두 제공합니다._
 
-## What you'll learn
+## 배울 내용
 
-### **GPU execution hierarchy**
+### **GPU 실행 계층 구조**
 
-Understand the fundamental relationship between GPU threads and SIMD operations:
+GPU 스레드와 SIMD 연산 사이의 근본적인 관계를 이해합니다:
 
 ```
 GPU Device
-├── Grid (your entire problem)
-│   ├── Block 1 (group of threads, shared memory)
-│   │   ├── Warp 1 (32 threads, lockstep execution) --> We'll learn in Part VI
+├── Grid (전체 문제)
+│   ├── Block 1 (스레드 그룹, 공유 메모리)
+│   │   ├── Warp 1 (32개 스레드, lockstep 실행) --> Part VI에서 학습
 │   │   │   ├── Thread 1 → SIMD
 │   │   │   ├── Thread 2 → SIMD
-│   │   │   └── ... (32 threads total)
-│   │   └── Warp 2 (32 threads)
-│   └── Block 2 (independent group)
+│   │   │   └── ... (총 32개 스레드)
+│   │   └── Warp 2 (32개 스레드)
+│   └── Block 2 (독립적인 그룹)
 ```
 
-**What Mojo abstracts for you:**
+**Mojo가 자동으로 처리하는 것들:**
 
-- Grid/Block configuration automatically calculated
-- Warp management handled transparently
-- Thread scheduling optimized automatically
-- Memory hierarchy optimization built-in
+- Grid/Block 구성 자동 계산
+- Warp 관리의 투명한 처리
+- 스레드 스케줄링 자동 최적화
+- 메모리 계층 구조 최적화 내장
 
-💡 **Note**: While this Part focuses on functional patterns, **warp-level programming** and advanced GPU memory management will be covered in detail in **[Part VII](../puzzle_24/puzzle_24.md)**.
+💡 **참고**: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, **Warp 레벨 프로그래밍**과 고급 GPU 메모리 관리는 **[Part VII](../puzzle_24/puzzle_24.md)** 에서 자세히 다룹니다.
 
-### **Four fundamental patterns**
+### **네 가지 기본 패턴**
 
-Learn the complete spectrum of GPU functional programming:
+GPU 함수형 프로그래밍의 핵심 패턴을 모두 다룹니다:
 
-1. **Elementwise**: Maximum parallelism with automatic SIMD vectorization
-2. **Tiled**: Memory-efficient processing with cache optimization
-3. **Manual vectorization**: Expert-level control over SIMD operations
-4. **Mojo vectorize**: Safe, automatic vectorization with bounds checking
+1. **Elementwise**: 자동 SIMD 벡터화를 통한 최대 병렬성
+2. **Tiled**: 캐시 최적화를 활용한 메모리 효율이 높은 처리
+3. **수동 벡터화**: SIMD 연산에 대한 전문가 수준의 제어
+4. **Mojo vectorize**: 경계 검사를 포함한 안전한 자동 벡터화
 
-### **Performance patterns you'll recognize**
-
-```
-Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
-
-Elementwise:     256 threads × 1 SIMD op   = High parallelism
-Tiled:           32 threads  × 8 SIMD ops  = Cache optimization
-Manual:          8 threads   × 32 SIMD ops = Maximum control
-Mojo vectorize:  32 threads  × 8 SIMD ops  = Automatic safety
-```
-
-### 📊 **Real performance insights**
-
-Learn to interpret empirical benchmark results:
+### **한눈에 보는 성능 패턴**
 
 ```
-Benchmark Results (SIZE=1,048,576):
-elementwise:        11.34ms  ← Maximum parallelism wins at scale
-tiled:              12.04ms  ← Good balance of locality and parallelism
-manual_vectorized:  15.75ms  ← Complex indexing hurts simple operations
-vectorized:         13.38ms  ← Automatic optimization overhead
+문제: 1024개 요소의 벡터 두 개 더하기 (SIZE=1024, SIMD_WIDTH=4)
+
+Elementwise:     256 스레드 × 1 SIMD 연산   = 높은 병렬성
+Tiled:           32 스레드  × 8 SIMD 연산  = 캐시 최적화
+Manual:          8 스레드   × 32 SIMD 연산 = 최대 제어
+Mojo vectorize:  32 스레드  × 8 SIMD 연산  = 자동 안전성
 ```
 
-## Prerequisites
+### 📊 **실제 성능 분석**
 
-Before diving into functional patterns, ensure you're comfortable with:
+실증적 벤치마크 결과를 해석하는 방법을 배웁니다:
 
-- **Basic GPU concepts**: Memory hierarchy, thread execution, SIMD operations
-- **Mojo fundamentals**: Parameter functions, compile-time specialization, capturing semantics
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
-- **GPU memory management**: Buffer allocation, host-device synchronization
+```
+벤치마크 결과 (SIZE=1,048,576):
+elementwise:        11.34ms  ← 대규모에서 최대 병렬성이 유리
+tiled:              12.04ms  ← 지역성과 병렬성의 균형
+manual_vectorized:  15.75ms  ← 단순 연산에서 복잡한 인덱싱이 불리
+vectorized:         13.38ms  ← 자동 최적화 오버헤드
+```
 
-## Learning path
+## 선수 지식
 
-### **1. Elementwise operations**
+함수형 패턴을 학습하기 전에 다음 내용에 익숙해야 합니다:
 
-**→ [Elementwise - Basic GPU Functional Operations](./elementwise.md)**
+- **기본 GPU 개념**: 메모리 계층 구조, 스레드 실행, SIMD 연산
+- **Mojo 기초**: 파라미터 함수, 컴파일 타임 특수화, 캡처 의미론
+- **LayoutTensor 연산**: 로드, 저장, 텐서 조작
+- **GPU 메모리 관리**: 버퍼 할당, 호스트-디바이스 동기화
 
-Start with the foundation: automatic thread management and SIMD vectorization.
+## 학습 경로
 
-**What you'll learn:**
+### **1. Elementwise 연산**
 
-- Functional GPU programming with `elementwise`
-- Automatic SIMD vectorization within GPU threads
-- LayoutTensor operations for safe memory access
-- Capturing semantics in nested functions
+**→ [Elementwise - 기본 GPU 함수형 연산](./elementwise.md)**
 
-**Key pattern:**
+기초부터 시작합니다: 자동 스레드 관리와 SIMD 벡터화.
+
+**배울 내용:**
+
+- `elementwise`를 활용한 함수형 GPU 프로그래밍
+- GPU 스레드 내의 자동 SIMD 벡터화
+- 안전한 메모리 접근을 위한 LayoutTensor 연산
+- 중첩 함수에서의 캡처 의미론
+
+**핵심 패턴:**
 
 ```mojo
 elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 ```
 
-### **2. Tiled processing**
+### **2. Tiled 처리**
 
-**→ [Tile - Memory-Efficient Tiled Processing](./tile.md)**
+**→ [Tile - 메모리 효율적인 Tiled 처리](./tile.md)**
 
-Build on elementwise with memory-optimized tiling patterns.
+elementwise를 기반으로 메모리 최적화 tiling 패턴을 학습합니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Tile-based memory organization for cache optimization
-- Sequential SIMD processing within tiles
-- Memory locality principles and cache-friendly access patterns
-- Thread-to-tile mapping vs thread-to-element mapping
+- 캐시 최적화를 위한 타일 기반 메모리 구성
+- 타일 내 순차적 SIMD 처리
+- 메모리 지역성 원칙과 캐시 친화적 접근 패턴
+- 스레드-타일 매핑 vs 스레드-요소 매핑
 
-**Key insight:** Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.
+**핵심 통찰:** Tiling은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.
 
-### **3. Advanced vectorization**
+### **3. 고급 벡터화**
 
-**→ [Vectorization - Fine-Grained SIMD Control](./vectorize.md)**
+**→ [Vectorize - SIMD 제어](./vectorize.md)**
 
-Explore manual control and automatic vectorization strategies.
+수동 제어와 자동 벡터화 전략을 탐구합니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Manual SIMD operations with explicit index management
-- Mojo's vectorize function for safe, automatic vectorization
-- Chunk-based memory organization for optimal SIMD alignment
-- Performance trade-offs between manual control and safety
+- 명시적 인덱스 관리를 통한 수동 SIMD 연산
+- 안전하고 자동적인 벡터화를 위한 Mojo의 vectorize 함수
+- 최적의 SIMD 정렬을 위한 chunk 기반 메모리 구성
+- 수동 제어와 안전성 간의 성능 트레이드오프
 
-**Two approaches:**
+**두 가지 접근법:**
 
-- **Manual**: Direct control, maximum performance, complex indexing
-- **Mojo vectorize**: Automatic optimization, built-in safety, clean code
+- **수동**: 직접 제어, 최대 성능, 복잡한 인덱싱
+- **Mojo vectorize**: 자동 최적화, 내장 안전성, 깔끔한 코드
 
-### 🧠 **4. Threading vs SIMD concepts**
+### 🧠 **4. 스레딩 vs SIMD 개념**
 
-**→ [GPU Threading vs SIMD - Understanding the Execution Hierarchy](./gpu-thread-vs-simd.md)**
+**→ [GPU 스레딩 vs SIMD 개념](./gpu-thread-vs-simd.md)**
 
-Understand the fundamental relationship between parallelism levels.
+병렬성 수준 간의 근본적인 관계를 이해합니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- GPU threading hierarchy and hardware mapping
-- SIMD operations within GPU threads
-- Pattern comparison and thread-to-work mapping
-- Choosing the right pattern for different workloads
+- GPU 스레딩 계층 구조와 하드웨어 매핑
+- GPU 스레드 내의 SIMD 연산
+- 패턴 비교와 스레드-작업 매핑
+- 워크로드에 맞는 올바른 패턴 선택
 
-**Key insight:** GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.
+**핵심 통찰:** GPU 스레드가 병렬성의 구조를 제공하고, SIMD 연산이 각 스레드 내에서 벡터화를 제공합니다.
 
-### 📊 **5. Performance benchmarking in Mojo**
+### 📊 **5. Mojo 성능 벤치마킹**
 
-**→ [Benchmarking in Mojo](./benchmarking.md)**
+**→ [Mojo 벤치마킹](./benchmarking.md)**
 
-Learn to measure, analyze, and optimize GPU performance scientifically.
+GPU 성능을 과학적으로 측정, 분석, 최적화하는 방법을 배웁니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Mojo's built-in benchmarking framework
-- GPU-specific timing and synchronization challenges
-- Parameterized benchmark functions with compile-time specialization
-- Empirical performance analysis and pattern selection
+- Mojo의 내장 벤치마킹 프레임워크
+- GPU 고유의 타이밍 및 동기화 문제
+- 컴파일 타임 특수화를 활용한 파라미터화된 벤치마크 함수
+- 실증적 성능 분석과 패턴 선택
 
-**Critical technique:** Using `keep()` to prevent compiler optimization of benchmarked code.
+**핵심 기법:** `keep()`을 사용하여 벤치마크 코드의 컴파일러 최적화를 방지합니다.
 
-## Getting started
+## 시작하기
 
-Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.
+Elementwise 패턴부터 시작하여 각 섹션을 체계적으로 학습하세요. 각 퍼즐은 이전 개념을 기반으로 새로운 수준의 정교함을 도입합니다.
 
-💡 **Success tip**: Focus on understanding the **why** behind each pattern, not just the **how**. The conceptual framework you develop here will serve you throughout your GPU programming career.
+💡 **성공 팁**: 각 패턴의 **어떻게**뿐만 아니라 **왜**를 이해하는 데 집중하세요. 여기서 형성하는 개념적 프레임워크는 GPU 프로그래밍 전반에 걸쳐 활용될 것입니다.
 
-**Learning objective**: By the end of Part VI, you'll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.
+**학습 목표**: Part VI를 마치면, 저수준 GPU 메커니즘 대신 함수형 패턴의 관점에서 사고할 수 있게 되어, 더 유지보수하기 쉽고, 성능이 뛰어나며, 이식성이 높은 GPU 코드를 작성할 수 있습니다.
 
-**Begin with**: **[Elementwise Operations](./elementwise.md)** to discover functional GPU programming.
+**시작하기**: **[Elementwise - 기본 GPU 함수형 연산](./elementwise.md)** 에서 함수형 GPU 프로그래밍을 시작하세요.

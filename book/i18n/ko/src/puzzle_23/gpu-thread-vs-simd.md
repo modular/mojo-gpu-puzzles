@@ -1,169 +1,182 @@
 <!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
 
-# 🧠 GPU Threading vs SIMD - Understanding the Execution Hierarchy
+# 🧠 GPU 스레딩 vs SIMD - 실행 계층 구조 이해하기
 
-## Overview
+## 개요
 
-After exploring **elementwise**, **tiled**, and **vectorization** patterns, you've seen different ways to organize GPU computation. This section clarifies the fundamental relationship between **GPU threads** and **SIMD operations** - two distinct but complementary levels of parallelism that work together for optimal performance.
+**Elementwise**, **tiled**, **벡터화** 패턴을 탐구하면서 GPU 연산을 구성하는 다양한 방법을 살펴보았습니다. 이 섹션에서는 **GPU 스레드**와 **SIMD 연산** 사이의 근본적인 관계를 명확히 합니다. 이 둘은 서로 다르지만 상호 보완적인 병렬성 수준으로, 최적의 성능을 위해 함께 동작합니다.
 
-> **Key insight:** _GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread._
+> **핵심 통찰:** _GPU 스레드가 병렬성의 구조를 제공하고, SIMD 연산이 각 스레드 내에서 벡터화를 제공합니다._
 
-## Core concepts
+## 핵심 개념
 
-### GPU threading hierarchy
+### GPU 스레딩 계층 구조
 
-GPU execution follows a well-defined hierarchy that abstracts hardware complexity:
+GPU 실행은 하드웨어의 복잡성을 추상화하는 잘 정의된 계층 구조를 따릅니다:
 
 ```
 GPU Device
-├── Grid (your entire problem)
-│   ├── Block 1 (group of threads, shared memory)
-│   │   ├── Warp 1 (32 threads, lockstep execution)
-│   │   │   ├── Thread 1 → SIMD operations
-│   │   │   ├── Thread 2 → SIMD operations
-│   │   │   └── ... (32 threads total)
-│   │   └── Warp 2 (32 threads)
-│   └── Block 2 (independent group)
+├── Grid (전체 문제)
+│   ├── Block 1 (스레드 그룹, 공유 메모리)
+│   │   ├── Warp 1 (32개 스레드, lockstep 실행)
+│   │   │   ├── Thread 1 → SIMD 연산
+│   │   │   ├── Thread 2 → SIMD 연산
+│   │   │   └── ... (총 32개 스레드)
+│   │   └── Warp 2 (32개 스레드)
+│   └── Block 2 (독립적인 그룹)
 ```
 
-💡 **Note**: While this Part focuses on functional patterns, **warp-level programming** and advanced GPU memory management will be covered in detail in **[Part VII](../puzzle_24/puzzle_24.md)**.
+💡 **참고**: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, **Warp 레벨 프로그래밍**과 고급 GPU 메모리 관리는 **[Part VII](../puzzle_24/puzzle_24.md)** 에서 자세히 다룹니다.
 
-**What Mojo abstracts for you:**
-- **Grid/Block configuration**: Automatically calculated based on problem size
-- **Warp management**: Hardware handles 32-thread groups transparently
-- **Thread scheduling**: GPU scheduler manages execution automatically
-- **Memory hierarchy**: Optimal access patterns built into functional operations
+**Mojo가 자동으로 처리하는 것들:**
 
-### SIMD within GPU threads
+- **Grid/Block 구성**: 문제 크기에 따라 자동 계산
+- **Warp 관리**: 하드웨어가 32개 스레드 그룹을 투명하게 처리
+- **스레드 스케줄링**: GPU 스케줄러가 실행을 자동 관리
+- **메모리 계층 구조**: 함수형 연산에 최적의 접근 패턴 내장
 
-Each GPU thread can process multiple data elements simultaneously using **SIMD (Single Instruction, Multiple Data)** operations:
+### GPU 스레드 내의 SIMD
+
+각 GPU 스레드는 **SIMD (Single Instruction, Multiple Data)** 연산을 사용하여 여러 데이터 요소를 동시에 처리할 수 있습니다:
 
 ```mojo
-# Within one GPU thread:
-a_simd = a.load[simd_width](idx, 0)      # Load 4 floats simultaneously
-b_simd = b.load[simd_width](idx, 0)      # Load 4 floats simultaneously
-result = a_simd + b_simd                 # Add 4 pairs simultaneously
-output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
+# 하나의 GPU 스레드 내부:
+a_simd = a.load[simd_width](idx, 0)      # float 4개를 동시에 로드
+b_simd = b.load[simd_width](idx, 0)      # float 4개를 동시에 로드
+result = a_simd + b_simd                 # 4쌍을 동시에 덧셈
+output.store[simd_width](idx, 0, result) # 결과 4개를 동시에 저장
 ```
 
-## Pattern comparison and thread-to-work mapping
+## 패턴 비교와 스레드-작업 매핑
 
-> **Critical insight:** All patterns perform the **same total work** - 256 SIMD operations for 1024 elements with SIMD_WIDTH=4. The difference is in how this work is distributed across GPU threads.
+> **핵심 인사이트:** 모든 패턴은 **동일한 총 작업량** - SIMD_WIDTH=4로 1024개 요소에 대해 256회의 SIMD 연산 - 을 수행합니다. 차이점은 이 작업이 GPU 스레드에 어떻게 분배되느냐에 있습니다.
 
-### Thread organization comparison (`SIZE=1024`, `SIMD_WIDTH=4`)
+### 스레드 구성 비교 (`SIZE=1024`, `SIMD_WIDTH=4`)
 
-| Pattern | Threads | SIMD ops/thread | Memory pattern | Trade-off |
+| 패턴 | 스레드 수 | 스레드당 SIMD 연산 | 메모리 패턴 | 트레이드오프 |
 |---------|---------|-----------------|----------------|-----------|
-| **Elementwise** | 256 | 1 | Distributed access | Max parallelism, poor locality |
-| **Tiled** | 32 | 8 | Small blocks | Balanced parallelism + locality |
-| **Manual vectorized** | 8 | 32 | Large chunks | High bandwidth, fewer threads |
-| **Mojo vectorize** | 32 | 8 | Smart blocks | Automatic optimization |
+| **Elementwise** | 256 | 1 | 분산 접근 | 최대 병렬성, 낮은 지역성 |
+| **Tiled** | 32 | 8 | 소형 블록 | 병렬성 + 지역성 균형 |
+| **수동 벡터화** | 8 | 32 | 대형 chunk | 높은 대역폭, 적은 스레드 |
+| **Mojo vectorize** | 32 | 8 | 스마트 블록 | 자동 최적화 |
 
-### Detailed execution patterns
+### 상세 실행 패턴
 
-**Elementwise pattern:**
+**Elementwise 패턴:**
+
 ```
 Thread 0: [0,1,2,3] → Thread 1: [4,5,6,7] → ... → Thread 255: [1020,1021,1022,1023]
-256 threads × 1 SIMD op = 256 total SIMD operations
+256 스레드 × 1 SIMD 연산 = 총 256회 SIMD 연산
 ```
 
-**Tiled pattern:**
+**Tiled 패턴:**
+
 ```
 Thread 0: [0:32] (8 SIMD) → Thread 1: [32:64] (8 SIMD) → ... → Thread 31: [992:1024] (8 SIMD)
-32 threads × 8 SIMD ops = 256 total SIMD operations
+32 스레드 × 8 SIMD 연산 = 총 256회 SIMD 연산
 ```
 
-**Manual vectorized pattern:**
+**수동 벡터화 패턴:**
+
 ```
 Thread 0: [0:128] (32 SIMD) → Thread 1: [128:256] (32 SIMD) → ... → Thread 7: [896:1024] (32 SIMD)
-8 threads × 32 SIMD ops = 256 total SIMD operations
+8 스레드 × 32 SIMD 연산 = 총 256회 SIMD 연산
 ```
 
-**Mojo vectorize pattern:**
+**Mojo vectorize 패턴:**
+
 ```
-Thread 0: [0:32] auto-vectorized → Thread 1: [32:64] auto-vectorized → ... → Thread 31: [992:1024] auto-vectorized
-32 threads × 8 SIMD ops = 256 total SIMD operations
+Thread 0: [0:32] 자동 벡터화 → Thread 1: [32:64] 자동 벡터화 → ... → Thread 31: [992:1024] 자동 벡터화
+32 스레드 × 8 SIMD 연산 = 총 256회 SIMD 연산
 ```
 
-## Performance characteristics and trade-offs
+## 성능 특성과 트레이드오프
 
-### Core trade-offs summary
+### 핵심 트레이드오프 요약
 
-| Aspect | High thread count (Elementwise) | Moderate threads (Tiled/Vectorize) | Low threads (Manual) |
+| 측면 | 스레드 많음 (Elementwise) | 스레드 중간 (Tiled/Vectorize) | 스레드 적음 (수동) |
 |--------|--------------------------------|-----------------------------------|----------------------|
-| **Parallelism** | Maximum latency hiding | Balanced approach | Minimal parallelism |
-| **Cache locality** | Poor between threads | Good within tiles | Excellent sequential |
-| **Memory bandwidth** | Good coalescing | Good + cache reuse | Maximum theoretical |
-| **Complexity** | Simplest | Moderate | Most complex |
+| **병렬성** | 최대 latency 은닉 | 균형 잡힌 접근 | 최소한의 병렬성 |
+| **캐시 지역성** | 스레드 간 낮음 | 타일 내에서 양호 | 순차 접근으로 우수 |
+| **메모리 대역폭** | 양호한 병합 | 양호 + 캐시 재사용 | 이론적 최댓값 |
+| **복잡도** | 가장 단순 | 보통 | 가장 복잡 |
 
-### When to choose each pattern
+### 각 패턴의 선택 기준
 
-**Use elementwise when:**
-- Simple operations with minimal arithmetic per element
-- Maximum parallelism needed for latency hiding
-- Scalability across different problem sizes is important
+**Elementwise를 사용할 때:**
 
-**Use tiled/vectorize when:**
-- Cache-sensitive operations that benefit from data reuse
-- Balanced performance and maintainability desired
-- Automatic optimization (vectorize) is preferred
+- 요소당 연산량이 적은 단순한 연산
+- Latency 은닉을 위해 최대 병렬성이 필요한 경우
+- 다양한 문제 크기에 대한 확장성이 중요한 경우
 
-**Use manual vectorization when:**
-- Expert-level control over memory patterns is needed
-- Maximum memory bandwidth utilization is critical
-- Development complexity is acceptable
+**Tiled/Vectorize를 사용할 때:**
 
-## Hardware considerations
+- 데이터 재사용의 이점이 있는 캐시 민감 연산
+- 성능과 유지보수성의 균형이 필요한 경우
+- 자동 최적화(vectorize)가 선호되는 경우
 
-Modern GPU architectures include several levels that Mojo abstracts:
+**수동 벡터화를 사용할 때:**
 
-**Hardware reality:**
-- **Warps**: 32 threads execute in lockstep
-- **Streaming Multiprocessors (SMs)**: Multiple warps execute concurrently
-- **SIMD units**: Vector processing units within each SM
-- **Memory hierarchy**: L1/L2 caches, shared memory, global memory
+- 메모리 패턴에 대한 전문가 수준의 제어가 필요한 경우
+- 최대 메모리 대역폭 활용이 중요한 경우
+- 개발 복잡도를 감수할 수 있는 경우
 
-**Mojo's abstraction benefits:**
-- Automatically handles warp alignment and scheduling
-- Optimizes memory access patterns transparently
-- Manages resource allocation across SMs
-- Provides portable performance across GPU vendors
+## 하드웨어 고려 사항
 
-## Performance mental model
+현대 GPU 아키텍처에는 Mojo가 추상화하는 여러 수준이 있습니다:
 
-Think of GPU programming as managing two complementary types of parallelism:
+**하드웨어 실제 구조:**
 
-**Thread-level parallelism:**
-- Provides the parallel structure (how many execution units)
-- Enables latency hiding through concurrent execution
-- Managed by GPU scheduler automatically
+- **Warp**: 32개 스레드가 lockstep으로 실행
+- **Streaming Multiprocessor (SM)**: 여러 Warp가 동시에 실행
+- **SIMD 유닛**: 각 SM 내의 벡터 처리 유닛
+- **메모리 계층 구조**: L1/L2 캐시, 공유 메모리, 글로벌 메모리
 
-**SIMD-level parallelism:**
-- Provides vectorization within each thread
-- Maximizes arithmetic throughput per thread
-- Utilizes vector processing units efficiently
+**Mojo 추상화의 이점:**
 
-**Optimal performance formula:**
+- Warp 정렬과 스케줄링을 자동으로 처리
+- 메모리 접근 패턴을 투명하게 최적화
+- SM 간 리소스 할당을 관리
+- GPU 벤더 간 이식 가능한 성능 제공
+
+## 성능에 대한 사고 모델
+
+GPU 프로그래밍을 두 가지 상호 보완적인 병렬성 유형을 관리하는 것으로 생각하세요:
+
+**스레드 수준 병렬성:**
+
+- 병렬 구조를 제공 (실행 유닛의 수)
+- 동시 실행을 통한 latency 은닉 가능
+- GPU 스케줄러가 자동으로 관리
+
+**SIMD 수준 병렬성:**
+
+- 각 스레드 내에서 벡터화를 제공
+- 스레드당 산술 처리량을 극대화
+- 벡터 처리 유닛을 효율적으로 활용
+
+**최적 성능 공식:**
+
 ```
-Performance = (Sufficient threads for latency hiding) ×
-              (Efficient SIMD utilization) ×
-              (Optimal memory access patterns)
+성능 = (latency 은닉을 위한 충분한 스레드) ×
+       (효율적인 SIMD 활용) ×
+       (최적의 메모리 접근 패턴)
 ```
 
-## Scaling considerations
+## 확장성 고려 사항
 
-| Problem size | Optimal pattern | Reasoning |
+| 문제 크기 | 최적 패턴 | 근거 |
 |-------------|----------------|-----------|
-| Small (< 1K) | Tiled/Vectorize | Lower launch overhead |
-| Medium (1K-1M) | Any pattern | Similar performance |
-| Large (> 1M) | Usually Elementwise | Parallelism dominates |
+| 소규모 (< 1K) | Tiled/Vectorize | 낮은 실행 오버헤드 |
+| 중규모 (1K-1M) | 모든 패턴 | 유사한 성능 |
+| 대규모 (> 1M) | 보통 Elementwise | 병렬성이 지배적 |
 
-The optimal choice depends on your specific hardware, workload complexity, and development constraints.
+최적의 선택은 특정 하드웨어, 워크로드 복잡도, 개발 제약 조건에 따라 달라집니다.
 
-## Next steps
+## 다음 단계
 
-With a solid understanding of GPU threading vs SIMD concepts:
+GPU 스레딩 vs SIMD 개념을 확실히 이해했다면:
 
-- **[📊 Benchmarking](./benchmarking.md)**: Measure and compare actual performance
+- **[📊 Mojo 벤치마킹](./benchmarking.md)**: 실제 성능을 측정하고 비교
 
-💡 **Key takeaway**: GPU threads and SIMD operations work together as complementary levels of parallelism. Understanding their relationship allows you to choose the right pattern for your specific performance requirements and constraints.
+💡 **핵심 요약**: GPU 스레드와 SIMD 연산은 상호 보완적인 병렬성 수준으로 함께 동작합니다. 이 둘의 관계를 이해하면 구체적인 성능 요구 사항과 제약 조건에 맞는 올바른 패턴을 선택할 수 있습니다.

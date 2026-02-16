@@ -1,16 +1,16 @@
 <!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
 
-# 📊 Benchmarking - Performance Analysis and Optimization
+# 📊 Mojo 벤치마킹 - 성능 분석과 최적화
 
-## Overview
+## 개요
 
-After learning **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. Here's how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
+**Elementwise**, **tiled**, **수동 벡터화**, **Mojo vectorize** 패턴을 학습한 후, 이제 실제 성능을 측정할 차례입니다. `p21.mojo`에 내장된 벤치마킹 시스템을 사용하여 이러한 접근법을 과학적으로 비교하고 성능 특성을 이해하는 방법을 알아봅니다.
 
-> **Key insight:** _Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware._
+> **핵심 통찰:** _이론적 분석은 가치 있지만, 실증적 벤치마킹이 특정 하드웨어에서의 실제 성능을 보여줍니다._
 
-## Running benchmarks
+## 벤치마크 실행
 
-To execute the comprehensive benchmark suite:
+종합 벤치마크 스위트를 실행하려면:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -49,7 +49,7 @@ uv run poe p23 --benchmark
   </div>
 </div>
 
-Your output will show performance measurements for each pattern:
+각 패턴에 대한 성능 측정 결과가 출력됩니다:
 
 ```txt
 SIZE: 1024
@@ -94,65 +94,65 @@ Running vectorized_1M_1024
 Benchmarks completed!
 ```
 
-## Benchmark configuration
+## 벤치마크 설정
 
-The benchmarking system uses Mojo's built-in `benchmark` module:
+벤치마킹 시스템은 Mojo의 내장 `benchmark` 모듈을 사용합니다:
 
 ```mojo
 from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 ```
 
-- **`max_iters=10`**: Up to 10 iterations for statistical reliability
-- **`num_warmup_iters=1`**: GPU warmup before measurement
-- Check out the [benchmark documentation](https://docs.modular.com/mojo/stdlib/benchmark/)
+- **`max_iters=10`**: 통계적 신뢰성을 위해 최대 10회 반복
+- **`num_warmup_iters=1`**: 측정 전 GPU 워밍업
+- [Benchmark 문서](https://docs.modular.com/mojo/stdlib/benchmark/)를 참고하세요
 
-## Benchmarking implementation essentials
+## 벤치마킹 구현의 핵심
 
-### Core workflow pattern
+### 핵심 워크플로우 패턴
 
-Each benchmark follows a streamlined pattern:
+각 벤치마크는 다음과 같은 간결한 패턴을 따릅니다:
 
 ```mojo
 @parameter
 fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
-    # Setup: Create buffers and initialize data
+    # 셋업: 버퍼 생성 및 데이터 초기화
     @parameter
     fn pattern_workflow(ctx: DeviceContext) raises:
-      # Compute: Execute the algorithm being measured
+      # 연산: 측정 대상 알고리즘 실행
 
     b.iter_custom[pattern_workflow](bench_ctx)
-    # Prevent optimization: keep(out.unsafe_ptr())
-    # Synchronize: ctx.synchronize()
+    # 최적화 방지: keep(out.unsafe_ptr())
+    # 동기화: ctx.synchronize()
 ```
 
-**Key phases:**
+**주요 단계:**
 
-1. **Setup**: Buffer allocation and data initialization
-2. **Computation**: The actual algorithm being benchmarked
-3. **Prevent optimization**: Critical for accurate measurement
-4. **Synchronization**: Ensure GPU work completes
+1. **셋업**: 버퍼 할당 및 데이터 초기화
+2. **연산**: 벤치마크 대상 알고리즘 실행
+3. **최적화 방지**: 정확한 측정을 위해 필수
+4. **동기화**: GPU 작업 완료 확인
 
-> **Critical: The `keep()` function**
-> `keep(out.unsafe_ptr())` prevents the compiler from optimizing away your computation as "unused code." Without this, you might measure nothing instead of your algorithm! This is essential for accurate GPU benchmarking because kernels are launched asynchronously.
+> **중요: `keep()` 함수**
+> `keep(out.unsafe_ptr())`는 컴파일러가 연산 결과를 "사용되지 않는 코드"로 최적화하여 제거하는 것을 방지합니다. 이것이 없으면 알고리즘 대신 아무것도 측정하지 못할 수 있습니다! GPU 커널은 비동기적으로 실행되기 때문에 정확한 GPU 벤치마킹에 필수적입니다.
 
-### Why custom iteration works for GPU
+### 커스텀 반복이 GPU에 필요한 이유
 
-Standard benchmarking assumes CPU-style synchronous execution. GPU kernels launch asynchronously, so we need:
+일반적인 벤치마킹은 CPU 스타일의 동기 실행을 가정합니다. GPU 커널은 비동기적으로 실행되므로 다음이 필요합니다:
 
-- **GPU context management**: Proper DeviceContext lifecycle
-- **Memory management**: Buffer cleanup between iterations
-- **Synchronization handling**: Accurate timing of async operations
-- **Overhead isolation**: Separate setup cost from computation cost
+- **GPU 컨텍스트 관리**: 적절한 DeviceContext 생명주기
+- **메모리 관리**: 반복 간 버퍼 정리
+- **동기화 처리**: 비동기 연산의 정확한 타이밍
+- **오버헤드 분리**: 셋업 비용과 연산 비용의 분리
 
-## Test scenarios and thread analysis
+## 테스트 시나리오와 스레드 분석
 
-The benchmark suite tests three scenarios to reveal performance characteristics:
+벤치마크 스위트는 성능 특성을 파악하기 위해 세 가지 시나리오를 테스트합니다:
 
-### Thread utilization summary
+### 스레드 활용 요약
 
-| Problem Size | Pattern | Threads | SIMD ops/thread | Total SIMD ops |
+| 문제 크기 | 패턴 | 스레드 수 | 스레드당 SIMD 연산 | 총 SIMD 연산 |
 |-------------|---------|---------|-----------------|----------------|
 | **SIZE=16** | Elementwise | 4 | 1 | 4 |
 |             | Tiled | 4 | 1 | 4 |
@@ -167,170 +167,170 @@ The benchmark suite tests three scenarios to reveal performance characteristics:
 |             | Manual | 256 | 1,024 | 262,144 |
 |             | Vectorize | 1,024 | 256 | 262,144 |
 
-### Performance characteristics by problem size
+### 문제 크기별 성능 특성
 
-**Small problems (SIZE=16):**
+**소규모 문제 (SIZE=16):**
 
-- Launch overhead dominates (~0.003ms baseline)
-- Thread count differences don't matter
-- Tiled/vectorize show slightly lower overhead
+- 실행 오버헤드가 지배적 (~0.003ms 기준선)
+- 스레드 수 차이는 거의 무의미
+- Tiled/vectorize가 약간 낮은 오버헤드를 보임
 
-**Medium problems (SIZE=128):**
+**중규모 문제 (SIZE=128):**
 
-- Still overhead-dominated (~0.003ms for all)
-- Performance differences nearly disappear
-- Transitional behaviour between overhead and computation
+- 여전히 오버헤드가 지배적 (~0.003ms 전 패턴)
+- 성능 차이가 거의 사라짐
+- 오버헤드 지배에서 연산 지배로의 전환 구간
 
-**Large problems (SIZE=1M):**
+**대규모 문제 (SIZE=1M):**
 
-- Real algorithmic differences emerge
-- Impact of uncoalesced loads becomes apparent
-- Clear performance ranking appears
+- 실질적인 알고리즘 차이가 드러남
+- 비병합 로드의 영향이 명확해짐
+- 뚜렷한 성능 순위가 나타남
 
-## What the data shows
+## 데이터가 보여주는 것
 
-Based on empirical benchmark results across different hardware:
+다양한 하드웨어에서의 실증적 벤치마크 결과를 기반으로:
 
-### Performance rankings (large problems)
+### 성능 순위 (대규모 문제)
 
-| Rank | Pattern | Typical time | Key insight |
+| 순위 | 패턴 | 대표 시간 | 핵심 인사이트 |
 |------|---------|-------------|-------------|
-| 🥇 | **Elementwise** | ~0.03ms | Coalesced memory access wins for memory-bound ops |
-| 🥈 | **Mojo vectorize** | ~0.19ms | Uncoalesced memory access hurts performance |
-| 🥉 | **Manual vectorized** | ~0.59ms | Uncoalesced memory access and manual optimization reduces performance |
-| 4th | **Tiled** | ~0.69ms | Uncoalesced memory access, manual optimization without SIMD loads reduces performance further |
+| 🥇 | **Elementwise** | ~0.03ms | 병합 메모리 접근이 메모리 바운드 연산에서 승리 |
+| 🥈 | **Mojo vectorize** | ~0.19ms | 비병합 메모리 접근이 성능을 저하 |
+| 🥉 | **수동 벡터화** | ~0.59ms | 비병합 메모리 접근과 수동 최적화가 성능 감소 |
+| 4위 | **Tiled** | ~0.69ms | 비병합 메모리 접근, SIMD 로드 없는 수동 최적화가 성능을 더 저하 |
 
-### Key performance insights
+### 핵심 성능 인사이트
 
-> **For simple memory-bound operations:** Maximum parallelism (elementwise) outperforms complex memory optimizations at scale.
+> **단순 메모리 바운드 연산의 경우:** 최대 병렬성(elementwise)이 대규모에서 복잡한 메모리 최적화보다 우수합니다.
 
-**Why elementwise wins:**
+**Elementwise가 승리하는 이유:**
 
-- **262,144 threads** provide excellent latency hiding
-- **Simple memory patterns** achieve good coalescing
-- **Minimal overhead** per thread
-- **Scales naturally** with GPU core count
+- **262,144개 스레드**가 우수한 latency 은닉을 제공
+- **단순한 메모리 패턴**이 좋은 병합을 달성
+- 스레드당 **최소한의 오버헤드**
+- GPU 코어 수에 따라 **자연스럽게 확장**
 
-**Why tiled and vectorize are competitive:**
+**Tiled와 vectorize가 경쟁력 있는 이유:**
 
-- **Balanced approach** between parallelism and memory locality
-- **Automatic optimization** (vectorize) performs nearly as well as manual tiling
-- **Good thread utilization** without excessive complexity
+- 병렬성과 메모리 지역성 사이의 **균형 잡힌 접근**
+- **자동 최적화**(vectorize)가 수동 tiling과 거의 동등한 성능
+- 과도한 복잡도 없이 **양호한 스레드 활용**
 
-**Why manual vectorization struggles:**
+**수동 벡터화가 고전하는 이유:**
 
-- **Only 256 threads** limit parallelism
-- **Complex indexing** adds computational overhead
-- **Cache pressure** from large chunks per thread
-- **Diminishing returns** for simple arithmetic
+- **256개 스레드만으로는** 병렬성이 제한적
+- **복잡한 인덱싱**이 연산 오버헤드를 추가
+- 스레드당 대형 chunk로 인한 **캐시 부담**
+- 단순 산술에서 **수확 체감**
 
-**Framework intelligence:**
+**프레임워크 인텔리전스:**
 
-- Automatic iteration count adjustment (91-100 iterations)
-- Statistical reliability across different execution times
-- Handles thermal throttling and system variation
+- 자동 반복 횟수 조정 (91-100회 반복)
+- 서로 다른 실행 시간에 걸친 통계적 신뢰성
+- 써멀 스로틀링과 시스템 변동을 처리
 
-## Interpreting your results
+## 결과 해석하기
 
-### Reading the output table
+### 출력 테이블 읽기
 
 ```txt
 | name                     | met (ms)           | iters |
 | elementwise_1M_1024      | 0.03130143         | 100   |
 ```
 
-- **`met (ms)`**: Execution time for a single iteration
-- **`iters`**: Number of iterations performed
-- **Compare within problem size**: Same-size comparisons are most meaningful
+- **`met (ms)`**: 단일 반복의 실행 시간
+- **`iters`**: 수행된 반복 횟수
+- **동일 문제 크기 내에서 비교**: 같은 크기끼리 비교하는 것이 가장 의미 있음
 
-### Making optimization decisions
+### 최적화 의사결정
 
-**Choose patterns based on empirical evidence:**
+**실증적 증거를 기반으로 패턴을 선택하세요:**
 
-**For production workloads:**
+**프로덕션 워크로드의 경우:**
 
-- **Large datasets (>100K elements)**: Elementwise typically optimal
-- **Small/startup datasets (<1K elements)**: Tiled or vectorize for lower overhead
-- **Development speed priority**: Mojo vectorize for automatic optimization
-- **Avoid manual vectorization**: Complexity rarely pays off for simple operations
+- **대규모 데이터셋 (>100K 요소)**: Elementwise가 일반적으로 최적
+- **소규모/시작 데이터셋 (<1K 요소)**: 낮은 오버헤드를 위해 tiled 또는 vectorize
+- **개발 속도 우선**: 자동 최적화를 위한 Mojo vectorize
+- **수동 벡터화 지양**: 단순 연산에서는 복잡도가 성능으로 보상되는 경우가 드묾
 
-**Performance optimization workflow:**
+**성능 최적화 워크플로우:**
 
-1. **Profile first**: Measure before optimizing
-2. **Test at scale**: Small problems mislead about real performance
-3. **Consider total cost**: Include development and maintenance effort
-4. **Validate improvements**: Confirm with benchmarks on target hardware
+1. **먼저 프로파일링**: 최적화하기 전에 측정
+2. **대규모에서 테스트**: 소규모 문제는 실제 성능에 대해 오해를 줄 수 있음
+3. **총비용 고려**: 개발 및 유지보수 노력을 포함
+4. **개선 사항 검증**: 대상 하드웨어에서 벤치마크로 확인
 
-## Advanced benchmarking techniques
+## 고급 벤치마킹 기법
 
-### Custom test scenarios
+### 커스텀 테스트 시나리오
 
-Modify parameters to test different conditions:
+매개변수를 수정하여 다양한 조건을 테스트할 수 있습니다:
 
 ```mojo
-# Different problem sizes
-benchmark_elementwise_parameterized[1024, 32]  # Large problem
-benchmark_elementwise_parameterized[64, 8]     # Small problem
+# 다양한 문제 크기
+benchmark_elementwise_parameterized[1024, 32]  # 대규모 문제
+benchmark_elementwise_parameterized[64, 8]     # 소규모 문제
 
-# Different tile sizes
-benchmark_tiled_parameterized[256, 8]   # Small tiles
-benchmark_tiled_parameterized[256, 64]  # Large tiles
+# 다양한 타일 크기
+benchmark_tiled_parameterized[256, 8]   # 작은 타일
+benchmark_tiled_parameterized[256, 64]  # 큰 타일
 ```
 
-### Hardware considerations
+### 하드웨어 고려 사항
 
-Your results will vary based on:
+결과는 다음에 따라 달라집니다:
 
-- **GPU architecture**: SIMD width, core count, memory bandwidth
-- **System configuration**: PCIe bandwidth, CPU performance
-- **Thermal state**: GPU boost clocks vs sustained performance
-- **Concurrent workloads**: Other processes affecting GPU utilization
+- **GPU 아키텍처**: SIMD 폭, 코어 수, 메모리 대역폭
+- **시스템 구성**: PCIe 대역폭, CPU 성능
+- **열 상태**: GPU 부스트 클럭 vs 지속 성능
+- **동시 워크로드**: GPU 활용에 영향을 주는 다른 프로세스
 
-## Best practices summary
+## 모범 사례 요약
 
-**Benchmarking workflow:**
+**벤치마킹 워크플로우:**
 
-1. **Warm up GPU** before critical measurements
-2. **Run multiple iterations** for statistical significance
-3. **Test multiple problem sizes** to understand scaling
-4. **Use `keep()` consistently** to prevent optimization artifacts
-5. **Compare like with like** (same problem size, same hardware)
+1. 중요한 측정 전에 **GPU 워밍업**
+2. 통계적 유의성을 위해 **여러 번 반복** 실행
+3. 확장 특성을 이해하기 위해 **다양한 문제 크기** 테스트
+4. 최적화 아티팩트를 방지하기 위해 **`keep()`을 일관되게** 사용
+5. **동일 조건에서 비교** (같은 문제 크기, 같은 하드웨어)
 
-**Performance decision framework:**
+**성능 의사결정 프레임워크:**
 
-- **Start simple**: Begin with elementwise for memory-bound operations
-- **Measure don't guess**: Theoretical analysis guides, empirical data decides
-- **Scale matters**: Small problem performance doesn't predict large problem behaviour
-- **Total cost optimization**: Balance development time vs runtime performance
+- **단순하게 시작**: 메모리 바운드 연산에는 elementwise부터
+- **추측하지 말고 측정**: 이론적 분석은 방향을, 실증적 데이터가 결정을
+- **규모가 중요**: 소규모 문제의 성능이 대규모 문제의 동작을 예측하지 못함
+- **총비용 최적화**: 개발 시간 vs 런타임 성능의 균형
 
-## Next steps
+## 다음 단계
 
-With benchmarking skills:
+벤치마킹 기술을 갖추었다면:
 
-- **Profile real applications**: Apply these patterns to actual workloads
-- **Advanced GPU patterns**: Explore reductions, convolutions, and matrix operations
-- **Multi-GPU scaling**: Understand distributed GPU computing patterns
-- **Memory optimization**: Dive deeper into shared memory and advanced caching
+- **실제 애플리케이션 프로파일링**: 이 패턴들을 실제 워크로드에 적용
+- **고급 GPU 패턴**: reduction, convolution, 행렬 연산 탐구
+- **멀티 GPU 확장**: 분산 GPU 컴퓨팅 패턴 이해
+- **메모리 최적화**: 공유 메모리와 고급 캐싱을 더 깊이 탐구
 
-💡 **Key takeaway**: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.
+💡 **핵심 요약**: 벤치마킹은 이론적 이해를 실질적인 성능 최적화로 전환합니다. 실증적 데이터를 사용하여 특정 하드웨어와 워크로드 특성에 가장 적합한 패턴을 선택하세요.
 
-## Looking ahead: when you need more control
+## 앞으로의 방향: 더 많은 제어가 필요할 때
 
-The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require **direct thread communication**:
+Part VI의 함수형 패턴은 대부분의 워크로드에서 우수한 성능을 제공하지만, 일부 알고리즘은 **직접적인 스레드 간 통신**이 필요합니다:
 
-### **Algorithms that benefit from warp programming:**
+### **Warp 프로그래밍이 유용한 알고리즘:**
 
-- **Reductions**: Sum, max, min operations across thread groups
-- **Prefix operations**: Cumulative sums, running maximums
-- **Data shuffling**: Reorganizing data between threads
-- **Cooperative algorithms**: Where threads must coordinate closely
+- **Reduction**: 스레드 그룹에 걸친 합계, 최댓값, 최솟값 연산
+- **Prefix 연산**: 누적 합, 이동 최댓값
+- **데이터 shuffle**: 스레드 간 데이터 재배치
+- **협력적 알고리즘**: 스레드 간 긴밀한 조정이 필요한 경우
 
-### **Performance preview:**
+### **성능 미리보기:**
 
-In Part VI, we'll revisit several algorithms from Part II and show how warp operations can:
+Part VII에서는 Part III의 여러 알고리즘을 다시 살펴보며 Warp 연산이 어떻게:
 
-- **Simplify code**: Replace complex shared memory patterns with single function calls
-- **Improve performance**: Eliminate barriers and reduce memory traffic
-- **Enable new algorithms**: Unlock patterns impossible with pure functional approaches
+- **코드를 간소화**하는지: 복잡한 공유 메모리 패턴을 단일 함수 호출로 대체
+- **성능을 향상**시키는지: barrier를 제거하고 메모리 트래픽을 감소
+- **새로운 알고리즘을 가능하게** 하는지: 순수 함수형 접근으로는 불가능한 패턴을 구현
 
-**Coming up next**: [Part VII: Warp-Level Programming](../puzzle_24/puzzle_24.md) - starting with a dramatic reimplementation of Puzzle 14's prefix sum.
+**다음 내용**: [Part VII: Warp 레벨 프로그래밍](../puzzle_24/puzzle_24.md) - Puzzle 14의 prefix sum을 완전히 새롭게 구현하는 것부터 시작합니다.

@@ -1,122 +1,122 @@
 <!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
 
-# Tile - Memory-Efficient Tiled Processing
+# Tile - 메모리 효율적인 Tiled 처리
 
-## Overview
+## 개요
 
-Building on the **elementwise** pattern, this puzzle introduces **tiled processing** - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.
+**Elementwise** 패턴을 기반으로, 이 퍼즐에서는 **tiled 처리**를 소개합니다. 이는 GPU에서 메모리 접근 패턴과 캐시 활용을 최적화하는 핵심 기법입니다. 각 스레드가 전체 배열에 걸쳐 개별 SIMD 벡터를 처리하는 대신, tiling은 데이터를 캐시 메모리에 더 잘 맞는 작고 관리 가능한 chunk로 구성합니다.
 
-You've already seen tiling in action with **[Puzzle 16's tiled matrix multiplication](../puzzle_16/tiled.md)**, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.
+**[Puzzle 16의 Tiled 행렬 곱셈](../puzzle_16/tiled.md)** 에서 이미 tiling을 경험한 바 있습니다. 거기서는 타일을 사용해 대규모 행렬을 효율적으로 처리했습니다. 여기서는 동일한 tiling 원칙을 벡터 연산에 적용하여, 이 기법이 2D 행렬에서 1D 배열까지 어떻게 확장되는지 보여줍니다.
 
-Implement the same vector addition operation using Mojo's tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.
+Mojo의 tiled 방식을 사용하여 동일한 벡터 덧셈 연산을 구현합니다. 각 GPU 스레드가 데이터의 타일 전체를 순차적으로 처리하며, 메모리 지역성이 특정 워크로드에서 어떻게 성능을 향상시킬 수 있는지 보여줍니다.
 
-**Key insight:** _Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization._
+**핵심 통찰:** _Tiling은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다._
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn:
+이 퍼즐에서 배울 내용:
 
-- **Tile-based memory organization** for cache optimization
-- **Sequential SIMD processing** within tiles
-- **Memory locality principles** and cache-friendly access patterns
-- **Thread-to-tile mapping** vs thread-to-element mapping
-- **Performance trade-offs** between parallelism and memory efficiency
+- 캐시 최적화를 위한 **타일 기반 메모리 구성**
+- 타일 내의 **순차적 SIMD 처리**
+- **메모리 지역성 원칙**과 캐시 친화적 접근 패턴
+- **스레드-타일 매핑** vs 스레드-요소 매핑
+- 병렬성과 메모리 효율 간의 **성능 트레이드오프**
 
-The same mathematical operation as elementwise:
+Elementwise와 동일한 수학적 연산:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
 
-But with a completely different execution strategy optimized for memory hierarchy.
+하지만 메모리 계층 구조에 최적화된 완전히 다른 실행 전략을 사용합니다.
 
-## Configuration
+## 설정
 
-- Vector size: `SIZE = 1024`
-- Tile size: `TILE_SIZE = 32`
-- Data type: `DType.float32`
-- SIMD width: GPU-dependent (for operations within tiles)
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- 벡터 크기: `SIZE = 1024`
+- 타일 크기: `TILE_SIZE = 32`
+- 데이터 타입: `DType.float32`
+- SIMD 폭: GPU 의존적 (타일 내 연산용)
+- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
 
-## Code to complete
+## 작성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p23/p23.mojo:tiled_elementwise_add}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p23/p23.mojo" class="filename">View full file: problems/p23/p23.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p23/p23.mojo" class="filename">전체 파일 보기: problems/p23/p23.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Understanding tile organization**
+### 1. **타일 구성 이해하기**
 
-The tiled approach divides your data into fixed-size chunks:
+Tiled 방식은 데이터를 고정 크기의 chunk로 나눕니다:
 
 ```mojo
-num_tiles = (size + tile_size - 1) // tile_size  # Ceiling division
+num_tiles = (size + tile_size - 1) // tile_size  # 올림 나눗셈
 ```
 
-For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
+`TILE_SIZE=32`인 1024개 요소 벡터의 경우: `1024 ÷ 32 = 32`개 타일이 정확히 생깁니다.
 
-### 2. **Tile extraction pattern**
+### 2. **타일 추출 패턴**
 
-Check out the [LayoutTensor `.tile` documentation](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile).
+[LayoutTensor `.tile` 문서](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile)를 참고하세요.
 
 ```mojo
-tile_id = indices[0]  # Each thread gets one tile to process
+tile_id = indices[0]  # 각 스레드가 처리할 타일 하나를 받음
 out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 ```
 
-The `tile[size](id)` method creates a view of `size` consecutive elements starting at `id × size`.
+`tile[size](id)` 메서드는 `id × size` 위치부터 시작하는 `size`개의 연속 요소에 대한 뷰를 생성합니다.
 
-### 3. **Sequential processing within tiles**
+### 3. **타일 내 순차 처리**
 
-Unlike elementwise, you process the tile sequentially:
+Elementwise와 달리, 타일을 순차적으로 처리합니다:
 
 ```mojo
 @parameter
 for i in range(tile_size):
-    # Process element i within the current tile
+    # 현재 타일 내의 요소 i를 처리
 ```
 
-This `@parameter` loop unrolls at compile-time for optimal performance.
+이 `@parameter` 루프는 최적의 성능을 위해 컴파일 타임에 전개됩니다.
 
-### 4. **SIMD operations within tile elements**
+### 4. **타일 요소 내 SIMD 연산**
 
 ```mojo
-a_vec = a_tile.load[simd_width](i, 0)  # Load from position i in tile
-b_vec = b_tile.load[simd_width](i, 0)  # Load from position i in tile
-result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
-out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
+a_vec = a_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
+b_vec = b_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
+result = a_vec + b_vec                 # SIMD 덧셈 (GPU 의존적 폭)
+out_tile.store[simd_width](i, 0, result)  # 타일 내 위치 i에 저장
 ```
 
-### 5. **Thread configuration difference**
+### 5. **스레드 구성의 차이점**
 
 ```mojo
 elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 ```
 
-Note the `1` instead of `SIMD_WIDTH` - each thread processes one entire tile sequentially.
+`SIMD_WIDTH` 대신 `1`을 사용합니다 - 각 스레드가 하나의 타일 전체를 순차적으로 처리합니다.
 
-### 6. **Memory access pattern insight**
+### 6. **메모리 접근 패턴 인사이트**
 
-Each thread accesses a contiguous block of memory (the tile), then moves to the next tile. This creates excellent **spatial locality** within each thread's execution.
+각 스레드는 연속적인 메모리 블록(타일)에 접근한 다음, 다음 타일로 이동합니다. 이렇게 하면 각 스레드의 실행 내에서 우수한 **공간 지역성**이 만들어집니다.
 
-### 7. **Key debugging insight**
+### 7. **디버깅 핵심 포인트**
 
-With tiling, you'll see fewer thread launches but each does more work:
+tiling을 사용하면 스레드 실행 수는 줄어들지만 각 스레드가 더 많은 작업을 수행합니다:
 
-- Elementwise: ~256 threads (for SIMD_WIDTH=4), each processing 4 elements
-- Tiled: ~32 threads, each processing 32 elements sequentially
+- Elementwise: ~256개 스레드 (SIMD_WIDTH=4 기준), 각각 4개 요소 처리
+- Tiled: ~32개 스레드, 각각 32개 요소를 순차적으로 처리
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+풀이를 테스트하려면 터미널에서 다음 명령을 실행하세요:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -155,7 +155,7 @@ uv run poe p23 --tiled
   </div>
 </div>
 
-Your output will look like this when not yet solved:
+퍼즐이 아직 풀리지 않은 경우 다음과 같이 출력됩니다:
 
 ```txt
 SIZE: 1024
@@ -173,7 +173,7 @@ out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -184,25 +184,25 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 <div class="solution-explanation">
 
-The tiled processing pattern demonstrates advanced memory optimization techniques for GPU programming:
+tiled 처리 패턴은 GPU 프로그래밍을 위한 고급 메모리 최적화 기법을 보여줍니다:
 
-### 1. **Tiling philosophy and memory hierarchy**
+### 1. **Tiling 철학과 메모리 계층 구조**
 
-Tiling represents a fundamental shift in how we think about parallel processing:
+Tiling은 병렬 처리에 대한 사고 방식의 근본적인 전환을 나타냅니다:
 
-**Elementwise approach:**
+**Elementwise 방식:**
 
-- **Wide parallelism**: Many threads, each doing minimal work
-- **Global memory pressure**: Threads scattered across entire array
-- **Cache misses**: Poor spatial locality across thread boundaries
+- **넓은 병렬성**: 많은 스레드가 각각 최소한의 작업 수행
+- **글로벌 메모리 부하**: 스레드들이 전체 배열에 분산
+- **캐시 미스**: 스레드 경계를 넘나드는 낮은 공간 지역성
 
-**Tiled approach:**
+**Tiled 방식:**
 
-- **Deep parallelism**: Fewer threads, each doing substantial work
-- **Localized memory access**: Each thread works on contiguous data
-- **Cache optimization**: Excellent spatial and temporal locality
+- **깊은 병렬성**: 더 적은 스레드가 각각 상당한 작업 수행
+- **지역화된 메모리 접근**: 각 스레드가 연속적인 데이터에서 작업
+- **캐시 최적화**: 우수한 공간 및 시간 지역성
 
-### 2. **Tile organization and indexing**
+### 2. **타일 구성과 인덱싱**
 
 ```mojo
 tile_id = indices[0]
@@ -211,25 +211,25 @@ a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 ```
 
-**Tile mapping visualization (TILE_SIZE=32):**
+**타일 매핑 시각화 (TILE_SIZE=32):**
 
 ```
-Original array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
+원본 배열: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
 
-Tile 0 (thread 0): [0, 1, 2, ..., 31]      ← Elements 0-31
-Tile 1 (thread 1): [32, 33, 34, ..., 63]   ← Elements 32-63
-Tile 2 (thread 2): [64, 65, 66, ..., 95]   ← Elements 64-95
+Tile 0 (thread 0): [0, 1, 2, ..., 31]      ← 요소 0-31
+Tile 1 (thread 1): [32, 33, 34, ..., 63]   ← 요소 32-63
+Tile 2 (thread 2): [64, 65, 66, ..., 95]   ← 요소 64-95
 ...
-Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
+Tile 31 (thread 31): [992, 993, ..., 1023] ← 요소 992-1023
 ```
 
-**Key insights:**
+**핵심 인사이트:**
 
-- Each `tile[size](id)` creates a **view** into the original tensor
-- Views are zero-copy - no data movement, just pointer arithmetic
-- Tile boundaries are always aligned to `tile_size` boundaries
+- `tile[size](id)`는 원본 텐서에 대한 **뷰**를 생성합니다
+- 뷰는 제로 카피로 동작합니다 - 데이터를 복사하지 않고 포인터 연산만 수행
+- 타일 경계는 항상 `tile_size` 단위로 정렬됩니다
 
-### 3. **Sequential processing deep dive**
+### 3. **순차 처리 심층 분석**
 
 ```mojo
 @parameter
@@ -240,132 +240,132 @@ for i in range(tile_size):
     out_tile.store[simd_width](i, 0, ret)
 ```
 
-**Why sequential processing?**
+**왜 순차 처리인가?**
 
-- **Cache optimization**: Consecutive memory accesses maximize cache hit rates
-- **Compiler optimization**: `@parameter` loops unroll completely at compile-time
-- **Memory bandwidth**: Sequential access aligns with memory controller design
-- **Reduced coordination**: No need to synchronize between SIMD groups
+- **캐시 최적화**: 연속적인 메모리 접근이 캐시 히트율을 극대화
+- **컴파일러 최적화**: `@parameter` 루프가 컴파일 타임에 완전히 전개됨
+- **메모리 대역폭**: 순차 접근이 메모리 컨트롤러 설계에 부합
+- **조정 비용 감소**: SIMD 그룹 간 동기화가 불필요
 
-**Execution pattern within one tile (TILE_SIZE=32, SIMD_WIDTH=4):**
+**하나의 타일 내 실행 패턴 (TILE_SIZE=32, SIMD_WIDTH=4):**
 
 ```
-Thread processes tile sequentially:
-Step 0: Process elements [0:4] with SIMD
-Step 1: Process elements [4:8] with SIMD
-Step 2: Process elements [8:12] with SIMD
+스레드가 타일을 순차 처리:
+Step 0: 요소 [0:4]를 SIMD로 처리
+Step 1: 요소 [4:8]를 SIMD로 처리
+Step 2: 요소 [8:12]를 SIMD로 처리
 ...
-Step 7: Process elements [28:32] with SIMD
-Total: 8 SIMD operations per thread (32 ÷ 4 = 8)
+Step 7: 요소 [28:32]를 SIMD로 처리
+합계: 스레드당 8회 SIMD 연산 (32 ÷ 4 = 8)
 ```
 
-### 4. **Memory access pattern analysis**
+### 4. **메모리 접근 패턴 분석**
 
-**Cache behavior comparison:**
+**캐시 동작 비교:**
 
-**Elementwise pattern:**
+**Elementwise 패턴:**
 
 ```
-Thread 0: accesses global positions [0, 4, 8, 12, ...]    ← Stride = SIMD_WIDTH
-Thread 1: accesses global positions [4, 8, 12, 16, ...]   ← Stride = SIMD_WIDTH
+Thread 0: 글로벌 위치 [0, 4, 8, 12, ...] 접근    ← Stride = SIMD_WIDTH
+Thread 1: 글로벌 위치 [4, 8, 12, 16, ...] 접근   ← Stride = SIMD_WIDTH
 ...
-Result: Memory accesses spread across entire array
+결과: 메모리 접근이 전체 배열에 분산
 ```
 
-**Tiled pattern:**
+**Tiled 패턴:**
 
 ```
-Thread 0: accesses positions [0:32] sequentially         ← Contiguous 32-element block
-Thread 1: accesses positions [32:64] sequentially       ← Next contiguous 32-element block
+Thread 0: 위치 [0:32]를 순차 접근               ← 연속적인 32개 요소 블록
+Thread 1: 위치 [32:64]를 순차 접근             ← 다음 연속적인 32개 요소 블록
 ...
-Result: Perfect spatial locality within each thread
+결과: 각 스레드 내에서 완벽한 공간 지역성
 ```
 
-**Cache efficiency implications:**
+**캐시 효율 시사점:**
 
-- **L1 cache**: Small tiles often fit better in L1 cache, reducing cache misses
-- **Memory bandwidth**: Sequential access maximizes effective bandwidth
-- **TLB efficiency**: Fewer translation lookbook buffer misses
-- **Prefetching**: Hardware prefetchers work optimally with sequential patterns
+- **L1 캐시**: 작은 타일이 L1 캐시에 더 잘 맞아 캐시 미스 감소
+- **메모리 대역폭**: 순차 접근이 유효 대역폭을 극대화
+- **TLB 효율**: TLB 미스 감소 (_역주: TLB(Translation Lookaside Buffer)는 가상 주소를 물리 주소로 변환하는 캐시로, 미스가 줄면 메모리 접근이 빨라집니다_)
+- **프리페칭**: 하드웨어 프리페처가 순차 패턴에서 최적으로 동작
 
-### 5. **Thread configuration strategy**
+### 5. **스레드 구성 전략**
 
 ```mojo
 elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 ```
 
-**Why `1` instead of `SIMD_WIDTH`?**
+**왜 `SIMD_WIDTH` 대신 `1`인가?**
 
-- **Thread count**: Launch exactly `num_tiles` threads, not `num_tiles × SIMD_WIDTH`
-- **Work distribution**: Each thread handles one complete tile
-- **Load balancing**: More work per thread, fewer threads total
-- **Memory locality**: Each thread's work is spatially localized
+- **스레드 수**: `num_tiles × SIMD_WIDTH`가 아닌 정확히 `num_tiles`개의 스레드만 실행
+- **작업 분배**: 각 스레드가 하나의 완전한 타일을 처리
+- **로드 밸런싱**: 스레드당 더 많은 작업, 전체적으로 더 적은 스레드
+- **메모리 지역성**: 각 스레드의 작업이 공간적으로 지역화
 
-**Performance trade-offs:**
+**성능 트레이드오프:**
 
-- **Fewer logical threads**: May not fully utilize all GPU cores at low occupancy
-- **More work per thread**: Better cache utilization and reduced coordination overhead
-- **Sequential access**: Optimal memory bandwidth utilization within each thread
-- **Reduced overhead**: Less thread launch and coordination overhead
+- **더 적은 논리적 스레드**: 낮은 점유율에서 모든 GPU 코어를 활용하지 못할 수 있음
+- **스레드당 더 많은 작업**: 더 나은 캐시 활용과 조정 오버헤드 감소
+- **순차 접근**: 각 스레드 내에서 최적의 메모리 대역폭 활용
+- **오버헤드 감소**: 스레드 실행 및 조정 오버헤드 감소
 
-**Important note**: "Fewer threads" refers to the logical programming model. The GPU scheduler can still achieve high hardware utilization by running multiple warps and efficiently switching between them during memory stalls.
+**중요 참고**: "더 적은 스레드"는 논리적 프로그래밍 모델을 의미합니다. GPU 스케줄러는 여러 Warp를 실행하고 메모리 지연 시 효율적으로 전환하여 높은 하드웨어 활용률을 달성할 수 있습니다.
 
-### 6. **Performance characteristics**
+### 6. **성능 특성**
 
-**When tiling helps:**
+**Tiling이 도움이 되는 경우:**
 
-- **Memory-bound operations**: When memory bandwidth is the bottleneck
-- **Cache-sensitive workloads**: Operations that benefit from data reuse
-- **Complex operations**: When compute per element is higher
-- **Limited parallelism**: When you have fewer threads than GPU cores
+- **메모리 바운드 연산**: 메모리 대역폭이 병목인 경우
+- **캐시 민감 워크로드**: 데이터 재사용의 이점이 있는 연산
+- **복잡한 연산**: 요소당 연산량이 많은 경우
+- **제한된 병렬성**: GPU 코어보다 스레드가 적은 경우
 
-**When tiling hurts:**
+**Tiling이 불리한 경우:**
 
-- **Highly parallel workloads**: When you need maximum thread utilization
-- **Simple operations**: When memory access dominates over computation
-- **Irregular access patterns**: When tiling doesn't improve locality
+- **고도로 병렬적인 워크로드**: 최대 스레드 활용이 필요한 경우
+- **단순한 연산**: 메모리 접근이 연산보다 지배적인 경우
+- **불규칙적 접근 패턴**: tiling이 지역성을 개선하지 못하는 경우
 
-**For our simple addition example (TILE_SIZE=32):**
+**단순 덧셈 예시 (TILE_SIZE=32):**
 
-- **Thread count**: 32 threads instead of 256 (8× fewer)
-- **Work per thread**: 32 elements instead of 4 (8× more)
-- **Memory pattern**: Sequential vs strided access
-- **Cache utilization**: Much better spatial locality
+- **스레드 수**: 256개 대신 32개 (8배 적음)
+- **스레드당 작업량**: 4개 대신 32개 요소 (8배 많음)
+- **메모리 패턴**: 순차 vs stride 접근
+- **캐시 활용**: 훨씬 나은 공간 지역성
 
-### 7. **Advanced tiling considerations**
+### 7. **고급 tiling 고려 사항**
 
-**Tile size selection:**
+**타일 크기 선택:**
 
-- **Too small**: Poor cache utilization, more overhead
-- **Too large**: May not fit in cache, reduced parallelism
-- **Sweet spot**: Usually 16-64 elements for L1 cache optimization
-- **Our choice**: 32 elements balances cache usage with parallelism
+- **너무 작으면**: 캐시 활용이 떨어지고, 오버헤드가 증가
+- **너무 크면**: 캐시에 맞지 않을 수 있고, 병렬성이 감소
+- **최적 지점**: L1 캐시 최적화를 위해 보통 16-64개 요소
+- **현재 선택**: 32개 요소로 캐시 활용과 병렬성의 균형 달성
 
-**Hardware considerations:**
+**하드웨어 고려 사항:**
 
-- **Cache size**: Tiles should fit in L1 cache when possible
-- **Memory bandwidth**: Consider memory controller width
-- **Core count**: Ensure enough tiles to utilize all cores
-- **SIMD width**: Tile size should be multiple of SIMD width
+- **캐시 크기**: 가능하면 타일이 L1 캐시에 맞아야 함
+- **메모리 대역폭**: 메모리 컨트롤러 폭을 고려
+- **코어 수**: 모든 코어를 활용하기에 충분한 타일 확보
+- **SIMD 폭**: 타일 크기는 SIMD 폭의 배수여야 함
 
-**Comparison summary:**
+**비교 요약:**
 
 ```
-Elementwise: High parallelism, scattered memory access
-Tiled:       Moderate parallelism, localized memory access
+Elementwise: 높은 병렬성, 분산된 메모리 접근
+Tiled:       적당한 병렬성, 지역화된 메모리 접근
 ```
 
-The choice between elementwise and tiled patterns depends on your specific workload characteristics, data access patterns, and target hardware capabilities.
+Elementwise와 tiled 패턴 간의 선택은 특정 워크로드 특성, 데이터 접근 패턴, 대상 하드웨어 능력에 따라 달라집니다.
 
 </div>
 </details>
 
-## Next steps
+## 다음 단계
 
-Now that you understand both elementwise and tiled patterns:
+Elementwise와 tiled 패턴을 모두 이해했다면:
 
-- **[Vectorization](./vectorize.md)**: Fine-grained control over SIMD operations
-- **[🧠 GPU Threading vs SIMD](./gpu-thread-vs-simd.md)**: Understanding the execution hierarchy
-- **[📊 Benchmarking](./benchmarking.md)**: Performance analysis and optimization
+- **[Vectorize - SIMD 제어](./vectorize.md)**: SIMD 연산에 대한 세밀한 제어
+- **[🧠 GPU 스레딩 vs SIMD 개념](./gpu-thread-vs-simd.md)**: 실행 계층 구조 이해
+- **[📊 Mojo 벤치마킹](./benchmarking.md)**: 성능 분석과 최적화
 
-💡 **Key takeaway**: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.
+💡 **핵심 요약**: Tiling은 메모리 접근 패턴이 원시 연산 처리량보다 더 중요할 수 있음을 보여줍니다. 최고의 GPU 코드는 병렬성과 메모리 계층 구조 최적화의 균형을 맞춥니다.

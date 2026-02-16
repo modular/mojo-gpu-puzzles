@@ -58,6 +58,7 @@
 | SIMD | Single Instruction Multiple Data. 벡터 연산 방식 |
 | stack trace | 오류 발생 시점까지의 함수 호출 경로 |
 | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
+| SM (Streaming Multiprocessor) | GPU의 연산 단위. 여러 Warp를 동시에 실행하는 프로세서 |
 | stencil | 이웃 데이터를 참조하는 연산 패턴 |
 | stride | 메모리 접근이나 반복의 간격. reduction에서 매 단계마다 절반으로 줄이는 보폭 |
 | synccheck | compute-sanitizer의 동기화 버그 탐지 도구 |
