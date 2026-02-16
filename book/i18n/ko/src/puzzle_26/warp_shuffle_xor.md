@@ -1,44 +1,44 @@
 <!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
 
-# `warp.shuffle_xor()` Butterfly Communication
+# `warp.shuffle_xor()` Butterfly 통신
 
-For warp-level butterfly communication we can use `shuffle_xor()` to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.
+Warp 레벨 butterfly 통신에서는 `shuffle_xor()`을 사용하여 Warp 내에 정교한 트리 기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 효율적인 병렬 reduction, 정렬 네트워크, 고급 조정 알고리즘을 구현할 수 있습니다.
 
-**Key insight:** _The [shuffle_xor()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor) operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \\(O(\\log n)\\) complexity relative to warp size._
+**핵심 통찰:** _[shuffle_xor()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor) 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, Warp 크기에 대해 \\(O(\\log n)\\) 복잡도로 확장되는 효율적인 butterfly 네트워크와 병렬 알고리즘을 가능하게 합니다._
 
-> **What are butterfly networks?** [Butterfly networks](https://en.wikipedia.org/wiki/Butterfly_network) are communication topologies where threads exchange data based on XOR patterns of their indices. The name comes from the visual pattern when drawn - connections that look like butterfly wings. These networks are fundamental to parallel algorithms like FFT, bitonic sort, and parallel reductions because they enable \\(O(\\log n)\\) communication complexity.
+> **Butterfly 네트워크란?** [Butterfly 네트워크](https://en.wikipedia.org/wiki/Butterfly_network)는 스레드들이 인덱스의 XOR 패턴에 따라 데이터를 교환하는 통신 토폴로지입니다. 이름은 시각적으로 그렸을 때 나비 날개처럼 보이는 연결 패턴에서 유래했습니다. 이 네트워크는 \\(O(\\log n)\\) 통신 복잡도를 가능하게 하기 때문에 FFT, bitonic 정렬, 병렬 reduction 같은 병렬 알고리즘의 기반이 됩니다.
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn:
+이 퍼즐에서 배울 내용:
 
-- **XOR-based communication patterns** with `shuffle_xor()`
-- **Butterfly network topologies** for parallel algorithms
-- **Tree-based parallel reductions** with \\(O(\\log n)\\) complexity
-- **Conditional butterfly operations** for advanced coordination
-- **Hardware-optimized parallel primitives** replacing complex shared memory
+- `shuffle_xor()`을 활용한 **XOR 기반 통신 패턴**
+- 병렬 알고리즘을 위한 **butterfly 네트워크 토폴로지**
+- \\(O(\\log n)\\) 복잡도의 **트리 기반 병렬 reduction**
+- 고급 조정을 위한 **조건부 butterfly 연산**
+- 복잡한 공유 메모리를 대체하는 **하드웨어 최적화 병렬 기본 요소**
 
-The `shuffle_xor` operation enables each lane to exchange data with lanes based on [XOR](https://en.wikipedia.org/wiki/Exclusive_or) patterns:
-\\[\\Large \text{shuffle\_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane\_id} \oplus \text{mask})\\]
+`shuffle_xor` 연산은 각 Lane이 [XOR](https://en.wikipedia.org/wiki/Exclusive_or) 패턴에 따라 다른 Lane과 데이터를 교환할 수 있게 합니다:
+\\[\Large \text{shuffle\_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane\_id} \oplus \text{mask})\\]
 
-This transforms complex parallel algorithms into elegant butterfly communication patterns, enabling efficient tree reductions and sorting networks without explicit coordination.
+이를 통해 복잡한 병렬 알고리즘이 우아한 butterfly 통신 패턴으로 변환되어, 명시적 조정 없이 효율적인 트리 reduction과 정렬 네트워크가 가능합니다.
 
-## 1. Basic butterfly pair swap
+## 1. 기본 butterfly 페어 교환
 
-### Configuration
+### 구성
 
-- Vector size: `SIZE = WARP_SIZE` (32 or 64 depending on GPU)
-- Grid configuration: `(1, 1)` blocks per grid
-- Block configuration: `(WARP_SIZE, 1)` threads per block
-- Data type: `DType.float32`
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- 벡터 크기: `SIZE = WARP_SIZE` (GPU에 따라 32 또는 64)
+- 그리드 구성: `(1, 1)` 그리드당 블록 수
+- 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
+- 데이터 타입: `DType.float32`
+- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
 
-### The `shuffle_xor` concept
+### shuffle_xor 개념
 
-Traditional pair swapping requires complex indexing and coordination:
+기존 페어 교환 방식은 복잡한 인덱싱과 조정이 필요합니다:
 
 ```mojo
-# Traditional approach - complex and requires synchronization
+# 기존 방식 - 복잡하고 동기화가 필요
 shared_memory[lane] = input[global_i]
 barrier()
 if lane % 2 == 0:
@@ -49,81 +49,81 @@ if partner < WARP_SIZE:
     swapped_val = shared_memory[partner]
 ```
 
-**Problems with traditional approach:**
+**기존 방식의 문제점:**
 
-- **Memory overhead**: Requires shared memory allocation
-- **Synchronization**: Needs explicit barriers
-- **Complex logic**: Manual partner calculation and bounds checking
-- **Poor scaling**: Doesn't leverage hardware communication
+- **메모리 오버헤드**: 공유 메모리 할당이 필요
+- **동기화**: 명시적 barrier가 필요
+- **복잡한 로직**: 수동 파트너 계산과 경계 검사
+- **낮은 확장성**: 하드웨어 통신을 활용하지 못함
 
-With `shuffle_xor()`, pair swapping becomes elegant:
+`shuffle_xor()`을 사용하면 페어 교환이 우아해집니다:
 
 ```mojo
-# Butterfly XOR approach - simple and hardware-optimized
+# Butterfly XOR 방식 - 간단하고 하드웨어 최적화
 current_val = input[global_i]
-swapped_val = shuffle_xor(current_val, 1)  # XOR with 1 creates pairs
+swapped_val = shuffle_xor(current_val, 1)  # 1과 XOR하면 페어가 생성됨
 output[global_i] = swapped_val
 ```
 
-**Benefits of shuffle_xor:**
+**shuffle_xor의 장점:**
 
-- **Zero memory overhead**: Direct register-to-register communication
-- **No synchronization**: SIMT execution guarantees correctness
-- **Hardware optimized**: Single instruction for all lanes
-- **Butterfly foundation**: Building block for complex parallel algorithms
+- **메모리 오버헤드 제로**: 레지스터 간 직접 통신
+- **동기화 불필요**: SIMT 실행이 정확성을 보장
+- **하드웨어 최적화**: 모든 Lane에 대해 단일 명령으로 처리
+- **Butterfly 기반**: 복잡한 병렬 알고리즘의 빌딩 블록
 
-### Code to complete
+### 작성할 코드
 
-Implement pair swapping using `shuffle_xor()` to exchange values between adjacent pairs.
+`shuffle_xor()`을 사용하여 인접 페어 간 값을 교환하는 페어 교환을 구현합니다.
 
-**Mathematical operation:** Create adjacent pairs that exchange values using XOR pattern:
-\\[\\Large \\text{output}[i] = \\text{input}[i \oplus 1]\\]
+**수학적 연산:** XOR 패턴으로 인접 페어를 만들어 값을 교환합니다:
+\\[\Large \\text{output}[i] = \\text{input}[i \oplus 1]\\]
 
-This transforms input data `[0, 1, 2, 3, 4, 5, 6, 7, ...]` into pairs `[1, 0, 3, 2, 5, 4, 7, 6, ...]`, where each pair `(i, i+1)` swaps values through XOR communication.
+입력 데이터 `[0, 1, 2, 3, 4, 5, 6, 7, ...]`을 페어 `[1, 0, 3, 2, 5, 4, 7, 6, ...]`으로 변환하며, 각 페어 `(i, i+1)`이 XOR 통신으로 값을 교환합니다.
 
 ```mojo
 {{#include ../../../../../problems/p26/p26.mojo:butterfly_pair_swap_solution}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p26/p26.mojo" class="filename">View full file: problems/p26/p26.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Understanding shuffle_xor**
+### 1. **shuffle_xor 이해하기**
 
-The `shuffle_xor(value, mask)` operation allows each lane to exchange data with a lane whose ID differs by the XOR mask. Think about what happens when you XOR a lane ID with different mask values.
+`shuffle_xor(value, mask)` 연산은 각 Lane이 XOR 마스크만큼 차이나는 Lane과 데이터를 교환할 수 있게 합니다. 서로 다른 마스크 값으로 Lane ID를 XOR했을 때 어떤 일이 일어나는지 생각해 보세요.
 
-**Key question to explore:**
+**탐구할 핵심 질문:**
 
-- What partner does lane 0 get when you XOR with mask 1?
-- What partner does lane 1 get when you XOR with mask 1?
-- Do you see a pattern forming?
+- Lane 0이 마스크 1로 XOR하면 어떤 파트너를 얻나요?
+- Lane 1이 마스크 1로 XOR하면 어떤 파트너를 얻나요?
+- 패턴이 보이나요?
 
-**Hint**: Try working out the XOR operation manually for the first few lane IDs to understand the pairing pattern.
+**힌트**: 처음 몇 개의 Lane ID에 대해 XOR 연산을 직접 해보면 페어링 패턴을 이해할 수 있습니다.
 
-### 2. **XOR pair pattern**
+### 2. **XOR 페어 패턴**
 
-Think about the binary representation of lane IDs and what happens when you flip the least significant bit.
+Lane ID의 이진 표현과 최하위 비트를 뒤집으면 어떻게 되는지 생각해 보세요.
 
-**Questions to consider:**
+**고려할 질문:**
 
-- What happens to even-numbered lanes when you XOR with 1?
-- What happens to odd-numbered lanes when you XOR with 1?
-- Why does this create perfect pairs?
+- 짝수 Lane을 1과 XOR하면 어떻게 되나요?
+- 홀수 Lane을 1과 XOR하면 어떻게 되나요?
+- 왜 이것이 완벽한 페어를 만드나요?
 
-### 3. **No boundary checking needed**
+### 3. **경계 검사 불필요**
 
-Unlike `shuffle_down()`, `shuffle_xor()` operations stay within warp boundaries. Consider why XOR with small masks never creates out-of-bounds lane IDs.
+`shuffle_down()`과 달리 `shuffle_xor()` 연산은 Warp 경계 내에서 유지됩니다. 작은 마스크로의 XOR이 절대로 범위 밖의 Lane ID를 만들지 않는 이유를 생각해 보세요.
 
-**Think about**: What's the maximum lane ID you can get when XORing any valid lane ID with 1?
+**생각해 보세요**: 유효한 Lane ID를 1과 XOR했을 때 나올 수 있는 최대 Lane ID는 얼마인가요?
 
 </div>
 </details>
 
-**Test the butterfly pair swap:**
+**Butterfly 페어 교환 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -161,7 +161,7 @@ uv run poe p26 --pair-swap
   </div>
 </div>
 
-Expected output when solved:
+풀었을 때의 예상 출력:
 
 ```txt
 WARP_SIZE:  32
@@ -171,7 +171,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 ✅ Butterfly pair swap test passed!
 ```
 
-### Solution
+### 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -182,23 +182,23 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 
 <div class="solution-explanation">
 
-This solution demonstrates how `shuffle_xor()` creates perfect pair exchanges through XOR communication patterns.
+이 풀이는 `shuffle_xor()`이 XOR 통신 패턴을 통해 완벽한 페어 교환을 어떻게 만드는지 보여줍니다.
 
-**Algorithm breakdown:**
+**알고리즘 분석:**
 
 ```mojo
 if global_i < size:
-    current_val = input[global_i]              # Each lane reads its element
-    swapped_val = shuffle_xor(current_val, 1)  # XOR creates pair exchange
+    current_val = input[global_i]              # 각 Lane이 자신의 요소를 읽음
+    swapped_val = shuffle_xor(current_val, 1)  # XOR로 페어 교환 생성
 
-    # For demonstration, store the swapped value
+    # 교환된 값을 저장
     output[global_i] = swapped_val
 ```
 
-**SIMT execution deep dive:**
+**SIMT 실행 상세 분석:**
 
 ```
-Cycle 1: All lanes load their values simultaneously
+사이클 1: 모든 Lane이 동시에 값을 로드
   Lane 0: current_val = input[0] = 0
   Lane 1: current_val = input[1] = 1
   Lane 2: current_val = input[2] = 2
@@ -206,16 +206,16 @@ Cycle 1: All lanes load their values simultaneously
   ...
   Lane 31: current_val = input[31] = 31
 
-Cycle 2: shuffle_xor(current_val, 1) executes on all lanes
-  Lane 0: receives from Lane 1 (0⊕1=1) → swapped_val = 1
-  Lane 1: receives from Lane 0 (1⊕1=0) → swapped_val = 0
-  Lane 2: receives from Lane 3 (2⊕1=3) → swapped_val = 3
-  Lane 3: receives from Lane 2 (3⊕1=2) → swapped_val = 2
+사이클 2: shuffle_xor(current_val, 1)이 모든 Lane에서 실행
+  Lane 0: Lane 1에서 수신 (0⊕1=1) → swapped_val = 1
+  Lane 1: Lane 0에서 수신 (1⊕1=0) → swapped_val = 0
+  Lane 2: Lane 3에서 수신 (2⊕1=3) → swapped_val = 3
+  Lane 3: Lane 2에서 수신 (3⊕1=2) → swapped_val = 2
   ...
-  Lane 30: receives from Lane 31 (30⊕1=31) → swapped_val = 31
-  Lane 31: receives from Lane 30 (31⊕1=30) → swapped_val = 30
+  Lane 30: Lane 31에서 수신 (30⊕1=31) → swapped_val = 31
+  Lane 31: Lane 30에서 수신 (31⊕1=30) → swapped_val = 30
 
-Cycle 3: Store results
+사이클 3: 결과 저장
   Lane 0: output[0] = 1
   Lane 1: output[1] = 0
   Lane 2: output[2] = 3
@@ -223,130 +223,130 @@ Cycle 3: Store results
   ...
 ```
 
-**Mathematical insight:** This implements perfect pair exchange using XOR properties:
-\\[\\Large \\text{XOR}(i, 1) = \\begin{cases}
+**수학적 통찰:** XOR 속성을 활용한 완벽한 페어 교환을 구현합니다:
+\\[\Large \\text{XOR}(i, 1) = \\begin{cases}
 i + 1 & \\text{if } i \\bmod 2 = 0 \\\\
 i - 1 & \\text{if } i \\bmod 2 = 1
 \\end{cases}\\]
 
-**Why shuffle_xor is superior:**
+**shuffle_xor이 우월한 이유:**
 
-1. **Perfect symmetry**: Every lane participates in exactly one pair
-2. **No coordination**: All pairs exchange simultaneously
-3. **Hardware optimized**: Single instruction for entire warp
-4. **Butterfly foundation**: Building block for complex parallel algorithms
+1. **완벽한 대칭**: 모든 Lane이 정확히 하나의 페어에 참여
+2. **조정 불필요**: 모든 페어가 동시에 교환
+3. **하드웨어 최적화**: Warp 전체에 대해 단일 명령으로 처리
+4. **Butterfly 기반**: 복잡한 병렬 알고리즘의 빌딩 블록
 
-**Performance characteristics:**
+**성능 특성:**
 
-- **Latency**: 1 cycle (hardware register exchange)
-- **Bandwidth**: 0 bytes (no memory traffic)
-- **Parallelism**: All WARP_SIZE lanes exchange simultaneously
-- **Scalability**: \\(O(1)\\) complexity regardless of data size
+- **Latency**: 1 사이클 (하드웨어 레지스터 교환)
+- **대역폭**: 0 바이트 (메모리 트래픽 없음)
+- **병렬성**: WARP_SIZE개 Lane 모두 동시에 교환
+- **확장성**: 데이터 크기에 관계없이 \\(O(1)\\) 복잡도
 
 </div>
 </details>
 
-## 2. Butterfly parallel maximum
+## 2. Butterfly 병렬 최댓값
 
-### Configuration
+### 구성
 
-- Vector size: `SIZE = WARP_SIZE` (32 or 64 depending on GPU)
-- Grid configuration: `(1, 1)` blocks per grid
-- Block configuration: `(WARP_SIZE, 1)` threads per block
+- 벡터 크기: `SIZE = WARP_SIZE` (GPU에 따라 32 또는 64)
+- 그리드 구성: `(1, 1)` 그리드당 블록 수
+- 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 
-### Code to complete
+### 작성할 코드
 
-Implement parallel maximum reduction using butterfly `shuffle_xor` with decreasing offsets.
+감소하는 offset으로 butterfly `shuffle_xor`을 사용하여 병렬 최댓값 reduction을 구현합니다.
 
-**Mathematical operation:** Compute the maximum across all warp lanes using tree reduction:
-\\[\\Large \\text{max\_result} = \\max_{i=0}^{\\small\\text{WARP\_SIZE}-1} \\text{input}[i]\\]
+**수학적 연산:** 트리 reduction을 통해 모든 Warp Lane에서 최댓값을 계산합니다:
+\\[\Large \\text{max\_result} = \\max_{i=0}^{\\small\\text{WARP\_SIZE}-1} \\text{input}[i]\\]
 
-**Butterfly reduction pattern:** Use XOR offsets starting from `WARP_SIZE/2` down to `1` to create a binary tree where each step halves the active communication range:
+**Butterfly reduction 패턴:** XOR offset을 `WARP_SIZE/2`에서 `1`까지 절반씩 줄여가며, 통신 범위가 단계마다 반으로 좁아지는 이진 트리를 구성합니다:
 
-- **Step 1**: Compare with lanes `WARP_SIZE/2` positions away (covers full warp)
-- **Step 2**: Compare with lanes `WARP_SIZE/4` positions away (covers remaining range)
-- **Step 3**: Compare with lanes `WARP_SIZE/8` positions away
-- **Step 4**: Continue halving until `offset = 1`
+- **1단계**: `WARP_SIZE/2` 거리의 Lane과 비교 (Warp 전체를 포괄)
+- **2단계**: `WARP_SIZE/4` 거리의 Lane과 비교 (범위를 절반으로 좁힘)
+- **3단계**: `WARP_SIZE/8` 거리의 Lane과 비교
+- **4단계**: `offset = 1`이 될 때까지 계속 절반으로 줄임
 
-After \\(\\log_2(\\text{WARP\_SIZE})\\) steps, all lanes have the global maximum. This works for any `WARP_SIZE` (32, 64, etc.).
+\\(\\log_2(\\text{WARP\_SIZE})\\) 단계를 거치면 모든 Lane이 전역 최댓값을 갖게 됩니다. 이 방식은 모든 `WARP_SIZE` (32, 64 등)에서 동작합니다.
 
 ```mojo
 {{#include ../../../../../problems/p26/p26.mojo:butterfly_parallel_max}}
 ```
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Understanding butterfly reduction**
+### 1. **Butterfly reduction 이해하기**
 
-The butterfly reduction creates a binary tree communication pattern. Think about how you can systematically reduce the problem size at each step.
+Butterfly reduction은 이진 트리 통신 패턴을 생성합니다. 각 단계에서 문제 크기를 체계적으로 줄이는 방법을 생각해 보세요.
 
-**Key questions:**
+**핵심 질문:**
 
-- What should be your starting offset to cover the maximum range?
-- How should the offset change between steps?
-- When should you stop the reduction?
+- 최대 범위를 커버하려면 시작 offset이 얼마여야 하나요?
+- 단계 사이에 offset을 어떻게 변경해야 하나요?
+- 언제 reduction을 멈춰야 하나요?
 
-**Hint**: The name "butterfly" comes from the communication pattern - try sketching it out for a small example.
+**힌트**: "butterfly"라는 이름은 통신 패턴에서 유래합니다 - 작은 예제에 대해 직접 그려보세요.
 
-### 2. **XOR reduction properties**
+### 2. **XOR reduction 특성**
 
-XOR creates non-overlapping communication pairs at each step. Consider why this is important for parallel reductions.
+XOR은 각 단계에서 겹치지 않는 통신 페어를 생성합니다. 이것이 병렬 reduction에서 왜 중요한지 생각해 보세요.
 
-**Think about:**
+**생각해 보세요:**
 
-- How does XOR with different offsets create different communication patterns?
-- Why don't lanes interfere with each other at the same step?
-- What makes XOR particularly well-suited for tree reductions?
+- 서로 다른 offset으로의 XOR이 어떻게 다른 통신 패턴을 만드나요?
+- 같은 단계에서 Lane들이 왜 서로 간섭하지 않나요?
+- XOR이 트리 reduction에 특히 적합한 이유는 무엇인가요?
 
-### 3. **Accumulating maximum values**
+### 3. **최댓값 누적**
 
-Each lane needs to progressively build up knowledge of the maximum value in its "region".
+각 Lane은 자신의 "영역"에서 최댓값의 지식을 점진적으로 쌓아가야 합니다.
 
-**Algorithm structure:**
+**알고리즘 구조:**
 
-- Start with your own value
-- At each step, compare with a neighbor's value
-- Keep the maximum and continue
+- 자신의 값으로 시작
+- 각 단계에서 이웃의 값과 비교
+- 최댓값을 유지하고 계속 진행
 
-**Key insight**: After each step, your "region of knowledge" doubles in size.
+**핵심 통찰**: 각 단계 후, "지식의 영역"이 두 배로 확장됩니다.
 
-- After final step: Each lane knows global maximum
+- 마지막 단계 후: 각 Lane이 전역 최댓값을 알게 됩니다
 
-### 4. **Why this pattern works**
+### 4. **이 패턴이 동작하는 이유**
 
-The butterfly reduction guarantees that after \\(\\log_2(\\text{WARP\\_SIZE})\\) steps:
+Butterfly reduction은 \\(\\log_2(\\text{WARP\\_SIZE})\\) 단계 후에 다음을 보장합니다:
 
-- **Every lane** has seen **every other lane's** value indirectly
-- **No redundant communication**: Each pair exchanges exactly once per step
-- **Optimal complexity**: \\(O(\\log n)\\) steps instead of \\(O(n)\\) sequential comparison
+- **모든 Lane**이 **다른 모든 Lane의** 값을 간접적으로 확인
+- **중복 통신 없음**: 각 페어가 단계당 정확히 한 번 교환
+- **최적 복잡도**: \\(O(n)\\) 순차 비교 대신 \\(O(\\log n)\\) 단계
 
-**Trace example** (4 lanes, values [3, 1, 7, 2]):
+**추적 예제** (4개 Lane, 값 [3, 1, 7, 2]):
 
 ```
-Initial: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
+초기 상태: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
 
-Step 1 (offset=2): 0 ↔ 2, 1 ↔ 3
+1단계 (offset=2): 0 ↔ 2, 1 ↔ 3
   Lane 0: max(3, 7) = 7
   Lane 1: max(1, 2) = 2
   Lane 2: max(7, 3) = 7
   Lane 3: max(2, 1) = 2
 
-Step 2 (offset=1): 0 ↔ 1, 2 ↔ 3
+2단계 (offset=1): 0 ↔ 1, 2 ↔ 3
   Lane 0: max(7, 2) = 7
   Lane 1: max(2, 7) = 7
   Lane 2: max(7, 2) = 7
   Lane 3: max(2, 7) = 7
 
-Result: All lanes have global maximum = 7
+결과: 모든 Lane이 전역 최댓값 = 7을 가짐
 ```
 
 </div>
 </details>
 
-**Test the butterfly parallel maximum:**
+**Butterfly 병렬 최댓값 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -376,7 +376,7 @@ uv run poe p26 --parallel-max
   </div>
 </div>
 
-Expected output when solved:
+풀었을 때의 예상 출력:
 
 ```txt
 WARP_SIZE:  32
@@ -386,7 +386,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 ✅ Butterfly parallel max test passed!
 ```
 
-### Solution
+### 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -397,148 +397,148 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 
 <div class="solution-explanation">
 
-This solution demonstrates how `shuffle_xor()` creates efficient parallel reduction trees with \\(O(\\log n)\\) complexity.
+이 풀이는 `shuffle_xor()`이 \\(O(\\log n)\\) 복잡도의 효율적인 병렬 reduction 트리를 어떻게 생성하는지 보여줍니다.
 
-**Complete algorithm analysis:**
+**전체 알고리즘 분석:**
 
 ```mojo
 if global_i < size:
-    max_val = input[global_i]  # Start with local value
+    max_val = input[global_i]  # 로컬 값으로 시작
 
-    # Butterfly reduction tree: dynamic for any WARP_SIZE
+    # Butterfly reduction 트리: 모든 WARP_SIZE에 동적으로 대응
     offset = WARP_SIZE // 2
     while offset > 0:
         max_val = max(max_val, shuffle_xor(max_val, offset))
         offset //= 2
 
-    output[global_i] = max_val  # All lanes have global maximum
+    output[global_i] = max_val  # 모든 Lane이 전역 최댓값을 가짐
 ```
 
-**Butterfly execution trace (8-lane example, values [0,2,4,6,8,10,12,1000]):**
+**Butterfly 실행 추적 (8-Lane 예제, 값 [0,2,4,6,8,10,12,1000]):**
 
 ```
-Initial state:
+초기 상태:
   Lane 0: max_val = 0,    Lane 1: max_val = 2
   Lane 2: max_val = 4,    Lane 3: max_val = 6
   Lane 4: max_val = 8,    Lane 5: max_val = 10
   Lane 6: max_val = 12,   Lane 7: max_val = 1000
 
-Step 1: shuffle_xor(max_val, 4) - Halves exchange
+1단계: shuffle_xor(max_val, 4) - 절반 교환
   Lane 0↔4: max(0,8)=8,     Lane 1↔5: max(2,10)=10
   Lane 2↔6: max(4,12)=12,   Lane 3↔7: max(6,1000)=1000
   Lane 4↔0: max(8,0)=8,     Lane 5↔1: max(10,2)=10
   Lane 6↔2: max(12,4)=12,   Lane 7↔3: max(1000,6)=1000
 
-Step 2: shuffle_xor(max_val, 2) - Quarters exchange
+2단계: shuffle_xor(max_val, 2) - 1/4 교환
   Lane 0↔2: max(8,12)=12,   Lane 1↔3: max(10,1000)=1000
   Lane 2↔0: max(12,8)=12,   Lane 3↔1: max(1000,10)=1000
   Lane 4↔6: max(8,12)=12,   Lane 5↔7: max(10,1000)=1000
   Lane 6↔4: max(12,8)=12,   Lane 7↔5: max(1000,10)=1000
 
-Step 3: shuffle_xor(max_val, 1) - Pairs exchange
+3단계: shuffle_xor(max_val, 1) - 페어 교환
   Lane 0↔1: max(12,1000)=1000,  Lane 1↔0: max(1000,12)=1000
   Lane 2↔3: max(12,1000)=1000,  Lane 3↔2: max(1000,12)=1000
   Lane 4↔5: max(12,1000)=1000,  Lane 5↔4: max(1000,12)=1000
   Lane 6↔7: max(12,1000)=1000,  Lane 7↔6: max(1000,12)=1000
 
-Final result: All lanes have max_val = 1000
+최종 결과: 모든 Lane의 max_val = 1000
 ```
 
-**Mathematical insight:** This implements the parallel reduction operator with butterfly communication:
-\\[\\Large \\text{Reduce}(\\oplus, [a_0, a_1, \\ldots, a_{n-1}]) = a_0 \\oplus a_1 \\oplus \\cdots \\oplus a_{n-1}\\]
+**수학적 통찰:** Butterfly 통신으로 병렬 reduction 연산자를 구현합니다:
+\\[\Large \\text{Reduce}(\\oplus, [a_0, a_1, \\ldots, a_{n-1}]) = a_0 \\oplus a_1 \\oplus \\cdots \\oplus a_{n-1}\\]
 
-Where \\(\\oplus\\) is the `max` operation and the butterfly pattern ensures optimal \\(O(\\log n)\\) complexity.
+여기서 \\(\\oplus\\)는 `max` 연산이며, butterfly 패턴이 최적 \\(O(\\log n)\\) 복잡도를 보장합니다.
 
-**Why butterfly reduction is superior:**
+**Butterfly reduction이 우월한 이유:**
 
-1. **Logarithmic complexity**: \\(O(\\log n)\\) vs \\(O(n)\\) for sequential reduction
-2. **Perfect load balancing**: Every lane participates equally at each step
-3. **No memory bottlenecks**: Pure register-to-register communication
-4. **Hardware optimized**: Maps directly to GPU butterfly networks
+1. **로그 복잡도**: 순차 reduction의 \\(O(n)\\)에 비해 \\(O(\\log n)\\)
+2. **완벽한 부하 분산**: 모든 Lane이 각 단계에서 동등하게 참여
+3. **메모리 병목 없음**: 순수 레지스터 간 통신
+4. **하드웨어 최적화**: GPU butterfly 네트워크에 직접 매핑
 
-**Performance characteristics:**
+**성능 특성:**
 
-- **Steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) (e.g., 5 for 32-thread, 6 for 64-thread warp)
-- **Latency per step**: 1 cycle (register exchange + comparison)
-- **Total latency**: \\(\\log_2(\\text{WARP\_SIZE})\\) cycles vs \\((\\text{WARP\_SIZE}-1)\\) cycles for sequential
-- **Parallelism**: All lanes active throughout the algorithm
+- **단계 수**: \\(\\log_2(\\text{WARP\_SIZE})\\) (예: 32-스레드 Warp는 5단계, 64-스레드 Warp는 6단계)
+- **단계당 latency**: 1 사이클 (레지스터 교환 + 비교)
+- **총 latency**: 순차 방식의 \\((\\text{WARP\_SIZE}-1)\\) 사이클 대비 \\(\\log_2(\\text{WARP\_SIZE})\\) 사이클
+- **병렬성**: 알고리즘 전체에서 모든 Lane이 활성 상태
 
 </div>
 </details>
 
-## 3. Butterfly conditional maximum
+## 3. Butterfly 조건부 최댓값
 
-### Configuration
+### 구성
 
-- Vector size: `SIZE_2 = 64` (multi-block scenario)
-- Grid configuration: `BLOCKS_PER_GRID_2 = (2, 1)` blocks per grid
-- Block configuration: `THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)` threads per block
+- 벡터 크기: `SIZE_2 = 64` (멀티 블록 시나리오)
+- 그리드 구성: `BLOCKS_PER_GRID_2 = (2, 1)` 그리드당 블록 수
+- 블록 구성: `THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)` 블록당 스레드 수
 
-### Code to complete
+### 작성할 코드
 
-Implement conditional butterfly reduction where even lanes store the maximum and odd lanes store the minimum.
+짝수 Lane은 최댓값을, 홀수 Lane은 최솟값을 저장하는 조건부 butterfly reduction을 구현합니다.
 
-**Mathematical operation:** Perform butterfly reduction for both maximum and minimum, then conditionally output based on lane parity:
-\\[\\Large \\text{output}[i] = \\begin{cases}
+**수학적 연산:** 최댓값과 최솟값 모두에 대해 butterfly reduction을 수행한 후, Lane 홀짝에 따라 조건부로 출력합니다:
+\\[\Large \\text{output}[i] = \\begin{cases}
 \\max_{j=0}^{\\text{WARP\_SIZE}-1} \\text{input}[j] & \\text{if } i \\bmod 2 = 0 \\\\
 \\min_{j=0}^{\\text{WARP\_SIZE}-1} \\text{input}[j] & \\text{if } i \\bmod 2 = 1
 \\end{cases}\\]
 
-**Dual reduction pattern:** Simultaneously track both maximum and minimum values through the butterfly tree, then conditionally output based on lane ID parity. This demonstrates how butterfly patterns can be extended for complex multi-value reductions.
+**이중 reduction 패턴:** Butterfly 트리를 통해 최댓값과 최솟값을 동시에 추적한 후, Lane ID 홀짝에 따라 조건부로 출력합니다. 이는 butterfly 패턴이 복잡한 다중 값 reduction으로 어떻게 확장되는지를 보여줍니다.
 
 ```mojo
 {{#include ../../../../../problems/p26/p26.mojo:butterfly_conditional_max}}
 ```
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Dual-track butterfly reduction**
+### 1. **이중 추적 butterfly reduction**
 
-This puzzle requires tracking TWO different values simultaneously through the butterfly tree. Think about how you can run multiple reductions in parallel.
+이 퍼즐은 butterfly 트리를 통해 두 가지 다른 값을 동시에 추적해야 합니다. 여러 reduction을 병렬로 실행하는 방법을 생각해 보세요.
 
-**Key questions:**
+**핵심 질문:**
 
-- How can you maintain both maximum and minimum values during the reduction?
-- Can you use the same butterfly pattern for both operations?
-- What variables do you need to track?
+- Reduction 과정에서 최댓값과 최솟값을 어떻게 동시에 유지할 수 있나요?
+- 두 연산에 같은 butterfly 패턴을 사용할 수 있나요?
+- 어떤 변수를 추적해야 하나요?
 
-### 2. **Conditional output logic**
+### 2. **조건부 출력 로직**
 
-After completing the butterfly reduction, you need to output different values based on lane parity.
+Butterfly reduction을 완료한 후, Lane 홀짝에 따라 다른 값을 출력해야 합니다.
 
-**Consider:**
+**고려할 점:**
 
-- How do you determine if a lane is even or odd?
-- Which lanes should output the maximum vs minimum?
-- How do you access the lane ID?
+- Lane이 짝수인지 홀수인지 어떻게 판별하나요?
+- 어떤 Lane이 최댓값을, 어떤 Lane이 최솟값을 출력해야 하나요?
+- Lane ID에 어떻게 접근하나요?
 
-### 3. **Butterfly reduction for both min and max**
+### 3. **min과 max 동시 butterfly reduction**
 
-The challenge is efficiently computing both min and max in parallel using the same butterfly communication pattern.
+이 과제의 핵심은 같은 butterfly 통신 패턴으로 min과 max를 효율적으로 병렬 계산하는 것입니다.
 
-**Think about:**
+**생각해 보세요:**
 
-- Do you need separate shuffle operations for min and max?
-- Can you reuse the same neighbor values for both operations?
-- How do you ensure both reductions complete correctly?
+- min과 max에 별도의 shuffle 연산이 필요한가요?
+- 두 연산에 같은 이웃 값을 재사용할 수 있나요?
+- 두 reduction 모두 올바르게 완료되려면 어떻게 해야 하나요?
 
-### 4. **Multi-block boundary considerations**
+### 4. **멀티 블록 경계 고려사항**
 
-This puzzle uses multiple blocks. Consider how this affects the reduction scope.
+이 퍼즐은 여러 블록을 사용합니다. 이것이 reduction 범위에 어떤 영향을 미치는지 생각해 보세요.
 
-**Important considerations:**
+**중요한 고려사항:**
 
-- What's the scope of each butterfly reduction?
-- How does the block structure affect lane numbering?
-- Are you computing global or per-block min/max values?
+- 각 butterfly reduction의 범위는 어디까지인가요?
+- 블록 구조가 Lane 번호 매기기에 어떤 영향을 미치나요?
+- 전역 min/max를 계산하나요, 블록별 min/max를 계산하나요?
 
 </div>
 </details>
 
-**Test the butterfly conditional maximum:**
+**Butterfly 조건부 최댓값 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -568,7 +568,7 @@ uv run poe p26 --conditional-max
   </div>
 </div>
 
-Expected output when solved:
+풀었을 때의 예상 출력:
 
 ```txt
 WARP_SIZE:  32
@@ -578,7 +578,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 ✅ Butterfly conditional max test passed!
 ```
 
-### Solution
+### 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -589,16 +589,16 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 
 <div class="solution-explanation">
 
-This solution demonstrates advanced butterfly reduction with dual tracking and conditional output.
+이 풀이는 이중 추적과 조건부 출력을 사용하는 고급 butterfly reduction을 보여줍니다.
 
-**Complete algorithm analysis:**
+**전체 알고리즘 분석:**
 
 ```mojo
 if global_i < size:
     current_val = input[global_i]
-    min_val = current_val  # Track minimum separately
+    min_val = current_val  # 최솟값을 별도로 추적
 
-    # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
+    # max와 min 동시 butterfly reduction (log_2(WARP_SIZE) 단계)
     offset = WARP_SIZE // 2
     while offset > 0:
         neighbor_val = shuffle_xor(current_val, offset)
@@ -609,38 +609,38 @@ if global_i < size:
 
         offset //= 2
 
-    # Conditional output based on lane parity
+    # Lane 홀짝에 따른 조건부 출력
     if lane % 2 == 0:
-        output[global_i] = current_val  # Even lanes: maximum
+        output[global_i] = current_val  # 짝수 Lane: 최댓값
     else:
-        output[global_i] = min_val      # Odd lanes: minimum
+        output[global_i] = min_val      # 홀수 Lane: 최솟값
 ```
 
-**Dual reduction execution trace (4-lane example, values [3, 1, 7, 2]):**
+**이중 reduction 실행 추적 (4-Lane 예제, 값 [3, 1, 7, 2]):**
 
 ```
-Initial state:
+초기 상태:
   Lane 0: current_val=3, min_val=3
   Lane 1: current_val=1, min_val=1
   Lane 2: current_val=7, min_val=7
   Lane 3: current_val=2, min_val=2
 
-Step 1: shuffle_xor(current_val, 2) and shuffle_xor(min_val, 2) - Halves exchange
+1단계: shuffle_xor(current_val, 2)와 shuffle_xor(min_val, 2) - 절반 교환
   Lane 0↔2: max_neighbor=7, min_neighbor=7 → current_val=max(3,7)=7, min_val=min(3,7)=3
   Lane 1↔3: max_neighbor=2, min_neighbor=2 → current_val=max(1,2)=2, min_val=min(1,2)=1
   Lane 2↔0: max_neighbor=3, min_neighbor=3 → current_val=max(7,3)=7, min_val=min(7,3)=3
   Lane 3↔1: max_neighbor=1, min_neighbor=1 → current_val=max(2,1)=2, min_val=min(2,1)=1
 
-Step 2: shuffle_xor(current_val, 1) and shuffle_xor(min_val, 1) - Pairs exchange
+2단계: shuffle_xor(current_val, 1)와 shuffle_xor(min_val, 1) - 페어 교환
   Lane 0↔1: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
   Lane 1↔0: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
   Lane 2↔3: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
   Lane 3↔2: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
 
-Final result: All lanes have current_val=7 (global max) and min_val=1 (global min)
+최종 결과: 모든 Lane이 current_val=7 (전역 max)과 min_val=1 (전역 min)을 가짐
 ```
 
-**Dynamic algorithm** (works for any WARP_SIZE):
+**동적 알고리즘** (모든 WARP_SIZE에서 동작):
 
 ```mojo
 offset = WARP_SIZE // 2
@@ -654,60 +654,60 @@ while offset > 0:
     offset //= 2
 ```
 
-**Mathematical insight:** This implements dual parallel reduction with conditional demultiplexing:
-\\[\\Large \\begin{align}
+**수학적 통찰:** 조건부 디멀티플렉싱을 사용하는 이중 병렬 reduction을 구현합니다:
+\\[\Large \\begin{align}
 \\text{max\_result} &= \\max_{i=0}^{n-1} \\text{input}[i] \\\\
 \\text{min\_result} &= \\min_{i=0}^{n-1} \\text{input}[i] \\\\
 \\text{output}[i] &= \\text{lane\_parity}(i) \\; \text{?} \\; \\text{min\_result} : \\text{max\_result}
 \\end{align}\\]
 
-**Why dual butterfly reduction works:**
+**이중 butterfly reduction이 동작하는 이유:**
 
-1. **Independent reductions**: Max and min reductions are mathematically independent
-2. **Parallel execution**: Both can use the same butterfly communication pattern
-3. **Shared communication**: Same shuffle operations serve both reductions
-4. **Conditional output**: Lane parity determines which result to output
+1. **독립적 reduction**: Max와 min reduction은 수학적으로 독립
+2. **병렬 실행**: 둘 다 같은 butterfly 통신 패턴을 사용 가능
+3. **통신 공유**: 같은 shuffle 연산이 두 reduction 모두에 활용
+4. **조건부 출력**: Lane 홀짝이 어떤 결과를 출력할지 결정
 
-**Performance characteristics:**
+**성능 특성:**
 
-- **Communication steps**: \\(\\log_2(\\text{WARP\_SIZE})\\) (same as single reduction)
-- **Computation per step**: 2 operations (max + min) vs 1 for single reduction
-- **Memory efficiency**: 2 registers per thread vs complex shared memory approaches
-- **Output flexibility**: Different lanes can output different reduction results
+- **통신 단계**: \\(\\log_2(\\text{WARP\_SIZE})\\) (단일 reduction과 동일)
+- **단계당 연산**: 단일 reduction의 1개 대비 2개 연산 (max + min)
+- **메모리 효율성**: 복잡한 공유 메모리 방식 대비 스레드당 레지스터 2개
+- **출력 유연성**: 서로 다른 Lane이 다른 reduction 결과를 출력 가능
 
 </div>
 </details>
 
-## Summary
+## 요약
 
-The `shuffle_xor()` primitive enables powerful butterfly communication patterns that form the foundation of efficient parallel algorithms. Through these three problems, you've learned:
+`shuffle_xor()` 기본 요소는 효율적인 병렬 알고리즘의 기반이 되는 강력한 butterfly 통신 패턴을 가능하게 합니다. 세 가지 문제를 통해 다음을 배웠습니다:
 
-### **Core Butterfly Patterns**
+### **핵심 Butterfly 패턴**
 
-1. **Pair Exchange** (`shuffle_xor(value, 1)`):
-   - Creates perfect adjacent pairs: (0,1), (2,3), (4,5), ...
-   - \\(O(1)\\) complexity with zero memory overhead
-   - Foundation for sorting networks and data reorganization
+1. **페어 교환** (`shuffle_xor(value, 1)`):
+   - 완벽한 인접 페어 생성: (0,1), (2,3), (4,5), ...
+   - 메모리 오버헤드 제로의 \\(O(1)\\) 복잡도
+   - 정렬 네트워크와 데이터 재배치의 기반
 
-2. **Tree Reduction** (dynamic offsets: `WARP_SIZE/2` → `1`):
-   - Logarithmic parallel reduction: \\(O(\\log n)\\) vs \\(O(n)\\) sequential
-   - Works for any associative operation (max, min, sum, etc.)
-   - Optimal load balancing across all warp lanes
+2. **트리 reduction** (동적 offset: `WARP_SIZE/2` → `1`):
+   - 로그 병렬 reduction: 순차의 \\(O(n)\\) 대비 \\(O(\\log n)\\)
+   - 모든 결합 연산에 적용 가능 (max, min, sum 등)
+   - 모든 Warp Lane에 걸쳐 최적의 부하 분산
 
-3. **Conditional Multi-Reduction** (dual tracking + lane parity):
-   - Simultaneous multiple reductions in parallel
-   - Conditional output based on thread characteristics
-   - Advanced coordination without explicit synchronization
+3. **조건부 다중 reduction** (이중 추적 + Lane 홀짝):
+   - 여러 reduction을 동시에 병렬 수행
+   - 스레드 특성에 따른 조건부 출력
+   - 명시적 동기화 없는 고급 조정
 
-### **Key Algorithmic Insights**
+### **핵심 알고리즘 통찰**
 
-**XOR Communication Properties:**
+**XOR 통신 특성:**
 
-- `shuffle_xor(value, mask)` creates symmetric, non-overlapping pairs
-- Each mask creates a unique communication topology
-- Butterfly networks emerge naturally from binary XOR patterns
+- `shuffle_xor(value, mask)`가 대칭적이고 겹치지 않는 페어를 생성
+- 각 마스크가 고유한 통신 토폴로지를 생성
+- 이진 XOR 패턴에서 butterfly 네트워크가 자연스럽게 도출
 
-**Dynamic Algorithm Design:**
+**동적 알고리즘 설계:**
 
 ```mojo
 offset = WARP_SIZE // 2
@@ -717,21 +717,21 @@ while offset > 0:
     offset //= 2
 ```
 
-**Performance Advantages:**
+**성능 이점:**
 
-- **Hardware optimization**: Direct register-to-register communication
-- **No synchronization**: SIMT execution guarantees correctness
-- **Scalable complexity**: \\(O(\\log n)\\) for any WARP_SIZE (32, 64, etc.)
-- **Memory efficiency**: Zero shared memory requirements
+- **하드웨어 최적화**: 레지스터 간 직접 통신
+- **동기화 불필요**: SIMT 실행이 정확성을 보장
+- **확장 가능한 복잡도**: 모든 WARP_SIZE (32, 64 등)에서 \\(O(\\log n)\\)
+- **메모리 효율성**: 공유 메모리 불필요
 
-### **Practical Applications**
+### **실용적 활용**
 
-These butterfly patterns are fundamental to:
+이 butterfly 패턴들의 기반이 되는 분야:
 
-- **Parallel reductions**: Sum, max, min, logical operations
-- **Prefix/scan operations**: Cumulative sums, parallel sorting
-- **FFT algorithms**: Signal processing and convolution
-- **Bitonic sorting**: Parallel sorting networks
-- **Graph algorithms**: Tree traversals and connectivity
+- **병렬 reduction**: 합계, max, min, 논리 연산
+- **Prefix/scan 연산**: 누적 합, 병렬 정렬
+- **FFT 알고리즘**: 신호 처리와 convolution
+- **Bitonic 정렬**: 병렬 정렬 네트워크
+- **그래프 알고리즘**: 트리 순회와 연결성
 
-The `shuffle_xor()` primitive transforms complex parallel coordination into elegant, hardware-optimized communication patterns that scale efficiently across different GPU architectures.
+`shuffle_xor()` 기본 요소는 복잡한 병렬 조정을 우아하고 하드웨어 최적화된 통신 패턴으로 변환하며, 다양한 GPU 아키텍처에서 효율적으로 확장됩니다.

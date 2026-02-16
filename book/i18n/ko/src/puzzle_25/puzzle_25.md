@@ -1,55 +1,55 @@
 <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
 
-# Puzzle 25: Warp Communication
+# Puzzle 25: Warp 통신
 
-## Overview
+## 개요
 
-**Puzzle 25: Warp Communication Primitives** introduces advanced GPU **warp-level communication operations** - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You'll learn about using [shuffle_down](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down) and [broadcast](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast) to implement neighbor communication and collective coordination without complex shared memory patterns.
+**Puzzle 25: Warp 통신 기본 요소**에서는 고급 GPU **Warp 레벨 통신 연산** - Warp 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_down](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)과 [broadcast](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.
 
-**Part VII: GPU Warp Communication** introduces warp-level data movement operations within thread groups. You'll learn to replace complex shared memory + indexing + boundary checking patterns with efficient warp communication calls that leverage hardware-optimized data movement.
+**Part VII: GPU Warp 통신**에서는 스레드 그룹 내 Warp 레벨 데이터 이동 연산을 다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된 데이터 이동을 활용하는 효율적인 Warp 통신 호출로 대체하는 방법을 배웁니다.
 
-**Key insight:** _GPU warps execute in lockstep - Mojo's warp communication operations use this synchronization to provide efficient data exchange primitives with automatic boundary handling and zero explicit synchronization._
+**핵심 통찰:** _GPU Warp는 lockstep으로 실행됩니다 - Mojo의 Warp 통신 연산은 이 동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본 요소를 제공합니다._
 
-## What you'll learn
+## 배울 내용
 
-### **Warp communication model**
+### **Warp 통신 모델**
 
-Understand the fundamental communication patterns within GPU warps:
+GPU Warp 내 기본 통신 패턴을 이해합니다:
 
 ```
-GPU Warp (32 threads, SIMT lockstep execution)
+GPU Warp (32 스레드, SIMT lockstep 실행)
 ├── Lane 0  ──shuffle_down──> Lane 1  ──shuffle_down──> Lane 2
 ├── Lane 1  ──shuffle_down──> Lane 2  ──shuffle_down──> Lane 3
 ├── Lane 2  ──shuffle_down──> Lane 3  ──shuffle_down──> Lane 4
 │   ...
-└── Lane 31 ──shuffle_down──> undefined (boundary)
+└── Lane 31 ──shuffle_down──> undefined (경계)
 
-Broadcast pattern:
-Lane 0 ──broadcast──> All lanes (0, 1, 2, ..., 31)
+Broadcast 패턴:
+Lane 0 ──broadcast──> 모든 Lane (0, 1, 2, ..., 31)
 ```
 
-**Hardware reality:**
+**하드웨어 현실:**
 
-- **Register-to-register communication**: Data moves directly between thread registers
-- **Zero memory overhead**: No shared memory allocation required
-- **Automatic boundary handling**: Hardware manages warp edge cases
-- **Single-cycle operations**: Communication happens in one instruction cycle
+- **레지스터 간 직접 통신**: 데이터가 스레드 레지스터 사이를 직접 이동합니다
+- **메모리 오버헤드 제로**: 공유 메모리 할당이 필요하지 않습니다
+- **자동 경계 처리**: 하드웨어가 Warp 경계의 예외 상황을 관리합니다
+- **단일 사이클 연산**: 하나의 명령 사이클에서 통신이 완료됩니다
 
-### **Warp communication operations in Mojo**
+### **Mojo의 Warp 통신 연산**
 
-Learn the core communication primitives from `gpu.primitives.warp`:
+`gpu.primitives.warp`의 핵심 통신 기본 요소를 배웁니다:
 
-1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)**: Get value from lane at higher index (neighbor access)
-2. **[`broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)**: Share lane 0's value with all other lanes (one-to-many)
-3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_idx)**: Get value from specific lane (random access)
-4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_up)**: Get value from lane at lower index (reverse neighbor)
+1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)**: 더 높은 인덱스의 Lane에서 값을 가져오기 (이웃 접근)
+2. **[`broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)**: Lane 0의 값을 모든 Lane에 공유 (일대다)
+3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_idx)**: 특정 Lane에서 값을 가져오기 (임의 접근)
+4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_up)**: 더 낮은 인덱스의 Lane에서 값을 가져오기 (역방향 이웃)
 
-> **Note:** This puzzle focuses on `shuffle_down()` and `broadcast()` as the most commonly used communication patterns. For complete coverage of all warp operations, see the [Mojo GPU Warp Documentation](https://docs.modular.com/mojo/stdlib/gpu/warp/).
+> **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과 `broadcast()`에 초점을 맞춥니다. 모든 Warp 연산에 대한 전체 내용은 [Mojo GPU Warp 문서](https://docs.modular.com/mojo/stdlib/gpu/warp/)를 참고하세요.
 
-### **Performance transformation example**
+### **성능 변환 예시**
 
 ```mojo
-# Complex neighbor access pattern (traditional approach):
+# 복잡한 이웃 접근 패턴 (기존 방식):
 shared = LayoutTensor[
     dtype,
     Layout.row_major(WARP_SIZE),
@@ -59,57 +59,57 @@ shared = LayoutTensor[
 shared[local_i] = input[global_i]
 barrier()
 if local_i < WARP_SIZE - 1:
-    next_value = shared[local_i + 1]  # Neighbor access
+    next_value = shared[local_i + 1]  # 이웃 접근
     result = next_value - shared[local_i]
 else:
-    result = 0  # Boundary handling
+    result = 0  # 경계 처리
 barrier()
 
-# Warp communication eliminates all this complexity:
+# Warp 통신은 이 모든 복잡성을 제거합니다:
 current_val = input[global_i]
-next_val = shuffle_down(current_val, 1)  # Direct neighbor access
+next_val = shuffle_down(current_val, 1)  # 이웃에 직접 접근
 if lane < WARP_SIZE - 1:
     result = next_val - current_val
 else:
     result = 0
 ```
 
-### **When warp communication excels**
+### **Warp 통신이 빛나는 순간**
 
-Learn the performance characteristics:
+성능 특성을 이해합니다:
 
-| Communication Pattern | Traditional | Warp Operations |
+| 통신 패턴 | 기존 방식 | Warp 연산 |
 |----------------------|-------------|-----------------|
-| Neighbor access | Shared memory | Register-to-register |
-| Stencil operations | Complex indexing | Simple shuffle patterns |
-| Block coordination | Barriers + shared | Single broadcast |
-| Boundary handling | Manual checks | Hardware automatic |
+| 이웃 접근 | 공유 메모리 | 레지스터 간 직접 통신 |
+| Stencil 연산 | 복잡한 인덱싱 | 간단한 shuffle 패턴 |
+| 블록 조정 | Barrier + 공유 메모리 | 단일 broadcast |
+| 경계 처리 | 수동 검사 | 하드웨어 자동 처리 |
 
-## Prerequisites
+## 선수 지식
 
-Before diving into warp communication, ensure you're comfortable with:
+Warp 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:
 
-- **Part VII warp fundamentals**: Understanding SIMT execution and basic warp operations (see [Puzzle 24](../puzzle_24/puzzle_24.md))
-- **GPU thread hierarchy**: Blocks, warps, and lane numbering
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
-- **Boundary condition handling**: Managing edge cases in parallel algorithms
+- **Part VII Warp 기초**: SIMT 실행과 기본 Warp 연산에 대한 이해 ([Puzzle 24: Warp 기초](../puzzle_24/puzzle_24.md) 참고)
+- **GPU 스레드 계층 구조**: 블록, Warp, Lane 번호 매기기
+- **LayoutTensor 연산**: 로드, 저장, 텐서 조작
+- **경계 조건 처리**: 병렬 알고리즘의 가장자리 케이스 관리
 
-## Learning path
+## 학습 경로
 
-### **1. Neighbor communication with shuffle_down**
+### **1. shuffle_down을 이용한 이웃 통신**
 
-**→ [Warp Shuffle Down](./warp_shuffle_down.md)**
+**→ [warp.shuffle_down()](./warp_shuffle_down.md)**
 
-Learn neighbor-based communication patterns for stencil operations and finite differences.
+Stencil 연산과 유한 차분을 위한 이웃 기반 통신 패턴을 배웁니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Using `shuffle_down()` for accessing adjacent lane data
-- Implementing finite differences and moving averages
-- Handling warp boundaries automatically
-- Multi-offset shuffling for extended neighbor access
+- `shuffle_down()`으로 인접 Lane 데이터 접근하기
+- 유한 차분과 이동 평균 구현
+- Warp 경계 자동 처리
+- 확장된 이웃 접근을 위한 다중 offset shuffle
 
-**Key pattern:**
+**핵심 패턴:**
 
 ```mojo
 current_val = input[global_i]
@@ -118,20 +118,20 @@ if lane < WARP_SIZE - 1:
     result = compute_with_neighbors(current_val, next_val)
 ```
 
-### **2. Collective coordination with broadcast**
+### **2. broadcast를 이용한 집합 조정**
 
-**→ [Warp Broadcast](./warp_broadcast.md)**
+**→ [warp.broadcast()](./warp_broadcast.md)**
 
-Learn one-to-many communication patterns for block-level coordination and collective decision-making.
+블록 레벨 조정과 집합적 의사결정을 위한 일대다 통신 패턴을 배웁니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Using `broadcast()` for sharing computed values across lanes
-- Implementing block-level statistics and collective decisions
-- Combining broadcast with conditional logic
-- Advanced broadcast-shuffle coordination patterns
+- `broadcast()`로 계산된 값을 모든 Lane에 공유
+- 블록 레벨 통계와 집합적 의사결정 구현
+- broadcast와 조건부 로직 결합
+- 고급 broadcast-shuffle 조정 패턴
 
-**Key pattern:**
+**핵심 패턴:**
 
 ```mojo
 var shared_value = 0.0
@@ -141,41 +141,41 @@ shared_value = broadcast(shared_value)
 result = use_shared_value(shared_value, local_data)
 ```
 
-## Key concepts
+## 핵심 개념
 
-### **Communication patterns**
+### **통신 패턴**
 
-Understanding fundamental warp communication paradigms:
+Warp 통신의 기본 패러다임을 이해합니다:
 
-- **Neighbor communication**: Lane-to-adjacent-lane data exchange
-- **Collective coordination**: One-lane-to-all-lanes information sharing
-- **Stencil operations**: Accessing fixed patterns of neighboring data
-- **Boundary handling**: Managing communication at warp edges
+- **이웃 통신**: Lane 간 인접 데이터 교환
+- **집합 조정**: 하나의 Lane에서 모든 Lane으로 정보 공유
+- **Stencil 연산**: 고정된 패턴으로 이웃 데이터 접근
+- **경계 처리**: Warp 가장자리에서의 통신 관리
 
-### **Hardware optimization**
+### **하드웨어 최적화**
 
-Recognizing how warp communication maps to GPU hardware:
+Warp 통신이 GPU 하드웨어에 매핑되는 방식을 이해합니다:
 
-- **Register file communication**: Direct inter-thread register access
-- **SIMT execution**: All lanes execute communication simultaneously
-- **Zero latency**: Communication happens within the execution unit
-- **Automatic synchronization**: No explicit barriers needed
+- **레지스터 파일 통신**: 스레드 간 레지스터 직접 접근
+- **SIMT 실행**: 모든 Lane이 통신을 동시에 실행합니다
+- **제로 latency**: 실행 유닛 내에서 통신이 완료됩니다
+- **자동 동기화**: 명시적 barrier가 필요하지 않습니다
 
-### **Algorithm transformation**
+### **알고리즘 변환**
 
-Converting traditional parallel patterns to warp communication:
+기존 병렬 패턴을 Warp 통신으로 변환합니다:
 
-- **Array neighbor access** → `shuffle_down()`
-- **Shared memory coordination** → `broadcast()`
-- **Complex boundary logic** → Hardware-handled edge cases
-- **Multi-stage synchronization** → Single communication operations
+- **배열 이웃 접근** → `shuffle_down()`
+- **공유 메모리 조정** → `broadcast()`
+- **복잡한 경계 로직** → 하드웨어 자동 처리
+- **다단계 동기화** → 단일 통신 연산
 
-## Getting started
+## 시작하기
 
-Start with neighbor-based shuffle operations to understand the foundation, then progress to collective broadcast patterns for advanced coordination.
+이웃 기반 shuffle 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 broadcast 패턴으로 나아갑니다.
 
-💡 **Success tip**: Think of warp communication as **hardware-accelerated message passing** between threads in the same warp. This mental model will guide you toward efficient communication patterns that leverage the GPU's SIMT architecture.
+💡 **성공 팁**: Warp 통신을 같은 Warp 내 스레드 간의 **하드웨어 가속 메시지 패싱**으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT 아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.
 
-**Learning objective**: By the end of Puzzle 25, you'll recognize when warp communication can replace complex shared memory patterns, enabling you to write simpler, faster neighbor-based and coordination algorithms.
+**학습 목표**: Puzzle 25를 마치면, Warp 통신이 복잡한 공유 메모리 패턴을 대체할 수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을 작성할 수 있게 됩니다.
 
-**Begin with**: **[Warp Shuffle Down Operations](./warp_shuffle_down.md)** to learn neighbor communication, then advance to **[Warp Broadcast Operations](./warp_broadcast.md)** for collective coordination patterns.
+**시작하기**: **[warp.shuffle_down()](./warp_shuffle_down.md)** 에서 이웃 통신을 배운 다음, **[warp.broadcast()](./warp_broadcast.md)** 에서 집합 조정 패턴으로 나아가세요.

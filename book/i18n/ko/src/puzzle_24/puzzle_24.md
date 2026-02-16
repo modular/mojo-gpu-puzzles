@@ -1,56 +1,56 @@
 <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
 
-# Puzzle 24: Warp Fundamentals
+# Puzzle 24: Warp 기초
 
-## Overview
+## 개요
 
-**Part VI: GPU Warp Programming** introduces GPU **warp-level primitives** - hardware-accelerated operations that leverage synchronized thread execution within warps. You'll learn to use built-in warp operations to replace complex shared memory patterns with simple, efficient function calls.
+**Part VII: Warp 레벨 프로그래밍**에서는 GPU의 **Warp 레벨 기본 요소** - Warp 내 동기화된 스레드 실행을 활용하는 하드웨어 가속 연산을 소개합니다. 복잡한 공유 메모리 패턴을 간단하고 효율적인 함수 호출로 대체하는 내장 Warp 연산을 배웁니다.
 
-**Goal:** Replace complex shared memory + barrier + tree reduction patterns with efficient warp primitive calls that leverage hardware synchronization.
+**목표:** 복잡한 공유 메모리 + barrier + 트리 reduction 패턴을 하드웨어 동기화를 활용하는 효율적인 Warp 기본 요소 호출로 대체합니다.
 
-**Key insight:** _GPU warps execute in lockstep - Mojo's warp operations use this synchronization to provide powerful parallel primitives with zero explicit synchronization._
+**핵심 통찰:** _GPU Warp는 lockstep으로 실행됩니다 - Mojo의 Warp 연산은 이 동기화를 활용하여 명시적 동기화 없이 강력한 병렬 기본 요소를 제공합니다._
 
-## What you'll learn
+## 배울 내용
 
-### **GPU warp execution model**
+### **GPU Warp 실행 모델**
 
-Understand the fundamental hardware unit of GPU parallelism:
+GPU 병렬성의 기본 하드웨어 단위를 이해합니다:
 
 ```
-GPU Block (e.g., 256 threads)
-├── Warp 0 (32 threads, SIMT lockstep execution)
+GPU 블록 (예: 256 스레드)
+├── Warp 0 (32 스레드, SIMT lockstep 실행)
 │   ├── Lane 0  ─┐
-│   ├── Lane 1   │ All execute same instruction
-│   ├── Lane 2   │ at same time (SIMT)
+│   ├── Lane 1   │ 모든 스레드가 같은 명령을
+│   ├── Lane 2   │ 동시에 실행 (SIMT)
 │   │   ...      │
 │   └── Lane 31 ─┘
-├── Warp 1 (32 threads, independent)
-├── Warp 2 (32 threads, independent)
+├── Warp 1 (32 스레드, 독립적)
+├── Warp 2 (32 스레드, 독립적)
 └── ...
 ```
 
-**Hardware reality:**
+**하드웨어 현실:**
 
-- **32 threads per warp** on NVIDIA GPUs (`WARP_SIZE=32`)
-- **32 or 64 threads per warp** on AMD GPUs (`WARP_SIZE=32 or 64`)
-- **Lockstep execution**: All threads in a warp execute the same instruction simultaneously
-- **Zero synchronization cost**: Warp operations happen instantly within each warp
+- NVIDIA GPU에서 **Warp당 32 스레드** (`WARP_SIZE=32`)
+- AMD GPU에서 **Warp당 32 또는 64 스레드** (`WARP_SIZE=32 or 64`)
+- **Lockstep 실행**: Warp 내 모든 스레드가 동일한 명령을 동시에 실행합니다
+- **동기화 비용 제로**: Warp 연산은 각 Warp 내에서 즉시 수행됩니다
 
-### **Warp operations available in Mojo**
+### **Mojo에서 사용 가능한 Warp 연산**
 
-Learn the core warp primitives from `gpu.primitives.warp`:
+`gpu.primitives.warp`의 핵심 Warp 기본 요소를 배웁니다:
 
-1. **`sum(value)`**: Sum all values across warp lanes
-2. **`shuffle_idx(value, lane)`**: Get value from specific lane
-3. **`shuffle_down(value, delta)`**: Get value from lane+delta
-4. **`prefix_sum(value)`**: Compute prefix sum across lanes
-5. **`lane_id()`**: Get current thread's lane number (0-31 or 0-63)
+1. **`sum(value)`**: Warp의 모든 Lane에서 값을 합산
+2. **`shuffle_idx(value, lane)`**: 특정 Lane에서 값을 가져오기
+3. **`shuffle_down(value, delta)`**: lane+delta 위치의 값을 가져오기
+4. **`prefix_sum(value)`**: Lane 전체에 걸쳐 prefix sum 계산
+5. **`lane_id()`**: 현재 스레드의 Lane 번호 반환 (0-31 또는 0-63)
 
-### **Performance transformation example**
+### **성능 변환 예시**
 
 ```mojo
-# 1. Reduction through shared memory
-# Complex pattern we have seen earlier (from p12.mojo):
+# 1. 공유 메모리를 통한 reduction
+# 앞서 살펴본 복잡한 패턴 (p12.mojo):
 shared = LayoutTensor[
     dtype,
     Layout.row_major(WARP_SIZE),
@@ -60,7 +60,7 @@ shared = LayoutTensor[
 shared[local_i] = partial_product
 barrier()
 
-# Safe tree reduction through shared memory requires a barrier after each reduction phase:
+# 공유 메모리를 통한 안전한 트리 reduction은 각 단계마다 barrier가 필요합니다:
 stride = WARP_SIZE // 2
 while stride > 0:
     if local_i < stride:
@@ -69,121 +69,121 @@ while stride > 0:
     barrier()
     stride //= 2
 
-# 2. Reduction using warp primitives
-# Safe tree reduction using warp primitives does not require shared memory or a barrier
-# after each reduction phase.
-# Mojo's warp-level sum operation uses warp primitives under the hood and hides all this
-# complexity:
-total = sum(partial_product)  # Internally no barriers, no race conditions!
+# 2. Warp 기본 요소를 활용한 reduction
+# Warp 기본 요소를 사용한 안전한 트리 reduction은 공유 메모리나 각 단계의 barrier가
+# 필요하지 않습니다.
+# Mojo의 Warp 레벨 sum 연산은 내부적으로 Warp 기본 요소를 사용하여 이 모든 복잡성을
+# 숨깁니다:
+total = sum(partial_product)  # 내부적으로 barrier도, 경쟁 상태도 없습니다!
 ```
 
-### **When warp operations excel**
+### **Warp 연산이 빛나는 순간**
 
-Learn the performance characteristics:
+성능 특성을 이해합니다:
 
 ```
-Problem Scale         Traditional    Warp Operations
-Single warp (32)      Fast          Fastest (no barriers)
-Few warps (128)       Good          Excellent (minimal overhead)
-Many warps (1024+)    Good          Outstanding (scales linearly)
-Massive (16K+)        Bottlenecked  Memory-bandwidth limited
+문제 규모              기존 방식        Warp 연산
+단일 Warp (32)        빠름            가장 빠름 (barrier 없음)
+소수 Warp (128)       좋음            우수 (오버헤드 최소)
+다수 Warp (1024+)     좋음            뛰어남 (선형 확장)
+대규모 (16K+)         병목 발생        메모리 대역폭 제한
 ```
 
-## Prerequisites
+## 선수 지식
 
-Before diving into warp programming, ensure you're comfortable with:
+Warp 프로그래밍에 들어가기 전에 다음 내용에 익숙해야 합니다:
 
-- **Part V functional patterns**: Elementwise, tiled, and vectorized approaches
-- **GPU thread hierarchy**: Understanding blocks, warps, and threads
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
-- **Shared memory concepts**: Why barriers and tree reduction are complex
+- **Part VI 함수형 패턴**: Elementwise, tiled, vectorize 접근 방식
+- **GPU 스레드 계층 구조**: 블록, Warp, 스레드에 대한 이해
+- **LayoutTensor 연산**: 로드, 저장, 텐서 조작
+- **공유 메모리 개념**: barrier와 트리 reduction이 왜 복잡한지
 
-## Learning path
+## 학습 경로
 
-### **1. SIMT execution model**
+### **1. SIMT 실행 모델**
 
-**→ [Warp Lanes & SIMT Execution](./warp_simt.md)**
+**→ [Warp Lane과 SIMT 실행](./warp_simt.md)**
 
-Understand the hardware foundation that makes warp operations possible.
+Warp 연산을 가능하게 하는 하드웨어 기반을 이해합니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Single Instruction, Multiple Thread (SIMT) execution model
-- Warp divergence and convergence patterns
-- Lane synchronization within warps
-- Hardware vs software thread management
+- SIMT(Single Instruction, Multiple Thread) 실행 모델
+- Warp 분기와 수렴 패턴
+- Warp 내 Lane 동기화
+- 하드웨어 vs 소프트웨어 스레드 관리
 
-**Key insight:** Warps are the fundamental unit of GPU execution - understanding SIMT unlocks warp programming.
+**핵심 통찰:** Warp는 GPU 실행의 기본 단위입니다 - SIMT를 이해하면 Warp 프로그래밍의 문이 열립니다.
 
-### **2. Warp sum fundamentals**
+### **2. Warp sum 기초**
 
-**→ [warp.sum() Essentials](./warp_sum.md)**
+**→ [warp.sum()의 핵심](./warp_sum.md)**
 
-Learn the most important warp operation through dot product implementation.
+내적 구현을 통해 가장 중요한 Warp 연산을 배웁니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Replacing shared memory + barriers with `sum()`
-- Cross-GPU architecture compatibility (`WARP_SIZE`)
-- Kernel vs functional programming patterns with warps
-- Performance comparison with traditional approaches
+- 공유 메모리 + barrier를 `sum()`으로 대체
+- GPU 아키텍처 간 호환성 (`WARP_SIZE`)
+- Warp를 활용한 kernel vs 함수형 프로그래밍 패턴
+- 기존 방식과의 성능 비교
 
-**Key pattern:**
+**핵심 패턴:**
 
 ```mojo
 partial_result = compute_per_lane_value()
-total = sum(partial_result)  # Magic happens here!
+total = sum(partial_result)  # 마법이 일어나는 곳!
 if lane_id() == 0:
     output[0] = total
 ```
 
-### **3. When to use warp programming**
+### **3. 언제 Warp 프로그래밍을 사용할까**
 
-**→ [When to Use Warp Programming](./warp_extra.md)**
+**→ [언제 Warp 프로그래밍을 사용할까](./warp_extra.md)**
 
-Learn the decision framework for choosing warp operations over alternatives.
+대안 대비 Warp 연산을 선택하기 위한 의사결정 프레임워크를 배웁니다.
 
-**What you'll learn:**
+**배울 내용:**
 
-- Problem characteristics that favor warp operations
-- Performance scaling patterns with warp count
-- Memory bandwidth vs computation trade-offs
-- Warp operation selection guidelines
+- Warp 연산에 유리한 문제 특성
+- Warp 수에 따른 성능 확장 패턴
+- 메모리 대역폭 vs 연산량 트레이드오프
+- Warp 연산 선택 가이드라인
 
-**Decision framework:** When reduction operations become the bottleneck, warp primitives often provide the breakthrough.
+**의사결정 프레임워크:** reduction 연산이 병목이 될 때, Warp 기본 요소가 돌파구를 제공하는 경우가 많습니다.
 
-## Key concepts to learn
+## 핵심 개념
 
-### **Hardware-software alignment**
+### **하드웨어-소프트웨어 정렬**
 
-Understanding how Mojo's warp operations map to GPU hardware:
+Mojo Warp 연산이 GPU 하드웨어에 매핑되는 방식을 이해합니다:
 
-- **SIMT execution**: All lanes execute same instruction simultaneously
-- **Built-in synchronization**: No explicit barriers needed within warps
-- **Cross-architecture support**: `WARP_SIZE` handles NVIDIA vs AMD differences
+- **SIMT 실행**: 모든 Lane이 동일한 명령을 동시에 실행합니다
+- **내장 동기화**: Warp 내에서 명시적 barrier가 필요하지 않습니다
+- **크로스 아키텍처 지원**: `WARP_SIZE`가 NVIDIA와 AMD의 차이를 처리합니다
 
-### **Pattern transformation**
+### **패턴 변환**
 
-Converting complex parallel patterns to warp primitives:
+복잡한 병렬 패턴을 Warp 기본 요소로 변환합니다:
 
-- **Tree reduction** → `sum()`
-- **Prefix computation** → `prefix_sum()`
-- **Data shuffling** → `shuffle_idx()`, `shuffle_down()`
+- **트리 reduction** → `sum()`
+- **Prefix 연산** → `prefix_sum()`
+- **데이터 shuffle** → `shuffle_idx()`, `shuffle_down()`
 
-### **Performance characteristics**
+### **성능 특성**
 
-Recognizing when warp operations provide advantages:
+Warp 연산이 이점을 제공하는 경우를 파악합니다:
 
-- **Small to medium problems**: Eliminates barrier overhead
-- **Large problems**: Reduces memory traffic and improves cache utilization
-- **Regular patterns**: Warp operations excel with predictable access patterns
+- **소~중규모 문제**: barrier 오버헤드를 제거합니다
+- **대규모 문제**: 메모리 트래픽을 줄이고 캐시 활용을 개선합니다
+- **규칙적인 패턴**: 예측 가능한 접근 패턴에서 Warp 연산이 탁월합니다
 
-## Getting started
+## 시작하기
 
-Start with understanding the SIMT execution model, then dive into practical warp sum implementation, and finish with the strategic decision framework.
+SIMT 실행 모델을 이해하는 것으로 시작하여, 실용적인 Warp sum 구현을 다루고, 전략적 의사결정 프레임워크로 마무리합니다.
 
-💡 **Success tip**: Think of warps as **synchronized vector units** rather than independent threads. This mental model will guide you toward effective warp programming patterns.
+💡 **성공 팁**: Warp를 독립적인 스레드가 아닌 **동기화된 벡터 유닛**으로 생각하세요. 이 멘탈 모델이 효과적인 Warp 프로그래밍 패턴으로 안내할 것입니다.
 
-**Learning objective**: By the end of Part VI, you'll recognize when warp operations can replace complex synchronization patterns, enabling you to write simpler, faster GPU code.
+**학습 목표**: Part VII을 마치면, Warp 연산이 복잡한 동기화 패턴을 대체할 수 있는 상황을 인식하여 더 간단하고 빠른 GPU 코드를 작성할 수 있게 됩니다.
 
-**Ready to begin?** Start with **[SIMT Execution Model](./warp_simt.md)** and discover the power of warp-level programming!
+**시작하기**: **[Warp Lane과 SIMT 실행](./warp_simt.md)** 에서 Warp 레벨 프로그래밍의 힘을 만나보세요!

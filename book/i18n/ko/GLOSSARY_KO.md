@@ -37,6 +37,7 @@
 | kernel | GPU에서 여러 스레드가 함께 실행하는 함수 |
 | lane | Warp 내 각 스레드의 위치 (0-31) |
 | latency | 작업이 완료될 때까지 기다리는 시간 |
+| lockstep | Warp 내 모든 스레드가 동일 명령을 동시에 실행하는 모드. SIMT의 핵심 동작 방식 |
 | LayoutTensor | Mojo의 다차원 배열 추상화 타입 |
 | memory fence | 메모리 작업 순서가 뒤바뀌지 않도록 보장하는 장치 |
 | memcheck | compute-sanitizer의 메모리 위반 탐지 도구 |
@@ -60,6 +61,7 @@
 | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
 | SM (Streaming Multiprocessor) | GPU의 연산 단위. 여러 Warp를 동시에 실행하는 프로세서 |
 | stencil | 이웃 데이터를 참조하는 연산 패턴 |
+| stream compaction | 프레디케이트를 만족하는 요소만 연속으로 재배치하는 병렬 알고리즘 |
 | stride | 메모리 접근이나 반복의 간격. reduction에서 매 단계마다 절반으로 줄이는 보폭 |
 | synccheck | compute-sanitizer의 동기화 버그 탐지 도구 |
 | tensor core | GPU의 행렬 연산 전용 하드웨어 |
@@ -106,6 +108,7 @@
 | padding | 패딩 | 배열 끝을 0이나 특정 값으로 채워 크기를 맞추는 것 |
 | parallel | 병렬 | 여러 작업을 동시에 처리하는 방식 |
 | partial block | 부분 블록 | 데이터 끝에서 블록 크기를 다 채우지 못한 블록 |
+| predicate | 프레디케이트 | 조건의 참/거짓을 나타내는 값. 병렬 알고리즘에서 파티션 소속을 결정 |
 | primitive | 기본 요소 | 프로그래밍의 기본 도구. 동기화 기본 요소 |
 | race condition | 경쟁 상태 | 여러 스레드가 같은 데이터에 동시에 접근해서 생기는 오류 |
 | register blocking | 레지스터 블로킹 | 레지스터에 값을 누적하여 메모리 트래픽을 줄이는 최적화 기법 |
@@ -115,6 +118,7 @@
 | synchronization | 동기화 | 스레드들이 발맞춰 실행되도록 맞추는 것 |
 | thread | 스레드 | 하나의 데이터를 처리하는 가장 작은 실행 단위 |
 | thread divergence | 스레드 분기 | 같은 Warp 내 스레드들이 서로 다른 분기를 타는 현상 |
+| topology | 토폴로지 | 통신 또는 연결 구조의 형태. butterfly 네트워크의 Lane 간 데이터 교환 패턴 |
 | transpose | 전치 | 행렬의 행과 열을 뒤바꾸는 연산. \\(A^T\\)로 표기 |
 | Undefined Behavior | 미정의 동작 | 프로그램의 동작이 정의되지 않은 상태 |
 | zero padding | 제로 패딩 | 배열 경계 밖을 0으로 채우는 기법. convolution 경계 처리에 사용 |
