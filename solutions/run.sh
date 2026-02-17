@@ -26,55 +26,6 @@ declare -a PASSED_TESTS_LIST
 declare -a SKIPPED_TESTS_LIST
 declare -a IGNORED_LOW_COMPUTE_TESTS_LIST
 
-# Extended GPU compute capability detection (supplements config.sh)
-detect_gpu_compute_capability() {
-    # Try to detect NVIDIA GPU compute capability
-    local compute_capability=""
-
-    # Method 1: Try nvidia-smi with expanded GPU list
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null | head -1)
-        if [ -n "$gpu_name" ]; then
-            # Check for known GPU families and their compute capabilities
-            if echo "$gpu_name" | grep -qi "H100"; then
-                compute_capability="9.0"
-            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4\|RTX 2000 Ada Generation"; then
-                compute_capability="8.9"
-            elif echo "$gpu_name" | grep -qi "RTX 30[0-9][0-9]\|RTX 3090\|RTX 3080\|RTX 3070\|RTX 3060\|A40\|A30\|A10"; then
-                compute_capability="8.6"
-            elif echo "$gpu_name" | grep -qi "A100"; then
-                compute_capability="8.0"
-            elif echo "$gpu_name" | grep -qi "V100"; then
-                compute_capability="7.0"
-            elif echo "$gpu_name" | grep -qi "T4\|RTX 20[0-9][0-9]\|RTX 2080\|RTX 2070\|RTX 2060"; then
-                compute_capability="7.5"
-            fi
-        fi
-    fi
-
-    # Method 2: Try Python with GPU detection script if available
-    # Try multiple possible paths for gpu_specs.py
-    local gpu_specs_paths=(
-        "../scripts/gpu_specs.py"           # From solutions/ directory
-        "scripts/gpu_specs.py"              # From repo root
-        "./scripts/gpu_specs.py"            # From repo root (explicit)
-    )
-
-    if [ -z "$compute_capability" ]; then
-        for gpu_specs_path in "${gpu_specs_paths[@]}"; do
-            if [ -f "$gpu_specs_path" ]; then
-                local gpu_info=$(python3 "$gpu_specs_path" 2>/dev/null | grep -i "compute capability" | head -1)
-                if [ -n "$gpu_info" ]; then
-                    compute_capability=$(echo "$gpu_info" | grep -o '[0-9]\+\.[0-9]\+' | head -1)
-                    break
-                fi
-            fi
-        done
-    fi
-
-    echo "$compute_capability"
-}
-
 has_high_compute_capability() {
     local compute_cap=$(detect_gpu_compute_capability)
     if [ -n "$compute_cap" ]; then

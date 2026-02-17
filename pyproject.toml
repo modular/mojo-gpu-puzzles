@@ -138,5 +138,6 @@ p33 = "mojo problems/p33/p33.mojo"
 
 p34 = "mojo problems/p34/p34.mojo"
 
-# GPU specs
-gpu-specs = { cmd = "python scripts/gpu_specs.py" }
+# GPU information
+gpu-info = { cmd = "python3 scripts/gpu_specs.py --summary" }
+gpu-specs = { cmd = "python3 scripts/gpu_specs.py" }
