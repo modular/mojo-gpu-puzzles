@@ -28,10 +28,12 @@
 | column-major | 열을 연속으로 저장하는 메모리 레이아웃. Fortran 방식 |
 | convolution | 합성곱. 이미지나 신경망에서 필터를 씌우는 연산 |
 | deadlock | 스레드들이 서로를 기다리며 영원히 멈춘 상태 |
+| DRAM | Dynamic Random Access Memory. GPU의 글로벌 메모리. 용량이 크지만 느림 |
 | double-buffering | 두 버퍼를 번갈아 쓰는 최적화 기법 |
 | embedding | 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환하는 연산 |
 | fusion | kernel을 합쳐서 실행하는 최적화 기법 |
 | guard | 경계 검사를 위한 조건문. `if i < size` 형태 |
+| halo (region) | 타일 경계를 넘어 확장되는 추가 데이터 영역. ghost cell, guard cell이라고도 함 |
 | hazard | 스레드 간 메모리 접근 충돌. read-after-write, write-after-write 등 |
 | JIT (Just-In-Time) | 실행 시점에 코드를 컴파일하는 방식. 빌드 단계 없이 빠른 반복 가능 |
 | kernel | GPU에서 여러 스레드가 함께 실행하는 함수 |
@@ -39,6 +41,7 @@
 | latency | 작업이 완료될 때까지 기다리는 시간 |
 | lockstep | Warp 내 모든 스레드가 동일 명령을 동시에 실행하는 모드. SIMT의 핵심 동작 방식 |
 | LayoutTensor | Mojo의 다차원 배열 추상화 타입 |
+| mbarrier | Mojo의 memory barrier API. `mbarrier_init()`, `mbarrier_arrive()`, `mbarrier_test_wait()` 등. 기본 `barrier()`보다 세밀한 동기화 제어 |
 | memory fence | 메모리 작업 순서가 뒤바뀌지 않도록 보장하는 장치 |
 | memcheck | compute-sanitizer의 메모리 위반 탐지 도구 |
 | mixed precision | FP16/BF16 입력 + FP32 누적처럼 정밀도를 혼합하는 기법 |
@@ -58,6 +61,7 @@
 | shuffle | Warp 내 스레드 간 데이터 교환 |
 | softmax | 벡터를 확률 분포로 정규화하는 함수 |
 | SIMD | Single Instruction Multiple Data. 벡터 연산 방식 |
+| SRAM | Static Random Access Memory. GPU의 공유 메모리에 해당. 용량이 작지만 빠름 |
 | stack trace | 오류 발생 시점까지의 함수 호출 경로 |
 | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
 | SM (Streaming Multiprocessor) | GPU의 연산 단위. 여러 Warp를 동시에 실행하는 프로세서 |
@@ -119,6 +123,7 @@
 | synchronization | 동기화 | 스레드들이 발맞춰 실행되도록 맞추는 것 |
 | thread | 스레드 | 하나의 데이터를 처리하는 가장 작은 실행 단위 |
 | thread divergence | 스레드 분기 | 같은 Warp 내 스레드들이 서로 다른 분기를 타는 현상 |
+| thread specialization | 스레드 특화 | 스레드 그룹마다 서로 다른 알고리즘을 실행하는 패턴. 데이터 병렬 처리와 대비 |
 | topology | 토폴로지 | 통신 또는 연결 구조의 형태. butterfly 네트워크의 Lane 간 데이터 교환 패턴 |
 | transpose | 전치 | 행렬의 행과 열을 뒤바꾸는 연산. \\(A^T\\)로 표기 |
 | Undefined Behavior | 미정의 동작 | 프로그램의 동작이 정의되지 않은 상태 |

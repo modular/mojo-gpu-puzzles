@@ -1,38 +1,38 @@
 <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 
-# Multi-Stage Pipeline Coordination
+# 다단계 파이프라인 조정
 
-## Overview
+## 개요
 
-Implement a kernel that processes an image through a coordinated 3-stage pipeline where different thread groups handle specialized processing stages, synchronized with explicit barriers.
+조율된 3단계 파이프라인을 통해 이미지를 처리하는 커널을 구현합니다. 서로 다른 스레드 그룹이 특화된 처리 단계를 담당하고, 명시적 barrier로 동기화됩니다.
 
-**Note:** _You have specialized thread roles: Stage 1 (threads 0-127) loads and preprocesses data, Stage 2 (threads 128-255) applies blur operations, and Stage 3 (all threads) performs final smoothing._
+**참고:** _스레드 역할이 특화되어 있습니다: Stage 1 (스레드 0-127)은 데이터를 로드하고 전처리하며, Stage 2 (스레드 128-255)는 blur 연산을 적용하고, Stage 3 (전체 스레드)은 최종 스무딩을 수행합니다._
 
-**Algorithm architecture:** This puzzle implements a **producer-consumer pipeline** where different thread groups execute completely different algorithms within a single GPU block. Unlike traditional GPU programming where all threads execute the same algorithm on different data, this approach divides threads by **functional specialization**.
+**알고리즘 아키텍처:** 이 퍼즐은 하나의 GPU 블록 안에서 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하는 **생산자-소비자 파이프라인**을 구현합니다. 모든 스레드가 서로 다른 데이터에 대해 동일한 알고리즘을 실행하는 전통적인 GPU 프로그래밍과 달리, 이 접근 방식은 스레드를 **기능별로 특화**하여 분할합니다.
 
-**Pipeline concept:** The algorithm processes data through three distinct stages, where each stage has specialized thread groups that execute different algorithms. Each stage produces data that the next stage consumes, creating explicit **producer-consumer relationships** that must be carefully synchronized with barriers.
+**파이프라인 개념:** 알고리즘은 세 개의 구분된 단계를 통해 데이터를 처리하며, 각 단계에는 서로 다른 알고리즘을 실행하는 특화된 스레드 그룹이 있습니다. 각 단계는 다음 단계가 소비하는 데이터를 생성하여, barrier로 신중하게 동기화해야 하는 명시적 **생산자-소비자 관계**를 만듭니다.
 
-**Data dependencies and synchronization:** Each stage produces data that the next stage consumes:
+**데이터 의존성과 동기화:** 각 단계는 다음 단계가 소비하는 데이터를 생성합니다:
 
-- **Stage 1 → Stage 2**: First stage produces preprocessed data for blur processing
-- **Stage 2 → Stage 3**: Second stage produces blur results for final smoothing
-- **Barriers prevent race conditions** by ensuring complete stage completion before dependent stages begin
+- **Stage 1 → Stage 2**: 첫 번째 단계가 blur 처리를 위한 전처리 데이터를 생성
+- **Stage 2 → Stage 3**: 두 번째 단계가 최종 스무딩을 위한 blur 결과를 생성
+- **Barrier가 경쟁 상태를 방지**: 의존하는 단계가 시작되기 전에 해당 단계가 완전히 완료되도록 보장
 
-Concretely, the multi-stage pipeline implements a coordinated image processing algorithm with three mathematical operations:
+구체적으로, 다단계 파이프라인은 세 가지 수학 연산으로 구성된 조율된 이미지 처리 알고리즘을 구현합니다:
 
-**Stage 1 - Preprocessing Enhancement:**
+**Stage 1 - 전처리 강화:**
 
 \\[P[i] = I[i] \times 1.1\\]
 
-where \\(P[i]\\) is the preprocessed data and \\(I[i]\\) is the input data.
+여기서 \\(P[i]\\)는 전처리된 데이터이고 \\(I[i]\\)는 입력 데이터입니다.
 
-**Stage 2 - Horizontal Blur Filter:**
+**Stage 2 - 수평 blur 필터:**
 
 \\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in [0, 255]\\]
 
-where \\(B[i]\\) is the blur result, and \\(N_i\\) is the count of valid neighbors within the tile boundary.
+여기서 \\(B[i]\\)는 blur 결과이고, \\(N_i\\)는 타일 경계 내의 유효한 이웃 수입니다.
 
-**Stage 3 - Cascading Neighbor Smoothing:**
+**Stage 3 - 연쇄적 이웃 스무딩:**
 
 \\[F[i] = \begin{cases}
 (B[i] + B[i+1]) \times 0.6 & \text{if } i = 0 \\\\
@@ -40,116 +40,116 @@ where \\(B[i]\\) is the blur result, and \\(N_i\\) is the count of valid neighbo
 (B[i] + B[i-1]) \times 0.6 & \text{if } i = 255
 \end{cases}\\]
 
-where \\(F[i]\\) is the final output with cascading smoothing applied.
+여기서 \\(F[i]\\)는 연쇄적 스무딩이 적용된 최종 출력입니다.
 
-**Thread Specialization:**
+**스레드 특화:**
 
-- **Threads 0-127**: Compute \\(P[i]\\) for \\(i \in \\{0, 1, 2, \ldots, 255\\}\\) (2 elements per thread)
-- **Threads 128-255**: Compute \\(B[i]\\) for \\(i \in \\{0, 1, 2, \ldots, 255\\}\\) (2 elements per thread)
-- **All 256 threads**: Compute \\(F[i]\\) for \\(i \in \\{0, 1, 2, \ldots, 255\\}\\) (1 element per thread)
+- **스레드 0-127**: \\(i \in \\{0, 1, 2, \ldots, 255\\}\\)에 대해 \\(P[i]\\) 계산 (스레드당 2개 요소)
+- **스레드 128-255**: \\(i \in \\{0, 1, 2, \ldots, 255\\}\\)에 대해 \\(B[i]\\) 계산 (스레드당 2개 요소)
+- **전체 256개 스레드**: \\(i \in \\{0, 1, 2, \ldots, 255\\}\\)에 대해 \\(F[i]\\) 계산 (스레드당 1개 요소)
 
-**Synchronization Points:**
+**동기화 지점:**
 
 \\[\text{barrier}_1 \Rightarrow P[i] \text{ complete} \Rightarrow \text{barrier}_2 \Rightarrow B[i] \text{ complete} \Rightarrow \text{barrier}_3 \Rightarrow F[i] \text{ complete}\\]
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn about:
+이 퍼즐에서는 다음을 배웁니다:
 
-- Implementing thread role specialization within a single GPU block
-- Coordinating producer-consumer relationships between processing stages
-- Using barriers to synchronize between different algorithms (not just within the same algorithm)
+- 하나의 GPU 블록 안에서 스레드 역할 특화 구현
+- 처리 단계 간 생산자-소비자 관계 조율
+- 서로 다른 알고리즘 간의 동기화를 위한 barrier 사용 (동일한 알고리즘 내부뿐 아니라)
 
-The key insight is understanding how to design multi-stage pipelines where different thread groups execute completely different algorithms, coordinated through strategic barrier placement.
+핵심 통찰은 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하면서 전략적 barrier 배치를 통해 조율되는 다단계 파이프라인을 어떻게 설계하는지 이해하는 것입니다.
 
-**Why this matters:** Most GPU tutorials teach barrier usage within a single algorithm - synchronizing threads during reductions or shared memory operations. But real-world GPU algorithms often require **architectural complexity** with multiple distinct processing stages that must be carefully orchestrated. This puzzle demonstrates how to transform monolithic algorithms into specialized, coordinated processing pipelines.
+**왜 중요한가:** 대부분의 GPU 튜토리얼은 단일 알고리즘 내에서의 barrier 사용법 - reduction이나 공유 메모리 연산 중 스레드를 동기화하는 것 - 을 가르칩니다. 하지만 실제 GPU 알고리즘에서는 신중하게 조율해야 하는 여러 개의 구분된 처리 단계를 포함하는 **아키텍처적 복잡성**이 필요한 경우가 많습니다. 이 퍼즐은 단일체적 알고리즘을 특화되고 조율된 처리 파이프라인으로 변환하는 방법을 보여줍니다.
 
-**Previous vs. current barrier usage:**
+**이전 퍼즐과 현재의 barrier 사용 비교:**
 
-- **Previous puzzles ([P8](../puzzle_08/puzzle_08.md), [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** All threads execute the same algorithm, barriers sync within algorithm steps
-- **This puzzle:** Different thread groups execute different algorithms, barriers coordinate between different algorithms
+- **이전 퍼즐 ([P8](../puzzle_08/puzzle_08.md), [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** 모든 스레드가 동일한 알고리즘을 실행하고, barrier는 알고리즘 단계 내에서 동기화
+- **이 퍼즐:** 서로 다른 스레드 그룹이 서로 다른 알고리즘을 실행하고, barrier는 서로 다른 알고리즘 간의 조율
 
-**Thread specialization architecture:** Unlike data parallelism where threads differ only in their data indices, this puzzle implements **algorithmic parallelism** where threads execute fundamentally different code paths based on their role in the pipeline.
+**스레드 특화 아키텍처:** 스레드가 데이터 인덱스만 다른 데이터 병렬 처리와 달리, 이 퍼즐은 파이프라인에서의 역할에 따라 스레드가 근본적으로 다른 코드 경로를 실행하는 **알고리즘 병렬 처리**를 구현합니다.
 
-## Configuration
+## 구성
 
-**System parameters:**
+**시스템 매개변수:**
 
-- **Image size**: `SIZE = 1024` elements (1D for simplicity)
-- **Threads per block**: `TPB = 256` threads organized as `(256, 1)` block dimension
-- **Grid configuration**: `(4, 1)` blocks to process entire image in tiles (4 blocks total)
-- **Data type**: `DType.float32` for all computations
+- **이미지 크기**: `SIZE = 1024` 요소 (간소화를 위해 1D)
+- **블록당 스레드 수**: `TPB = 256` 스레드, `(256, 1)` 블록 차원으로 구성
+- **그리드 구성**: 전체 이미지를 타일 단위로 처리하기 위한 `(4, 1)` 블록 (총 4개 블록)
+- **데이터 타입**: 모든 연산에 `DType.float32`
 
-**Thread specialization architecture:**
+**스레드 특화 아키텍처:**
 
-- **Stage 1 threads**: `STAGE1_THREADS = 128` (threads 0-127, first half of block)
-  - **Responsibility**: Load input data from global memory and apply preprocessing
-  - **Work distribution**: Each thread processes 2 elements for efficient load balancing
-  - **Output**: Populates `input_shared[256]` with preprocessed data
+- **Stage 1 스레드**: `STAGE1_THREADS = 128` (스레드 0-127, 블록의 전반부)
+  - **역할**: 글로벌 메모리에서 입력 데이터를 로드하고 전처리 적용
+  - **작업 분배**: 효율적인 부하 균형을 위해 스레드당 2개 요소 처리
+  - **출력**: `input_shared[256]`에 전처리된 데이터 채우기
 
-- **Stage 2 threads**: `STAGE2_THREADS = 128` (threads 128-255, second half of block)
-  - **Responsibility**: Apply horizontal blur filter on preprocessed data
-  - **Work distribution**: Each thread processes 2 blur operations
-  - **Output**: Populates `blur_shared[256]` with blur results
+- **Stage 2 스레드**: `STAGE2_THREADS = 128` (스레드 128-255, 블록의 후반부)
+  - **역할**: 전처리된 데이터에 수평 blur 필터 적용
+  - **작업 분배**: 스레드당 2개의 blur 연산 처리
+  - **출력**: `blur_shared[256]`에 blur 결과 채우기
 
-- **Stage 3 threads**: All 256 threads collaborate
-  - **Responsibility**: Final smoothing and output to global memory
-  - **Work distribution**: One-to-one mapping (thread `i` processes element `i`)
-  - **Output**: Writes final results to global `output` array
+- **Stage 3 스레드**: 전체 256개 스레드 협력
+  - **역할**: 최종 스무딩 및 글로벌 메모리로 출력
+  - **작업 분배**: 일대일 매핑 (스레드 `i`가 요소 `i`를 처리)
+  - **출력**: 글로벌 `output` 배열에 최종 결과 기록
 
-## Code to complete
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p29/p29.mojo:multi_stage_pipeline}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p29/p29.mojo" class="filename">View full file: problems/p29/p29.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### **Thread role identification**
+### **스레드 역할 식별**
 
-- Use thread index comparisons to determine which stage each thread should execute
-- Stage 1: First half of threads (threads 0-127)
-- Stage 2: Second half of threads (threads 128-255)
-- Stage 3: All threads participate
+- 스레드 인덱스 비교를 통해 각 스레드가 어떤 단계를 실행해야 하는지 결정
+- Stage 1: 전반부 스레드 (스레드 0-127)
+- Stage 2: 후반부 스레드 (스레드 128-255)
+- Stage 3: 모든 스레드 참여
 
-### **Stage 1 approach**
+### **Stage 1 접근 방식**
 
-- Identify Stage 1 threads using appropriate index comparison
-- Each thread should handle multiple elements for load balancing
-- Apply the preprocessing enhancement factor
-- Implement proper boundary handling with zero-padding
+- 적절한 인덱스 비교를 통해 Stage 1 스레드 식별
+- 부하 균형을 위해 각 스레드가 여러 요소를 처리
+- 전처리 강화 계수 적용
+- 제로 패딩을 사용한 적절한 경계 처리 구현
 
-### **Stage 2 approach**
+### **Stage 2 접근 방식**
 
-- Identify Stage 2 threads and map their indices to processing range
-- Implement the blur kernel by averaging neighboring elements
-- Handle boundary conditions by only including valid neighbors
-- Process multiple elements per thread for efficiency
+- Stage 2 스레드를 식별하고 인덱스를 처리 범위에 매핑
+- 이웃 요소의 평균을 구하는 blur 커널 구현
+- 유효한 이웃만 포함하여 경계 조건 처리
+- 효율성을 위해 스레드당 여러 요소 처리
 
-### **Stage 3 approach**
+### **Stage 3 접근 방식**
 
-- All threads participate in final processing
-- Apply neighbor smoothing using the specified scaling factor
-- Handle edge cases where neighbors may not exist
-- Write results to global output with bounds checking
+- 모든 스레드가 최종 처리에 참여
+- 지정된 스케일링 계수를 사용한 이웃 스무딩 적용
+- 이웃이 존재하지 않는 경우의 엣지 케이스 처리
+- 경계 검사를 통해 글로벌 출력에 결과 기록
 
-### **Synchronization strategy**
+### **동기화 전략**
 
-- Place barriers between stages to prevent race conditions
-- Ensure each stage completes before dependent stages begin
-- Use final barrier to guarantee completion before block exit
+- 경쟁 상태를 방지하기 위해 단계 사이에 barrier 배치
+- 의존하는 단계가 시작되기 전에 각 단계가 완료되도록 보장
+- 블록 종료 전 완료를 보장하기 위해 최종 barrier 사용
 
 </div>
 </details>
 
-## Running the code
+## 코드 실행
 
-To test your solution, run the following command in your terminal:
+풀이를 테스트하려면 터미널에서 다음 명령을 실행합니다:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -180,7 +180,7 @@ uv run poe p29 --multi-stage
   </div>
 </div>
 
-After completing the puzzle successfully, you should see output similar to:
+퍼즐을 성공적으로 완료하면 다음과 유사한 출력이 표시됩니다:
 
 ```
 Puzzle 29: GPU Synchronization Primitives
@@ -199,7 +199,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -210,119 +210,119 @@ Output sample: 1.6665002 2.3331003 3.3996604
 
 <div class="solution-explanation">
 
-The key insight is recognizing this as a **pipeline architecture problem** with thread role specialization:
+핵심 통찰은 이것이 스레드 역할 특화를 가진 **파이프라인 아키텍처 문제**임을 인식하는 것입니다:
 
-1. **Design stage-specific thread groups**: Divide threads by function, not just by data
-2. **Implement producer-consumer chains**: Stage 1 produces for Stage 2, Stage 2 produces for Stage 3
-3. **Use strategic barrier placement**: Synchronize between different algorithms, not within the same algorithm
-4. **Optimize memory access patterns**: Ensure coalesced reads and efficient shared memory usage
+1. **단계별 스레드 그룹 설계**: 데이터뿐만 아니라 기능별로 스레드를 분할
+2. **생산자-소비자 체인 구현**: Stage 1이 Stage 2를 위해 생산하고, Stage 2가 Stage 3을 위해 생산
+3. **전략적 barrier 배치**: 동일한 알고리즘 내가 아니라 서로 다른 알고리즘 간의 동기화
+4. **메모리 접근 패턴 최적화**: 병합된 읽기와 효율적인 공유 메모리 사용 보장
 
-<strong>Complete Solution with Detailed Explanation</strong>
+<strong>상세 설명이 포함된 전체 풀이</strong>
 
-The multi-stage pipeline solution demonstrates sophisticated thread specialization and barrier coordination. This approach transforms a traditional monolithic GPU algorithm into a specialized, coordinated processing pipeline.
+다단계 파이프라인 풀이는 정교한 스레드 특화와 barrier 조정을 보여줍니다. 이 접근 방식은 전통적인 단일체적 GPU 알고리즘을 특화되고 조율된 처리 파이프라인으로 변환합니다.
 
-## **Pipeline architecture design**
+## **파이프라인 아키텍처 설계**
 
-The fundamental breakthrough in this puzzle is **thread specialization by role** rather than by data:
+이 퍼즐의 근본적인 돌파구는 데이터가 아닌 **역할에 의한 스레드 특화**입니다:
 
-**Traditional approach:** All threads execute the same algorithm on different data
+**전통적인 접근 방식:** 모든 스레드가 서로 다른 데이터에 대해 동일한 알고리즘을 실행
 
-- Everyone performs identical operations (like reductions or matrix operations)
-- Barriers synchronize threads within the same algorithm steps
-- Thread roles differ only by data indices they process
+- 모든 스레드가 동일한 연산을 수행 (reduction이나 행렬 연산 등)
+- Barrier는 동일한 알고리즘 단계 내에서 스레드를 동기화
+- 스레드 역할은 처리하는 데이터 인덱스만 다름
 
-**This puzzle's innovation:** Different thread groups execute completely different algorithms
+**이 퍼즐의 혁신:** 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행
 
-- Threads 0-127 execute loading and preprocessing algorithms
-- Threads 128-255 execute blur processing algorithms
-- All threads collaborate in final smoothing algorithm
-- Barriers coordinate between different algorithms, not within the same algorithm
+- 스레드 0-127이 로딩 및 전처리 알고리즘을 실행
+- 스레드 128-255가 blur 처리 알고리즘을 실행
+- 모든 스레드가 최종 스무딩 알고리즘에 협력
+- Barrier는 동일한 알고리즘 내가 아니라 서로 다른 알고리즘 간의 조율
 
-## **Producer-consumer coordination**
+## **생산자-소비자 조정**
 
-Unlike previous puzzles where threads were peers in the same algorithm, this establishes explicit producer-consumer relationships:
+스레드가 동일한 알고리즘 내에서 동등한 역할을 하던 이전 퍼즐과 달리, 이 퍼즐은 명시적인 생산자-소비자 관계를 설정합니다:
 
-- **Stage 1**: Producer (creates preprocessed data for Stage 2)
-- **Stage 2**: Consumer (uses Stage 1 data) + Producer (creates blur data for Stage 3)
-- **Stage 3**: Consumer (uses Stage 2 data)
+- **Stage 1**: 생산자 (Stage 2를 위한 전처리 데이터 생성)
+- **Stage 2**: 소비자 (Stage 1의 데이터 사용) + 생산자 (Stage 3을 위한 blur 데이터 생성)
+- **Stage 3**: 소비자 (Stage 2의 데이터 사용)
 
-## **Strategic barrier placement**
+## **전략적 barrier 배치**
 
-Understanding when barriers are necessary vs. wasteful:
+Barrier가 언제 필요하고 언제 낭비적인지 이해하기:
 
-- **Necessary**: Between dependent stages to prevent race conditions
-- **Wasteful**: Within independent operations of the same stage
-- **Performance insight**: Each barrier has a cost - use them strategically
+- **필요한 경우**: 의존적인 단계 사이에서 경쟁 상태를 방지하기 위해
+- **낭비적인 경우**: 같은 단계의 독립적인 연산 내에서
+- **성능 통찰**: 각 barrier에는 비용이 있으므로 전략적으로 사용
 
-**Critical synchronization points:**
+**핵심 동기화 지점:**
 
-1. **After Stage 1**: Prevent Stage 2 from reading incomplete preprocessed data
-2. **After Stage 2**: Prevent Stage 3 from reading incomplete blur results
-3. **After Stage 3**: Ensure all output writes complete before block termination
+1. **Stage 1 이후**: Stage 2가 불완전한 전처리 데이터를 읽는 것을 방지
+2. **Stage 2 이후**: Stage 3이 불완전한 blur 결과를 읽는 것을 방지
+3. **Stage 3 이후**: 블록 종료 전 모든 출력 쓰기가 완료되도록 보장
 
-## **Thread utilization patterns**
+## **스레드 활용 패턴**
 
-- **Stage 1**: 50% utilization (128/256 threads active, 128 idle)
-- **Stage 2**: 50% utilization (128 active, 128 idle)
-- **Stage 3**: 100% utilization (all 256 threads active)
+- **Stage 1**: 50% 활용 (256개 중 128개 스레드 활성, 128개 유휴)
+- **Stage 2**: 50% 활용 (128개 활성, 128개 유휴)
+- **Stage 3**: 100% 활용 (전체 256개 스레드 활성)
 
-This demonstrates sophisticated **algorithmic parallelism** where different thread groups specialize in different computational tasks within a coordinated pipeline, moving beyond simple data parallelism to architectural thinking required for real-world GPU algorithms.
+이것은 서로 다른 스레드 그룹이 조율된 파이프라인 내에서 서로 다른 연산 작업에 특화되는 정교한 **알고리즘 병렬 처리**를 보여주며, 단순한 데이터 병렬 처리를 넘어 실제 GPU 알고리즘에 필요한 아키텍처적 사고로 나아갑니다.
 
-## **Memory hierarchy optimization**
+## **메모리 계층 구조 최적화**
 
-**Shared memory architecture:**
+**공유 메모리 아키텍처:**
 
-- Two specialized buffers handle data flow between stages
-- Global memory access minimized to boundary operations only
-- All intermediate processing uses fast shared memory
+- 두 개의 특화된 버퍼가 단계 간 데이터 흐름을 처리
+- 글로벌 메모리 접근은 경계 연산에만 최소화
+- 모든 중간 처리에 빠른 공유 메모리 사용
 
-**Access pattern benefits:**
+**접근 패턴의 이점:**
 
-- **Stage 1**: Coalesced global memory reads for input loading
-- **Stage 2**: Fast shared memory reads for blur processing
-- **Stage 3**: Coalesced global memory writes for output
+- **Stage 1**: 입력 로딩을 위한 병합된 글로벌 메모리 읽기
+- **Stage 2**: blur 처리를 위한 빠른 공유 메모리 읽기
+- **Stage 3**: 출력을 위한 병합된 글로벌 메모리 쓰기
 
-## **Real-world applications**
+## **실제 응용 분야**
 
-This pipeline architecture pattern is fundamental to:
+이 파이프라인 아키텍처 패턴은 다음 분야의 기반이 됩니다:
 
-**Image processing pipelines:**
+**이미지 처리 파이프라인:**
 
-- Multi-stage filters (blur, sharpen, edge detection in sequence)
-- Color space conversions (RGB → HSV → processing → RGB)
-- Noise reduction with multiple algorithm passes
+- 다단계 필터 (blur, 선명화, 엣지 검출을 순차적으로)
+- 색 공간 변환 (RGB → HSV → 처리 → RGB)
+- 다중 알고리즘 패스를 사용한 노이즈 감소
 
-**Scientific computing:**
+**과학 연산:**
 
-- Stencil computations with multi-stage finite difference methods
-- Signal processing with filtering, transformation, and analysis pipelines
-- Computational fluid dynamics with multi-stage solver iterations
+- 다단계 유한 차분 방법을 사용한 stencil 연산
+- 필터링, 변환, 분석 파이프라인을 사용한 신호 처리
+- 다단계 솔버 반복을 사용한 전산 유체 역학
 
-**Machine learning:**
+**머신러닝:**
 
-- Neural network layers with specialized thread groups for different operations
-- Data preprocessing pipelines (load, normalize, augment in coordinated stages)
-- Batch processing where different thread groups handle different operations
+- 서로 다른 연산을 위해 특화된 스레드 그룹을 가진 신경망 레이어
+- 데이터 전처리 파이프라인 (조율된 단계에서 로드, 정규화, 증강)
+- 서로 다른 스레드 그룹이 서로 다른 연산을 처리하는 배치 처리
 
-## **Key technical insights**
+## **핵심 기술적 통찰**
 
-**Algorithmic vs. data parallelism:**
+**알고리즘 병렬 처리 vs. 데이터 병렬 처리:**
 
-- **Data parallelism**: Threads execute identical code on different data elements
-- **Algorithmic parallelism**: Threads execute fundamentally different algorithms based on their specialized roles
+- **데이터 병렬 처리**: 스레드가 서로 다른 데이터 요소에 동일한 코드를 실행
+- **알고리즘 병렬 처리**: 스레드가 특화된 역할에 따라 근본적으로 다른 알고리즘을 실행
 
-**Barrier usage philosophy:**
+**Barrier 사용 철학:**
 
-- **Strategic placement**: Barriers only where necessary to prevent race conditions between dependent stages
-- **Performance consideration**: Each barrier incurs synchronization overhead - use sparingly but correctly
-- **Correctness guarantee**: Proper barrier placement ensures deterministic results regardless of thread execution timing
+- **전략적 배치**: 의존적인 단계 간의 경쟁 상태를 방지하기 위해 필요한 곳에만 barrier 배치
+- **성능 고려사항**: 각 barrier에는 동기화 오버헤드가 발생하므로 정확하지만 절제된 사용
+- **정확성 보장**: 적절한 barrier 배치로 스레드 실행 타이밍에 관계없이 결정적 결과를 보장
 
-**Thread specialization benefits:**
+**스레드 특화의 이점:**
 
-- **Algorithmic optimization**: Each stage can be optimized for its specific computational pattern
-- **Memory access optimization**: Different stages can use different memory access strategies
-- **Resource utilization**: Complex algorithms can be decomposed into specialized, efficient components
+- **알고리즘 최적화**: 각 단계를 해당 연산 패턴에 맞게 최적화 가능
+- **메모리 접근 최적화**: 서로 다른 단계에서 서로 다른 메모리 접근 전략 사용 가능
+- **리소스 활용**: 복잡한 알고리즘을 특화되고 효율적인 구성 요소로 분해 가능
 
-This solution demonstrates how to design sophisticated GPU algorithms that leverage thread specialization and strategic synchronization for complex multi-stage computations, moving beyond simple parallel loops to architectural approaches used in production GPU software.
+이 풀이는 복잡한 다단계 연산을 위해 스레드 특화와 전략적 동기화를 활용하는 정교한 GPU 알고리즘을 설계하는 방법을 보여주며, 단순한 병렬 루프를 넘어 실제 GPU 소프트웨어에서 사용되는 아키텍처적 접근 방식으로 나아갑니다.
 
 </details>

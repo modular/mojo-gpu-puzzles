@@ -1,123 +1,123 @@
 <!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
 
-# Puzzle 29: GPU Synchronization Primitives
+# Puzzle 29: GPU 동기화 기본 요소
 
-> **Beyond Simple Parallelism**
+> **단순한 병렬 처리를 넘어서**
 >
-> This chapter introduces **synchronization patterns** that enable complex GPU algorithms requiring precise coordination between threads. Unlike previous puzzles that focused on simple parallel operations, these challenges explore **architectural approaches** used in production GPU software.
+> 이 장에서는 스레드 간 정밀한 조율이 필요한 복잡한 GPU 알고리즘을 가능하게 하는 **동기화 패턴**을 소개합니다. 단순한 병렬 연산에 초점을 맞춘 이전 퍼즐들과 달리, 이 챌린지들은 실제 GPU 소프트웨어에서 사용되는 **아키텍처 접근 방식**을 탐구합니다.
 >
-> **What you'll learn:**
+> **학습 내용:**
 >
-> - **Thread specialization**: Different thread groups executing distinct algorithms within a single block
-> - **Producer-consumer pipelines**: Multi-stage processing with explicit data dependencies
-> - **Advanced barrier APIs**: Fine-grained synchronization control beyond basic `barrier()` calls
-> - **Memory barrier coordination**: Explicit control over memory visibility and ordering
-> - **Iterative algorithm patterns**: Double-buffering and pipeline coordination for complex computations
+> - **스레드 특화**: 하나의 블록 안에서 서로 다른 스레드 그룹이 각각 다른 알고리즘을 실행
+> - **생산자-소비자 파이프라인**: 명시적 데이터 의존성을 가진 다단계 처리
+> - **고급 barrier API**: 기본 `barrier()` 호출을 넘어선 세밀한 동기화 제어
+> - **Memory barrier 조정**: 메모리 가시성과 순서에 대한 명시적 제어
+> - **반복 알고리즘 패턴**: 복잡한 연산을 위한 double-buffering과 파이프라인 조정
 >
-> **Why this matters:** Most GPU tutorials teach simple data-parallel patterns, but real-world applications require **sophisticated coordination** between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.
+> **왜 중요한가:** 대부분의 GPU 튜토리얼은 단순한 데이터 병렬 패턴을 가르치지만, 실제 애플리케이션에서는 서로 다른 처리 단계, 메모리 접근 패턴, 알고리즘 단계 간의 **정교한 조율**이 필요합니다. 이 퍼즐들은 학술적 예제와 실제 GPU 컴퓨팅 사이의 간극을 메워줍니다.
 
-## Overview
+## 개요
 
-GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: **pipeline coordination**, **memory barrier management**, and **streaming computation**.
+GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 동작하게 하는 토대입니다. 이 장에서는 고성능 GPU 컴퓨팅 전반에 걸쳐 나타나는 세 가지 기본적인 동기화 패턴인 **파이프라인 조정**, **memory barrier 관리**, **스트리밍 연산**을 탐구합니다.
 
-**Core learning objectives:**
+**핵심 학습 목표:**
 
-- **Understand when and why** different synchronization primitives are needed
-- **Design multi-stage algorithms** with proper thread specialization
-- **Implement iterative patterns** that require precise memory coordination
-- **Optimize synchronization overhead** while maintaining correctness guarantees
+- 서로 다른 동기화 기본 요소가 **언제, 왜** 필요한지 이해
+- 적절한 스레드 특화를 통한 **다단계 알고리즘 설계**
+- 정밀한 메모리 조정이 필요한 **반복 패턴 구현**
+- 정확성을 보장하면서 **동기화 오버헤드 최적화**
 
-**Architectural progression:** These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.
+**아키텍처 진행 구조:** 이 퍼즐들은 기본적인 파이프라인 조정부터 고급 memory barrier 관리까지, 그리고 최종적으로 고처리량 애플리케이션에서 사용되는 스트리밍 연산 패턴까지 단계적으로 진행되도록 설계되었습니다.
 
-## Key concepts
+## 핵심 개념
 
-**Thread coordination paradigms:**
+**스레드 조율 패러다임:**
 
-- **Simple parallelism**: All threads execute identical operations (previous puzzles)
-- **Specialized parallelism**: Different thread groups execute distinct algorithms (this chapter)
-- **Pipeline parallelism**: Sequential stages with producer-consumer relationships
-- **Iterative parallelism**: Multiple passes with careful buffer management
+- **단순 병렬 처리**: 모든 스레드가 동일한 연산을 수행 (이전 퍼즐들)
+- **특화 병렬 처리**: 서로 다른 스레드 그룹이 각각 다른 알고리즘을 수행 (이 장)
+- **파이프라인 병렬 처리**: 생산자-소비자 관계를 가진 순차적 단계
+- **반복 병렬 처리**: 신중한 버퍼 관리를 수반하는 다중 패스
 
-**Synchronization primitive hierarchy:**
+**동기화 기본 요소의 계층 구조:**
 
-- **Basic [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)**: Simple thread synchronization within blocks
-- **Advanced [mbarrier APIs](https://docs.modular.com/mojo/stdlib/gpu/sync/)**: Fine-grained memory barrier control with state tracking
-- **Streaming coordination**: Asynchronous copy and bulk transfer synchronization
+- **기본 [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)**: 블록 내 단순 스레드 동기화
+- **고급 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/)**: 상태 추적을 지원하는 세밀한 memory barrier 제어
+- **스트리밍 조정**: 비동기 복사 및 대량 전송 동기화
 
-**Memory consistency models:**
+**메모리 일관성 모델:**
 
-- **Shared memory coordination**: Fast on-chip memory for inter-thread communication
-- **Global memory ordering**: Ensuring visibility of writes across different memory spaces
-- **Buffer management**: Double-buffering and ping-pong patterns for iterative algorithms
+- **공유 메모리 조정**: 스레드 간 통신을 위한 빠른 온칩 메모리
+- **글로벌 메모리 순서 보장**: 서로 다른 메모리 공간에 걸쳐 쓰기의 가시성 보장
+- **버퍼 관리**: 반복 알고리즘을 위한 double-buffering과 핑퐁 패턴
 
-## Configuration
+## 구성
 
-**System architecture:**
+**시스템 아키텍처:**
 
-- **Block size**: `TPB = 256` threads per block for optimal occupancy
-- **Grid configuration**: Multiple blocks processing different data tiles
-- **Memory hierarchy**: Strategic use of shared memory, registers, and global memory
-- **Data types**: `DType.float32` for numerical computations
+- **블록 크기**: 최적의 occupancy를 위해 블록당 `TPB = 256` 스레드
+- **그리드 구성**: 각각 서로 다른 데이터 타일을 처리하는 다수의 블록
+- **메모리 계층 구조**: 공유 메모리, 레지스터, 글로벌 메모리의 전략적 활용
+- **데이터 타입**: 수치 연산을 위한 `DType.float32`
 
-**Synchronization patterns covered:**
+**다루는 동기화 패턴:**
 
-1. **Multi-stage pipelines**: Thread specialization with barrier coordination
-2. **Double-buffered iterations**: Memory barrier management for iterative algorithms
-3. **Streaming computation**: Asynchronous copy coordination for high-throughput processing
+1. **다단계 파이프라인**: barrier 조정을 활용한 스레드 특화
+2. **Double-buffered 반복**: 반복 알고리즘을 위한 memory barrier 관리
+3. **스트리밍 연산**: 고처리량 처리를 위한 비동기 복사 조정
 
-**Performance considerations:**
+**성능 고려사항:**
 
-- **Synchronization overhead**: Understanding the cost of different barrier types
-- **Memory bandwidth**: Optimizing access patterns for maximum throughput
-- **Thread utilization**: Balancing specialized roles with overall efficiency
+- **동기화 오버헤드**: 서로 다른 barrier 유형의 비용 이해
+- **메모리 대역폭**: 최대 처리량을 위한 접근 패턴 최적화
+- **스레드 활용도**: 특화된 역할과 전체 효율성 간의 균형
 
-## Puzzle structure
+## 퍼즐 구성
 
-This chapter contains three interconnected puzzles that build upon each other:
+이 장에는 서로를 기반으로 발전하는 세 개의 연결된 퍼즐이 포함되어 있습니다:
 
-### **[Multi-Stage Pipeline Coordination](barrier.md)**
+### **[다단계 파이프라인 조정](barrier.md)**
 
-**Focus**: Thread specialization and pipeline architecture
+**초점**: 스레드 특화와 파이프라인 아키텍처
 
-Learn how to design GPU kernels where different thread groups execute completely different algorithms within the same block. This puzzle introduces **producer-consumer relationships** and strategic barrier placement for coordinating between different algorithmic stages.
+하나의 블록 안에서 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하는 GPU kernel을 설계하는 방법을 배웁니다. 이 퍼즐에서는 **생산자-소비자 관계**와 서로 다른 알고리즘 단계 간의 전략적 barrier 배치를 소개합니다.
 
-**Key concepts**:
+**핵심 개념**:
 
-- Thread role specialization (Stage 1: load, Stage 2: process, Stage 3: output)
-- Producer-consumer data flow between processing stages
-- Strategic barrier placement between different algorithms
+- 스레드 역할 특화 (Stage 1: 로드, Stage 2: 처리, Stage 3: 출력)
+- 처리 단계 간 생산자-소비자 데이터 흐름
+- 서로 다른 알고리즘 사이의 전략적 barrier 배치
 
-**Real-world applications**: Image processing pipelines, multi-stage scientific computations, neural network layer coordination
+**실제 응용 분야**: 이미지 처리 파이프라인, 다단계 과학 연산, 신경망 레이어 조정
 
-### **[Double-Buffered Stencil Computation](memory_barrier.md)**
+### **[Double-Buffered Stencil 연산](memory_barrier.md)**
 
-**Focus**: Advanced memory barrier APIs and iterative processing
+**초점**: 고급 memory barrier API와 반복 처리
 
-Explore **fine-grained synchronization control** using [mbarrier APIs](https://docs.modular.com/mojo/stdlib/gpu/sync/) for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.
+정밀한 메모리 조정이 필요한 반복 알고리즘을 위해 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/)를 사용한 **세밀한 동기화 제어**를 탐구합니다. 이 퍼즐은 반복법와 시뮬레이션 알고리즘에 필수적인 double-buffering 패턴을 보여줍니다.
 
-**Key concepts**:
+**핵심 개념**:
 
-- Advanced [mbarrier APIs](https://docs.modular.com/mojo/stdlib/gpu/sync/) vs basic [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)
-- Double-buffering with alternating read/write buffer roles
-- Iterative algorithm coordination with explicit memory barriers
+- 고급 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/) vs 기본 [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)
+- 읽기/쓰기 버퍼 역할을 교대하는 double-buffering
+- 명시적 memory barrier를 사용한 반복 알고리즘 조정
 
-**Real-world applications**: Iterative solvers (Jacobi, Gauss-Seidel), cellular automata, simulation time-stepping
+**실제 응용 분야**: 반복법 (Jacobi, Gauss-Seidel), 셀룰러 오토마타, 시뮬레이션 시간 스텝
 
-## Getting started
+## 시작하기
 
-**Recommended approach:**
+**권장 학습 순서:**
 
-1. **Start with [Pipeline Coordination](barrier.md)**: Understand thread specialization basics
-2. **Progress to [Memory Barriers](memory_barrier.md)**: Learn fine-grained synchronization control
-3. **Apply to streaming patterns**: Combine concepts for high-throughput applications
+1. **[파이프라인 조정](barrier.md)부터 시작**: 스레드 특화의 기초 이해
+2. **[Memory Barrier](memory_barrier.md)로 진행**: 세밀한 동기화 제어 학습
+3. **스트리밍 패턴에 적용**: 고처리량 애플리케이션을 위한 개념 결합
 
-**Prerequisites:**
+**사전 준비:**
 
-- Comfort with basic GPU programming concepts (threads, blocks, shared memory)
-- Understanding of memory hierarchies and access patterns
-- Familiarity with barrier synchronization from previous puzzles
+- 기본 GPU 프로그래밍 개념 (스레드, 블록, 공유 메모리)에 대한 이해
+- 메모리 계층 구조와 접근 패턴에 대한 이해
+- 이전 퍼즐에서 배운 barrier 동기화에 대한 친숙함
 
-**Learning outcomes:**
-By completing this chapter, you'll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.
+**학습 성과:**
+이 장을 완료하면, 정밀한 조율이 필요한 정교한 GPU 알고리즘을 설계하고 구현할 수 있는 토대를 갖추게 되어, 실제 GPU 컴퓨팅 애플리케이션에서 마주하는 아키텍처적 복잡성에 대비할 수 있습니다.
 
-**Ready to dive in?** Start with **[Multi-Stage Pipeline Coordination](barrier.md)** to learn thread specialization fundamentals, then advance to **[Double-Buffered Stencil Computation](memory_barrier.md)** to explore advanced memory barrier techniques.
+**시작할 준비가 되셨나요?** **[다단계 파이프라인 조정](barrier.md)** 에서 스레드 특화의 기본을 배운 다음, **[Double-Buffered Stencil 연산](memory_barrier.md)** 으로 나아가 고급 memory barrier 기법을 탐구해 보세요.
