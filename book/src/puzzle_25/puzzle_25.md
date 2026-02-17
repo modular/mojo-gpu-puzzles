@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Puzzle 25: Warp Communication Primitives** introduces advanced GPU **warp-level communication operations** - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You'll learn about using [shuffle_down](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down) and [broadcast](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast) to implement neighbor communication and collective coordination without complex shared memory patterns.
+**Puzzle 25: Warp Communication Primitives** introduces advanced GPU **warp-level communication operations** - hardware-accelerated primitives that enable efficient data exchange and coordination patterns within warps. You'll learn about using [shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down) and [broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast) to implement neighbor communication and collective coordination without complex shared memory patterns.
 
 **Part VII: GPU Warp Communication** introduces warp-level data movement operations within thread groups. You'll learn to replace complex shared memory + indexing + boundary checking patterns with efficient warp communication calls that leverage hardware-optimized data movement.
 
@@ -37,12 +37,12 @@ Lane 0 ──broadcast──> All lanes (0, 1, 2, ..., 31)
 
 Learn the core communication primitives from `gpu.primitives.warp`:
 
-1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)**: Get value from lane at higher index (neighbor access)
-2. **[`broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)**: Share lane 0's value with all other lanes (one-to-many)
-3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_idx)**: Get value from specific lane (random access)
-4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_up)**: Get value from lane at lower index (reverse neighbor)
+1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**: Get value from lane at higher index (neighbor access)
+2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**: Share lane 0's value with all other lanes (one-to-many)
+3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**: Get value from specific lane (random access)
+4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**: Get value from lane at lower index (reverse neighbor)
 
-> **Note:** This puzzle focuses on `shuffle_down()` and `broadcast()` as the most commonly used communication patterns. For complete coverage of all warp operations, see the [Mojo GPU Warp Documentation](https://docs.modular.com/mojo/stdlib/gpu/warp/).
+> **Note:** This puzzle focuses on `shuffle_down()` and `broadcast()` as the most commonly used communication patterns. For complete coverage of all warp operations, see the [Mojo GPU Warp Documentation](https://docs.modular.com/mojo/std/gpu/primitives/warp/).
 
 ### **Performance transformation example**
 

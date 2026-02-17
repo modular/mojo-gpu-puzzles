@@ -2,7 +2,7 @@
 
 For warp-level butterfly communication we can use `shuffle_xor()` to create sophisticated tree-based communication patterns within a warp. This powerful primitive enables efficient parallel reductions, sorting networks, and advanced coordination algorithms without shared memory or explicit synchronization.
 
-**Key insight:** _The [shuffle_xor()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor) operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \\(O(\\log n)\\) complexity relative to warp size._
+**Key insight:** _The [shuffle_xor()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor) operation leverages SIMT execution to create XOR-based communication trees, enabling efficient butterfly networks and parallel algorithms that scale with \\(O(\\log n)\\) complexity relative to warp size._
 
 > **What are butterfly networks?** [Butterfly networks](https://en.wikipedia.org/wiki/Butterfly_network) are communication topologies where threads exchange data based on XOR patterns of their indices. The name comes from the visual pattern when drawn - connections that look like butterfly wings. These networks are fundamental to parallel algorithms like FFT, bitonic sort, and parallel reductions because they enable \\(O(\\log n)\\) communication complexity.
 

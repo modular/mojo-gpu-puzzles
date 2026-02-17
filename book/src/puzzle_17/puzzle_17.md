@@ -117,7 +117,7 @@ The solution is:
 <div class="solution-explanation">
 This single line does several important things:
 
-1. Calls [enqueue_function](https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/#enqueue_function) on the GPU context (`gpu_ctx` is of type [DeviceContext](https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/)) to schedule our kernel execution
+1. Calls [enqueue_function](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function) on the GPU context (`gpu_ctx` is of type [DeviceContext](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/)) to schedule our kernel execution
 2. Passes the necessary layout and size information as **compile-time** parameters
 3. Provides the output, input, and kernel tensors as runtime arguments
 4. Configures the execution grid with the appropriate dimensions

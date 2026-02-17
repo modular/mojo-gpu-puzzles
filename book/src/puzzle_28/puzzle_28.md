@@ -50,7 +50,7 @@ Before diving in, ensure you have solid foundation in:
 - Thread block organization and synchronization
 - Basic understanding of memory latency vs. bandwidth
 
-**API familiarity:** [Mojo GPU Memory Operations](https://docs.modular.com/mojo/stdlib/gpu/memory/)
+**API familiarity:** [Mojo GPU Memory Operations](https://docs.modular.com/mojo/std/gpu/memory/)
 
 > **⚠️ Hardware compatibility note:** This puzzle uses async copy operations (`copy_dram_to_sram_async`, `async_copy_wait_all`) that may require modern GPU architectures. If you encounter compilation errors related to `.async` modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.
 >
@@ -80,7 +80,7 @@ By the end of this puzzle, you'll have hands-on experience with:
 Building on the async copy operations introduced in [Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling), you'll now focus specifically on their memory optimization potential:
 
 - **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**: Launch background DRAM→SRAM transfers using dedicated copy engines
-- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all)**: Synchronize transfer completion before accessing shared memory
+- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**: Synchronize transfer completion before accessing shared memory
 
 **What's different from Puzzle 16?** While Puzzle 16 used async copy for clean tile loading in matmul, this puzzle focuses specifically on **latency hiding** - structuring algorithms to overlap expensive memory operations with useful computation work.
 

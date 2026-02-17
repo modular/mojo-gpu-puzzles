@@ -2,7 +2,7 @@
 
 This puzzle implements vector addition using Mojo's functional `elementwise` pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.
 
-**Key insight:** _The [elementwise](https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/) function automatically handles thread management, SIMD vectorization, and memory coalescing for you._
+**Key insight:** _The [elementwise](https://docs.modular.com/mojo/std/algorithm/functional/elementwise/) function automatically handles thread management, SIMD vectorization, and memory coalescing for you._
 
 ## Key concepts
 

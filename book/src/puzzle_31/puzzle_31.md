@@ -144,7 +144,7 @@ pixi run gpu-specs
 - [NVIDIA CUDA Compute Capability Table](https://developer.nvidia.com/cuda-gpus)
 - [CUDA Programming Guide - Compute Capabilities](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities)
 - [Hopper Architecture In-Depth](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/)
-- [Ampere Architecture Whitepaper](https://developer.nvidia.com/ampere-architecture)
+- [Ampere Architecture Whitepaper](https://www.nvidia.com/en-us/data-center/ampere-architecture/)
 
 **⚠️ Note:** These are theoretical maximums. Actual occupancy may be lower due to hardware scheduling constraints, driver overhead, and other factors.
 

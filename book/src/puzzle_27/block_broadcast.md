@@ -1,8 +1,8 @@
 # block.broadcast() Vector Normalization
 
-Implement vector mean normalization by combining [block.sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) and [block.broadcast](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.
+Implement vector mean normalization by combining [block.sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) and [block.broadcast](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.
 
-**Key insight:** _The [block.broadcast()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all)._
+**Key insight:** _The [block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all)._
 
 ## Key concepts
 
@@ -126,7 +126,7 @@ if local_i == 0:
 
 **Why thread 0?** Consistent with `block.sum()` pattern where thread 0 receives the result.
 
-### 4. **[block.broadcast()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) API concepts**
+### 4. **[block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) API concepts**
 
 Study the function signature - it needs:
 

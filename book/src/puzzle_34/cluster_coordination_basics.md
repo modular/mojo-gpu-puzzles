@@ -6,7 +6,7 @@ Welcome to your first **cluster programming challenge**! This section introduces
 
 **The Challenge**: Implement a multi-block histogram algorithm where **4 thread blocks coordinate** to process different ranges of data and store results in a shared output array.
 
-**Key Learning**: Learn the essential cluster synchronization pattern: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) → process → [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait), extending the synchronization concepts from [barrier() in Puzzle 29](../puzzle_29/barrier.md).
+**Key Learning**: Learn the essential cluster synchronization pattern: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) → process → [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait), extending the synchronization concepts from [barrier() in Puzzle 29](../puzzle_29/barrier.md).
 
 ## The problem: multi-block histogram binning
 
@@ -25,8 +25,8 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 
 **Coordination Requirements:**
 
-1. Each block must signal completion using [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)
-2. All blocks must wait for others using [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
+1. Each block must signal completion using [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)
+2. All blocks must wait for others using [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
 3. Final output shows each block's processed sum in a 4-element array
 
 ## Configuration
@@ -59,7 +59,7 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 
 ### **Block identification patterns**
 
-- Use [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster) to get the cluster rank (0-3)
+- Use [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster) to get the cluster rank (0-3)
 - Use `Int(block_idx.x)` for reliable block indexing in grid launch
 - Scale data processing by block position for distinct results
 
@@ -72,9 +72,9 @@ Traditional single-block algorithms like those in [Puzzle 27](../puzzle_27/puzzl
 ### **Cluster synchronization pattern**
 
 1. **Process**: Each block works on its portion of data
-2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) announces processing completion
+2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) announces processing completion
 3. **Compute**: Block-local operations (reduction, aggregation)
-4. **Wait**: [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) ensures all blocks complete before proceeding
+4. **Wait**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) ensures all blocks complete before proceeding
 
 ### **Thread coordination within blocks**
 
@@ -168,7 +168,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 
 **Inter-block signaling:**
 
-- [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) signals that this block has completed its local processing phase
+- [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) signals that this block has completed its local processing phase
 - This is a **non-blocking** operation that registers completion with the cluster hardware
 
 **Local aggregation (Thread 0 only):**
@@ -186,7 +186,7 @@ if local_i == 0:
 
 **Final synchronization:**
 
-- [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) blocks until ALL blocks in the cluster have completed their work
+- [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) blocks until ALL blocks in the cluster have completed their work
 - This ensures deterministic completion order across the entire cluster
 
 ## **Key technical insights**
@@ -194,7 +194,7 @@ if local_i == 0:
 **Why use `block_id` instead of `my_block_rank`?**
 
 - `block_idx.x` provides reliable grid-launch indexing (0, 1, 2, 3)
-- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster) may behave differently depending on cluster configuration
+- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster) may behave differently depending on cluster configuration
 - Using `block_id` guarantees each block gets unique data portions and output positions
 
 **Memory access pattern:**
@@ -206,8 +206,8 @@ if local_i == 0:
 **Synchronization hierarchy:**
 
 1. **`barrier()`**: Synchronizes threads within each block (intra-block)
-2. **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**: Signals completion to other blocks (inter-block, non-blocking)
-3. **[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)**: Waits for all blocks to complete (inter-block, blocking)
+2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: Signals completion to other blocks (inter-block, non-blocking)
+3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: Waits for all blocks to complete (inter-block, blocking)
 
 **Performance characteristics:**
 
@@ -223,8 +223,8 @@ if local_i == 0:
 The essential cluster coordination pattern follows a simple but powerful structure:
 
 1. **Phase 1**: Each block processes its assigned data portion independently
-2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) announces completion of processing
+2. **Signal**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) announces completion of processing
 3. **Phase 2**: Blocks can safely perform operations that depend on other blocks' results
-4. **Synchronize**: [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) ensures all blocks finish before proceeding
+4. **Synchronize**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) ensures all blocks finish before proceeding
 
 **Next step**: Ready for more advanced coordination? Continue to **[Cluster-Wide Collective Operations](./cluster_collective_ops.md)** to learn how to extend [`block.sum()` patterns from Puzzle 27](../puzzle_27/block_sum.md) to cluster scale, building on [warp-level reductions from Puzzle 24](../puzzle_24/warp_sum.md)!

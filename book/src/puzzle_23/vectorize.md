@@ -2,7 +2,7 @@
 
 ## Overview
 
-This puzzle explores **advanced vectorization techniques** using manual vectorization and [vectorize](https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/) that give you precise control over SIMD operations within GPU kernels. You'll implement two different approaches to vectorized computation:
+This puzzle explores **advanced vectorization techniques** using manual vectorization and [vectorize](https://docs.modular.com/mojo/std/algorithm/functional/vectorize/) that give you precise control over SIMD operations within GPU kernels. You'll implement two different approaches to vectorized computation:
 
 1. **Manual vectorization**: Direct SIMD control with explicit index calculations
 2. **Mojo's vectorize function**: High-level vectorization with automatic bounds checking

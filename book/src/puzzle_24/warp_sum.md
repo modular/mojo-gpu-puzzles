@@ -2,7 +2,7 @@
 
 Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using Mojo's warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use `warp.sum()` to combine results automatically, demonstrating how warp programming transforms GPU synchronization.
 
-**Key insight:** _The [warp.sum()](https://docs.modular.com/mojo/stdlib/gpu/warp/sum) operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction._
+**Key insight:** _The [warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum) operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction._
 
 ## Key concepts
 
