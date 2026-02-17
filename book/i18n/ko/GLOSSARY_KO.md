@@ -47,6 +47,7 @@
 | offset | 메모리 시작 위치로부터의 거리. 인덱스 계산에 사용 |
 | pooling | 윈도우 내 값들을 하나로 합치는 연산. max pooling, average pooling 등 |
 | prefix sum | 배열에서 각 위치까지의 누적 합을 구하는 알고리즘 |
+| PTX (Parallel Thread Execution) | NVIDIA GPU의 가상 어셈블리 언어. 컴파일러가 생성하는 중간 표현 |
 | profiling | 프로그램에서 느린 부분을 찾아내는 성능 분석 |
 | racecheck | compute-sanitizer의 경쟁 상태 탐지 도구 |
 | reduction | 여러 값을 합계나 최댓값처럼 하나의 값으로 줄이는 연산 |

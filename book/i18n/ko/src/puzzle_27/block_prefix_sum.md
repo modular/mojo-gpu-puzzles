@@ -1,107 +1,107 @@
 <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
 
-# block.prefix_sum() Parallel Histogram Binning
+# block.prefix_sum()과 병렬 히스토그램 구간 분류
 
-This puzzle implements parallel histogram binning using block-level [block.prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum) operations for advanced parallel filtering and extraction. Each thread determines its element's target bin, then applies `block.prefix_sum()` to compute write positions for extracting elements from a specific bin, showing how prefix sum enables sophisticated parallel partitioning beyond simple reductions.
+이 퍼즐은 블록 레벨 [block.prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum) 연산을 사용하여 고급 병렬 필터링과 추출을 위한 병렬 히스토그램 구간 분류를 구현합니다. 각 스레드가 자신의 요소가 속할 대상 구간을 결정한 다음, `block.prefix_sum()`을 적용하여 특정 구간의 요소를 추출하기 위한 쓰기 위치를 계산합니다. prefix sum이 단순한 reduction을 넘어 고급 병렬 파티셔닝을 가능하게 하는 방법을 보여줍니다.
 
-**Key insight:** _The [block.prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum) operation provides parallel filtering and extraction by computing cumulative write positions for matching elements across all threads in a block._
+**핵심 통찰:** _[block.prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum) 연산은 블록 내 모든 스레드에 걸쳐 일치하는 요소의 누적 쓰기 위치를 계산하여 병렬 필터링과 추출을 제공합니다._
 
-## Key concepts
+## 핵심 개념
 
-This puzzle covers:
+이 퍼즐에서 다루는 내용:
 
-- **Block-level prefix sum** with `block.prefix_sum()`
-- **Parallel filtering and extraction** using cumulative computations
-- **Advanced parallel partitioning** algorithms
-- **Histogram binning** with block-wide coordination
-- **Exclusive vs inclusive** prefix sum patterns
+- `block.prefix_sum()`을 활용한 **블록 레벨 prefix sum**
+- 누적 연산을 사용한 **병렬 필터링과 추출**
+- **고급 병렬 파티셔닝** 알고리즘
+- 블록 전체 조율을 통한 **히스토그램 구간 분류**
+- **Exclusive vs inclusive** prefix sum 패턴
 
-The algorithm constructs histograms by extracting elements belonging to specific value ranges (bins):
+이 알고리즘은 특정 값 범위(구간)에 속하는 요소를 추출하여 히스토그램을 구성합니다:
 \\[\Large \text{Bin}_k = \\{x_i : k/N \leq x_i < (k+1)/N\\}\\]
 
-Each thread determines its element's bin assignment, with `block.prefix_sum()` coordinating parallel extraction.
+각 스레드가 자신의 요소가 속하는 구간을 결정하고, `block.prefix_sum()`이 병렬 추출을 조율합니다.
 
-## Configuration
+## 구성
 
-- Vector size: `SIZE = 128` elements
-- Data type: `DType.float32`
-- Block configuration: `(128, 1)` threads per block (`TPB = 128`)
-- Grid configuration: `(1, 1)` blocks per grid
-- Number of bins: `NUM_BINS = 8` (ranges [0.0, 0.125), [0.125, 0.25), etc.)
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
-- Warps per block: `128 / WARP_SIZE` (2 or 4 warps depending on GPU)
+- 벡터 크기: `SIZE = 128` 요소
+- 데이터 타입: `DType.float32`
+- 블록 구성: `(128, 1)` 블록당 스레드 수 (`TPB = 128`)
+- 그리드 구성: `(1, 1)` 그리드당 블록 수
+- 구간 수: `NUM_BINS = 8` (범위 [0.0, 0.125), [0.125, 0.25) 등)
+- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
+- 블록당 Warp 수: `128 / WARP_SIZE` (GPU에 따라 2개 또는 4개)
 
-## The challenge: Parallel bin extraction
+## 도전 과제: 병렬 구간 추출
 
-Traditional sequential histogram construction processes elements one by one:
+기존의 순차적 히스토그램 구성은 요소를 하나씩 처리합니다:
 
 ```python
-# Sequential approach - doesn't parallelize well
+# 순차적 방식 - 병렬화가 어려움
 histogram = [[] for _ in range(NUM_BINS)]
 for element in data:
-    bin_id = int(element * NUM_BINS)  # Determine bin
-    histogram[bin_id].append(element)  # Sequential append
+    bin_id = int(element * NUM_BINS)  # 구간 결정
+    histogram[bin_id].append(element)  # 순차적 추가
 ```
 
-**Problems with naive GPU parallelization:**
+**단순한 GPU 병렬화의 문제점:**
 
-- **Race conditions**: Multiple threads writing to same bin simultaneously
-- **Uncoalesced memory**: Threads access different memory locations
-- **Load imbalance**: Some bins may have many more elements than others
-- **Complex synchronization**: Need barriers and atomic operations
+- **경쟁 상태**: 여러 스레드가 같은 구간에 동시에 쓰기
+- **비정렬 메모리 접근**: 스레드들이 서로 다른 메모리 위치에 접근
+- **부하 불균형**: 일부 구간에 훨씬 많은 요소가 몰릴 수 있음
+- **복잡한 동기화**: barrier와 atomic 연산이 필요
 
-## The advanced approach: `block.prefix_sum()` coordination
+## 고급 방식: `block.prefix_sum()` 조율
 
-Transform the complex parallel partitioning into coordinated extraction:
+복잡한 병렬 파티셔닝을 조율된 추출로 변환합니다:
 
-## Code to complete
+## 작성할 코드
 
-### `block.prefix_sum()` approach
+### `block.prefix_sum()` 방식
 
-Implement parallel histogram binning using `block.prefix_sum()` for extraction:
+`block.prefix_sum()`을 사용하여 병렬 히스토그램 구간 분류를 구현합니다:
 
 ```mojo
 {{#include ../../../../../problems/p27/p27.mojo:block_histogram}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Core algorithm structure (adapt from previous puzzles)**
+### 1. **핵심 알고리즘 구조 (이전 퍼즐에서 적용)**
 
-Just like `block_sum_dot_product`, you need these key variables:
+`block_sum_dot_product`와 마찬가지로 다음 핵심 변수가 필요합니다:
 
 ```mojo
 global_i = block_dim.x * block_idx.x + thread_idx.x
 local_i = thread_idx.x
 ```
 
-Your function will have **5 main steps** (about 15-20 lines total):
+함수는 **5가지 주요 단계**(총 약 15-20줄)로 구성됩니다:
 
-1. Load element and determine its bin
-2. Create binary predicate for target bin
-3. Run `block.prefix_sum()` on the predicate
-4. Conditionally write using computed offset
-5. Final thread computes total count
+1. 요소를 로드하고 구간을 결정
+2. 대상 구간에 대한 이진 프레디케이트 생성
+3. 프레디케이트에 `block.prefix_sum()` 실행
+4. 계산된 offset을 사용하여 조건부 쓰기
+5. 마지막 스레드가 총 개수를 계산
 
-### 2. **Bin calculation (use `math.floor`)**
+### 2. **구간 계산 (`math.floor` 사용)**
 
-To classify a `Float32` value into bins:
+`Float32` 값을 구간으로 분류하려면:
 
 ```mojo
-my_value = input_data[global_i][0]  # Extract SIMD like in dot product
+my_value = input_data[global_i][0]  # 내적에서처럼 SIMD 추출
 bin_number = Int(floor(my_value * num_bins))
 ```
 
-**Edge case handling**: Values exactly 1.0 would go to bin `NUM_BINS`, but you only have bins 0 to `NUM_BINS-1`. Use an `if` statement to clamp the maximum bin.
+**경계 사례 처리**: 정확히 1.0인 값은 구간 `NUM_BINS`에 들어가지만, 실제 구간은 0부터 `NUM_BINS-1`까지입니다. `if` 문을 사용하여 최대 구간을 제한하세요.
 
-### 3. **Binary predicate creation**
+### 3. **이진 프레디케이트 생성**
 
-Create an integer variable (0 or 1) indicating if this thread's element belongs to target_bin:
+이 스레드의 요소가 target_bin에 속하는지를 나타내는 정수 변수(0 또는 1)를 만듭니다:
 
 ```mojo
 var belongs_to_target: Int = 0
@@ -109,57 +109,57 @@ if (thread_has_valid_element) and (my_bin == target_bin):
     belongs_to_target = 1
 ```
 
-This is the key insight: prefix sum works on these binary flags to compute positions!
+이것이 핵심 통찰입니다: prefix sum이 이 이진 플래그에 작용하여 위치를 계산합니다!
 
-### 4. **`block.prefix_sum()` call pattern**
+### 4. **`block.prefix_sum()` 호출 패턴**
 
-Following the documentation, the call looks like:
+문서에 따르면 호출은 다음과 같습니다:
 
 ```mojo
 offset = block.prefix_sum[
-    dtype=DType.int32,         # Working with integer predicates
-    block_size=tpb,            # Same as block.sum()
-    exclusive=True             # Key: gives position BEFORE each thread
+    dtype=DType.int32,         # 정수 프레디케이트로 작업
+    block_size=tpb,            # block.sum()과 동일
+    exclusive=True             # 핵심: 각 스레드 이전의 위치를 제공
 ](val=SIMD[DType.int32, 1](my_predicate_value))
 ```
 
-**Why exclusive?** Thread with predicate=1 at position 5 should write to output[4] if 4 elements came before it.
+**왜 exclusive인가?** 위치 5에서 프레디케이트=1인 스레드는, 자신 앞에 4개의 요소가 있었다면 output[4]에 써야 합니다.
 
-### 5. **Conditional writing pattern**
+### 5. **조건부 쓰기 패턴**
 
-Only threads with `belongs_to_target == 1` should write:
+`belongs_to_target == 1`인 스레드만 기록해야 합니다:
 
 ```mojo
 if belongs_to_target == 1:
-    bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
+    bin_output[Int(offset[0])] = my_value  # 인덱싱을 위해 SIMD를 Int로 변환
 ```
 
-This is just like the bounds checking pattern from [Puzzle 12](../puzzle_12/layout_tensor.md), but now the condition is "belongs to target bin."
+이것은 [Puzzle 12](../puzzle_12/layout_tensor.md)의 경계 검사 패턴과 동일하지만, 조건이 "대상 구간에 속하는지"로 바뀌었습니다.
 
-### 6. **Final count computation**
+### 6. **최종 개수 계산**
 
-The last thread (not thread 0!) computes the total count:
+마지막 스레드(스레드 0이 아님!)가 총 개수를 계산합니다:
 
 ```mojo
-if local_i == tpb - 1:  # Last thread in block
-    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+if local_i == tpb - 1:  # 블록의 마지막 스레드
+    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + 자신의 기여분
     count_output[0] = total_count
 ```
 
-**Why last thread?** It has the highest `offset` value, so `offset + contribution` gives the total.
+**왜 마지막 스레드인가?** 가장 높은 `offset` 값을 가지므로, `offset + 기여분`이 총 개수가 됩니다.
 
-### 7. **Data types and conversions**
+### 7. **데이터 타입과 변환**
 
-Remember the patterns from previous puzzles:
+이전 퍼즐의 패턴을 기억하세요:
 
-- `LayoutTensor` indexing returns SIMD: `input_data[i][0]`
-- `block.prefix_sum()` returns SIMD: `offset[0]` to extract
-- Array indexing needs `Int`: `Int(offset[0])` for `bin_output[...]`
+- `LayoutTensor` 인덱싱은 SIMD를 반환: `input_data[i][0]`
+- `block.prefix_sum()`은 SIMD를 반환: `offset[0]`으로 추출
+- 배열 인덱싱은 `Int`가 필요: `bin_output[...]`에 `Int(offset[0])`
 
 </div>
 </details>
 
-**Test the block.prefix_sum() approach:**
+**block.prefix_sum() 방식 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -197,7 +197,7 @@ uv run poe p27 --histogram
   </div>
 </div>
 
-Expected output when solved:
+풀었을 때의 예상 출력:
 
 ```txt
 SIZE: 128
@@ -239,7 +239,7 @@ Bin 7 count: 0
 Bin 7 extracted elements:
 ```
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -250,153 +250,153 @@ Bin 7 extracted elements:
 
 <div class="solution-explanation">
 
-The `block.prefix_sum()` kernel demonstrates advanced parallel coordination patterns by building on concepts from previous puzzles:
+`block.prefix_sum()` 커널은 이전 퍼즐의 개념을 기반으로 고급 병렬 조율 패턴을 보여줍니다:
 
-## **Step-by-step algorithm walkthrough:**
+## **단계별 알고리즘 분석:**
 
-### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/layout_tensor.md) dot product)**
+### **1단계: 요소 처리 ([Puzzle 12](../puzzle_12/layout_tensor.md) 내적과 유사)**
 
 ```
-Thread indexing (familiar pattern):
-  global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
-  local_i = thread_idx.x                              // Local thread index
+스레드 인덱싱 (익숙한 패턴):
+  global_i = block_dim.x * block_idx.x + thread_idx.x  // 전역 요소 인덱스
+  local_i = thread_idx.x                               // 로컬 스레드 인덱스
 
-Element loading (like LayoutTensor pattern):
-  Thread 0:  my_value = input_data[0][0] = 0.00
-  Thread 1:  my_value = input_data[1][0] = 0.01
-  Thread 13: my_value = input_data[13][0] = 0.13
-  Thread 25: my_value = input_data[25][0] = 0.25
+요소 로딩 (LayoutTensor 패턴과 동일):
+  스레드 0:  my_value = input_data[0][0] = 0.00
+  스레드 1:  my_value = input_data[1][0] = 0.01
+  스레드 13: my_value = input_data[13][0] = 0.13
+  스레드 25: my_value = input_data[25][0] = 0.25
   ...
 ```
 
-### **Phase 2: Bin classification (new concept)**
+### **2단계: 구간 분류 (새로운 개념)**
 
 ```
-Bin calculation using floor operation:
-  Thread 0:  my_bin = Int(floor(0.00 * 8)) = 0  // Values [0.000, 0.125) → bin 0
-  Thread 1:  my_bin = Int(floor(0.01 * 8)) = 0  // Values [0.000, 0.125) → bin 0
-  Thread 13: my_bin = Int(floor(0.13 * 8)) = 1  // Values [0.125, 0.250) → bin 1
-  Thread 25: my_bin = Int(floor(0.25 * 8)) = 2  // Values [0.250, 0.375) → bin 2
+floor 연산을 사용한 구간 계산:
+  스레드 0:  my_bin = Int(floor(0.00 * 8)) = 0  // 값 [0.000, 0.125) → 구간 0
+  스레드 1:  my_bin = Int(floor(0.01 * 8)) = 0  // 값 [0.000, 0.125) → 구간 0
+  스레드 13: my_bin = Int(floor(0.13 * 8)) = 1  // 값 [0.125, 0.250) → 구간 1
+  스레드 25: my_bin = Int(floor(0.25 * 8)) = 2  // 값 [0.250, 0.375) → 구간 2
   ...
 ```
 
-### **Phase 3: Binary predicate creation (filtering pattern)**
+### **3단계: 이진 프레디케이트 생성 (필터링 패턴)**
 
 ```
-For target_bin=0, create extraction mask:
-  Thread 0:  belongs_to_target = 1  (bin 0 == target 0)
-  Thread 1:  belongs_to_target = 1  (bin 0 == target 0)
-  Thread 13: belongs_to_target = 0  (bin 1 != target 0)
-  Thread 25: belongs_to_target = 0  (bin 2 != target 0)
+target_bin=0에 대해 추출 마스크 생성:
+  스레드 0:  belongs_to_target = 1  (구간 0 == 대상 0)
+  스레드 1:  belongs_to_target = 1  (구간 0 == 대상 0)
+  스레드 13: belongs_to_target = 0  (구간 1 != 대상 0)
+  스레드 25: belongs_to_target = 0  (구간 2 != 대상 0)
   ...
 
-This creates binary array: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+이진 배열 생성: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 ```
 
-### **Phase 4: Parallel prefix sum (the magic!)**
+### **4단계: 병렬 prefix sum (마법이 일어나는 곳!)**
 
 ```
-block.prefix_sum[exclusive=True] on predicates:
-Input:     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
+프레디케이트에 block.prefix_sum[exclusive=True] 적용:
+입력:      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 Exclusive: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
                                                       ^
-                                                 doesn't matter
+                                                 중요하지 않음
 
-Key insight: Each thread gets its WRITE POSITION in the output array!
+핵심 통찰: 각 스레드가 출력 배열에서 자신의 쓰기 위치를 받습니다!
 ```
 
-### **Phase 5: Coordinated extraction (conditional write)**
+### **5단계: 조율된 추출 (조건부 쓰기)**
 
 ```
-Only threads with belongs_to_target=1 write:
-  Thread 0:  bin_output[0] = 0.00   // Uses write_offset[0] = 0
-  Thread 1:  bin_output[1] = 0.01   // Uses write_offset[1] = 1
-  Thread 12: bin_output[12] = 0.12  // Uses write_offset[12] = 12
-  Thread 13: (no write)             // belongs_to_target = 0
-  Thread 25: (no write)             // belongs_to_target = 0
+belongs_to_target=1인 스레드만 기록:
+  스레드 0:  bin_output[0] = 0.00   // write_offset[0] = 0 사용
+  스레드 1:  bin_output[1] = 0.01   // write_offset[1] = 1 사용
+  스레드 12: bin_output[12] = 0.12  // write_offset[12] = 12 사용
+  스레드 13: (기록 안 함)             // belongs_to_target = 0
+  스레드 25: (기록 안 함)             // belongs_to_target = 0
   ...
 
-Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
+결과: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // 빈틈없이 채워짐!
 ```
 
-### **Phase 6: Count computation (like block.sum() pattern)**
+### **6단계: 개수 계산 (block.sum() 패턴과 유사)**
 
 ```
-Last thread computes total (not thread 0!):
-  if local_i == tpb - 1:  // Thread 127 in our case
-      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+마지막 스레드가 총 개수를 계산 (스레드 0이 아님!):
+  if local_i == tpb - 1:  // 이 경우 스레드 127
+      total = write_offset[0] + belongs_to_target  // Inclusive sum 공식
       count_output[0] = total
 ```
 
-## **Why this advanced algorithm works:**
+## **이 고급 알고리즘이 동작하는 이유:**
 
-### **Connection to [Puzzle 12](../puzzle_12/layout_tensor.md) (Traditional dot product):**
+### **[Puzzle 12](../puzzle_12/layout_tensor.md) (기존 내적)과의 연결:**
 
-- **Same thread indexing**: `global_i` and `local_i` patterns
-- **Same bounds checking**: `if global_i < size` validation
-- **Same data loading**: LayoutTensor SIMD extraction with `[0]`
+- **동일한 스레드 인덱싱**: `global_i`와 `local_i` 패턴
+- **동일한 경계 검사**: `if global_i < size` 검증
+- **동일한 데이터 로딩**: `[0]`을 사용한 LayoutTensor SIMD 추출
 
-### **Connection to [`block.sum()`](./block_sum.md) (earlier in this puzzle):**
+### **[`block.sum()`](./block_sum.md) (이 퍼즐의 앞부분)과의 연결:**
 
-- **Same block-wide operation**: All threads participate in block primitive
-- **Same result handling**: Special thread (last instead of first) handles final result
-- **Same SIMD conversion**: `Int(result[0])` pattern for array indexing
+- **동일한 블록 전체 연산**: 모든 스레드가 블록 기본 요소에 참여
+- **동일한 결과 처리**: 특정 스레드(첫 번째 대신 마지막)가 최종 결과 처리
+- **동일한 SIMD 변환**: 배열 인덱싱을 위한 `Int(result[0])` 패턴
 
-### **Advanced concepts unique to `block.prefix_sum()`:**
+### **`block.prefix_sum()`만의 고급 개념:**
 
-- **Every thread gets result**: Unlike `block.sum()` where only thread 0 matters
-- **Coordinated write positions**: Prefix sum eliminates race conditions automatically
-- **Parallel filtering**: Binary predicates enable sophisticated data reorganization
+- **모든 스레드가 결과를 받음**: 스레드 0만 중요한 `block.sum()`과 달리
+- **조율된 쓰기 위치**: prefix sum이 경쟁 상태를 자동으로 제거
+- **병렬 필터링**: 이진 프레디케이트가 고급 데이터 재구성을 가능하게 함
 
-## **Performance advantages over naive approaches:**
+## **단순한 방식 대비 성능 이점:**
 
-### **vs. Atomic operations:**
+### **vs. Atomic 연산:**
 
-- **No race conditions**: Prefix sum gives unique write positions
-- **Coalesced memory**: Sequential writes improve cache performance
-- **No serialization**: All writes happen in parallel
+- **경쟁 상태 없음**: prefix sum이 고유한 쓰기 위치를 제공
+- **Coalesced 메모리**: 순차적 쓰기가 캐시 성능을 향상
+- **직렬화 없음**: 모든 쓰기가 병렬로 수행
 
-### **vs. Multi-pass algorithms:**
+### **vs. 다중 패스 알고리즘:**
 
-- **Single kernel**: Complete histogram extraction in one GPU launch
-- **Full utilization**: All threads work regardless of data distribution
-- **Optimal memory bandwidth**: Pattern optimized for GPU memory hierarchy
+- **단일 kernel**: 한 번의 GPU 실행으로 히스토그램 추출 완료
+- **완전 활용**: 데이터 분포에 관계없이 모든 스레드가 작업
+- **최적 메모리 대역폭**: GPU 메모리 계층 구조에 최적화된 패턴
 
-This demonstrates how `block.prefix_sum()` enables sophisticated parallel algorithms that would be complex or impossible with simpler primitives like `block.sum()`.
+이것은 `block.prefix_sum()`이 `block.sum()` 같은 단순한 기본 요소로는 복잡하거나 불가능한 고급 병렬 알고리즘을 어떻게 가능하게 하는지 보여줍니다.
 
 </div>
 </details>
 
-## Performance insights
+## 성능 인사이트
 
-**`block.prefix_sum()` vs Traditional:**
+**`block.prefix_sum()` vs 기존 방식:**
 
-- **Algorithm sophistication**: Advanced parallel partitioning vs sequential processing
-- **Memory efficiency**: Coalesced writes vs scattered random access
-- **Synchronization**: Built-in coordination vs manual barriers and atomics
-- **Scalability**: Works with any block size and bin count
+- **알고리즘 정교함**: 고급 병렬 파티셔닝 vs 순차적 처리
+- **메모리 효율**: coalesced 쓰기 vs 분산된 무작위 접근
+- **동기화**: 내장 조율 vs 수동 barrier와 atomic
+- **확장성**: 모든 블록 크기와 구간 수에 동작
 
 **`block.prefix_sum()` vs `block.sum()`:**
 
-- **Scope**: Every thread gets result vs only thread 0
-- **Use case**: Complex partitioning vs simple aggregation
-- **Algorithm type**: Parallel scan primitive vs reduction primitive
-- **Output pattern**: Per-thread positions vs single total
+- **범위**: 모든 스레드가 결과를 받음 vs 스레드 0만
+- **용도**: 복잡한 파티셔닝 vs 단순한 집계
+- **알고리즘 유형**: 병렬 scan 기본 요소 vs reduction 기본 요소
+- **출력 패턴**: 스레드별 위치 vs 단일 합계
 
-**When to use `block.prefix_sum()`:**
+**`block.prefix_sum()`을 사용해야 할 때:**
 
-- **Parallel filtering**: Extract elements matching criteria
-- **Stream compaction**: Remove unwanted elements
-- **Parallel partitioning**: Separate data into categories
-- **Advanced algorithms**: Load balancing, sorting, graph algorithms
+- **병렬 필터링**: 조건에 맞는 요소 추출
+- **Stream compaction**: 불필요한 요소 제거
+- **병렬 파티셔닝**: 데이터를 카테고리별로 분리
+- **고급 알고리즘**: 부하 분산, 정렬, 그래프 알고리즘
 
-## Next steps
+## 다음 단계
 
-Once you've learned about `block.prefix_sum()` operations, you're ready for:
+`block.prefix_sum()` 연산을 배웠으니, 다음으로 진행할 수 있습니다:
 
-- **[Block Broadcast Operations](./block_broadcast.md)**: Sharing values across all threads in a block
-- **Multi-block algorithms**: Coordinating multiple blocks for larger problems
-- **Advanced parallel algorithms**: Sorting, graph traversal, dynamic load balancing
-- **Complex memory patterns**: Combining block operations with sophisticated memory access
+- **[block.broadcast()와 벡터 정규화](./block_broadcast.md)**: 블록 내 모든 스레드에 값을 공유
+- **멀티 블록 알고리즘**: 더 큰 문제를 위한 여러 블록 간 조율
+- **고급 병렬 알고리즘**: 정렬, 그래프 탐색, 동적 부하 분산
+- **복잡한 메모리 패턴**: 블록 연산과 고급 메모리 접근의 결합
 
-💡 **Key Takeaway**: Block prefix sum operations transform GPU programming from simple parallel computations to sophisticated parallel algorithms. While `block.sum()` simplified reductions, `block.prefix_sum()` enables advanced data reorganization patterns essential for high-performance parallel algorithms.
+💡 **핵심 요점**: 블록 prefix sum 연산은 GPU 프로그래밍을 단순한 병렬 계산에서 고급 병렬 알고리즘으로 변환합니다. `block.sum()`이 reduction을 단순화했다면, `block.prefix_sum()`은 고성능 병렬 알고리즘에 필수적인 고급 데이터 재구성 패턴을 가능하게 합니다.

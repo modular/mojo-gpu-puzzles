@@ -1,71 +1,71 @@
 <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
 
-# block.sum() Essentials - Block-Level Dot Product
+# block.sum()의 핵심 - 블록 레벨 내적
 
-Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using block-level [sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use `block.sum()` to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.
+[Puzzle 12](../puzzle_12/puzzle_12.md)에서 살펴본 내적을 블록 레벨 [sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각 스레드가 하나의 요소를 처리하고 `block.sum()`으로 결과를 자동으로 합산하여, 블록 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.
 
-**Key insight:** _The [block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See [technical investigation](#technical-investigation-what-does-blocksum-actually-compile-to) for LLVM analysis._
+**핵심 통찰:** _[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 연산은 블록 전체 실행을 활용하여 공유 메모리 + barrier + 트리 reduction을 블록 내 모든 스레드에 걸쳐 Warp 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다. LLVM 분석은 [기술 분석](#기술-분석-blocksum은-실제로-무엇으로-컴파일될까)을 참고하세요._
 
-## Key concepts
+## 핵심 개념
 
-In this puzzle, you'll learn:
+이 퍼즐에서 배울 내용:
 
-- **Block-level reductions** with `block.sum()`
-- **Block-wide synchronization** and thread coordination
-- **Cross-warp communication** within a single block
-- **Performance transformation** from complex to simple patterns
-- **Thread 0 result management** and conditional writes
+- `block.sum()`을 활용한 **블록 레벨 reduction**
+- **블록 전체 동기화**와 스레드 조율
+- 단일 블록 내 **크로스 Warp 통신**
+- 복잡한 패턴에서 간단한 패턴으로의 **성능 변환**
+- **스레드 0 결과 관리**와 조건부 쓰기
 
-The mathematical operation is a dot product (inner product):
+수학적 연산은 내적(dot product)입니다:
 \\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\\]
 
-But the implementation teaches fundamental patterns for all block-level GPU programming in Mojo.
+하지만 구현 과정에서 Mojo의 모든 블록 레벨 GPU 프로그래밍에 적용되는 기본 패턴을 배웁니다.
 
-## Configuration
+## 구성
 
-- Vector size: `SIZE = 128` elements
-- Data type: `DType.float32`
-- Block configuration: `(128, 1)` threads per block (`TPB = 128`)
-- Grid configuration: `(1, 1)` blocks per grid
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
-- Warps per block: `128 / WARP_SIZE` (4 warps on NVIDIA, 2 or 4 warps on AMD)
+- 벡터 크기: `SIZE = 128` 요소
+- 데이터 타입: `DType.float32`
+- 블록 구성: `(128, 1)` 블록당 스레드 수 (`TPB = 128`)
+- 그리드 구성: `(1, 1)` 그리드당 블록 수
+- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
+- 블록당 Warp 수: `128 / WARP_SIZE` (NVIDIA에서 4개, AMD에서 2개 또는 4개)
 
-## The traditional complexity (from Puzzle 12)
+## 기존 방식의 복잡성 (Puzzle 12에서)
 
-Recall the complex approach from [Puzzle 12](../puzzle_12/layout_tensor.md) that required shared memory, barriers, and tree reduction:
+[Puzzle 12](../puzzle_12/layout_tensor.md)의 복잡한 방식을 떠올려 봅시다. 공유 메모리, barrier, 트리 reduction이 필요했습니다:
 
 ```mojo
 {{#include ../../../../../solutions/p27/p27.mojo:traditional_dot_product_solution}}
 ```
 
-**What makes this complex:**
+**이 방식이 복잡한 이유:**
 
-- **Shared memory allocation**: Manual memory management within blocks
-- **Explicit barriers**: `barrier()` calls to synchronize all threads in block
-- **Tree reduction**: Complex loop with stride-based indexing (64→32→16→8→4→2→1)
-- **Cross-warp coordination**: Must synchronize across multiple warps
-- **Conditional writes**: Only thread 0 writes the final result
+- **공유 메모리 할당**: 블록 내에서 수동으로 메모리를 관리
+- **명시적 barrier**: 블록 내 모든 스레드를 동기화하기 위한 `barrier()` 호출
+- **트리 reduction**: stride 기반 인덱싱을 사용하는 복잡한 루프 (64→32→16→8→4→2→1)
+- **크로스 Warp 조율**: 여러 Warp 간 동기화가 필요
+- **조건부 쓰기**: 스레드 0만 최종 결과를 기록
 
-This works across the entire block (128 threads across 2 or 4 warps depending on GPU), but it's verbose, error-prone, and requires deep understanding of block-level GPU synchronization.
+이 방식은 전체 블록(GPU에 따라 2개 또는 4개 Warp에 걸친 128 스레드)에서 동작하지만, 코드가 장황하고 오류가 발생하기 쉬우며 블록 레벨 GPU 동기화에 대한 깊은 이해가 필요합니다.
 
-## The warp-level improvement (from Puzzle 24)
+## Warp 레벨 개선 (Puzzle 24에서)
 
-Before jumping to block-level operations, recall how [Puzzle 24](../puzzle_24/warp_sum.md) simplified reduction within a single warp using `warp.sum()`:
+블록 레벨 연산으로 넘어가기 전에, [Puzzle 24](../puzzle_24/warp_sum.md)에서 `warp.sum()`을 사용하여 단일 Warp 내 reduction을 어떻게 단순화했는지 떠올려 봅시다:
 
 ```mojo
 {{#include ../../../../../solutions/p24/p24.mojo:simple_warp_kernel_solution}}
 ```
 
-**What `warp.sum()` achieved:**
+**`warp.sum()`이 달성한 것:**
 
-- **Single warp scope**: Works within 32 threads (NVIDIA) or 32/64 threads (AMD)
-- **Hardware shuffle**: Uses `shfl.sync.bfly.b32` instructions for efficiency
-- **Zero shared memory**: No explicit memory management needed
-- **One line reduction**: `total = warp_sum[warp_size=WARP_SIZE](val=partial_product)`
+- **단일 Warp 범위**: 32 스레드(NVIDIA) 또는 32/64 스레드(AMD) 내에서 동작
+- **하드웨어 shuffle**: 효율적인 `shfl.sync.bfly.b32` 명령 사용
+- **공유 메모리 불필요**: 명시적 메모리 관리 없음
+- **한 줄 reduction**: `total = warp_sum[warp_size=WARP_SIZE](val=partial_product)`
 
-**But the limitation:** `warp.sum()` only works within a single warp. For problems requiring multiple warps (like our 128-thread block), you'd still need the complex shared memory + barriers approach to coordinate between warps.
+**그러나 한계가 있습니다:** `warp.sum()`은 단일 Warp 내에서만 동작합니다. 여러 Warp가 필요한 문제(예: 128 스레드 블록)에서는 여전히 Warp 간 조율을 위해 복잡한 공유 메모리 + barrier 방식이 필요합니다.
 
-**Test the traditional approach:**
+**기존 방식 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -103,17 +103,17 @@ uv run poe p27 --traditional-dot-product
   </div>
 </div>
 
-## Code to complete
+## 작성할 코드
 
-### `block.sum()` approach
+### `block.sum()` 방식
 
-Transform the complex traditional approach into a simple block kernel using `block.sum()`:
+복잡한 기존 방식을 `block.sum()`을 사용하는 간단한 블록 커널로 변환합니다:
 
 ```mojo
 {{#include ../../../../../problems/p27/p27.mojo:block_sum_dot_product}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p27/p27.mojo" class="filename">View full file: problems/p27/p27.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a>
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -144,7 +144,7 @@ uv run poe p27 --block-sum-dot-product
   </div>
 </div>
 
-Expected output when solved:
+풀었을 때의 예상 출력:
 
 ```txt
 SIZE: 128
@@ -157,44 +157,44 @@ Just like warp.sum() but for the entire block
 ```
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### 1. **Think about the three-step pattern**
+### 1. **세 단계 패턴 이해하기**
 
-Every block reduction follows the same conceptual pattern:
+모든 블록 reduction은 동일한 개념적 패턴을 따릅니다:
 
-1. Each thread computes its local contribution
-2. All threads participate in a block-wide reduction
-3. One designated thread handles the final result
+1. 각 스레드가 자신의 로컬 기여분을 계산
+2. 모든 스레드가 블록 전체 reduction에 참여
+3. 지정된 하나의 스레드가 최종 결과를 처리
 
-### 2. **Remember the dot product math**
+### 2. **내적 수학 기억하기**
 
-Each thread should handle one element pair from vectors `a` and `b`. What operation combines these into a "partial result" that can be summed across threads?
+각 스레드는 벡터 `a`와 `b`에서 하나의 요소 쌍을 처리해야 합니다. 이들을 스레드 간에 합산할 수 있는 "부분 결과"로 합치는 연산은 무엇일까요?
 
-### 3. **LayoutTensor indexing patterns**
+### 3. **LayoutTensor 인덱싱 패턴**
 
-When accessing `LayoutTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
+`LayoutTensor` 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요. 산술 연산을 위해 스칼라 값을 추출해야 합니다.
 
-### 4. **[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) API concepts**
+### 4. **[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) API 개념**
 
-Study the function signature - it needs:
+함수 시그니처를 살펴보세요 - 다음이 필요합니다:
 
-- A template parameter specifying the block size
-- A template parameter for result distribution (`broadcast`)
-- A runtime parameter containing the value to reduce
+- 블록 크기를 지정하는 템플릿 파라미터
+- 결과 분배 방식을 위한 템플릿 파라미터 (`broadcast`)
+- reduce할 값을 담은 런타임 파라미터
 
-### 5. **Thread coordination principles**
+### 5. **스레드 조율 원칙**
 
-- Which threads have valid data to process? (Hint: bounds checking)
-- Which thread should write the final result? (Hint: consistent choice)
-- How do you identify that specific thread? (Hint: thread indexing)
+- 어떤 스레드가 처리할 유효한 데이터를 가지고 있을까요? (힌트: 경계 검사)
+- 어떤 스레드가 최종 결과를 기록해야 할까요? (힌트: 일관된 선택)
+- 그 특정 스레드를 어떻게 식별할까요? (힌트: 스레드 인덱싱)
 
 </div>
 </details>
 
-## Solution
+## 풀이
 
 <details class="solution-details">
 <summary></summary>
@@ -205,167 +205,167 @@ Study the function signature - it needs:
 
 <div class="solution-explanation">
 
-The `block.sum()` kernel demonstrates the fundamental transformation from complex block synchronization to expertly optimized implementations:
+`block.sum()` 커널은 복잡한 블록 동기화에서 정교하게 최적화된 구현으로의 근본적인 변환을 보여줍니다:
 
-**What disappeared from the traditional approach:**
+**기존 방식에서 사라진 것들:**
 
-- **15+ lines → 8 lines**: Dramatic code reduction
-- **Shared memory allocation**: Zero memory management required
-- **7+ barrier() calls**: Zero explicit synchronization needed
-- **Complex tree reduction**: Single function call
-- **Stride-based indexing**: Eliminated entirely
-- **Cross-warp coordination**: Handled automatically by optimized implementation
+- **15줄 이상 → 8줄**: 획기적인 코드 축소
+- **공유 메모리 할당**: 메모리 관리 불필요
+- **7회 이상의 barrier() 호출**: 명시적 동기화 제로
+- **복잡한 트리 reduction**: 단일 함수 호출로 대체
+- **Stride 기반 인덱싱**: 완전히 제거
+- **크로스 Warp 조율**: 최적화된 구현이 자동으로 처리
 
-**Block-wide execution model:**
+**블록 전체 실행 모델:**
 
 ```
-Block threads (128 threads across 4 warps):
-Warp 0 (threads 0-31):
-  Thread 0: partial_product = a[0] * b[0] = 0.0
-  Thread 1: partial_product = a[1] * b[1] = 2.0
+블록 스레드 (128 스레드, 4개 Warp):
+Warp 0 (스레드 0-31):
+  스레드 0: partial_product = a[0] * b[0] = 0.0
+  스레드 1: partial_product = a[1] * b[1] = 2.0
   ...
-  Thread 31: partial_product = a[31] * b[31] = 1922.0
+  스레드 31: partial_product = a[31] * b[31] = 1922.0
 
-Warp 1 (threads 32-63):
-  Thread 32: partial_product = a[32] * b[32] = 2048.0
-  ...
-
-Warp 2 (threads 64-95):
-  Thread 64: partial_product = a[64] * b[64] = 8192.0
+Warp 1 (스레드 32-63):
+  스레드 32: partial_product = a[32] * b[32] = 2048.0
   ...
 
-Warp 3 (threads 96-127):
-  Thread 96: partial_product = a[96] * b[96] = 18432.0
-  Thread 127: partial_product = a[127] * b[127] = 32258.0
+Warp 2 (스레드 64-95):
+  스레드 64: partial_product = a[64] * b[64] = 8192.0
+  ...
 
-block.sum() hardware operation:
-All threads → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
-Thread 0 receives → total = 1381760.0 (when broadcast=False)
+Warp 3 (스레드 96-127):
+  스레드 96: partial_product = a[96] * b[96] = 18432.0
+  스레드 127: partial_product = a[127] * b[127] = 32258.0
+
+block.sum() 하드웨어 연산:
+모든 스레드 → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
+스레드 0이 수신 → total = 1381760.0 (broadcast=False일 때)
 ```
 
-**Why this works without barriers:**
+**Barrier 없이 동작하는 이유:**
 
-1. **Block-wide execution**: All threads execute each instruction in lockstep within warps
-2. **Built-in synchronization**: `block.sum()` implementation handles synchronization internally
-3. **Cross-warp communication**: Optimized communication between warps in the block
-4. **Coordinated result delivery**: Only thread 0 receives the final result
+1. **블록 전체 실행**: 모든 스레드가 Warp 내에서 lockstep으로 각 명령을 실행
+2. **내장 동기화**: `block.sum()` 구현이 동기화를 내부적으로 처리
+3. **크로스 Warp 통신**: 블록 내 Warp 간 최적화된 통신
+4. **조율된 결과 전달**: 스레드 0만 최종 결과를 수신
 
-**Comparison to warp.sum() (Puzzle 24):**
+**warp.sum() (Puzzle 24)과의 비교:**
 
-- **Warp scope**: `warp.sum()` works within 32/64 threads (single warp)
-- **Block scope**: `block.sum()` works across entire block (multiple warps)
-- **Same simplicity**: Both replace complex manual reductions with one-line calls
-- **Automatic coordination**: `block.sum()` handles the cross-warp barriers that `warp.sum()` cannot
+- **Warp 범위**: `warp.sum()`은 32/64 스레드(단일 Warp) 내에서 동작
+- **블록 범위**: `block.sum()`은 전체 블록(여러 Warp)에 걸쳐 동작
+- **동일한 단순함**: 둘 다 복잡한 수동 reduction을 한 줄 호출로 대체
+- **자동 조율**: `block.sum()`은 `warp.sum()`이 처리할 수 없는 크로스 Warp barrier를 자동으로 처리
 
 </div>
 </details>
 
-## Technical investigation: What does `block.sum()` actually compile to?
+## 기술 분석: block.sum()은 실제로 무엇으로 컴파일될까?
 
-To understand what `block.sum()` actually generates, we compiled the puzzle with debug information:
+`block.sum()`이 실제로 무엇을 생성하는지 이해하기 위해, 디버그 정보와 함께 퍼즐을 컴파일했습니다:
 
 ```bash
 pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
 ```
 
-This generated **LLVM file** `solutions/p27/p27.ll`. For example, on a compatible NVIDIA GPU, the `p27.ll` file has embedded **PTX assembly** showing the actual GPU instructions:
+이렇게 생성된 **LLVM 파일** `solutions/p27/p27.ll`에는, 호환 NVIDIA GPU에서 실제 GPU 명령을 보여주는 **PTX 어셈블리**가 내장되어 있습니다:
 
-### **Finding 1: Not a single instruction**
+### **발견 1: 단일 명령이 아니다**
 
-`block.sum()` compiles to approximately **20+ PTX instructions**, organized in a two-phase reduction:
+`block.sum()`은 약 **20개 이상의 PTX 명령**으로 컴파일되며, 2단계 reduction으로 구성됩니다:
 
-**Phase 1: Warp-level reduction (butterfly shuffles)**
-
-```ptx
-shfl.sync.bfly.b32 %r23, %r46, 16, 31, -1;  // shuffle with offset 16
-add.f32            %r24, %r46, %r23;         // add shuffled values
-shfl.sync.bfly.b32 %r25, %r24, 8, 31, -1;   // shuffle with offset 8
-add.f32            %r26, %r24, %r25;         // add shuffled values
-// ... continues for offsets 4, 2, 1
-```
-
-**Phase 2: Cross-warp coordination**
+**1단계: Warp 레벨 reduction (butterfly shuffle)**
 
 ```ptx
-shr.u32            %r32, %r1, 5;             // compute warp ID
-mov.b32            %r34, _global_alloc_$__gpu_shared_mem; // shared memory
-bar.sync           0;                        // barrier synchronization
-// ... another butterfly shuffle sequence for cross-warp reduction
+shfl.sync.bfly.b32 %r23, %r46, 16, 31, -1;   // offset 16으로 shuffle
+add.f32            %r24, %r46, %r23;         // shuffle된 값을 합산
+shfl.sync.bfly.b32 %r25, %r24, 8, 31, -1;    // offset 8로 shuffle
+add.f32            %r26, %r24, %r25;         // shuffle된 값을 합산
+// ... offset 4, 2, 1에 대해 계속
 ```
 
-### **Finding 2: Hardware-optimized implementation**
+**2단계: 크로스 Warp 조율**
 
-- **Butterfly shuffles**: More efficient than tree reduction
-- **Automatic barrier placement**: Handles cross-warp synchronization
-- **Optimized memory access**: Uses shared memory strategically
-- **Architecture-aware**: Same API works on NVIDIA (32-thread warps) and AMD (32 or 64-thread warps)
+```ptx
+shr.u32            %r32, %r1, 5;             // Warp ID 계산
+mov.b32            %r34, _global_alloc_$__gpu_shared_mem; // 공유 메모리
+bar.sync           0;                        // barrier 동기화
+// ... 크로스 Warp reduction을 위한 또 다른 butterfly shuffle 시퀀스
+```
 
-### **Finding 3: Algorithm complexity analysis**
+### **발견 2: 하드웨어 최적화 구현**
 
-**Our approach to investigation:**
+- **Butterfly shuffle**: 트리 reduction보다 효율적
+- **자동 barrier 배치**: 크로스 Warp 동기화를 자동으로 처리
+- **최적화된 메모리 접근**: 공유 메모리를 전략적으로 사용
+- **아키텍처 인식**: 동일한 API가 NVIDIA(32 스레드 Warp)와 AMD(32 또는 64 스레드 Warp)에서 동작
 
-1. Located PTX assembly in binary ELF sections (`.nv_debug_ptx_txt`)
-2. Identified algorithmic differences rather than counting individual instructions
+### **발견 3: 알고리즘 복잡도 분석**
 
-**Key algorithmic differences observed:**
+**분석 접근 방식:**
 
-- **Traditional**: Tree reduction with shared memory + multiple `bar.sync` calls
-- **block.sum()**: Butterfly shuffle pattern + optimized cross-warp coordination
+1. 바이너리 ELF 섹션(`.nv_debug_ptx_txt`)에서 PTX 어셈블리를 확인
+2. 개별 명령 수를 세기보다 알고리즘적 차이를 식별
 
-The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.
+**관찰된 주요 알고리즘 차이:**
 
-## Performance insights
+- **기존 방식**: 공유 메모리를 사용한 트리 reduction + 다수의 `bar.sync` 호출
+- **block.sum()**: Butterfly shuffle 패턴 + 최적화된 크로스 Warp 조율
 
-**`block.sum()` vs Traditional:**
+성능 이점은 명령 수나 마법 같은 하드웨어가 아니라 **정교하게 최적화된 알고리즘 선택**(butterfly > tree)에서 비롯됩니다. 구현에 대한 자세한 내용은 Mojo gpu 모듈의 [block.mojo]를 참고하세요.
 
-- **Code simplicity**: 15+ lines → 1 line for the reduction
-- **Memory usage**: No shared memory allocation required
-- **Synchronization**: No explicit barriers needed
-- **Scalability**: Works with any block size (up to hardware limits)
+## 성능 인사이트
+
+**`block.sum()` vs 기존 방식:**
+
+- **코드 단순함**: reduction 부분이 15줄 이상 → 1줄로
+- **메모리 사용**: 공유 메모리 할당 불필요
+- **동기화**: 명시적 barrier 불필요
+- **확장성**: 하드웨어 한도 내에서 모든 블록 크기에 동작
 
 **`block.sum()` vs `warp.sum()`:**
 
-- **Scope**: Block-wide (128 threads) vs warp-wide (32 threads)
-- **Use case**: When you need reduction across entire block
-- **Convenience**: Same programming model, different scale
+- **범위**: 블록 전체(128 스레드) vs Warp 전체(32 스레드)
+- **용도**: 전체 블록에 걸친 reduction이 필요할 때
+- **편의성**: 동일한 프로그래밍 모델, 다른 규모
 
-**When to use `block.sum()`:**
+**`block.sum()`을 사용해야 할 때:**
 
-- **Single block problems**: When all data fits in one block
-- **Block-level algorithms**: Shared memory computations needing reduction
-- **Convenience over scalability**: Simpler than multi-block approaches
+- **단일 블록 문제**: 모든 데이터가 하나의 블록에 들어갈 때
+- **블록 레벨 알고리즘**: reduction이 필요한 공유 메모리 연산
+- **확장성보다 편의성**: 멀티 블록 방식보다 단순
 
-## Relationship to previous puzzles
+## 이전 퍼즐과의 관계
 
-**From Puzzle 12 (Traditional):**
+**Puzzle 12 (기존 방식)에서:**
 
 ```
-Complex: shared memory + barriers + tree reduction
+복잡함: 공유 메모리 + barrier + 트리 reduction
 ↓
-Simple: block.sum() hardware primitive
+단순함: block.sum() 하드웨어 기본 요소
 ```
 
-**From Puzzle 24 (`warp.sum()`):**
+**Puzzle 24 (`warp.sum()`)에서:**
 
 ```
-Warp-level: warp.sum() across 32 threads (single warp)
+Warp 레벨: warp.sum() - 32 스레드 (단일 Warp)
 ↓
-Block-level: block.sum() across 128 threads (multiple warps)
+블록 레벨: block.sum() - 128 스레드 (여러 Warp)
 ```
 
-**Three-stage progression:**
+**3단계 진행:**
 
-1. **Manual reduction** (Puzzle 12): Complex shared memory + barriers + tree reduction
-2. **Warp primitives** (Puzzle 24): `warp.sum()` - simple but limited to single warp
-3. **Block primitives** (Puzzle 27): `block.sum()` - extends warp simplicity across multiple warps
+1. **수동 reduction** (Puzzle 12): 복잡한 공유 메모리 + barrier + 트리 reduction
+2. **Warp 기본 요소** (Puzzle 24): `warp.sum()` - 단순하지만 단일 Warp로 제한
+3. **블록 기본 요소** (Puzzle 27): `block.sum()` - Warp의 단순함을 여러 Warp로 확장
 
-**The key insight:** `block.sum()` gives you the simplicity of `warp.sum()` but scales across an entire block by automatically handling the complex cross-warp coordination that you'd otherwise need to implement manually.
+**핵심 통찰:** `block.sum()`은 `warp.sum()`의 단순함을 제공하면서 전체 블록으로 확장됩니다. 수동으로 구현해야 했던 복잡한 크로스 Warp 조율을 자동으로 처리합니다.
 
-## Next steps
+## 다음 단계
 
-Once you've learned about `block.sum()` operations, you're ready for:
+`block.sum()` 연산을 배웠으니, 다음으로 진행할 수 있습니다:
 
-- **[Block Prefix Sum Operations](./block_prefix_sum.md)**: Cumulative operations across block threads
-- **[Block Broadcast Operations](./block_broadcast.md)**: Sharing values across all threads in a block
+- **[block.prefix_sum()과 병렬 히스토그램 구간 분류](./block_prefix_sum.md)**: 블록 스레드에 걸친 누적 연산
+- **[block.broadcast()와 벡터 정규화](./block_broadcast.md)**: 블록 내 모든 스레드에 값을 공유
 
-💡 **Key Takeaway**: Block operations extend warp programming concepts to entire thread blocks, providing optimized primitives that replace complex synchronization patterns while working across multiple warps simultaneously. Just like `warp.sum()` simplified warp-level reductions, `block.sum()` simplifies block-level reductions without sacrificing performance.
+💡 **핵심 요점**: 블록 연산은 Warp 프로그래밍 개념을 전체 스레드 블록으로 확장하여, 여러 Warp에 걸쳐 동시에 동작하면서 복잡한 동기화 패턴을 대체하는 최적화된 기본 요소를 제공합니다. `warp.sum()`이 Warp 레벨 reduction을 단순화한 것처럼, `block.sum()`은 성능을 희생하지 않고 블록 레벨 reduction을 단순화합니다.
