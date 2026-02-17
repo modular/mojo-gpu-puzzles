@@ -91,11 +91,11 @@ Learn how to design GPU kernels where different thread groups execute completely
 
 **Focus**: Advanced memory barrier APIs and iterative processing
 
-Explore **fine-grained synchronization control** using [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/) for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.
+Explore **fine-grained synchronization control** using [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.
 
 **Key concepts**:
 
-- Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/) vs basic [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/#barrier)
+- Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) vs basic [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
 - Double-buffering with alternating read/write buffer roles
 - Iterative algorithm coordination with explicit memory barriers
 
