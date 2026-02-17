@@ -38,8 +38,8 @@ GPU synchronization is the foundation that enables complex parallel algorithms t
 
 **Synchronization primitive hierarchy:**
 
-- **Basic [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/#barrier)**: Simple thread synchronization within blocks
-- **Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/)**: Fine-grained memory barrier control with state tracking
+- **Basic [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)**: Simple thread synchronization within blocks
+- **Advanced [mbarrier APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/)**: Fine-grained memory barrier control with state tracking
 - **Streaming coordination**: Asynchronous copy and bulk transfer synchronization
 
 **Memory consistency models:**
