@@ -310,7 +310,7 @@ bar.sync           0;                        // barrier synchronization
 - **Traditional**: Tree reduction with shared memory + multiple `bar.sync` calls
 - **block.sum()**: Butterfly shuffle pattern + optimized cross-warp coordination
 
-The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.
+The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo](https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo) in Mojo gpu module for more details about the implementation.
 
 ## Performance insights
 

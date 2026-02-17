@@ -7,7 +7,7 @@ You've learned debugging [memory crashes](./first_case.md) and [logic bugs](./se
 **The complete debugging journey:**
 - **[First Case](./first_case.md)**: Program crashes → Follow error signals → Find memory bugs
 - **[Second Case](./second_case.md)**: Program produces wrong results → Analyze patterns → Find logic bugs
-- **[Third Case]**: Program hangs forever → Investigate thread states → Find coordination bugs
+- **Third Case**: Program hangs forever → Investigate thread states → Find coordination bugs
 
 This advanced-level debugging challenge teaches you to investigate **thread coordination failures** using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.
 

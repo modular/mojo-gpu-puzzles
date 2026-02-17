@@ -145,7 +145,7 @@ Let's break down how this works in the larger context:
    - Device context manages GPU memory allocation and kernel execution
 
 4. **Kernel execution**:
-   - When [model.execute(...)]() is called, our `conv1d_kernel` receives the data
+   - When `model.execute(...)` is called, our `conv1d_kernel` receives the data
    - GPU thread configuration is set with `grid_dim` and `block_dim`
    - Results are transferred back to CPU with `result.to(CPU())`
    - NumPy verification compares our results with the expected output
