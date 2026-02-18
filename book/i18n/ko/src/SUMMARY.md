@@ -117,13 +117,13 @@
 
 # Part X: 📊 성능 분석과 최적화
 
-- [Puzzle 30: GPU Profiling](./puzzle_30/puzzle_30.md)
-  - [📚 NVIDIA Profiling 기초](./puzzle_30/nvidia_profiling_basics.md)
+- [Puzzle 30: GPU 프로파일링](./puzzle_30/puzzle_30.md)
+  - [📚 NVIDIA 프로파일링 기초](./puzzle_30/nvidia_profiling_basics.md)
   - [🕵 캐시 히트의 역설](./puzzle_30/profile_kernels.md)
-- [Puzzle 31: Occupancy 최적화](./puzzle_31/puzzle_31.md)
-- [Puzzle 32: Bank Conflicts](./puzzle_32/puzzle_32.md)
+- [Puzzle 31: 점유율 최적화](./puzzle_31/puzzle_31.md)
+- [Puzzle 32: 뱅크 충돌](./puzzle_32/puzzle_32.md)
   - [📚 공유 메모리 뱅크 이해하기](./puzzle_32/shared_memory_bank.md)
-  - [Conflict-Free 패턴](./puzzle_32/conflict_free_patterns.md)
+  - [충돌 없는 패턴](./puzzle_32/conflict_free_patterns.md)
 
 # Part XI: 🚀 고급 GPU 기능
 

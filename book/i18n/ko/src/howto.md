@@ -30,6 +30,7 @@
 
 > [!NOTE]
 > 운영체제별 GPU 지원 설정 방법을 안내합니다.
+>
 > - [NVIDIA를 사용하는 Windows WSL2 for Linux](#windows-wsl2-for-linux-with-nvidia)
 > - [NVIDIA를 사용하는 Linux 네이티브](#linux-native-with-nvidia)
 > - [macOS Apple Silicon](#macos-apple-silicon)
@@ -45,17 +46,20 @@ Windows 호스트의 CUDA 드라이버가 WSL 2 내부에서 libcuda.so로 스�
 드라이버 설치 후 정상 동작을 확인합니다.
 
 Windows에서 확인: PowerShell을 엽니다 (WSL이 아닙니다)
+
 ```bash
 nvidia-smi
 ```
 
 WSL 내부에서 확인: (먼저 WSL을 시작합니다. 예: wsl -d Ubuntu)
+
 ```bash
 ls -l /usr/lib/wsl/lib/nvidia-smi
 /usr/lib/wsl/lib/nvidia-smi
 ```
 
 Pixi에서 설정을 확인하고, 필요시 누락된 요구사항을 설치합니다 (예: cuda-gdb 디버깅용)
+
 ```bash
 pixi run nvidia-smi
 pixi run setup-cuda-gdb
@@ -70,7 +74,6 @@ WSL에서는 VS Code를 에디터로 사용할 수 있습니다.
 
 > [!NOTE]
 > 퍼즐 1-15는 모두 WSL과 Linux에서 작동합니다.
-
 
 ### Linux native with NVIDIA
 
@@ -117,7 +120,6 @@ code --version
 
 > [!NOTE]
 > 퍼즐 1-15는 모두 Linux에서 작동합니다.
-
 
 ### macOS Apple Silicon
 
@@ -380,9 +382,9 @@ uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
 | 28 - Async Memory | ✅ | ✅ | ✅ | 고급 메모리 연산 |
 | 29 - Barriers | ✅ | ❌ | ❌ | NVIDIA 전용 고급 동기화 |
 | **Part X: 성능 분석** | | | | |
-| 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA profiling 도구 (NSight) |
-| 31 - Occupancy | ✅ | ❌ | ❌ | NVIDIA profiling 도구 |
-| 32 - Bank Conflicts | ✅ | ❌ | ❌ | NVIDIA profiling 도구 |
+| 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 (NSight) |
+| 31 - Occupancy | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
+| 32 - Bank Conflicts | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
 | **Part XI: 최신 GPU 기능** | | | | |
 | 33 - Tensor Cores | ✅ | ❌ | ❌ | NVIDIA tensor core 전용 |
 | 34 - Cluster | ✅ | ❌ | ❌ | NVIDIA cluster 프로그래밍 |
@@ -403,16 +405,16 @@ uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
 **AMD GPU (폭넓은 지원)**
 
 - 대부분의 퍼즐(1-8, 11-29)이 ROCm을 통해 작동합니다
-- 미지원: 디버깅 도구(9-10), profiling(30-32), tensor core(33-34)
+- 미지원: 디버깅 도구(9-10), 프로파일링(30-32), tensor core(33-34)
 - 고급 알고리즘과 메모리 패턴까지 포함하여 GPU 프로그래밍을 폭넓게 학습할 수 있습니다
 
 **Apple GPU (기본 지원)**
 
 - 기초(1-8, 11-18) 및 고급(23-27) 퍼즐 일부를 지원합니다
-- 미지원: 고급 기능 전반, 디버깅, profiling 도구
+- 미지원: 고급 기능 전반, 디버깅, 프로파일링 도구
 - GPU 프로그래밍의 기본 패턴을 익히기에 적합합니다
 
-> **향후 지원 계획**: AMD 및 Apple GPU에 대한 도구와 플랫폼 지원을 꾸준히 확대하고 있습니다. 디버깅 도구, profiling 기능, 고급 GPU 연산 등 아직 지원되지 않는 기능은 향후 릴리스에 포함될 예정입니다. 크로스 플랫폼 호환성을 계속 개선하고 있으니 업데이트를 확인해 주세요.
+> **향후 지원 계획**: AMD 및 Apple GPU에 대한 도구와 플랫폼 지원을 꾸준히 확대하고 있습니다. 디버깅 도구, 프로파일링 기능, 고급 GPU 연산 등 아직 지원되지 않는 기능은 향후 릴리스에 포함될 예정입니다. 크로스 플랫폼 호환성을 계속 개선하고 있으니 업데이트를 확인해 주세요.
 
 ## GPU 리소스
 
@@ -457,7 +459,7 @@ Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:
 **Mojo GPU Puzzles 사용 시 제한사항:**
 
 - **GPU 아키텍처 제약**: T4의 고급 기능 호환성 문제는 Colab과 동일
-- **제한적 디버깅 도구**: NVIDIA profiling 및 디버깅 도구(퍼즐 9-10, 30-32) 사용 불가
+- **제한적 디버깅 도구**: NVIDIA 프로파일링 및 디버깅 도구(퍼즐 9-10, 30-32) 사용 불가
 - **Mojo 설치 복잡성**: Mojo 환경을 수동으로 설정해야 합니다
 - **cluster 프로그래밍 미지원**: 고급 퍼즐(33-34) 작동 불가
 
@@ -469,7 +471,7 @@ Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:
 - **폭넓은 학습**: AMD GPU로도 대부분의 내용을 다룰 수 있습니다 (34개 중 27개)
 - **기초 학습**: Apple GPU로 기본 개념을 익힐 수 있습니다 (34개 중 13개)
 - **무료 플랫폼 학습**: Google Colab/Kaggle로 기초~중급 개념까지 학습 가능합니다 (퍼즐 1-16)
-- **디버깅 및 profiling**: 디버깅 도구와 성능 분석에는 NVIDIA GPU가 필요합니다
+- **디버깅 및 프로파일링**: 디버깅 도구와 성능 분석에는 NVIDIA GPU가 필요합니다
 - **최신 GPU 기능**: tensor core와 cluster 프로그래밍에는 NVIDIA GPU가 필요합니다
 
 ## 개발

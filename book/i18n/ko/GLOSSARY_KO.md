@@ -19,7 +19,6 @@
 | --- | --- |
 | atomic | 중간 상태 없이 완전히 실행되거나 전혀 실행되지 않는 연산 |
 | autograd | PyTorch의 자동 미분 시스템. 역전파 기울기를 자동 계산 |
-| bank conflict | 여러 스레드가 공유 메모리의 같은 뱅크에 한꺼번에 접근해서 생기는 충돌 |
 | barrier | 스레드들이 특정 지점에서 만나는 동기화 장벽 |
 | broadcast | 1. 작은 차원의 데이터를 큰 차원으로 확장하여 연산. 예: 벡터를 행렬로 확장<br>2. 데이터를 여러 스레드에 복사하는 연산 (`warp.broadcast()`) |
 | butterfly (network) | 나비 모양의 데이터 교환 패턴. 병렬 알고리즘에서 사용 |
@@ -45,18 +44,17 @@
 | memory fence | 메모리 작업 순서가 뒤바뀌지 않도록 보장하는 장치 |
 | memcheck | compute-sanitizer의 메모리 위반 탐지 도구 |
 | mixed precision | FP16/BF16 입력 + FP32 누적처럼 정밀도를 혼합하는 기법 |
-| occupancy | GPU를 얼마나 활용하고 있는지 나타내는 비율 |
 | off-by-one | 경계값이 1만큼 어긋나는 프로그래밍 오류. 반복문에서 흔히 발생 |
 | offset | 메모리 시작 위치로부터의 거리. 인덱스 계산에 사용 |
 | pooling | 윈도우 내 값들을 하나로 합치는 연산. max pooling, average pooling 등 |
 | prefix sum | 배열에서 각 위치까지의 누적 합을 구하는 알고리즘 |
 | PTX (Parallel Thread Execution) | NVIDIA GPU의 가상 어셈블리 언어. 컴파일러가 생성하는 중간 표현 |
-| profiling | 프로그램에서 느린 부분을 찾아내는 성능 분석 |
 | racecheck | compute-sanitizer의 경쟁 상태 탐지 도구 |
 | reduction | 여러 값을 합계나 최댓값처럼 하나의 값으로 줄이는 연산 |
 | roofline (model) | 하드웨어 한계 대비 성능을 분석하는 모델 |
 | row-major | 행을 연속으로 저장하는 메모리 레이아웃. C/Mojo 기본 방식 |
 | sanitizer | GPU 코드의 메모리 오류, 경쟁 상태 등을 탐지하는 검사 도구 |
+| SAXPY | Single-precision Alpha times X plus Y. `y[i] = α * x[i] + y[i]` 형태의 BLAS Level 1 표준 연산 |
 | segmentation fault | 접근 권한이 없는 메모리 영역에 접근할 때 발생하는 오류 |
 | shuffle | Warp 내 스레드 간 데이터 교환 |
 | softmax | 벡터를 확률 분포로 정규화하는 함수 |
@@ -80,6 +78,8 @@
 | English | 한글 | 비고 |
 | --- | --- | --- |
 | address space | 주소 공간 | 메모리 영역 구분. Mojo에서 `AddressSpace.SHARED` 등으로 지정 |
+| bank conflict | 뱅크 충돌 | 여러 스레드가 공유 메모리의 같은 뱅크에 한꺼번에 접근해서 생기는 충돌 |
+| conflict-free (pattern) | 충돌 없는 (패턴) | 뱅크 충돌이 발생하지 않는 접근 패턴 |
 | arithmetic intensity | 산술 강도 | 데이터 1바이트당 수행하는 연산량 (FLOP/B). Roofline 모델의 X축 |
 | backward pass | 역전파 | 신경망에서 기울기를 뒤로 전달하는 과정 |
 | binary | 바이너리 | 컴파일된 실행 파일 |
@@ -109,11 +109,13 @@
 | memory leak | 메모리 누수 | 할당된 메모리를 해제하지 않아 발생하는 문제 |
 | memory violation | 메모리 위반 | 잘못된 메모리 영역에 접근하는 오류 |
 | normalization | 정규화 | 값을 일정 범위로 조정하는 것 |
+| occupancy | 점유율 | SM당 활성 Warp 수 대비 최대 가능 Warp 수의 비율 |
 | overlap | 중첩 | 여러 작업을 동시에 수행하는 것. 복사 중첩 |
 | padding | 패딩 | 배열 끝을 0이나 특정 값으로 채워 크기를 맞추는 것 |
 | parallel | 병렬 | 여러 작업을 동시에 처리하는 방식 |
 | partial block | 부분 블록 | 데이터 끝에서 블록 크기를 다 채우지 못한 블록 |
 | predicate | 프레디케이트 | 조건의 참/거짓을 나타내는 값. 병렬 알고리즘에서 파티션 소속을 결정 |
+| profiling | 프로파일링 | 프로그램에서 느린 부분을 찾아내는 성능 분석 |
 | primitive | 기본 요소 | 프로그래밍의 기본 도구. 동기화 기본 요소 |
 | race condition | 경쟁 상태 | 여러 스레드가 같은 데이터에 동시에 접근해서 생기는 오류 |
 | register blocking | 레지스터 블로킹 | 레지스터에 값을 누적하여 메모리 트래픽을 줄이는 최적화 기법 |

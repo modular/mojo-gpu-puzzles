@@ -1,113 +1,113 @@
 <!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
 
-# Puzzle 32: Bank Conflicts
+# Puzzle 32: 뱅크 충돌
 
-## Why this puzzle matters
+## 이 퍼즐이 중요한 이유
 
-**Completing the performance trilogy:** You've learned GPU profiling tools in [Puzzle 30](../puzzle_30/puzzle_30.md) and understood occupancy optimization in [Puzzle 31](../puzzle_31/puzzle_31.md). Now you're ready for the final piece of the performance optimization puzzle: **shared memory efficiency**.
+**성능 최적화 3부작의 완결:** [Puzzle 30](../puzzle_30/puzzle_30.md)에서 GPU 프로파일링 도구를 배우고, [Puzzle 31](../puzzle_31/puzzle_31.md)에서 점유율 최적화를 이해했습니다. 이제 성능 최적화 퍼즐의 마지막 조각을 맞출 준비가 되었습니다: **공유 메모리 효율**.
 
-**The hidden performance trap:** You can write GPU kernels with perfect occupancy, optimal global memory coalescing, and identical mathematical operations - yet still experience dramatic performance differences due to **how threads access shared memory**. Bank conflicts represent one of the most subtle but impactful performance pitfalls in GPU programming.
+**숨겨진 성능 함정:** 완벽한 점유율, 최적의 글로벌 메모리 병합, 동일한 수학적 연산을 갖춘 GPU 커널을 작성하고도 **스레드가 공유 메모리에 접근하는 방식** 때문에 극적인 성능 차이를 경험할 수 있습니다. 뱅크 충돌은 GPU 프로그래밍에서 가장 미묘하면서도 영향력이 큰 성능 함정 중 하나입니다.
 
-**The learning journey:**
+**학습 여정:**
 
-- **Puzzle 30** taught you to **measure and diagnose** performance with NSight profiling
-- **Puzzle 31** taught you to **predict and control** resource usage through occupancy analysis
-- **Puzzle 32** teaches you to **optimize shared memory access patterns** for maximum efficiency
+- **Puzzle 30**에서는 NSight 프로파일링으로 성능을 **측정하고 진단**하는 법을 배웠습니다
+- **Puzzle 31**에서는 점유율 분석을 통해 리소스 사용을 **예측하고 제어**하는 법을 배웠습니다
+- **Puzzle 32**에서는 최대 효율을 위해 **공유 메모리 접근 패턴을 최적화**하는 법을 배웁니다
 
-**Why this matters beyond GPU programming:** The principles of memory banking, conflict detection, and systematic access pattern optimization apply across many parallel computing systems - from CPU cache hierarchies to distributed memory architectures.
+**GPU를 넘어서 적용되는 원리:** 메모리 뱅킹, 충돌 감지, 체계적인 접근 패턴 최적화의 원리는 CPU 캐시 계층 구조부터 분산 메모리 아키텍처까지 다양한 병렬 컴퓨팅 시스템에 적용됩니다.
 
-> **Note: This puzzle is specific to NVIDIA GPUs**
+> **참고: 이 퍼즐은 NVIDIA GPU 전용입니다**
 >
-> Bank conflict analysis uses NVIDIA's 32-bank shared memory architecture and NSight Compute profiling tools. While the optimization principles apply broadly, the specific techniques and measurements are NVIDIA CUDA-focused.
+> 뱅크 충돌 분석은 NVIDIA의 32-뱅크 공유 메모리 아키텍처와 NSight Compute 프로파일링 도구를 사용합니다. 최적화 원리는 널리 적용되지만, 구체적인 기법과 측정 방법은 NVIDIA CUDA에 초점을 맞추고 있습니다.
 
-## Overview
+## 개요
 
-**Shared memory bank conflicts** occur when multiple threads in a warp simultaneously access different addresses within the same memory bank, forcing the hardware to serialize these accesses. This can transform what should be a single-cycle memory operation into multiple cycles of serialized access.
+**공유 메모리 뱅크 충돌**는 Warp 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른 주소에 동시에 접근할 때 발생하며, 하드웨어가 이러한 접근을 직렬화하도록 강제합니다. 단일 사이클 메모리 연산이어야 할 것이 여러 사이클의 직렬화된 접근으로 바뀔 수 있습니다.
 
-**What you'll discover:**
+**발견하게 될 것:**
 
-- How GPU shared memory banking works at the hardware level
-- Why identical kernels can have vastly different shared memory efficiency
-- How to predict and measure bank conflicts before they impact performance
-- Professional optimization strategies for designing conflict-free algorithms
+- 하드웨어 수준에서 GPU 공유 메모리 뱅킹이 작동하는 방식
+- 동일한 커널이 왜 공유 메모리 효율에서 크게 다를 수 있는지
+- 성능에 영향을 미치기 전에 뱅크 충돌을 예측하고 측정하는 방법
+- 충돌 없는 알고리즘을 설계하기 위한 전문적인 최적화 전략
 
-**The detective methodology:** This puzzle follows the same evidence-based approach as previous performance puzzles - you'll use profiling tools to uncover hidden inefficiencies, then apply systematic optimization principles to eliminate them.
+**탐정 방법론:** 이 퍼즐은 이전 성능 퍼즐과 동일한 근거 기반 접근법을 따릅니다 - 프로파일링 도구로 숨겨진 비효율을 밝혀낸 다음, 체계적인 최적화 원칙을 적용하여 제거합니다.
 
-## Key concepts
+## 핵심 개념
 
-**Shared memory architecture fundamentals:**
+**공유 메모리 아키텍처의 기초:**
 
-- **32-bank design**: NVIDIA GPUs organize shared memory into 32 independent banks
-- **Conflict types**: No conflict (optimal), N-way conflicts (serialized), broadcast (optimized)
-- **Access pattern mathematics**: Bank assignment formulas and conflict prediction
-- **Performance impact**: From optimal 1-cycle access to worst-case 32-cycle serialization
+- **32-뱅크 설계**: NVIDIA GPU는 공유 메모리를 32개의 독립적인 뱅크로 구성합니다
+- **충돌 유형**: 충돌 없음(최적), N-way conflict(직렬화), broadcast(최적화)
+- **접근 패턴 수학**: 뱅크 할당 공식과 충돌 예측
+- **성능 영향**: 최적의 1사이클 접근부터 최악의 32사이클 직렬화까지
 
-**Professional optimization skills:**
+**전문적인 최적화 기술:**
 
-- **Pattern analysis**: Mathematical prediction of banking behavior
-- **Profiling methodology**: NSight Compute metrics for conflict measurement
-- **Design principles**: Conflict-free algorithm patterns and prevention strategies
-- **Performance validation**: Evidence-based optimization using systematic measurement
+- **패턴 분석**: 뱅킹 동작의 수학적 예측
+- **프로파일링 방법론**: 충돌 측정을 위한 NSight Compute 메트릭
+- **설계 원칙**: 충돌 없는 알고리즘 패턴과 예방 전략
+- **성능 검증**: 체계적인 측정을 통한 근거 기반 최적화
 
-## Puzzle structure
+## 퍼즐 구성
 
-This puzzle contains two complementary sections that build your expertise progressively:
+이 퍼즐은 전문성을 점진적으로 쌓아가는 두 개의 상호 보완적인 섹션으로 구성되어 있습니다:
 
-### **[📚 Understanding Shared Memory Banks](./shared_memory_bank.md)**
+### **[📚 공유 메모리 뱅크 이해하기](./shared_memory_bank.md)**
 
-Learn the theoretical foundations of GPU shared memory banking through clear explanations and practical examples.
+명확한 설명과 실용적인 예제를 통해 GPU 공유 메모리 뱅킹의 이론적 기초를 학습합니다.
 
-**You'll learn:**
+**배우게 될 것:**
 
-- How NVIDIA's 32-bank architecture enables parallel access
-- The mathematics of bank assignment and conflict prediction
-- Types of conflicts and their performance implications
-- Connection to previous concepts (warp execution, occupancy, profiling)
+- NVIDIA의 32-뱅크 아키텍처가 병렬 접근을 가능하게 하는 방식
+- 뱅크 할당과 충돌 예측의 수학
+- 충돌 유형과 성능에 미치는 영향
+- 이전 개념과의 연결 (Warp 실행, 점유율, 프로파일링)
 
-**Key insight:** Understanding the hardware enables you to predict performance before writing code.
+**핵심 통찰:** 하드웨어를 이해하면 코드를 작성하기 전에 성능을 예측할 수 있습니다.
 
-### **[Conflict-Free Patterns](./conflict_free_patterns.md)**
+### **[충돌 없는 패턴](./conflict_free_patterns.md)**
 
-Apply your banking knowledge to solve a performance mystery using professional profiling techniques.
+뱅킹 지식을 활용하여 전문 프로파일링 기법으로 성능 미스터리를 풀어봅니다.
 
-**The detective challenge:** Two kernels compute identical results but have dramatically different shared memory access efficiency. Use NSight Compute to uncover why one kernel experiences systematic bank conflicts while the other achieves optimal performance.
+**탐정 도전 과제:** 두 커널이 동일한 결과를 계산하지만 공유 메모리 접근 효율은 극적으로 다릅니다. NSight Compute를 사용하여 한 커널은 체계적인 뱅크 충돌을 겪고 다른 커널은 최적의 성능을 달성하는 이유를 밝혀내세요.
 
-**Skills developed:** Pattern analysis, conflict measurement, systematic optimization, and evidence-based performance improvement.
+**길러지는 역량:** 패턴 분석, 충돌 측정, 체계적 최적화, 근거 기반 성능 개선.
 
-## Getting started
+## 시작하기
 
-**Learning path:**
+**학습 경로:**
 
-1. **[Understanding Shared Memory Banks](./shared_memory_bank.md)** - Build theoretical foundation
-2. **[Conflict-Free Patterns](./conflict_free_patterns.md)** - Apply detective skills to real optimization
+1. **[공유 메모리 뱅크 이해하기](./shared_memory_bank.md)** - 이론적 기초 쌓기
+2. **[충돌 없는 패턴](./conflict_free_patterns.md)** - 실전 최적화에 탐정 역량 적용하기
 
-**Prerequisites:**
+**선수 조건:**
 
-- GPU profiling experience from [Puzzle 30](../puzzle_30/puzzle_30.md)
-- Resource optimization understanding from [Puzzle 31](../puzzle_31/puzzle_31.md)
-- Shared memory programming experience from [Puzzle 8](../puzzle_08/puzzle_08.md) and [Puzzle 16](../puzzle_16/puzzle_16.md)
+- [Puzzle 30](../puzzle_30/puzzle_30.md)에서 익힌 GPU 프로파일링 경험
+- [Puzzle 31](../puzzle_31/puzzle_31.md)에서 익힌 리소스 최적화 이해
+- [Puzzle 8](../puzzle_08/puzzle_08.md)과 [Puzzle 16](../puzzle_16/puzzle_16.md)에서 익힌 공유 메모리 프로그래밍 경험
 
-**Hardware requirements:**
+**하드웨어 요구 사항:**
 
-- NVIDIA GPU with CUDA toolkit
-- NSight Compute profiling tools
-- The dependencies such as profiling are managed by `pixi`
-- [Compatible GPU architecture](https://docs.modular.com/max/packages/#gpu-compatibility)
+- CUDA 툴킷이 설치된 NVIDIA GPU
+- NSight Compute 프로파일링 도구
+- 프로파일링 등의 의존성은 `pixi`로 관리됩니다
+- [호환 가능한 GPU 아키텍처](https://docs.modular.com/max/packages/#gpu-compatibility)
 
-## The optimization impact
+## 최적화의 효과
 
-**When bank conflicts matter most:**
+**뱅크 충돌이 가장 중요한 경우:**
 
-- **Matrix multiplication** with shared memory tiling
-- **Stencil computations** using shared memory caching
-- **Parallel reductions** with stride-based memory patterns
+- 공유 메모리 tiling을 사용하는 **행렬 곱셈**
+- 공유 메모리 캐싱을 사용하는 **Stencil 연산**
+- stride 기반 메모리 패턴을 사용하는 **병렬 reduction**
 
-**Professional development value:**
+**전문 역량 개발:**
 
-- **Systematic optimization**: Evidence-based performance improvement methodology
-- **Hardware awareness**: Understanding how software maps to hardware constraints
-- **Pattern recognition**: Identifying problematic access patterns in algorithm design
+- **체계적 최적화**: 근거 기반 성능 개선 방법론
+- **하드웨어 인식**: 소프트웨어가 하드웨어 제약에 어떻게 매핑되는지 이해
+- **패턴 인식**: 알고리즘 설계에서 문제가 되는 접근 패턴 식별
 
-**Learning outcome:** Complete your GPU performance optimization toolkit with the ability to design, measure, and optimize shared memory access patterns - the final piece for professional-level GPU programming expertise.
+**학습 성과:** 공유 메모리 접근 패턴을 설계, 측정, 최적화하는 역량까지 갖추면 GPU 성능 최적화 도구 세트가 완성됩니다 - 전문가 수준의 GPU 프로그래밍을 위한 마지막 퍼즐 조각입니다.
 
-This puzzle demonstrates that **optimal GPU performance requires understanding hardware at multiple levels** - from global memory coalescing through occupancy management to shared memory banking efficiency.
+글로벌 메모리 병합에서 점유율 관리를 거쳐 공유 메모리 뱅킹 효율까지, 이 퍼즐은 **최적의 GPU 성능을 위해서는 여러 수준에서 하드웨어를 이해해야 한다**는 것을 보여줍니다.

@@ -1,33 +1,33 @@
 <!-- i18n-source-commit: 27670ce1d5fb537c6d9404b9fdb39dfc64468e3f -->
 
-# Puzzle 31: GPU Occupancy Optimization
+# Puzzle 31: 점유율 최적화
 
-## Why this puzzle matters
+## 이 퍼즐이 중요한 이유
 
-**Building on Puzzle 30:** You've just learned GPU profiling tools and discovered how memory access patterns can create dramatic performance differences. Now you're ready for the next level: **resource optimization**.
+**Puzzle 30의 연장선:** [GPU 프로파일링](../puzzle_30/puzzle_30.md) 도구를 배우고, 메모리 접근 패턴이 어떻게 극적인 성능 차이를 만들어내는지 발견했습니다. 이제 다음 단계로 나아갈 준비가 되었습니다: **리소스 최적화**.
 
-**The Learning Journey:**
+**학습 여정:**
 
-- **Puzzle 30** taught you to **diagnose** performance problems using NSight profiling (`nsys` and `ncu`)
-- **Puzzle 31** teaches you to **predict and control** performance through resource management
-- **Together**, they give you the complete toolkit for GPU optimization
+- **Puzzle 30**에서는 NSight 프로파일링(`nsys`와 `ncu`)을 통해 성능 문제를 **진단**하는 법을 배웠습니다
+- **Puzzle 31**에서는 리소스 관리를 통해 성능을 **예측하고 제어**하는 법을 배웁니다
+- **둘을 합치면** GPU 최적화를 위한 완전한 도구 세트를 갖추게 됩니다
 
-**What You'll Discover:**
-GPU performance isn't just about algorithmic efficiency - it's about **how your code uses limited hardware resources**. Every GPU has finite registers, shared memory, and execution units. Understanding **occupancy** - _the ratio of active warps to maximum possible warps per SM_ - is crucial for:
+**발견하게 될 것:**
+GPU 성능은 단순히 알고리즘 효율의 문제가 아닙니다 - **코드가 한정된 하드웨어 리소스를 어떻게 활용하느냐**가 핵심입니다. 모든 GPU는 유한한 레지스터, 공유 메모리, 실행 유닛을 갖고 있습니다. **점유율(occupancy)** - _SM당 활성 Warp 수 대비 최대 가능 Warp 수의 비율_ - 을 이해하는 것은 다음과 같은 이유로 중요합니다:
 
-- **Latency hiding**: Keeping the GPU busy while waiting for memory
-- **Resource allocation**: Balancing registers, shared memory, and thread blocks
-- **Performance prediction**: Understanding bottlenecks before they happen
-- **Optimization strategy**: Knowing when to focus on occupancy vs other factors
+- **Latency hiding**: 메모리 대기 시간 동안 GPU가 유휴 상태에 빠지지 않도록 유지
+- **리소스 할당**: 레지스터, 공유 메모리, 스레드 블록 간의 균형 조절
+- **성능 예측**: 병목이 발생하기 전에 미리 파악
+- **최적화 전략**: 점유율에 집중해야 할 때와 다른 요소에 집중해야 할 때 판단
 
-**Why This Matters Beyond GPUs:**
-The principles you learn here apply to any parallel computing system where resources are shared among many execution units - from CPUs with hyperthreading to distributed computing clusters.
+**GPU를 넘어서 적용되는 원리:**
+여기서 배우는 원리는 리소스를 여러 실행 유닛이 공유하는 모든 병렬 컴퓨팅 시스템에 적용됩니다 - 하이퍼스레딩을 사용하는 CPU부터 분산 컴퓨팅 클러스터까지.
 
-## Overview
+## 개요
 
-**GPU Occupancy** is the ratio of active warps to the maximum possible warps per SM. It determines how well your GPU can hide memory latency through warp switching.
+**GPU 점유율**은 SM당 활성 Warp 수 대비 최대 가능 Warp 수의 비율입니다. GPU가 Warp 전환을 통해 메모리 latency를 얼마나 효과적으로 숨길 수 있는지를 결정합니다.
 
-**SAXPY** is a mnemonic for Single-precision Alpha times X plus Y. This puzzle explores three SAXPY kernels (`y[i] = alpha * x[i] + y[i]`) with identical math but different resource usage:
+**SAXPY**는 Single-precision Alpha times X plus Y의 약자입니다. 이 퍼즐에서는 수학적으로 동일하지만 리소스 사용이 다른 세 가지 SAXPY 커널(`y[i] = alpha * x[i] + y[i]`)을 탐구합니다:
 
 ```mojo
 {{#include ../../../../../problems/p31/p31.mojo:minimal_kernel}}
@@ -47,93 +47,93 @@ The principles you learn here apply to any parallel computing system where resou
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a>
 
-## Your task
+## 도전 과제
 
-Use profiling tools to investigate three kernels and answer analysis questions about occupancy optimization. The kernels compute identical results but use resources very differently - your job is to discover why performance and occupancy behave counterintuitively!
+프로파일링 도구를 사용하여 세 커널을 조사하고, 점유율 최적화에 대한 분석 질문에 답하세요. 커널들은 동일한 결과를 계산하지만 리소스 사용이 극적으로 다릅니다 - 성능과 점유율이 왜 직관에 어긋나는 방식으로 동작하는지 발견하는 것이 여러분의 임무입니다!
 
-> The specific numerical results shown in this puzzle are based on **NVIDIA A10G (Ampere 8.6)** hardware. Your results will vary depending on your GPU vendor and architecture (NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5), but the **fundamental concepts, methodology, and insights remain universally applicable** across modern GPUs. Use `pixi run gpu-specs` to get your specific hardware values.
+> 이 퍼즐에 표시된 구체적인 수치 결과는 **NVIDIA A10G (Ampere 8.6)** 하드웨어를 기준으로 합니다. 결과는 GPU 제조사와 아키텍처(NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5)에 따라 달라지지만, **기본 개념, 방법론, 통찰은 모든 최신 GPU에 보편적으로 적용됩니다**. `pixi run gpu-specs`를 실행하여 하드웨어별 수치를 확인하세요.
 
-## Configuration
+## 구성
 
-**Requirements:**
+**요구 사항:**
 
-- NVIDIA GPU with CUDA toolkit
-- NSight Compute from [Puzzle 30](../puzzle_30/puzzle_30.md)
+- CUDA 툴킷이 설치된 NVIDIA GPU
+- [Puzzle 30](../puzzle_30/puzzle_30.md)의 NSight Compute
 
-> **⚠️ GPU compatibility note:**
-> The default configuration uses aggressive settings that may fail on older or lower-capability GPUs:
+> **⚠️ GPU 호환성 참고:**
+> 기본 설정은 공격적인 값을 사용하므로 구형이나 저사양 GPU에서는 실패할 수 있습니다:
 >
 > ```mojo
-> comptime SIZE = 32 * 1024 * 1024  # 32M elements (~256MB memory per array)
-> comptime THREADS_PER_BLOCK = (1024, 1)  # 1024 threads per block
-> comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 blocks
+> comptime SIZE = 32 * 1024 * 1024  # 32M 요소 (배열당 ~256MB 메모리)
+> comptime THREADS_PER_BLOCK = (1024, 1)  # 블록당 1024 스레드
+> comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 블록
 > ```
 >
-> **If you encounter launch failures, reduce these values in `problems/p31/p31.mojo`:**
+> **실행 실패 시 `problems/p31/p31.mojo`에서 다음 값을 줄이세요:**
 >
-> - **For older GPUs (Compute Capability < 3.0):** Use `THREADS_PER_BLOCK = (512, 1)` and `SIZE = 16 * 1024 * 1024`
-> - **For limited memory GPUs (< 2GB):** Use `SIZE = 8 * 1024 * 1024` or `SIZE = 4 * 1024 * 1024`
-> - **For grid dimension limits:** The `BLOCKS_PER_GRID` will automatically adjust with `SIZE`
+> - **구형 GPU (Compute Capability < 3.0):** `THREADS_PER_BLOCK = (512, 1)`, `SIZE = 16 * 1024 * 1024` 사용
+> - **메모리 제한 GPU (< 2GB):** `SIZE = 8 * 1024 * 1024` 또는 `SIZE = 4 * 1024 * 1024` 사용
+> - **그리드 차원 제한:** `BLOCKS_PER_GRID`는 `SIZE`에 맞춰 자동 조정됩니다
 
-**Occupancy Formula:**
+**점유율 공식:**
 
 ```
-Theoretical Occupancy = min(
-    Registers Per SM / (Registers Per Thread × Threads Per Block),
-    Shared Memory Per SM / Shared Memory Per Block,
-    Max Blocks Per SM
-) × Threads Per Block / Max Threads Per SM
+이론적 점유율 = min(
+    SM당 레지스터 수 / (스레드당 레지스터 수 × 블록당 스레드 수),
+    SM당 공유 메모리 / 블록당 공유 메모리,
+    SM당 최대 블록 수
+) × 블록당 스레드 수 / SM당 최대 스레드 수
 ```
 
-## The investigation
+## 조사 과정
 
-### Step 1: Test the kernels
+### Step 1: 커널 테스트
 
 ```bash
 pixi shell -e nvidia
 mojo problems/p31/p31.mojo --all
 ```
 
-All three should produce identical results. The mystery: why do they have different performance?
+세 커널 모두 동일한 결과를 내야 합니다. 미스터리: 왜 성능은 다를까요?
 
-### Step 2: Benchmark performance
+### Step 2: 성능 벤치마크
 
 ```bash
 mojo problems/p31/p31.mojo --benchmark
 ```
 
-All three should produce identical results. The mystery: why do they have different performance?
+세 커널 모두 동일한 결과를 내야 합니다. 미스터리: 왜 성능은 다를까요?
 
-### Step 3: Build for profiling
+### Step 3: 프로파일링용 빌드
 
 ```bash
 mojo build --debug-level=full problems/p31/p31.mojo -o problems/p31/p31_profiler
 ```
 
-### Step 4: Profile resource usage
+### Step 4: 리소스 사용량 프로파일링
 
 ```bash
-# Profile each kernel's resource usage
+# 각 커널의 리소스 사용량 프로파일링
 ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --minimal
 ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --sophisticated
 ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
 ```
 
-Record the resource usage for occupancy analysis.
+점유율 분석을 위해 리소스 사용량을 기록하세요.
 
-### Step 5: Calculate theoretical occupancy
+### Step 5: 이론적 점유율 계산
 
-First, identify your GPU architecture and detailed specs:
+먼저 GPU 아키텍처와 세부 스펙을 확인합니다:
 
 ```bash
 pixi run gpu-specs
 ```
 
-**Note**: `gpu-specs` automatically detects your GPU vendor (NVIDIA/AMD/Apple) and shows **all architectural details** derived from your hardware - no lookup tables needed!
+**참고**: `gpu-specs`는 GPU 제조사(NVIDIA/AMD/Apple)를 자동 감지하고 하드웨어에서 파생된 **모든 아키텍처 세부 정보**를 표시합니다 - 별도의 참조표가 필요 없습니다!
 
-**Common Architecture Specs (Reference):**
+**주요 아키텍처 스펙 (참고용):**
 
-| Architecture | Compute Cap | Registers/SM | Shared Mem/SM | Max Threads/SM | Max Blocks/SM |
+| 아키텍처 | Compute Cap | 레지스터/SM | 공유 메모리/SM | 최대 스레드/SM | 최대 블록/SM |
 |--------------|-------------|--------------|---------------|----------------|---------------|
 | **Hopper (H100)** | 9.0 | 65,536 | 228KB | 2,048 | 32 |
 | **Ada (RTX 40xx)** | 8.9 | 65,536 | 128KB | 2,048 | 32 |
@@ -141,350 +141,350 @@ pixi run gpu-specs
 | **Turing (RTX 20xx)** | 7.5 | 65,536 | 96KB | 1,024 | 16 |
 | **Pascal (GTX 10xx)** | 6.1 | 65,536 | 96KB | 2,048 | 32 |
 
-**📚 Official Documentation:**
+**📚 공식 문서:**
 
 - [NVIDIA CUDA Compute Capability Table](https://developer.nvidia.com/cuda-gpus)
 - [CUDA Programming Guide - Compute Capabilities](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities)
 - [Hopper Architecture In-Depth](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/)
 - [Ampere Architecture Whitepaper](https://developer.nvidia.com/ampere-architecture)
 
-**⚠️ Note:** These are theoretical maximums. Actual occupancy may be lower due to hardware scheduling constraints, driver overhead, and other factors.
+**⚠️ 참고:** 이 값들은 이론적 최대치입니다. 실제 점유율은 하드웨어 스케줄링 제약, 드라이버 오버헤드 등의 요인으로 더 낮을 수 있습니다.
 
-Using your GPU specs and the occupancy formula:
+GPU 스펙과 점유율 공식을 사용하여:
 
-- **Threads Per Block:** 1024 (from our kernel)
+- **블록당 스레드 수:** 1024 (커널 설정값)
 
-Use the occupancy formula and your hardware specifications to predict each kernel's theoretical occupancy.
+점유율 공식과 하드웨어 스펙을 사용하여 각 커널의 이론적 점유율을 예측하세요.
 
-### Step 6: Measure actual occupancy
+### Step 6: 실제 점유율 측정
 
 ```bash
-# Measure actual occupancy for each kernel
+# 각 커널의 실제 점유율 측정
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --minimal
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --sophisticated
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --balanced
 ```
 
-Compare the actual measured occupancy with your theoretical calculations - this is where the mystery reveals itself!
+이론적 계산과 실제 측정된 점유율을 비교하세요 - 미스터리가 드러나는 순간입니다!
 
-## Key insights
+## 핵심 통찰
 
-💡 **Occupancy Threshold:** Once you have sufficient occupancy for latency hiding (~25-50%), additional occupancy provides diminishing returns.
+💡 **점유율 임계값:** 대기 시간을 숨기기에 충분한 점유율(~25-50%)을 확보하면, 그 이상의 점유율은 수확 체감 효과를 보입니다.
 
-💡 **Memory Bound vs Compute Bound:** SAXPY is memory-bound. Memory bandwidth often matters more than occupancy for memory-bound kernels.
+💡 **메모리 바운드 vs 연산 바운드:** SAXPY는 메모리 바운드입니다. 메모리 바운드 커널에서는 메모리 대역폭이 점유율보다 더 중요한 경우가 많습니다.
 
-💡 **Resource Efficiency:** Modern GPUs can handle moderate register pressure (20-40 registers/thread) without dramatic occupancy loss.
+💡 **리소스 효율:** 최신 GPU는 적당한 수준의 레지스터 압박(스레드당 20-40개)을 점유율의 극적인 감소 없이 처리할 수 있습니다.
 
-## Your task: Answer the following questions
+## 도전 과제: 다음 질문에 답하세요
 
-**After completing the investigation steps above, answer these analysis questions to solve the occupancy mystery:**
+**위의 조사 단계를 완료한 후, 다음 분석 질문에 답하여 점유율 미스터리를 풀어보세요:**
 
-**Performance Analysis (Step 2):**
+**성능 분석 (Step 2):**
 
-1. Which kernel is fastest? Which is slowest? Record the timing differences.
+1. 어떤 커널이 가장 빠르고, 어떤 커널이 가장 느린가요? 실행 시간 차이를 기록하세요.
 
-**Resource Profiling (Step 4):**
+**리소스 프로파일링 (Step 4):**
 
-2. Record for each kernel: Registers Per Thread, Shared Memory Per Block, Warps Per SM
+1. 각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 Warp 수를 기록하세요.
 
-**Theoretical Calculations (Step 5):**
+**이론적 계산 (Step 5):**
 
-3. Calculate theoretical occupancy for each kernel using your GPU specs and the occupancy formula. Which should be highest/lowest?
+1. GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤 커널이 가장 높고/낮아야 하나요?
 
-**Measured Occupancy (Step 6):**
+**측정된 점유율 (Step 6):**
 
-4. How do the measured occupancy values compare to your calculations?
+1. 측정된 점유율 값이 계산 결과와 어떻게 비교되나요?
 
-**The Occupancy Mystery:**
+**점유율 미스터리:**
 
-5. Why do all three kernels achieve similar occupancy (~64-66% results may vary depending on gpu architecture) despite dramatically different resource usage?
-6. Why is performance nearly identical (<2% difference) when resource usage varies so dramatically (19 vs 40 registers, 0KB vs 49KB shared memory)?
-7. What does this reveal about the relationship between theoretical occupancy calculations and real-world GPU behavior?
-8. For this SAXPY workload, what is the actual performance bottleneck if it's not occupancy?
+1. 리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU 아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?
+2. 리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리) 성능이 거의 동일한(<2% 차이) 이유는 무엇인가요?
+3. 이론적 점유율 계산과 실제 GPU 동작 사이의 관계에 대해 무엇을 알 수 있나요?
+4. 이 SAXPY 워크로드의 실제 성능 병목이 점유율이 아니라면 무엇인가요?
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-**Your detective toolkit:**
+**탐정 도구 모음:**
 
-- **NSight Compute (`ncu`)** - Measure occupancy and resource usage
-- **GPU architecture specs** - Calculate theoretical limits using `pixi run gpu-specs`
-- **Occupancy formula** - Predict resource bottlenecks
-- **Performance benchmarks** - Validate theoretical analysis
+- **NSight Compute (`ncu`)** - 점유율과 리소스 사용량 측정
+- **GPU 아키텍처 스펙** - `pixi run gpu-specs`를 사용한 이론적 한계 계산
+- **점유율 공식** - 리소스 병목 예측
+- **성능 벤치마크** - 이론적 분석 검증
 
-**Key optimization principles:**
+**핵심 최적화 원칙:**
 
-- **Calculate before optimizing:** Use the occupancy formula to predict resource limits before writing code
-- **Measure to validate:** Theoretical calculations don't account for compiler optimizations and hardware details
-- **Consider workload characteristics:** Memory-bound workloads need less occupancy than compute-bound operations
-- **Don't optimize for maximum occupancy:** Optimize for sufficient occupancy + other performance factors
-- **Think in terms of thresholds:** 25-50% occupancy is often sufficient for latency hiding
-- **Profile resource usage:** Use NSight Compute to understand actual register and shared memory consumption
+- **최적화 전에 계산하기:** 코드를 작성하기 전에 점유율 공식으로 리소스 한계를 예측
+- **측정으로 검증하기:** 이론적 계산은 컴파일러 최적화와 하드웨어 세부 사항을 반영하지 못함
+- **워크로드 특성 고려하기:** 메모리 바운드 워크로드는 연산 바운드보다 점유율이 덜 필요
+- **최대 점유율을 목표로 하지 않기:** 충분한 점유율 + 다른 성능 요소를 최적화
+- **임계값 관점으로 사고하기:** 25-50% 점유율이면 대부분 대기 시간을 숨기기에 충분
+- **리소스 사용량 프로파일링하기:** NSight Compute로 실제 레지스터와 공유 메모리 소비량 파악
 
-**Investigation approach:**
+**조사 접근법:**
 
-1. **Start with benchmarking** - See the performance differences first
-2. **Profile with NSight Compute** - Get actual resource usage and occupancy data
-3. **Calculate theoretical occupancy** - Use your GPU specs and the occupancy formula
-4. **Compare theory vs reality** - This is where the mystery reveals itself!
-5. **Think about workload characteristics** - Why might theory not match practice?
+1. **벤치마킹부터 시작** - 먼저 성능 차이를 확인
+2. **NSight Compute로 프로파일링** - 실제 리소스 사용량과 점유율 데이터 확보
+3. **이론적 점유율 계산** - GPU 스펙과 점유율 공식 활용
+4. **이론과 현실 비교** - 미스터리가 드러나는 순간!
+5. **워크로드 특성 고찰** - 이론과 실제가 왜 다를 수 있는지 생각해보기
 
 </div>
 </details>
 
-## Solution
+## 풀이
 
 <details class="solution-details">
-<summary><strong>Complete Solution with Enhanced Explanation</strong></summary>
+<summary><strong>심층 해설이 포함된 완전한 풀이</strong></summary>
 
-This occupancy detective case demonstrates how resource usage affects GPU performance and reveals the complex relationship between theoretical occupancy and actual performance.
+이 점유율 탐정 사건은 리소스 사용이 GPU 성능에 어떤 영향을 미치는지 보여주고, 이론적 점유율과 실제 성능 사이의 복잡한 관계를 드러냅니다.
 
-> The specific calculations below are for **NVIDIA A10G (Ampere 8.6)** - the GPU used for testing. Your results will vary based on your GPU architecture, but the methodology and insights apply universally. Use `pixi run gpu-specs` to get your specific hardware values.
+> 아래 구체적인 계산은 **NVIDIA A10G (Ampere 8.6)** - 테스트에 사용된 GPU - 기준입니다. 결과는 GPU 아키텍처에 따라 달라지지만, 방법론과 통찰은 보편적으로 적용됩니다. `pixi run gpu-specs`를 실행하여 하드웨어별 수치를 확인하세요.
 
-## **Profiling evidence from resource analysis**
+## **리소스 분석을 통한 프로파일링 근거**
 
-**NSight Compute Resource Analysis:**
+**NSight Compute 리소스 분석:**
 
-**Actual Profiling Results (NVIDIA A10G - your results will vary by GPU):**
+**실제 프로파일링 결과 (NVIDIA A10G - GPU에 따라 결과가 다를 수 있음):**
 
-- **Minimal:** 19 registers, ~0KB shared → **63.87%** occupancy, **327.7ms**
-- **Balanced:** 25 registers, 16.4KB shared → **65.44%** occupancy, **329.4ms**
-- **Sophisticated:** 40 registers, 49.2KB shared → **65.61%** occupancy, **330.9ms**
+- **Minimal:** 19 레지스터, ~0KB 공유 메모리 → 점유율 **63.87%**, **327.7ms**
+- **Balanced:** 25 레지스터, 16.4KB 공유 메모리 → 점유율 **65.44%**, **329.4ms**
+- **Sophisticated:** 40 레지스터, 49.2KB 공유 메모리 → 점유율 **65.61%**, **330.9ms**
 
-**Performance Evidence from Benchmarking:**
+**벤치마크 성능 근거:**
 
-- **All kernels perform nearly identically** (~327-331ms, <2% difference)
-- **All achieve similar occupancy** (~64-66%) despite huge resource differences
-- **Memory bandwidth becomes the limiting factor** for all kernels
+- **세 커널 모두 거의 동일한 성능**을 보임 (~327-331ms, <2% 차이)
+- 리소스 차이가 크지만 **모두 비슷한 점유율**을 달성 (~64-66%)
+- **메모리 대역폭이 제한 요인**으로 작용
 
-## **Occupancy calculations revealed**
+## **점유율 계산의 실체**
 
-**Theoretical Occupancy Analysis (NVIDIA A10G, Ampere 8.6):**
+**이론적 점유율 분석 (NVIDIA A10G, Ampere 8.6):**
 
-**GPU Specifications (from `pixi run gpu-specs`):**
+**GPU 스펙 (`pixi run gpu-specs` 출력):**
 
-- **Registers Per SM:** 65,536
-- **Shared Memory Per SM:** 164KB (architectural maximum)
-- **Max Threads Per SM:** 1,536 (hardware limit on A10G)
-- **Threads Per Block:** 1,024 (our configuration)
-- **Max Blocks Per SM:** 32
+- **SM당 레지스터:** 65,536
+- **SM당 공유 메모리:** 164KB (아키텍처 최대치)
+- **SM당 최대 스레드:** 1,536 (A10G 하드웨어 제한)
+- **블록당 스레드:** 1,024 (커널 설정값)
+- **SM당 최대 블록:** 32
 
-**Minimal Kernel Calculation:**
-
-```
-Register Limit = 65,536 / (19 × 1,024) = 3.36 blocks per SM
-Shared Memory Limit = 164KB / 0KB = ∞ blocks per SM
-Hardware Block Limit = 32 blocks per SM
-
-Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
-Actual Blocks = min(3, ∞, 1) = 1 block per SM
-Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
-```
-
-**Balanced Kernel Calculation:**
+**Minimal 커널 계산:**
 
 ```
-Register Limit = 65,536 / (25 × 1,024) = 2.56 blocks per SM
-Shared Memory Limit = 164KB / 16.4KB = 10 blocks per SM
-Hardware Block Limit = 32 blocks per SM
+레지스터 제한 = 65,536 / (19 × 1,024) = 3.36 블록/SM
+공유 메모리 제한 = 164KB / 0KB = ∞ 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
 
-Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
-Actual Blocks = min(2, 10, 1) = 1 block per SM
-Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(3, ∞, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
 ```
 
-**Sophisticated Kernel Calculation:**
+**Balanced 커널 계산:**
 
 ```
-Register Limit = 65,536 / (40 × 1,024) = 1.64 blocks per SM
-Shared Memory Limit = 164KB / 49.2KB = 3.33 blocks per SM
-Hardware Block Limit = 32 blocks per SM
+레지스터 제한 = 65,536 / (25 × 1,024) = 2.56 블록/SM
+공유 메모리 제한 = 164KB / 16.4KB = 10 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
 
-Thread Limit = 1,536 / 1,024 = 1 block per SM (floor)
-Actual Blocks = min(1, 3, 1) = 1 block per SM
-Theoretical Occupancy = (1 × 1,024) / 1,536 = 66.7%
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(2, 10, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
 ```
 
-**Key Discovery: Theory Matches Reality!**
-
-- **Theoretical**: All kernels ~66.7% (limited by A10G's thread capacity)
-- **Actual Measured**: All ~64-66% (very close match!)
-
-This reveals that **A10G's thread limit dominates** - you can only fit 1 block of 1,024 threads per SM when the maximum is 1,536 threads. The small difference (66.7% theoretical vs ~65% actual) comes from hardware scheduling overhead and driver limitations.
-
-## **Why theory closely matches reality**
-
-**Why the small gap between theoretical (66.7%) and actual (~65%) occupancy:**
-
-1. **Hardware Scheduling Overhead**: Real warp schedulers have practical limitations beyond theoretical calculations
-2. **CUDA Runtime Reservations**: Driver and runtime overhead reduce available SM resources slightly
-3. **Memory Controller Pressure**: A10G's memory subsystem creates slight scheduling constraints
-4. **Power and Thermal Management**: Dynamic frequency scaling affects peak performance
-5. **Instruction Cache Effects**: Real kernels have instruction fetch overhead not captured in occupancy calculations
-
-**Key Insight**: The close match (66.7% theoretical vs ~65% actual) shows that **A10G's thread limit truly dominates** all three kernels, regardless of their register and shared memory differences. This is an excellent example of identifying the real bottleneck!
-
-## **The occupancy mystery explained**
-
-**The Real Mystery Revealed:**
-
-- **All kernels achieve nearly identical occupancy** (~64-66%) despite dramatic resource differences
-- **Performance is essentially identical** (<2% variation) across all kernels
-- **Theory correctly predicts occupancy** (66.7% theoretical ≈ 65% actual)
-- **The mystery isn't occupancy mismatch** - it's why identical occupancy and performance despite huge resource differences!
-
-**Why Identical Performance Despite Different Resource Usage:**
-
-**SAXPY Workload Characteristics:**
-
-- **Memory-bound operation:** Each thread does minimal computation (`y[i] = alpha * x[i] + y[i]`)
-- **High memory traffic:** Reading 2 values, writing 1 value per thread
-- **Low arithmetic intensity:** Only 2 FLOPS per 12 bytes of memory traffic
-
-**Memory Bandwidth Analysis (A10G):**
+**Sophisticated 커널 계산:**
 
 ```
-Single Kernel Pass Analysis:
-- Input arrays: 32M × 4 bytes × 2 arrays = 256MB read
-- Output array: 32M × 4 bytes × 1 array = 128MB write
-- Total per kernel: 384MB memory traffic
+레지스터 제한 = 65,536 / (40 × 1,024) = 1.64 블록/SM
+공유 메모리 제한 = 164KB / 49.2KB = 3.33 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
 
-Peak Bandwidth (A10G): 600 GB/s
-Single-pass time: 384MB / 600 GB/s ≈ 0.64ms theoretical minimum
-Benchmark time: ~328ms (includes multiple iterations + overhead)
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(1, 3, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
 ```
 
-**The Real Performance Factors:**
+**핵심 발견: 이론과 현실이 일치한다!**
 
-1. **Memory Bandwidth Utilization**: All kernels saturate available memory bandwidth
-2. **Computational Overhead**: Sophisticated kernel does extra work (register pressure effects)
-3. **Shared Memory Benefits**: Balanced kernel gets some caching advantages
-4. **Compiler Optimizations**: Modern compilers minimize register usage when possible
+- **이론적**: 모든 커널 ~66.7% (A10G의 스레드 용량에 의해 제한)
+- **실측**: 모두 ~64-66% (매우 근접한 결과!)
 
-## **Understanding the occupancy threshold concept**
+이는 **A10G의 스레드 제한이 지배적**임을 보여줍니다 - SM당 최대 스레드가 1,536개이므로 1,024 스레드 블록은 1개만 들어갑니다. 이론(66.7%)과 실측(~65%) 사이의 작은 차이는 하드웨어 스케줄링 오버헤드와 드라이버 제약에서 비롯됩니다.
 
-**Critical Insight: Occupancy is About "Sufficient" Not "Maximum"**
+## **이론과 현실이 근접한 이유**
 
-**Latency Hiding Requirements:**
+**이론적(66.7%)과 실측(~65%) 점유율 사이 작은 차이의 원인:**
 
-- **Memory latency:** ~500-800 cycles on modern GPUs
-- **Warp scheduling:** GPU needs enough warps to hide this latency
-- **Sufficient threshold:** Usually 25-50% occupancy provides effective latency hiding
+1. **하드웨어 스케줄링 오버헤드**: 실제 Warp 스케줄러는 이론적 계산을 넘어서는 실질적 제약이 있음
+2. **CUDA 런타임 예약**: 드라이버와 런타임 오버헤드가 가용 SM 리소스를 약간 줄임
+3. **메모리 컨트롤러 압박**: A10G의 메모리 서브시스템이 약간의 스케줄링 제약을 만듦
+4. **전력 및 열 관리**: 동적 주파수 조절이 최대 성능에 영향
+5. **명령어 캐시 효과**: 실제 커널은 점유율 계산에 포착되지 않는 명령어 페치 오버헤드가 있음
 
-**Why Higher Occupancy Doesn't Always Help:**
+**핵심 통찰**: 이론과 실측이 근접하다는 것(66.7% vs ~65%)은 레지스터와 공유 메모리 차이와 무관하게 **A10G의 스레드 제한이 세 커널 모두를 지배**한다는 뜻입니다. 진짜 병목을 정확히 짚어낸 좋은 사례입니다!
 
-**Resource Competition:**
+## **점유율 미스터리 해설**
 
-- More active threads compete for same memory bandwidth
-- Cache pressure increases with more concurrent accesses
-- Register/shared memory pressure can hurt individual thread performance
+**미스터리의 진짜 정체:**
 
-**Workload-Specific Optimization:**
+- 리소스 차이가 극적인데도 **세 커널 모두 거의 동일한 점유율**을 달성 (~64-66%)
+- **성능이 본질적으로 동일** (세 커널 모두 <2% 변동)
+- **이론이 점유율을 정확히 예측** (66.7% 이론 ≈ 65% 실측)
+- **미스터리는 점유율 불일치가 아닙니다** - 리소스 사용이 크게 다른데도 왜 점유율과 성능이 동일한지가 진짜 미스터리입니다!
 
-- **Compute-bound:** Higher occupancy helps hide ALU pipeline latency
-- **Memory-bound:** Memory bandwidth limits performance regardless of occupancy
-- **Mixed workloads:** Balance occupancy with other optimization factors
+**리소스 사용이 다른데 성능이 동일한 이유:**
 
-## **Real-world occupancy optimization principles**
+**SAXPY 워크로드의 특성:**
 
-**Systematic Occupancy Analysis Approach:**
+- **메모리 바운드 연산:** 각 스레드의 연산량이 극히 적음 (`y[i] = alpha * x[i] + y[i]`)
+- **높은 메모리 트래픽:** 스레드당 2개 값 읽기, 1개 값 쓰기
+- **낮은 산술 강도:** 12바이트 메모리 트래픽당 2 FLOPS만 수행
 
-**Phase 1: Calculate Theoretical Limits**
+**메모리 대역폭 분석 (A10G):**
+
+```
+단일 커널 패스 분석:
+- 입력 배열: 32M × 4바이트 × 2 배열 = 256MB 읽기
+- 출력 배열: 32M × 4바이트 × 1 배열 = 128MB 쓰기
+- 커널당 총량: 384MB 메모리 트래픽
+
+최대 대역폭 (A10G): 600 GB/s
+단일 패스 시간: 384MB / 600 GB/s ≈ 0.64ms 이론적 최소치
+벤치마크 시간: ~328ms (여러 반복 + 오버헤드 포함)
+```
+
+**실제 성능 결정 요인:**
+
+1. **메모리 대역폭 활용**: 모든 커널이 가용 메모리 대역폭을 포화시킴
+2. **연산 오버헤드**: 정교한 커널이 추가 작업을 수행 (레지스터 압박 효과)
+3. **공유 메모리 이점**: Balanced 커널이 일부 캐싱 이점을 얻음
+4. **컴파일러 최적화**: 최신 컴파일러가 가능한 한 레지스터 사용을 최소화
+
+## **점유율 임계값 개념 이해하기**
+
+**핵심 통찰: 점유율은 "최대"가 아닌 "충분함"의 문제**
+
+**대기 시간 은닉 요구 사항:**
+
+- **메모리 latency:** 최신 GPU에서 ~500-800 사이클
+- **Warp 스케줄링:** GPU는 이 latency를 숨기기 위해 충분한 Warp가 필요
+- **충분한 임계값:** 보통 25-50% 점유율이면 대기 시간을 효과적으로 숨길 수 있음
+
+**높은 점유율이 항상 도움이 되지 않는 이유:**
+
+**리소스 경쟁:**
+
+- 더 많은 활성 스레드가 동일한 메모리 대역폭을 놓고 경쟁
+- 동시 접근이 많아지면 캐시 압박이 증가
+- 레지스터/공유 메모리 압박이 개별 스레드 성능을 저하시킬 수 있음
+
+**워크로드별 최적화:**
+
+- **연산 바운드:** 높은 점유율이 ALU 파이프라인 latency를 숨기는 데 도움
+- **메모리 바운드:** 점유율과 무관하게 메모리 대역폭이 성능을 제한
+- **혼합 워크로드:** 점유율과 다른 최적화 요소 사이에서 균형 필요
+
+## **실전 점유율 최적화 원칙**
+
+**체계적 점유율 분석 접근법:**
+
+**1단계: 이론적 한계 계산**
 
 ```bash
-# Find your GPU specs
+# GPU 스펙 확인
 pixi run gpu-specs
 ```
 
-**Phase 2: Profile Actual Usage**
+**2단계: 실제 사용량 프로파일링**
 
 ```bash
-# Measure resource consumption
+# 리소스 소비량 측정
 ncu --set=@occupancy --section=LaunchStats your_kernel
 
-# Measure achieved occupancy
+# 달성된 점유율 측정
 ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
 ```
 
-**Phase 3: Performance Validation**
+**3단계: 성능 검증**
 
 ```bash
-# Always validate with actual performance measurements
+# 항상 실제 성능 측정으로 검증
 ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
 ```
 
-**Evidence-to-Decision Framework:**
+**근거 기반 의사결정 프레임워크:**
 
 ```
-OCCUPANCY ANALYSIS → OPTIMIZATION STRATEGY:
+점유율 분석 → 최적화 전략:
 
-High occupancy (>70%) + Good performance:
-→ Occupancy is sufficient, focus on other bottlenecks
+높은 점유율 (>70%) + 좋은 성능:
+→ 점유율은 충분, 다른 병목에 집중
 
-Low occupancy (<30%) + Poor performance:
-→ Increase occupancy through resource optimization
+낮은 점유율 (<30%) + 나쁜 성능:
+→ 리소스 최적화를 통해 점유율 향상 필요
 
-Good occupancy (50-70%) + Poor performance:
-→ Look for memory bandwidth, cache, or computational bottlenecks
+적당한 점유율 (50-70%) + 나쁜 성능:
+→ 메모리 대역폭, 캐시, 연산 병목 조사 필요
 
-Low occupancy (<30%) + Good performance:
-→ Workload doesn't need high occupancy (memory-bound)
+낮은 점유율 (<30%) + 좋은 성능:
+→ 워크로드가 높은 점유율을 필요로 하지 않음 (메모리 바운드)
 ```
 
-## **Practical occupancy optimization techniques**
+## **실용적인 점유율 최적화 기법**
 
-**Register Optimization:**
+**레지스터 최적화:**
 
-- **Use appropriate data types**: `float32` vs `float64`, `int32` vs `int64`
-- **Minimize intermediate variables**: Let compiler optimize temporary storage
-- **Loop unrolling consideration**: Balance occupancy vs instruction-level parallelism
+- **적절한 데이터 타입 사용**: `float32` vs `float64`, `int32` vs `int64`
+- **중간 변수 최소화**: 컴파일러가 임시 저장소를 최적화하도록 맡기기
+- **루프 전개 고려**: 점유율과 명령어 수준 병렬성 사이의 균형
 
-**Shared Memory Optimization:**
+**공유 메모리 최적화:**
 
-- **Calculate required sizes**: Avoid over-allocation
-- **Consider tiling strategies**: Balance occupancy vs data reuse
-- **Bank conflict avoidance**: Design access patterns for conflict-free access
+- **필요한 크기 계산**: 과다 할당 방지
+- **tiling 전략 고려**: 점유율과 데이터 재사용 사이의 균형
+- **뱅크 충돌 회피**: 충돌 없는 접근 패턴 설계
 
-**Block Size Tuning:**
+**블록 크기 튜닝:**
 
-- **Test multiple configurations**: 256, 512, 1024 threads per block
-- **Consider warp utilization**: Avoid partial warps when possible
-- **Balance occupancy vs resource usage**: Larger blocks may hit resource limits
+- **여러 설정 테스트**: 블록당 256, 512, 1024 스레드
+- **Warp 활용 고려**: 가능하면 불완전한 Warp 방지
+- **점유율과 리소스 사용의 균형**: 블록이 클수록 리소스 한계에 도달할 수 있음
 
-## **Key takeaways: From A10G mystery to universal principles**
+## **핵심 정리: A10G 미스터리에서 보편적 원칙으로**
 
-This A10G occupancy investigation reveals a clear progression of insights that apply to all GPU optimization:
+이 A10G 점유율 조사는 모든 GPU 최적화에 적용되는 명확한 통찰의 진행을 보여줍니다:
 
-**The A10G Discovery Chain:**
+**A10G 발견 과정:**
 
-1. **Thread limits dominated everything** - Despite 19 vs 40 registers and 0KB vs 49KB shared memory differences, all kernels hit the same 1-block-per-SM limit due to A10G's 1,536-thread capacity
-2. **Theory matched reality closely** - 66.7% theoretical vs ~65% measured occupancy shows our calculations work when we identify the right bottleneck
-3. **Memory bandwidth ruled performance** - With identical 66.7% occupancy, SAXPY's memory-bound nature (600 GB/s saturated) explained identical performance despite resource differences
+1. **스레드 제한이 모든 것을 지배** - 19 vs 40 레지스터, 0KB vs 49KB 공유 메모리 차이에도 불구하고, A10G의 1,536 스레드 용량 때문에 모든 커널이 SM당 1블록이라는 동일한 제한에 걸림
+2. **이론이 현실과 근접하게 일치** - 66.7% 이론 vs ~65% 실측 점유율은 올바른 병목을 식별했을 때 계산이 유효함을 보여줌
+3. **메모리 대역폭이 성능을 지배** - 동일한 66.7% 점유율에서, SAXPY의 메모리 바운드 특성(600 GB/s 포화)이 리소스 차이에도 불구하고 동일한 성능을 설명
 
-**Universal GPU Optimization Principles:**
+**보편적인 GPU 최적화 원칙:**
 
-**Identify the Real Bottleneck:**
+**진짜 병목 식별하기:**
 
-- Calculate occupancy limits from **all resources**: registers, shared memory, AND thread capacity
-- The most restrictive limit wins - don't assume it's always registers or shared memory
-- Memory-bound workloads (like SAXPY) are limited by bandwidth, not occupancy, once you have sufficient threads for latency hiding
+- **모든 리소스**에서 점유율 제한을 계산: 레지스터, 공유 메모리, 스레드 용량
+- 가장 제한적인 요소가 결정적 - 레지스터나 공유 메모리가 항상 병목이라고 가정하지 말 것
+- 메모리 바운드 워크로드(SAXPY 같은)는 대기 시간을 숨길 만큼 충분한 스레드만 확보되면 점유율이 아닌 대역폭이 제한 요인
 
-**When Occupancy Matters vs When It Doesn't:**
+**점유율이 중요한 경우 vs 중요하지 않은 경우:**
 
-- **High occupancy critical**: Compute-intensive kernels (GEMM, scientific simulations) that need latency hiding for ALU pipeline stalls
-- **Occupancy less critical**: Memory-bound operations (BLAS Level 1, memory copies) where bandwidth saturation occurs before occupancy becomes limiting
-- **Sweet spot**: 60-70% occupancy often sufficient for latency hiding - beyond that, focus on the real bottleneck
+- **높은 점유율이 중요**: 연산 집약적 커널(GEMM, 과학 시뮬레이션)에서 ALU 파이프라인이 멈추는 시간을 다른 Warp 실행으로 숨겨야 하는 경우
+- **점유율이 덜 중요**: 메모리 바운드 연산(BLAS Level 1, 메모리 복사)에서 점유율이 제한 요인이 되기 전에 대역폭이 포화되는 경우
+- **적정 수준**: 60-70% 점유율이면 대기 시간을 숨기기에 충분 - 그 이상은 진짜 병목에 집중
 
-**Practical Optimization Workflow:**
+**실전 최적화 워크플로우:**
 
-1. **Profile first** (`ncu --set=@occupancy`) - measure actual resource usage and occupancy
-2. **Calculate theoretical limits** using your GPU's specs (`pixi run gpu-specs`)
-3. **Identify the dominant constraint** - registers, shared memory, thread capacity, or memory bandwidth
-4. **Optimize the bottleneck** - don't waste time on non-limiting resources
-5. **Validate with end-to-end performance** - occupancy is a means to performance, not the goal
+1. **먼저 프로파일링** (`ncu --set=@occupancy`) - 실제 리소스 사용량과 점유율 측정
+2. **이론적 한계 계산** - GPU 스펙 활용 (`pixi run gpu-specs`)
+3. **지배적 제약 식별** - 레지스터, 공유 메모리, 스레드 용량, 또는 메모리 대역폭
+4. **병목 최적화** - 제한 요인이 아닌 리소스에 시간 낭비하지 않기
+5. **종단간 성능으로 검증** - 점유율은 성능을 위한 수단이지 목표가 아님
 
-The A10G case perfectly demonstrates why **systematic bottleneck analysis beats intuition** - the sophisticated kernel's high register pressure was irrelevant because thread capacity dominated, and identical occupancy plus memory bandwidth saturation explained the performance mystery completely.
+A10G 사례는 **체계적 병목 분석이 직관보다 낫다**는 것을 완벽하게 보여줍니다 - 스레드 용량이 지배적이었기에 정교한 커널의 높은 레지스터 압박은 무관했고, 동일한 점유율과 메모리 대역폭 포화가 성능 미스터리를 완전히 설명해줍니다.
 
 </details>

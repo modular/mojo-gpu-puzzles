@@ -1,103 +1,103 @@
 <!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
 
-# Puzzle 30: GPU Performance Profiling
+# Puzzle 30: GPU 프로파일링
 
-> **Beyond Correct Code**
+> **올바른 코드, 그 너머로**
 >
-> Note: **This part is specific to compatible NVIDIA GPUs**
+> 참고: **이 파트는 호환되는 NVIDIA GPU 전용입니다**
 >
-> This chapter introduces **systematic performance analysis** that transforms working GPU code into high-performance code. Unlike previous puzzles that focused on correctness and GPU features, these challenges explore **profiling methodologies** used in production GPU software development.
+> 이 챕터에서는 동작하는 GPU 코드를 고성능 코드로 탈바꿈시키는 **체계적 성능 분석**을 소개합니다. 정확성과 GPU 기능에 집중했던 이전 퍼즐들과 달리, 여기서는 실무 GPU 소프트웨어 개발에서 사용되는 **프로파일링 방법론**을 탐구합니다.
 >
 >
-> **What you'll learn:**
+> **학습 내용:**
 >
-> - **Professional profiling tools**: NSight Systems and NSight Compute for comprehensive performance analysis
-> - **Performance detective work**: Using profiler data to identify bottlenecks and optimization opportunities
-> - **Memory system insights**: Understanding how memory access patterns dramatically impact performance
-> - **Counter-intuitive discoveries**: Learning when "good" metrics actually indicate performance problems
-> - **Evidence-based optimization**: Making optimization decisions based on profiler data, not assumptions
+> - **전문 프로파일링 도구**: 종합적인 성능 분석을 위한 NSight Systems와 NSight Compute
+> - **성능 탐정 작업**: 프로파일러 데이터를 활용한 병목과 최적화 기회 파악
+> - **메모리 시스템 통찰**: 메모리 접근 패턴이 성능에 미치는 극적인 영향 이해
+> - **반직관적인 발견**: "좋아 보이는" 지표가 오히려 성능 문제를 가리키는 경우
+> - **근거 기반 최적화**: 가정이 아닌 프로파일러 데이터에 기반한 최적화 판단
 >
-> **Why this matters:** Most GPU tutorials teach basic performance concepts, but real-world GPU development requires **systematic profiling methodologies** to identify actual bottlenecks, understand memory system behavior, and make informed optimization decisions. These skills bridge the gap between academic examples and production GPU computing.
+> **왜 중요한가:** 대부분의 GPU 튜토리얼은 기본적인 성능 개념만 가르치지만, 실제 GPU 개발에서는 실질적인 병목을 찾아내고, 메모리 시스템 동작을 이해하며, 근거 있는 최적화 결정을 내리기 위한 **체계적 프로파일링 방법론**이 필요합니다. 이런 역량이 학술적 예제와 실무 GPU 컴퓨팅 사이의 격차를 메워줍니다.
 
-## Overview
+## 개요
 
-GPU performance profiling transforms correct code into high-performance code through systematic analysis. This chapter explores professional profiling tools and detective methodologies used in production GPU development.
+GPU 성능 프로파일링은 체계적 분석을 통해 올바른 코드를 고성능 코드로 변환합니다. 이 챕터에서는 실무 GPU 개발에서 사용되는 전문 프로파일링 도구와 탐정 방법론을 살펴봅니다.
 
-**Core learning objectives:**
+**핵심 학습 목표:**
 
-- **Learn profiling tool selection** and understand when to use NSight Systems vs NSight Compute
-- **Develop performance detective skills** using real profiler output to identify bottlenecks
-- **Discover counter-intuitive insights** about GPU memory systems and caching behavior
-- **Learn evidence-based optimization** based on profiler data rather than assumptions
+- **프로파일링 도구 선택법 학습** - NSight Systems와 NSight Compute를 언제 사용하는지 이해
+- **성능 탐정 능력 개발** - 실제 프로파일러 출력을 활용하여 병목 식별
+- **반직관적인 통찰 발견** - GPU 메모리 시스템과 캐싱 동작에 대한 새로운 시각
+- **근거 기반 최적화 학습** - 가정이 아닌 프로파일러 데이터에 기반한 최적화
 
-## Key concepts
+## 핵심 개념
 
-**Professional profiling tools:**
+**전문 프로파일링 도구:**
 
-- **[NSight Systems](https://developer.nvidia.com/nsight-systems) (`nsys`)**: System-wide timeline analysis for CPU-GPU coordination and memory transfers
-- **[NSight Compute](https://developer.nvidia.com/nsight-compute) (`ncu`)**: Detailed kernel analysis for memory efficiency and compute utilization
-- **Systematic methodology**: Evidence-based bottleneck identification and optimization validation
+- **[NSight Systems](https://developer.nvidia.com/nsight-systems) (`nsys`)**: CPU-GPU 조율과 메모리 전송을 위한 시스템 전체 타임라인 분석
+- **[NSight Compute](https://developer.nvidia.com/nsight-compute) (`ncu`)**: 메모리 효율과 연산 활용도를 위한 상세 커널 분석
+- **체계적 방법론**: 근거 기반 병목 식별과 최적화 검증
 
-**Key insights you'll discover:**
+**발견하게 될 핵심 통찰:**
 
-- **Counter-intuitive behavior**: When high cache hit rates actually indicate poor performance
-- **Memory access patterns**: How coalescing dramatically impacts bandwidth utilization
-- **Tool-guided optimization**: Using profiler data to make decisions rather than performance assumptions
+- **반직관적 동작**: 높은 캐시 히트율이 실제로는 낮은 성능을 나타내는 경우
+- **메모리 접근 패턴**: 병합이 대역폭 활용에 미치는 극적인 영향
+- **도구 기반 최적화**: 성능 가정이 아닌 프로파일러 데이터를 활용한 의사결정
 
-## Configuration
+## 구성
 
-**Requirements:**
+**요구 사항:**
 
-- **NVIDIA GPU**: CUDA-compatible hardware with profiling enabled
-- **CUDA Toolkit**: NSight Systems and NSight Compute tools
-- **Build setup**: Optimized code with debug info (`--debug-level=full`)
+- **NVIDIA GPU**: 프로파일링이 활성화된 CUDA 호환 하드웨어
+- **CUDA Toolkit**: NSight Systems 및 NSight Compute 도구
+- **빌드 설정**: 디버그 정보가 포함된 최적화 코드 (`--debug-level=full`)
 
-**Methodology:**
+**방법론:**
 
-1. **System-wide analysis** with NSight Systems to identify major bottlenecks
-2. **Kernel deep-dives** with NSight Compute for memory system analysis
-3. **Evidence-based conclusions** using profiler data to guide optimization
+1. NSight Systems를 활용한 **시스템 전체 분석**으로 주요 병목 식별
+2. NSight Compute를 활용한 **커널 심층 분석**으로 메모리 시스템 분석
+3. 프로파일러 데이터를 활용한 **근거 기반 결론**으로 최적화 방향 도출
 
-## Puzzle structure
+## 퍼즐 구성
 
-This chapter contains two interconnected components that build upon each other:
+이 챕터는 서로 연결되어 점진적으로 발전하는 두 개의 구성 요소로 이루어져 있습니다:
 
-### **[NVIDIA Profiling Basics Tutorial](nvidia_profiling_basics.md)**
+### **[NVIDIA 프로파일링 기초](nvidia_profiling_basics.md)**
 
-Learn the essential NVIDIA profiling ecosystem through hands-on examples with actual profiler output.
+실제 프로파일러 출력을 사용한 실습 예제를 통해 NVIDIA 프로파일링 생태계의 핵심을 배웁니다.
 
-**You'll learn:**
+**학습 내용:**
 
-- NSight Systems for system-wide timeline analysis and bottleneck identification
-- NSight Compute for detailed kernel analysis and memory system insights
-- Professional profiling workflows and best practices from production GPU development
+- 시스템 전체 타임라인 분석과 병목 식별을 위한 NSight Systems
+- 상세 커널 분석과 메모리 시스템 통찰을 위한 NSight Compute
+- 실무 GPU 개발에서 사용되는 전문 프로파일링 워크플로우와 모범 사례
 
-### **[The Cache Hit Paradox Detective Case](profile_kernels.md)**
+### **[캐시 히트의 역설](profile_kernels.md)**
 
-Apply profiling skills to solve a performance mystery where three identical vector addition kernels have dramatically different performance.
+동일한 벡터 덧셈 커널 세 개가 극적으로 다른 성능을 보이는 미스터리를 프로파일링으로 풀어봅니다.
 
-**The challenge:** Discover why the kernel with the **highest cache hit rates** has the **worst performance** - a counter-intuitive insight that challenges traditional CPU-based performance thinking.
+**도전 과제:** **캐시 히트율이 가장 높은** 커널이 **성능은 가장 낮은** 이유를 밝혀내세요 - CPU 중심의 전통적인 성능 관념을 뒤집는 반직관적 통찰입니다.
 
-**Detective skills:** Use real NSight Systems and NSight Compute data to understand memory coalescing effects and evidence-based optimization.
+**탐정 능력:** 실제 NSight Systems와 NSight Compute 데이터를 활용하여 메모리 병합 효과와 근거 기반 최적화를 이해합니다.
 
-## Getting started
+## 시작하기
 
-**Learning path:**
+**학습 경로:**
 
-1. **[Profiling Basics Tutorial](nvidia_profiling_basics.md)** - Learn NSight Systems and NSight Compute
-2. **[Cache Hit Paradox Detective Case](profile_kernels.md)** - Apply skills to solve performance mysteries
+1. **[NVIDIA 프로파일링 기초](nvidia_profiling_basics.md)** - NSight Systems와 NSight Compute 학습
+2. **[캐시 히트의 역설](profile_kernels.md)** - 성능 미스터리 풀기에 능력 적용
 
-**Prerequisites:**
+**사전 준비:**
 
-- GPU memory hierarchies and access patterns
-- GPU programming fundamentals (threads, blocks, warps, shared memory)
-- Command-line profiling tools experience
+- GPU 메모리 계층 구조와 접근 패턴
+- GPU 프로그래밍 기초 (스레드, 블록, Warp, 공유 메모리)
+- 커맨드라인 프로파일링 도구 사용 경험
 
-**Learning outcome:** Professional-level profiling skills for systematic bottleneck identification and evidence-based optimization used in production GPU development.
+**학습 성과:** 실무 GPU 개발에서 사용되는 체계적 병목 식별과 근거 기반 최적화를 위한 전문가 수준의 프로파일링 역량.
 
-This chapter teaches that **systematic profiling reveals truths that intuition misses** - GPU performance optimization requires tool-guided discovery rather than assumptions.
+이 챕터는 **체계적 프로파일링이 직관이 놓치는 진실을 드러낸다**는 것을 알려줍니다 - GPU 성능 최적화는 가정이 아닌 도구 기반의 발견이 필요합니다.
 
-**Additional resources:**
+**추가 자료:**
 
 - [NVIDIA CUDA Best Practices Guide - Profiling](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)
 - [NSight Systems User Guide](https://docs.nvidia.com/nsight-systems/UserGuide/)

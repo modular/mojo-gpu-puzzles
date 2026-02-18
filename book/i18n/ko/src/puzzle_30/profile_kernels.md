@@ -1,121 +1,121 @@
 <!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
 
-# 🕵 The Cache Hit Paradox
+# 🕵 캐시 히트의 역설
 
-## Overview
+## 개요
 
-Welcome to your first **profiling detective case**! You have three GPU kernels that all compute the same simple vector addition: `output[i] = a[i] + b[i]`. They should all perform identically, right?
+첫 번째 **프로파일링 탐정 사건**에 오신 것을 환영합니다! 세 개의 GPU 커널이 모두 동일한 벡터 덧셈 `output[i] = a[i] + b[i]`을 수행합니다. 당연히 성능도 같겠죠?
 
-**Wrong!** These kernels have dramatically different performance - one is **orders of magnitude slower** than the others. Your mission: use the [profiling tools](./nvidia_profiling_basics.md) you just learned to discover **why**.
+**아닙니다!** 이 커널들의 성능 차이는 극적입니다 - 하나는 나머지보다 **수십 배나 느립니다**. 여러분의 임무: 방금 배운 [프로파일링 도구](./nvidia_profiling_basics.md)를 활용하여 **왜** 그런지 밝혀내세요.
 
-## The challenge
+## 도전 과제
 
-Welcome to a **performance mystery** that will challenge everything you think you know about GPU optimization! You're confronted with three seemingly identical vector addition kernels that compute the exact same mathematical operation:
+GPU 최적화에 대한 기존 상식을 완전히 뒤집는 **성능 미스터리**에 오신 것을 환영합니다! 눈앞에는 겉보기에 동일한 벡터 덧셈 커널 세 개가 있고, 모두 정확히 같은 수학 연산을 수행합니다:
 
 ```
-output[i] = a[i] + b[i]  // Simple arithmetic - what could go wrong?
+output[i] = a[i] + b[i]  // 단순한 산술 연산 - 뭐가 잘못될 수 있을까?
 ```
 
-**The shocking reality:**
+**충격적인 현실:**
 
-- **All three kernels produce identical, correct results**
-- **One kernel runs ~50x slower than the others**
-- **The slowest kernel has the highest cache hit rates** (counterintuitive!)
-- **Standard performance intuition completely fails**
+- **세 커널 모두 동일하고 정확한 결과를 생성합니다**
+- **하나의 커널이 나머지보다 ~50배 느립니다**
+- **가장 느린 커널이 가장 높은 캐시 히트율을 보입니다** (예상과 정반대!)
+- **일반적인 성능 직관이 완전히 빗나갑니다**
 
-**Your detective mission:**
+**탐정 임무:**
 
-1. **Identify the performance culprit** - Which kernel is catastrophically slow?
-2. **Uncover the cache paradox** - Why do high cache hits indicate poor performance?
-3. **Decode memory access patterns** - What makes identical operations behave so differently?
-4. **Learn profiling methodology** - Use NSight tools to gather evidence, not guesses
+1. **성능 범인 식별** - 어떤 커널이 치명적으로 느린가?
+2. **캐시의 역설 규명** - 높은 캐시 히트가 왜 낮은 성능을 의미하는가?
+3. **메모리 접근 패턴 해독** - 동일한 연산이 어떻게 이렇게 다르게 동작하는가?
+4. **프로파일링 방법론 학습** - 추측이 아닌 NSight 도구로 근거를 확보하라
 
-**Why this matters:** This puzzle reveals a fundamental GPU performance principle that challenges CPU-based intuition. The skills you develop here apply to real-world GPU optimization where memory access patterns often matter more than algorithmic complexity.
+**왜 중요한가:** 이 퍼즐은 CPU 기반 직관에 도전하는 GPU 성능의 근본 원리를 드러냅니다. 여기서 기르는 역량은 메모리 접근 패턴이 알고리즘 복잡도보다 중요한 실무 GPU 최적화에 직접 적용됩니다.
 
-**The twist:** We approach this **without looking at the source code first** - using only profiling tools as your guide, just like debugging production performance issues. After we obtained the profiling results, we look at the code for further analysis.
+**반전:** 이 과정은 프로덕션 성능 이슈를 디버깅하듯이, **소스 코드를 먼저 보지 않고** 프로파일링 도구만으로 접근합니다. 프로파일링 결과를 얻은 후에 코드를 들여다봅니다.
 
-## Your detective toolkit
+## 탐정 도구 모음
 
-From the profiling tutorial, you have:
+프로파일링 튜토리얼에서 배운 도구들:
 
-- **NSight Systems (`nsys`)** - Find which kernels are slow
-- **NSight Compute (`ncu`)** - Analyze why kernels are slow
-- **Memory efficiency metrics** - Detect poor access patterns
+- **NSight Systems (`nsys`)** - 어떤 커널이 느린지 찾기
+- **NSight Compute (`ncu`)** - 커널이 왜 느린지 분석하기
+- **메모리 효율 지표** - 비효율적인 접근 패턴 탐지
 
-## Getting started
+## 시작하기
 
-### Step 1: Run the benchmark
+### Step 1: 벤치마크 실행
 
 ```bash
 pixi shell -e nvidia
 mojo problems/p30/p30.mojo --benchmark
 ```
 
-You'll see dramatic timing differences between kernels! One kernel is **much slower** than the others. Your job is to figure out why using profiling tools **without** looking at the code.
+커널 간에 극적인 실행 시간 차이를 확인할 수 있습니다! 하나의 커널이 나머지보다 **훨씬 느립니다**. 코드를 **보지 않고** 프로파일링 도구만으로 원인을 찾아내는 것이 목표입니다.
 
-**Example output:**
+**출력 예시:**
 
 ```
 | name    | met (ms)  | iters |
 | ------- | --------- | ----- |
 | kernel1 | 171.85    | 11    |
-| kernel2 | 1546.68   | 11    |  <- This one is much slower!
+| kernel2 | 1546.68   | 11    |  <- 이것만 유독 느리다!
 | kernel3 | 172.18    | 11    |
 ```
 
-### Step 2: Prepare your code for profiling
+### Step 2: 프로파일링을 위한 빌드 준비
 
-**Critical**: For accurate profiling, build with full debug information while keeping optimizations enabled:
+**필수**: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를 포함하여 빌드합니다:
 
 ```bash
 mojo build --debug-level=full problems/p30/p30.mojo -o problems/p30/p30_profiler
 ```
 
-**Why this matters**:
+**중요한 이유**:
 
-- **Full debug info**: Provides complete symbol tables, variable names, and source line mapping for profilers
-- **Comprehensive analysis**: Enables NSight tools to correlate performance data with specific code locations
-- **Optimizations enabled**: Ensures realistic performance measurements that match production builds
+- **전체 디버그 정보**: 프로파일러에 완전한 심볼 테이블, 변수명, 소스 라인 매핑을 제공
+- **종합 분석**: NSight 도구가 성능 데이터를 특정 코드 위치와 연관 짓는 것이 가능
+- **최적화 유지**: 프로덕션 빌드와 동일한 현실적인 성능 측정 보장
 
-## Step 3: System-wide investigation (NSight Systems)
+## Step 3: 시스템 전체 조사 (NSight Systems)
 
-Profile each kernel to see the big picture:
+각 커널을 프로파일링하여 전체 그림을 확인합니다:
 
 ```bash
-# Profile each kernel individually using the optimized build (with warmup to avoid cold start effects)
+# 최적화 빌드로 각 커널을 개별 프로파일링 (콜드 스타트 방지를 위한 워밍업 포함)
 nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
 nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
 nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
 
-# Analyze the results
+# 결과 분석
 nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep > ./problems/p30/kernel1_profile.txt
 nsys stats --force-export=true ./problems/p30/kernel2_profile.nsys-rep > ./problems/p30/kernel2_profile.txt
 nsys stats --force-export=true ./problems/p30/kernel3_profile.nsys-rep > ./problems/p30/kernel3_profile.txt
 ```
 
-**Look for:**
+**확인할 사항:**
 
-- **GPU Kernel Summary** - Which kernels take longest?
-- **Kernel execution times** - How much do they vary?
-- **Memory transfer patterns** - Are they similar across implementations?
+- **GPU 커널 요약** - 어떤 커널이 가장 오래 걸리는가?
+- **커널 실행 시간** - 차이가 얼마나 나는가?
+- **메모리 전송 패턴** - 구현 간에 비슷한가?
 
-## Step 4: Kernel deep-dive (NSight Compute)
+## Step 4: 커널 심층 분석 (NSight Compute)
 
-Once you identify the slow kernel, analyze it with NSight Compute:
+느린 커널을 식별한 후, NSight Compute로 분석합니다:
 
 ```bash
-# Deep-dive into memory patterns for each kernel using the optimized build
+# 최적화 빌드로 각 커널의 메모리 패턴 심층 분석
 ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
 ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
 ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
 
-# View the results
+# 결과 확인
 ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 ```
 
-**When you run these commands, you'll see output like this:**
+**위 명령어를 실행하면 다음과 같은 출력이 나타납니다:**
 
 ```
 Kernel1: Memory Throughput: ~308 Gbyte/s, Max Bandwidth: ~51%
@@ -123,300 +123,300 @@ Kernel2: Memory Throughput: ~6 Gbyte/s,   Max Bandwidth: ~12%
 Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 ```
 
-**Key metrics to investigate:**
+**주요 조사 지표:**
 
-- **Memory Throughput (Gbyte/s)** - Actual memory bandwidth achieved
-- **Max Bandwidth (%)** - Percentage of theoretical peak bandwidth utilized
-- **L1/TEX Hit Rate (%)** - L1 cache efficiency
-- **L2 Hit Rate (%)** - L2 cache efficiency
+- **Memory Throughput (Gbyte/s)** - 실제 달성한 메모리 대역폭
+- **Max Bandwidth (%)** - 이론적 최대 대역폭 대비 활용률
+- **L1/TEX Hit Rate (%)** - L1 캐시 효율
+- **L2 Hit Rate (%)** - L2 캐시 효율
 
-**🤔 The Counterintuitive Result**: You'll notice Kernel2 has the **highest** cache hit rates but the **lowest** performance! This is the key mystery to solve.
+**🤔 반직관적인 결과**: Kernel2가 **가장 높은** 캐시 히트율을 보이면서 **가장 낮은** 성능을 보입니다! 이것이 풀어야 할 핵심 미스터리입니다.
 
-## Step 5: Detective questions
+## Step 5: 탐정 질문
 
-Use your profiling evidence to answer these questions by looking at the kernel code <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>:
+프로파일링 근거를 바탕으로 커널 코드 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>를 살펴보며 다음 질문에 답해 보세요:
 
-### Performance analysis
+### 성능 분석
 
-1. **Which kernel achieves the highest Memory Throughput?** (Look at Gbyte/s values)
-2. **Which kernel has the lowest Max Bandwidth utilization?** (Compare percentages)
-3. **What's the performance gap in memory throughput?** (Factor difference between fastest and slowest)
+1. **어떤 커널이 가장 높은 Memory Throughput을 달성하는가?** (Gbyte/s 값 확인)
+2. **어떤 커널의 Max Bandwidth 활용률이 가장 낮은가?** (백분율 비교)
+3. **메모리 처리량의 성능 격차는 얼마인가?** (가장 빠른 것과 가장 느린 것의 배수 차이)
 
-### The cache paradox
+### 캐시의 역설
 
-4. **Which kernel has the highest L1/TEX Hit Rate?**
-5. **Which kernel has the highest L2 Hit Rate?**
-6. **🤯 Why does the kernel with the BEST cache hit rates perform the WORST?**
+1. **어떤 커널의 L1/TEX Hit Rate가 가장 높은가?**
+2. **어떤 커널의 L2 Hit Rate가 가장 높은가?**
+3. **🤯 캐시 히트율이 가장 높은 커널이 왜 성능이 가장 나쁜가?**
 
-### Memory access detective work
+### 메모리 접근 패턴 탐구
 
-7. **Can high cache hit rates actually indicate a performance problem?**
-8. **What memory access pattern would cause high cache hits but low throughput?**
-9. **Why might "efficient caching" be a symptom of "inefficient memory access"?**
+1. **높은 캐시 히트율이 실제로 성능 문제를 나타낼 수 있는가?**
+2. **어떤 메모리 접근 패턴이 높은 캐시 히트와 낮은 처리량을 동시에 유발하는가?**
+3. **왜 "효율적인 캐싱"이 "비효율적인 메모리 접근"의 증상일 수 있는가?**
 
-### The "Aha!" Moment
+### "아하!" 순간
 
-10. **Based on the profiling evidence, what fundamental GPU memory principle does this demonstrate?**
+1. **프로파일링 근거를 바탕으로, 이 사례가 보여주는 GPU 메모리의 근본 원리는 무엇인가?**
 
-**Key insight to discover**: Sometimes **high cache hit rates are a red flag**, not a performance victory!
+**발견할 핵심 통찰**: 때로는 **높은 캐시 히트율이 성능 승리가 아니라 위험 신호**입니다!
 
-## Solution
+## 풀이
 
-The mystery reveals a fundamental GPU performance principle: **memory access patterns dominate performance for memory-bound operations**, even when kernels perform identical computations.
+이 미스터리는 GPU 성능의 근본 원리를 드러냅니다: 커널이 동일한 연산을 수행하더라도 **메모리 바운드 연산에서는 메모리 접근 패턴이 성능을 지배합니다**.
 
-**The profiling evidence reveals:**
+**프로파일링 근거가 밝히는 것:**
 
-1. **Performance hierarchy**: Kernel1 and Kernel3 are fast, Kernel2 is catastrophically slow (orders of magnitude difference)
-2. **Memory throughput tells the story**: Fast kernels achieve high bandwidth utilization, slow kernel achieves minimal utilization
-3. **The cache paradox**: The slowest kernel has the **highest** cache hit rates - revealing that high cache hits can indicate **poor** memory access patterns
-4. **Memory access patterns matter more than algorithmic complexity** for memory-bound GPU workloads
+1. **성능 위계**: Kernel1과 Kernel3은 빠르고, Kernel2는 치명적으로 느림 (수십 배 차이)
+2. **메모리 처리량이 답을 말해준다**: 빠른 커널은 높은 대역폭 활용률을 달성하고, 느린 커널은 최소한의 활용률만 달성
+3. **캐시의 역설**: 가장 느린 커널이 **가장 높은** 캐시 히트율을 보임 - 높은 캐시 히트가 **비효율적인** 메모리 접근 패턴을 나타낼 수 있음을 시사
+4. **메모리 바운드 GPU 워크로드에서는 메모리 접근 패턴이 알고리즘 복잡도보다 중요**
 
 <details class="solution-details">
-<summary><strong>Complete Solution with Enhanced Explanation</strong></summary>
+<summary><strong>상세 풀이와 심층 설명</strong></summary>
 
-This profiling detective case demonstrates how memory access patterns create orders-of-magnitude performance differences, even when kernels perform identical mathematical operations.
+이 프로파일링 탐정 사건은 커널이 동일한 수학 연산을 수행하더라도 메모리 접근 패턴이 어떻게 수십 배의 성능 차이를 만들어내는지 보여줍니다.
 
-## **Performance evidence from profiling**
+## **프로파일링으로 확인한 성능 근거**
 
-**NSight Systems Timeline Analysis:**
+**NSight Systems 타임라인 분석:**
 
-- **Kernel 1**: Short execution time - **EFFICIENT**
-- **Kernel 3**: Similar to Kernel 1 - **EFFICIENT**
-- **Kernel 2**: Dramatically longer execution time - **INEFFICIENT**
+- **Kernel 1**: 짧은 실행 시간 - **효율적**
+- **Kernel 3**: Kernel 1과 유사 - **효율적**
+- **Kernel 2**: 극적으로 긴 실행 시간 - **비효율적**
 
-**NSight Compute Memory Analysis (Hardware-Agnostic Patterns):**
+**NSight Compute 메모리 분석 (하드웨어 무관한 패턴):**
 
-- **Efficient kernels (1 & 3)**: High memory throughput, good bandwidth utilization, moderate cache hit rates
-- **Inefficient kernel (2)**: Very low memory throughput, poor bandwidth utilization, **extremely high cache hit rates**
+- **효율적인 커널 (1 & 3)**: 높은 메모리 처리량, 양호한 대역폭 활용률, 보통 수준의 캐시 히트율
+- **비효율적인 커널 (2)**: 매우 낮은 메모리 처리량, 열악한 대역폭 활용률, **극도로 높은 캐시 히트율**
 
-## **The cache paradox revealed**
+## **캐시의 역설 규명**
 
-**🤯 The Counterintuitive Discovery:**
+**🤯 반직관적인 발견:**
 
-- **Kernel2 has the HIGHEST cache hit rates** but **WORST performance**
-- **This challenges conventional wisdom**: "High cache hits = good performance"
-- **The truth**: High cache hit rates can be a **symptom of inefficient memory access patterns**
+- **Kernel2가 가장 높은 캐시 히트율**을 보이면서 **성능은 최악**
+- **기존 상식에 대한 도전**: "높은 캐시 히트 = 좋은 성능"
+- **진실**: 높은 캐시 히트율은 **비효율적인 메모리 접근 패턴의 증상**일 수 있음
 
-**Why the Cache Paradox Occurs:**
+**캐시의 역설이 발생하는 이유:**
 
-**Traditional CPU intuition (INCORRECT for GPUs):**
+**전통적인 CPU 직관 (GPU에서는 틀림):**
 
-- Higher cache hit rates always mean better performance
-- Cache hits reduce memory traffic, improving efficiency
+- 캐시 히트율이 높을수록 항상 성능이 좋다
+- 캐시 히트는 메모리 트래픽을 줄여 효율을 높인다
 
-**GPU memory reality (CORRECT understanding):**
+**GPU 메모리의 현실 (올바른 이해):**
 
-- **Coalescing matters more than caching** for memory-bound workloads
-- **Poor access patterns** can cause artificial cache hit inflation
-- **Memory bandwidth utilization** is the real performance indicator
+- 메모리 바운드 워크로드에서는 **병합이 캐싱보다 중요**
+- **비효율적인 접근 패턴**은 인위적으로 캐시 히트율을 부풀릴 수 있음
+- **메모리 대역폭 활용률**이 진정한 성능 지표
 
-## **Root cause analysis - memory access patterns**
+## **근본 원인 분석 - 메모리 접근 패턴**
 
-**Actual Kernel Implementations from p30.mojo:**
+**p30.mojo의 실제 커널 구현:**
 
-**Kernel 1 - Efficient Coalesced Access:**
+**Kernel 1 - 효율적인 병합 접근:**
 
 ```mojo
 {{#include ../../../../../problems/p30/p30.mojo:kernel1}}
 ```
 
-*Standard thread indexing - adjacent threads access adjacent memory*
+*표준 스레드 인덱싱 - 인접 스레드가 인접 메모리에 접근*
 
-**Kernel 2 - Inefficient Strided Access:**
+**Kernel 2 - 비효율적인 stride 접근:**
 
 ```mojo
 {{#include ../../../../../problems/p30/p30.mojo:kernel2}}
 ```
 
-*Large stride=512 creates memory access gaps - same operation but scattered access*
+*큰 stride=512로 메모리 접근 간격 발생 - 동일한 연산이지만 흩어진 접근*
 
-**Kernel 3 - Efficient Reverse Access:**
+**Kernel 3 - 효율적인 역순 접근:**
 
 ```mojo
 {{#include ../../../../../problems/p30/p30.mojo:kernel3}}
 ```
 
-*Reverse indexing but still predictable - adjacent threads access adjacent addresses (just backwards)*
+*역순 인덱싱이지만 여전히 예측 가능 - 인접 스레드가 인접 주소에 접근 (방향만 반대)*
 
-**Pattern Analysis:**
+**패턴 분석:**
 
-- **Kernel 1**: Classic coalesced access - adjacent threads access adjacent memory
-- **Kernel 2**: Catastrophic strided access - threads jump by 512 elements
-- **Kernel 3**: Reverse but still coalesced within warps - predictable pattern
+- **Kernel 1**: 전형적인 병합 접근 - 인접 스레드가 인접 메모리에 접근
+- **Kernel 2**: 치명적인 stride 접근 - 스레드가 512개 요소씩 건너뜀
+- **Kernel 3**: 역순이지만 Warp 내에서는 병합 유지 - 예측 가능한 패턴
 
-## **Understanding the memory system**
+## **메모리 시스템 이해**
 
-**GPU Memory Architecture Fundamentals:**
+**GPU 메모리 아키텍처 기초:**
 
-- **Warp execution**: 32 threads execute together
-- **Cache line size**: 128 bytes (32 float32 values)
-- **Coalescing requirement**: Adjacent threads should access adjacent memory
+- **Warp 실행**: 32개 스레드가 함께 실행
+- **캐시 라인 크기**: 128바이트 (float32 값 32개)
+- **병합 요건**: 인접 스레드가 인접 메모리에 접근해야 함
 
-**p30.mojo Configuration Details:**
+**p30.mojo 설정 상세:**
 
 ```mojo
-comptime SIZE = 16 * 1024 * 1024          # 16M elements (64MB of float32 data)
-comptime THREADS_PER_BLOCK = (1024, 1)    # 1024 threads per block
-comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 16,384 blocks total
-comptime dtype = DType.float32             # 4 bytes per element
+comptime SIZE = 16 * 1024 * 1024          # 16M 요소 (float32 데이터 64MB)
+comptime THREADS_PER_BLOCK = (1024, 1)    # 블록당 1024 스레드
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 총 16,384 블록
+comptime dtype = DType.float32             # 요소당 4바이트
 ```
 
-**Why these settings matter:**
+**이 설정이 중요한 이유:**
 
-- **Large dataset (16M)**: Makes memory access patterns clearly visible
-- **1024 threads/block**: Maximum CUDA threads per block
-- **32 warps/block**: Each block contains 32 warps of 32 threads each
+- **대용량 데이터셋 (16M)**: 메모리 접근 패턴의 차이가 명확하게 드러남
+- **블록당 1024 스레드**: CUDA 최대 스레드 수
+- **블록당 32 Warp**: 각 블록에 32개의 Warp(각 32 스레드)가 포함
 
-**Memory Access Efficiency Visualization:**
+**메모리 접근 효율 시각화:**
 
 ```
-KERNEL 1 (Coalesced):           KERNEL 2 (Strided by 512):
-Warp threads 0-31:             Warp threads 0-31:
+KERNEL 1 (병합):                KERNEL 2 (stride 512):
+Warp 스레드 0-31:               Warp 스레드 0-31:
   Thread 0: Memory[0]            Thread 0: Memory[0]
   Thread 1: Memory[1]            Thread 1: Memory[512]
   Thread 2: Memory[2]            Thread 2: Memory[1024]
   ...                           ...
   Thread 31: Memory[31]          Thread 31: Memory[15872]
 
-Result: 1 cache line fetch       Result: 32 separate cache line fetches
-Status: ~308 GB/s throughput     Status: ~6 GB/s throughput
-Cache: Efficient utilization     Cache: Same lines hit repeatedly!
+결과: 캐시 라인 1회 fetch          결과: 별도의 캐시 라인 32회 fetch
+상태: ~308 GB/s 처리량            상태: ~6 GB/s 처리량
+캐시: 효율적 활용                  캐시: 같은 라인을 반복 히트!
 ```
 
-**KERNEL 3 (Reverse but Coalesced):**
+**KERNEL 3 (역순이지만 병합):**
 
 ```
-Warp threads 0-31 (first iteration):
+Warp 스레드 0-31 (첫 번째 반복):
   Thread 0: Memory[SIZE-1]     (reverse_i = SIZE-1-0)
   Thread 1: Memory[SIZE-2]     (reverse_i = SIZE-1-1)
   Thread 2: Memory[SIZE-3]     (reverse_i = SIZE-1-2)
   ...
   Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
 
-Result: Adjacent addresses (just backwards)
-Status: ~310 GB/s throughput (nearly identical to Kernel 1)
-Cache: Efficient utilization despite reverse order
+결과: 인접한 주소 (방향만 반대)
+상태: ~310 GB/s 처리량 (Kernel 1과 거의 동일)
+캐시: 역순임에도 효율적 활용
 ```
 
-## **The cache paradox explained**
+## **캐시의 역설 설명**
 
-**Why Kernel2 (stride=512) has high cache hit rates but poor performance:**
+**Kernel2 (stride=512)가 높은 캐시 히트율에도 성능이 나쁜 이유:**
 
-**The stride=512 disaster explained:**
+**stride=512의 재앙 설명:**
 
 ```mojo
-# Each thread processes multiple elements with huge gaps:
+# 각 스레드가 큰 간격으로 여러 요소를 처리:
 Thread 0: elements [0, 512, 1024, 1536, 2048, ...]
 Thread 1: elements [1, 513, 1025, 1537, 2049, ...]
 Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 ...
 ```
 
-**Why this creates the cache paradox:**
+**이것이 캐시의 역설을 만드는 이유:**
 
-1. **Cache line repetition**: Each 512-element jump stays within overlapping cache line regions
-2. **False efficiency illusion**: Same cache lines accessed repeatedly = artificially high "hit rates"
-3. **Bandwidth catastrophe**: 32 threads × 32 separate cache lines = massive memory traffic
-4. **Warp execution mismatch**: GPU designed for coalesced access, but getting scattered access
+1. **캐시 라인 반복**: 512개 요소를 건너뛰어도 겹치는 캐시 라인 영역 안에 머무름
+2. **거짓 효율의 환상**: 같은 캐시 라인에 반복 접근 = 인위적으로 높은 "히트율"
+3. **대역폭 재앙**: 32개 스레드 × 32개 별도 캐시 라인 = 막대한 메모리 트래픽
+4. **Warp 실행 불일치**: GPU는 병합 접근에 맞게 설계되었지만, 흩어진 접근을 받음
 
-**Concrete example with float32 (4 bytes each):**
+**float32 (각 4바이트) 구체 예시:**
 
-- **Cache line**: 128 bytes = 32 float32 values
-- **Stride 512**: Thread jumps by 512×4 = 2048 bytes = 16 cache lines apart!
-- **Warp impact**: 32 threads need 32 different cache lines instead of 1
+- **캐시 라인**: 128바이트 = float32 값 32개
+- **stride 512**: 스레드가 512×4 = 2048바이트 = 16 캐시 라인 간격으로 점프!
+- **Warp 영향**: 32개 스레드가 1개 대신 32개의 서로 다른 캐시 라인을 필요로 함
 
-**The key insight**: High cache hits in Kernel2 are **repeated access to inefficiently fetched data**, not smart caching!
+**핵심 통찰**: Kernel2의 높은 캐시 히트는 **비효율적으로 가져온 데이터에 대한 반복 접근**이지, 현명한 캐싱이 아닙니다!
 
-## **Profiling methodology insights**
+## **프로파일링 방법론 통찰**
 
-**Systematic Detective Approach:**
+**체계적 탐정 접근법:**
 
-**Phase 1: NSight Systems (Big Picture)**
+**1단계: NSight Systems (전체 그림)**
 
-- Identify which kernels are slow
-- Rule out obvious bottlenecks (memory transfers, API overhead)
-- Focus on kernel execution time differences
+- 어떤 커널이 느린지 식별
+- 명백한 병목 배제 (메모리 전송, API 오버헤드)
+- 커널 실행 시간 차이에 집중
 
-**Phase 2: NSight Compute (Deep Analysis)**
+**2단계: NSight Compute (심층 분석)**
 
-- Analyze memory throughput metrics
-- Compare bandwidth utilization percentages
-- Investigate cache hit rates and patterns
+- 메모리 처리량 지표 분석
+- 대역폭 활용률 백분율 비교
+- 캐시 히트율과 패턴 조사
 
-**Phase 3: Connect Evidence to Theory**
+**3단계: 근거를 이론으로 연결**
 
 ```
-PROFILING EVIDENCE → CODE ANALYSIS:
+프로파일링 근거 → 코드 분석:
 
-NSight Compute Results:           Actual Code Pattern:
-- Kernel1: ~308 GB/s            → i = block_idx*block_dim + thread_idx (coalesced)
-- Kernel2: ~6 GB/s, 99% L2 hits → i += 512 (catastrophic stride)
-- Kernel3: ~310 GB/s            → reverse_i = size-1-forward_i (reverse coalesced)
+NSight Compute 결과:              실제 코드 패턴:
+- Kernel1: ~308 GB/s            → i = block_idx*block_dim + thread_idx (병합)
+- Kernel2: ~6 GB/s, 99% L2 hits → i += 512 (치명적 stride)
+- Kernel3: ~310 GB/s            → reverse_i = size-1-forward_i (역순 병합)
 
-The profiler data directly reveals the memory access efficiency!
+프로파일러 데이터가 메모리 접근 효율을 직접 드러냅니다!
 ```
 
-**Evidence-to-Code Connection:**
+**근거에서 코드로의 연결:**
 
-- **High throughput + normal cache rates** = Coalesced access (Kernels 1 & 3)
-- **Low throughput + high cache rates** = Inefficient strided access (Kernel 2)
-- **Memory bandwidth utilization** reveals true efficiency regardless of cache statistics
+- **높은 처리량 + 보통 캐시 히트율** = 병합 접근 (Kernel 1 & 3)
+- **낮은 처리량 + 높은 캐시 히트율** = 비효율적 stride 접근 (Kernel 2)
+- **메모리 대역폭 활용률**이 캐시 통계와 무관하게 진정한 효율을 드러냄
 
-## **Real-world performance implications**
+## **실무 성능 시사점**
 
-**This pattern affects many GPU applications:**
+**이 패턴이 영향을 미치는 GPU 응용 분야:**
 
-**Scientific Computing:**
+**과학 컴퓨팅:**
 
-- **Stencil computations**: Neighbor access patterns in grid simulations
-- **Linear algebra**: Matrix traversal order (row-major vs column-major)
-- **PDE solvers**: Grid point access patterns in finite difference methods
+- **stencil 연산**: 그리드 시뮬레이션에서의 이웃 접근 패턴
+- **선형 대수**: 행렬 순회 순서 (row-major vs column-major)
+- **편미분 방정식 풀이**: 유한 차분법에서의 격자점 접근 패턴
 
-**Graphics and Image Processing:**
+**그래픽스 및 이미지 처리:**
 
-- **Texture filtering**: Sample access patterns in shaders
-- **Image convolution**: Filter kernel memory access
-- **Color space conversion**: Channel interleaving strategies
+- **텍스처 필터링**: 셰이더에서의 샘플 접근 패턴
+- **이미지 convolution**: 필터 커널의 메모리 접근
+- **색 공간 변환**: 채널 인터리빙 전략
 
-**Machine Learning:**
+**머신러닝:**
 
-- **Matrix operations**: Memory layout optimization in GEMM
-- **Tensor contractions**: Multi-dimensional array access patterns
-- **Data loading**: Batch processing and preprocessing pipelines
+- **행렬 연산**: GEMM에서의 메모리 레이아웃 최적화
+- **텐서 축약**: 다차원 배열 접근 패턴
+- **데이터 로딩**: 배치 처리와 전처리 파이프라인
 
-## **Fundamental GPU optimization principles**
+## **GPU 최적화의 근본 원칙**
 
-**Memory-First Optimization Strategy:**
+**메모리 우선 최적화 전략:**
 
-1. **Memory patterns dominate**: Access patterns often matter more than algorithmic complexity
-2. **Coalescing is critical**: Design for adjacent threads accessing adjacent memory
-3. **Measure bandwidth utilization**: Focus on actual throughput, not just cache statistics
-4. **Profile systematically**: Use NSight tools to identify real bottlenecks
+1. **메모리 패턴이 지배**: 접근 패턴이 알고리즘 복잡도보다 더 중요한 경우가 많음
+2. **병합이 핵심**: 인접 스레드가 인접 메모리에 접근하도록 설계
+3. **대역폭 활용률 측정**: 캐시 통계가 아닌 실제 처리량에 집중
+4. **체계적 프로파일링**: NSight 도구로 실제 병목을 파악
 
-**Key Technical Insights:**
+**핵심 기술 통찰:**
 
-- **Memory-bound workloads**: Bandwidth utilization determines performance
-- **Cache metrics can mislead**: High hit rates don't always indicate efficiency
-- **Warp-level thinking**: Design access patterns for 32-thread execution groups
-- **Hardware-aware programming**: Understanding GPU memory hierarchy is essential
+- **메모리 바운드 워크로드**: 대역폭 활용률이 성능을 결정
+- **캐시 지표의 함정**: 높은 히트율이 항상 효율을 의미하지는 않음
+- **Warp 레벨 사고**: 32개 스레드 실행 그룹을 위한 접근 패턴 설계
+- **하드웨어 인식 프로그래밍**: GPU 메모리 계층 구조 이해가 필수
 
-## **Key takeaways**
+## **핵심 교훈**
 
-This detective case reveals that **GPU performance optimization requires abandoning CPU intuition** for **memory-centric thinking**:
+이번에 탐구한 사례는 **GPU 성능 최적화가 CPU 직관을 버리고 메모리 중심 사고로 전환할 것을** 요구한다는 점을 보여줍니다:
 
-**Critical insights:**
+**핵심 통찰:**
 
-- High cache hit rates can indicate poor memory access patterns (not good performance)
-- Memory bandwidth utilization matters more than cache statistics
-- Simple coalesced patterns often outperform complex algorithms
-- Profiling tools reveal counterintuitive performance truths
+- 높은 캐시 히트율은 좋은 성능이 아니라 비효율적인 메모리 접근 패턴을 나타낼 수 있음
+- 메모리 대역폭 활용률이 캐시 통계보다 중요
+- 단순한 병합 패턴이 복잡한 알고리즘보다 더 빠른 경우가 많음
+- 프로파일링 도구가 직관으로는 알 수 없는 성능의 진실을 드러냄
 
-**Practical methodology:**
+**실전 방법론:**
 
-- Profile systematically with NSight Systems and NSight Compute
-- Design for adjacent threads accessing adjacent memory (coalescing)
-- Let profiler evidence guide optimization decisions, not intuition
+- NSight Systems와 NSight Compute로 체계적으로 프로파일링
+- 인접 스레드가 인접 메모리에 접근하도록 설계 (병합)
+- 직관이 아닌 프로파일러 근거를 바탕으로 최적화 결정
 
-The cache paradox demonstrates that **high-level metrics can mislead without architectural understanding** - applicable far beyond GPU programming.
+캐시의 역설은 **아키텍처에 대한 이해 없이 고수준 지표에 의존하면 잘못된 결론에 이를 수 있다**는 점을 보여줍니다 - GPU 프로그래밍을 넘어 두루 적용되는 교훈입니다.
 
 </details>

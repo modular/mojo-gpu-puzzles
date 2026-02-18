@@ -136,7 +136,7 @@ Roofline 모델은 현재 성능을 진단할 뿐 아니라, 최적화 방향까
 
 ## 8. 실전에서 roofline 활용하기
 
-1. **Kernel profiling**: Nsight Compute 같은 도구로 실제 FLOPs와 메모리 트래픽 측정
+1. **Kernel 프로파일링**: Nsight Compute 같은 도구로 실제 FLOPs와 메모리 트래픽 측정
 2. **데이터 포인트 표시**: 산술 강도와 실측 성능 계산
 3. **병목 식별**: 메모리 바운드 kernel은 메모리 상한 위에, 연산 바운드 kernel은 연산 상한에 근접
 4. **최적화 선택**: 메모리 바운드 kernel에는 대역폭 개선에, 연산 바운드 kernel에는 알고리즘 변경에 집중

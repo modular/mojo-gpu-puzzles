@@ -258,7 +258,7 @@ tiled 행렬 곱셈 구현은 작은 타일 \\((3 \times 3)\\)을 사용하여 �
        acc += a_shared[local_row, k] * b_shared[k, local_col]
    ```
 
-   - 공유 메모리 bank conflict 회피:
+   - 공유 메모리 뱅크 충돌 회피:
 
      ```txt
      Bank Conflict Free (Good):        Bank Conflicts (Bad):
@@ -270,7 +270,7 @@ tiled 행렬 곱셈 구현은 작은 타일 \\((3 \times 3)\\)을 사용하여 �
      (a_shared는 broadcast)               같은 뱅크에 직렬 접근
      ```
 
-     **공유 메모리 bank conflict 설명:**
+     **공유 메모리 뱅크 충돌 설명:**
      - **왼쪽 (Good)**: `b_shared[k,threadIdx.x]`는 서로 다른 뱅크에 접근하고, `a_shared[0,k]`는 모든 스레드에 broadcast됩니다
      - **오른쪽 (Bad)**: b_shared가 column-major였다면 스레드들이 동시에 같은 뱅크에 접근하게 됩니다
      - **핵심**: 이것은 글로벌 메모리 coalescing이 아닌 공유 메모리 접근 패턴에 관한 것입니다
@@ -289,7 +289,7 @@ tiled 행렬 곱셈 구현은 작은 타일 \\((3 \times 3)\\)을 사용하여 �
 - \\((3 \times 3)\\) 타일로 \\((9 \times 9)\\) 행렬 처리 (딱 맞는 크기!)
 - 공유 메모리로 빠른 타일 접근
 - 병합된 메모리 접근으로 글로벌 메모리 트랜잭션 최소화
-- Bank conflict를 피하도록 최적화된 공유 메모리 레이아웃과 접근 패턴
+- 뱅크 충돌을 피하도록 최적화된 공유 메모리 레이아웃과 접근 패턴
 
 1. **결과 기록**:
 
@@ -429,7 +429,7 @@ tiled 행렬 곱셈 구현은 작은 타일 \\((3 \times 3)\\)을 사용하여 �
 
    **세 가지 별개의 메모리 고려사항:**
    1. **글로벌→공유 coalescing**: `Layout.row_major(1, TPB)`로 병합 글로벌 메모리 접근 보장
-   2. **공유 메모리 연산**: `a_shared[local_row, k] * b_shared[k, local_col]`로 bank conflict 회피
+   2. **공유 메모리 연산**: `a_shared[local_row, k] * b_shared[k, local_col]`로 뱅크 충돌 회피
    3. **행렬 연산**: 연산 패턴이 A × B를 결정 (A × B^T가 아님)
 
 4. **완벽한 tiling으로 경계 검사 불필요**
@@ -527,7 +527,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 **이것이 최적인 이유:**
 
 - **병합 글로벌 메모리 접근**: `Layout.row_major(1, TPB)`로 효율적인 로딩 보장
-- **Bank conflict 회피**: 공유 메모리 접근 패턴이 충돌을 방지
+- **뱅크 충돌 회피**: 공유 메모리 접근 패턴이 충돌을 방지
 - **표준 알고리즘**: 가장 일반적인 행렬 곱셈 패턴을 구현
 
 </div>
