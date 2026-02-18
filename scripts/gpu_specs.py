@@ -10,26 +10,29 @@ This script detects and reports GPU specifications across multiple vendors:
 Features:
 - Automatic platform detection
 - Unified output format across all vendors
-- Fallback mechanisms for missing dependencies
+- Graceful fallback mechanisms for missing dependencies
 - Integration with PyTorch backends
+- Bash-friendly output modes for scripting
 
-Requirements:
-- NVIDIA: pynvml, torch with CUDA support
-- AMD: rocm-smi, torch with ROCm support
+Requirements (with automatic fallbacks):
+- NVIDIA: pynvml (preferred) → PyTorch CUDA → nvidia-smi (minimum)
+- AMD: rocm-smi (required), torch with ROCm support (optional)
 - Apple: system_profiler, sysctl (built-in macOS tools)
 
 Usage:
-    # With pixi (recommended - handles all dependencies):
+    # Full specs (default):
     pixi run gpu-specs              # NVIDIA (default)
     pixi run -e amd gpu-specs       # AMD
     pixi run -e apple gpu-specs     # Apple
 
-    # With uv (install GPU-specific deps if needed):
-    uv pip install -e ".[nvidia]"   # For NVIDIA GPUs
-    uv pip install -e ".[amd]"      # For AMD GPUs
-    uv run poe gpu-specs
+    # Bash-friendly output modes:
+    python3 scripts/gpu_specs.py --platform           # Output: nvidia, amd, apple, or unknown
+    python3 scripts/gpu_specs.py --compute-cap        # Output: 8.6 (NVIDIA only, empty otherwise)
+    python3 scripts/gpu_specs.py --check-platform nvidia  # Exit 0 if match, 1 otherwise
 """
 
+import argparse
+import os
 import platform
 import subprocess
 import sys
@@ -62,7 +65,22 @@ class GPUSpecs:
 
 
 def detect_platform() -> str:
-    """Detect the current platform and available GPU backends"""
+    """Detect the current platform and available GPU backends
+
+    Returns one of: 'nvidia', 'amd', 'apple_silicon', 'unknown'
+
+    Supports mocking via environment variables for testing:
+    - MOCK_GPU_PLATFORM: Set to nvidia/amd/apple_silicon/unknown to override detection
+    """
+    # Check for mock override (for testing)
+    mock_platform = os.getenv("MOCK_GPU_PLATFORM")
+    if mock_platform:
+        valid_platforms = ["nvidia", "amd", "apple_silicon", "unknown"]
+        if mock_platform in valid_platforms:
+            return mock_platform
+        else:
+            print(f"Warning: Invalid MOCK_GPU_PLATFORM='{mock_platform}', ignoring", file=sys.stderr)
+
     system = platform.system()
 
     # Check for Apple Silicon
@@ -101,16 +119,117 @@ def detect_platform() -> str:
     return "unknown"
 
 
-def get_nvidia_specs(device_index: int = 0) -> GPUSpecs:
-    """Get NVIDIA GPU specifications using pynvml and PyTorch"""
+def _fallback_nvidia_smi(device_index: int = 0) -> tuple:
+    """Fallback to nvidia-smi for basic GPU info when pynvml/PyTorch unavailable
+
+    Returns:
+        tuple: (compute_capability, device_name, total_memory_gb)
+
+    Raises:
+        RuntimeError: If nvidia-smi fails or output cannot be parsed
+    """
     try:
-        try:
-            import pynvml
-        except ImportError:
-            raise RuntimeError(
-                "pynvml not installed. Install with: uv pip install -e '.[nvidia]'\n"
-                "Or use pixi which handles all dependencies automatically."
-            )
+        # Query nvidia-smi for compute capability, name, and memory
+        result = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=compute_cap,name,memory.total",
+                "--format=csv,noheader,nounits",
+                f"--id={device_index}"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(f"nvidia-smi failed: {result.stderr}")
+
+        # Parse output: "8.6, NVIDIA GeForce RTX 3090, 24576"
+        output = result.stdout.strip()
+        parts = [p.strip() for p in output.split(",")]
+
+        if len(parts) < 3:
+            raise RuntimeError(f"Unexpected nvidia-smi output: {output}")
+
+        # Parse compute capability
+        cap_str = parts[0]
+        major, minor = cap_str.split(".")
+        cap = (int(major), int(minor))
+
+        # Get name and memory
+        name_str = parts[1]
+        total_memory_gb = float(parts[2]) / 1024  # Convert MiB to GiB
+
+        return cap, name_str, total_memory_gb
+
+    except FileNotFoundError:
+        raise RuntimeError(
+            "nvidia-smi not found. Please ensure NVIDIA drivers are installed.\n"
+            "For full functionality, install pynvml: uv pip install nvidia-ml-py\n"
+            "Or use pixi which handles all dependencies automatically."
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to query nvidia-smi: {e}")
+
+
+def get_nvidia_specs(device_index: int = 0) -> GPUSpecs:
+    """Get NVIDIA GPU specifications using pynvml, PyTorch, or nvidia-smi
+
+    Gracefully falls back through multiple detection methods:
+    1. pynvml (most accurate, requires nvidia-ml-py package)
+    2. PyTorch CUDA (good accuracy, requires torch with CUDA)
+    3. nvidia-smi (basic info, requires NVIDIA drivers)
+
+    Supports mocking via environment variables for testing:
+    - MOCK_COMPUTE_CAP: Set to compute capability (e.g., "8.6") to override detection
+    """
+    try:
+        # Check for mock compute capability
+        mock_cap = os.getenv("MOCK_COMPUTE_CAP")
+        if mock_cap:
+            try:
+                major, minor = mock_cap.split(".")
+                cap = (int(major), int(minor))
+                name_str = f"Mock GPU (Compute {mock_cap})"
+                total_memory_gb = 16.0  # Mock value
+            except ValueError:
+                print(f"Warning: Invalid MOCK_COMPUTE_CAP='{mock_cap}', ignoring", file=sys.stderr)
+                mock_cap = None
+
+        if not mock_cap:
+            # Try pynvml first (most accurate)
+            pynvml_available = False
+            try:
+                import pynvml
+                pynvml.nvmlInit()
+                handle = pynvml.nvmlDeviceGetHandleByIndex(device_index)
+                name = pynvml.nvmlDeviceGetName(handle)
+                name_str = name if isinstance(name, str) else name.decode()
+                cap = pynvml.nvmlDeviceGetCudaComputeCapability(handle)
+
+                # Get memory info
+                mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                total_memory_gb = mem_info.total / (1024**3)
+                pynvml_available = True
+            except (ImportError, Exception) as e:
+                # Fall back to PyTorch or nvidia-smi
+                if isinstance(e, ImportError):
+                    print("Note: pynvml not available, falling back to PyTorch/nvidia-smi", file=sys.stderr)
+
+                # Try PyTorch CUDA as fallback
+                if torch and torch.cuda.is_available():
+                    try:
+                        d = torch.cuda.get_device_properties(device_index)
+                        cap = (d.major, d.minor)
+                        name_str = d.name
+                        total_memory_gb = d.total_memory / (1024**3)
+                    except Exception:
+                        # Last resort: try nvidia-smi
+                        cap, name_str, total_memory_gb = _fallback_nvidia_smi(device_index)
+                else:
+                    # No PyTorch, try nvidia-smi directly
+                    cap, name_str, total_memory_gb = _fallback_nvidia_smi(device_index)
 
         arch_map = {
             "5.0": "Maxwell",
@@ -128,16 +247,6 @@ def get_nvidia_specs(device_index: int = 0) -> GPUSpecs:
             "8.9": "Ada",
             "9.0": "Hopper",
         }
-
-        pynvml.nvmlInit()
-        handle = pynvml.nvmlDeviceGetHandleByIndex(device_index)
-        name = pynvml.nvmlDeviceGetName(handle)
-        name_str = name if isinstance(name, str) else name.decode()
-        cap = pynvml.nvmlDeviceGetCudaComputeCapability(handle)
-
-        # Get memory info
-        mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        total_memory_gb = mem_info.total / (1024**3)
 
         cap_str = f"{cap[0]}.{cap[1]}"
         arch = arch_map.get(cap_str, f"Compute {cap_str}")
@@ -190,8 +299,26 @@ def get_nvidia_specs(device_index: int = 0) -> GPUSpecs:
 
 
 def get_amd_specs(device_index: int = 0) -> GPUSpecs:
-    """Get AMD GPU specifications using ROCm tools"""
+    """Get AMD GPU specifications using ROCm tools
+
+    Supports mocking via environment variables for testing:
+    - MOCK_GPU_PLATFORM=amd: Returns mock AMD GPU specs
+    """
     try:
+        # Check for mock override
+        if os.getenv("MOCK_GPU_PLATFORM") == "amd":
+            return GPUSpecs(
+                vendor="AMD",
+                device_name="Mock AMD GPU (RDNA 3)",
+                architecture="RDNA 3",
+                compute_units=96,
+                total_memory_gb=24.0,
+                additional_info={
+                    "unit_type": "Compute Unit (CU)",
+                    "note": "Mock GPU for testing",
+                },
+            )
+
         # Get basic info from rocm-smi
         result = subprocess.run(
             ["rocm-smi", "--showproductname"],
@@ -368,6 +495,39 @@ def get_apple_silicon_specs() -> GPUSpecs:
         raise RuntimeError(f"Failed to get Apple Silicon specs: {e}")
 
 
+def print_gpu_summary(specs: GPUSpecs):
+    """Print concise GPU summary (user-friendly format)"""
+    # First line: Device name and key specs
+    summary_parts = [specs.device_name]
+
+    if specs.compute_capability:
+        summary_parts.append(f"Compute {specs.compute_capability}, {specs.architecture}")
+    elif specs.architecture and specs.architecture != specs.device_name:
+        summary_parts.append(specs.architecture)
+
+    if specs.compute_units:
+        unit_type = "cores" if specs.vendor == "Apple" else "SMs" if specs.vendor == "NVIDIA" else "CUs"
+        summary_parts.append(f"{specs.compute_units} {unit_type}")
+
+    if specs.total_memory_gb:
+        memory_type = "unified memory" if specs.additional_info and specs.additional_info.get("unified_memory") else ""
+        summary_parts.append(f"{specs.total_memory_gb:.0f}GB {memory_type}".strip())
+
+    print(f"GPU: {', '.join(summary_parts)}")
+
+    # Second line: Platform info
+    platform_parts = [f"{specs.vendor}"]
+
+    if specs.vendor == "Apple" and specs.additional_info and specs.additional_info.get("metal_support"):
+        platform_parts.append("with Metal support")
+    elif specs.vendor == "NVIDIA":
+        platform_parts.append("with CUDA support")
+    elif specs.vendor == "AMD":
+        platform_parts.append("with ROCm support")
+
+    print(f"Platform: {' '.join(platform_parts)}")
+
+
 def print_gpu_specs(specs: GPUSpecs):
     """Print GPU specifications in a unified format"""
     print(f"Device: {specs.device_name}")
@@ -420,8 +580,112 @@ def print_gpu_specs(specs: GPUSpecs):
 
 def main():
     """Main function to detect and display GPU specifications"""
+    parser = argparse.ArgumentParser(
+        description="Cross-platform GPU specification detection",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Output Modes:
+  (default)              Display full GPU specifications (human-readable)
+  --platform             Output platform name only (bash-friendly): nvidia, amd, apple, or unknown
+  --compute-cap          Output NVIDIA compute capability only (bash-friendly): e.g., 8.6
+  --check-platform NAME  Check if platform matches NAME, exit 0 if yes, 1 if no
+
+Examples:
+  python3 scripts/gpu_specs.py                    # Full specs
+  python3 scripts/gpu_specs.py --platform         # Output: nvidia
+  python3 scripts/gpu_specs.py --compute-cap      # Output: 8.6
+  python3 scripts/gpu_specs.py --check-platform nvidia  # Exit 0 if NVIDIA, 1 otherwise
+
+Testing:
+  MOCK_GPU_PLATFORM=nvidia MOCK_COMPUTE_CAP=8.6 python3 scripts/gpu_specs.py --platform
+  MOCK_GPU_PLATFORM=apple python3 scripts/gpu_specs.py --check-platform apple
+        """
+    )
+
+    parser.add_argument(
+        "--platform",
+        action="store_true",
+        help="Output platform name only (nvidia/amd/apple/unknown)"
+    )
+
+    parser.add_argument(
+        "--compute-cap",
+        action="store_true",
+        help="Output NVIDIA compute capability only (e.g., 8.6), empty for non-NVIDIA"
+    )
+
+    parser.add_argument(
+        "--check-platform",
+        metavar="NAME",
+        help="Check if platform matches NAME (nvidia/amd/apple), exit 0 if match, 1 otherwise"
+    )
+
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Display concise GPU summary (user-friendly format)"
+    )
+
+    args = parser.parse_args()
+
     try:
         platform_type = detect_platform()
+
+        # Normalize platform name for output (remove underscore)
+        platform_name = platform_type.replace("_", "")  # apple_silicon -> apple
+        if platform_name == "applesilicon":
+            platform_name = "apple"
+
+        # Handle --platform flag (output platform name only)
+        if args.platform:
+            print(platform_name)
+            sys.exit(0)
+
+        # Handle --compute-cap flag (output compute capability only)
+        if args.compute_cap:
+            if platform_type == "nvidia":
+                try:
+                    specs = get_nvidia_specs()
+                    print(specs.compute_capability)
+                    sys.exit(0)
+                except Exception as e:
+                    # If we can't get specs, log the error and output empty string
+                    print(f"Warning: failed to get NVIDIA compute capability: {e}", file=sys.stderr)
+                    print("")
+                    sys.exit(0)
+            else:
+                # Not NVIDIA, output empty string
+                print("")
+                sys.exit(0)
+
+        # Handle --check-platform flag (check if platform matches)
+        if args.check_platform:
+            requested_platform = args.check_platform.lower().replace("_", "")
+            if requested_platform == "applesilicon":
+                requested_platform = "apple"
+
+            if platform_name == requested_platform:
+                sys.exit(0)  # Match
+            else:
+                sys.exit(1)  # No match
+
+        # Handle --summary flag (concise output)
+        if args.summary:
+            if platform_type == "nvidia":
+                specs = get_nvidia_specs()
+                print_gpu_summary(specs)
+            elif platform_type == "amd":
+                specs = get_amd_specs()
+                print_gpu_summary(specs)
+            elif platform_type == "apple_silicon":
+                specs = get_apple_silicon_specs()
+                print_gpu_summary(specs)
+            else:
+                print(f"GPU: No compatible GPU detected")
+                print(f"Platform: {platform_type}")
+            sys.exit(0)
+
+        # Default behavior: display full specs
         print(f'Detected Platform: {platform_type.replace("_", " ").title()}\n')
 
         if platform_type == "nvidia":
@@ -454,7 +718,7 @@ def main():
                 )
 
     except Exception as e:
-        print(f"Error detecting GPU specifications: {e}")
+        print(f"Error detecting GPU specifications: {e}", file=sys.stderr)
         sys.exit(1)
 
 

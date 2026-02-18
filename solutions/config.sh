@@ -26,61 +26,46 @@ AMD_UNSUPPORTED_PUZZLES=("p09" "p10" "p30" "p31" "p32" "p33" "p34")
 APPLE_UNSUPPORTED_PUZZLES=("p09" "p10" "p20" "p21" "p22" "p29" "p30" "p31" "p32" "p33" "p34")
 
 # GPU detection functions
+# These now use scripts/gpu_specs.py as the single source of truth
 detect_gpu_platform() {
     # Detect GPU platform: nvidia, amd, apple, or unknown
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null | head -1)
-        if [ -n "$gpu_name" ]; then
-            echo "nvidia"
-            return
+    # Uses gpu_specs.py for accurate cross-platform detection
+
+    # Try to find gpu_specs.py relative to this config file
+    # BASH_SOURCE[0] in a sourced file points to the sourced file itself
+    local config_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+    local gpu_specs_path="${config_dir}/../scripts/gpu_specs.py"
+
+    if [ -f "$gpu_specs_path" ]; then
+        python3 "$gpu_specs_path" --platform 2>/dev/null || echo "unknown"
+    else
+        # Fallback: try from current working directory
+        if [ -f "scripts/gpu_specs.py" ]; then
+            python3 "scripts/gpu_specs.py" --platform 2>/dev/null || echo "unknown"
+        else
+            echo "unknown"
         fi
     fi
-
-    # Check for AMD ROCm
-    if command -v rocm-smi >/dev/null 2>&1; then
-        if rocm-smi --showproductname >/dev/null 2>&1; then
-            echo "amd"
-            return
-        fi
-    fi
-
-    # Check for Apple Silicon (macOS)
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        if system_profiler SPDisplaysDataType 2>/dev/null | grep -q "Apple"; then
-            echo "apple"
-            return
-        fi
-    fi
-
-    echo "unknown"
 }
 
 detect_gpu_compute_capability() {
-    # Try to detect NVIDIA GPU compute capability
-    local compute_capability=""
+    # Detect NVIDIA GPU compute capability (returns empty for non-NVIDIA)
+    # Uses gpu_specs.py with pynvml for accurate detection
 
-    # Method 1: Try nvidia-smi with expanded GPU list
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        local gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null | head -1)
-        if [ -n "$gpu_name" ]; then
-            # Check for known GPU families and their compute capabilities
-            if echo "$gpu_name" | grep -qi "H100"; then
-                compute_capability="9.0"
-            elif echo "$gpu_name" | grep -qi "RTX 40[0-9][0-9]\|RTX 4090\|L40S\|L4\|RTX 2000 Ada Generation"; then
-                compute_capability="8.9"
-            elif echo "$gpu_name" | grep -qi "RTX 30[0-9][0-9]\|RTX 3090\|RTX 3080\|RTX 3070\|RTX 3060\|A40\|A30\|A10"; then
-                compute_capability="8.6"
-            elif echo "$gpu_name" | grep -qi "A100"; then
-                compute_capability="8.0"
-            elif echo "$gpu_name" | grep -qi "V100"; then
-                compute_capability="7.0"
-            elif echo "$gpu_name" | grep -qi "T4\|RTX 20[0-9][0-9]\|RTX 2080\|RTX 2070\|RTX 2060"; then
-                compute_capability="7.5"
-            fi
+    # Try to find gpu_specs.py relative to this config file
+    local config_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+    local gpu_specs_path="${config_dir}/../scripts/gpu_specs.py"
+
+    if [ -f "$gpu_specs_path" ]; then
+        python3 "$gpu_specs_path" --compute-cap 2>/dev/null
+    else
+        # Fallback: try from current working directory
+        if [ -f "scripts/gpu_specs.py" ]; then
+            python3 "scripts/gpu_specs.py" --compute-cap 2>/dev/null
+        else
+            echo ""
         fi
     fi
-
-    echo "$compute_capability"
 }
 
 # Check if a puzzle is in an array
