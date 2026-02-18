@@ -648,8 +648,9 @@ Testing:
                     specs = get_nvidia_specs()
                     print(specs.compute_capability)
                     sys.exit(0)
-                except Exception:
-                    # If we can't get specs, output empty string
+                except Exception as e:
+                    # If we can't get specs, log the error and output empty string
+                    print(f"Warning: failed to get NVIDIA compute capability: {e}", file=sys.stderr)
                     print("")
                     sys.exit(0)
             else:
