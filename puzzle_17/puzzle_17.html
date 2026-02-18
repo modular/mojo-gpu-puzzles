@@ -386,7 +386,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <div class="solution-explanation">
 This single line does several important things:
 <ol>
-<li>Calls <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a> on the GPU context (<code>gpu_ctx</code> is of type <a href="https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/">DeviceContext</a>) to schedule our kernel execution</li>
+<li>Calls <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a> on the GPU context (<code>gpu_ctx</code> is of type <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>) to schedule our kernel execution</li>
 <li>Passes the necessary layout and size information as <strong>compile-time</strong> parameters</li>
 <li>Provides the output, input, and kernel tensors as runtime arguments</li>
 <li>Configures the execution grid with the appropriate dimensions</li>
@@ -424,7 +424,7 @@ This single line does several important things:
 <li>
 <p><strong>Kernel execution</strong>:</p>
 <ul>
-<li>When <a href="">model.execute(…)</a> is called, our <code>conv1d_kernel</code> receives the data</li>
+<li>When <code>model.execute(...)</code> is called, our <code>conv1d_kernel</code> receives the data</li>
 <li>GPU thread configuration is set with <code>grid_dim</code> and <code>block_dim</code></li>
 <li>Results are transferred back to CPU with <code>result.to(CPU())</code></li>
 <li>NumPy verification compares our results with the expected output</li>

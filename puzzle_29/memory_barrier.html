@@ -188,7 +188,7 @@
                         <h1 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation">Double-Buffered Stencil Computation</a></h1>
 <blockquote>
 <p><strong>🔬 Fine-Grained Synchronization: mbarrier vs barrier()</strong></p>
-<p>This puzzle introduces <strong>explicit memory barrier APIs</strong> that provide significantly more control than the basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> function used in previous puzzles.</p>
+<p>This puzzle introduces <strong>explicit memory barrier APIs</strong> that provide significantly more control than the basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> function used in previous puzzles.</p>
 <p><strong>Basic <code>barrier()</code> limitations:</strong></p>
 <ul>
 <li><strong>Fire-and-forget</strong>: Single synchronization point with no state tracking</li>
@@ -197,11 +197,11 @@
 <li><strong>Coarse-grained</strong>: Limited control over memory ordering and timing</li>
 <li><strong>Static coordination</strong>: Cannot adapt to different thread participation patterns</li>
 </ul>
-<p><strong>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/"><code>mbarrier APIs</code></a> capabilities:</strong></p>
+<p><strong>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier APIs</code></a> capabilities:</strong></p>
 <ul>
-<li><strong>Precise control</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
-<li><strong>State tracking</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
-<li><strong>Flexible waiting</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> allows threads to wait for specific completion states</li>
+<li><strong>Precise control</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a> sets up reusable barrier objects with specific thread counts</li>
+<li><strong>State tracking</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> signals individual thread completion and maintains arrival count</li>
+<li><strong>Flexible waiting</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> allows threads to wait for specific completion states</li>
 <li><strong>Reusable objects</strong>: Same barrier can be reinitialized and reused across multiple iterations</li>
 <li><strong>Multiple barriers</strong>: Different barrier objects for different synchronization points (initialization, iteration, finalization)</li>
 <li><strong>Hardware optimization</strong>: Maps directly to GPU hardware synchronization primitives for better performance</li>
@@ -248,15 +248,15 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Implementing double-buffering patterns for iterative algorithms</li>
-<li>Coordinating explicit memory barriers using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a></li>
+<li>Coordinating explicit memory barriers using <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a></li>
 <li>Managing alternating read/write buffer roles across iterations</li>
 </ul>
 <p>The key insight is understanding how to safely coordinate buffer swapping in iterative algorithms where race conditions between read and write operations can corrupt data if not properly synchronized.</p>
 <p><strong>Why this matters:</strong> Most GPU tutorials show simple one-pass algorithms, but real-world applications often require <strong>iterative refinement</strong> with multiple passes over data. Double-buffering is essential for algorithms like iterative solvers, image processing filters, and simulation updates where each iteration depends on the complete results of the previous iteration.</p>
 <p><strong>Previous vs. current synchronization:</strong></p>
 <ul>
-<li><strong>Previous puzzles (<a href="../puzzle_08/puzzle_08.html">P8</a>, <a href="../puzzle_12/puzzle_12.html">P12</a>, <a href="../puzzle_15/puzzle_15.html">P15</a>):</strong> Simple <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> calls for single-pass algorithms</li>
-<li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
+<li><strong>Previous puzzles (<a href="../puzzle_08/puzzle_08.html">P8</a>, <a href="../puzzle_12/puzzle_12.html">P12</a>, <a href="../puzzle_15/puzzle_15.html">P15</a>):</strong> Simple <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> calls for single-pass algorithms</li>
+<li><strong>This puzzle:</strong> Explicit <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> for precise control over buffer swap timing</li>
 </ul>
 <p><strong>Memory barrier specialization:</strong> Unlike basic thread synchronization, this puzzle uses <strong>explicit memory barriers</strong> that provide fine-grained control over when memory operations complete, essential for complex memory access patterns.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
@@ -283,7 +283,7 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 <p><strong>Initialization phase:</strong></p>
 <ul>
 <li><strong>Buffer setup</strong>: Initialize buffer_A with input data, buffer_B with zeros</li>
-<li><strong>Barrier initialization</strong>: Set up <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init">mbarrier objects</a> for synchronization points</li>
+<li><strong>Barrier initialization</strong>: Set up <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier objects</a> for synchronization points</li>
 <li><strong>Thread coordination</strong>: All threads participate in initialization</li>
 </ul>
 <p><strong>Iterative processing:</strong></p>
@@ -295,8 +295,8 @@ In double-buffering patterns, you need <strong>precise coordination</strong> bet
 </ul>
 <p><strong>Memory barrier coordination:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive">mbarrier_arrive()</a></strong>: Each thread signals completion of write phase</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait">mbarrier_test_wait()</a></strong>: All threads wait until everyone completes writes</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>: Each thread signals completion of write phase</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>: All threads wait until everyone completes writes</li>
 <li><strong>Buffer swap safety</strong>: Prevents reading from buffer while others still writing</li>
 <li><strong>Barrier reinitialization</strong>: Reset barrier state between iterations</li>
 </ul>
@@ -444,9 +444,9 @@ fn double_buffered_stencil_computation[
 </ul>
 <h3 id="memory-barrier-coordination"><a class="header" href="#memory-barrier-coordination"><strong>Memory barrier coordination</strong></a></h3>
 <ul>
-<li>Call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a> after each thread completes its write operations</li>
-<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> to ensure all threads finish before buffer swap</li>
-<li>Reinitialize barriers between iterations for reuse: <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init"><code>mbarrier_init()</code></a></li>
+<li>Call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> after each thread completes its write operations</li>
+<li>Use <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> to ensure all threads finish before buffer swap</li>
+<li>Reinitialize barriers between iterations for reuse: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
 <li>Only thread 0 should reinitialize barriers to avoid race conditions</li>
 </ul>
 <h3 id="output-selection"><a class="header" href="#output-selection"><strong>Output selection</strong></a></h3>
@@ -646,7 +646,7 @@ GPU output sample: 1.0 1.0 1.0
 <p>The double-buffered stencil solution demonstrates sophisticated memory barrier coordination and iterative processing patterns. This approach enables safe iterative refinement algorithms that require precise control over memory access timing.</p>
 <h2 id="double-buffering-architecture-design"><a class="header" href="#double-buffering-architecture-design"><strong>Double-buffering architecture design</strong></a></h2>
 <p>The fundamental breakthrough in this puzzle is <strong>explicit memory barrier control</strong> rather than simple thread synchronization:</p>
-<p><strong>Traditional approach:</strong> Use basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a> for simple thread coordination</p>
+<p><strong>Traditional approach:</strong> Use basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> for simple thread coordination</p>
 <ul>
 <li>All threads execute same operation on different data</li>
 <li>Single barrier call synchronizes thread completion</li>
@@ -655,7 +655,7 @@ GPU output sample: 1.0 1.0 1.0
 <p><strong>This puzzle’s innovation:</strong> Different buffer roles coordinated with explicit memory barriers</p>
 <ul>
 <li>buffer_A and buffer_B alternate between read source and write target</li>
-<li><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> provide precise control over memory operation completion</li>
+<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> provide precise control over memory operation completion</li>
 <li>Explicit coordination prevents race conditions during buffer transitions</li>
 </ul>
 <h2 id="iterative-processing-coordination"><a class="header" href="#iterative-processing-coordination"><strong>Iterative processing coordination</strong></a></h2>
@@ -669,16 +669,16 @@ GPU output sample: 1.0 1.0 1.0
 <h2 id="memory-barrier-api-usage"><a class="header" href="#memory-barrier-api-usage"><strong>Memory barrier API usage</strong></a></h2>
 <p>Understanding the mbarrier coordination pattern:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_init">mbarrier_init()</a></strong>: Initialize barrier for specific thread count (TPB)</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive">mbarrier_arrive()</a></strong>: Signal individual thread completion of write phase</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait">mbarrier_test_wait()</a></strong>: Block until all threads signal completion</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>: Initialize barrier for specific thread count (TPB)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>: Signal individual thread completion of write phase</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>: Block until all threads signal completion</li>
 <li><strong>Reinitialization</strong>: Reset barrier state between iterations for reuse</li>
 </ul>
 <p><strong>Critical timing sequence:</strong></p>
 <ol>
 <li><strong>All threads write</strong>: Each thread updates its assigned buffer element</li>
-<li><strong>Signal completion</strong>: Each thread calls <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
-<li><strong>Wait for all</strong>: All threads call <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#mbarrier_test_wait"><code>mbarrier_test_wait()</code></a></li>
+<li><strong>Signal completion</strong>: Each thread calls <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a></li>
+<li><strong>Wait for all</strong>: All threads call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a></li>
 <li><strong>Safe to proceed</strong>: Now safe to swap buffer roles for next iteration</li>
 </ol>
 <h2 id="stencil-operation-mechanics"><a class="header" href="#stencil-operation-mechanics"><strong>Stencil operation mechanics</strong></a></h2>

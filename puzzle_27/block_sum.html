@@ -186,8 +186,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="blocksum-essentials---block-level-dot-product"><a class="header" href="#blocksum-essentials---block-level-dot-product">block.sum() Essentials - Block-Level Dot Product</a></h1>
-<p>Implement the dot product we saw in <a href="../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
+<p>Implement the dot product we saw in <a href="../puzzle_12/puzzle_12.html">puzzle 12</a> using block-level <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use <code>block.sum()</code> to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See <a href="#technical-investigation-what-does-blocksum-actually-compile-to">technical investigation</a> for LLVM analysis.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -392,7 +392,7 @@ Just like warp.sum() but for the entire block
 <p>Each thread should handle one element pair from vectors <code>a</code> and <code>b</code>. What operation combines these into a “partial result” that can be summed across threads?</p>
 <h3 id="3-layouttensor-indexing-patterns"><a class="header" href="#3-layouttensor-indexing-patterns">3. <strong>LayoutTensor indexing patterns</strong></a></h3>
 <p>When accessing <code>LayoutTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
-<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
+<h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>A template parameter specifying the block size</li>
@@ -531,7 +531,7 @@ bar.sync           0;                        // barrier synchronization
 <li><strong>Traditional</strong>: Tree reduction with shared memory + multiple <code>bar.sync</code> calls</li>
 <li><strong>block.sum()</strong>: Butterfly shuffle pattern + optimized cross-warp coordination</li>
 </ul>
-<p>The performance advantage comes from <strong>expertly optimized algorithm choice</strong> (butterfly &gt; tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.</p>
+<p>The performance advantage comes from <strong>expertly optimized algorithm choice</strong> (butterfly &gt; tree), not from instruction count or magical hardware. Take a look at <a href="https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo">block.mojo</a> in Mojo gpu module for more details about the implementation.</p>
 <h2 id="performance-insights"><a class="header" href="#performance-insights">Performance insights</a></h2>
 <p><strong><code>block.sum()</code> vs Traditional:</strong></p>
 <ul>

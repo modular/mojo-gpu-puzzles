@@ -186,8 +186,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="blockbroadcast-vector-normalization"><a class="header" href="#blockbroadcast-vector-normalization">block.broadcast() Vector Normalization</a></h1>
-<p>Implement vector mean normalization by combining <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum">block.sum</a> and <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast</a> operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast()</a> operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
+<p>Implement vector mean normalization by combining <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a> and <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a> operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.</p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all).</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -321,7 +321,7 @@ if local_i == 0:
     # Compute mean from total_sum and size
 </code></pre>
 <p><strong>Why thread 0?</strong> Consistent with <code>block.sum()</code> pattern where thread 0 receives the result.</p>
-<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
+<h3 id="4-blockbroadcast-api-concepts"><a class="header" href="#4-blockbroadcast-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
 <li>Template parameters: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>

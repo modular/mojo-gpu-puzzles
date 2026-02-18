@@ -190,7 +190,7 @@
 <h2 id="moving-to-layouttensor"><a class="header" href="#moving-to-layouttensor">Moving to LayoutTensor</a></h2>
 <p>So far in our GPU puzzle journey, we’ve been exploring two parallel approaches to GPU memory management:</p>
 <ol>
-<li>Raw memory management with direct pointer manipulation using <a href="https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a></li>
+<li>Raw memory management with direct pointer manipulation using <a href="https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a></li>
 <li>The more structured <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> with its powerful address_space parameter for memory allocation</li>
 </ol>
 <p>Starting from this puzzle, we’re transitioning exclusively to using <code>LayoutTensor</code>. This abstraction provides several benefits:</p>

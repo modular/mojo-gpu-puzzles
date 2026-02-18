@@ -194,16 +194,16 @@
 <p>Real-world GPU algorithms often require <strong>hierarchical coordination</strong> where different levels of the GPU hierarchy (<a href="../puzzle_24/warp_simt.html">warps from Puzzle 24</a>, <a href="../puzzle_27/block_sum.html">blocks from Puzzle 27</a>, clusters) perform specialized roles in a coordinated computation pipeline, extending <a href="../puzzle_29/barrier.html">multi-stage processing from Puzzle 29</a>.</p>
 <p><strong>Your task</strong>: Implement a multi-stage algorithm where:</p>
 <ol>
-<li><strong><a href="../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient intra-warp coordination (from <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li><strong><a href="../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient intra-warp coordination (from <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
 <li><strong><a href="../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using <a href="../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
-<li><strong>Cluster-level</strong>: Coordinate between blocks using <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
+<li><strong>Cluster-level</strong>: Coordinate between blocks using <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
 </ol>
 <h3 id="algorithm-specification"><a class="header" href="#algorithm-specification">Algorithm specification</a></h3>
 <p><strong>Multi-Stage Processing Pipeline:</strong></p>
 <ol>
 <li><strong>Stage 1 (<a href="../puzzle_24/puzzle_24.html">Warp-level</a>)</strong>: Each warp elects one thread to sum 32 consecutive elements</li>
 <li><strong>Stage 2 (<a href="../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp sums within each block</li>
-<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 </ol>
 <p><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing
 <strong>Output</strong>: 4 block results showing hierarchical processing effects</p>
@@ -247,7 +247,7 @@
 <div class="solution-tips">
 <h3 id="warp-level-optimization-patterns"><a class="header" href="#warp-level-optimization-patterns"><strong>Warp-level optimization patterns</strong></a></h3>
 <ul>
-<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> to select one thread per warp for computation (from <a href="../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
+<li>Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> to select one thread per warp for computation (from <a href="../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
 <li>The elected thread should process 32 consecutive elements (leveraging <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
 <li>Compute warp start with <code>(local_i // 32) * 32</code> to find warp boundaries (lane indexing from <a href="../puzzle_24/puzzle_24.html">warp concepts</a>)</li>
 <li>Store warp results back in <a href="../puzzle_08/puzzle_08.html">shared memory at elected thread’s position</a></li>
@@ -262,9 +262,9 @@
 <h3 id="cluster-coordination-flow"><a class="header" href="#cluster-coordination-flow"><strong>Cluster coordination flow</strong></a></h3>
 <ol>
 <li><strong>Process</strong>: Each block processes its data with hierarchical warp optimization</li>
-<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a> indicates completion of local processing</li>
+<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> indicates completion of local processing</li>
 <li><strong>Store</strong>: Thread 0 writes the block result to output</li>
-<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before termination</li>
+<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before termination</li>
 </ol>
 <h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
 <ul>
@@ -276,12 +276,12 @@
 </div>
 </details>
 <h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
+<p><strong>From <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Wait for all blocks to reach synchronization point</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Get unique block identifier within cluster</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Wait for all blocks to reach synchronization point</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Get unique block identifier within cluster</li>
 </ul>
 <h2 id="hierarchical-coordination-pattern"><a class="header" href="#hierarchical-coordination-pattern">Hierarchical coordination pattern</a></h2>
 <p>This puzzle demonstrates <strong>three-level coordination hierarchy</strong>:</p>
@@ -452,10 +452,10 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </code></pre>
 <p><strong>Why staged synchronization?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> called <strong>before</strong> final computation allows overlapping work</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> called <strong>before</strong> final computation allows overlapping work</li>
 <li>Block can compute its result while other blocks are still processing</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> ensures deterministic completion order</li>
-<li>More efficient than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for independent block computations</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> ensures deterministic completion order</li>
+<li>More efficient than <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> for independent block computations</li>
 </ul>
 <h2 id="advanced-pattern-characteristics"><a class="header" href="#advanced-pattern-characteristics"><strong>Advanced pattern characteristics</strong></a></h2>
 <p><strong>Hierarchical computation reduction:</strong></p>
@@ -475,13 +475,13 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 <p><strong>Synchronization hierarchy:</strong></p>
 <ol>
 <li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and warp processing)</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Inter-block signaling (non-blocking, enables work overlap)</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Inter-block synchronization (blocking, ensures completion order)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Inter-block signaling (non-blocking, enables work overlap)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Inter-block synchronization (blocking, ensures completion order)</li>
 </ol>
 <p><strong>Why this is “advanced”:</strong></p>
 <ul>
 <li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming techniques</li>
-<li><strong>Hardware efficiency</strong>: Leverages <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for optimal warp utilization</li>
+<li><strong>Hardware efficiency</strong>: Leverages <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for optimal warp utilization</li>
 <li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible synchronization</li>
 <li><strong>Production-ready</strong>: Demonstrates patterns used in real-world GPU libraries</li>
 </ul>

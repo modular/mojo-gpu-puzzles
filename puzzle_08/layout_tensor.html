@@ -206,7 +206,7 @@
 <h2 id="key-differences-from-raw-approach"><a class="header" href="#key-differences-from-raw-approach">Key differences from raw approach</a></h2>
 <ol>
 <li>
-<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/">stack_allocation</a></p>
+<p><strong>Memory allocation</strong>: We will use <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor">LayoutTensor</a> with address_space instead of <a href="https://docs.modular.com/mojo/std/memory/memory/stack_allocation/">stack_allocation</a></p>
 <pre><code class="language-mojo"># Raw approach
 shared = stack_allocation[TPB, Scalar[dtype]]()
 

@@ -187,7 +187,7 @@
                     <main>
                         <h1 id="warpsum-essentials---warp-level-dot-product"><a class="header" href="#warpsum-essentials---warp-level-dot-product">warp.sum() Essentials - Warp-Level Dot Product</a></h1>
 <p>Implement the dot product we saw in <a href="../puzzle_12/puzzle_12.html">puzzle 12</a> using Mojo’s warp operations to replace complex shared memory patterns with simple function calls. Each warp lane will process one element and use <code>warp.sum()</code> to combine results automatically, demonstrating how warp programming transforms GPU synchronization.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a> operation leverages SIMT execution to replace shared memory + barriers + tree reduction with a single hardware-accelerated instruction.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>

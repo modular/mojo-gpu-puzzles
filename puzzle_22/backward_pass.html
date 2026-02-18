@@ -270,7 +270,7 @@ where:</p>
 <h2 id="implementation-challenging"><a class="header" href="#implementation-challenging">Implementation (challenging)</a></h2>
 <p>The fused backward kernel combines LayerNorm and Linear backward operations into a single GPU kernel. This is a challenging implementation that requires careful handling of:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/stdlib/os/atomic/Atomic/">Atomic operations</a> for gradient accumulation</li>
+<li><a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">Atomic operations</a> for gradient accumulation</li>
 <li>Numerical stability in gradient computations</li>
 <li>Memory access patterns for efficient GPU utilization</li>
 <li>Proper synchronization between operations</li>

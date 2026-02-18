@@ -187,7 +187,7 @@
                     <main>
                         <h1 id="warpbroadcast-one-to-many-communication"><a class="header" href="#warpbroadcast-one-to-many-communication"><code>warp.broadcast()</code> One-to-Many Communication</a></h1>
 <p>For warp-level coordination we can use <code>broadcast()</code> to share data from one lane to all other lanes within a warp. This powerful primitive enables efficient block-level computations, conditional logic coordination, and one-to-many communication patterns without shared memory or explicit synchronization.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast">broadcast()</a> operation leverages SIMT execution to let one lane (typically lane 0) share its computed value with all other lanes in the same warp, enabling efficient coordination patterns and collective decision-making.</em></p>
+<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast()</a> operation leverages SIMT execution to let one lane (typically lane 0) share its computed value with all other lanes in the same warp, enabling efficient coordination patterns and collective decision-making.</em></p>
 <blockquote>
 <p><strong>What are broadcast operations?</strong> Broadcast operations are communication patterns where one thread computes a value and shares it with all other threads in a group. This is essential for coordination tasks like computing block-level statistics, making collective decisions, or sharing configuration parameters across all threads in a warp.</p>
 </blockquote>

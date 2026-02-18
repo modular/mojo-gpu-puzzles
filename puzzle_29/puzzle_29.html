@@ -219,8 +219,8 @@
 </ul>
 <p><strong>Synchronization primitive hierarchy:</strong></p>
 <ul>
-<li><strong>Basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></strong>: Simple thread synchronization within blocks</li>
-<li><strong>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a></strong>: Fine-grained memory barrier control with state tracking</li>
+<li><strong>Basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>: Simple thread synchronization within blocks</li>
+<li><strong>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a></strong>: Fine-grained memory barrier control with state tracking</li>
 <li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer synchronization</li>
 </ul>
 <p><strong>Memory consistency models:</strong></p>
@@ -263,10 +263,10 @@
 <p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific computations, neural network layer coordination</p>
 <h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
 <p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
-<p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
+<p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
 <p><strong>Key concepts</strong>:</p>
 <ul>
-<li>Advanced <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/">mbarrier APIs</a> vs basic <a href="https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier"><code>barrier()</code></a></li>
+<li>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> vs basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
 <li>Double-buffering with alternating read/write buffer roles</li>
 <li>Iterative algorithm coordination with explicit memory barriers</li>
 </ul>

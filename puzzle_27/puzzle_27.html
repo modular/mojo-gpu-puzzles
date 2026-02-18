@@ -214,9 +214,9 @@ Cross-warp coordination:
 <h3 id="block-operations-in-mojo"><a class="header" href="#block-operations-in-mojo"><strong>Block operations in Mojo</strong></a></h3>
 <p>Learn the complete parallel programming toolkit from <code>gpu.primitives.block</code>:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>: All-to-one reduction for totals, averages, maximum/minimum values</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: All-to-each scan for parallel filtering and extraction</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>: One-to-all distribution for parameter sharing and coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>: All-to-one reduction for totals, averages, maximum/minimum values</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: All-to-each scan for parallel filtering and extraction</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>: One-to-all distribution for parameter sharing and coordination</li>
 </ol>
 <blockquote>
 <p><strong>Note:</strong> These primitives enable sophisticated parallel algorithms like statistical computations, histogram binning, and normalization workflows that would otherwise require dozens of lines of complex shared memory coordination code.</p>

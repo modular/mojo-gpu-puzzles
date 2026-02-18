@@ -225,7 +225,7 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 <li>Thread block organization and synchronization</li>
 <li>Basic understanding of memory latency vs. bandwidth</li>
 </ul>
-<p><strong>API familiarity:</strong> <a href="https://docs.modular.com/mojo/stdlib/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<p><strong>API familiarity:</strong> <a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
 <p><strong>⚠️ Hardware compatibility note:</strong> This puzzle uses async copy operations (<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>) that may require modern GPU architectures. If you encounter compilation errors related to <code>.async</code> modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.</p>
 <p><strong>Check your GPU compute capability:</strong></p>
@@ -250,7 +250,7 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 <p>Building on the async copy operations introduced in <a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16’s idiomatic matmul</a>, you’ll now focus specifically on their memory optimization potential:</p>
 <ul>
 <li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: Launch background DRAM→SRAM transfers using dedicated copy engines</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all"><code>async_copy_wait_all()</code></a></strong>: Synchronize transfer completion before accessing shared memory</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>: Synchronize transfer completion before accessing shared memory</li>
 </ul>
 <p><strong>What’s different from Puzzle 16?</strong> While Puzzle 16 used async copy for clean tile loading in matmul, this puzzle focuses specifically on <strong>latency hiding</strong> - structuring algorithms to overlap expensive memory operations with useful computation work.</p>
 <h3 id="performance-impact"><a class="header" href="#performance-impact"><strong>Performance impact</strong></a></h3>

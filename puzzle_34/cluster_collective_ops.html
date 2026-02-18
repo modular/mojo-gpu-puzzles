@@ -187,9 +187,9 @@
                     <main>
                         <h1 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations">☸️ Cluster-Wide Collective Operations</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum"><code>block.sum</code></a> pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
+<p>Building on basic cluster coordination from the previous section, this challenge teaches you to implement <strong>cluster-wide collective operations</strong> - extending the familiar <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> pattern from <a href="../puzzle_27/block_sum.html">Puzzle 27</a> to coordinate across <strong>multiple thread blocks</strong>.</p>
 <p><strong>The Challenge</strong>: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.</p>
-<p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
+<p><strong>Key Learning</strong>: Learn <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster coordination and <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient final reductions.</p>
 <h2 id="the-problem-large-scale-global-sum"><a class="header" href="#the-problem-large-scale-global-sum">The problem: large-scale global sum</a></h2>
 <p>Single blocks (as learned in <a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>) are limited by their thread count and <a href="../puzzle_08/puzzle_08.html">shared memory capacity from Puzzle 8</a>. For <strong>large datasets</strong> requiring global statistics (mean, variance, sum) beyond <a href="../puzzle_27/block_sum.html">single-block reductions</a>, we need <strong>cluster-wide collective operations</strong>.</p>
 <p><strong>Your task</strong>: Implement a cluster-wide sum reduction where:</p>
@@ -207,7 +207,7 @@
 <p><strong>Coordination Requirements:</strong></p>
 <ol>
 <li><strong>Local reduction</strong>: Each block computes partial sum using tree reduction</li>
-<li><strong>Cluster sync</strong>: <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> ensures all partial results are ready</li>
+<li><strong>Cluster sync</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> ensures all partial results are ready</li>
 <li><strong>Final aggregation</strong>: One elected thread combines all partial results</li>
 </ol>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
@@ -253,12 +253,12 @@
 <h3 id="cluster-coordination-strategy"><a class="header" href="#cluster-coordination-strategy"><strong>Cluster coordination strategy</strong></a></h3>
 <ul>
 <li>Store partial results in <code>temp_storage[block_id]</code> for reliable indexing</li>
-<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster synchronization (stronger than arrive/wait)</li>
+<li>Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> for full cluster synchronization (stronger than arrive/wait)</li>
 <li>Only one thread should perform the final global aggregation</li>
 </ul>
 <h3 id="election-pattern-for-efficiency"><a class="header" href="#election-pattern-for-efficiency"><strong>Election pattern for efficiency</strong></a></h3>
 <ul>
-<li>Use <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a> within the first block (<code>my_block_rank == 0</code>) (pattern from <a href="../puzzle_24/warp_sum.html">warp programming</a>)</li>
+<li>Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> within the first block (<code>my_block_rank == 0</code>) (pattern from <a href="../puzzle_24/warp_sum.html">warp programming</a>)</li>
 <li>This ensures only one thread performs the final sum to avoid redundancy</li>
 <li>The elected thread reads all partial results from <code>temp_storage</code> (similar to <a href="../puzzle_08/puzzle_08.html">shared memory access from Puzzle 8</a>)</li>
 </ul>
@@ -272,11 +272,11 @@
 </div>
 </details>
 <h2 id="cluster-apis-reference"><a class="header" href="#cluster-apis-reference">Cluster APIs reference</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
+<p><strong>From <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: Full cluster synchronization - stronger than arrive/wait pattern</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Elects single thread within warp for efficient coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Returns unique block identifier within cluster</li>
 </ul>
 <h2 id="tree-reduction-pattern"><a class="header" href="#tree-reduction-pattern">Tree reduction pattern</a></h2>
 <p>Recall the <strong>tree reduction pattern</strong> from <a href="../puzzle_27/puzzle_27.html">Puzzle 27’s traditional dot product</a>:</p>
@@ -413,7 +413,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <h2 id="phase-2-cluster-synchronization"><a class="header" href="#phase-2-cluster-synchronization"><strong>Phase 2: Cluster synchronization</strong></a></h2>
 <p><strong>Full cluster barrier:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a> provides <strong>stronger guarantees</strong> than <a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> provides <strong>stronger guarantees</strong> than <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 <li>Ensures <strong>all blocks complete their local reductions</strong> before any block proceeds</li>
 <li>Hardware-accelerated synchronization across all blocks in the cluster</li>
 </ul>
@@ -427,7 +427,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </code></pre>
 <p><strong>Why this election strategy?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Hardware primitive that selects exactly one thread per warp</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Hardware primitive that selects exactly one thread per warp</li>
 <li><strong><code>my_block_rank == 0</code></strong>: Only elect from the first block to ensure single writer</li>
 <li><strong>Result</strong>: Only ONE thread across the entire cluster performs the final summation</li>
 <li><strong>Efficiency</strong>: Avoids redundant computation across all 1024 threads</li>
@@ -449,7 +449,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <p><strong>Synchronization guarantees:</strong></p>
 <ul>
 <li><strong><code>barrier()</code></strong>: Ensures all threads in block complete each tree reduction step</li>
-<li><strong><a href="https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>Global barrier</strong> - all blocks reach same execution point</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>Global barrier</strong> - all blocks reach same execution point</li>
 <li><strong>Single writer</strong>: Election prevents race conditions on final output</li>
 </ul>
 <p><strong>Algorithm complexity analysis:</strong></p>

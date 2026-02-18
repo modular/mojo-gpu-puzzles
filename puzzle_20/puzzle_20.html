@@ -199,7 +199,7 @@
 <p>This transition shows how the same optimized GPU kernel can work with different Python integration approaches.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/CustomOpLibrary/">CustomOpLibrary</a> instead of MAX Graph.</p>
+<p>In this puzzle, we’ll take the exact same 1D convolution kernel from <a href="../puzzle_17/puzzle_17.html">Puzzle 17</a> and integrate it with PyTorch using the <a href="https://docs.modular.com/max/api/python/torch/">CustomOpLibrary</a> instead of MAX Graph.</p>
 <p>The key learning here is that <strong>the same Mojo kernel works unchanged</strong> - only the Python integration layer differs between MAX Graph and PyTorch approaches.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <p>To complete this puzzle, you need to fill in one line to call the custom operation:</p>
