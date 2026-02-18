@@ -35,7 +35,7 @@ Elementwise와 동일한 수학적 연산:
 - SIMD 폭: GPU 의존적 (타일 내 연산용)
 - 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p23/p23.mojo:tiled_elementwise_add}}

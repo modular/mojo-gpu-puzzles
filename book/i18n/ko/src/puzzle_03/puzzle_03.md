@@ -46,7 +46,7 @@ Thread 5 (i=5):  if 5 < size:  ❌ Skip (out of bounds)
 - 다양한 배열 형태
 - 복잡한 접근 패턴
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p03/p03.mojo:add_10_guard}}
@@ -160,4 +160,4 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-이런 경계 처리 패턴은 [Puzzle 4에서 LayoutTensor를 배우면](../puzzle_04/) 훨씬 깔끔해집니다. LayoutTensor는 형태 관리 기능을 기본으로 제공합니다.
+이런 경계 처리 패턴은 [Puzzle 4에서 LayoutTensor를 배우면](../puzzle_04/introduction_layout_tensor.md) 훨씬 깔끔해집니다. LayoutTensor는 형태 관리 기능을 기본으로 제공합니다.

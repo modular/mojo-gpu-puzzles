@@ -72,7 +72,7 @@ output[global_i] = swapped_val
 - **하드웨어 최적화**: 모든 Lane에 대해 단일 명령으로 처리
 - **Butterfly 기반**: 복잡한 병렬 알고리즘의 빌딩 블록
 
-### 작성할 코드
+### 완성할 코드
 
 `shuffle_xor()`을 사용하여 인접 페어 간 값을 교환하는 페어 교환을 구현합니다.
 
@@ -254,7 +254,7 @@ i - 1 & \\text{if } i \\bmod 2 = 1
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
 - 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 
-### 작성할 코드
+### 완성할 코드
 
 감소하는 offset으로 butterfly `shuffle_xor`을 사용하여 병렬 최댓값 reduction을 구현합니다.
 
@@ -474,7 +474,7 @@ if global_i < size:
 - 그리드 구성: `BLOCKS_PER_GRID_2 = (2, 1)` 그리드당 블록 수
 - 블록 구성: `THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)` 블록당 스레드 수
 
-### 작성할 코드
+### 완성할 코드
 
 짝수 Lane은 최댓값을, 홀수 Lane은 최솟값을 저장하는 조건부 butterfly reduction을 구현합니다.
 

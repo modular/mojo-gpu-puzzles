@@ -84,7 +84,7 @@ Lane 0이 블록 레벨 통계를 계산하고 모든 Lane과 공유하는 기�
 - 데이터 타입: `DType.float32`
 - 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
 
-### 작성할 코드
+### 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p25/p25.mojo:basic_broadcast}}
@@ -285,7 +285,7 @@ Lane 0이 블록 데이터를 분석하고 모든 Lane에 영향을 미치는 �
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
 - 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 
-### 작성할 코드
+### 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p25/p25.mojo:conditional_broadcast}}
@@ -343,7 +343,7 @@ Lane 0이 여러 데이터 포인트를 효율적으로 분석하는 방법을 �
 
 - 최댓값/최솟값 찾기
 - 평균이나 합계 계산
-- 패턴이나 임곗값 감지
+- 패턴이나 임계값 감지
 - 데이터 특성에 기반한 이진 결정
 
 </div>
@@ -425,9 +425,9 @@ if global_i < size:
     current_input = input[global_i]
     threshold = decision_value / 2.0
     if current_input >= threshold:
-        output[global_i] = current_input * 2.0  # 임곗값 이상이면 2배
+        output[global_i] = current_input * 2.0  # 임계값 이상이면 2배
     else:
-        output[global_i] = current_input / 2.0  # 임곗값 미만이면 절반
+        output[global_i] = current_input / 2.0  # 임계값 미만이면 절반
 ```
 
 **의사결정 실행 추적:**
@@ -462,19 +462,19 @@ if global_i < size:
   ...나머지 Lane에 패턴 반복
 ```
 
-**수학적 기반:** 임곗값 기반 변환을 구현합니다:
+**수학적 기반:** 임계값 기반 변환을 구현합니다:
 \\[\Large f(x) = \\begin{cases}
 2x & \\text{if } x \\geq \\tau \\\\
 \\frac{x}{2} & \\text{if } x < \\tau
 \\end{cases}\\]
 
-여기서 \\(\\tau = \\frac{\\max(\\text{block\_data})}{2}\\)는 broadcast된 임곗값입니다.
+여기서 \\(\\tau = \\frac{\\max(\\text{block\_data})}{2}\\)는 broadcast된 임계값입니다.
 
 **조정 패턴의 장점:**
 
 1. **중앙화된 분석**: 하나의 Lane이 분석하고 모든 Lane이 혜택을 받음
-2. **일관된 결정**: 모든 Lane이 같은 임곗값을 사용
-3. **적응형 동작**: 임곗값이 블록 로컬 데이터 특성에 따라 적응
+2. **일관된 결정**: 모든 Lane이 같은 임계값을 사용
+3. **적응형 동작**: 임계값이 블록 로컬 데이터 특성에 따라 적응
 4. **효율적 조정**: 단일 broadcast로 복잡한 조건부 로직을 조정
 
 **활용 분야:**
@@ -510,7 +510,7 @@ if global_i < size:
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
 - 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 
-### 작성할 코드
+### 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p25/p25.mojo:broadcast_shuffle_coordination}}

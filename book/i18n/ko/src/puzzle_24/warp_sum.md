@@ -84,7 +84,7 @@ uv run poe p24 --traditional
   </div>
 </div>
 
-## 작성할 코드
+## 완성할 코드
 
 ### 1. 간단한 Warp 커널 방식
 

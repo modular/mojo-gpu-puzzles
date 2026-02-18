@@ -26,13 +26,11 @@
 | coalescing | 여러 스레드의 메모리 접근을 하나로 묶어서 효율을 높이는 방법 |
 | column-major | 열을 연속으로 저장하는 메모리 레이아웃. Fortran 방식 |
 | convolution | 합성곱. 이미지나 신경망에서 필터를 씌우는 연산 |
-| deadlock | 스레드들이 서로를 기다리며 영원히 멈춘 상태 |
 | DRAM | Dynamic Random Access Memory. GPU의 글로벌 메모리. 용량이 크지만 느림 |
 | double-buffering | 두 버퍼를 번갈아 쓰는 최적화 기법 |
 | embedding | 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환하는 연산 |
 | fusion | kernel을 합쳐서 실행하는 최적화 기법 |
 | GEMM (General Matrix Multiply) | 범용 행렬 곱셈. GPU 행렬 연산의 핵심 알고리즘 |
-| guard | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | halo (region) | 타일 경계를 넘어 확장되는 추가 데이터 영역. ghost cell, guard cell이라고도 함 |
 | hazard | 스레드 간 메모리 접근 충돌. read-after-write, write-after-write 등 |
 | JIT (Just-In-Time) | 실행 시점에 코드를 컴파일하는 방식. 빌드 단계 없이 빠른 반복 가능 |
@@ -92,6 +90,7 @@
 | buffer overflow | 버퍼 오버플로우 | 버퍼 경계를 넘어서 데이터를 쓰는 메모리 오류 |
 | compute-bound | 연산 바운드 | 연산 처리량에 의해 성능이 제한되는 상태 |
 | data locality | 데이터 지역성 | 자주 쓰는 데이터를 가까운 메모리에 두는 것 |
+| deadlock | 교착 상태 | 스레드들이 서로를 기다리며 영원히 멈춘 상태 |
 | dense vector | 밀집 벡터 | 대부분의 원소가 0이 아닌 벡터. embedding의 출력 형태 |
 | dereference | 역참조 | 포인터가 가리키는 메모리의 값에 접근하는 것 |
 | dot product | 내적 | 두 벡터의 원소별 곱의 합 |
@@ -100,6 +99,7 @@
 | global index | 전역 인덱스 | 전체 데이터에서의 위치. `block_dim * block_idx + thread_idx`로 계산 |
 | global memory | 글로벌 메모리 | GPU 어디서든 접근할 수 있는 메모리 |
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |
+| guard | 가드 | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | host code | 호스트 코드 | CPU에서 실행되는 코드. GPU 작업을 설정하는 부분 |
 | in-place (computation) | 직접 저장 (연산) | 별도 메모리를 할당하지 않고 기존 버퍼에 결과를 직접 기록하는 방식 |
 | kernel code | 커널 코드 | GPU에서 병렬로 실행되는 코드 |

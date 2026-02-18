@@ -23,7 +23,7 @@ comptime dtype = DType.float32
 {{#include ../../../../../problems/p10/p10.mojo:shared_memory_race}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">전체 파일 보기: problems/p10/p10.mojo</a>
 
 ## 코드 실행
 
@@ -101,18 +101,18 @@ AssertionError: `left == right` comparison failed:
 ========= ERROR SUMMARY: 0 errors
 ```
 
-**핵심 통찰**: `synccheck`가 **0개의 오류**를 찾았습니다 - deadlock 같은 동기화 문제는 없습니다. 문제는 동기화 버그가 아닌 **경쟁 상태**입니다.
+**핵심 통찰**: `synccheck`가 **0개의 오류**를 찾았습니다 - 교착 상태 같은 동기화 문제는 없습니다. 문제는 동기화 버그가 아닌 **경쟁 상태**입니다.
 
-## Deadlock vs Race Condition: 차이점 이해하기
+## 교착 상태 vs 경쟁 상태: 차이점 이해하기
 
-| 측면 | Deadlock (교착 상태) | Race Condition (경쟁 상태) |
+| 측면 | 교착 상태 | Race Condition (경쟁 상태) |
 |------|----------|----------|
 | **증상** | 프로그램이 영원히 멈춤 | 프로그램이 잘못된 결과 생성 |
 | **실행** | 완료되지 않음 | 성공적으로 완료됨 |
 | **타이밍** | 결정적으로 멈춤 | 비결정적 결과 |
 | **근본 원인** | 동기화 로직 오류 | 동기화되지 않은 데이터 접근 |
 | **탐지 도구** | `synccheck` | `racecheck` |
-| **예시** | [Puzzle 09: 세 번째 사례](../puzzle_09/third_case.md) barrier deadlock | 공유 메모리 `+=` 연산 |
+| **예시** | [Puzzle 09: 세 번째 사례](../puzzle_09/third_case.md) barrier 교착 상태 | 공유 메모리 `+=` 연산 |
 
 **우리 사례에서:**
 
@@ -157,7 +157,7 @@ AssertionError: `left == right` comparison failed:
 ### 경쟁 상태 디버깅 팁
 
 1. **데이터 경쟁에는 racecheck 사용**: 공유 메모리 위험 요소와 데이터 손상 탐지
-2. **교착 상태에는 synccheck 사용**: 동기화 버그(barrier 문제, deadlock) 탐지
+2. **교착 상태에는 synccheck 사용**: 동기화 버그(barrier 문제, 교착 상태) 탐지
 3. **공유 메모리 접근에 집중**: 공유 변수에 대한 동기화되지 않은 `+=`, `=` 연산 찾기
 4. **패턴 식별**: read-modify-write 연산이 흔한 경쟁 상태 원인
 5. **Barrier 배치 확인**: barrier는 충돌 연산 **이전에** 배치해야 함, 이후가 아님
@@ -289,7 +289,7 @@ if row < size and col < size:
 
 **이 솔루션은 효율성보다 정확성을 우선합니다**. 경쟁 상태는 제거하지만, 위치 (0,0) 스레드만 누적에 사용하는 것은 GPU 성능에 **최적이 아닙니다** - 대규모 병렬 장치에서 사실상 직렬 계산을 하는 셈입니다.
 
-**이어서 [Puzzle 11: Pooling](../../puzzle_11/puzzle_11.md)에서**: **모든 스레드**를 활용해 고성능 합산 연산을 수행하면서도 경쟁 상태를 피하는 효율적인 병렬 리덕션 알고리즘 (_역주: 여러 값을 트리 구조로 병렬 합산하여 O(log n) 단계에 결과를 얻는 기법_)을 배웁니다. 이 퍼즐은 **정확성 우선**의 기초를 가르칩니다 - 경쟁 상태를 피하는 방법을 이해하고 나면, Puzzle 11에서 **정확성과 성능 모두**를 달성하는 방법을 보게 됩니다.
+**이어서 [Puzzle 11: Pooling](../../puzzle_11/puzzle_11.md)에서**: **모든 스레드**를 활용해 고성능 합산 연산을 수행하면서도 경쟁 상태를 피하는 효율적인 병렬 reduction 알고리즘 (_역주: 여러 값을 트리 구조로 병렬 합산하여 O(log n) 단계에 결과를 얻는 기법_)을 배웁니다. 이 퍼즐은 **정확성 우선**의 기초를 가르칩니다 - 경쟁 상태를 피하는 방법을 이해하고 나면, Puzzle 11에서 **정확성과 성능 모두**를 달성하는 방법을 보게 됩니다.
 
 ### 검증
 

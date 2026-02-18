@@ -30,7 +30,7 @@
 - 입력 B: `Layout.row_major(SIZE, SIZE)`
 - 출력: `Layout.row_major(SIZE, SIZE)`
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p16/p16.mojo:naive_matmul}}

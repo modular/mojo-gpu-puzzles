@@ -103,7 +103,7 @@ uv run poe p27 --traditional-dot-product
   </div>
 </div>
 
-## 작성할 코드
+## 완성할 코드
 
 ### `block.sum()` 방식
 

@@ -39,7 +39,7 @@ A[i,j]: Direct access                  a_shared[local_row, local_col]
 B[i,j]: Direct access                  b_shared[local_row, local_col]
 ```
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p16/p16.mojo:single_block_matmul}}

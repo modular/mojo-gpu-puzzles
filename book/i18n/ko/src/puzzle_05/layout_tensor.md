@@ -23,7 +23,7 @@
 - **가드 조건**: 출력 크기에 대한 경계 검사는 여전히 필요
 - **스레드 범위**: 텐서 원소 \\((2 \times 2)\\)보다 스레드 \\((3 \times 3)\\)가 많음
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p05/p05_layout_tensor.mojo:broadcast_add_layout_tensor}}

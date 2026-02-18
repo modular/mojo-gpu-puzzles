@@ -247,7 +247,7 @@ Each 32×32 warp tile contains multiple 16×8 MMA fragments:
 {{#include ../../../../../problems/p33/p33.mojo:tensor_core_matrix_multiplication}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p33/p33.mojo" class="filename">View full file: problems/p33/p33.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p33/p33.mojo" class="filename">전체 파일 보기: problems/p33/p33.mojo</a>
 
 **할 일**: 세 겹의 중첩 루프 안에 있는 빈 부분(`# FILL IN (roughly 8 lines)`으로 표시됨)을 완성하세요.
 

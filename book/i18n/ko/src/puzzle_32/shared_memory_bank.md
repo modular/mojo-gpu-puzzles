@@ -143,7 +143,7 @@ constant = shared[0]  # All threads read shared[0]
 [Puzzle 30](../puzzle_30/puzzle_30.md)에서 배운 프로파일링 방법론을 바탕으로, 뱅크 충돌을 정량적으로 측정할 수 있습니다:
 
 ```bash
-# Key metrics for shared memory 뱅크 충돌s
+# Key metrics for shared memory bank conflicts
 ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st your_kernel
 
 # Additional context metrics

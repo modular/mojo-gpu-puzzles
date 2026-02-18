@@ -330,7 +330,7 @@ comptime REDUCTION_SIZE = 32          # AMD에서 잘못된 값!
 
 - **CDNA 장점**: Warp당 2배의 메모리 대역폭
 - **CDNA 장점**: Warp당 2배의 연산량
-- **NVIDIA/RDNA 장점**: 블록당 더 많은 Warp (더 높은 occupancy)
+- **NVIDIA/RDNA 장점**: 블록당 더 많은 Warp (더 높은 점유율)
 - **코드 이식성**: 같은 소스 코드로 양쪽 모두 최적 성능
 
 ## Warp와 메모리 접근 패턴

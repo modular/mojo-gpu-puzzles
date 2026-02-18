@@ -4,7 +4,7 @@
 
 > ## Kernel fusion과 autograd 통합
 >
-> **Kernel fusion**과 **autograd 통합**에 초점을 맞춰 Part IV를 이어갑니다.
+> **Kernel fusion**과 **autograd 통합**에 초점을 맞춰 Part V를 이어갑니다.
 >
 > [Puzzle 21: Embedding Op](../puzzle_21/puzzle_21.md)에 이어, 여러 연산을 하나의 효율적인 커널로 결합하고 이를 PyTorch의 autograd 시스템과 통합하는 방법을 알아봅니다. 배울 내용은 다음과 같습니다:
 >

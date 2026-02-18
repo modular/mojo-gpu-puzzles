@@ -38,7 +38,7 @@
 
 ## 1. 수동 벡터화 방식
 
-### 작성할 코드
+### 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p23/p23.mojo:manual_vectorized_tiled_elementwise_add}}
@@ -215,7 +215,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
 ## 2. Mojo vectorize 방식
 
-### 작성할 코드
+### 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p23/p23.mojo:vectorize_within_tiles_elementwise_add}}

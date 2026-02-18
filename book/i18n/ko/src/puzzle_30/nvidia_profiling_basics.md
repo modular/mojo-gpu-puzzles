@@ -8,7 +8,7 @@
 
 > 이 튜토리얼은 [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)에서 권장하는 NVIDIA 프로파일링 방법론을 따릅니다.
 
-**핵심 통찰**: 올바른 커널이라도 최적의 성능보다 몇 배나 느릴 수 있습니다. 프로파일링은 동작하는 코드와 고성능 코드 사이의 격차를 좁힙니다.
+**핵심 통찰**: 올바른 커널이라도 최적의 성능보다 수십 배나 느릴 수 있습니다. 프로파일링은 동작하는 코드와 고성능 코드 사이의 격차를 좁힙니다.
 
 ## 프로파일링 도구 모음
 

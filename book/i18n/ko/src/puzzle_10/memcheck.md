@@ -20,7 +20,7 @@
 {{#include ../../../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">View full file: problems/p10/p10.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p10/p10.mojo" class="filename">전체 파일 보기: problems/p10/p10.mojo</a>
 
 이 프로그램을 일반적으로 실행하면, 모든 것이 정상으로 보입니다:
 

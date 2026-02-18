@@ -33,19 +33,19 @@ GPU 성능은 단순히 알고리즘 효율의 문제가 아닙니다 - **코드
 {{#include ../../../../../problems/p31/p31.mojo:minimal_kernel}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a>
 
 ```mojo
 {{#include ../../../../../problems/p31/p31.mojo:sophisticated_kernel}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a>
 
 ```mojo
 {{#include ../../../../../problems/p31/p31.mojo:balanced_kernel}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a>
 
 ## 도전 과제
 
@@ -185,22 +185,22 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 
 **리소스 프로파일링 (Step 4):**
 
-1. 각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 Warp 수를 기록하세요.
+2. 각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 Warp 수를 기록하세요.
 
 **이론적 계산 (Step 5):**
 
-1. GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤 커널이 가장 높고/낮아야 하나요?
+3. GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤 커널이 가장 높고/낮아야 하나요?
 
 **측정된 점유율 (Step 6):**
 
-1. 측정된 점유율 값이 계산 결과와 어떻게 비교되나요?
+4. 측정된 점유율 값이 계산 결과와 어떻게 비교되나요?
 
 **점유율 미스터리:**
 
-1. 리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU 아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?
-2. 리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리) 성능이 거의 동일한(<2% 차이) 이유는 무엇인가요?
-3. 이론적 점유율 계산과 실제 GPU 동작 사이의 관계에 대해 무엇을 알 수 있나요?
-4. 이 SAXPY 워크로드의 실제 성능 병목이 점유율이 아니라면 무엇인가요?
+5. 리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU 아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?
+6. 리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리) 성능이 거의 동일한(<2% 차이) 이유는 무엇인가요?
+7. 이론적 점유율 계산과 실제 GPU 동작 사이의 관계에 대해 무엇을 알 수 있나요?
+8. 이 SAXPY 워크로드의 실제 성능 병목이 점유율이 아니라면 무엇인가요?
 
 <details>
 <summary><strong>팁</strong></summary>

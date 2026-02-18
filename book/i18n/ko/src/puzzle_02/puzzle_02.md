@@ -37,7 +37,7 @@ Thread 2:  a[2] + b[2] → output[2]
 
 💡 **참고**: 이제 Kernel에서 세 개의 배열(`a`, `b`, `output`)을 다루고 있습니다. 연산이 복잡해질수록 여러 배열에 대한 접근을 관리하기가 점점 어려워집니다.
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p02/p02.mojo:add}}
@@ -129,7 +129,7 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 직접 인덱싱은 간단한 요소별 연산에서 잘 작동하지만, 다음 상황을 생각해 보세요:
 
 - 배열의 레이아웃이 서로 다르다면?
-- 한 배열을 다른 배열에 확산(broadcast)해야 한다면?
+- 한 배열을 다른 배열에 broadcast해야 한다면?
 - 여러 배열에서 병합(coalesced) 접근을 어떻게 보장할 수 있을까?
 
-이러한 질문들은 [Puzzle 4에서 LayoutTensor를 소개](../puzzle_04/)할 때 다룹니다.
+이러한 질문들은 [Puzzle 4에서 LayoutTensor를 소개](../puzzle_04/introduction_layout_tensor.md)할 때 다룹니다.

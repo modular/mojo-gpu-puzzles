@@ -32,7 +32,7 @@
 - **레이아웃 처리**: 입력용과 출력용 레이아웃을 따로 구성
 - **스레드 조율**: Raw 버전과 동일하게 `barrier()`로 동기화
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p12/p12_layout_tensor.mojo:dot_product_layout_tensor}}

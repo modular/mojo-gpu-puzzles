@@ -30,7 +30,7 @@
 - **메모리 패턴**: 입력 배열과 convolution kernel을 저장하는 공유 배열
 - **스레드 동기화**: 연산 시작 전 스레드 간 조율
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p13/p13.mojo:conv_1d_simple}}

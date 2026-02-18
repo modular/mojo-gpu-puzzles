@@ -68,7 +68,7 @@ if lane < WARP_SIZE - 1:
 - **동기화 불필요**: SIMT 실행이 정확성을 보장
 - **조합 가능**: 다른 Warp 연산과 쉽게 결합
 
-### 작성할 코드
+### 완성할 코드
 
 `shuffle_down()`으로 다음 요소에 접근하여 유한 차분을 구현합니다.
 
@@ -259,7 +259,7 @@ if global_i < size:
 - 그리드 구성: `BLOCKS_PER_GRID = (2, 1)` 그리드당 블록 수
 - 블록 구성: `THREADS_PER_BLOCK = (WARP_SIZE, 1)` 블록당 스레드 수
 
-### 작성할 코드
+### 완성할 코드
 
 여러 `shuffle_down` 연산을 사용하여 3점 이동 평균을 구현합니다.
 

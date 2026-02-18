@@ -21,7 +21,7 @@
 - **접근 패턴**: stride 기반 병렬 연산
 - **타입 안전성**: LayoutTensor의 타입 시스템 활용
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p14/p14.mojo:prefix_sum_simple}}

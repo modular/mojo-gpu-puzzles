@@ -31,7 +31,7 @@
 - **경계 처리**: 처음 두 위치는 특수 케이스
 - **메모리 패턴**: 스레드당 공유 메모리 로드 1회
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p11/p11_layout_tensor.mojo:pooling_layout_tensor}}

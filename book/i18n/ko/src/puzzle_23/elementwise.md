@@ -28,7 +28,7 @@
 - SIMD 폭: 타겟 의존적 (GPU 아키텍처와 데이터 타입에 따라 결정)
 - 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p23/p23.mojo:elementwise_add}}

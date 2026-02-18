@@ -54,7 +54,7 @@
 {{#include ../../../../../problems/p34/p34.mojo:advanced_cluster_patterns}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a>
 
 <details>
 <summary><strong>팁</strong></summary>

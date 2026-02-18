@@ -26,7 +26,7 @@
 {{#include ../../../../../problems/p32/p32.mojo:two_way_conflict_kernel}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p32/p32.mojo" class="filename">View full file: problems/p32/p32.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p32/p32.mojo" class="filename">전체 파일 보기: problems/p32/p32.mojo</a>
 
 **미스터리:** 이 커널들은 동일한 결과를 계산하지만 공유 메모리 접근 효율은 극적으로 다릅니다. 체계적인 프로파일링 분석을 통해 그 이유를 밝혀내는 것이 임무입니다.
 

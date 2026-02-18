@@ -54,7 +54,7 @@ for element in data:
 
 복잡한 병렬 파티셔닝을 조율된 추출로 변환합니다:
 
-## 작성할 코드
+## 완성할 코드
 
 ### `block.prefix_sum()` 방식
 

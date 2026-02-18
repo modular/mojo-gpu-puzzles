@@ -27,7 +27,7 @@
 - **총 스레드 수**: \\(25\\)개 원소에 대해 \\(36\\)개
 - **스레드 매핑**: 각 스레드가 행렬 원소 하나씩 처리
 
-## 작성할 코드
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p07/p07_layout_tensor.mojo:add_10_blocks_2d_layout_tensor}}
