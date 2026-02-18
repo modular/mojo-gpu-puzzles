@@ -2,7 +2,6 @@ from gpu import thread_idx, block_idx, block_dim, barrier
 from gpu.host import DeviceContext
 from gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import size_of
 from testing import assert_equal
 
 comptime TPB = 8

@@ -6,7 +6,7 @@ from gpu.memory import AddressSpace
 from algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
 from utils import Index, IndexList
-from sys import argv, simd_width_of, size_of, align_of
+from sys import argv, simd_width_of, align_of
 from testing import assert_equal
 from random import random_float64
 from benchmark import (

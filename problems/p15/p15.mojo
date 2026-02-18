@@ -1,4 +1,3 @@
-from sys import size_of
 from testing import assert_equal
 from gpu.host import DeviceContext
 

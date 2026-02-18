@@ -5,7 +5,7 @@ from layout import Layout, LayoutTensor
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
 from utils import Index
-from sys import size_of, argv
+from sys import argv
 from testing import assert_equal, assert_almost_equal
 
 comptime dtype = DType.float32
