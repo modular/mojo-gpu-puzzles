@@ -31,6 +31,7 @@
 | double-buffering | 두 버퍼를 번갈아 쓰는 최적화 기법 |
 | embedding | 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환하는 연산 |
 | fusion | kernel을 합쳐서 실행하는 최적화 기법 |
+| GEMM (General Matrix Multiply) | 범용 행렬 곱셈. GPU 행렬 연산의 핵심 알고리즘 |
 | guard | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | halo (region) | 타일 경계를 넘어 확장되는 추가 데이터 영역. ghost cell, guard cell이라고도 함 |
 | hazard | 스레드 간 메모리 접근 충돌. read-after-write, write-after-write 등 |
@@ -44,6 +45,7 @@
 | memory fence | 메모리 작업 순서가 뒤바뀌지 않도록 보장하는 장치 |
 | memcheck | compute-sanitizer의 메모리 위반 탐지 도구 |
 | mixed precision | FP16/BF16 입력 + FP32 누적처럼 정밀도를 혼합하는 기법 |
+| MMA (Matrix-Multiply-Accumulate) | 텐서 코어가 수행하는 기본 연산. `D = A × B + C` 형태의 행렬 프래그먼트 연산 |
 | off-by-one | 경계값이 1만큼 어긋나는 프로그래밍 오류. 반복문에서 흔히 발생 |
 | offset | 메모리 시작 위치로부터의 거리. 인덱스 계산에 사용 |
 | pooling | 윈도우 내 값들을 하나로 합치는 연산. max pooling, average pooling 등 |
@@ -66,6 +68,7 @@
 | stencil | 이웃 데이터를 참조하는 연산 패턴 |
 | stream compaction | 프레디케이트를 만족하는 요소만 연속으로 재배치하는 병렬 알고리즘 |
 | stride | 메모리 접근이나 반복의 간격. reduction에서 매 단계마다 절반으로 줄이는 보폭 |
+| swizzle (pattern) | 공유 메모리의 뱅크 충돌을 피하기 위해 데이터 주소를 비트 연산으로 재배치하는 기법 |
 | synccheck | compute-sanitizer의 동기화 버그 탐지 도구 |
 | tensor core | GPU의 행렬 연산 전용 하드웨어 |
 | tiling | 큰 데이터를 작은 조각으로 나눠서 처리하는 방법 |
@@ -93,6 +96,7 @@
 | dereference | 역참조 | 포인터가 가리키는 메모리의 값에 접근하는 것 |
 | dot product | 내적 | 두 벡터의 원소별 곱의 합 |
 | element-wise | 요소별 | 배열의 각 요소에 개별적으로 수행하는 연산 |
+| fragment | 프래그먼트 | 텐서 코어에서 Warp가 처리하는 행렬 조각 단위. MMA 연산의 입출력 |
 | global index | 전역 인덱스 | 전체 데이터에서의 위치. `block_dim * block_idx + thread_idx`로 계산 |
 | global memory | 글로벌 메모리 | GPU 어디서든 접근할 수 있는 메모리 |
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |

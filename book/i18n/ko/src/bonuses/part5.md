@@ -1,98 +1,98 @@
 <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 
-# 🎯 Performance Bonus Challenge
+# 🎯 성능 보너스 챌린지
 
-## The discovery
+## 발견
 
-You've just completed [Puzzle 33](../puzzle_33/puzzle_33.md) and implemented actual Tensor Core matrix multiplication using Mojo's `TensorCore` API. The implementation works correctly, passes all accuracy tests, and uses real hardware-accelerated matrix operations. But when you profile it against the simple idiomatic tiled version from [Puzzle 16](../puzzle_16/tiled.md) ...
+[Puzzle 33](../puzzle_33/puzzle_33.md)을 완료하고 Mojo의 `TensorCore` API를 사용하여 실제 텐서 코어 행렬 곱셈을 구현했습니다. 구현은 정확하게 동작하고, 모든 정확도 테스트를 통과하며, 실제 하드웨어 가속 행렬 연산을 사용합니다. 그런데 [Puzzle 16](../puzzle_16/tiled.md)의 Tiled 버전과 프로파일링으로 비교하면...
 
-**The "specialized hardware" is orders of magnitude slower!**
+**"전용 하드웨어"가 엄청나게 더 느립니다!**
 
-### What went wrong?
+### 무엇이 잘못된 걸까?
 
-Your profiling with (NVIDIA only) `ncu` revealed the brutal truth (if you need a refresher on profiling techniques, see [Puzzle 10's memory error detection](../puzzle_10/puzzle_10.md) and [Puzzle 30's GPU profiling](../puzzle_30/puzzle_30.md)):
+(NVIDIA 전용) `ncu`를 사용한 프로파일링이 냉혹한 현실을 드러냈습니다 (프로파일링 기법을 복습하려면 [Puzzle 10의 메모리 오류 탐지](../puzzle_10/puzzle_10.md)와 [Puzzle 30의 GPU 프로파일링](../puzzle_30/puzzle_30.md)을 참고하세요):
 
-**Tensor Core version (the disappointment):**
+**텐서 코어 버전 (기대에 못 미침):**
 
 - **Duration**: ~13.9 ms
-- **Memory bound**: 72.5% DRAM throughput (should be compute-bound!)
-- **Poor occupancy**: 26.3% (wasted hardware)
-- **Cache disaster**: 29.7% L2 hit rate
-- **Register pressure**: 68 registers per thread
-- **Shared memory conflicts**: Bank conflicts destroying performance
+- **메모리 바운드**: 72.5% DRAM throughput (연산 바운드여야 하는데!)
+- **낮은 점유율**: 26.3% (하드웨어 낭비)
+- **캐시 재앙**: 29.7% L2 적중률
+- **레지스터 압박**: 스레드당 68개 레지스터
+- **공유 메모리 충돌**: 뱅크 충돌이 성능을 파괴
 
-**Tiled version (the winner):**
+**Tiled 버전 (승자):**
 
-- **Duration**: ~1.62 ms (8.6x faster!)
-- **Compute bound**: 1.7% DRAM throughput (as expected)
-- **Excellent occupancy**: 66.7%
-- **Cache friendly**: 96.9% L2 hit rate
-- **Efficient**: 38 registers per thread
-- **Clean memory**: No significant bank conflicts
+- **Duration**: ~1.62 ms (8.6배 빠름!)
+- **연산 바운드**: 1.7% DRAM throughput (예상대로)
+- **탁월한 점유율**: 66.7%
+- **캐시 친화적**: 96.9% L2 적중률
+- **효율적**: 스레드당 38개 레지스터
+- **깔끔한 메모리**: 유의미한 뱅크 충돌 없음
 
-### The harsh reality
+### 냉혹한 현실
 
-This is a common story in GPU optimization: **raw hardware capability ≠ actual performance**. Tensor Cores are incredibly powerful, but they're also incredibly demanding:
+이는 GPU 최적화에서 흔한 이야기입니다: **하드웨어의 원시 성능 ≠ 실제 성능**. 텐서 코어는 놀랍도록 강력하지만, 동시에 요구사항도 놀랍도록 까다롭습니다:
 
-- **Memory wall**: They're so fast they expose every memory bottleneck
-- **Resource hungry**: High register usage kills occupancy
-- **Access sensitive**: Poor memory patterns destroy cache behavior
-- **Configuration critical**: Launch parameters must be perfectly tuned
+- **메모리 벽**: 연산이 너무 빨라서 모든 메모리 병목이 드러남
+- **리소스 탐식**: 높은 레지스터 사용량이 점유율을 저하시킴
+- **접근 패턴 민감**: 나쁜 메모리 패턴이 캐시 동작을 파괴함
+- **설정이 핵심**: 실행 파라미터를 완벽하게 튜닝해야 함
 
-### Your mission: Fix the tensor core performance
+### 미션: 텐서 코어 성능 개선하기
 
-**The challenge:** Transform your memory-bound, low-occupancy Tensor Core implementation into something that actually beats the simple tiled version.
+**도전 과제:** 메모리 바운드에 낮은 점유율인 텐서 코어 구현을 단순한 tiled 버전을 실제로 이기는 구현으로 변환하세요.
 
-**What you need to beat:**
+**이겨야 할 기준:**
 
-- **Target duration**: < 1.62 ms
-- **Occupancy**: > 26.3% baseline
-- **DRAM pressure**: < 72.5% baseline
-- **Cache performance**: > 29.7% L2 hit rate baseline
+- **목표 Duration**: < 1.62 ms
+- **점유율**: > 26.3% 기준선
+- **DRAM 부하**: < 72.5% 기준선
+- **캐시 성능**: > 29.7% L2 적중률 기준선
 
-**Optimization strategies to explore:**
+**탐구할 최적화 전략:**
 
-1. **Register pressure reduction**
-   - Use smaller accumulator tiles
-   - Minimize intermediate storage
-   - Consider mixed-precision to reduce register footprint
-   - Review [Puzzle 16's tiled approach](../puzzle_16/tiled.md) for efficient accumulation patterns
+1. **레지스터 압박 줄이기**
+   - 더 작은 누산기 타일 사용
+   - 중간 저장 공간 최소화
+   - 레지스터 사용량을 줄이기 위해 mixed precision 고려
+   - 효율적인 누적 패턴은 [Puzzle 16의 tiled 방식](../puzzle_16/tiled.md) 참고
 
-2. **Memory pattern optimization**
-   - Add shared memory padding to eliminate bank conflicts (see [shared memory concepts](../puzzle_16/shared_memory.md))
-   - Optimize `copy_dram_to_sram_async` layouts
-   - Improve coalescing patterns (memory access fundamentals from [early puzzles](../puzzle_01/puzzle_01.md))
+2. **메모리 패턴 최적화**
+   - 뱅크 충돌을 제거하기 위해 공유 메모리 패딩 추가 ([공유 메모리 개념](../puzzle_16/shared_memory.md) 참고)
+   - `copy_dram_to_sram_async` 레이아웃 최적화
+   - 병합 패턴 개선 ([초반 퍼즐](../puzzle_01/puzzle_01.md)의 메모리 접근 기초 참고)
 
-3. **Occupancy improvements**
-   - Tune block sizes for better warp utilization
-   - Balance shared memory vs register usage
-   - Optimize warp-to-SM mapping
-   - Apply thread coordination lessons from [Puzzle 11-20 series](../puzzle_11/puzzle_11.md)
+3. **점유율 개선**
+   - 더 나은 Warp 활용을 위한 블록 크기 튜닝
+   - 공유 메모리 vs 레지스터 사용량 균형 맞추기
+   - Warp-SM 매핑 최적화
+   - [Puzzle 11-20 시리즈](../puzzle_11/puzzle_11.md)의 스레드 조정 교훈 적용
 
-4. **Cache optimization**
-   - Improve data reuse patterns
-   - Optimize tile sizes for cache hierarchy
-   - Consider data layout transformations
-   - Build on memory hierarchy concepts from [puzzle progression](../puzzle_05/puzzle_05.md)
+4. **캐시 최적화**
+   - 데이터 재사용 패턴 개선
+   - 캐시 계층 구조에 맞는 타일 크기 최적화
+   - 데이터 레이아웃 변환 고려
+   - [이전 퍼즐 과정](../puzzle_05/puzzle_05.md)의 메모리 계층 구조 개념 활용
 
-5. **Advanced techniques**
-   - Implement double buffering to overlap memory and compute
-   - Use software pipelining
-   - Explore async execution patterns
-   - Apply advanced coordination from [sanitization puzzles](../puzzle_10/puzzle_10.md)
+5. **고급 기법**
+   - 메모리와 연산을 중첩하기 위한 double-buffering 구현
+   - 소프트웨어 파이프라이닝 사용
+   - 비동기 실행 패턴 탐구
+   - [sanitizer 퍼즐](../puzzle_10/puzzle_10.md)의 고급 조정 기법 적용
 
-### Success criteria
+### 성공 기준
 
-- **Correctness**: All accuracy tests still pass
-- **Performance**: Tensor Core duration < 1.62 ms
-- **Efficiency**: Higher occupancy (>26.3%)
-- **Memory**: Lower DRAM pressure (<72.5%)
-- **Cache**: Better hit rates (>29.7% L2)
+- **정확성**: 모든 정확도 테스트가 여전히 통과
+- **성능**: 텐서 코어 Duration < 1.62 ms
+- **효율성**: 더 높은 점유율 (>26.3%)
+- **메모리**: 더 낮은 DRAM 부하 (<72.5%)
+- **캐시**: 더 높은 적중률 (>29.7% L2)
 
-### The deeper lesson
+### 더 깊은 교훈
 
-This bonus challenge teaches the most important lesson in GPU optimization: **understanding bottlenecks matters more than using the latest APIs**.
+이 보너스 챌린지는 GPU 최적화에서 가장 중요한 교훈을 가르칩니다: **병목을 이해하는 것이 최신 API를 사용하는 것보다 중요합니다**.
 
-The goal isn't just to make Tensor Cores faster - it's to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.
+목표는 단순히 텐서 코어를 더 빠르게 만드는 것이 아닙니다 - 텐서 코어가 왜 더 느려질 수 있는지 이해하고, 성능 문제를 체계적으로 진단하는 방법을 배우고, 원칙에 기반한 최적화 기법을 적용하는 것입니다.
 
-Complete this challenge, and you'll have the skills to optimize any GPU workload, regardless of the hardware features available.
+이 챌린지를 완수하면, 사용 가능한 하드웨어 기능과 관계없이 어떤 GPU 워크로드든 최적화할 수 있는 역량을 갖추게 됩니다.

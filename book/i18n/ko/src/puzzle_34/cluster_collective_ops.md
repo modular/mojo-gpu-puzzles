@@ -1,53 +1,53 @@
 <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
 
-# ☸️ Cluster-Wide Collective Operations
+# ☸️ 클러스터 전체 집합 연산
 
-## Overview
+## 개요
 
-Building on basic cluster coordination from the previous section, this challenge teaches you to implement **cluster-wide collective operations** - extending the familiar [`block.sum`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) pattern from [Puzzle 27](../puzzle_27/block_sum.md) to coordinate across **multiple thread blocks**.
+이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는 **클러스터 전체 집합 연산**을 구현하는 방법을 배웁니다 - [Puzzle 27](../puzzle_27/block_sum.md)에서 익힌 [`block.sum`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 패턴을 **여러 스레드 블록**에 걸쳐 확장합니다.
 
-**The Challenge**: Implement a cluster-wide reduction that processes 1024 elements across 4 coordinated blocks, combining their individual reductions into a single global result.
+**도전 과제**: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별 reduction을 하나의 전역 결과로 합치는 클러스터 전체 reduction을 구현합니다.
 
-**Key Learning**: Learn [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync) for full cluster coordination and [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) for efficient final reductions.
+**핵심 학습**: 전체 클러스터 조정을 위한 [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)와 효율적인 최종 reduction을 위한 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 배웁니다.
 
-## The problem: large-scale global sum
+## 문제: 대규모 전역 합산
 
-Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited by their thread count and [shared memory capacity from Puzzle 8](../puzzle_08/puzzle_08.md). For **large datasets** requiring global statistics (mean, variance, sum) beyond [single-block reductions](../puzzle_27/block_sum.md), we need **cluster-wide collective operations**.
+단일 블록은 ([Puzzle 27](../puzzle_27/puzzle_27.md)에서 배웠듯이) 스레드 수와 [Puzzle 8의 공유 메모리 용량](../puzzle_08/puzzle_08.md)에 의해 제한됩니다. [단일 블록 reduction](../puzzle_27/block_sum.md)을 넘어서는 **대규모 데이터셋**의 전역 통계(평균, 분산, 합계)를 구하려면 **클러스터 전체 집합 연산**이 필요합니다.
 
-**Your task**: Implement a cluster-wide sum reduction where:
+**과제**: 다음과 같은 클러스터 전체 합산 reduction을 구현하세요:
 
-1. Each block performs local reduction (like [`block.sum()` from Puzzle 27](../puzzle_27/block_sum.md))
-2. Blocks coordinate to combine their partial results using [synchronization from Puzzle 29](../puzzle_29/barrier.md)
-3. One elected thread computes the final global sum using [warp election patterns](../puzzle_24/warp_sum.md)
+1. 각 블록이 로컬 reduction을 수행합니다 ([Puzzle 27의 `block.sum()`](../puzzle_27/block_sum.md)과 유사)
+2. [Puzzle 29의 동기화](../puzzle_29/barrier.md)를 사용하여 블록들이 부분 결과를 합칩니다
+3. 선출된 하나의 스레드가 [Warp 선출 패턴](../puzzle_24/warp_sum.md)을 사용하여 최종 전역 합계를 계산합니다
 
-### Problem specification
+### 문제 명세
 
-**Algorithmic Flow:**
+**알고리즘 흐름:**
 
-**Phase 1 - Local Reduction (within each block):**
+**1단계 - 로컬 Reduction (각 블록 내부):**
 \\[R_i = \sum_{j=0}^{TPB-1} input[i \times TPB + j] \quad \text{for block } i\\]
 
-**Phase 2 - Global Aggregation (across cluster):**
+**2단계 - 전역 집계 (클러스터 전체):**
 \\[\text{Global Sum} = \sum_{i=0}^{\text{CLUSTER_SIZE}-1} R_i\\]
 
-**Coordination Requirements:**
+**조정 요구사항:**
 
-1. **Local reduction**: Each block computes partial sum using tree reduction
-2. **Cluster sync**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync) ensures all partial results are ready
-3. **Final aggregation**: One elected thread combines all partial results
+1. **로컬 reduction**: 각 블록이 트리 reduction으로 부분 합을 계산합니다
+2. **클러스터 동기화**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)로 모든 부분 결과가 준비되었는지 보장합니다
+3. **최종 집계**: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다
 
-## Configuration
+## 설정
 
-- **Problem Size**: `SIZE = 1024` elements
-- **Block Configuration**: `TPB = 256` threads per block `(256, 1)`
-- **Grid Configuration**: `CLUSTER_SIZE = 4` blocks per cluster `(4, 1)`
-- **Data Type**: `DType.float32`
-- **Memory Layout**: Input `Layout.row_major(SIZE)`, Output `Layout.row_major(1)`
-- **Temporary Storage**: `Layout.row_major(CLUSTER_SIZE)` for partial results
+- **문제 크기**: `SIZE = 1024` 요소
+- **블록 설정**: `TPB = 256` 블록당 스레드 수 `(256, 1)`
+- **그리드 설정**: `CLUSTER_SIZE = 4` 클러스터당 블록 수 `(4, 1)`
+- **데이터 타입**: `DType.float32`
+- **메모리 레이아웃**: 입력 `Layout.row_major(SIZE)`, 출력 `Layout.row_major(1)`
+- **임시 저장소**: 부분 결과를 위한 `Layout.row_major(CLUSTER_SIZE)`
 
-**Expected Result**: Sum of sequence `0, 0.01, 0.02, ..., 10.23` = **523,776**
+**예상 결과**: 수열 `0, 0.01, 0.02, ..., 10.23`의 합 = **523,776**
 
-## Code to complete
+## 완성할 코드
 
 ```mojo
 {{#include ../../../../../problems/p34/p34.mojo:cluster_collective_operations}}
@@ -56,52 +56,52 @@ Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p34/p34.mojo" class="filename">View full file: problems/p34/p34.mojo</a>
 
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 
 <div class="solution-tips">
 
-### **Local reduction pattern**
+### **로컬 reduction 패턴**
 
-- Use [tree reduction pattern from Puzzle 27's block sum](../puzzle_27/block_sum.md)
-- Start with stride = `tpb // 2` and halve each iteration (classic [reduction from Puzzle 12](../puzzle_12/puzzle_12.md))
-- Only threads with `local_i < stride` participate in each step
-- Use `barrier()` between reduction steps (from [barrier concepts in Puzzle 29](../puzzle_29/barrier.md))
+- [Puzzle 27의 block sum에서 사용한 트리 reduction 패턴](../puzzle_27/block_sum.md)을 활용합니다
+- stride = `tpb // 2`로 시작하여 매 반복마다 절반으로 줄입니다 (고전적인 [Puzzle 12의 reduction](../puzzle_12/puzzle_12.md))
+- 각 단계에서 `local_i < stride`인 스레드만 참여합니다
+- reduction 단계 사이에 `barrier()`를 사용합니다 ([Puzzle 29의 barrier 개념](../puzzle_29/barrier.md))
 
-### **Cluster coordination strategy**
+### **클러스터 조정 전략**
 
-- Store partial results in `temp_storage[block_id]` for reliable indexing
-- Use [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync) for full cluster synchronization (stronger than arrive/wait)
-- Only one thread should perform the final global aggregation
+- 안정적인 인덱싱을 위해 부분 결과를 `temp_storage[block_id]`에 저장합니다
+- 전체 클러스터 동기화를 위해 [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)를 사용합니다 (arrive/wait보다 강력)
+- 최종 전역 집계는 하나의 스레드만 수행해야 합니다
 
-### **Election pattern for efficiency**
+### **효율적인 선출 패턴**
 
-- Use [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) within the first block (`my_block_rank == 0`) (pattern from [warp programming](../puzzle_24/warp_sum.md))
-- This ensures only one thread performs the final sum to avoid redundancy
-- The elected thread reads all partial results from `temp_storage` (similar to [shared memory access from Puzzle 8](../puzzle_08/puzzle_08.md))
+- 첫 번째 블록(`my_block_rank == 0`) 내에서 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 사용합니다 ([Warp 프로그래밍](../puzzle_24/warp_sum.md)의 패턴)
+- 중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다
+- 선출된 스레드가 `temp_storage`에서 모든 부분 결과를 읽습니다 ([Puzzle 8의 공유 메모리 접근](../puzzle_08/puzzle_08.md)과 유사)
 
-### **Memory access patterns**
+### **메모리 접근 패턴**
 
-- Each thread reads `input[global_i]` with bounds checking (from [guards in Puzzle 3](../puzzle_03/puzzle_03.md))
-- Store intermediate results in [shared memory for intra-block reduction](../puzzle_08/puzzle_08.md)
-- Store partial results in `temp_storage[block_id]` for inter-block communication
-- Final result goes to `output[0]` (single-writer pattern from [block coordination](../puzzle_27/block_sum.md))
+- 각 스레드가 경계 검사와 함께 `input[global_i]`를 읽습니다 ([Puzzle 3의 guard](../puzzle_03/puzzle_03.md))
+- 블록 내부 reduction을 위해 [공유 메모리](../puzzle_08/puzzle_08.md)에 중간 결과를 저장합니다
+- 블록 간 통신을 위해 부분 결과를 `temp_storage[block_id]`에 저장합니다
+- 최종 결과는 `output[0]`에 기록합니다 ([블록 조정](../puzzle_27/block_sum.md)의 단일 writer 패턴)
 
 </div>
 </details>
 
-## Cluster APIs reference
+## 클러스터 API 참조
 
-**From [`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/) module:**
+**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/) 모듈:**
 
-- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync)**: Full cluster synchronization - stronger than arrive/wait pattern
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync)**: Elects single thread within warp for efficient coordination
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster)**: Returns unique block identifier within cluster
+- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync)**: 전체 클러스터 동기화 - arrive/wait 패턴보다 강력
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync)**: 효율적인 조정을 위해 Warp 내에서 단일 스레드를 선출
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자를 반환
 
-## Tree reduction pattern
+## 트리 reduction 패턴
 
-Recall the **tree reduction pattern** from [Puzzle 27's traditional dot product](../puzzle_27/puzzle_27.md):
+[Puzzle 27의 전통적인 내적](../puzzle_27/puzzle_27.md)에서 배운 **트리 reduction 패턴**을 떠올려 보세요:
 
-```
+```txt
 Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
 Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
 Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
@@ -110,9 +110,9 @@ Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
 Stride 1:   [T0] += [T1] → Final result at T0
 ```
 
-**Now extend this pattern to cluster scale** where each block produces one partial result, then combine across blocks.
+**이제 이 패턴을 클러스터 규모로 확장합니다** - 각 블록이 하나의 부분 결과를 생성한 뒤, 블록 간에 결합합니다.
 
-## Running the code
+## 코드 실행
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -135,9 +135,9 @@ uv run poe p34 --reduction
   </div>
 </div>
 
-**Expected Output:**
+**예상 출력:**
 
-```
+```txt
 Testing Cluster-Wide Reduction
 SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
 Expected sum: 523776.0
@@ -148,16 +148,16 @@ Error: 0.0
 ✅ Cluster-wide collective operations tests passed!
 ```
 
-**Success Criteria:**
+**성공 기준:**
 
-- **Perfect accuracy**: Result exactly matches expected sum (523,776)
-- **Cluster coordination**: All 4 blocks contribute their partial sums
-- **Efficient final reduction**: Single elected thread computes final result
+- **완벽한 정확도**: 결과가 예상 합계(523,776)와 정확히 일치합니다
+- **클러스터 조정**: 4개 블록 모두가 부분 합에 기여합니다
+- **효율적인 최종 reduction**: 선출된 단일 스레드가 최종 결과를 계산합니다
 
-## Solution
+## 풀이
 
 <details class="solution-details">
-<summary>Click to reveal solution</summary>
+<summary></summary>
 
 ```mojo
 {{#include ../../../../../solutions/p34/p34.mojo:cluster_collective_operations_solution}}
@@ -165,11 +165,11 @@ Error: 0.0
 
 <div class="solution-explanation">
 
-**The cluster collective operations solution demonstrates the classic distributed computing pattern: local reduction → global coordination → final aggregation:**
+**클러스터 집합 연산 풀이는 분산 컴퓨팅의 고전적인 패턴을 보여줍니다: 로컬 reduction → 전역 조정 → 최종 집계:**
 
-## **Phase 1: Local block reduction (traditional tree reduction)**
+## **1단계: 로컬 블록 reduction (전통적 트리 reduction)**
 
-**Data loading and initialization:**
+**데이터 로딩 및 초기화:**
 
 ```mojo
 var my_value: Float32 = 0.0
@@ -179,7 +179,7 @@ shared_mem[local_i] = my_value     # Store in shared memory
 barrier()                          # Ensure all threads complete loading
 ```
 
-**Tree reduction algorithm:**
+**트리 reduction 알고리즘:**
 
 ```mojo
 var stride = tpb // 2  # Start with half the threads (128)
@@ -190,9 +190,9 @@ while stride > 0:
     stride = stride // 2
 ```
 
-**Tree reduction visualization (TPB=256):**
+**트리 reduction 시각화 (TPB=256):**
 
-```
+```txt
 Step 1: stride=128  [T0]+=T128, [T1]+=T129, ..., [T127]+=T255
 Step 2: stride=64   [T0]+=T64,  [T1]+=T65,  ..., [T63]+=T127
 Step 3: stride=32   [T0]+=T32,  [T1]+=T33,  ..., [T31]+=T63
@@ -203,22 +203,22 @@ Step 7: stride=2    [T0]+=T2,   [T1]+=T3
 Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 ```
 
-**Partial result storage:**
+**부분 결과 저장:**
 
-- Only thread 0 writes: `temp_storage[block_id] = shared_mem[0]`
-- Each block stores its sum at `temp_storage[0]`, `temp_storage[1]`, `temp_storage[2]`, `temp_storage[3]`
+- 스레드 0만 기록합니다: `temp_storage[block_id] = shared_mem[0]`
+- 각 블록이 자신의 합계를 `temp_storage[0]`, `temp_storage[1]`, `temp_storage[2]`, `temp_storage[3]`에 저장합니다
 
-## **Phase 2: Cluster synchronization**
+## **2단계: 클러스터 동기화**
 
-**Full cluster barrier:**
+**전체 클러스터 barrier:**
 
-- [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync) provides **stronger guarantees** than [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
-- Ensures **all blocks complete their local reductions** before any block proceeds
-- Hardware-accelerated synchronization across all blocks in the cluster
+- [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)는 [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)보다 **더 강력한 보장**을 제공합니다
+- 어떤 블록이든 다음으로 진행하기 전에 **모든 블록이 로컬 reduction을 완료**하도록 보장합니다
+- 클러스터 내 모든 블록에 걸친 하드웨어 가속 동기화입니다
 
-## **Phase 3: Final global aggregation**
+## **3단계: 최종 전역 집계**
 
-**Thread election for efficiency:**
+**효율적인 스레드 선출:**
 
 ```mojo
 if elect_one_sync() and my_block_rank == 0:
@@ -228,70 +228,70 @@ if elect_one_sync() and my_block_rank == 0:
     output[0] = total
 ```
 
-**Why this election strategy?**
+**왜 이 선출 전략을 사용할까?**
 
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: Hardware primitive that selects exactly one thread per warp
-- **`my_block_rank == 0`**: Only elect from the first block to ensure single writer
-- **Result**: Only ONE thread across the entire cluster performs the final summation
-- **Efficiency**: Avoids redundant computation across all 1024 threads
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: Warp당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다
+- **`my_block_rank == 0`**: 단일 writer를 보장하기 위해 첫 번째 블록에서만 선출합니다
+- **결과**: 전체 클러스터에서 단 하나의 스레드만 최종 합산을 수행합니다
+- **효율성**: 1024개 전체 스레드에 걸친 중복 연산을 피합니다
 
-## **Key technical insights**
+## **핵심 기술 인사이트**
 
-**Three-level reduction hierarchy:**
+**3단계 reduction 계층 구조:**
 
-1. **Thread → Warp**: Individual threads contribute to warp-level partial sums
-2. **Warp → Block**: Tree reduction combines warps into single block result (256 → 1)
-3. **Block → Cluster**: Simple loop combines block results into final sum (4 → 1)
+1. **스레드 → Warp**: 개별 스레드가 Warp 레벨 부분 합에 기여합니다
+2. **Warp → 블록**: 트리 reduction이 Warp들을 하나의 블록 결과로 합칩니다 (256 → 1)
+3. **블록 → 클러스터**: 단순 루프가 블록 결과를 최종 합계로 합칩니다 (4 → 1)
 
-**Memory access patterns:**
+**메모리 접근 패턴:**
 
-- **Input**: Each element read exactly once (`input[global_i]`)
-- **Shared memory**: High-speed workspace for intra-block tree reduction
-- **Temp storage**: Low-overhead inter-block communication (only 4 values)
-- **Output**: Single global result written once
+- **입력**: 각 요소를 정확히 한 번 읽습니다 (`input[global_i]`)
+- **공유 메모리**: 블록 내부 트리 reduction을 위한 고속 작업 공간
+- **임시 저장소**: 저비용 블록 간 통신 (4개 값만)
+- **출력**: 단일 전역 결과를 한 번 기록
 
-**Synchronization guarantees:**
+**동기화 보장:**
 
-- **`barrier()`**: Ensures all threads in block complete each tree reduction step
-- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)**: **Global barrier** - all blocks reach same execution point
-- **Single writer**: Election prevents race conditions on final output
+- **`barrier()`**: 블록 내 모든 스레드가 각 트리 reduction 단계를 완료하도록 보장합니다
+- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)**: **전역 barrier** - 모든 블록이 동일한 실행 지점에 도달합니다
+- **단일 writer**: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다
 
-**Algorithm complexity analysis:**
+**알고리즘 복잡도 분석:**
 
-- **Tree reduction**: O(log₂ TPB) = O(log₂ 256) = 8 steps per block
-- **Cluster coordination**: O(1) synchronization overhead
-- **Final aggregation**: O(CLUSTER_SIZE) = O(4) simple additions
-- **Total**: Logarithmic within blocks, linear across blocks
+- **트리 reduction**: O(log₂ TPB) = O(log₂ 256) = 블록당 8단계
+- **클러스터 조정**: O(1) 동기화 오버헤드
+- **최종 집계**: O(CLUSTER_SIZE) = O(4) 단순 덧셈
+- **전체**: 블록 내부는 로그, 블록 간은 선형
 
-**Scalability characteristics:**
+**확장성 특성:**
 
-- **Block level**: Scales to thousands of threads with logarithmic complexity
-- **Cluster level**: Scales to dozens of blocks with linear complexity
-- **Memory**: Temp storage requirements scale linearly with cluster size
-- **Communication**: Minimal inter-block data movement (one value per block)
+- **블록 레벨**: 로그 복잡도로 수천 개의 스레드까지 확장 가능
+- **클러스터 레벨**: 선형 복잡도로 수십 개의 블록까지 확장 가능
+- **메모리**: 임시 저장소 요구량이 클러스터 크기에 비례하여 선형 증가
+- **통신**: 최소한의 블록 간 데이터 이동 (블록당 하나의 값)
 
 </div>
 </details>
 
-## Understanding the collective pattern
+## 집합 연산 패턴 이해하기
 
-This puzzle demonstrates the classic **two-phase reduction pattern** used in distributed computing:
+이 퍼즐은 분산 컴퓨팅에서 사용되는 고전적인 **2단계 reduction 패턴**을 보여줍니다:
 
-1. **Local aggregation**: Each processing unit (block) reduces its data portion
-2. **Global coordination**: Processing units synchronize and exchange results
-3. **Final reduction**: One elected unit combines all partial results
+1. **로컬 집계**: 각 처리 단위(블록)가 자신의 데이터 영역을 reduction합니다
+2. **전역 조정**: 처리 단위들이 동기화하고 결과를 교환합니다
+3. **최종 reduction**: 선출된 하나의 단위가 모든 부분 결과를 합칩니다
 
-**Comparison to single-block approaches:**
+**단일 블록 방식과의 비교:**
 
-- **Traditional `block.sum()`**: Works within 256 threads maximum
-- **Cluster collective**: Scales to 1000+ threads across multiple blocks
-- **Same accuracy**: Both produce identical mathematical results
-- **Different scale**: Cluster approach handles larger datasets
+- **기존 `block.sum()`**: 최대 256개 스레드 내에서만 동작합니다
+- **클러스터 집합 연산**: 여러 블록에 걸쳐 1000개 이상의 스레드로 확장됩니다
+- **동일한 정확도**: 둘 다 동일한 수학적 결과를 생성합니다
+- **다른 규모**: 클러스터 방식이 더 큰 데이터셋을 처리합니다
 
-**Performance benefits**:
+**성능 이점**:
 
-- **Larger datasets**: Process arrays that exceed single-block capacity
-- **Better utilization**: Use more GPU compute units simultaneously
-- **Scalable patterns**: Foundation for complex multi-stage algorithms
+- **더 큰 데이터셋**: 단일 블록 용량을 초과하는 배열을 처리합니다
+- **더 나은 활용률**: 더 많은 GPU 연산 유닛을 동시에 사용합니다
+- **확장 가능한 패턴**: 복잡한 다단계 알고리즘의 기반이 됩니다
 
-**Next step**: Ready for the ultimate challenge? Continue to **[Advanced Cluster Algorithms](./advanced_cluster_patterns.md)** to learn hierarchical [warp programming](../puzzle_24/warp_sum.md)+[block coordination](../puzzle_27/block_sum.md)+cluster synchronization, building on [performance optimization techniques](../puzzle_30/profile_kernels.md)!
+**다음 단계**: 최종 도전을 할 준비가 되셨나요? **[고급 클러스터 알고리즘](./advanced_cluster_patterns.md)** 으로 이동하여 [Warp 프로그래밍](../puzzle_24/warp_sum.md)+[블록 조정](../puzzle_27/block_sum.md)+클러스터 동기화를 결합한 계층적 패턴을 배워보세요. [성능 최적화 기법](../puzzle_30/profile_kernels.md)을 기반으로 합니다!

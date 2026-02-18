@@ -1,29 +1,29 @@
 <!-- i18n-source-commit: b9266f4ff3b8ee0a7f5d253dff9e704b63fe480b -->
 
-# Puzzle 34: GPU Cluster Programming (SM90+)
+# Puzzle 34: GPU 클러스터 프로그래밍 (SM90+)
 
-## Introduction
+## 소개
 
-> **Hardware requirement: ⚠️ NVIDIA SM90+ Only**
+> **하드웨어 요구사항: ⚠️ NVIDIA SM90+ 전용**
 >
-> This puzzle requires **NVIDIA Hopper architecture** (H100, H200) or newer GPUs with SM90+ compute capability. The cluster programming APIs are hardware-accelerated and will raise errors on unsupported hardware. If you're unsure about the underlying architecture, run `pixi run gpu-specs` and must have at least `Compute Cap: 9.0` (see [GPU profiling basics](../puzzle_30/nvidia_profiling_basics.md) for hardware identification)
+> 이 퍼즐은 SM90+ 컴퓨트 능력을 갖춘 **NVIDIA Hopper 아키텍처** (H100, H200) 이상의 GPU가 필요합니다. 클러스터 프로그래밍 API는 하드웨어 가속 기반이며, 지원하지 않는 하드웨어에서는 오류가 발생합니다. 사용 중인 아키텍처가 확실하지 않다면 `pixi run gpu-specs`를 실행하여 최소 `Compute Cap: 9.0` 이상인지 확인하세요 (하드웨어 식별에 대한 자세한 내용은 [NVIDIA 프로파일링 기초](../puzzle_30/nvidia_profiling_basics.md)를 참고하세요)
 
-Building on your journey from **[warp-level programming (Puzzles 24-26)](../puzzle_24/puzzle_24.md)** through **[block-level programming (Puzzle 27)](../puzzle_27/puzzle_27.md)**, you'll now learn **cluster-level programming** - coordinating multiple thread blocks to solve problems that exceed single-block capabilities.
+**[Warp 레벨 프로그래밍 (Puzzle 24-26)](../puzzle_24/puzzle_24.md)** 에서 **[블록 레벨 프로그래밍 (Puzzle 27)](../puzzle_27/puzzle_27.md)** 까지의 여정을 이어, 이제 **클러스터 레벨 프로그래밍**을 배웁니다 - 단일 블록의 한계를 넘어서는 문제를 해결하기 위해 여러 스레드 블록을 조정하는 기법입니다.
 
-## What are thread block clusters?
+## 스레드 블록 클러스터란?
 
-Thread Block Clusters are a revolutionary SM90+ feature that enable **multiple thread blocks to cooperate** on a single computational task with hardware-accelerated synchronization and communication primitives.
+스레드 블록 클러스터는 하드웨어 가속 동기화 및 통신 기본 요소를 통해 **여러 스레드 블록이 협력**하여 하나의 연산 작업을 수행할 수 있게 해주는 혁신적인 SM90+ 기능입니다.
 
-**Key capabilities:**
-- **Inter-block synchronization**: Coordinate multiple blocks with [`cluster_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), [`cluster_arrive`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
-- **Block identification**: Use [`block_rank_in_cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster) for unique block coordination
-- **Efficient coordination**: [`elect_one_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) for optimized warp-level cooperation
-- **Advanced patterns**: [`cluster_mask_base`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_mask_base) for selective block coordination
+**핵심 기능:**
 
+- **블록 간 동기화**: [`cluster_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), [`cluster_arrive`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)로 여러 블록을 조정합니다
+- **블록 식별**: [`block_rank_in_cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster)를 사용하여 고유한 블록 조정을 수행합니다
+- **효율적인 조정**: [`elect_one_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)로 최적화된 Warp 수준 협력을 구현합니다
+- **고급 패턴**: [`cluster_mask_base`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_mask_base)로 선택적 블록 조정을 수행합니다
 
-## The cluster programming model
+## 클러스터 프로그래밍 모델
 
-### Traditional GPU programming hierarchy:
+### 기존 GPU 프로그래밍 계층 구조
 
 ```
 Grid (Multiple Blocks)
@@ -37,7 +37,8 @@ Grid (Multiple Blocks)
         └── Thread (SIMD operations within each thread)
 ```
 
-### **New: Cluster programming hierarchy:**
+### **새로운 계층: 클러스터 프로그래밍 계층 구조:**
+
 ```
 Grid (Multiple Clusters)
 ├── 🆕 Cluster (Multiple Blocks) - cluster_sync(), cluster_arrive()
@@ -51,77 +52,80 @@ Grid (Multiple Clusters)
             └── Thread (SIMD operations within each thread)
 ```
 
-**Execution Model Details:**
-- **Thread Level**: [SIMD operations](../puzzle_23/gpu-thread-vs-simd.md) within individual threads
-- **Warp Level**: [SIMT execution](../puzzle_24/warp_simt.md) - 32 threads in lockstep coordination
-- **Block Level**: [Multi-warp coordination](../puzzle_27/puzzle_27.md) with shared memory and barriers
-- **🆕 Cluster Level**: Multi-block coordination with SM90+ cluster APIs
+**실행 모델 상세:**
 
-## Learning progression
+- **스레드 레벨**: 개별 스레드 내에서의 [SIMD 연산](../puzzle_23/gpu-thread-vs-simd.md)
+- **Warp 레벨**: [SIMT 실행](../puzzle_24/warp_simt.md) - 32개 스레드의 lockstep 조정
+- **블록 레벨**: 공유 메모리와 barrier를 활용한 [멀티 Warp 조정](../puzzle_27/puzzle_27.md)
+- **🆕 클러스터 레벨**: SM90+ 클러스터 API를 활용한 멀티 블록 조정
 
-This puzzle follows a carefully designed **3-part progression** that builds your cluster programming expertise:
+## 학습 단계
 
-### **[🔰 Multi-Block Coordination Basics](./cluster_coordination_basics.md)**
+이 퍼즐은 클러스터 프로그래밍 역량을 체계적으로 쌓아가는 **3단계 구성**으로 설계되었습니다:
 
-**Focus**: Understanding fundamental cluster synchronization patterns
+### **[🔰 멀티 블록 조정 기초](./cluster_coordination_basics.md)**
 
-Learn how multiple thread blocks coordinate their execution using [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) and [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) for basic inter-block communication and data distribution.
+**핵심**: 클러스터 동기화 패턴의 기본 이해
 
-**Key APIs**: [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
+여러 스레드 블록이 [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)와 [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)를 사용하여 기본적인 블록 간 통신과 데이터 분배를 위해 실행을 조정하는 방법을 배웁니다.
 
----
-
-### **[📊 Cluster-Wide Collective Operations](./cluster_collective_ops.md)**
-
-**Focus**: Extending block-level patterns to cluster scale
-
-Learn cluster-wide reductions and collective operations that extend familiar `block.sum()` concepts to coordinate across multiple thread blocks for large-scale computations.
-
-**Key APIs**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) for efficient cluster coordination
+**주요 API**: [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
 
 ---
 
-### **[🚀 Advanced Cluster Algorithms](./advanced_cluster_patterns.md)**
+### **[☸️ 클러스터 전체 집합 연산](./cluster_collective_ops.md)**
 
-**Focus**: Production-ready multi-level coordination patterns
+**핵심**: 블록 레벨 패턴을 클러스터 규모로 확장
 
-Implement sophisticated algorithms combining warp-level, block-level, and cluster-level coordination for maximum GPU utilization and complex computational workflows.
+익숙한 `block.sum()` 개념을 여러 스레드 블록에 걸쳐 확장하여 대규모 연산을 조정하는 클러스터 전체 reduction과 집합 연산을 배웁니다.
 
-**Key APIs**: [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), advanced coordination patterns
+**주요 API**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), 효율적인 클러스터 조정을 위한 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)
 
-## Why cluster programming matters
+---
 
-**Problem Scale**: Modern AI and scientific workloads often require computations that exceed single thread block capabilities:
-- **Large matrix operations** requiring inter-block coordination (like [matrix multiplication from Puzzle 16](../puzzle_16/puzzle_16.md))
-- **Multi-stage algorithms** with [producer-consumer dependencies from Puzzle 29](../puzzle_29/barrier.md)
-- **Global statistics** across datasets larger than [shared memory from Puzzle 8](../puzzle_08/puzzle_08.md)
-- **Advanced stencil computations** requiring neighbor block communication
+### **[🧠 고급 클러스터 알고리즘](./advanced_cluster_patterns.md)**
 
-**Hardware Evolution**: As GPUs gain more compute units (see [GPU architecture profiling in Puzzle 30](../puzzle_30/nvidia_profiling_basics.md)), **cluster programming becomes essential** for utilizing next-generation hardware efficiently.
+**핵심**: 프로덕션 수준의 다단계 조정 패턴
 
-## Educational value
+GPU 활용률을 극대화하고 복잡한 연산 워크플로우를 구현하기 위해 Warp 레벨, 블록 레벨, 클러스터 레벨의 조정을 결합하는 정교한 알고리즘을 구현합니다.
 
-By completing this puzzle, you'll have learned the complete **GPU programming hierarchy**:
+**주요 API**: [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), 고급 조정 패턴
 
-- **Thread-level**: [Individual computation units with SIMD operations](../puzzle_23/gpu-thread-vs-simd.md)
-- **[Warp-level](../puzzle_24/puzzle_24.md)**: [32-thread SIMT coordination](../puzzle_24/warp_simt.md) (Puzzles 24-26)
-- **[Block-level](../puzzle_27/puzzle_27.md)**: [Multi-warp coordination with shared memory](../puzzle_27/block_sum.md) (Puzzle 27)
-- **🆕 Cluster-level**: Multi-block coordination (Puzzle 34)
-- **Grid-level**: Independent block execution across [multiple streaming multiprocessors](../puzzle_30/profile_kernels.md)
+## 클러스터 프로그래밍이 중요한 이유
 
-This progression prepares you for **next-generation GPU programming** and **large-scale parallel computing** challenges, building on the [performance optimization techniques from Puzzles 30-32](../puzzle_30/puzzle_30.md).
+**문제 규모**: 현대 AI 및 과학 워크로드는 단일 스레드 블록의 능력을 초과하는 연산을 필요로 하는 경우가 많습니다:
 
-## Getting started
+- 블록 간 조정이 필요한 **대규모 행렬 연산** ([Puzzle 16의 행렬 곱셈](../puzzle_16/puzzle_16.md)과 같은)
+- [Puzzle 29의 생산자-소비자 의존성](../puzzle_29/barrier.md)을 갖는 **다단계 알고리즘**
+- [Puzzle 8의 공유 메모리](../puzzle_08/puzzle_08.md)보다 큰 데이터셋에 대한 **전역 통계**
+- 이웃 블록 간 통신이 필요한 **고급 stencil 연산**
 
-**Prerequisites**:
-- Complete understanding of [block-level programming (Puzzle 27)](../puzzle_27/puzzle_27.md)
-- Experience with [warp-level programming (Puzzles 24-26)](../puzzle_24/puzzle_24.md)
-- Familiarity with GPU memory hierarchy from [shared memory concepts (Puzzle 8)](../puzzle_08/puzzle_08.md)
-- Understanding of [GPU synchronization from barriers (Puzzle 29)](../puzzle_29/puzzle_29.md)
-- Access to NVIDIA SM90+ hardware or compatible environment
+**하드웨어 발전**: GPU가 더 많은 연산 유닛을 갖추게 됨에 따라 ([Puzzle 30의 GPU 아키텍처 프로파일링](../puzzle_30/nvidia_profiling_basics.md) 참고), **클러스터 프로그래밍은 차세대 하드웨어를 효율적으로 활용하는 데 필수적**이 됩니다.
 
-**Recommended approach**: Follow the 3-part progression sequentially, as each part builds essential concepts for the next level of complexity.
+## 교육적 가치
 
-**Hardware note**: If running on non-SM90+ hardware, the puzzles serve as **educational examples** of cluster programming concepts and API usage patterns.
+이 퍼즐을 완료하면 완전한 **GPU 프로그래밍 계층 구조**를 학습하게 됩니다:
 
-Ready to learn the future of GPU programming? Start with **[Multi-Block Coordination Basics](./cluster_coordination_basics.md)** to learn fundamental cluster synchronization patterns!
+- **스레드 레벨**: [SIMD 연산을 수행하는 개별 연산 단위](../puzzle_23/gpu-thread-vs-simd.md)
+- **[Warp 레벨](../puzzle_24/puzzle_24.md)**: [32개 스레드 SIMT 조정](../puzzle_24/warp_simt.md) (Puzzle 24-26)
+- **[블록 레벨](../puzzle_27/puzzle_27.md)**: [공유 메모리를 활용한 멀티 Warp 조정](../puzzle_27/block_sum.md) (Puzzle 27)
+- **🆕 클러스터 레벨**: 멀티 블록 조정 (Puzzle 34)
+- **그리드 레벨**: [다수의 SM(Streaming Multiprocessor)](../puzzle_30/profile_kernels.md)에 걸친 독립적 블록 실행
+
+이 과정은 [Puzzle 30-32의 성능 최적화 기법](../puzzle_30/puzzle_30.md)을 기반으로, **차세대 GPU 프로그래밍**과 **대규모 병렬 컴퓨팅** 도전에 대비할 수 있도록 준비시켜 줍니다.
+
+## 시작하기
+
+**선수 조건**:
+
+- [블록 레벨 프로그래밍 (Puzzle 27)](../puzzle_27/puzzle_27.md)에 대한 완전한 이해
+- [Warp 레벨 프로그래밍 (Puzzle 24-26)](../puzzle_24/puzzle_24.md) 경험
+- [공유 메모리 개념 (Puzzle 8)](../puzzle_08/puzzle_08.md)을 통한 GPU 메모리 계층 구조 숙지
+- [Barrier를 활용한 GPU 동기화 (Puzzle 29)](../puzzle_29/puzzle_29.md)에 대한 이해
+- NVIDIA SM90+ 하드웨어 또는 호환 환경 접근
+
+**권장 학습 방법**: 3단계 구성을 순서대로 따라가세요. 각 단계가 다음 단계의 복잡성을 위한 핵심 개념을 구축합니다.
+
+**하드웨어 참고**: SM90+ 이외의 하드웨어에서 실행하는 경우, 이 퍼즐은 클러스터 프로그래밍 개념과 API 사용 패턴의 **교육적 예제**로 활용할 수 있습니다.
+
+GPU 프로그래밍의 미래를 배울 준비가 되셨나요? **[멀티 블록 조정 기초](./cluster_coordination_basics.md)** 부터 시작하여 기본적인 클러스터 동기화 패턴을 배워보세요!
