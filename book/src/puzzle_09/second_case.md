@@ -5,8 +5,7 @@
 Building on your [crash debugging skills from the First Case](./first_case.md), you'll now face a completely different challenge: a **logic bug** that produces incorrect results without crashing.
 
 **The debugging shift:**
-
-- **First Case**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
+- **[First Case](./first_case.md)**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
 - **Second Case**: No crashes, no error messages - just subtly wrong results that require detective work
 
 This intermediate-level debugging challenge covers investigating **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
