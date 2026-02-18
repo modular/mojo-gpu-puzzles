@@ -2,7 +2,7 @@
 
 For warp-level neighbor communication we can use `shuffle_down()` to access data from adjacent lanes within a warp. This powerful primitive enables efficient finite differences, moving averages, and neighbor-based computations without shared memory or explicit synchronization.
 
-**Key insight:** _The [shuffle_down()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down) operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations._
+**Key insight:** _The [shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down) operation leverages SIMT execution to let each lane access data from its neighbors within the same warp, enabling efficient stencil patterns and sliding window operations._
 
 > **What are stencil operations?** [Stencil](https://en.wikipedia.org/wiki/Iterative_Stencil_Loops) operations are computations where each output element depends on a fixed pattern of neighboring input elements. Common examples include finite differences (derivatives), convolutions, and moving averages. The "stencil" refers to the pattern of neighbor access - like a 3-point stencil that reads `[i-1, i, i+1]` or a 5-point stencil that reads `[i-2, i-1, i, i+1, i+2]`.
 

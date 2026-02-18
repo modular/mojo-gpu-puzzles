@@ -2,7 +2,7 @@
 
 For warp-level parallel scan operations we can use `prefix_sum()` to replace complex shared memory algorithms with hardware-optimized primitives. This powerful operation enables efficient cumulative computations, parallel partitioning, and advanced coordination algorithms that would otherwise require dozens of lines of shared memory and synchronization code.
 
-**Key insight:** _The [prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum) operation leverages hardware-accelerated parallel scan to compute cumulative operations across warp lanes with \\(O(\\log n)\\) complexity, replacing complex multi-phase algorithms with single function calls._
+**Key insight:** _The [prefix_sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum) operation leverages hardware-accelerated parallel scan to compute cumulative operations across warp lanes with \\(O(\\log n)\\) complexity, replacing complex multi-phase algorithms with single function calls._
 
 > **What is parallel scan?** [Parallel scan (prefix sum)](https://en.wikipedia.org/wiki/Prefix_sum) is a fundamental parallel primitive that computes cumulative operations across data elements. For addition, it transforms `[a, b, c, d]` into `[a, a+b, a+b+c, a+b+c+d]`. This operation is essential for parallel algorithms like stream compaction, quicksort partitioning, and parallel sorting.
 

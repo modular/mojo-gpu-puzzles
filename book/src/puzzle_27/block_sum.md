@@ -1,8 +1,8 @@
 # block.sum() Essentials - Block-Level Dot Product
 
-Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using block-level [sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use `block.sum()` to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.
+Implement the dot product we saw in [puzzle 12](../puzzle_12/puzzle_12.md) using block-level [sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) operations to replace complex shared memory patterns with simple function calls. Each thread in the block will process one element and use `block.sum()` to combine results automatically, demonstrating how block programming transforms GPU synchronization across entire thread blocks.
 
-**Key insight:** _The [block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See [technical investigation](#technical-investigation-what-does-blocksum-actually-compile-to) for LLVM analysis._
+**Key insight:** _The [block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) operation leverages block-wide execution to replace shared memory + barriers + tree reduction with expertly optimized implementations that work across all threads using warp patterns in a block. See [technical investigation](#technical-investigation-what-does-blocksum-actually-compile-to) for LLVM analysis._
 
 ## Key concepts
 
@@ -175,7 +175,7 @@ Each thread should handle one element pair from vectors `a` and `b`. What operat
 
 When accessing `LayoutTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
 
-### 4. **[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) API concepts**
+### 4. **[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) API concepts**
 
 Study the function signature - it needs:
 
@@ -310,7 +310,7 @@ bar.sync           0;                        // barrier synchronization
 - **Traditional**: Tree reduction with shared memory + multiple `bar.sync` calls
 - **block.sum()**: Butterfly shuffle pattern + optimized cross-warp coordination
 
-The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo] in Mojo gpu module for more details about the implementation.
+The performance advantage comes from **expertly optimized algorithm choice** (butterfly > tree), not from instruction count or magical hardware. Take a look at [block.mojo](https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo) in Mojo gpu module for more details about the implementation.
 
 ## Performance insights
 

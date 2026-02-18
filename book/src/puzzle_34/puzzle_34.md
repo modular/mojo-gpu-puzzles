@@ -13,10 +13,10 @@ Building on your journey from **[warp-level programming (Puzzles 24-26)](../puzz
 Thread Block Clusters are a revolutionary SM90+ feature that enable **multiple thread blocks to cooperate** on a single computational task with hardware-accelerated synchronization and communication primitives.
 
 **Key capabilities:**
-- **Inter-block synchronization**: Coordinate multiple blocks with [`cluster_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), [`cluster_arrive`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
-- **Block identification**: Use [`block_rank_in_cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster) for unique block coordination
-- **Efficient coordination**: [`elect_one_sync`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) for optimized warp-level cooperation
-- **Advanced patterns**: [`cluster_mask_base`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_mask_base) for selective block coordination
+- **Inter-block synchronization**: Coordinate multiple blocks with [`cluster_sync`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync), [`cluster_arrive`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive), [`cluster_wait`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
+- **Block identification**: Use [`block_rank_in_cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster) for unique block coordination
+- **Efficient coordination**: [`elect_one_sync`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync) for optimized warp-level cooperation
+- **Advanced patterns**: [`cluster_mask_base`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base) for selective block coordination
 
 
 ## The cluster programming model
@@ -63,9 +63,9 @@ This puzzle follows a carefully designed **3-part progression** that builds your
 
 **Focus**: Understanding fundamental cluster synchronization patterns
 
-Learn how multiple thread blocks coordinate their execution using [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) and [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) for basic inter-block communication and data distribution.
+Learn how multiple thread blocks coordinate their execution using [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) and [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) for basic inter-block communication and data distribution.
 
-**Key APIs**: [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)
+**Key APIs**: [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster), [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive), [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)
 
 ---
 
@@ -75,7 +75,7 @@ Learn how multiple thread blocks coordinate their execution using [`cluster_arri
 
 Learn cluster-wide reductions and collective operations that extend familiar `block.sum()` concepts to coordinate across multiple thread blocks for large-scale computations.
 
-**Key APIs**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync), [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync) for efficient cluster coordination
+**Key APIs**: [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync), [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync) for efficient cluster coordination
 
 ---
 
@@ -85,7 +85,7 @@ Learn cluster-wide reductions and collective operations that extend familiar `bl
 
 Implement sophisticated algorithms combining warp-level, block-level, and cluster-level coordination for maximum GPU utilization and complex computational workflows.
 
-**Key APIs**: [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync), [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive), advanced coordination patterns
+**Key APIs**: [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync), [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive), advanced coordination patterns
 
 ## Why cluster programming matters
 

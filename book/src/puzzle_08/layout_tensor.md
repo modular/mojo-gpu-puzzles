@@ -23,7 +23,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 ## Key differences from raw approach
 
-1. **Memory allocation**: We will use [LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor) with address_space instead of [stack_allocation](https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/)
+1. **Memory allocation**: We will use [LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor) with address_space instead of [stack_allocation](https://docs.modular.com/mojo/std/memory/memory/stack_allocation/)
 
    ```mojo
    # Raw approach
