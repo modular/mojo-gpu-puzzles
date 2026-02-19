@@ -1,14 +1,14 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # ☸️ 클러스터 전체 집합 연산
 
 ## 개요
 
-이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는 **클러스터 전체 집합 연산**을 구현하는 방법을 배웁니다 - [Puzzle 27](../puzzle_27/block_sum.md)에서 익힌 [`block.sum`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 패턴을 **여러 스레드 블록**에 걸쳐 확장합니다.
+이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는 **클러스터 전체 집합 연산**을 구현하는 방법을 배웁니다 - [Puzzle 27](../puzzle_27/block_sum.md)에서 익힌 [`block.sum`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) 패턴을 **여러 스레드 블록**에 걸쳐 확장합니다.
 
 **도전 과제**: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별 reduction을 하나의 전역 결과로 합치는 클러스터 전체 reduction을 구현합니다.
 
-**핵심 학습**: 전체 클러스터 조정을 위한 [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)와 효율적인 최종 reduction을 위한 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 배웁니다.
+**핵심 학습**: 전체 클러스터 조정을 위한 [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)와 효율적인 최종 reduction을 위한 [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 배웁니다.
 
 ## 문제: 대규모 전역 합산
 
@@ -33,7 +33,7 @@
 **조정 요구사항:**
 
 1. **로컬 reduction**: 각 블록이 트리 reduction으로 부분 합을 계산합니다
-2. **클러스터 동기화**: [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)로 모든 부분 결과가 준비되었는지 보장합니다
+2. **클러스터 동기화**: [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)로 모든 부분 결과가 준비되었는지 보장합니다
 3. **최종 집계**: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다
 
 ## 설정
@@ -70,12 +70,12 @@
 ### **클러스터 조정 전략**
 
 - 안정적인 인덱싱을 위해 부분 결과를 `temp_storage[block_id]`에 저장합니다
-- 전체 클러스터 동기화를 위해 [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)를 사용합니다 (arrive/wait보다 강력)
+- 전체 클러스터 동기화를 위해 [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)를 사용합니다 (arrive/wait보다 강력)
 - 최종 전역 집계는 하나의 스레드만 수행해야 합니다
 
 ### **효율적인 선출 패턴**
 
-- 첫 번째 블록(`my_block_rank == 0`) 내에서 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 사용합니다 ([Warp 프로그래밍](../puzzle_24/warp_sum.md)의 패턴)
+- 첫 번째 블록(`my_block_rank == 0`) 내에서 [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 사용합니다 ([Warp 프로그래밍](../puzzle_24/warp_sum.md)의 패턴)
 - 중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다
 - 선출된 스레드가 `temp_storage`에서 모든 부분 결과를 읽습니다 ([Puzzle 8의 공유 메모리 접근](../puzzle_08/puzzle_08.md)과 유사)
 
@@ -91,11 +91,11 @@
 
 ## 클러스터 API 참조
 
-**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/) 모듈:**
+**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/) 모듈:**
 
-- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/cluster_sync)**: 전체 클러스터 동기화 - arrive/wait 패턴보다 강력
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/elect_one_sync)**: 효율적인 조정을 위해 Warp 내에서 단일 스레드를 선출
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/primitives/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자를 반환
+- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**: 전체 클러스터 동기화 - arrive/wait 패턴보다 강력
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: 효율적인 조정을 위해 Warp 내에서 단일 스레드를 선출
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자를 반환
 
 ## 트리 reduction 패턴
 
@@ -212,7 +212,7 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 
 **전체 클러스터 barrier:**
 
-- [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)는 [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)보다 **더 강력한 보장**을 제공합니다
+- [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)는 [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)/[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)보다 **더 강력한 보장**을 제공합니다
 - 어떤 블록이든 다음으로 진행하기 전에 **모든 블록이 로컬 reduction을 완료**하도록 보장합니다
 - 클러스터 내 모든 블록에 걸친 하드웨어 가속 동기화입니다
 
@@ -230,7 +230,7 @@ if elect_one_sync() and my_block_rank == 0:
 
 **왜 이 선출 전략을 사용할까?**
 
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: Warp당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: Warp당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다
 - **`my_block_rank == 0`**: 단일 writer를 보장하기 위해 첫 번째 블록에서만 선출합니다
 - **결과**: 전체 클러스터에서 단 하나의 스레드만 최종 합산을 수행합니다
 - **효율성**: 1024개 전체 스레드에 걸친 중복 연산을 피합니다
@@ -253,7 +253,7 @@ if elect_one_sync() and my_block_rank == 0:
 **동기화 보장:**
 
 - **`barrier()`**: 블록 내 모든 스레드가 각 트리 reduction 단계를 완료하도록 보장합니다
-- **[`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)**: **전역 barrier** - 모든 블록이 동일한 실행 지점에 도달합니다
+- **[`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)**: **전역 barrier** - 모든 블록이 동일한 실행 지점에 도달합니다
 - **단일 writer**: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다
 
 **알고리즘 복잡도 분석:**

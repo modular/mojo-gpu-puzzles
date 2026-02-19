@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 20: 1D Convolution Op
 
@@ -17,7 +17,7 @@
 
 ## 개요
 
-이 퍼즐에서는 [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)의 1D convolution kernel을 그대로 가져와서, MAX Graph 대신 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/CustomOpLibrary/)를 사용하여 PyTorch와 통합합니다.
+이 퍼즐에서는 [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)의 1D convolution kernel을 그대로 가져와서, MAX Graph 대신 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 사용하여 PyTorch와 통합합니다.
 
 여기서 핵심은 **동일한 Mojo 커널이 수정 없이 그대로 동작한다**는 것입니다. MAX Graph와 PyTorch 방식 사이에서 달라지는 것은 Python 통합 레이어뿐입니다.
 

@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Elementwise - 기본 GPU 함수형 연산
 
 이 퍼즐은 Mojo의 함수형 `elementwise` 패턴을 사용하여 벡터 덧셈을 구현합니다. 각 스레드가 자동으로 여러 SIMD 요소를 처리하며, 현대 GPU 프로그래밍이 어떻게 저수준 세부 사항을 추상화하면서도 높은 성능을 유지하는지 보여줍니다.
 
-**핵심 통찰:** _[elementwise](https://docs.modular.com/mojo/stdlib/algorithm/functional/elementwise/) 함수는 스레드 관리, SIMD 벡터화, 메모리 병합을 자동으로 처리합니다._
+**핵심 통찰:** _[elementwise](https://docs.modular.com/mojo/std/algorithm/functional/elementwise/) 함수는 스레드 관리, SIMD 벡터화, 메모리 병합을 자동으로 처리합니다._
 
 ## 핵심 개념
 

@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # block.sum()의 핵심 - 블록 레벨 내적
 
-[Puzzle 12](../puzzle_12/puzzle_12.md)에서 살펴본 내적을 블록 레벨 [sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각 스레드가 하나의 요소를 처리하고 `block.sum()`으로 결과를 자동으로 합산하여, 블록 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.
+[Puzzle 12](../puzzle_12/puzzle_12.md)에서 살펴본 내적을 블록 레벨 [sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각 스레드가 하나의 요소를 처리하고 `block.sum()`으로 결과를 자동으로 합산하여, 블록 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.
 
-**핵심 통찰:** _[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) 연산은 블록 전체 실행을 활용하여 공유 메모리 + barrier + 트리 reduction을 블록 내 모든 스레드에 걸쳐 Warp 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다. LLVM 분석은 [기술 분석](#기술-분석-blocksum은-실제로-무엇으로-컴파일될까)을 참고하세요._
+**핵심 통찰:** _[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) 연산은 블록 전체 실행을 활용하여 공유 메모리 + barrier + 트리 reduction을 블록 내 모든 스레드에 걸쳐 Warp 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다. LLVM 분석은 [기술 분석](#기술-분석-blocksum은-실제로-무엇으로-컴파일될까)을 참고하세요._
 
 ## 핵심 개념
 
@@ -177,7 +177,7 @@ Just like warp.sum() but for the entire block
 
 `LayoutTensor` 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요. 산술 연산을 위해 스칼라 값을 추출해야 합니다.
 
-### 4. **[block.sum()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum) API 개념**
+### 4. **[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) API 개념**
 
 함수 시그니처를 살펴보세요 - 다음이 필요합니다:
 

@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # `warp.shuffle_xor()` Butterfly 통신
 
 Warp 레벨 butterfly 통신에서는 `shuffle_xor()`을 사용하여 Warp 내에 정교한 트리 기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 효율적인 병렬 reduction, 정렬 네트워크, 고급 조정 알고리즘을 구현할 수 있습니다.
 
-**핵심 통찰:** _[shuffle_xor()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor) 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, Warp 크기에 대해 \\(O(\\log n)\\) 복잡도로 확장되는 효율적인 butterfly 네트워크와 병렬 알고리즘을 가능하게 합니다._
+**핵심 통찰:** _[shuffle_xor()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor) 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, Warp 크기에 대해 \\(O(\\log n)\\) 복잡도로 확장되는 효율적인 butterfly 네트워크와 병렬 알고리즘을 가능하게 합니다._
 
 > **Butterfly 네트워크란?** [Butterfly 네트워크](https://en.wikipedia.org/wiki/Butterfly_network)는 스레드들이 인덱스의 XOR 패턴에 따라 데이터를 교환하는 통신 토폴로지입니다. 이름은 시각적으로 그렸을 때 나비 날개처럼 보이는 연결 패턴에서 유래했습니다. 이 네트워크는 \\(O(\\log n)\\) 통신 복잡도를 가능하게 하기 때문에 FFT, bitonic 정렬, 병렬 reduction 같은 병렬 알고리즘의 기반이 됩니다.
 

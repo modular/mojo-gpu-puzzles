@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 29: GPU 동기화 기본 요소
 
@@ -40,8 +40,8 @@ GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 �
 
 **동기화 기본 요소의 계층 구조:**
 
-- **기본 [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)**: 블록 내 단순 스레드 동기화
-- **고급 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/)**: 상태 추적을 지원하는 세밀한 memory barrier 제어
+- **기본 [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)**: 블록 내 단순 스레드 동기화
+- **고급 [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)**: 상태 추적을 지원하는 세밀한 memory barrier 제어
 - **스트리밍 조정**: 비동기 복사 및 대량 전송 동기화
 
 **메모리 일관성 모델:**
@@ -93,11 +93,11 @@ GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 �
 
 **초점**: 고급 memory barrier API와 반복 처리
 
-정밀한 메모리 조정이 필요한 반복 알고리즘을 위해 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/)를 사용한 **세밀한 동기화 제어**를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에 필수적인 double-buffering 패턴을 보여줍니다.
+정밀한 메모리 조정이 필요한 반복 알고리즘을 위해 [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)를 사용한 **세밀한 동기화 제어**를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에 필수적인 double-buffering 패턴을 보여줍니다.
 
 **핵심 개념**:
 
-- 고급 [mbarrier API](https://docs.modular.com/mojo/stdlib/gpu/sync/) vs 기본 [`barrier()`](https://docs.modular.com/mojo/stdlib/gpu/sync/#barrier)
+- 고급 [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/) vs 기본 [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
 - 읽기/쓰기 버퍼 역할을 교대하는 double-buffering
 - 명시적 memory barrier를 사용한 반복 알고리즘 조정
 

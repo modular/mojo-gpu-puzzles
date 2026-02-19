@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 704b538202746549a7731989c173fdc49f00c5c2 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Embedding 커널: Coalesced vs Non-Coalesced
 
@@ -148,7 +148,7 @@
 
 ### PyTorch 통합
 
-등록된 연산은 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/CustomOpLibrary/)를 통해 Python에서 호출할 수 있습니다:
+등록된 연산은 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 통해 Python에서 호출할 수 있습니다:
 
 ```python
 # Load the custom operations

@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 27670ce1d5fb537c6d9404b9fdb39dfc64468e3f -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 31: 점유율 최적화
 
@@ -146,7 +146,7 @@ pixi run gpu-specs
 - [NVIDIA CUDA Compute Capability Table](https://developer.nvidia.com/cuda-gpus)
 - [CUDA Programming Guide - Compute Capabilities](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities)
 - [Hopper Architecture In-Depth](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/)
-- [Ampere Architecture Whitepaper](https://developer.nvidia.com/ampere-architecture)
+- [Ampere Architecture Whitepaper](https://www.nvidia.com/en-us/data-center/ampere-architecture/)
 
 **⚠️ 참고:** 이 값들은 이론적 최대치입니다. 실제 점유율은 하드웨어 스케줄링 제약, 드라이버 오버헤드 등의 요인으로 더 낮을 수 있습니다.
 

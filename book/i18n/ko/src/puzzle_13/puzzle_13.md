@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: c851c500cec0955e101b5dae8db281cced543065 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 13: 1D Convolution
 
@@ -6,7 +6,7 @@
 >
 > 지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께 살펴보았습니다:
 >
-> 1. [UnsafePointer](https://docs.modular.com/mojo/stdlib/memory/unsafe_pointer/UnsafePointer/)를 사용한 포인터 직접 조작 방식의 raw 메모리 관리
+> 1. [UnsafePointer](https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/)를 사용한 포인터 직접 조작 방식의 raw 메모리 관리
 > 2. 강력한 주소 공간(address_space) 파라미터로 메모리를 할당하는, 보다 구조화된 [LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)
 >
 > 이 퍼즐부터는 `LayoutTensor`로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을 제공합니다:

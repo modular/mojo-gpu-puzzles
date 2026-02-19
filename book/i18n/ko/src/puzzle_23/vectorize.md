@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Vectorize - SIMD 제어
 
 ## 개요
 
-이 퍼즐에서는 수동 벡터화와 [vectorize](https://docs.modular.com/mojo/stdlib/algorithm/functional/vectorize/)를 사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 **고급 벡터화 기법**을 탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:
+이 퍼즐에서는 수동 벡터화와 [vectorize](https://docs.modular.com/mojo/std/algorithm/functional/vectorize/)를 사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 **고급 벡터화 기법**을 탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:
 
 1. **수동 벡터화**: 명시적 인덱스 계산을 통한 직접적인 SIMD 제어
 2. **Mojo의 vectorize 함수**: 자동 경계 검사를 포함한 고수준 벡터화

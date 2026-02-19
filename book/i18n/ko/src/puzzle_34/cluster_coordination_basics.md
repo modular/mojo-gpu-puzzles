@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # 멀티 블록 조정 기초
 
@@ -8,7 +8,7 @@
 
 **도전 과제**: **4개의 스레드 블록이 조정**하여 서로 다른 데이터 범위를 처리하고 결과를 공유 출력 배열에 저장하는 멀티 블록 히스토그램 알고리즘을 구현합니다.
 
-**핵심 학습**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) → 처리 → [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)라는 필수적인 클러스터 동기화 패턴을 배웁니다. [Puzzle 29의 barrier()](../puzzle_29/barrier.md)에서 배운 동기화 개념을 확장합니다.
+**핵심 학습**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) → 처리 → [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)라는 필수적인 클러스터 동기화 패턴을 배웁니다. [Puzzle 29의 barrier()](../puzzle_29/barrier.md)에서 배운 동기화 개념을 확장합니다.
 
 ## 문제: 멀티 블록 히스토그램 구간 분류
 
@@ -27,8 +27,8 @@
 
 **조정 요구사항:**
 
-1. 각 블록은 [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)를 사용하여 완료를 알려야 합니다
-2. 모든 블록은 [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)를 사용하여 다른 블록을 기다려야 합니다
+1. 각 블록은 [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)를 사용하여 완료를 알려야 합니다
+2. 모든 블록은 [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)를 사용하여 다른 블록을 기다려야 합니다
 3. 최종 출력은 각 블록의 처리된 합계를 4개 요소 배열로 보여줍니다
 
 ## 설정
@@ -61,7 +61,7 @@
 
 ### **블록 식별 패턴**
 
-- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster)를 사용하여 클러스터 순위(0-3)를 얻습니다
+- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)를 사용하여 클러스터 순위(0-3)를 얻습니다
 - 그리드 실행에서 안정적인 블록 인덱싱을 위해 `Int(block_idx.x)`를 사용합니다
 - 블록 위치에 따라 데이터 처리를 스케일링하여 고유한 결과를 만듭니다
 
@@ -74,9 +74,9 @@
 ### **클러스터 동기화 패턴**
 
 1. **처리**: 각 블록이 자신의 데이터 영역을 처리합니다
-2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)로 처리 완료를 알립니다
+2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로 처리 완료를 알립니다
 3. **연산**: 블록 내부 연산 (reduction, 집계)
-4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
+4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
 
 ### **블록 내부 스레드 조정**
 
@@ -170,7 +170,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 
 **블록 간 신호:**
 
-- [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)는 이 블록이 로컬 처리 단계를 완료했음을 알립니다
+- [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)는 이 블록이 로컬 처리 단계를 완료했음을 알립니다
 - 클러스터 하드웨어에 완료를 등록하는 **논블로킹** 연산입니다
 
 **로컬 집계 (스레드 0만):**
@@ -188,7 +188,7 @@ if local_i == 0:
 
 **최종 동기화:**
 
-- [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)는 클러스터 내 모든 블록이 작업을 완료할 때까지 대기합니다
+- [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)는 클러스터 내 모든 블록이 작업을 완료할 때까지 대기합니다
 - 이를 통해 전체 클러스터에 걸쳐 결정론적 완료 순서를 보장합니다
 
 ## **핵심 기술 인사이트**
@@ -196,7 +196,7 @@ if local_i == 0:
 **왜 `my_block_rank` 대신 `block_id`를 사용할까?**
 
 - `block_idx.x`는 안정적인 그리드 실행 인덱싱을 제공합니다 (0, 1, 2, 3)
-- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster)는 클러스터 설정에 따라 다르게 동작할 수 있습니다
+- [`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)는 클러스터 설정에 따라 다르게 동작할 수 있습니다
 - `block_id`를 사용하면 각 블록이 고유한 데이터 영역과 출력 위치를 확보할 수 있습니다
 
 **메모리 접근 패턴:**
@@ -208,8 +208,8 @@ if local_i == 0:
 **동기화 계층 구조:**
 
 1. **`barrier()`**: 각 블록 내 스레드를 동기화합니다 (블록 내부)
-2. **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**: 다른 블록에 완료를 알립니다 (블록 간, 논블로킹)
-3. **[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)**: 모든 블록이 완료될 때까지 대기합니다 (블록 간, 블로킹)
+2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: 다른 블록에 완료를 알립니다 (블록 간, 논블로킹)
+3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: 모든 블록이 완료될 때까지 대기합니다 (블록 간, 블로킹)
 
 **성능 특성:**
 
@@ -225,8 +225,8 @@ if local_i == 0:
 클러스터 조정의 핵심 패턴은 단순하지만 강력한 구조를 따릅니다:
 
 1. **1단계**: 각 블록이 할당된 데이터 영역을 독립적으로 처리합니다
-2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)로 처리 완료를 알립니다
+2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로 처리 완료를 알립니다
 3. **2단계**: 다른 블록의 결과에 의존하는 연산을 안전하게 수행할 수 있습니다
-4. **동기화**: [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)로 모든 블록이 완료된 후 다음으로 진행합니다
+4. **동기화**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료된 후 다음으로 진행합니다
 
 **다음 단계**: 더 고급 조정을 배울 준비가 되셨나요? **[클러스터 전체 집합 연산](./cluster_collective_ops.md)** 으로 이동하여 [Puzzle 27의 `block.sum()` 패턴](../puzzle_27/block_sum.md)을 클러스터 규모로 확장하는 방법을 배워보세요. [Puzzle 24의 Warp 레벨 reduction](../puzzle_24/warp_sum.md)을 기반으로 합니다!

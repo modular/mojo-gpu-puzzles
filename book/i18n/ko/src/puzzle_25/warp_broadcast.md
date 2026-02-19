@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # `warp.broadcast()` 일대다 통신
 
 Warp 레벨 조정에서는 `broadcast()`를 사용하여 하나의 Lane에서 Warp 내 다른 모든 Lane으로 데이터를 공유할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 블록 레벨 계산, 조건부 로직 조정, 일대다 통신 패턴을 효율적으로 수행할 수 있습니다.
 
-**핵심 통찰:** _[broadcast()](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast) 연산은 SIMT 실행을 활용하여 하나의 Lane(보통 Lane 0)이 계산한 값을 같은 Warp의 모든 Lane에 전달하며, 효율적인 조정 패턴과 집합적 의사결정을 가능하게 합니다._
+**핵심 통찰:** _[broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast) 연산은 SIMT 실행을 활용하여 하나의 Lane(보통 Lane 0)이 계산한 값을 같은 Warp의 모든 Lane에 전달하며, 효율적인 조정 패턴과 집합적 의사결정을 가능하게 합니다._
 
 > **Broadcast 연산이란?** Broadcast 연산은 하나의 스레드가 값을 계산하고 그룹 내 다른 모든 스레드와 공유하는 통신 패턴입니다. 블록 레벨 통계 계산, 집합적 의사결정, Warp 내 모든 스레드에 설정 파라미터 전달 등의 조정 작업에 필수적입니다.
 

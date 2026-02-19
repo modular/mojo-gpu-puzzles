@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 25: Warp 통신
 
 ## 개요
 
-**Puzzle 25: Warp 통신 기본 요소**에서는 고급 GPU **Warp 레벨 통신 연산** - Warp 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_down](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)과 [broadcast](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.
+**Puzzle 25: Warp 통신 기본 요소**에서는 고급 GPU **Warp 레벨 통신 연산** - Warp 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_down](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)과 [broadcast](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.
 
 **Part VII: GPU Warp 통신**에서는 스레드 그룹 내 Warp 레벨 데이터 이동 연산을 다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된 데이터 이동을 활용하는 효율적인 Warp 통신 호출로 대체하는 방법을 배웁니다.
 
@@ -39,12 +39,12 @@ Lane 0 ──broadcast──> 모든 Lane (0, 1, 2, ..., 31)
 
 `gpu.primitives.warp`의 핵심 통신 기본 요소를 배웁니다:
 
-1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down)**: 더 높은 인덱스의 Lane에서 값을 가져오기 (이웃 접근)
-2. **[`broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/broadcast)**: Lane 0의 값을 모든 Lane에 공유 (일대다)
-3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_idx)**: 특정 Lane에서 값을 가져오기 (임의 접근)
-4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_up)**: 더 낮은 인덱스의 Lane에서 값을 가져오기 (역방향 이웃)
+1. **[`shuffle_down(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down)**: 더 높은 인덱스의 Lane에서 값을 가져오기 (이웃 접근)
+2. **[`broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast)**: Lane 0의 값을 모든 Lane에 공유 (일대다)
+3. **[`shuffle_idx(value, lane)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx)**: 특정 Lane에서 값을 가져오기 (임의 접근)
+4. **[`shuffle_up(value, offset)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up)**: 더 낮은 인덱스의 Lane에서 값을 가져오기 (역방향 이웃)
 
-> **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과 `broadcast()`에 초점을 맞춥니다. 모든 Warp 연산에 대한 전체 내용은 [Mojo GPU Warp 문서](https://docs.modular.com/mojo/stdlib/gpu/warp/)를 참고하세요.
+> **참고:** 이 퍼즐은 가장 많이 사용되는 통신 패턴인 `shuffle_down()`과 `broadcast()`에 초점을 맞춥니다. 모든 Warp 연산에 대한 전체 내용은 [Mojo GPU Warp 문서](https://docs.modular.com/mojo/std/gpu/primitives/warp/)를 참고하세요.
 
 ### **성능 변환 예시**
 

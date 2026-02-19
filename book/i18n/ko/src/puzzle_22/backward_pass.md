@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # ⛓️ Autograd 통합과 역전파
 
@@ -70,7 +70,7 @@
 
 Fused 역전파 커널은 LayerNorm과 Linear의 역전파 연산을 하나의 GPU 커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:
 
-- 기울기 누적을 위한 [atomic 연산](https://docs.modular.com/mojo/stdlib/os/atomic/Atomic/)
+- 기울기 누적을 위한 [atomic 연산](https://docs.modular.com/mojo/std/os/atomic/Atomic/)
 - 기울기 계산에서의 수치 안정성
 - 효율적인 GPU 활용을 위한 메모리 접근 패턴
 - 연산 간 적절한 동기화

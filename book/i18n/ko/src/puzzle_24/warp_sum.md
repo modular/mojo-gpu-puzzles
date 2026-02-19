@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # warp.sum()의 핵심 - Warp 레벨 내적
 
 [Puzzle 12](../puzzle_12/puzzle_12.md)에서 살펴본 내적을 Mojo의 Warp 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 각 Warp Lane이 하나의 요소를 처리하고 `warp.sum()`으로 결과를 자동으로 합산하여, Warp 프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.
 
-**핵심 통찰:** _[warp.sum()](https://docs.modular.com/mojo/stdlib/gpu/warp/sum) 연산은 SIMT 실행을 활용하여 공유 메모리 + barrier + 트리 reduction을 단일 하드웨어 가속 명령으로 대체합니다._
+**핵심 통찰:** _[warp.sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/sum) 연산은 SIMT 실행을 활용하여 공유 메모리 + barrier + 트리 reduction을 단일 하드웨어 가속 명령으로 대체합니다._
 
 ## 핵심 개념
 

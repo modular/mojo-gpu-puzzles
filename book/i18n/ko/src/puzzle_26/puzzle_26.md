@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 26: 고급 Warp 패턴
 
 ## 개요
 
-**Puzzle 26: 고급 Warp 통신 기본 요소**에서는 정교한 GPU **Warp 레벨 butterfly 통신과 병렬 scan 연산** - Warp 내에서 효율적인 트리 기반 알고리즘과 병렬 reduction을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_xor](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor)을 사용한 butterfly 네트워크와 [prefix_sum](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum)을 사용한 하드웨어 최적화 병렬 scan을 배우며, 복잡한 다단계 공유 메모리 알고리즘 없이 이를 구현하는 방법을 익힙니다.
+**Puzzle 26: 고급 Warp 통신 기본 요소**에서는 정교한 GPU **Warp 레벨 butterfly 통신과 병렬 scan 연산** - Warp 내에서 효율적인 트리 기반 알고리즘과 병렬 reduction을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. [shuffle_xor](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)을 사용한 butterfly 네트워크와 [prefix_sum](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)을 사용한 하드웨어 최적화 병렬 scan을 배우며, 복잡한 다단계 공유 메모리 알고리즘 없이 이를 구현하는 방법을 익힙니다.
 
 **달성 목표:** 복잡한 공유 메모리 + barrier + 다단계 reduction 패턴에서 벗어나, 하드웨어 최적화된 butterfly 네트워크와 병렬 scan 유닛을 활용하는 우아한 단일 함수 호출 알고리즘으로 전환합니다.
 
@@ -40,8 +40,8 @@ Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 
 `gpu.primitives.warp`의 정교한 통신 기본 요소를 배웁니다:
 
-1. **[`shuffle_xor(value, mask)`](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_xor)**: 트리 알고리즘을 위한 XOR 기반 butterfly 통신
-2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum)**: 하드웨어 가속 병렬 scan 연산
+1. **[`shuffle_xor(value, mask)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor)**: 트리 알고리즘을 위한 XOR 기반 butterfly 통신
+2. **[`prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum)**: 하드웨어 가속 병렬 scan 연산
 3. **고급 조정 패턴**: 여러 기본 요소를 결합한 복잡한 알고리즘
 
 > **참고:** 이 기본 요소들은 병렬 reduction, stream compaction, quicksort 파티셔닝, FFT 연산 등 공유 메모리 조정 코드가 수십 줄 필요했을 정교한 병렬 알고리즘을 가능하게 합니다.

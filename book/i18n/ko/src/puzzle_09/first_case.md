@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 0a990e59524b1bfe14d9910bb95a22b04281d446 -->
+<!-- i18n-source-commit: 3711cbf0f794001097a09faed0075ed062023569 -->
 
 # 🧐 탐정 수사: 첫 번째 사례
 

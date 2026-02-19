@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 17: 1D Convolution Op
 
@@ -119,7 +119,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <div class="solution-explanation">
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 
-1. GPU 컨텍스트(`gpu_ctx`의 타입은 [DeviceContext](https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/))에서 [enqueue_function](https://docs.modular.com/mojo/stdlib/gpu/host/device_context/DeviceContext/#enqueue_function)을 호출하여 kernel 실행 예약
+1. GPU 컨텍스트(`gpu_ctx`의 타입은 [DeviceContext](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/))에서 [enqueue_function](https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function)을 호출하여 kernel 실행 예약
 2. 필요한 레이아웃과 크기 정보를 **컴파일 타임** 파라미터로 전달
 3. 출력, 입력, kernel 텐서를 런타임 인자로 제공
 4. 적절한 차원으로 실행 그리드 구성
@@ -147,7 +147,7 @@ Verification passed: Custom kernel results match NumPy calculation
    - Device context가 GPU 메모리 할당과 kernel 실행 관리
 
 4. **Kernel 실행**:
-   - [model.execute(...)]()가 호출되면 `conv1d_kernel`이 데이터 수신
+   - `model.execute(...)`가 호출되면 `conv1d_kernel`이 데이터 수신
    - `grid_dim`과 `block_dim`으로 GPU 스레드 구성 설정
    - `result.to(CPU())`로 결과를 CPU로 전송
    - NumPy 검증으로 기대 출력과 결과 비교

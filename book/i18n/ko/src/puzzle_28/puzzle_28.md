@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 2bb7071f5afbc671e252b0dc6902b520793c11d5 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 28: 비동기 메모리 연산과 복사 중첩
 
@@ -52,7 +52,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 - 스레드 블록 구성과 동기화
 - 메모리 latency vs. 대역폭에 대한 기본 이해
 
-**API 숙지:** [Mojo GPU Memory Operations](https://docs.modular.com/mojo/stdlib/gpu/memory/)
+**API 숙지:** [Mojo GPU Memory Operations](https://docs.modular.com/mojo/std/gpu/memory/)
 
 > **⚠️ 하드웨어 호환성 참고:** 이 퍼즐은 최신 GPU 아키텍처가 필요할 수 있는 비동기 복사 연산(`copy_dram_to_sram_async`, `async_copy_wait_all`)을 사용합니다. `.async` 수정자나 지원되지 않는 연산 관련 컴파일 오류가 발생하면 해당 GPU가 이 기능을 지원하지 않는 것일 수 있습니다. 그래도 메모리 최적화 패턴을 이해하는 데 개념은 여전히 유용합니다.
 >
@@ -82,7 +82,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 [Puzzle 16의 관용적 matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling)에서 소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:
 
 - **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**: 전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작
-- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/stdlib/gpu/memory/async_copy_wait_all)**: 공유 메모리 접근 전 전송 완료 동기화
+- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**: 공유 메모리 접근 전 전송 완료 동기화
 
 **Puzzle 16과 다른 점은?** Puzzle 16에서는 matmul의 깔끔한 타일 로딩을 위해 비동기 복사를 사용했다면, 이 퍼즐은 **latency hiding**에 집중합니다 - 비용이 큰 메모리 연산과 유용한 연산 작업을 중첩하도록 알고리즘을 구조화하는 것입니다.
 

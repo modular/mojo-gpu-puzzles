@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # Puzzle 27: 블록 전체 패턴
 
@@ -37,9 +37,9 @@ GPU 스레드 블록 (128 스레드, 4개 또는 2개 Warp, 하드웨어 조율)
 ### **Mojo의 블록 연산**
 `gpu.primitives.block`의 완전한 병렬 프로그래밍 도구 모음을 배웁니다:
 
-1. **[`block.sum(value)`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum)**: 합계, 평균, 최댓값/최솟값을 위한 전체→하나 reduction
-2. **[`block.prefix_sum(value)`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/prefix_sum)**: 병렬 필터링과 추출을 위한 전체→각각 scan
-3. **[`block.broadcast(value)`](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast)**: 매개변수 공유와 조율을 위한 하나→전체 분배
+1. **[`block.sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/sum)**: 합계, 평균, 최댓값/최솟값을 위한 전체→하나 reduction
+2. **[`block.prefix_sum(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum)**: 병렬 필터링과 추출을 위한 전체→각각 scan
+3. **[`block.broadcast(value)`](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast)**: 매개변수 공유와 조율을 위한 하나→전체 분배
 
 > **참고:** 이 기본 요소들은 통계 연산, 히스토그램 구간 분류, 정규화 워크플로우와 같은 고급 병렬 알고리즘을 가능하게 합니다. 이런 알고리즘을 기본 요소 없이 구현하려면 수십 줄의 복잡한 공유 메모리 조율 코드가 필요합니다.
 

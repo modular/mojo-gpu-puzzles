@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # block.broadcast()와 벡터 정규화
 
-[block.sum](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/sum)과 [block.broadcast](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, broadcast된 평균을 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해 어떻게 함께 동작하는지 보여줍니다.
+[block.sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum)과 [block.broadcast](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, broadcast된 평균을 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해 어떻게 함께 동작하는지 보여줍니다.
 
-**핵심 통찰:** _[block.broadcast()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다: reduction(전체→하나), scan(전체→각각), broadcast(하나→전체)._
+**핵심 통찰:** _[block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다: reduction(전체→하나), scan(전체→각각), broadcast(하나→전체)._
 
 ## 핵심 개념
 
@@ -128,7 +128,7 @@ if local_i == 0:
 
 **왜 스레드 0인가?** `block.sum()` 패턴에서 스레드 0이 결과를 받는 것과 일관성을 유지합니다.
 
-### 4. **[block.broadcast()](https://docs.modular.com/mojo/stdlib/gpu/primitives/block/broadcast) API 개념**
+### 4. **[block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) API 개념**
 
 함수 시그니처를 살펴보세요 - 다음이 필요합니다:
 

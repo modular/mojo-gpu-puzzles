@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 9ac1b899ca05c1be26f2d9ee77fe97503d00cc0f -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 ## 개요
 
@@ -25,7 +25,7 @@
 
 ## Raw 방식과의 주요 차이점
 
-1. **메모리 할당**: [stack_allocation](https://docs.modular.com/mojo/stdlib/memory/memory/stack_allocation/) 대신 address_space를 사용한 [LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor) 사용
+1. **메모리 할당**: [stack_allocation](https://docs.modular.com/mojo/std/memory/memory/stack_allocation/) 대신 address_space를 사용한 [LayoutTensor](https://docs.modular.com/mojo/stdlib/layout/layout_tensor/LayoutTensor) 사용
 
    ```mojo
    # Raw 방식

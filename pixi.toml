@@ -65,8 +65,6 @@ build-book-en = "cd book && mdbook build"
 build-book-ko = { cmd = "mdbook build book/i18n/ko && cp -r book/html/theme book/html/ko/", depends-on = ["build-book-en"] }
 
 book = { cmd = "python -m http.server 3000 -d book/html", depends-on = ["build-book"] }
-book-en = { cmd = "cd book && mdbook serve --open", depends-on = ["build-book-en"] }
-book-ko = { cmd = "mdbook serve book/i18n/ko --open", depends-on = ["build-book-ko"] }
 
 clean = { cmd = "cd book && mdbook clean && rm -rf html/ko" }
 

@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 6e14212e9192cb4247342d83711502ceac4b04f3 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # 완성 버전
 
@@ -35,7 +35,7 @@
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a>
 
-이 퍼즐의 핵심은 [barrier](https://docs.modular.com/mojo/stdlib/gpu/sync/barrier/)가 블록 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 kernel을 큐에 넣어야 합니다:
+이 퍼즐의 핵심은 [barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)가 블록 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 kernel을 큐에 넣어야 합니다:
 
 ```mojo
 {{#include ../../../../../solutions/p14/p14.mojo:prefix_sum_complete_block_level_sync}}

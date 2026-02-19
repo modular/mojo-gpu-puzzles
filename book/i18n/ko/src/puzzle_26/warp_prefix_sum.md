@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # `warp.prefix_sum()` 하드웨어 최적화 병렬 Scan
 
 Warp 레벨 병렬 scan 연산에서는 `prefix_sum()`을 사용하여 복잡한 공유 메모리 알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해 수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.
 
-**핵심 통찰:** _[prefix_sum()](https://docs.modular.com/mojo/stdlib/gpu/warp/prefix_sum) 연산은 하드웨어 가속 병렬 scan을 활용하여 Warp Lane에 걸쳐 \\(O(\\log n)\\) 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로 대체합니다._
+**핵심 통찰:** _[prefix_sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum) 연산은 하드웨어 가속 병렬 scan을 활용하여 Warp Lane에 걸쳐 \\(O(\\log n)\\) 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로 대체합니다._
 
 > **병렬 scan이란?** [병렬 scan (prefix sum)](https://en.wikipedia.org/wiki/Prefix_sum)은 데이터 요소에 걸쳐 누적 연산을 수행하는 기본적인 병렬 기본 요소입니다. 덧셈의 경우 `[a, b, c, d]`를 `[a, a+b, a+b+c, a+b+c+d]`로 변환합니다. 이 연산은 stream compaction, quicksort 파티셔닝, 병렬 정렬 같은 병렬 알고리즘에 필수적입니다.
 

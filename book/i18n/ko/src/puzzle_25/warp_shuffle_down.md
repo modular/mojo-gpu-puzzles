@@ -1,10 +1,10 @@
-<!-- i18n-source-commit: 1bae134f191aad7be60cc8612dcb64a50ef5ab2e -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # `warp.shuffle_down()` 일대일 통신
 
 Warp 레벨 이웃 통신에서는 `shuffle_down()`을 사용하여 Warp 내 인접 Lane의 데이터에 접근할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 유한 차분, 이동 평균, 이웃 기반 계산을 효율적으로 수행할 수 있습니다.
 
-**핵심 통찰:** _[shuffle_down()](https://docs.modular.com/mojo/stdlib/gpu/warp/shuffle_down) 연산은 SIMT 실행을 활용하여 각 Lane이 같은 Warp 내 이웃의 데이터에 접근할 수 있게 하며, 효율적인 stencil 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다._
+**핵심 통찰:** _[shuffle_down()](https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down) 연산은 SIMT 실행을 활용하여 각 Lane이 같은 Warp 내 이웃의 데이터에 접근할 수 있게 하며, 효율적인 stencil 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다._
 
 > **Stencil 연산이란?** [Stencil](https://en.wikipedia.org/wiki/Iterative_Stencil_Loops) 연산은 각 출력 요소가 이웃 입력 요소의 고정된 패턴에 의존하는 계산입니다. 대표적인 예로 유한 차분(도함수), convolution, 이동 평균이 있습니다. "Stencil"은 이웃 접근 패턴을 가리킵니다 - 예를 들어 `[i-1, i, i+1]`을 읽는 3점 stencil이나 `[i-2, i-1, i, i+1, i+2]`를 읽는 5점 stencil이 있습니다.
 

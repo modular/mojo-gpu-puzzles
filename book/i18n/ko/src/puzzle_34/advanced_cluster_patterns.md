@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # 🧠 고급 클러스터 알고리즘
 
@@ -16,9 +16,9 @@
 
 **과제**: 다음과 같은 다단계 알고리즘을 구현하세요:
 
-1. **[Warp 레벨](../puzzle_24/warp_sum.md)**: 효율적인 Warp 내부 조정을 위해 [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 사용합니다 ([SIMT 실행](../puzzle_24/warp_simt.md))
+1. **[Warp 레벨](../puzzle_24/warp_sum.md)**: 효율적인 Warp 내부 조정을 위해 [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 사용합니다 ([SIMT 실행](../puzzle_24/warp_simt.md))
 2. **[블록 레벨](../puzzle_27/block_sum.md)**: [공유 메모리 조정](../puzzle_08/puzzle_08.md)을 사용하여 Warp 결과를 집계합니다
-3. **클러스터 레벨**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait) [Puzzle 29의 단계적 동기화](../puzzle_29/barrier.md)를 사용하여 블록 간 조정을 수행합니다
+3. **클러스터 레벨**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait) [Puzzle 29의 단계적 동기화](../puzzle_29/barrier.md)를 사용하여 블록 간 조정을 수행합니다
 
 ### 알고리즘 명세
 
@@ -26,7 +26,7 @@
 
 1. **1단계 ([Warp 레벨](../puzzle_24/puzzle_24.md))**: 각 Warp가 하나의 스레드를 선출하여 32개의 연속 요소를 합산합니다
 2. **2단계 ([블록 레벨](../puzzle_27/puzzle_27.md))**: 각 블록 내의 모든 Warp 합계를 집계합니다
-3. **3단계 (클러스터 레벨)**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)로 블록 간 조정을 수행합니다
+3. **3단계 (클러스터 레벨)**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive) / [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 블록 간 조정을 수행합니다
 
 **입력**: 테스트를 위한 `(i % 50) * 0.02` 패턴의 1024개 float 값
 **출력**: 계층적 처리 효과를 보여주는 4개 블록 결과
@@ -63,7 +63,7 @@
 
 ### **Warp 레벨 최적화 패턴**
 
-- [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 사용하여 Warp당 하나의 스레드를 연산용으로 선출합니다 ([Warp 프로그래밍 기초](../puzzle_24/warp_sum.md))
+- [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 사용하여 Warp당 하나의 스레드를 연산용으로 선출합니다 ([Warp 프로그래밍 기초](../puzzle_24/warp_sum.md))
 - 선출된 스레드가 32개의 연속 요소를 처리해야 합니다 ([SIMT 실행](../puzzle_24/warp_simt.md) 활용)
 - `(local_i // 32) * 32`로 Warp 시작점을 계산하여 Warp 경계를 찾습니다 ([Warp 개념](../puzzle_24/puzzle_24.md)의 Lane 인덱싱)
 - Warp 결과를 [선출된 스레드 위치의 공유 메모리](../puzzle_08/puzzle_08.md)에 저장합니다
@@ -78,9 +78,9 @@
 ### **클러스터 조정 흐름**
 
 1. **처리**: 각 블록이 계층적 Warp 최적화로 데이터를 처리합니다
-2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)로 로컬 처리 완료를 알립니다
+2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로 로컬 처리 완료를 알립니다
 3. **저장**: 스레드 0이 블록 결과를 출력에 기록합니다
-4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
+4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
 
 ### **데이터 스케일링 및 경계 검사**
 
@@ -94,12 +94,12 @@
 
 ## 고급 클러스터 API
 
-**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/stdlib/gpu/cluster/) 모듈:**
+**[`gpu.primitives.cluster`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/) 모듈:**
 
-- **[`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)**: 효율적인 연산을 위한 Warp 레벨 스레드 선출
-- **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**: 단계적 클러스터 조정을 위한 완료 신호
-- **[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)**: 모든 블록이 동기화 지점에 도달할 때까지 대기
-- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자 반환
+- **[`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)**: 효율적인 연산을 위한 Warp 레벨 스레드 선출
+- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: 단계적 클러스터 조정을 위한 완료 신호
+- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: 모든 블록이 동기화 지점에 도달할 때까지 대기
+- **[`block_rank_in_cluster()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster)**: 클러스터 내 고유한 블록 식별자 반환
 
 ## 계층적 조정 패턴
 
@@ -262,10 +262,10 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 
 **왜 단계적 동기화를 사용할까?**
 
-- **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**를 최종 연산 **이전에** 호출하면 작업 중첩이 가능합니다
+- **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**를 최종 연산 **이전에** 호출하면 작업 중첩이 가능합니다
 - 다른 블록이 아직 처리 중인 동안에도 블록이 자체 결과를 계산할 수 있습니다
-- **[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)**로 결정론적 완료 순서를 보장합니다
-- 독립적인 블록 연산의 경우 [`cluster_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_sync)보다 더 효율적입니다
+- **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**로 결정론적 완료 순서를 보장합니다
+- 독립적인 블록 연산의 경우 [`cluster_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync)보다 더 효율적입니다
 
 ## **고급 패턴 특성**
 
@@ -286,13 +286,13 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 **동기화 계층 구조:**
 
 1. **`barrier()`**: 블록 내부 스레드 동기화 (데이터 로딩 및 Warp 처리 후)
-2. **[`cluster_arrive()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_arrive)**: 블록 간 신호 (논블로킹, 작업 중첩 가능)
-3. **[`cluster_wait()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/cluster_wait)**: 블록 간 동기화 (블로킹, 완료 순서 보장)
+2. **[`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)**: 블록 간 신호 (논블로킹, 작업 중첩 가능)
+3. **[`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)**: 블록 간 동기화 (블로킹, 완료 순서 보장)
 
 **왜 "고급"인가:**
 
 - **다단계 최적화**: Warp, 블록, 클러스터 프로그래밍 기법을 결합합니다
-- **하드웨어 효율**: [`elect_one_sync()`](https://docs.modular.com/mojo/stdlib/gpu/cluster/elect_one_sync)를 활용하여 Warp 활용률을 최적화합니다
+- **하드웨어 효율**: [`elect_one_sync()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync)를 활용하여 Warp 활용률을 최적화합니다
 - **단계적 조정**: 고급 클러스터 API를 사용하여 유연한 동기화를 구현합니다
 - **프로덕션 수준**: 실제 GPU 라이브러리에서 사용되는 패턴을 보여줍니다
 

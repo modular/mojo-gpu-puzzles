@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
+<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
 # 📊 Mojo 벤치마킹 - 성능 분석과 최적화
 
@@ -105,7 +105,7 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 
 - **`max_iters=10`**: 통계적 신뢰성을 위해 최대 10회 반복
 - **`num_warmup_iters=1`**: 측정 전 GPU 워밍업
-- [Benchmark 문서](https://docs.modular.com/mojo/stdlib/benchmark/)를 참고하세요
+- [Benchmark 문서](https://docs.modular.com/mojo/std/benchmark/)를 참고하세요
 
 ## 벤치마킹 구현의 핵심
 
