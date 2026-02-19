@@ -63,10 +63,10 @@ sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["zero-memo
 build-book = { depends-on = ["build-book-en", "build-book-ko"] }
 build-book-en = "cd book && mdbook build"
 build-book-ko = { cmd = "mdbook build book/i18n/ko && cp -r book/html/theme book/html/ko/", depends-on = ["build-book-en"] }
-
-book = { cmd = "python -m http.server 3000 -d book/html", depends-on = ["build-book"] }
-
-clean = { cmd = "cd book && mdbook clean && rm -rf html/ko" }
+book = { cmd = "cd book && mdbook serve --open", depends-on = ["build-book"] }
+book-ko = { cmd = "cd book/i18n/ko && mdbook serve --open", depends-on = ["build-book"] }
+book-static = { cmd = "python -m http.server 3000 -d book/html", depends-on = ["build-book"] }
+clean = "cd book && mdbook clean"
 
 p01 = "mojo problems/p01/p01.mojo"
 viz01 = "cd book/src/puzzle_01 && python puzzle_01_viz.py"
