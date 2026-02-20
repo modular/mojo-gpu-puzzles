@@ -69,7 +69,7 @@
 
 - `LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`으로 공유 메모리를 할당합니다 ([Puzzle 8의 공유 메모리 기초](../puzzle_08/puzzle_08.md) 참고)
 - `block_id + 1`로 스케일링하여 블록마다 고유한 스케일링을 적용합니다
-- 입력 데이터 접근 시 경계 검사를 사용합니다 ([Puzzle 3의 guard 패턴](../puzzle_03/puzzle_03.md))
+- 입력 데이터 접근 시 경계 검사를 사용합니다 ([Puzzle 3의 가드 패턴](../puzzle_03/puzzle_03.md))
 
 ### **클러스터 동기화 패턴**
 

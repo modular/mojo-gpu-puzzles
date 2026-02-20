@@ -1,6 +1,6 @@
 <!-- i18n-source-commit: b45a36a83148aa53ca8b3cf4b96304e3cc742518 -->
 
-# Puzzle 3: Guards
+# Puzzle 3: 가드
 
 {{ youtube YFKutZbRYSM breakpoint-lg }}
 

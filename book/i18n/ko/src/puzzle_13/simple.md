@@ -143,7 +143,7 @@ Kernel b:        [0  1  2]
 ### 구현 상세
 
 1. **스레드 참여 범위와 효율성**:
-   - 적절한 스레드 guard가 없는 비효율적 접근:
+   - 적절한 스레드 가드가 없는 비효율적 접근:
 
      ```mojo
      # 비효율적 버전 - 결과가 사용되지 않을 스레드도 모두 연산 수행
@@ -151,7 +151,7 @@ Kernel b:        [0  1  2]
      for j in range(CONV):
          if local_i + j < SIZE:
              local_sum += shared_a[local_i + j] * shared_b[j]
-     # 마지막 쓰기만 guard
+     # 마지막 쓰기만 가드
      if global_i < SIZE:
          output[global_i] = local_sum
      ```
@@ -168,7 +168,7 @@ Kernel b:        [0  1  2]
          output[global_i] = local_sum
      ```
 
-   핵심적인 차이는 guard의 위치입니다. 비효율적 버전은 `global_i >= SIZE`인 스레드를 포함해 **모든 스레드가 convolution 연산을 수행**한 뒤, 마지막 쓰기에서만 guard를 적용합니다. 이로 인해:
+   핵심적인 차이는 가드의 위치입니다. 비효율적 버전은 `global_i >= SIZE`인 스레드를 포함해 **모든 스레드가 convolution 연산을 수행**한 뒤, 마지막 쓰기에서만 가드를 적용합니다. 이로 인해:
    - **불필요한 연산**: 유효 범위 밖의 스레드가 쓸모없는 작업을 수행
    - **효율 저하**: 사용되지 않을 연산에 자원 소비
    - **GPU 활용도 저하**: 의미 없는 계산에 GPU 코어를 낭비

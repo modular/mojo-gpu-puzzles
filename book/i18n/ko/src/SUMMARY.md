@@ -14,7 +14,7 @@
   - [🔰 Raw 메모리 방식](./puzzle_01/raw.md)
   - [💡 미리보기: LayoutTensor를 활용한 현대적 방식](./puzzle_01/layout_tensor_preview.md)
 - [Puzzle 2: Zip](./puzzle_02/puzzle_02.md)
-- [Puzzle 3: Guards](./puzzle_03/puzzle_03.md)
+- [Puzzle 3: 가드](./puzzle_03/puzzle_03.md)
 - [Puzzle 4: 2D Map](./puzzle_04/puzzle_04.md)
   - [🔰 Raw 메모리 방식](./puzzle_04/raw.md)
   - [📚 LayoutTensor 알아보기](./puzzle_04/introduction_layout_tensor.md)

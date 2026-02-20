@@ -85,7 +85,7 @@
 ### **데이터 스케일링 및 경계 검사**
 
 - `Float32(block_id + 1)`로 입력을 스케일링하여 블록별 고유 패턴을 만듭니다
-- 입력을 읽기 전에 항상 `global_i < size`를 검사합니다 ([Puzzle 3의 guard](../puzzle_03/puzzle_03.md))
+- 입력을 읽기 전에 항상 `global_i < size`를 검사합니다 ([Puzzle 3의 가드](../puzzle_03/puzzle_03.md))
 - 블록 내 처리 단계 사이에 `barrier()`를 사용합니다 ([동기화 패턴](../puzzle_29/barrier.md))
 - 루프에서 Warp 경계 조건을 주의 깊게 처리합니다 ([Warp 프로그래밍](../puzzle_24/warp_simt.md)의 고려사항)
 

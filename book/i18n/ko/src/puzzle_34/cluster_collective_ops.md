@@ -81,7 +81,7 @@
 
 ### **메모리 접근 패턴**
 
-- 각 스레드가 경계 검사와 함께 `input[global_i]`를 읽습니다 ([Puzzle 3의 guard](../puzzle_03/puzzle_03.md))
+- 각 스레드가 경계 검사와 함께 `input[global_i]`를 읽습니다 ([Puzzle 3의 가드](../puzzle_03/puzzle_03.md))
 - 블록 내부 reduction을 위해 [공유 메모리](../puzzle_08/puzzle_08.md)에 중간 결과를 저장합니다
 - 블록 간 통신을 위해 부분 결과를 `temp_storage[block_id]`에 저장합니다
 - 최종 결과는 `output[0]`에 기록합니다 ([블록 조정](../puzzle_27/block_sum.md)의 단일 writer 패턴)

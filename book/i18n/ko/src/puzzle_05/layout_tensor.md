@@ -121,7 +121,7 @@ LayoutTensor broadcast와 GPU 스레드 매핑의 핵심 개념을 보여주는 
    ```
 
 3. **경계 검사**
-   - guard 조건 `row < size and col < size`로 범위 초과 접근 방지
+   - 가드 조건 `row < size and col < size`로 범위 초과 접근 방지
    - 행렬 범위와 초과 스레드를 효율적으로 처리
    - broadcast 덕분에 `a`와 `b`에 대한 별도 검사 불필요
 

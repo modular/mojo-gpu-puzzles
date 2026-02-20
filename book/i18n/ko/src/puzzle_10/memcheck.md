@@ -14,7 +14,7 @@
 
 ### 테스트는 통과했지만, 코드가 정말 올바른 걸까?
 
-얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (guard가 없는 [Puzzle 04](../puzzle_04/layout_tensor.md)입니다):
+얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 [Puzzle 04](../puzzle_04/layout_tensor.md)입니다):
 
 ```mojo
 {{#include ../../../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
