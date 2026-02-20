@@ -62,7 +62,7 @@ sanitizers = { cmd = "bash solutions/sanitizer.sh all", depends-on = ["zero-memo
 
 build-book = { cmd = "bash scripts/build_book.sh", description = "Build English + all translated mdbook languages" }
 book = { cmd = "bash scripts/serve_book.sh", description = "Serve mdbook with live reload for all languages" }
-clean = { cmd = "bash -c 'cd book && mdbook clean && rm -rf html-*'", description = "Remove all book build artifacts" }
+clean = { cmd = "cd book && mdbook clean && rm -rf html-*", description = "Remove all book build artifacts" }
 
 p01 = "mojo problems/p01/p01.mojo"
 viz01 = "cd book/src/puzzle_01 && python puzzle_01_viz.py"
