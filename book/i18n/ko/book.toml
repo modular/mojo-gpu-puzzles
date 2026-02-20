@@ -1,0 +1,44 @@
+[book]
+authors = ["Modular <hello@modular.com>", "Korean Translation"]
+language = "ko"
+src = "src"
+title = "Mojo 🔥 GPU 퍼즐"
+
+[build]
+build-dir = "../../html/ko"
+create-missing = false
+
+[output.html]
+additional-css = [
+    "theme/css/custom.css",
+    "theme/css/highlight.css",
+    "theme/css/tabs.css",
+    "theme/css/language-switcher.css",
+]
+additional-js = [
+    "theme/mojolang.js",
+    "theme/sidebar.js",
+    "theme/solution.js",
+    "theme/tabs.js",
+    "theme/language-switcher.js",
+    "theme/livereload-poll.js",
+]
+default-theme = "light"
+preferred-dark-theme = "ayu"
+smart-punctuation = true
+no-section-label = true
+git-repository-url = "https://github.com/modular/mojo-gpu-puzzles"
+mathjax-support = true
+favicon_svg = true
+
+[output.html.search]
+enable = true
+
+[preprocessor.links]
+renderers = ["html"]
+
+[preprocessor.youtube]
+command = "python scripts/youtube_preprocessor.py"
+
+[preprocessor.i18n-status]
+command = "python scripts/i18n_status_preprocessor.py"
