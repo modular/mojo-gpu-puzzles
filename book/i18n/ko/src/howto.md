@@ -144,7 +144,7 @@ xcodebuild -downloadComponent MetalToolchain
 다음에 대한 기본적인 이해가 있으면 좋습니다:
 
 - 프로그래밍 기초 (변수, 반복문, 조건문, 함수)
-- 병렬 컴퓨팅 개념 (스레드, 동기화, 경쟁 상태(race condition))
+- 병렬 컴퓨팅 개념 (스레드, 동기화, 경쟁 상태)
 - [Mojo](https://docs.modular.com/mojo/manual/) 기본 문법 ([포인터 입문](https://docs.modular.com/mojo/manual/pointers/) 섹션 포함)
 - [GPU 프로그래밍 기초](https://docs.modular.com/mojo/manual/gpu/fundamentals)를 미리 읽어두면 도움이 됩니다!
 
@@ -346,48 +346,48 @@ uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
 | **Part I: GPU 기초** | | | | |
 | 1 - Map | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | 2 - Zip | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 3 - Guard | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 3 - 가드 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | 4 - Map 2D | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 5 - Broadcast | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 6 - Blocks | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 7 - Shared Memory | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 8 - Stencil | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 5 - 브로드캐스트 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 6 - 블록 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 7 - 공유 메모리 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 8 - 스텐실 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | **Part II: 디버깅** | | | | |
-| 9 - GPU Debugger | ✅ | ❌ | ❌ | NVIDIA 전용 디버깅 도구 |
-| 10 - Sanitizer | ✅ | ❌ | ❌ | NVIDIA 전용 디버깅 도구 |
+| 9 - GPU 디버거 | ✅ | ❌ | ❌ | NVIDIA 전용 디버깅 도구 |
+| 10 - 새니타이저 | ✅ | ❌ | ❌ | NVIDIA 전용 디버깅 도구 |
 | **Part III: GPU 알고리즘** | | | | |
-| 11 - Reduction | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 12 - Scan | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 13 - Pool | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 14 - Conv | ✅ | ✅ | ✅ | 기본 GPU 커널 |
-| 15 - Matmul | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 11 - 리덕션 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 12 - 스캔 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 13 - 풀링 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 14 - 합성곱 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
+| 15 - 행렬 곱셈 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | 16 - Flashdot | ✅ | ✅ | ✅ | 고급 메모리 패턴 |
 | **Part IV: MAX Graph** | | | | |
-| 17 - Custom Op | ✅ | ✅ | ✅ | MAX Graph 통합 |
-| 18 - Softmax | ✅ | ✅ | ✅ | MAX Graph 통합 |
-| 19 - Attention | ✅ | ✅ | ✅ | MAX Graph 통합 |
+| 17 - 커스텀 Op | ✅ | ✅ | ✅ | MAX Graph 통합 |
+| 18 - 소프트맥스 | ✅ | ✅ | ✅ | MAX Graph 통합 |
+| 19 - 어텐션 | ✅ | ✅ | ✅ | MAX Graph 통합 |
 | **Part V: PyTorch 통합** | | | | |
-| 20 - Torch Bridge | ✅ | ✅ | ❌ | PyTorch 통합 |
-| 21 - Autograd | ✅ | ✅ | ❌ | PyTorch 통합 |
-| 22 - Fusion | ✅ | ✅ | ❌ | PyTorch 통합 |
+| 20 - Torch 브릿지 | ✅ | ✅ | ❌ | PyTorch 통합 |
+| 21 - 오토그래드 | ✅ | ✅ | ❌ | PyTorch 통합 |
+| 22 - 퓨전 | ✅ | ✅ | ❌ | PyTorch 통합 |
 | **Part VI: 함수형 패턴** | | | | |
-| 23 - Functional | ✅ | ✅ | ✅ | 고급 Mojo 패턴 |
-| **Part VII: Warp 프로그래밍** | | | | |
-| 24 - Warp Sum | ✅ | ✅ | ✅ | Warp 수준 연산 |
-| 25 - Warp Communication | ✅ | ✅ | ✅ | Warp 수준 연산 |
-| 26 - Advanced Warp | ✅ | ✅ | ✅ | Warp 수준 연산 |
+| 23 - 함수형 | ✅ | ✅ | ✅ | 고급 Mojo 패턴 |
+| **Part VII: 워프 프로그래밍** | | | | |
+| 24 - 워프 합계 | ✅ | ✅ | ✅ | 워프 수준 연산 |
+| 25 - 워프 통신 | ✅ | ✅ | ✅ | 워프 수준 연산 |
+| 26 - 고급 워프 | ✅ | ✅ | ✅ | 워프 수준 연산 |
 | **Part VIII: 블록 프로그래밍** | | | | |
-| 27 - Block Operations | ✅ | ✅ | ✅ | 블록 단위 프로그래밍 패턴 |
+| 27 - 블록 연산 | ✅ | ✅ | ✅ | 블록 단위 프로그래밍 패턴 |
 | **Part IX: 메모리 시스템** | | | | |
-| 28 - Async Memory | ✅ | ✅ | ✅ | 고급 메모리 연산 |
-| 29 - Barriers | ✅ | ❌ | ❌ | NVIDIA 전용 고급 동기화 |
+| 28 - 비동기 메모리 | ✅ | ✅ | ✅ | 고급 메모리 연산 |
+| 29 - 배리어 | ✅ | ❌ | ❌ | NVIDIA 전용 고급 동기화 |
 | **Part X: 성능 분석** | | | | |
-| 30 - Profiling | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 (NSight) |
-| 31 - Occupancy | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
-| 32 - Bank Conflicts | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
+| 30 - 프로파일링 | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 (NSight) |
+| 31 - 점유율 | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
+| 32 - 뱅크 충돌 | ✅ | ❌ | ❌ | NVIDIA 프로파일링 도구 |
 | **Part XI: 최신 GPU 기능** | | | | |
-| 33 - Tensor Cores | ✅ | ❌ | ❌ | NVIDIA tensor core 전용 |
-| 34 - Cluster | ✅ | ❌ | ❌ | NVIDIA cluster 프로그래밍 |
+| 33 - 텐서 코어 | ✅ | ❌ | ❌ | NVIDIA 텐서 코어 전용 |
+| 34 - 클러스터 | ✅ | ❌ | ❌ | NVIDIA 클러스터 프로그래밍 |
 
 ### 범례
 
@@ -405,7 +405,7 @@ uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
 **AMD GPU (폭넓은 지원)**
 
 - 대부분의 퍼즐(1-8, 11-29)이 ROCm을 통해 작동합니다
-- 미지원: 디버깅 도구(9-10), 프로파일링(30-32), tensor core(33-34)
+- 미지원: 디버깅 도구(9-10), 프로파일링(30-32), 텐서 코어(33-34)
 - 고급 알고리즘과 메모리 패턴까지 포함하여 GPU 프로그래밍을 폭넓게 학습할 수 있습니다
 
 **Apple GPU (기본 지원)**
@@ -461,7 +461,7 @@ Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:
 - **GPU 아키텍처 제약**: T4의 고급 기능 호환성 문제는 Colab과 동일
 - **제한적 디버깅 도구**: NVIDIA 프로파일링 및 디버깅 도구(퍼즐 9-10, 30-32) 사용 불가
 - **Mojo 설치 복잡성**: Mojo 환경을 수동으로 설정해야 합니다
-- **cluster 프로그래밍 미지원**: 고급 퍼즐(33-34) 작동 불가
+- **클러스터 프로그래밍 미지원**: 고급 퍼즐(33-34) 작동 불가
 
 **추천 용도:** 기본 GPU 프로그래밍(퍼즐 1-16)을 장시간에 걸쳐 학습할 때 적합합니다.
 
@@ -472,7 +472,7 @@ Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:
 - **기초 학습**: Apple GPU로 기본 개념을 익힐 수 있습니다 (34개 중 13개)
 - **무료 플랫폼 학습**: Google Colab/Kaggle로 기초~중급 개념까지 학습 가능합니다 (퍼즐 1-16)
 - **디버깅 및 프로파일링**: 디버깅 도구와 성능 분석에는 NVIDIA GPU가 필요합니다
-- **최신 GPU 기능**: tensor core와 cluster 프로그래밍에는 NVIDIA GPU가 필요합니다
+- **최신 GPU 기능**: 텐서 코어와 클러스터 프로그래밍에는 NVIDIA GPU가 필요합니다
 
 ## 개발
 
