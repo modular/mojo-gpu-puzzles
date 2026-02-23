@@ -84,10 +84,10 @@ This `@parameter` loop unrolls at compile-time for optimal performance.
 ### 4. **SIMD operations within tile elements**
 
 ```mojo
-a_vec = a_tile.load[simd_width](i, 0)  # Load from position i in tile
-b_vec = b_tile.load[simd_width](i, 0)  # Load from position i in tile
+a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
+b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
 result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
-out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
+out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 ```
 
 ### 5. **Thread configuration difference**
@@ -232,10 +232,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 ```mojo
 @parameter
 for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](i, 0)
-    b_vec = b_tile.load[simd_width](i, 0)
+    a_vec = a_tile.load[simd_width](Index(i))
+    b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
-    out_tile.store[simd_width](i, 0, ret)
+    out_tile.store[simd_width](Index(i), ret)
 ```
 
 **Why sequential processing?**
