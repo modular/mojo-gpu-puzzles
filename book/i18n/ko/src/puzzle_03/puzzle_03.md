@@ -6,7 +6,7 @@
 
 ## 개요
 
-벡터 `a`의 각 위치에 10을 더해 `output`에 저장하는 Kernel을 구현해 보세요.
+벡터 `a`의 각 위치에 10을 더해 `output`에 저장하는 커널을 구현해 보세요.
 
 **참고**: _스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가 없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다._
 
@@ -21,7 +21,7 @@
 
 - 스레드 수와 데이터 크기 불일치 처리
 - 범위를 벗어난 메모리 접근 방지
-- GPU Kernel에서 조건부 실행 사용
+- GPU 커널에서 조건부 실행 사용
 - 안전한 메모리 접근 패턴
 
 ### 수학적 표현
@@ -160,4 +160,4 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-이런 경계 처리 패턴은 [Puzzle 4에서 LayoutTensor를 배우면](../puzzle_04/introduction_layout_tensor.md) 훨씬 깔끔해집니다. LayoutTensor는 형태 관리 기능을 기본으로 제공합니다.
+이런 경계 처리 패턴은 Puzzle 4의 [LayoutTensor 알아보기](../puzzle_04/introduction_layout_tensor.md)에서 배우면 훨씬 깔끔해집니다. LayoutTensor는 형태 관리 기능을 기본으로 제공합니다.

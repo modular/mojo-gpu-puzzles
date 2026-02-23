@@ -3,7 +3,7 @@
 # LayoutTensor 알아보기
 
 퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를 미리 살펴봅시다:
-🥁 ... 바로 **[LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)**입니다.
+🥁 ... 바로 **[LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)** 입니다.
 
 > 💡 _LayoutTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸 이해할 필요는 없어요 - 퍼즐을 진행하면서 각 기능을 자세히 알아볼 겁니다_.
 
@@ -26,7 +26,7 @@ if i < size:
 차원이 늘어나면 코드는 더 복잡해집니다:
 
 ```mojo
-# 전통적인 2D 인덱싱 (row-major 2D 행렬)
+# 전통적인 2D 인덱싱 (행 우선 2D 행렬)
 idx = row * WIDTH + col
 if row < height and col < width:
     output[idx] = a[idx] + 10.0
@@ -37,7 +37,7 @@ if row < height and col < width:
 LayoutTensor는 이런 문제들을 깔끔하게 해결해줍니다. 앞으로 배울 내용을 살짝 엿보면:
 
 1. **자연스러운 인덱싱**: 수동 오프셋 계산 대신 `tensor[i, j]` 사용
-2. **유연한 메모리 레이아웃**: Row-major, column-major, tiled 구성 지원
+2. **유연한 메모리 레이아웃**: 행 우선, 열 우선, 타일 구성 지원
 3. **성능 최적화**: GPU에 효율적인 메모리 접근 패턴
 
 ## 앞으로 배울 내용 맛보기
@@ -125,7 +125,7 @@ After:
 
 무슨 일이 일어나는지 살펴봅시다:
 
-1. Row-major 레이아웃으로 `2 x 3` 텐서를 생성합니다
+1. 행 우선 레이아웃으로 `2 x 3` 텐서를 생성합니다
 2. 처음에는 모든 요소가 0입니다
 3. 자연스러운 인덱싱으로 하나의 요소를 수정합니다
 4. 변경 사항이 출력에 반영됩니다
@@ -140,7 +140,7 @@ After:
 
 - 멀티 스레드 GPU 연산
 - 공유 메모리 최적화
-- 복잡한 tiling 전략
+- 복잡한 타일링 전략
 - 하드웨어 가속 연산
 
 LayoutTensor와 함께 GPU 프로그래밍 여정을 시작할 준비가 됐나요? 퍼즐로 들어가봅시다!
