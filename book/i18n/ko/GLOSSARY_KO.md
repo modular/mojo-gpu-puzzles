@@ -49,7 +49,6 @@
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |
 | guard | 가드 | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | halo (region) | 헤일로 (영역) | 타일 경계를 넘어 확장되는 추가 데이터 영역. ghost cell, guard cell이라고도 함 |
-| hazard | 해저드 | 스레드 간 메모리 접근 충돌. read-after-write, write-after-write 등 |
 | host code | 호스트 코드 | CPU에서 실행되는 코드. GPU 작업을 설정하는 부분 |
 | in-place (computation) | 직접 저장 (연산) | 별도 메모리를 할당하지 않고 기존 버퍼에 결과를 직접 기록하는 방식 |
 | JIT | JIT | Just-In-Time. 실행 시점에 코드를 컴파일하는 방식. 빌드 단계 없이 빠른 반복 가능 |
