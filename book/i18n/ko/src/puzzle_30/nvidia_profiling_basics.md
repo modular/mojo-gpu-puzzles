@@ -214,7 +214,7 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep
 **결과 비교 방법**:
 
 1. **GPU Kernel Summary 확인** - 구현 간 실행 시간 비교
-2. **Memory Operations 확인** - 공유 메모리가 글로벌 메모리 트래픽을 줄이는지 확인
+2. **Memory Operations 확인** - 공유 메모리가 전역 메모리 트래픽을 줄이는지 확인
 3. **API 오버헤드 비교** - 모두 비슷한 메모리 할당 패턴을 가져야 함
 
 **수동 비교 워크플로우**:

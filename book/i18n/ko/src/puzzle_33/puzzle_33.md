@@ -150,10 +150,10 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
 텐서 코어는 메모리 최적화에 한 단계를 더 추가합니다:
 
-1. **글로벌 메모리** → **공유 메모리**: `copy_dram_to_sram_async` 사용 (Puzzle 16에서 배운 것)
+1. **전역 메모리** → **공유 메모리**: `copy_dram_to_sram_async` 사용 (Puzzle 16에서 배운 것)
 2. **공유 메모리** → **레지스터 프래그먼트**: `mma_op.load_a/load_b` 사용
 3. **연산**: 레지스터 프래그먼트에서 `mma_op.mma_op` 사용
-4. **레지스터 프래그먼트** → **글로벌 메모리**: `mma_op.store_d` 사용
+4. **레지스터 프래그먼트** → **전역 메모리**: `mma_op.store_d` 사용
 
 ## 도전 과제
 

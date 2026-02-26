@@ -53,8 +53,15 @@
         {{/each}}
 
         {{#if mathjax_support}}
-        <!-- MathJax -->
-        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <!-- MathJax: force lang="en" on rendered elements to prevent CJK font fallback in non-English locales -->
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Register.StartupHook("End", function() {
+                document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                    el.setAttribute('lang', 'en');
+                });
+            });
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
         {{/if}}
 
         <!-- Provide site root and default themes to javascript -->

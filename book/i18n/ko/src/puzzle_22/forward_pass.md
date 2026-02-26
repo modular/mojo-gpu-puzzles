@@ -596,7 +596,7 @@ Fused 구현은 연산들을 효율적으로 결합합니다:
 
 1. **메모리 트래픽 제거**:
    - 연산 간 중간 텐서 할당 불필요
-   - 글로벌 메모리 읽기/쓰기 감소
+   - 전역 메모리 읽기/쓰기 감소
    - 선형 변환을 위한 정규화된 값 재사용
    - 메모리 대역폭 절감률: \\[\Large \text{reduction} = \frac{\text{unfused\_bandwidth} - \text{fused\_bandwidth}}{\text{unfused\_bandwidth}}\\]
 

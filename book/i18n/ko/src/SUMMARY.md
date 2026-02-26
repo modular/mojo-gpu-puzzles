@@ -57,7 +57,7 @@
   - [⭐ 완성 버전](./puzzle_14/complete.md)
 - [Puzzle 15: 축 합계](./puzzle_15/puzzle_15.md)
 - [Puzzle 16: 행렬 곱셈 (MatMul)](./puzzle_16/puzzle_16.md)
-  - [🔰 글로벌 메모리를 사용한 기본 버전](./puzzle_16/naïve.md)
+  - [🔰 전역 메모리를 사용한 기본 버전](./puzzle_16/naïve.md)
   - [📚 루프라인 모델 알아보기](./puzzle_16/roofline.md)
   - [🤝 공유 메모리 버전](./puzzle_16/shared_memory.md)
   - [📐 타일링 버전](./puzzle_16/tiled.md)

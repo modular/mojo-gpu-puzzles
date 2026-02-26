@@ -2,9 +2,9 @@
 
 # 단일 블록을 사용한 기본 버전
 
-1D LayoutTensor `a`와 1D LayoutTensor `b`의 1D convolution을 계산하여 1D LayoutTensor `output`에 저장하는 kernel을 구현하세요.
+1D LayoutTensor `a`와 1D LayoutTensor `b`의 1D 합성곱을 계산하여 1D LayoutTensor `output`에 저장하는 커널을 구현하세요.
 
-**참고:** _일반적인 경우를 처리해야 합니다. 스레드당 global read 2회, global write 1회만 필요합니다._
+**참고:** _일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다._
 
 ## 핵심 개념
 
@@ -19,15 +19,15 @@
 ## 구성
 
 - 입력 배열 크기: `SIZE = 6`
-- Kernel 크기: `CONV = 3`
+- 커널 크기: `CONV = 3`
 - 블록당 스레드 수: `TPB = 8`
 - 블록 수: 1
 - 공유 메모리: `SIZE`와 `CONV` 크기의 배열 2개
 
 참고:
 
-- **데이터 로딩**: 각 스레드가 입력 배열과 kernel에서 원소를 하나씩 로드
-- **메모리 패턴**: 입력 배열과 convolution kernel을 저장하는 공유 배열
+- **데이터 로딩**: 각 스레드가 입력 배열과 커널에서 원소를 하나씩 로드
+- **메모리 패턴**: 입력 배열과 합성곱 커널을 저장하는 공유 배열
 - **스레드 동기화**: 연산 시작 전 스레드 간 조율
 
 ## 완성할 코드
@@ -44,7 +44,7 @@
 <div class="solution-tips">
 
 1. `LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`으로 공유 메모리 할당
-2. 입력을 `shared_a[local_i]`에, kernel을 `shared_b[local_i]`에 로드
+2. 입력을 `shared_a[local_i]`에, 커널을 `shared_b[local_i]`에 로드
 3. 데이터 로드 후 `barrier()` 호출
 4. 경계 안에서 곱을 합산: `if local_i + j < SIZE`
 5. `global_i < SIZE`일 때만 결과 기록
@@ -52,7 +52,7 @@
 </div>
 </details>
 
-## 코드 실행
+### 코드 실행
 
 솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
 
@@ -111,13 +111,13 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 <div class="solution-explanation">
 
-공유 메모리를 활용해 겹치는 원소에 효율적으로 접근하는 1D convolution 구현입니다. 단계별로 살펴보겠습니다:
+공유 메모리를 활용해 겹치는 원소에 효율적으로 접근하는 1D 합성곱 구현입니다. 단계별로 살펴보겠습니다:
 
 ### 메모리 레이아웃
 
 ```txt
 입력 배열 a:       [0  1  2  3  4  5]
-Kernel b:        [0  1  2]
+커널 b:          [0  1  2]
 ```
 
 ### 연산 과정
@@ -126,10 +126,10 @@ Kernel b:        [0  1  2]
 
    ```txt
    shared_a: [0  1  2  3  4  5]  // 입력 배열
-   shared_b: [0  1  2]           // Convolution kernel
+   shared_b: [0  1  2]           // 합성곱 커널
    ```
 
-2. 각 위치 i에 대한 **convolution 연산**:
+2. 각 위치 i에 대한 **합성곱 연산**:
 
    ```txt
    output[0] = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] = 0*0 + 1*1 + 2*2 = 5
@@ -168,7 +168,7 @@ Kernel b:        [0  1  2]
          output[global_i] = local_sum
      ```
 
-   핵심적인 차이는 가드의 위치입니다. 비효율적 버전은 `global_i >= SIZE`인 스레드를 포함해 **모든 스레드가 convolution 연산을 수행**한 뒤, 마지막 쓰기에서만 가드를 적용합니다. 이로 인해:
+   핵심적인 차이는 가드의 위치입니다. 비효율적 버전은 `global_i >= SIZE`인 스레드를 포함해 **모든 스레드가 합성곱 연산을 수행**한 뒤, 마지막 쓰기에서만 가드를 적용합니다. 이로 인해:
    - **불필요한 연산**: 유효 범위 밖의 스레드가 쓸모없는 작업을 수행
    - **효율 저하**: 사용되지 않을 연산에 자원 소비
    - **GPU 활용도 저하**: 의미 없는 계산에 GPU 코어를 낭비
@@ -177,22 +177,22 @@ Kernel b:        [0  1  2]
 
 2. **주요 구현 특징**:
    - `var`와 `output.element_type`으로 적절한 타입 추론
-   - `@parameter` 데코레이터로 convolution 루프를 컴파일 타임에 전개
+   - `@parameter` 데코레이터로 합성곱 루프를 컴파일 타임에 전개
    - 엄격한 경계 검사로 메모리 안전성 확보
    - LayoutTensor의 타입 시스템으로 코드 안전성 향상
 
 3. **메모리 관리**:
-   - 입력 배열과 kernel 모두 공유 메모리 사용
-   - 스레드당 글로벌 메모리에서 1회 로드
+   - 입력 배열과 커널 모두 공유 메모리 사용
+   - 스레드당 전역 메모리에서 1회 로드
    - 로드한 데이터의 효율적 재사용
 
 4. **스레드 조율**:
    - `barrier()`로 모든 데이터 로드가 끝난 후 연산 시작을 보장
    - 각 스레드가 출력 원소 하나를 계산
-   - 병합(coalesced) 메모리 접근 패턴 유지
+   - 병합 메모리 접근 패턴 유지
 
 5. **성능 최적화**:
-   - 글로벌 메모리 접근 최소화
+   - 전역 메모리 접근 최소화
    - 공유 메모리로 빠른 데이터 접근
    - 메인 연산 루프에서 스레드 분기 회피
    - `@parameter` 데코레이터를 통한 루프 전개
