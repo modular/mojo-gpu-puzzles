@@ -18,7 +18,7 @@ GPU 스레드와 SIMD 연산 사이의 근본적인 관계를 이해합니다:
 GPU Device
 ├── Grid (전체 문제)
 │   ├── Block 1 (스레드 그룹, 공유 메모리)
-│   │   ├── Warp 1 (32개 스레드, lockstep 실행) --> Part VI에서 학습
+│   │   ├── Warp 1 (32개 스레드, 록스텝 실행) --> Part VI에서 학습
 │   │   │   ├── Thread 1 → SIMD
 │   │   │   ├── Thread 2 → SIMD
 │   │   │   └── ... (총 32개 스레드)
@@ -28,12 +28,12 @@ GPU Device
 
 **Mojo가 자동으로 처리하는 것들:**
 
-- Grid/Block 구성 자동 계산
-- Warp 관리의 투명한 처리
+- 그리드/블록 구성 자동 계산
+- 워프 관리의 투명한 처리
 - 스레드 스케줄링 자동 최적화
 - 메모리 계층 구조 최적화 내장
 
-💡 **참고**: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, **Warp 레벨 프로그래밍**과 고급 GPU 메모리 관리는 **[Part VII](../puzzle_24/puzzle_24.md)** 에서 자세히 다룹니다.
+💡 **참고**: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, **워프 레벨 프로그래밍**과 고급 GPU 메모리 관리는 **[Part VII](../puzzle_24/puzzle_24.md)** 에서 자세히 다룹니다.
 
 ### **네 가지 기본 패턴**
 
@@ -80,7 +80,7 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 
 ### **1. Elementwise 연산**
 
-**→ [Elementwise - 기본 GPU 함수형 연산](./elementwise.md)**
+**→ [elementwise - 기본 GPU 함수형 연산](./elementwise.md)**
 
 기초부터 시작합니다: 자동 스레드 관리와 SIMD 벡터화.
 
@@ -97,11 +97,11 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 ```
 
-### **2. Tiled 처리**
+### **2. 타일링 처리**
 
-**→ [Tile - 메모리 효율적인 Tiled 처리](./tile.md)**
+**→ [tile - 메모리 효율적인 타일링 처리](./tile.md)**
 
-elementwise를 기반으로 메모리 최적화 tiling 패턴을 학습합니다.
+elementwise를 기반으로 메모리 최적화 타일링 패턴을 학습합니다.
 
 **배울 내용:**
 
@@ -110,11 +110,11 @@ elementwise를 기반으로 메모리 최적화 tiling 패턴을 학습합니다
 - 메모리 지역성 원칙과 캐시 친화적 접근 패턴
 - 스레드-타일 매핑 vs 스레드-요소 매핑
 
-**핵심 통찰:** Tiling은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.
+**핵심 통찰:** 타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.
 
 ### **3. 고급 벡터화**
 
-**→ [Vectorize - SIMD 제어](./vectorize.md)**
+**→ [vectorize - SIMD 제어](./vectorize.md)**
 
 수동 제어와 자동 벡터화 전략을 탐구합니다.
 
@@ -122,7 +122,7 @@ elementwise를 기반으로 메모리 최적화 tiling 패턴을 학습합니다
 
 - 명시적 인덱스 관리를 통한 수동 SIMD 연산
 - 안전하고 자동적인 벡터화를 위한 Mojo의 vectorize 함수
-- 최적의 SIMD 정렬을 위한 chunk 기반 메모리 구성
+- 최적의 SIMD 정렬을 위한 청크 기반 메모리 구성
 - 수동 제어와 안전성 간의 성능 트레이드오프
 
 **두 가지 접근법:**
@@ -168,4 +168,4 @@ Elementwise 패턴부터 시작하여 각 섹션을 체계적으로 학습하세
 
 **학습 목표**: Part VI를 마치면, 저수준 GPU 메커니즘 대신 함수형 패턴의 관점에서 사고할 수 있게 되어, 더 유지보수하기 쉽고, 성능이 뛰어나며, 이식성이 높은 GPU 코드를 작성할 수 있습니다.
 
-**시작하기**: **[Elementwise - 기본 GPU 함수형 연산](./elementwise.md)** 에서 함수형 GPU 프로그래밍을 시작하세요.
+**시작하기**: **[elementwise - 기본 GPU 함수형 연산](./elementwise.md)** 에서 함수형 GPU 프로그래밍을 시작하세요.

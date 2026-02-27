@@ -1,6 +1,6 @@
 <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
-# Elementwise - 기본 GPU 함수형 연산
+# elementwise - 기본 GPU 함수형 연산
 
 이 퍼즐은 Mojo의 함수형 `elementwise` 패턴을 사용하여 벡터 덧셈을 구현합니다. 각 스레드가 자동으로 여러 SIMD 요소를 처리하며, 현대 GPU 프로그래밍이 어떻게 저수준 세부 사항을 추상화하면서도 높은 성능을 유지하는지 보여줍니다.
 
@@ -26,7 +26,7 @@
 - 벡터 크기: `SIZE = 1024`
 - 데이터 타입: `DType.float32`
 - SIMD 폭: 타겟 의존적 (GPU 아키텍처와 데이터 타입에 따라 결정)
-- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
+- 레이아웃: `Layout.row_major(SIZE)` (1D 행 우선)
 
 ## 완성할 코드
 
@@ -79,7 +79,7 @@ a_simd = a.aligned_load[simd_width](Index(idx))  # 연속 float 4개 로드 (GPU
 b_simd = b.aligned_load[simd_width](Index(idx))  # 연속 float 4개 로드 (GPU 의존적)
 ```
 
-두 번째 매개변수 `0`은 차원 offset입니다 (1D 벡터에서는 항상 0). 이 연산은 한 번에 **벡터화된 chunk**의 데이터를 로드합니다. 로드되는 정확한 요소 수는 GPU의 SIMD 능력에 따라 달라집니다.
+두 번째 매개변수 `0`은 차원 오프셋입니다 (1D 벡터에서는 항상 0). 이 연산은 한 번에 **벡터화된 청크**의 데이터를 로드합니다. 로드되는 정확한 요소 수는 GPU의 SIMD 능력에 따라 달라집니다.
 
 ### 4. **벡터 연산**
 
@@ -114,7 +114,7 @@ elementwise[your_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
 idx: 0, idx: 4, idx: 8, idx: 12, ...
 ```
 
-각 스레드가 서로 다른 SIMD chunk를 처리하며, `SIMD_WIDTH` (GPU 의존적) 간격으로 자동 배치됨을 보여줍니다.
+각 스레드가 서로 다른 SIMD 청크를 처리하며, `SIMD_WIDTH` (GPU 의존적) 간격으로 자동 배치됨을 보여줍니다.
 
 </div>
 </details>
@@ -271,7 +271,7 @@ GPU 아키텍처:
 a.aligned_load[simd_width](Index(idx))  // 병합 메모리 접근
 ```
 
-**메모리 coalescing의 이점:**
+**메모리 병합의 이점:**
 
 - **순차적 접근**: 스레드들이 연속적인 메모리 위치에 접근
 - **캐시 최적화**: L1/L2 캐시 히트율 극대화
@@ -332,10 +332,10 @@ comptime SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
 **복잡한 연산의 기초:**
 이 elementwise 패턴은 다음 연산들의 기반이 됩니다:
 
-- **Reduction 연산**: 대규모 배열에서의 합계, 최댓값, 최솟값
-- **Broadcast 연산**: 스칼라-벡터 연산
+- **리덕션 연산**: 대규모 배열에서의 합계, 최댓값, 최솟값
+- **브로드캐스트 연산**: 스칼라-벡터 연산
 - **복잡한 변환**: 활성화 함수, 정규화
-- **다차원 연산**: 행렬 연산, convolution
+- **다차원 연산**: 행렬 연산, 합성곱
 
 **전통적인 방식과의 비교:**
 
@@ -369,8 +369,8 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
 Elementwise 연산을 학습했다면 다음으로 넘어갈 준비가 되었습니다:
 
-- **[Tile - 메모리 효율적인 Tiled 처리](./tile.md)**: 메모리 효율적인 tiled 처리 패턴
-- **[Vectorize - SIMD 제어](./vectorize.md)**: 세밀한 SIMD 제어
+- **[tile - 메모리 효율적인 타일링 처리](./tile.md)**: 메모리 효율적인 타일링 처리 패턴
+- **[vectorize - SIMD 제어](./vectorize.md)**: 세밀한 SIMD 제어
 - **[🧠 GPU 스레딩 vs SIMD 개념](./gpu-thread-vs-simd.md)**: 실행 계층 구조 이해
 - **[📊 Mojo 벤치마킹](./benchmarking.md)**: 성능 분석과 최적화
 
