@@ -1,26 +1,26 @@
 <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
-# `warp.prefix_sum()` 하드웨어 최적화 병렬 Scan
+# `warp.prefix_sum()` 하드웨어 최적화 병렬 스캔
 
-Warp 레벨 병렬 scan 연산에서는 `prefix_sum()`을 사용하여 복잡한 공유 메모리 알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해 수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.
+워프 레벨 병렬 스캔 연산에서는 `prefix_sum()`을 사용하여 복잡한 공유 메모리 알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해 수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.
 
-**핵심 통찰:** _[prefix_sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum) 연산은 하드웨어 가속 병렬 scan을 활용하여 Warp Lane에 걸쳐 \\(O(\\log n)\\) 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로 대체합니다._
+**핵심 통찰:** _[prefix_sum()](https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum) 연산은 하드웨어 가속 병렬 스캔을 활용하여 워프 레인에 걸쳐 \\(O(\\log n)\\) 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로 대체합니다._
 
-> **병렬 scan이란?** [병렬 scan (prefix sum)](https://en.wikipedia.org/wiki/Prefix_sum)은 데이터 요소에 걸쳐 누적 연산을 수행하는 기본적인 병렬 기본 요소입니다. 덧셈의 경우 `[a, b, c, d]`를 `[a, a+b, a+b+c, a+b+c+d]`로 변환합니다. 이 연산은 stream compaction, quicksort 파티셔닝, 병렬 정렬 같은 병렬 알고리즘에 필수적입니다.
+> **병렬 스캔이란?** [병렬 스캔 (누적 합)](https://en.wikipedia.org/wiki/Prefix_sum)은 데이터 요소에 걸쳐 누적 연산을 수행하는 기본적인 병렬 기본 요소입니다. 덧셈의 경우 `[a, b, c, d]`를 `[a, a+b, a+b+c, a+b+c+d]`로 변환합니다. 이 연산은 스트림 컴팩션, quicksort 파티셔닝, 병렬 정렬 같은 병렬 알고리즘에 필수적입니다.
 
 ## 핵심 개념
 
 이 퍼즐에서 배울 내용:
 
-- `prefix_sum()`을 활용한 **하드웨어 최적화 병렬 scan**
-- **Inclusive vs exclusive prefix sum** 패턴
-- 데이터 재배치를 위한 **Warp 레벨 stream compaction**
-- 여러 Warp 기본 요소를 결합한 **고급 병렬 파티셔닝**
-- 복잡한 공유 메모리를 대체하는 **단일 Warp 알고리즘 최적화**
+- `prefix_sum()`을 활용한 **하드웨어 최적화 병렬 스캔**
+- **포함(inclusive) vs 비포함(exclusive) 누적 합** 패턴
+- 데이터 재배치를 위한 **워프 레벨 스트림 컴팩션**
+- 여러 워프 기본 요소를 결합한 **고급 병렬 파티셔닝**
+- 복잡한 공유 메모리를 대체하는 **단일 워프 알고리즘 최적화**
 
-이를 통해 다단계 공유 메모리 알고리즘이 우아한 단일 함수 호출로 변환되어, 명시적 동기화 없이 효율적인 병렬 scan 연산이 가능합니다.
+이를 통해 다단계 공유 메모리 알고리즘이 우아한 단일 함수 호출로 변환되어, 명시적 동기화 없이 효율적인 병렬 스캔 연산이 가능합니다.
 
-## 1. Warp inclusive prefix sum
+## 1. 워프 포함 누적 합
 
 ### 구성
 
@@ -32,7 +32,7 @@ Warp 레벨 병렬 scan 연산에서는 `prefix_sum()`을 사용하여 복잡한
 
 ### prefix_sum의 이점
 
-기존 prefix sum은 복잡한 다단계 공유 메모리 알고리즘이 필요합니다. [Puzzle 14: Prefix Sum](../puzzle_14/puzzle_14.md)에서는 명시적 공유 메모리 관리로 이를 힘들게 구현했습니다:
+기존 누적 합은 복잡한 다단계 공유 메모리 알고리즘이 필요합니다. [Puzzle 14: 누적 합](../puzzle_14/puzzle_14.md)에서는 명시적 공유 메모리 관리로 이를 힘들게 구현했습니다:
 
 ```mojo
 {{#include ../../../../../solutions/p14/p14.mojo:prefix_sum_simple_solution}}
@@ -41,11 +41,11 @@ Warp 레벨 병렬 scan 연산에서는 `prefix_sum()`을 사용하여 복잡한
 **기존 방식의 문제점:**
 
 - **메모리 오버헤드**: 공유 메모리 할당이 필요
-- **다중 barrier**: 복잡한 다단계 동기화
-- **복잡한 인덱싱**: 수동 stride 계산과 경계 검사
-- **낮은 확장성**: 각 단계 사이에 barrier가 필요한 \\(O(\\log n)\\) 단계
+- **다중 배리어**: 복잡한 다단계 동기화
+- **복잡한 인덱싱**: 수동 스트라이드 계산과 경계 검사
+- **낮은 확장성**: 각 단계 사이에 배리어가 필요한 \\(O(\\log n)\\) 단계
 
-`prefix_sum()`을 사용하면 병렬 scan이 간단해집니다:
+`prefix_sum()`을 사용하면 병렬 스캔이 간단해집니다:
 
 ```mojo
 # 하드웨어 최적화 방식 - 단일 함수 호출!
@@ -57,15 +57,15 @@ output[global_i] = scan_result
 **prefix_sum의 장점:**
 
 - **메모리 오버헤드 제로**: 하드웨어 가속 연산
-- **동기화 불필요**: 단일 atomic 연산
-- **하드웨어 최적화**: 전용 scan 유닛 활용
+- **동기화 불필요**: 단일 아토믹 연산
+- **하드웨어 최적화**: 전용 스캔 유닛 활용
 - **완벽한 확장성**: 모든 `WARP_SIZE` (32, 64 등)에서 동작
 
 ### 완성할 코드
 
-하드웨어 최적화 `prefix_sum()` 기본 요소를 사용하여 inclusive prefix sum을 구현합니다.
+하드웨어 최적화 `prefix_sum()` 기본 요소를 사용하여 포함 누적 합을 구현합니다.
 
-**수학적 연산:** 각 Lane이 자신의 위치까지 모든 요소의 합을 포함하는 누적 합을 계산합니다:
+**수학적 연산:** 각 레인이 자신의 위치까지 모든 요소의 합을 포함하는 누적 합을 계산합니다:
 \\[\Large \\text{output}[i] = \\sum_{j=0}^{i} \\text{input}[j]\\]
 
 입력 데이터 `[1, 2, 3, 4, 5, ...]`를 누적 합 `[1, 3, 6, 10, 15, ...]`으로 변환하며, 각 위치에 이전 모든 요소와 자기 자신의 합이 담깁니다.
@@ -83,25 +83,25 @@ output[global_i] = scan_result
 
 ### 1. **prefix_sum 매개변수 이해하기**
 
-`prefix_sum()` 함수에는 scan 유형을 제어하는 중요한 템플릿 매개변수가 있습니다.
+`prefix_sum()` 함수에는 스캔 유형을 제어하는 중요한 템플릿 매개변수가 있습니다.
 
 **핵심 질문:**
 
-- Inclusive prefix sum과 exclusive prefix sum의 차이는 무엇인가요?
+- 포함 누적 합과 비포함 누적 합의 차이는 무엇인가요?
 - 어떤 매개변수가 이 동작을 제어하나요?
-- Inclusive scan에서 각 Lane은 무엇을 출력해야 하나요?
+- 포함 스캔에서 각 레인은 무엇을 출력해야 하나요?
 
-**힌트**: 함수 시그니처를 보고 누적 연산에서 "inclusive"가 무엇을 의미하는지 생각해 보세요.
+**힌트**: 함수 시그니처를 보고 누적 연산에서 "포함(inclusive)"이 무엇을 의미하는지 생각해 보세요.
 
-### 2. **단일 Warp 제한**
+### 2. **단일 워프 제한**
 
-이 하드웨어 기본 요소는 단일 Warp 내에서만 동작합니다. 이 제한의 의미를 생각해 보세요.
+이 하드웨어 기본 요소는 단일 워프 내에서만 동작합니다. 이 제한의 의미를 생각해 보세요.
 
 **생각해 보세요:**
 
-- 여러 Warp가 있으면 어떻게 되나요?
+- 여러 워프가 있으면 어떻게 되나요?
 - 이 제한을 이해하는 것이 왜 중요한가요?
-- 멀티 Warp 시나리오로 확장하려면 어떻게 해야 하나요?
+- 멀티 워프 시나리오로 확장하려면 어떻게 해야 하나요?
 
 ### 3. **데이터 타입 고려사항**
 
@@ -116,7 +116,7 @@ output[global_i] = scan_result
 </div>
 </details>
 
-**Warp inclusive prefix sum 테스트:**
+**워프 포함 누적 합 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -164,7 +164,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 ✅ Warp inclusive prefix sum test passed!
 ```
 
-### 풀이
+### 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -175,7 +175,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 
 <div class="solution-explanation">
 
-이 풀이는 `prefix_sum()`이 복잡한 다단계 알고리즘을 하드웨어 최적화된 단일 함수 호출로 어떻게 대체하는지 보여줍니다.
+이 솔루션은 `prefix_sum()`이 복잡한 다단계 알고리즘을 하드웨어 최적화된 단일 함수 호출로 어떻게 대체하는지 보여줍니다.
 
 **알고리즘 분석:**
 
@@ -184,7 +184,7 @@ if global_i < size:
     current_val = input[global_i]
 
     # 이 한 줄이 Puzzle 14의 복잡한 공유 메모리 로직 ~30줄을 대체합니다!
-    # 단, 현재 Warp (WARP_SIZE 스레드) 내에서만 동작합니다
+    # 단, 현재 워프 (WARP_SIZE 스레드) 내에서만 동작합니다
     scan_result = prefix_sum[exclusive=False](
         rebind[Scalar[dtype]](current_val)
     )
@@ -197,7 +197,7 @@ if global_i < size:
 ```
 입력: [1, 2, 3, 4, 5, 6, 7, 8, ...]
 
-사이클 1: 모든 Lane이 동시에 값을 로드
+사이클 1: 모든 레인이 동시에 값을 로드
   Lane 0: current_val = 1
   Lane 1: current_val = 2
   Lane 2: current_val = 3
@@ -221,38 +221,38 @@ if global_i < size:
   ...
 ```
 
-**수학적 통찰:** inclusive prefix sum 연산을 구현합니다:
+**수학적 통찰:** 포함 누적 합 연산을 구현합니다:
 \\[\Large \\text{output}[i] = \\sum_{j=0}^{i} \\text{input}[j]\\]
 
 **Puzzle 14 방식과의 비교:**
 
-- **[Puzzle 14: Prefix Sum](../puzzle_14/puzzle_14.md)**: 공유 메모리 ~30줄 + 다중 barrier + 복잡한 인덱싱
-- **Warp 기본 요소**: 하드웨어 가속의 함수 호출 1개
+- **[Puzzle 14: 누적 합](../puzzle_14/puzzle_14.md)**: 공유 메모리 ~30줄 + 다중 배리어 + 복잡한 인덱싱
+- **워프 기본 요소**: 하드웨어 가속의 함수 호출 1개
 - **성능**: 같은 \\(O(\\log n)\\) 복잡도이지만, 전용 하드웨어에서 구현
 - **메모리**: 명시적 할당 대비 공유 메모리 사용량 제로
 
-**Puzzle 12에서의 발전:** 현대 GPU 아키텍처의 강력함을 보여줍니다 - Puzzle 12에서 신중한 수동 구현이 필요했던 것이 이제는 하드웨어 가속 기본 요소 하나로 해결됩니다. Warp 레벨 `prefix_sum()`은 구현 복잡도 제로로 같은 알고리즘적 이점을 제공합니다.
+**Puzzle 12에서의 발전:** 현대 GPU 아키텍처의 강력함을 보여줍니다 - Puzzle 12에서 신중한 수동 구현이 필요했던 것이 이제는 하드웨어 가속 기본 요소 하나로 해결됩니다. 워프 레벨 `prefix_sum()`은 구현 복잡도 제로로 같은 알고리즘적 이점을 제공합니다.
 
 **prefix_sum이 우월한 이유:**
 
-1. **하드웨어 가속**: 현대 GPU의 전용 scan 유닛
+1. **하드웨어 가속**: 현대 GPU의 전용 스캔 유닛
 2. **메모리 오버헤드 제로**: 공유 메모리 할당 불필요
-3. **자동 동기화**: 명시적 barrier 불필요
+3. **자동 동기화**: 명시적 배리어 불필요
 4. **완벽한 확장성**: 모든 `WARP_SIZE`에서 최적으로 동작
 
 **성능 특성:**
 
-- **Latency**: ~1-2 사이클 (하드웨어 scan 유닛)
+- **지연 시간**: ~1-2 사이클 (하드웨어 스캔 유닛)
 - **대역폭**: 메모리 트래픽 제로 (레지스터 전용 연산)
-- **병렬성**: `WARP_SIZE`개 Lane 모두 동시에 참여
+- **병렬성**: `WARP_SIZE`개 레인 모두 동시에 참여
 - **확장성**: 하드웨어 최적화를 동반한 \\(O(\\log n)\\) 복잡도
 
-**중요한 제한사항**: 이 기본 요소는 단일 Warp 내에서만 동작합니다. 멀티 Warp 시나리오에서는 Warp 간 추가 조정이 필요합니다.
+**중요한 제한사항**: 이 기본 요소는 단일 워프 내에서만 동작합니다. 멀티 워프 시나리오에서는 워프 간 추가 조정이 필요합니다.
 
 </div>
 </details>
 
-## 2. Warp 파티션
+## 2. 워프 파티션
 
 ### 구성
 
@@ -262,17 +262,17 @@ if global_i < size:
 
 ### 완성할 코드
 
-`shuffle_xor`과 `prefix_sum` 기본 요소를 **모두** 사용하여 단일 Warp 병렬 파티셔닝을 구현합니다.
+`shuffle_xor`과 `prefix_sum` 기본 요소를 **모두** 사용하여 단일 워프 병렬 파티셔닝을 구현합니다.
 
 **수학적 연산:** 피벗 값을 기준으로 요소를 분할하여, `< pivot`인 요소는 왼쪽에, `>= pivot`인 요소는 오른쪽에 배치합니다:
 \\[\Large \\text{output} = [\\text{elements} < \\text{pivot}] \\,|\\, [\\text{elements} \\geq \\text{pivot}]\\]
 
-**고급 알고리즘:** 이 알고리즘은 두 가지 정교한 Warp 기본 요소를 결합합니다:
+**고급 알고리즘:** 이 알고리즘은 두 가지 정교한 워프 기본 요소를 결합합니다:
 
-1. **`shuffle_xor()`**: 왼쪽 요소 개수를 세기 위한 Warp 레벨 butterfly reduction
-2. **`prefix_sum()`**: 각 파티션 내 위치 계산을 위한 exclusive scan
+1. **`shuffle_xor()`**: 왼쪽 요소 개수를 세기 위한 워프 레벨 버터플라이 리덕션
+2. **`prefix_sum()`**: 각 파티션 내 위치 계산을 위한 비포함 스캔
 
-이는 단일 Warp 내에서 여러 Warp 기본 요소를 결합하여 복잡한 병렬 알고리즘을 구현하는 강력함을 보여줍니다.
+이는 단일 워프 내에서 여러 워프 기본 요소를 결합하여 복잡한 병렬 알고리즘을 구현하는 강력함을 보여줍니다.
 
 ```mojo
 {{#include ../../../../../problems/p26/p26.mojo:warp_partition}}
@@ -306,7 +306,7 @@ if global_i < size:
 
 ### 3. **shuffle_xor과 prefix_sum 결합**
 
-이 알고리즘은 두 Warp 기본 요소를 서로 다른 목적으로 사용합니다.
+이 알고리즘은 두 워프 기본 요소를 서로 다른 목적으로 사용합니다.
 
 **고려할 점:**
 
@@ -321,13 +321,13 @@ if global_i < size:
 **핵심 통찰:**
 
 - 왼쪽 파티션 요소: 최종 위치를 무엇이 결정하나요?
-- 오른쪽 파티션 요소: offset을 어떻게 올바르게 적용하나요?
+- 오른쪽 파티션 요소: 오프셋을 어떻게 올바르게 적용하나요?
 - 로컬 위치와 파티션 경계를 어떻게 결합하나요?
 
 </div>
 </details>
 
-**Warp 파티션 테스트:**
+**워프 파티션 테스트:**
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">uv</button>
@@ -360,7 +360,7 @@ pivot: 5.0
 ✅ Warp partition test passed!
 ```
 
-### 풀이
+### 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -371,7 +371,7 @@ pivot: 5.0
 
 <div class="solution-explanation">
 
-이 풀이는 여러 Warp 기본 요소 간의 고급 조정을 통해 정교한 병렬 알고리즘을 구현하는 방법을 보여줍니다.
+이 솔루션은 여러 워프 기본 요소 간의 고급 조정을 통해 정교한 병렬 알고리즘을 구현하는 방법을 보여줍니다.
 
 **전체 알고리즘 분석:**
 
@@ -379,18 +379,18 @@ pivot: 5.0
 if global_i < size:
     current_val = input[global_i]
 
-    # 1단계: Warp 레벨 프레디케이트 생성
+    # 1단계: 워프 레벨 프레디케이트 생성
     predicate_left = Float32(1.0) if current_val < pivot else Float32(0.0)
     predicate_right = Float32(1.0) if current_val >= pivot else Float32(0.0)
 
-    # 2단계: Warp 레벨 prefix sum으로 Warp 내 위치 계산
+    # 2단계: 워프 레벨 누적 합으로 워프 내 위치 계산
     warp_left_pos = prefix_sum[exclusive=True](predicate_left)
     warp_right_pos = prefix_sum[exclusive=True](predicate_right)
 
-    # 3단계: shuffle_xor butterfly reduction으로 왼쪽 총 개수 구하기
+    # 3단계: shuffle_xor 버터플라이 리덕션으로 왼쪽 총 개수 구하기
     warp_left_total = predicate_left
 
-    # Warp 전체의 합산을 위한 butterfly reduction: 모든 WARP_SIZE에 동적 대응
+    # 워프 전체의 합산을 위한 버터플라이 리덕션: 모든 WARP_SIZE에 동적 대응
     offset = WARP_SIZE // 2
     while offset > 0:
         warp_left_total += shuffle_xor(warp_left_total, offset)
@@ -398,14 +398,14 @@ if global_i < size:
 
     # 4단계: 출력 위치에 기록
     if current_val < pivot:
-        # 왼쪽 파티션: Warp 레벨 위치 사용
+        # 왼쪽 파티션: 워프 레벨 위치 사용
         output[Int(warp_left_pos)] = current_val
     else:
         # 오른쪽 파티션: 왼쪽 총 개수 + 오른쪽 위치로 offset
         output[Int(warp_left_total + warp_right_pos)] = current_val
 ```
 
-**다단계 실행 추적 (8-Lane 예제, pivot=5, 값 [3,7,1,8,2,9,4,6]):**
+**다단계 실행 추적 (8-레인 예제, pivot=5, 값 [3,7,1,8,2,9,4,6]):**
 
 ```
 초기 상태:
@@ -424,13 +424,13 @@ if global_i < size:
   Lane 6: predicate_left=1.0, predicate_right=0.0
   Lane 7: predicate_left=0.0, predicate_right=1.0
 
-2단계: 위치 계산을 위한 exclusive prefix sum
+2단계: 위치 계산을 위한 비포함 누적 합
   warp_left_pos:  [0, 0, 1, 1, 2, 2, 3, 3]
   warp_right_pos: [0, 0, 0, 1, 1, 2, 2, 3]
 
-3단계: 왼쪽 총 개수를 위한 butterfly reduction
+3단계: 왼쪽 총 개수를 위한 버터플라이 리덕션
   초기값: [1, 0, 1, 0, 1, 0, 1, 0]
-  Reduction 후: 모든 Lane이 warp_left_total = 4를 가짐
+  리덕션 후: 모든 레인이 warp_left_total = 4를 가짐
 
 4단계: 출력 위치에 기록
   Lane 0: current_val=3 < pivot → output[0] = 3
@@ -445,43 +445,43 @@ if global_i < size:
 최종 결과: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot)
 ```
 
-**수학적 통찰:** 이중 Warp 기본 요소를 사용한 병렬 파티셔닝을 구현합니다:
+**수학적 통찰:** 이중 워프 기본 요소를 사용한 병렬 파티셔닝을 구현합니다:
 \\[\Large \\begin{align}
-\\text{left\\_pos}[i] &= \\text{prefix\\_sum}_{\\text{exclusive}}(\\text{predicate\\_left}[i]) \\\\
-\\text{right\\_pos}[i] &= \\text{prefix\\_sum}_{\\text{exclusive}}(\\text{predicate\\_right}[i]) \\\\
-\\text{left\\_total} &= \\text{butterfly\\_reduce}(\\text{predicate\\_left}) \\\\
-\\text{final\\_pos}[i] &= \\begin{cases}
-\\text{left\\_pos}[i] & \\text{if } \\text{input}[i] < \\text{pivot} \\\\
-\\text{left\\_total} + \\text{right\\_pos}[i] & \\text{if } \\text{input}[i] \\geq \\text{pivot}
+\\text{left\_pos}[i] &= \\text{prefix\_sum}\_{\\text{exclusive}}(\\text{predicate\_left}[i]) \\\\
+\\text{right\_pos}[i] &= \\text{prefix\_sum}\_{\\text{exclusive}}(\\text{predicate\_right}[i]) \\\\
+\\text{left\_total} &= \\text{butterfly\_reduce}(\\text{predicate\_left}) \\\\
+\\text{final\_pos}[i] &= \\begin{cases}
+\\text{left\_pos}[i] & \\text{if } \\text{input}[i] < \\text{pivot} \\\\
+\\text{left\_total} + \\text{right\_pos}[i] & \\text{if } \\text{input}[i] \\geq \\text{pivot}
 \\end{cases}
 \\end{align}\\]
 
 **다중 기본 요소 접근 방식이 동작하는 이유:**
 
 1. **프레디케이트 생성**: 각 요소의 파티션 소속을 식별
-2. **Exclusive prefix sum**: 각 파티션 내 상대적 위치를 계산
-3. **Butterfly reduction**: 파티션 경계 (왼쪽 총 개수)를 산출
+2. **비포함 누적 합**: 각 파티션 내 상대적 위치를 계산
+3. **버터플라이 리덕션**: 파티션 경계 (왼쪽 총 개수)를 산출
 4. **조정된 기록**: 로컬 위치와 전역 파티션 구조를 결합
 
 **알고리즘 복잡도:**
 
 - **1단계**: \\(O(1)\\) - 프레디케이트 생성
-- **2단계**: \\(O(\\log n)\\) - 하드웨어 가속 prefix sum
-- **3단계**: \\(O(\\log n)\\) - `shuffle_xor`을 활용한 butterfly reduction
+- **2단계**: \\(O(\\log n)\\) - 하드웨어 가속 누적 합
+- **3단계**: \\(O(\\log n)\\) - `shuffle_xor`을 활용한 버터플라이 리덕션
 - **4단계**: \\(O(1)\\) - 조정된 기록
 - **전체**: 우수한 상수를 가진 \\(O(\\log n)\\)
 
 **성능 특성:**
 
-- **통신 단계**: \\(2 \\times \\log_2(\\text{WARP\_SIZE})\\) (prefix sum + butterfly reduction)
+- **통신 단계**: \\(2 \\times \\log_2(\\text{WARP\_SIZE})\\) (누적 합 + 버터플라이 리덕션)
 - **메모리 효율성**: 공유 메모리 제로, 모두 레지스터 기반
-- **병렬성**: 알고리즘 전체에서 모든 Lane이 활성 상태
+- **병렬성**: 알고리즘 전체에서 모든 레인이 활성 상태
 - **확장성**: 모든 `WARP_SIZE` (32, 64 등)에서 동작
 
 **실용적 활용:** 이 패턴의 기반이 되는 분야:
 
 - **Quicksort 파티셔닝**: 병렬 정렬 알고리즘의 핵심 단계
-- **Stream compaction**: 데이터 스트림에서 null/무효 요소 제거
+- **스트림 컴팩션**: 데이터 스트림에서 null/무효 요소 제거
 - **병렬 필터링**: 복잡한 프레디케이트에 따른 데이터 분리
 - **부하 분산**: 연산 요구량에 따른 작업 재분배
 
@@ -490,27 +490,27 @@ if global_i < size:
 
 ## 요약
 
-`prefix_sum()` 기본 요소는 복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 가속 병렬 scan 연산을 가능하게 합니다. 두 가지 문제를 통해 다음을 배웠습니다:
+`prefix_sum()` 기본 요소는 복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 가속 병렬 스캔 연산을 가능하게 합니다. 두 가지 문제를 통해 다음을 배웠습니다:
 
-### **핵심 Prefix Sum 패턴**
+### **핵심 누적 합 패턴**
 
-1. **Inclusive Prefix Sum** (`prefix_sum[exclusive=False]`):
+1. **포함 누적 합** (`prefix_sum[exclusive=False]`):
    - 하드웨어 가속 누적 연산
    - 공유 메모리 코드 ~30줄을 단일 함수 호출로 대체
    - 전용 하드웨어 최적화를 동반한 \\(O(\\log n)\\) 복잡도
 
 2. **고급 다중 기본 요소 조정** (`prefix_sum` + `shuffle_xor` 결합):
-   - 단일 Warp 내 정교한 병렬 알고리즘
-   - 위치 계산을 위한 exclusive scan + 총합을 위한 butterfly reduction
+   - 단일 워프 내 정교한 병렬 알고리즘
+   - 위치 계산을 위한 비포함 스캔 + 총합을 위한 버터플라이 리덕션
    - 최적의 병렬 효율성을 가진 복잡한 파티셔닝 연산
 
 ### **핵심 알고리즘 통찰**
 
 **하드웨어 가속의 이점:**
 
-- `prefix_sum()`이 현대 GPU의 전용 scan 유닛을 활용
+- `prefix_sum()`이 현대 GPU의 전용 스캔 유닛을 활용
 - 기존 방식 대비 공유 메모리 오버헤드 제로
-- 명시적 barrier 없는 자동 동기화
+- 명시적 배리어 없는 자동 동기화
 
 **다중 기본 요소 조정:**
 
@@ -530,18 +530,18 @@ final_pos = local_pos + partition_offset
 
 **성능 이점:**
 
-- **하드웨어 최적화**: 소프트웨어 구현 대비 전용 scan 유닛
+- **하드웨어 최적화**: 소프트웨어 구현 대비 전용 스캔 유닛
 - **메모리 효율성**: 공유 메모리 할당 대비 레지스터 전용 연산
 - **확장 가능한 복잡도**: 하드웨어 가속을 동반한 \\(O(\\log n)\\)
-- **단일 Warp 최적화**: `WARP_SIZE` 한도 내 알고리즘에 최적
+- **단일 워프 최적화**: `WARP_SIZE` 한도 내 알고리즘에 최적
 
 ### **실용적 활용**
 
-이 prefix sum 패턴들의 기반이 되는 분야:
+이 누적 합 패턴들의 기반이 되는 분야:
 
-- **병렬 scan 연산**: 누적 합, 누적 곱, min/max scan
-- **Stream compaction**: 병렬 필터링과 데이터 재배치
+- **병렬 스캔 연산**: 누적 합, 누적 곱, min/max 스캔
+- **스트림 컴팩션**: 병렬 필터링과 데이터 재배치
 - **Quicksort 파티셔닝**: 병렬 정렬 알고리즘의 핵심 빌딩 블록
 - **병렬 알고리즘**: 부하 분산, 작업 분배, 데이터 재구조화
 
-`prefix_sum()`과 `shuffle_xor()`의 결합은 현대 GPU Warp 기본 요소가 최소한의 코드 복잡도와 최적의 성능 특성으로 정교한 병렬 알고리즘을 어떻게 구현할 수 있는지를 보여줍니다.
+`prefix_sum()`과 `shuffle_xor()`의 결합은 현대 GPU 워프 기본 요소가 최소한의 코드 복잡도와 최적의 성능 특성으로 정교한 병렬 알고리즘을 어떻게 구현할 수 있는지를 보여줍니다.
