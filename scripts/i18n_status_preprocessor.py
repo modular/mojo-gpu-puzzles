@@ -37,10 +37,8 @@ def get_warning_banner(lang: str) -> str:
 """
 
 
-def get_source_commit(source_file: str, book_root: Path) -> str | None:
-    """Get the latest commit hash for the English source file."""
-    # Path relative to book_root for git command
-    relative_path = f"src/{source_file}"
+def get_file_commit(relative_path: str, book_root: Path) -> str | None:
+    """Get the latest commit hash for a file on main branch."""
     try:
         result = subprocess.run(
             ["git", "log", "main", "-1", "--format=%H", "--", relative_path],
@@ -69,12 +67,18 @@ def process_content(content: str, source_file: str, book_root: Path, lang: str) 
     if not source_commit:
         return content
 
-    current_commit = get_source_commit(source_file, book_root)
+    current_commit = get_file_commit(f"src/{source_file}", book_root)
 
     if not current_commit:
         return content
 
     if source_commit != current_commit:
+        # If both files were modified in the same commit, they are in sync
+        translation_commit = get_file_commit(
+            f"i18n/{lang}/src/{source_file}", book_root
+        )
+        if translation_commit == current_commit:
+            return content
         warning_banner = get_warning_banner(lang)
         # Insert after first heading
         heading_match = re.search(r"^(#[^\n]+\n)", content, re.MULTILINE)
