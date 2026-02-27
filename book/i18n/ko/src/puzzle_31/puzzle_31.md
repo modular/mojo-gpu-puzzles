@@ -234,7 +234,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 </div>
 </details>
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary><strong>심층 해설이 포함된 완전한 풀이</strong></summary>

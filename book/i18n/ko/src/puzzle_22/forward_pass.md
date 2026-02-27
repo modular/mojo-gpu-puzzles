@@ -291,7 +291,7 @@ Benchmarking CPU vs GPU UNFUSED
 UNFUSED Algorithm Test Completed!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
@@ -532,7 +532,7 @@ Correctness Summary:
 FUSED Algorithm Test Completed!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

@@ -239,7 +239,7 @@ Bin 7 count: 0
 Bin 7 extracted elements:
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

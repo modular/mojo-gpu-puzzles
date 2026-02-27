@@ -62,7 +62,7 @@
   - [🤝 공유 메모리 버전](./puzzle_16/shared_memory.md)
   - [📐 타일링 버전](./puzzle_16/tiled.md)
 
-# Part IV: 🐍 MAX Graph 커스텀 Op으로 Python 연동하기
+# Part IV: 🐍 MAX 그래프 커스텀 Op으로 파이썬 연동하기
 
 - [Puzzle 17: 1D 합성곱 Op](./puzzle_17/puzzle_17.md)
 - [Puzzle 18: 소프트맥스 Op](./puzzle_18/puzzle_18.md)

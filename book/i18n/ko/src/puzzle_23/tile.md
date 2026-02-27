@@ -173,7 +173,7 @@ out: HostBuffer([0.0, 0.0, 0.0, ..., 0.0, 0.0, 0.0])
 expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

@@ -154,7 +154,7 @@ Error: 0.0
 - **클러스터 조정**: 4개 블록 모두가 부분 합에 기여합니다
 - **효율적인 최종 reduction**: 선출된 단일 스레드가 최종 결과를 계산합니다
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

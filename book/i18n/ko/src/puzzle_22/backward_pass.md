@@ -205,7 +205,7 @@ Backward Pass Test Summary:
 BACKWARD PASS Test Completed!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

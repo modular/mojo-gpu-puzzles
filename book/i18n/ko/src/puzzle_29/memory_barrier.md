@@ -244,7 +244,7 @@ GPU output sample: 1.0 1.0 1.0
 ✅ Double-buffered stencil test PASSED!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

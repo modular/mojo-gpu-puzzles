@@ -235,7 +235,7 @@ Output mean: 1.0
 ✅ Success: Output mean is 1.0 (should be close to 1.0)
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

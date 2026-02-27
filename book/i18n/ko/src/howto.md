@@ -362,10 +362,10 @@ uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
 | 14 - 합성곱 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | 15 - 행렬 곱셈 | ✅ | ✅ | ✅ | 기본 GPU 커널 |
 | 16 - Flashdot | ✅ | ✅ | ✅ | 고급 메모리 패턴 |
-| **Part IV: MAX Graph** | | | | |
-| 17 - 커스텀 Op | ✅ | ✅ | ✅ | MAX Graph 통합 |
-| 18 - 소프트맥스 | ✅ | ✅ | ✅ | MAX Graph 통합 |
-| 19 - 어텐션 | ✅ | ✅ | ✅ | MAX Graph 통합 |
+| **Part IV: MAX 그래프** | | | | |
+| 17 - 커스텀 Op | ✅ | ✅ | ✅ | MAX 그래프 통합 |
+| 18 - 소프트맥스 | ✅ | ✅ | ✅ | MAX 그래프 통합 |
+| 19 - 어텐션 | ✅ | ✅ | ✅ | MAX 그래프 통합 |
 | **Part V: PyTorch 통합** | | | | |
 | 20 - Torch 브릿지 | ✅ | ✅ | ❌ | PyTorch 통합 |
 | 21 - 오토그래드 | ✅ | ✅ | ❌ | PyTorch 통합 |

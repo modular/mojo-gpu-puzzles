@@ -194,7 +194,7 @@ Just like warp.sum() but for the entire block
 </div>
 </details>
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

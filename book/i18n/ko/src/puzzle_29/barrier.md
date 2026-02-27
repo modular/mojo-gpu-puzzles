@@ -199,7 +199,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 ✅ Multi-stage pipeline coordination test PASSED!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

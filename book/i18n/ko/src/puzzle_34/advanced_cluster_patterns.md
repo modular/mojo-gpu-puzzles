@@ -168,7 +168,7 @@ Advanced cluster algorithm results:
 - **클러스터 조정**: 모든 블록이 처리를 성공적으로 완료합니다
 - **성능 패턴**: 더 높은 블록 ID가 비례적으로 더 큰 결과를 생성합니다
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

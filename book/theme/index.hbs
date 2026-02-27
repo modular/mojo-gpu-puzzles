@@ -53,13 +53,27 @@
         {{/each}}
 
         {{#if mathjax_support}}
-        <!-- MathJax: force lang="en" on rendered elements to prevent CJK font fallback in non-English locales -->
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
         <script type="text/x-mathjax-config">
-            MathJax.Hub.Register.StartupHook("End", function() {
-                document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
-                    el.setAttribute('lang', 'en');
-                });
-            });
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
         </script>
         <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
         {{/if}}

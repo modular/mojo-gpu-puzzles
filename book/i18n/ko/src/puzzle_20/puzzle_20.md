@@ -84,7 +84,7 @@ MAX Graph result: [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 ✅ PyTorch and MAX Graph results MATCH
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

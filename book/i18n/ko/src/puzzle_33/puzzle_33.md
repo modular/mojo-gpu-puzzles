@@ -342,7 +342,7 @@ uv run poe p33 --test
 ALL TESTS PASSED!
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

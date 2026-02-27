@@ -190,7 +190,7 @@ shared_buf[(thread_idx.x * 2) % TPB]
 </div>
 </details>
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary><strong>뱅크 충돌 분석이 포함된 완전한 풀이</strong></summary>

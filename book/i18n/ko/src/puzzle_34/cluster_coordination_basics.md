@@ -129,7 +129,7 @@ Block coordination results:
 - 결과가 **스케일링 패턴**을 보여줍니다: Block 1 > Block 0, Block 2 > Block 1 등
 - 경쟁 상태나 조정 실패가 없어야 합니다
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>

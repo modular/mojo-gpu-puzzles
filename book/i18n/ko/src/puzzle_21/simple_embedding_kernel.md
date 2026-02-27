@@ -90,7 +90,7 @@
 
 ## 커스텀 op 등록
 
-커널들은 PyTorch와 쉽게 통합할 수 있도록 커스텀 연산으로 래핑됩니다. 등록 패턴은 [MAX Graph 커스텀 op 이해하기](../puzzle_17/puzzle_17.md#max-graph-커스텀-op-이해하기)에서 설명한 MAX 커스텀 op과 동일합니다:
+커널들은 PyTorch와 쉽게 통합할 수 있도록 커스텀 연산으로 래핑됩니다. 등록 패턴은 [MAX 그래프 커스텀 op 이해하기](../puzzle_17/puzzle_17.md#max-그래프-커스텀-op-이해하기)에서 설명한 MAX 커스텀 op과 동일합니다:
 
 ### 1D Coalesced 연산
 
@@ -227,7 +227,7 @@ Key Learning Points:
 • Grid configuration affects GPU utilization
 ```
 
-## 풀이
+## 솔루션
 
 <details class="solution-details">
 <summary></summary>
