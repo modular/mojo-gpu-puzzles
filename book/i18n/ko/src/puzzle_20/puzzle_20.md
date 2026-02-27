@@ -1,25 +1,25 @@
 <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
-# Puzzle 20: 1D Convolution Op
+# Puzzle 20: 1D 합성곱 Op
 
-> ## MAX Graph에서 PyTorch 커스텀 Op으로
+> ## MAX 그래프에서 PyTorch 커스텀 Op으로
 >
 > GPU 퍼즐 여정의 Part V에 진입했습니다: **PyTorch 커스텀 Op 통합하기**.
 >
-> [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)에서 MAX Graph를 사용하여 Mojo GPU 커널을 Python과 연동하는 방법을 배웠습니다. 이제부터는 다음을 알아봅니다:
+> [Puzzle 17: 1D 합성곱 Op](../puzzle_17/puzzle_17.md)에서 MAX 그래프를 사용하여 Mojo GPU 커널을 파이썬과 연동하는 방법을 배웠습니다. 이제부터는 다음을 알아봅니다:
 >
 > - 동일한 Mojo 커널을 PyTorch의 CustomOpLibrary로 사용하기
-> - PyTorch의 텐서 시스템 및 autograd와 통합하기
-> - MAX Graph와 PyTorch 방식의 커스텀 연산 비교하기
+> - PyTorch의 텐서 시스템 및 오토그래드(autograd)와 통합하기
+> - MAX 그래프와 PyTorch 방식의 커스텀 연산 비교하기
 > - 명시적 출력 텐서 할당이라는 핵심 패턴 이해하기
 >
-> 이 전환을 통해 동일한 최적화된 GPU 커널이 서로 다른 Python 통합 방식에서 어떻게 동작하는지 확인할 수 있습니다.
+> 이 전환을 통해 동일한 최적화된 GPU 커널이 서로 다른 파이썬 통합 방식에서 어떻게 동작하는지 확인할 수 있습니다.
 
 ## 개요
 
-이 퍼즐에서는 [Puzzle 17: 1D Convolution Op](../puzzle_17/puzzle_17.md)의 1D convolution kernel을 그대로 가져와서, MAX Graph 대신 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 사용하여 PyTorch와 통합합니다.
+이 퍼즐에서는 [Puzzle 17: 1D 합성곱 Op](../puzzle_17/puzzle_17.md)의 1D 합성곱(convolution) 커널을 그대로 가져와서, MAX 그래프 대신 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 사용하여 PyTorch와 통합합니다.
 
-여기서 핵심은 **동일한 Mojo 커널이 수정 없이 그대로 동작한다**는 것입니다. MAX Graph와 PyTorch 방식 사이에서 달라지는 것은 Python 통합 레이어뿐입니다.
+여기서 핵심은 **동일한 Mojo 커널이 수정 없이 그대로 동작한다**는 것입니다. MAX 그래프와 PyTorch 방식 사이에서 달라지는 것은 파이썬 통합 레이어뿐입니다.
 
 ## 완성할 코드
 
@@ -113,7 +113,7 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 output_tensor = torch.empty_like(input_tensor)
 ```
 
-- MAX Graph는 출력 할당을 자동으로 처리하지만
+- MAX 그래프는 출력 할당을 자동으로 처리하지만
 - PyTorch CustomOpLibrary는 **미리 할당된 출력 텐서**가 필요합니다
 - Mojo 연산 시그니처는 `(out, input, kernel)` 순서를 기대합니다
 
@@ -134,7 +134,7 @@ ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shap
 - 동일한 GPU 커널 코드
 - 동일한 메모리 접근 패턴
 - 동일한 연산 로직
-- Python 래퍼 레이어만 달라짐
+- 파이썬 래퍼 레이어만 달라짐
 
 </div>
 
@@ -144,13 +144,13 @@ ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shap
 
 이 퍼즐은 PyTorch 커스텀 연산의 주요 패턴을 보여줍니다:
 
-| 개념 | MAX Graph (p15) | PyTorch CustomOpLibrary (p18) |
+| 개념 | MAX 그래프 (p15) | PyTorch CustomOpLibrary (p18) |
 |---------|-----------------|-------------------------------|
 | **출력 할당** | 자동 | 수동 (`torch.empty_like()`) |
 | **연산 호출** | `ops.custom(...)` | `torch.compile(op)(...)` |
 | **파라미터 전달** | `parameters={...}` | `op[{...}]` |
 | **디바이스 관리** | 명시적 device context | PyTorch 텐서의 device |
-| **메모리 관리** | MAX Graph 텐서 | PyTorch 텐서 |
+| **메모리 관리** | MAX 그래프 텐서 | PyTorch 텐서 |
 
 ### 핵심 패턴: 명시적 출력 텐서 할당
 
@@ -180,15 +180,15 @@ torch.compile(conv1d)(output_tensor, input_tensor, kernel_tensor)
 - 텐서 포맷 변환 최적화
 - 메모리 연산에 대한 적절한 오류 처리 제공
 
-_참고: `torch.compile()` 없이 사용하면 `std::bad_alloc` 오류가 발생할 수 있습니다. 이는 raw 연산이 PyTorch의 텐서 메모리 관리를 처리하지 못하기 때문입니다._
+_참고: `torch.compile()` 없이 사용하면 `std::bad_alloc` 오류가 발생할 수 있습니다. 이는 원시 연산이 PyTorch의 텐서 메모리 관리를 처리하지 못하기 때문입니다._
 
 ## 커스텀 연산 디버깅
 
 자주 발생하는 문제와 해결 방법:
 
 1. **메모리 할당 오류**: 항상 `torch.compile()`을 사용하세요
-2. **잘못된 출력 Shape**: 출력 텐서가 기대하는 차원과 일치하는지 확인하세요
+2. **잘못된 출력 형상**: 출력 텐서가 기대하는 차원과 일치하는지 확인하세요
 3. **디바이스 불일치**: 모든 텐서가 같은 디바이스에 있어야 합니다
 4. **파라미터 오류**: 파라미터 이름이 Mojo 연산 시그니처와 일치하는지 확인하세요
 
-디버깅 접근법: PyTorch 결과를 동일한 커널을 실행하는 MAX Graph 레퍼런스 구현과 비교해 보세요.
+디버깅 접근법: PyTorch 결과를 동일한 커널을 실행하는 MAX 그래프 레퍼런스 구현과 비교해 보세요.

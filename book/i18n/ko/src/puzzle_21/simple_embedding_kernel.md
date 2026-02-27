@@ -1,10 +1,10 @@
 <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 
-# Embedding 커널: Coalesced vs Non-Coalesced
+# 임베딩 커널: 병합 vs 비병합
 
-이 퍼즐에서는 동일한 결과를 생성하지만 서로 다른 메모리 접근 패턴을 사용하는 두 가지 GPU embedding 커널을 구현합니다. GPU 성능에서 메모리 병합이 얼마나 중요한지 직접 체험할 수 있습니다.
+이 퍼즐에서는 동일한 결과를 생성하지만 서로 다른 메모리 접근 패턴을 사용하는 두 가지 GPU 임베딩 커널을 구현합니다. GPU 성능에서 메모리 병합이 얼마나 중요한지 직접 체험할 수 있습니다.
 
-## 1D Coalesced 커널 (최적화된 접근법)
+## 1D 병합 커널 (최적화된 접근법)
 
 이 커널은 각 스레드가 정확히 하나의 출력 요소를 처리하는 단순한 1D 그리드를 사용합니다. 핵심은 연속된 스레드가 연속된 메모리 위치에 접근하여 최적의 메모리 병합을 달성한다는 점입니다.
 
@@ -12,18 +12,18 @@
 
 - **그리드 구성**: `[total_elements // 256]` 블록, 블록당 `256` 스레드
 - **스레드 매핑**: 각 스레드가 하나의 `(batch, seq, embed)` 위치 처리
-- **메모리 패턴**: 연속된 스레드가 연속된 embedding 차원 접근
+- **메모리 패턴**: 연속된 스레드가 연속된 임베딩 차원 접근
 
 **구현할 내용:**
 
 1. 블록 인덱스와 스레드 인덱스로부터 전역 스레드 인덱스 계산
 2. 1차원 인덱스를 3D 좌표 `(batch_idx, seq_idx, embed_idx)`로 변환
 3. indices 텐서에서 토큰 인덱스 조회
-4. 해당하는 embedding 벡터 요소를 출력에 복사
+4. 해당하는 임베딩 벡터 요소를 출력에 복사
 
 ### 완성할 코드
 
-두 embedding 커널의 빈 부분을 완성해야 합니다:
+두 임베딩 커널의 빈 부분을 완성해야 합니다:
 
 ```mojo
 {{#include ../../../../../problems/p21/op/embedding.mojo:embedding_kernel_coalesced}}
@@ -41,31 +41,31 @@
 - `remaining = global_idx % (seq_len * embed_dim)`을 사용하면 이후 계산이 간단해집니다
 - 항상 경계 검사를 하세요: `if global_idx >= total_elements: return`
 - 유효하지 않은 토큰 인덱스는 출력을 0으로 설정하세요
-- Embedding 조회: `output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]`
+- 임베딩 조회: `output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]`
 
 </div>
 </details>
 
-## 2D Non-coalesced 커널 (비교용 접근법)
+## 2D 비병합 커널 (비교용 접근법)
 
-이 커널은 X 차원이 `(batch × seq)` 위치를, Y 차원이 embedding 차원을 담당하는 2D 그리드를 사용합니다. 이 방식은 메모리 접근이 병합되지 않을 수 있습니다.
+이 커널은 X 차원이 `(batch × seq)` 위치를, Y 차원이 임베딩 차원을 담당하는 2D 그리드를 사용합니다. 이 방식은 메모리 접근이 병합되지 않을 수 있습니다.
 
 **스레드 구성:**
 
 - **그리드 구성**: `[batch x seq // 16, embed_dim // 16]` 블록, `16 x 16` 스레드
-- **스레드 매핑**: `thread_idx.x`는 batch/sequence에, `thread_idx.y`는 embedding 차원에 매핑
-- **메모리 패턴**: Warp 내 스레드들이 흩어진 메모리 위치에 접근할 수 있음
+- **스레드 매핑**: `thread_idx.x`는 batch/sequence에, `thread_idx.y`는 임베딩 차원에 매핑
+- **메모리 패턴**: 워프 내 스레드들이 흩어진 메모리 위치에 접근할 수 있음
 
 **구현할 내용:**
 
 1. 2D 그리드에서 X, Y 좌표 계산
 2. X 좌표를 batch 인덱스와 sequence 인덱스로 분리
-3. Y 좌표를 embedding 차원으로 직접 사용
-4. 경계 검사와 함께 동일한 embedding 조회 수행
+3. Y 좌표를 임베딩 차원으로 직접 사용
+4. 경계 검사와 함께 동일한 임베딩 조회 수행
 
 ### 완성할 코드
 
-두 embedding 커널의 빈 부분을 완성해야 합니다:
+두 임베딩 커널의 빈 부분을 완성해야 합니다:
 
 ```mojo
 {{#include ../../../../../problems/p21/op/embedding.mojo:embedding_kernel_2d}}
@@ -82,8 +82,8 @@
 - 그리고: `embed_idx = block_idx.y * block_dim.y + thread_idx.y`
 - `batch_seq_idx`를 batch와 sequence 인덱스로 분리합니다: `batch_idx = batch_seq_idx // seq_len`
 - 두 차원 모두 경계 검사를 잊지 마세요: `if batch_seq_idx >= total_positions or embed_idx >= embed_dim`
-- 토큰 조회는 1D와 동일하지만, 스레드당 하나의 embedding 차원만 처리합니다
-- 이 커널은 전체 벡터가 아닌 스레드당 하나의 embedding 차원을 처리합니다
+- 토큰 조회는 1D와 동일하지만, 스레드당 하나의 임베딩 차원만 처리합니다
+- 이 커널은 전체 벡터가 아닌 스레드당 하나의 임베딩 차원을 처리합니다
 
 </div>
 </details>
@@ -92,9 +92,9 @@
 
 커널들은 PyTorch와 쉽게 통합할 수 있도록 커스텀 연산으로 래핑됩니다. 등록 패턴은 [MAX 그래프 커스텀 op 이해하기](../puzzle_17/puzzle_17.md#max-그래프-커스텀-op-이해하기)에서 설명한 MAX 커스텀 op과 동일합니다:
 
-### 1D Coalesced 연산
+### 1D 병합 연산
 
-이 연산은 최적화된 1D embedding 커널을 `"embedding"`으로 등록합니다:
+이 연산은 최적화된 1D 임베딩 커널을 `"embedding"`으로 등록합니다:
 
 ```mojo
 {{#include ../../../../../solutions/p21/op/embedding.mojo:embedding_custom_op_solution}}
@@ -107,9 +107,9 @@
 - **컴파일 타임 파라미터**: 모든 텐서 차원을 컴파일 타임 파라미터로 전달하여 최적 성능 달성
 - **디바이스 추상화**: GPU 실행과 CPU 폴백을 매끄럽게 처리
 
-### 2D Non-coalesced 연산
+### 2D 비병합 연산
 
-이 연산은 비교용 2D embedding 커널을 `"embedding_2d"`로 등록합니다:
+이 연산은 비교용 2D 임베딩 커널을 `"embedding_2d"`로 등록합니다:
 
 ```mojo
 {{#include ../../../../../solutions/p21/op/embedding.mojo:embedding_2d_custom_op_solution}}
@@ -148,7 +148,7 @@
 
 ### PyTorch 통합
 
-등록된 연산은 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 통해 Python에서 호출할 수 있습니다:
+등록된 연산은 [CustomOpLibrary](https://docs.modular.com/max/api/python/torch/)를 통해 파이썬에서 호출할 수 있습니다:
 
 ```python
 # Load the custom operations
@@ -165,7 +165,7 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
 )
 ```
 
-이 접근법의 장점은 동일한 커널 구현을 다양한 Python 프레임워크에서 사용하면서도 최적의 성능 특성을 유지할 수 있다는 것입니다.
+이 접근법의 장점은 동일한 커널 구현을 다양한 파이썬 프레임워크에서 사용하면서도 최적의 성능 특성을 유지할 수 있다는 것입니다.
 
 ## 코드 실행
 
@@ -234,13 +234,13 @@ Key Learning Points:
 
 두 커널의 좌표 변환과 메모리 연산을 구현하면 됩니다:
 
-## 1D Coalesced 커널
+## 1D 병합 커널
 
 ```mojo
 {{#include ../../../../../solutions/p21/op/embedding.mojo:embedding_kernel_coalesced_solution}}
 ```
 
-## 2D Non-Coalesced 커널
+## 2D 비병합 커널
 
 ```mojo
 {{#include ../../../../../solutions/p21/op/embedding.mojo:embedding_kernel_2d_solution}}
@@ -248,7 +248,7 @@ Key Learning Points:
 
 <div class="solution-explanation">
 
-두 풀이 모두 동일한 embedding 조회 로직을 구현하지만 스레드 구성이 다릅니다:
+두 풀이 모두 동일한 임베딩 조회 로직을 구현하지만 스레드 구성이 다릅니다:
 
 ### 주요 차이점
 
@@ -257,7 +257,7 @@ Key Learning Points:
    - **2D 커널**: (batch×seq, embed_dim) 좌표에 대한 2D 그리드 매핑
 
 2. **메모리 접근 패턴**:
-   - **1D 커널**: 연속된 스레드가 연속된 embedding 차원에 접근 → 병합됨
+   - **1D 커널**: 연속된 스레드가 연속된 임베딩 차원에 접근 → 병합됨
    - **2D 커널**: 스레드 접근 패턴이 블록 구성에 따라 달라짐 → 병합되지 않을 수 있음
 
 3. **인덱싱 복잡도**:
@@ -274,9 +274,9 @@ Key Learning Points:
 
 2D 커널의 성능이 떨어질 수 있는 이유:
 
-- **흩어진 메모리 접근**: Warp 내 스레드들이 서로 다른 embedding 벡터에 접근할 수 있음
+- **흩어진 메모리 접근**: 워프 내 스레드들이 서로 다른 임베딩 벡터에 접근할 수 있음
 - **복잡한 그리드 구성**: 16×16 블록이 메모리 레이아웃과 최적으로 맞지 않을 수 있음
-- **Warp 분기**: 서로 다른 스레드가 서로 다른 실행 경로를 따를 수 있음
+- **워프 분기**: 서로 다른 스레드가 서로 다른 실행 경로를 따를 수 있음
 
 </div>
 
@@ -284,7 +284,7 @@ Key Learning Points:
 
 ## 핵심 개념
 
-| 개념 | 1D Coalesced | 2D Non-coalesced |
+| 개념 | 1D 병합 | 2D 비병합 |
 |---------|---------------|-------------------|
 | **스레드 구성** | 1D 1차원 인덱싱 | 2D 그리드 (batch×seq, embed) |
 | **메모리 접근** | 연속된 주소 | 흩어질 수 있음 |
@@ -292,4 +292,4 @@ Key Learning Points:
 | **성능** | 메모리 대역폭에 최적화 | 최적화되지 않은 메모리 패턴 |
 | **사용 목적** | 프로덕션 커널 | 교육용 비교 |
 
-핵심 교훈: **메모리 병합**은 embedding과 같은 메모리 바운드 연산에서 2~3배의 성능 차이를 가져올 수 있습니다.
+핵심 교훈: **메모리 병합**은 임베딩과 같은 메모리 바운드 연산에서 2~3배의 성능 차이를 가져올 수 있습니다.

@@ -76,7 +76,7 @@
   - [🔰 병합 vs 비병합 커널](./puzzle_21/simple_embedding_kernel.md)
   - [📊 성능 비교](./puzzle_21/performance.md)
 - [Puzzle 22: 커널 퓨전과 커스텀 역방향 패스](./puzzle_22/puzzle_22.md)
-  - [⚛️ 퓨전 vs 비퓨전 커널](./puzzle_22/forward_pass.md)
+  - [⚛️ 퓨전 vs 언퓨전 커널](./puzzle_22/forward_pass.md)
   - [⛓️ 오토그래드 통합과 역방향 패스](./puzzle_22/backward_pass.md)
 
 # Part VI: 🌊 Mojo 함수형 패턴과 벤치마킹

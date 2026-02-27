@@ -43,12 +43,14 @@
 | embedding | 임베딩 | 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환하는 연산 |
 | fragment | 프래그먼트 | 텐서 코어에서 워프가 처리하는 행렬 조각 단위. MMA 연산의 입출력 |
 | fusion | 퓨전 | 커널을 합쳐서 실행하는 최적화 기법 |
+| fused / unfused | 퓨전 / 언퓨전 | 퓨전이 적용된 / 적용되지 않은. "언(un-)" + 외래어 조합 패턴 |
 | GEMM | GEMM | General Matrix Multiply. 범용 행렬 곱셈. GPU 행렬 연산의 핵심 알고리즘 |
 | global index | 전역 인덱스 | 전체 데이터에서의 위치. `block_dim * block_idx + thread_idx`로 계산 |
 | global memory | 전역 메모리 | GPU 어디서든 접근할 수 있는 메모리 |
 | grid | 그리드 | 전체 계산을 담당하는 블록들의 집합 |
 | guard | 가드 | 경계 검사를 위한 조건문. `if i < size` 형태 |
 | halo (region) | 헤일로 (영역) | 타일 경계를 넘어 확장되는 추가 데이터 영역. ghost cell, guard cell이라고도 함 |
+| hidden dimension | 은닉 차원 | 신경망 내부 표현의 차원 수. 트랜스포머에서 각 토큰의 벡터 크기 |
 | host code | 호스트 코드 | CPU에서 실행되는 코드. GPU 작업을 설정하는 부분 |
 | in-place (computation) | 직접 저장 (연산) | 별도 메모리를 할당하지 않고 기존 버퍼에 결과를 직접 기록하는 방식 |
 | JIT | JIT | Just-In-Time. 실행 시점에 코드를 컴파일하는 방식. 빌드 단계 없이 빠른 반복 가능 |
