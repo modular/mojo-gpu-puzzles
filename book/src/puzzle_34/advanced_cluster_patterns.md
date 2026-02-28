@@ -315,13 +315,13 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 
 Congratulations! By completing this puzzle, you've learned **the complete GPU programming stack**:
 
-✅ **Thread-level programming**: Individual execution units
-✅ **[Warp-level programming](../puzzle_24/puzzle_24.md)**: 32-thread SIMT coordination
-✅ **[Block-level programming](../puzzle_27/puzzle_27.md)**: Multi-warp coordination and shared memory
-✅ **🆕 Cluster-level programming**: Multi-block coordination with SM90+ APIs
-✅ **Coordinate multiple thread blocks** with cluster synchronization primitives
-✅ **Scale algorithms beyond single-block limitations** using cluster APIs
-✅ **Implement hierarchical algorithms** combining warp + block + cluster coordination
+✅ **Thread-level programming**: Individual execution units</br>
+✅ **[Warp-level programming](../puzzle_24/puzzle_24.md)**: 32-thread SIMT coordination</br>
+✅ **[Block-level programming](../puzzle_27/puzzle_27.md)**: Multi-warp coordination and shared memory</br>
+✅ **🆕 Cluster-level programming**: Multi-block coordination with SM90+ APIs</br>
+✅ **Coordinate multiple thread blocks** with cluster synchronization primitives</br>
+✅ **Scale algorithms beyond single-block limitations** using cluster APIs</br>
+✅ **Implement hierarchical algorithms** combining warp + block + cluster coordination</br>
 ✅ **Utilize next-generation GPU hardware** with SM90+ cluster programming
 
 ## Real-world applications

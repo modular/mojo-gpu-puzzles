@@ -16,7 +16,7 @@
 
 ## 개요
 
-공유 메모리 뱅크 충돌은 Warp 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른 주소에 동시에 접근할 때 발생합니다. 이 탐정 사건에서는 대조적인 접근 패턴을 가진 두 커널을 살펴봅니다:
+공유 메모리 뱅크 충돌은 워프 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른 주소에 동시에 접근할 때 발생합니다. 이 탐정 사건에서는 대조적인 접근 패턴을 가진 두 커널을 살펴봅니다:
 
 ```mojo
 {{#include ../../../../../problems/p32/p32.mojo:no_conflict_kernel}}
@@ -152,7 +152,7 @@ shared_buf[(thread_idx.x * 2) % TPB]
 
 1. 뱅크 충돌이 애플리케이션 성능에 큰 영향을 미칠 것으로 예상되는 경우는 언제인가요?
 2. 공유 메모리 알고리즘을 구현하기 전에 뱅크 충돌 패턴을 어떻게 예측할 수 있나요?
-3. 행렬 연산과 stencil 연산에서 뱅크 충돌을 피하는 데 도움이 되는 설계 원칙은 무엇인가요?
+3. 행렬 연산과 스텐실 연산에서 뱅크 충돌을 피하는 데 도움이 되는 설계 원칙은 무엇인가요?
 
 <details>
 <summary><strong>팁</strong></summary>
@@ -183,8 +183,8 @@ shared_buf[(thread_idx.x * 2) % TPB]
 **일반적인 충돌 없는 패턴:**
 
 - **순차 접근:** `shared[thread_idx.x]` - 각 스레드가 다른 뱅크에 접근
-- **Broadcast 접근:** 모든 스레드가 `shared[0]` - 하드웨어 최적화
-- **2의 거듭제곱 stride:** stride-32는 뱅킹 패턴에 깔끔하게 매핑되는 경우가 많음
+- **브로드캐스트 접근:** 모든 스레드가 `shared[0]` - 하드웨어 최적화
+- **2의 거듭제곱 스트라이드:** stride-32는 뱅킹 패턴에 깔끔하게 매핑되는 경우가 많음
 - **패딩된 배열:** 패딩을 추가하여 문제가 되는 접근 패턴을 이동
 
 </div>
@@ -262,7 +262,7 @@ Thread 2  → Index 2   → Bank 2 % 32 = 2
 Thread 31 → Index 31  → Bank 31 % 32 = 31
 ```
 
-**결과:** 완벽한 뱅크 분배 - 각 Warp 내에서 각 스레드가 서로 다른 뱅크에 접근하여 병렬 접근이 가능합니다.
+**결과:** 완벽한 뱅크 분배 - 각 워프 내에서 각 스레드가 서로 다른 뱅크에 접근하여 병렬 접근이 가능합니다.
 
 ### 2-way 충돌 커널 접근 패턴
 
@@ -272,7 +272,7 @@ Thread 31 → Index 31  → Bank 31 % 32 = 31
 shared_buf[(thread_idx.x * 2) % TPB]  # TPB = 256
 ```
 
-**첫 번째 Warp(스레드 0-31)의 뱅크 할당 분석:**
+**첫 번째 워프(스레드 0-31)의 뱅크 할당 분석:**
 
 ```
 Thread 0  → Index (0*2)%256 = 0   → Bank 0
@@ -305,7 +305,7 @@ Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← Thread 2와 충돌
 
 **뱅크 충돌이 가장 중요한 경우:**
 
-1. **연산 집약적 공유 메모리 알고리즘** - 행렬 곱셈, stencil 연산, FFT
+1. **연산 집약적 공유 메모리 알고리즘** - 행렬 곱셈, 스텐실 연산, FFT
 2. **타이트한 연산 루프** - 내부 루프 안에서 반복적인 공유 메모리 접근
 3. **높은 산술 강도** - 메모리 접근당 상당한 연산량
 4. **대규모 공유 메모리 작업 세트** - 공유 메모리 캐싱을 집중적으로 활용하는 알고리즘
@@ -322,14 +322,14 @@ for k in range(tile_size):
     acc += a_shared[local_row, k] * b_shared[k, local_col]  # b_shared[k, 0] conflicts
 ```
 
-**Stencil 연산:**
+**스텐실 연산:**
 
 ```mojo
 # Problematic: Stride access in boundary handling
 shared_buf[thread_idx.x * stride]  # Creates systematic conflicts
 ```
 
-**병렬 Reduction:**
+**병렬 리덕션:**
 
 ```mojo
 # Problematic: Power-of-2 stride patterns
@@ -347,7 +347,7 @@ if thread_idx.x < stride:
 shared[thread_idx.x]  # Optimal - each thread different bank
 ```
 
-**2. Broadcast 최적화:**
+**2. 브로드캐스트 최적화:**
 
 ```mojo
 constant = shared[0]  # All threads read same address - hardware optimized

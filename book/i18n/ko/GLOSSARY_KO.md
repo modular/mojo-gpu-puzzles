@@ -102,7 +102,7 @@
 | shuffle | 셔플 | 워프 내 스레드 간 데이터 교환 |
 | SIMD | SIMD | Single Instruction Multiple Data. 벡터 연산 방식 |
 | SIMT | SIMT | Single Instruction Multiple Thread. GPU 실행 모델 |
-| single writer pattern | 단일 writer 패턴 | 하나의 스레드만 쓰기를 담당하는 동기화 패턴 |
+| single writer pattern | 단일 쓰기 패턴 | 하나의 스레드만 쓰기를 담당하는 동기화 패턴 |
 | sliding window | 슬라이딩 윈도우 | 데이터 위를 이동하며 처리하는 고정 크기 창 |
 | SM | SM | Streaming Multiprocessor. GPU의 연산 단위. 여러 워프를 동시에 실행하는 프로세서 |
 | softmax | 소프트맥스 | 벡터를 확률 분포로 정규화하는 함수 |

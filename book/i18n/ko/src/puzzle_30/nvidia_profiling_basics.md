@@ -4,7 +4,7 @@
 
 ## 개요
 
-지금까지 GPU 프로그래밍의 기초와 고급 패턴을 배웠습니다. Part II에서는 `compute-sanitizer`와 `cuda-gdb`를 사용한 **정확성** 디버깅 기법을, 다른 파트에서는 Warp 프로그래밍, 메모리 시스템, 블록 레벨 연산 등 다양한 GPU 기능을 다뤘습니다. 커널이 올바르게 동작하긴 합니다 - 하지만 **빠르기도** 할까요?
+지금까지 GPU 프로그래밍의 기초와 고급 패턴을 배웠습니다. Part II에서는 `compute-sanitizer`와 `cuda-gdb`를 사용한 **정확성** 디버깅 기법을, 다른 파트에서는 워프 프로그래밍, 메모리 시스템, 블록 레벨 연산 등 다양한 GPU 기능을 다뤘습니다. 커널이 올바르게 동작하긴 합니다 - 하지만 **빠르기도** 할까요?
 
 > 이 튜토리얼은 [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)에서 권장하는 NVIDIA 프로파일링 방법론을 따릅니다.
 
@@ -48,9 +48,9 @@ pixi run nsys stats --force-export=true timeline.nsys-rep
 
 **용도**: 상세한 단일 커널 성능 분석 ([NSight Compute 문서](https://docs.nvidia.com/nsight-compute/))
 
-- Roofline 모델 분석
+- 루프라인 모델 분석
 - 메모리 계층 구조 활용도
-- Warp 실행 효율
+- 워프 실행 효율
 - 레지스터/공유 메모리 사용량
 - 연산 유닛 활용도
 
@@ -61,7 +61,7 @@ pixi run nsys stats --force-export=true timeline.nsys-rep
 - 특정 커널 성능 최적화
 - 메모리 접근 패턴 파악
 - 연산 바운드 vs 메모리 바운드 커널 분석
-- Warp 분기 문제 식별
+- 워프 분기 문제 식별
 
 ```bash
 # 도움말 보기
@@ -415,10 +415,10 @@ Achieved Occupancy                    %         2.09
 **NSight Compute가 보여주는 것**: 실제 점유율이 낮음
 **해결책**: 레지스터 사용량 줄이기, 블록 크기 최적화
 
-#### 패턴 3: Warp 분기
+#### 패턴 3: 워프 분기
 
 **NSight Systems가 보여주는 것**: 불규칙한 커널 실행 패턴
-**NSight Compute가 보여주는 것**: 낮은 Warp 실행 효율
+**NSight Compute가 보여주는 것**: 낮은 워프 실행 효율
 **해결책**: 조건 분기 최소화, 알고리즘 재구성
 
 ### 프로파일링 탐정 워크플로우
@@ -590,7 +590,7 @@ ncu \
 **주요 NSight Compute 플래그**:
 
 - `--set full`: 사용 가능한 모든 지표 수집 (포괄적이지만 느림)
-- `--set @roofline`: roofline 분석에 최적화된 세트
+- `--set @roofline`: 루프라인 분석에 최적화된 세트
 - `--import-source=on`: 결과를 소스 코드에 매핑
 - `--replay-mode=kernel`: 정확한 측정을 위해 커널 리플레이
 - `--cache-control=all`: 일관된 결과를 위한 GPU 캐시 제어

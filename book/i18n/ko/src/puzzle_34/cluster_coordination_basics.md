@@ -75,13 +75,13 @@
 
 1. **처리**: 각 블록이 자신의 데이터 영역을 처리합니다
 2. **신호**: [`cluster_arrive()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive)로 처리 완료를 알립니다
-3. **연산**: 블록 내부 연산 (reduction, 집계)
+3. **연산**: 블록 내부 연산 (리덕션, 집계)
 4. **대기**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료될 때까지 대기합니다
 
 ### **블록 내부 스레드 조정**
 
-- 클러스터 연산 전에 블록 내부 동기화를 위해 `barrier()`를 사용합니다 ([Puzzle 29의 barrier 개념](../puzzle_29/barrier.md))
-- 스레드 0만 최종 블록 결과를 기록해야 합니다 ([블록 프로그래밍](../puzzle_27/block_sum.md)의 단일 writer 패턴)
+- 클러스터 연산 전에 블록 내부 동기화를 위해 `barrier()`를 사용합니다 ([Puzzle 29의 배리어 개념](../puzzle_29/barrier.md))
+- 스레드 0만 최종 블록 결과를 기록해야 합니다 ([블록 프로그래밍](../puzzle_27/block_sum.md)의 단일 쓰기 패턴)
 - 안정적인 인덱싱을 위해 결과를 `output[block_id]`에 저장합니다
 
 </div>
@@ -229,4 +229,4 @@ if local_i == 0:
 3. **2단계**: 다른 블록의 결과에 의존하는 연산을 안전하게 수행할 수 있습니다
 4. **동기화**: [`cluster_wait()`](https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait)로 모든 블록이 완료된 후 다음으로 진행합니다
 
-**다음 단계**: 더 고급 조정을 배울 준비가 되셨나요? **[클러스터 전체 집합 연산](./cluster_collective_ops.md)** 으로 이동하여 [Puzzle 27의 `block.sum()` 패턴](../puzzle_27/block_sum.md)을 클러스터 규모로 확장하는 방법을 배워보세요. [Puzzle 24의 Warp 레벨 reduction](../puzzle_24/warp_sum.md)을 기반으로 합니다!
+**다음 단계**: 더 고급 조정을 배울 준비가 되셨나요? **[클러스터 전체 집합 연산](./cluster_collective_ops.md)** 으로 이동하여 [Puzzle 27의 `block.sum()` 패턴](../puzzle_27/block_sum.md)을 클러스터 규모로 확장하는 방법을 배워보세요. [Puzzle 24의 워프 레벨 리덕션](../puzzle_24/warp_sum.md)을 기반으로 합니다!
