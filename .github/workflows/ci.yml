@@ -23,6 +23,8 @@ permissions:
 jobs:
   test:
     runs-on: github-gpu
+    env:
+      MODULAR_NVPTX_COMPILER_PATH: /usr/local/cuda/bin/ptxas
     steps:
       - uses: actions/checkout@v4
 
