@@ -23,6 +23,8 @@ permissions:
 jobs:
   test:
     runs-on: github-gpu
+    env:
+      MODULAR_NVPTX_COMPILER_PATH: /home/runner/work/mojo-gpu-puzzles/mojo-gpu-puzzles/.pixi/envs/default/bin/ptxas
     steps:
       - uses: actions/checkout@v4
 

@@ -2,7 +2,7 @@
 authors = ["Modular <hello@modular.com>"]
 channels = ["https://conda.modular.com/max-nightly", "conda-forge"]
 name = "mojo-gpu-puzzles"
-platforms = ["linux-64", "osx-arm64"]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 version = "1.0.0"
 
 [feature.nvidia]
@@ -18,6 +18,15 @@ nsight-compute = "*"  # interactive kernel profiling
 torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" }
 nvidia-ml-py = "*"
 
+[feature.nvidia.target.linux-aarch64.dependencies]
+cuda-toolkit = "12.*" # for compute-sanitizer etc.
+cuda-gdb = "12.*"     # for GPU kernel debugging
+nsight-compute = "*"  # interactive kernel profiling
+
+[feature.nvidia.target.linux-aarch64.pypi-dependencies]
+torch = { version = "==2.9.0", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-ml-py = "*"
+
 [feature.amd]
 system-requirements = {}
 
@@ -31,7 +40,7 @@ system-requirements = { macos = "15.0" }
 [dependencies]
 python = "==3.12"
 mojo = "<1.0.0" # includes `mojo-compiler`, lsp, debugger, formatter etc.
-max = "==26.2.0.dev2026020505"
+max = "==26.2.0.dev2026030205"
 bash = ">=5.2.21,<6"
 manim = ">=0.18.1,<0.19"
 mdbook = ">=0.4.48,<0.5"
