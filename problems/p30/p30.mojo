@@ -189,7 +189,7 @@ fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     b.iter_custom[kernel3_workflow](bench_ctx)
 
 
-def test_kernel1():
+def test_kernel1() raises:
     """Test kernel 1."""
     print("Testing kernel 1...")
     with DeviceContext() as ctx:
@@ -232,7 +232,7 @@ def test_kernel1():
         print("✅ Kernel 1 test passed")
 
 
-def test_kernel2():
+def test_kernel2() raises:
     """Test kernel 2."""
     print("Testing kernel 2...")
     with DeviceContext() as ctx:
@@ -278,7 +278,7 @@ def test_kernel2():
         print("✅ Kernel 2 test passed,", processed, "elements processed")
 
 
-def test_kernel3():
+def test_kernel3() raises:
     """Test kernel 3."""
     print("Testing kernel 3...")
     with DeviceContext() as ctx:
@@ -321,7 +321,7 @@ def test_kernel3():
         print("✅ Kernel 3 test passed")
 
 
-def main():
+def main() raises:
     """Run the memory access pattern tests."""
     args = argv()
     if len(args) < 2:

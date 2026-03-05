@@ -222,7 +222,7 @@ fn warp_partition[
 # ANCHOR_END: warp_partition_solution
 
 
-def test_butterfly_pair_swap():
+def test_butterfly_pair_swap() raises:
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
@@ -267,7 +267,7 @@ def test_butterfly_pair_swap():
     print("✅ Butterfly pair swap test passed!")
 
 
-def test_butterfly_parallel_max():
+def test_butterfly_parallel_max() raises:
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
@@ -307,7 +307,7 @@ def test_butterfly_parallel_max():
     print("✅ Butterfly parallel max test passed!")
 
 
-def test_butterfly_conditional_max():
+def test_butterfly_conditional_max() raises:
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
@@ -367,7 +367,7 @@ def test_butterfly_conditional_max():
     print("✅ Butterfly conditional max test passed!")
 
 
-def test_warp_inclusive_prefix_sum():
+def test_warp_inclusive_prefix_sum() raises:
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
@@ -409,7 +409,7 @@ def test_warp_inclusive_prefix_sum():
     print("✅ Warp inclusive prefix sum test passed!")
 
 
-def test_warp_partition():
+def test_warp_partition() raises:
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
@@ -484,7 +484,7 @@ def test_warp_partition():
     print("✅ Warp partition test passed!")
 
 
-def main():
+def main() raises:
     print("WARP_SIZE: ", WARP_SIZE)
     if len(argv()) != 2:
         print(

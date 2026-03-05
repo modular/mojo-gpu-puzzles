@@ -72,7 +72,7 @@ fn matmul_tiled[
 # ANCHOR_END: matmul_tiled
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         if len(argv()) != 2 or argv()[1] not in [
             "--naive",

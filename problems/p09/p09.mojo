@@ -90,7 +90,7 @@ fn collaborative_filter(
 # ANCHOR_END: third_crash
 
 
-def main():
+def main() raises:
     if len(argv()) != 2:
         print(
             "Usage: pixi run mojo p09 [--first-case | --second-case |"

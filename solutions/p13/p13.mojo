@@ -141,7 +141,7 @@ fn conv_1d_block_boundary[
 # ANCHOR_END: conv_1d_block_boundary_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
         conv = CONV_2 if argv()[1] == "--block-boundary" else CONV

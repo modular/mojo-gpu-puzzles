@@ -152,7 +152,7 @@ fn prefix_sum_block_sum_phase[
 # ANCHOR_END: prefix_sum_complete_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         use_simple = argv()[1] == "--simple"
         size = SIZE if use_simple else SIZE_2

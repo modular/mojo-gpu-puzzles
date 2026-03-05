@@ -300,7 +300,7 @@ fn benchmark_traditional_parameterized[
     bench_ctx.synchronize()
 
 
-def main():
+def main() raises:
     if argv()[1] != "--benchmark":
         print("SIZE:", SIZE)
         print("WARP_SIZE:", WARP_SIZE)

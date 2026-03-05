@@ -66,7 +66,7 @@ fn add_10_2d(
 # ANCHOR_END: add_10_2d_solution
 
 
-def main():
+def main() raises:
     if len(argv()) != 2:
         print(
             "Expected one command-line argument: '--memory-bug' or"

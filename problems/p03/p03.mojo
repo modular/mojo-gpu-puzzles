@@ -22,7 +22,7 @@ fn add_10_guard(
 # ANCHOR_END: add_10_guard
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)

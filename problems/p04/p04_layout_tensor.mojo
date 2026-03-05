@@ -24,7 +24,7 @@ fn add_10_2d(
 # ANCHOR_END: add_10_2d_layout_tensor
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)

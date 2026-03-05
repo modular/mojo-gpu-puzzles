@@ -334,7 +334,7 @@ fn benchmark_vectorized_parameterized[
     bench_ctx.synchronize()
 
 
-def main():
+def main() raises:
     ctx = DeviceContext()
     out = ctx.enqueue_create_buffer[dtype](SIZE)
     out.enqueue_fill(0)

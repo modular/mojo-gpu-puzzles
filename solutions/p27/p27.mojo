@@ -214,7 +214,7 @@ fn block_normalize_vector[
 # ANCHOR_END: block_normalize_solution
 
 
-def main():
+def main() raises:
     if len(argv()) != 2:
         print(
             "Usage: --traditional-dot-product | --block-sum-dot-product |"

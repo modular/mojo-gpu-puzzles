@@ -53,7 +53,7 @@ fn async_copy_overlap_convolution[
 # ANCHOR_END: async_copy_overlap_convolution
 
 
-def test_async_copy_overlap_convolution():
+def test_async_copy_overlap_convolution() raises:
     """Test async copy overlap with 1D convolution."""
     with DeviceContext() as ctx:
         input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
@@ -144,7 +144,7 @@ def test_async_copy_overlap_convolution():
                     print("Async copy overlap convolution test FAILED!")
 
 
-def main():
+def main() raises:
     """Run memory fence tests based on command line arguments."""
     if len(argv()) != 1:
         print("Usage: p25.mojo")

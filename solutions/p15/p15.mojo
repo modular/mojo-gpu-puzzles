@@ -73,7 +73,7 @@ fn axis_sum[
 # ANCHOR_END: axis_sum_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](BATCH)
         out.enqueue_fill(0)

@@ -196,7 +196,7 @@ fn advanced_cluster_patterns[
 # ANCHOR_END: advanced_cluster_patterns_solution
 
 
-def main():
+def main() raises:
     """Test cluster programming concepts using proper Mojo GPU patterns."""
     if len(argv()) < 2:
         print("Usage: p34.mojo [--coordination | --reduction | --advanced]")
