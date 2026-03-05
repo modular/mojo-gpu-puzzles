@@ -23,6 +23,8 @@ permissions:
 jobs:
   test:
     runs-on: github-gpu
+    env:
+      MODULAR_NVPTX_COMPILER_PATH: /home/runner/work/mojo-gpu-puzzles/mojo-gpu-puzzles/.pixi/envs/default/bin/ptxas
     steps:
       - uses: actions/checkout@v4
 
@@ -38,9 +40,6 @@ jobs:
           pixi-version: v0.53.0
           cache: false
           post-cleanup: false
-
-      - name: Set NVPTX compiler path
-        run: echo "MODULAR_NVPTX_COMPILER_PATH=$(which ptxas)" >> "$GITHUB_ENV"
 
       - name: Check formatting
         shell: bash
