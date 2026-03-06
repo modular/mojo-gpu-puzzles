@@ -1,0 +1,394 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 23: GPU 함수형 프로그래밍 패턴 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+<h1 id="puzzle-23-gpu-함수형-프로그래밍-패턴"><a class="header" href="#puzzle-23-gpu-함수형-프로그래밍-패턴">Puzzle 23: GPU 함수형 프로그래밍 패턴</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p><strong>Part VI: 함수형 GPU 프로그래밍</strong>에서는 GPU 연산을 위한 Mojo의 고수준 프로그래밍 패턴을 소개합니다. 벡터화, 메모리 최적화, 성능 튜닝을 자동으로 처리하는 함수형 접근 방식을 배우며, 수동 GPU 커널 프로그래밍을 대체합니다.</p>
+<p><strong>핵심 통찰:</strong> <em>현대 GPU 프로그래밍은 성능을 위해 우아함을 포기할 필요가 없습니다 - Mojo의 함수형 패턴은 두 가지를 모두 제공합니다.</em></p>
+<h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
+<h3 id="gpu-실행-계층-구조"><a class="header" href="#gpu-실행-계층-구조"><strong>GPU 실행 계층 구조</strong></a></h3>
+<p>GPU 스레드와 SIMD 연산 사이의 근본적인 관계를 이해합니다:</p>
+<pre><code>GPU Device
+├── Grid (전체 문제)
+│   ├── Block 1 (스레드 그룹, 공유 메모리)
+│   │   ├── Warp 1 (32개 스레드, 록스텝 실행) --&gt; Part VI에서 학습
+│   │   │   ├── Thread 1 → SIMD
+│   │   │   ├── Thread 2 → SIMD
+│   │   │   └── ... (총 32개 스레드)
+│   │   └── Warp 2 (32개 스레드)
+│   └── Block 2 (독립적인 그룹)
+</code></pre>
+<p><strong>Mojo가 자동으로 처리하는 것들:</strong></p>
+<ul>
+<li>그리드/블록 구성 자동 계산</li>
+<li>워프 관리의 투명한 처리</li>
+<li>스레드 스케줄링 자동 최적화</li>
+<li>메모리 계층 구조 최적화 내장</li>
+</ul>
+<p>💡 <strong>참고</strong>: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, <strong>워프 레벨 프로그래밍</strong>과 고급 GPU 메모리 관리는 <strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong> 에서 자세히 다룹니다.</p>
+<h3 id="네-가지-기본-패턴"><a class="header" href="#네-가지-기본-패턴"><strong>네 가지 기본 패턴</strong></a></h3>
+<p>GPU 함수형 프로그래밍의 핵심 패턴을 모두 다룹니다:</p>
+<ol>
+<li><strong>Elementwise</strong>: 자동 SIMD 벡터화를 통한 최대 병렬성</li>
+<li><strong>Tiled</strong>: 캐시 최적화를 활용한 메모리 효율이 높은 처리</li>
+<li><strong>수동 벡터화</strong>: SIMD 연산에 대한 전문가 수준의 제어</li>
+<li><strong>Mojo vectorize</strong>: 경계 검사를 포함한 안전한 자동 벡터화</li>
+</ol>
+<h3 id="한눈에-보는-성능-패턴"><a class="header" href="#한눈에-보는-성능-패턴"><strong>한눈에 보는 성능 패턴</strong></a></h3>
+<pre><code>문제: 1024개 요소의 벡터 두 개 더하기 (SIZE=1024, SIMD_WIDTH=4)
+
+Elementwise:     256 스레드 × 1 SIMD 연산   = 높은 병렬성
+Tiled:           32 스레드  × 8 SIMD 연산  = 캐시 최적화
+Manual:          8 스레드   × 32 SIMD 연산 = 최대 제어
+Mojo vectorize:  32 스레드  × 8 SIMD 연산  = 자동 안전성
+</code></pre>
+<h3 id="-실제-성능-분석"><a class="header" href="#-실제-성능-분석">📊 <strong>실제 성능 분석</strong></a></h3>
+<p>실증적 벤치마크 결과를 해석하는 방법을 배웁니다:</p>
+<pre><code>벤치마크 결과 (SIZE=1,048,576):
+elementwise:        11.34ms  ← 대규모에서 최대 병렬성이 유리
+tiled:              12.04ms  ← 지역성과 병렬성의 균형
+manual_vectorized:  15.75ms  ← 단순 연산에서 복잡한 인덱싱이 불리
+vectorized:         13.38ms  ← 자동 최적화 오버헤드
+</code></pre>
+<h2 id="선수-지식"><a class="header" href="#선수-지식">선수 지식</a></h2>
+<p>함수형 패턴을 학습하기 전에 다음 내용에 익숙해야 합니다:</p>
+<ul>
+<li><strong>기본 GPU 개념</strong>: 메모리 계층 구조, 스레드 실행, SIMD 연산</li>
+<li><strong>Mojo 기초</strong>: 파라미터 함수, 컴파일 타임 특수화, 캡처 의미론</li>
+<li><strong>LayoutTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
+<li><strong>GPU 메모리 관리</strong>: 버퍼 할당, 호스트-디바이스 동기화</li>
+</ul>
+<h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
+<h3 id="1-elementwise-연산"><a class="header" href="#1-elementwise-연산"><strong>1. Elementwise 연산</strong></a></h3>
+<p><strong>→ <a href="./elementwise.html">elementwise - 기본 GPU 함수형 연산</a></strong></p>
+<p>기초부터 시작합니다: 자동 스레드 관리와 SIMD 벡터화.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li><code>elementwise</code>를 활용한 함수형 GPU 프로그래밍</li>
+<li>GPU 스레드 내의 자동 SIMD 벡터화</li>
+<li>안전한 메모리 접근을 위한 LayoutTensor 연산</li>
+<li>중첩 함수에서의 캡처 의미론</li>
+</ul>
+<p><strong>핵심 패턴:</strong></p>
+<pre><code class="language-mojo">elementwise[add_function, SIMD_WIDTH, target="gpu"](total_size, ctx)
+</code></pre>
+<h3 id="2-타일링-처리"><a class="header" href="#2-타일링-처리"><strong>2. 타일링 처리</strong></a></h3>
+<p><strong>→ <a href="./tile.html">tile - 메모리 효율적인 타일링 처리</a></strong></p>
+<p>elementwise를 기반으로 메모리 최적화 타일링 패턴을 학습합니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li>캐시 최적화를 위한 타일 기반 메모리 구성</li>
+<li>타일 내 순차적 SIMD 처리</li>
+<li>메모리 지역성 원칙과 캐시 친화적 접근 패턴</li>
+<li>스레드-타일 매핑 vs 스레드-요소 매핑</li>
+</ul>
+<p><strong>핵심 통찰:</strong> 타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.</p>
+<h3 id="3-고급-벡터화"><a class="header" href="#3-고급-벡터화"><strong>3. 고급 벡터화</strong></a></h3>
+<p><strong>→ <a href="./vectorize.html">vectorize - SIMD 제어</a></strong></p>
+<p>수동 제어와 자동 벡터화 전략을 탐구합니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li>명시적 인덱스 관리를 통한 수동 SIMD 연산</li>
+<li>안전하고 자동적인 벡터화를 위한 Mojo의 vectorize 함수</li>
+<li>최적의 SIMD 정렬을 위한 청크 기반 메모리 구성</li>
+<li>수동 제어와 안전성 간의 성능 트레이드오프</li>
+</ul>
+<p><strong>두 가지 접근법:</strong></p>
+<ul>
+<li><strong>수동</strong>: 직접 제어, 최대 성능, 복잡한 인덱싱</li>
+<li><strong>Mojo vectorize</strong>: 자동 최적화, 내장 안전성, 깔끔한 코드</li>
+</ul>
+<h3 id="-4-스레딩-vs-simd-개념"><a class="header" href="#-4-스레딩-vs-simd-개념">🧠 <strong>4. 스레딩 vs SIMD 개념</strong></a></h3>
+<p><strong>→ <a href="./gpu-thread-vs-simd.html">GPU 스레딩 vs SIMD 개념</a></strong></p>
+<p>병렬성 수준 간의 근본적인 관계를 이해합니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li>GPU 스레딩 계층 구조와 하드웨어 매핑</li>
+<li>GPU 스레드 내의 SIMD 연산</li>
+<li>패턴 비교와 스레드-작업 매핑</li>
+<li>워크로드에 맞는 올바른 패턴 선택</li>
+</ul>
+<p><strong>핵심 통찰:</strong> GPU 스레드가 병렬성의 구조를 제공하고, SIMD 연산이 각 스레드 내에서 벡터화를 제공합니다.</p>
+<h3 id="-5-mojo-성능-벤치마킹"><a class="header" href="#-5-mojo-성능-벤치마킹">📊 <strong>5. Mojo 성능 벤치마킹</strong></a></h3>
+<p><strong>→ <a href="./benchmarking.html">Mojo 벤치마킹</a></strong></p>
+<p>GPU 성능을 과학적으로 측정, 분석, 최적화하는 방법을 배웁니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li>Mojo의 내장 벤치마킹 프레임워크</li>
+<li>GPU 고유의 타이밍 및 동기화 문제</li>
+<li>컴파일 타임 특수화를 활용한 파라미터화된 벤치마크 함수</li>
+<li>실증적 성능 분석과 패턴 선택</li>
+</ul>
+<p><strong>핵심 기법:</strong> <code>keep()</code>을 사용하여 벤치마크 코드의 컴파일러 최적화를 방지합니다.</p>
+<h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
+<p>Elementwise 패턴부터 시작하여 각 섹션을 체계적으로 학습하세요. 각 퍼즐은 이전 개념을 기반으로 새로운 수준의 정교함을 도입합니다.</p>
+<p>💡 <strong>성공 팁</strong>: 각 패턴의 <strong>어떻게</strong>뿐만 아니라 <strong>왜</strong>를 이해하는 데 집중하세요. 여기서 형성하는 개념적 프레임워크는 GPU 프로그래밍 전반에 걸쳐 활용될 것입니다.</p>
+<p><strong>학습 목표</strong>: Part VI를 마치면, 저수준 GPU 메커니즘 대신 함수형 패턴의 관점에서 사고할 수 있게 되어, 더 유지보수하기 쉽고, 성능이 뛰어나며, 이식성이 높은 GPU 코드를 작성할 수 있습니다.</p>
+<p><strong>시작하기</strong>: <strong><a href="./elementwise.html">elementwise - 기본 GPU 함수형 연산</a></strong> 에서 함수형 GPU 프로그래밍을 시작하세요.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_22/backward_pass.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_23/elementwise.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_22/backward_pass.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_23/elementwise.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

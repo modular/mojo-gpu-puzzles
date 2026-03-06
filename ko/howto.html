@@ -1,0 +1,670 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🧭 퍼즐 사용 가이드 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" href="theme/css/tabs.css">
+        <link rel="stylesheet" href="theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 45b4d82c1f65818e5f47f7c2925ef0f3083e9875 -->
+<h2 id="퍼즐-사용-가이드"><a class="header" href="#퍼즐-사용-가이드">퍼즐 사용 가이드</a></h2>
+<p>각 퍼즐은 단계적으로 실력을 쌓을 수 있도록 다음과 같은 일관된 구조로 구성되어 있습니다:</p>
+<ul>
+<li><strong>개요</strong>: 문제 정의와 핵심 개념 소개</li>
+<li><strong>구성</strong>: 기술적 설정과 메모리 구성 설명</li>
+<li><strong>완성할 코드</strong>: <code>problems/pXX/</code>에 채워야 할 부분이 표시된 구현 템플릿</li>
+<li><strong>힌트</strong>: 필요할 때 참고할 수 있는 전략적 힌트로, 정답을 직접 알려주지 않습니다</li>
+<li><strong>풀이</strong>: 성능 고려사항과 개념 설명을 포함한 종합 분석</li>
+</ul>
+<p>퍼즐은 이전에 배운 개념 위에 새로운 개념을 쌓아가며 점차 복잡해집니다. 고급 퍼즐은 앞선 퍼즐의 개념을 알고 있다고 가정하므로, 순서대로 풀어나가는 것을 권장합니다.</p>
+<h2 id="코드-실행하기"><a class="header" href="#코드-실행하기">코드 실행하기</a></h2>
+<p>모든 퍼즐에는 구현 결과를 예상 결과와 비교해주는 테스트 프레임워크가 포함되어 있습니다. 각 퍼즐별로 실행 방법과 검증 절차가 안내됩니다.</p>
+<h2 id="사전-준비"><a class="header" href="#사전-준비">사전 준비</a></h2>
+<h3 id="시스템-요구사항"><a class="header" href="#시스템-요구사항">시스템 요구사항</a></h3>
+<p>먼저 시스템이 <a href="https://docs.modular.com/max/packages#system-requirements">시스템 요구사항</a>을 충족하는지 확인하세요.</p>
+<h3 id="지원되는-gpu"><a class="header" href="#지원되는-gpu">지원되는 GPU</a></h3>
+<p>퍼즐을 실행하려면 <a href="https://docs.modular.com/max/faq#gpu-requirements">지원되는 GPU</a>가 필요합니다. 환경 설정을 마친 뒤 아래 환경 설정의 <code>gpu-specs</code> 명령어로 GPU 호환성을 확인할 수 있습니다.</p>
+<h2 id="운영체제"><a class="header" href="#운영체제">운영체제</a></h2>
+<blockquote>
+<p>[!NOTE]
+운영체제별 GPU 지원 설정 방법을 안내합니다.</p>
+<ul>
+<li><a href="#windows-wsl2-for-linux-with-nvidia">NVIDIA를 사용하는 Windows WSL2 for Linux</a></li>
+<li><a href="#linux-native-with-nvidia">NVIDIA를 사용하는 Linux 네이티브</a></li>
+<li><a href="#macos-apple-silicon">macOS Apple Silicon</a></li>
+</ul>
+</blockquote>
+<h3 id="windows-wsl2-for-linux-with-nvidia"><a class="header" href="#windows-wsl2-for-linux-with-nvidia">Windows WSL2 for Linux with NVIDIA</a></h3>
+<p>Windows Subsystem for Linux(WSL2, 예: Ubuntu)에서 NVIDIA GPU를 설정하려면 <a href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">NVIDIA CUDA on WSL 가이드</a>를 참고하세요.</p>
+<p>핵심은 <em>Windows</em>용 NVIDIA CUDA 드라이버를 설치하는 것입니다. 이 드라이버가 WSL2를 완벽히 지원합니다.
+Windows에 NVIDIA GPU 드라이버를 설치하면 WSL 2 안에서 CUDA를 바로 사용할 수 있습니다.
+Windows 호스트의 CUDA 드라이버가 WSL 2 내부에서 libcuda.so로 스텁(stub) 처리되므로, WSL 2 안에 별도의 NVIDIA GPU Linux 드라이버를 설치해서는 안 됩니다.</p>
+<p>드라이버 설치 후 정상 동작을 확인합니다.</p>
+<p>Windows에서 확인: PowerShell을 엽니다 (WSL이 아닙니다)</p>
+<pre><code class="language-bash">nvidia-smi
+</code></pre>
+<p>WSL 내부에서 확인: (먼저 WSL을 시작합니다. 예: wsl -d Ubuntu)</p>
+<pre><code class="language-bash">ls -l /usr/lib/wsl/lib/nvidia-smi
+/usr/lib/wsl/lib/nvidia-smi
+</code></pre>
+<p>Pixi에서 설정을 확인하고, 필요시 누락된 요구사항을 설치합니다 (예: cuda-gdb 디버깅용)</p>
+<pre><code class="language-bash">pixi run nvidia-smi
+pixi run setup-cuda-gdb
+pixi run mojo debug --help
+pixi run cuda-gdb --version
+</code></pre>
+<p>WSL에서는 VS Code를 에디터로 사용할 수 있습니다.</p>
+<ul>
+<li>Windows에서 <a href="https://code.visualstudio.com/">https://code.visualstudio.com/</a>을 통해 VS Code를 설치합니다.</li>
+<li>그런 다음 Remote - WSL 확장을 설치합니다.</li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+퍼즐 1-15는 모두 WSL과 Linux에서 작동합니다.</p>
+</blockquote>
+<h3 id="linux-native-with-nvidia"><a class="header" href="#linux-native-with-nvidia">Linux native with NVIDIA</a></h3>
+<p>먼저 GPU와 Ubuntu 버전을 확인합니다 (지원되는 Ubuntu LTS: 20.04, 22.04, 24.04)</p>
+<pre><code class="language-bash">lspci | grep -i nvidia
+lsb_release -a
+</code></pre>
+<p>NVIDIA 드라이버를 설치합니다 (필수)</p>
+<pre><code class="language-bash">sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+sudo reboot
+</code></pre>
+<p>Linux에서는 VS Code를 에디터로 사용할 수 있습니다. VS Code APT 저장소를 통해 설치하는 방법은 다음과 같습니다.</p>
+<p>Microsoft GPG 키 가져오기</p>
+<pre><code class="language-bash">wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+  | gpg --dearmor \
+  | sudo tee /usr/share/keyrings/packages.microsoft.gpg &gt; /dev/null
+</code></pre>
+<p>VS Code APT 저장소 추가</p>
+<pre><code class="language-bash">echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] \
+https://packages.microsoft.com/repos/code stable main" \
+| sudo tee /etc/apt/sources.list.d/vscode.list
+</code></pre>
+<p>VS Code 설치 및 확인</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install code
+code --version
+</code></pre>
+<blockquote>
+<p>[!NOTE]
+퍼즐 1-15는 모두 Linux에서 작동합니다.</p>
+</blockquote>
+<h3 id="macos-apple-silicon"><a class="header" href="#macos-apple-silicon">macOS Apple Silicon</a></h3>
+<p><code>osx-arm64</code> 사용자는 다음이 필요합니다:</p>
+<ul>
+<li><strong>macOS 15.0 이상</strong> — 최적 호환성을 위해 권장됩니다. <code>pixi run check-macos</code>로 확인하고, 실패하면 업그레이드하세요.</li>
+<li><strong>Xcode 16 이상</strong> — 최소 요구사항입니다. <code>xcodebuild -version</code>으로 확인합니다.</li>
+</ul>
+<p><code>xcrun -sdk macosx metal</code> 실행 시 <code>cannot execute tool 'metal' due to missing Metal toolchain</code> 오류가 나타나면 다음을 실행합니다.</p>
+<pre><code class="language-bash">xcodebuild -downloadComponent MetalToolchain
+</code></pre>
+<p>이후 <code>xcrun -sdk macosx metal</code>을 다시 실행하면 <code>no input files error</code>가 나타나야 정상입니다.</p>
+<blockquote>
+<p>[!NOTE]
+현재 퍼즐 1-8과 11-15가 macOS에서 작동합니다. 더 많은 퍼즐 지원을 준비하고 있습니다!</p>
+</blockquote>
+<h2 id="프로그래밍-지식"><a class="header" href="#프로그래밍-지식">프로그래밍 지식</a></h2>
+<p>다음에 대한 기본적인 이해가 있으면 좋습니다:</p>
+<ul>
+<li>프로그래밍 기초 (변수, 반복문, 조건문, 함수)</li>
+<li>병렬 컴퓨팅 개념 (스레드, 동기화, 경쟁 상태)</li>
+<li><a href="https://docs.modular.com/mojo/manual/">Mojo</a> 기본 문법 (<a href="https://docs.modular.com/mojo/manual/pointers/">포인터 입문</a> 섹션 포함)</li>
+<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU 프로그래밍 기초</a>를 미리 읽어두면 도움이 됩니다!</li>
+</ul>
+<p>GPU 프로그래밍 경험이 없어도 괜찮습니다! 퍼즐을 풀어가며 자연스럽게 익힐 수 있습니다.</p>
+<p>Mojo🔥와 함께 GPU 컴퓨팅의 세계로 떠나봅시다!</p>
+<h2 id="환경-설정하기"><a class="header" href="#환경-설정하기">환경 설정하기</a></h2>
+<ol>
+<li>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles">GitHub 저장소</a>를 클론하고 해당 디렉토리로 이동합니다:</p>
+<pre><code class="language-bash"># 저장소 클론
+git clone https://github.com/modular/mojo-gpu-puzzles
+cd mojo-gpu-puzzles
+</code></pre>
+</li>
+<li>
+<p>Mojo🔥 프로그램을 실행하기 위한 패키지 매니저를 설치합니다:</p>
+<h4 id="옵션-1-강력-추천-pixi"><a class="header" href="#옵션-1-강력-추천-pixi"><strong>옵션 1 (강력 추천)</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+<p>이 프로젝트에서 <code>pixi</code>를 <strong>권장하는 이유</strong>는 다음과 같습니다:</p>
+<ul>
+<li>Modular의 MAX/Mojo 패키지에 쉽게 접근 가능</li>
+<li>GPU 의존성을 자동으로 처리</li>
+<li>conda + PyPI 생태계를 모두 지원</li>
+</ul>
+<blockquote>
+<p><strong>참고: 일부 퍼즐은 <code>pixi</code>에서만 작동합니다</strong></p>
+</blockquote>
+<p><strong>설치:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
+</code></pre>
+<p><strong>업데이트:</strong></p>
+<pre><code class="language-bash">pixi self-update
+</code></pre>
+<h4 id="옵션-2-uv"><a class="header" href="#옵션-2-uv"><strong>옵션 2</strong>: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></a></h4>
+<p><strong>설치:</strong></p>
+<pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
+</code></pre>
+<p><strong>업데이트:</strong></p>
+<pre><code class="language-bash">uv self update
+</code></pre>
+<p><strong>가상 환경 생성:</strong></p>
+<pre><code class="language-bash">uv venv &amp;&amp; source .venv/bin/activate
+</code></pre>
+</li>
+<li>
+<p><strong>설정을 확인하고 첫 번째 퍼즐을 실행합니다:</strong></p>
+</li>
+</ol>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># GPU 사양 확인
+pixi run gpu-specs
+
+# 첫 번째 퍼즐 실행
+# 아직 구현 전이므로 실패합니다! 본문을 따라 구현해 보세요
+pixi run p01
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># GPU 사양 확인
+pixi run gpu-specs
+
+# 첫 번째 퍼즐 실행
+# 아직 구현 전이므로 실패합니다! 본문을 따라 구현해 보세요
+pixi run -e amd p01
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># GPU 사양 확인
+pixi run gpu-specs
+
+# 첫 번째 퍼즐 실행
+# 아직 구현 전이므로 실패합니다! 본문을 따라 구현해 보세요
+pixi run -e apple p01
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># GPU별 의존성 설치
+uv pip install -e ".[nvidia]"  # NVIDIA GPU용
+# 또는
+uv pip install -e ".[amd]"     # AMD GPU용
+
+# GPU 사양 확인
+uv run poe gpu-specs
+
+# 첫 번째 퍼즐 실행
+# 아직 구현 전이므로 실패합니다! 본문을 따라 구현해 보세요
+uv run poe p01
+</code></pre>
+  </div>
+</div>
+<h2 id="퍼즐-풀기"><a class="header" href="#퍼즐-풀기">퍼즐 풀기</a></h2>
+<h3 id="프로젝트-구조"><a class="header" href="#프로젝트-구조">프로젝트 구조</a></h3>
+<ul>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/problems"><code>problems/</code></a></strong>: 풀이를 직접 구현하는 곳입니다 (여기서 작업합니다!)</li>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions"><code>solutions/</code></a></strong>: 비교와 학습을 위한 참고 풀이입니다. 책 전반에 걸쳐 활용됩니다</li>
+</ul>
+<h3 id="작업-흐름"><a class="header" href="#작업-흐름">작업 흐름</a></h3>
+<ol>
+<li><code>problems/pXX/</code>에서 퍼즐 템플릿을 엽니다</li>
+<li>제공된 프레임워크 안에 풀이를 작성합니다</li>
+<li>구현을 테스트합니다: <code>pixi run pXX</code> 또는 <code>uv run poe pXX</code> (플랫폼에 따라 <code>-e platform</code>을 추가합니다. 예: <code>-e amd</code>)</li>
+<li><code>solutions/pXX/</code>의 참고 풀이와 비교하며 다른 접근 방식을 배웁니다</li>
+</ol>
+<h3 id="주요-명령어"><a class="header" href="#주요-명령어">주요 명령어</a></h3>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># 퍼즐 실행 (필요시 -e로 플랫폼 지정)
+pixi run pXX             # NVIDIA (기본값) `pixi run -e nvidia pXX`와 동일
+pixi run -e amd pXX      # AMD GPU
+pixi run -e apple pXX    # Apple GPU
+
+# 풀이 테스트
+pixi run tests           # 모든 풀이 테스트
+pixi run tests pXX       # 특정 퍼즐 테스트
+
+# 수동 실행
+pixi run mojo problems/pXX/pXX.mojo     # 내 구현
+pixi run mojo solutions/pXX/pXX.mojo    # 참고 풀이
+
+# 인터랙티브 셸
+pixi shell               # 환경 진입
+mojo problems/p01/p01.mojo              # 직접 실행
+exit                     # 셸 종료
+
+# 개발
+pixi run format         # 코드 포맷팅
+pixi task list          # 사용 가능한 명령어
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash"># 참고: uv는 제한적이며 일부 챕터는 pixi가 필요합니다
+# GPU별 의존성 설치:
+uv pip install -e ".[nvidia]"  # NVIDIA GPU용
+uv pip install -e ".[amd]"     # AMD GPU용
+
+# 풀이 테스트
+uv run poe tests        # 모든 풀이 테스트
+uv run poe tests pXX    # 특정 퍼즐 테스트
+
+# 수동 실행
+uv run mojo problems/pXX/pXX.mojo      # 내 구현
+uv run mojo solutions/pXX/pXX.mojo     # 참고 풀이
+</code></pre>
+  </div>
+</div>
+<h2 id="gpu-지원-현황"><a class="header" href="#gpu-지원-현황">GPU 지원 현황</a></h2>
+<p>아래 표는 퍼즐별 GPU 플랫폼 호환성을 정리한 것입니다. 퍼즐에 따라 필요한 GPU 기능과 벤더별 도구가 다릅니다.</p>
+<div class="table-wrapper"><table><thead><tr><th>퍼즐</th><th>NVIDIA GPU</th><th>AMD GPU</th><th>Apple GPU</th><th>비고</th></tr></thead><tbody>
+<tr><td><strong>Part I: GPU 기초</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>1 - Map</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>2 - Zip</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>3 - 가드</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>4 - Map 2D</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>5 - 브로드캐스트</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>6 - 블록</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>7 - 공유 메모리</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>8 - 스텐실</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td><strong>Part II: 디버깅</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>9 - GPU 디버거</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 전용 디버깅 도구</td></tr>
+<tr><td>10 - 새니타이저</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 전용 디버깅 도구</td></tr>
+<tr><td><strong>Part III: GPU 알고리즘</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>11 - 리덕션</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>12 - 스캔</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>13 - 풀링</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>14 - 합성곱</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>15 - 행렬 곱셈</td><td>✅</td><td>✅</td><td>✅</td><td>기본 GPU 커널</td></tr>
+<tr><td>16 - Flashdot</td><td>✅</td><td>✅</td><td>✅</td><td>고급 메모리 패턴</td></tr>
+<tr><td><strong>Part IV: MAX 그래프</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>17 - 커스텀 Op</td><td>✅</td><td>✅</td><td>✅</td><td>MAX 그래프 통합</td></tr>
+<tr><td>18 - 소프트맥스</td><td>✅</td><td>✅</td><td>✅</td><td>MAX 그래프 통합</td></tr>
+<tr><td>19 - 어텐션</td><td>✅</td><td>✅</td><td>✅</td><td>MAX 그래프 통합</td></tr>
+<tr><td><strong>Part V: PyTorch 통합</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>20 - Torch 브릿지</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch 통합</td></tr>
+<tr><td>21 - 오토그래드</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch 통합</td></tr>
+<tr><td>22 - 퓨전</td><td>✅</td><td>✅</td><td>❌</td><td>PyTorch 통합</td></tr>
+<tr><td><strong>Part VI: 함수형 패턴</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>23 - 함수형</td><td>✅</td><td>✅</td><td>✅</td><td>고급 Mojo 패턴</td></tr>
+<tr><td><strong>Part VII: 워프 프로그래밍</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>24 - 워프 합계</td><td>✅</td><td>✅</td><td>✅</td><td>워프 수준 연산</td></tr>
+<tr><td>25 - 워프 통신</td><td>✅</td><td>✅</td><td>✅</td><td>워프 수준 연산</td></tr>
+<tr><td>26 - 고급 워프</td><td>✅</td><td>✅</td><td>✅</td><td>워프 수준 연산</td></tr>
+<tr><td><strong>Part VIII: 블록 프로그래밍</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>27 - 블록 연산</td><td>✅</td><td>✅</td><td>✅</td><td>블록 단위 프로그래밍 패턴</td></tr>
+<tr><td><strong>Part IX: 메모리 시스템</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>28 - 비동기 메모리</td><td>✅</td><td>✅</td><td>✅</td><td>고급 메모리 연산</td></tr>
+<tr><td>29 - 배리어</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 전용 고급 동기화</td></tr>
+<tr><td><strong>Part X: 성능 분석</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>30 - 프로파일링</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 프로파일링 도구 (NSight)</td></tr>
+<tr><td>31 - 점유율</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 프로파일링 도구</td></tr>
+<tr><td>32 - 뱅크 충돌</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 프로파일링 도구</td></tr>
+<tr><td><strong>Part XI: 최신 GPU 기능</strong></td><td></td><td></td><td></td><td></td></tr>
+<tr><td>33 - 텐서 코어</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 텐서 코어 전용</td></tr>
+<tr><td>34 - 클러스터</td><td>✅</td><td>❌</td><td>❌</td><td>NVIDIA 클러스터 프로그래밍</td></tr>
+</tbody></table>
+</div>
+<h3 id="범례"><a class="header" href="#범례">범례</a></h3>
+<ul>
+<li>✅ <strong>지원</strong>: 해당 플랫폼에서 퍼즐이 작동합니다</li>
+<li>❌ <strong>미지원</strong>: 플랫폼별 고유 기능이 필요합니다</li>
+</ul>
+<h3 id="플랫폼별-참고사항"><a class="header" href="#플랫폼별-참고사항">플랫폼별 참고사항</a></h3>
+<p><strong>NVIDIA GPU (전체 지원)</strong></p>
+<ul>
+<li>모든 퍼즐(1-34)이 CUDA를 지원하는 NVIDIA GPU에서 작동합니다</li>
+<li>CUDA 툴킷과 호환 드라이버가 필요합니다</li>
+<li>모든 기능을 사용할 수 있어 가장 완전한 학습 경험을 제공합니다</li>
+</ul>
+<p><strong>AMD GPU (폭넓은 지원)</strong></p>
+<ul>
+<li>대부분의 퍼즐(1-8, 11-29)이 ROCm을 통해 작동합니다</li>
+<li>미지원: 디버깅 도구(9-10), 프로파일링(30-32), 텐서 코어(33-34)</li>
+<li>고급 알고리즘과 메모리 패턴까지 포함하여 GPU 프로그래밍을 폭넓게 학습할 수 있습니다</li>
+</ul>
+<p><strong>Apple GPU (기본 지원)</strong></p>
+<ul>
+<li>기초(1-8, 11-18) 및 고급(23-27) 퍼즐 일부를 지원합니다</li>
+<li>미지원: 고급 기능 전반, 디버깅, 프로파일링 도구</li>
+<li>GPU 프로그래밍의 기본 패턴을 익히기에 적합합니다</li>
+</ul>
+<blockquote>
+<p><strong>향후 지원 계획</strong>: AMD 및 Apple GPU에 대한 도구와 플랫폼 지원을 꾸준히 확대하고 있습니다. 디버깅 도구, 프로파일링 기능, 고급 GPU 연산 등 아직 지원되지 않는 기능은 향후 릴리스에 포함될 예정입니다. 크로스 플랫폼 호환성을 계속 개선하고 있으니 업데이트를 확인해 주세요.</p>
+</blockquote>
+<h2 id="gpu-리소스"><a class="header" href="#gpu-리소스">GPU 리소스</a></h2>
+<h3 id="무료-클라우드-gpu-플랫폼"><a class="header" href="#무료-클라우드-gpu-플랫폼">무료 클라우드 GPU 플랫폼</a></h3>
+<p>로컬 GPU가 없다면, 무료로 GPU를 사용할 수 있는 클라우드 플랫폼을 활용할 수 있습니다:</p>
+<h4 id="google-colab"><a class="header" href="#google-colab"><strong>Google Colab</strong></a></h4>
+<p>Google Colab은 무료 GPU 접근을 제공하지만, Mojo GPU 프로그래밍에는 일부 제한이 있습니다:</p>
+<p><strong>사용 가능한 GPU:</strong></p>
+<ul>
+<li>Tesla T4 (구세대 Turing 아키텍처)</li>
+<li>Tesla V100 (제한적 가용)</li>
+</ul>
+<p><strong>Mojo GPU Puzzles 사용 시 제한사항:</strong></p>
+<ul>
+<li><strong>구세대 GPU 아키텍처</strong>: T4 GPU는 고급 Mojo GPU 기능과 호환되지 않을 수 있습니다</li>
+<li><strong>세션 시간 제한</strong>: 최대 12시간 실행 후 자동으로 연결이 끊깁니다</li>
+<li><strong>제한적 디버깅 지원</strong>: NVIDIA 디버깅 도구(퍼즐 9-10)를 완전히 사용하지 못할 수 있습니다</li>
+<li><strong>패키지 설치 제한</strong>: Mojo/MAX 설치 시 우회 방법이 필요할 수 있습니다</li>
+<li><strong>성능 제한</strong>: 공유 인프라 특성상 일관된 벤치마킹이 어렵습니다</li>
+</ul>
+<p><strong>추천 용도:</strong> 기본 GPU 프로그래밍 개념(퍼즐 1-8, 11-15)과 기초 패턴 학습.</p>
+<h4 id="kaggle-notebooks"><a class="header" href="#kaggle-notebooks"><strong>Kaggle Notebooks</strong></a></h4>
+<p>Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:</p>
+<p><strong>사용 가능한 GPU:</strong></p>
+<ul>
+<li>Tesla T4 (주당 30시간 무료)</li>
+<li>P100 (제한적 가용)</li>
+</ul>
+<p><strong>Colab 대비 장점:</strong></p>
+<ul>
+<li><strong>넉넉한 시간</strong>: Colab의 일일 세션 제한과 달리 주당 30시간 사용 가능</li>
+<li><strong>자동 저장</strong>: 노트북이 자동으로 저장됩니다</li>
+<li><strong>안정적인 환경</strong>: 패키지 설치가 더 안정적입니다</li>
+</ul>
+<p><strong>Mojo GPU Puzzles 사용 시 제한사항:</strong></p>
+<ul>
+<li><strong>GPU 아키텍처 제약</strong>: T4의 고급 기능 호환성 문제는 Colab과 동일</li>
+<li><strong>제한적 디버깅 도구</strong>: NVIDIA 프로파일링 및 디버깅 도구(퍼즐 9-10, 30-32) 사용 불가</li>
+<li><strong>Mojo 설치 복잡성</strong>: Mojo 환경을 수동으로 설정해야 합니다</li>
+<li><strong>클러스터 프로그래밍 미지원</strong>: 고급 퍼즐(33-34) 작동 불가</li>
+</ul>
+<p><strong>추천 용도:</strong> 기본 GPU 프로그래밍(퍼즐 1-16)을 장시간에 걸쳐 학습할 때 적합합니다.</p>
+<h3 id="권장-사항"><a class="header" href="#권장-사항">권장 사항</a></h3>
+<ul>
+<li><strong>전체 학습 과정</strong>: NVIDIA GPU가 있으면 모든 퍼즐을 학습할 수 있습니다 (전체 34개)</li>
+<li><strong>폭넓은 학습</strong>: AMD GPU로도 대부분의 내용을 다룰 수 있습니다 (34개 중 27개)</li>
+<li><strong>기초 학습</strong>: Apple GPU로 기본 개념을 익힐 수 있습니다 (34개 중 13개)</li>
+<li><strong>무료 플랫폼 학습</strong>: Google Colab/Kaggle로 기초~중급 개념까지 학습 가능합니다 (퍼즐 1-16)</li>
+<li><strong>디버깅 및 프로파일링</strong>: 디버깅 도구와 성능 분석에는 NVIDIA GPU가 필요합니다</li>
+<li><strong>최신 GPU 기능</strong>: 텐서 코어와 클러스터 프로그래밍에는 NVIDIA GPU가 필요합니다</li>
+</ul>
+<h2 id="개발"><a class="header" href="#개발">개발</a></h2>
+<p>자세한 내용은 <a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>를 참고하세요.</p>
+<h2 id="커뮤니티-참여하기"><a class="header" href="#커뮤니티-참여하기">커뮤니티 참여하기</a></h2>
+<p align="center" style="display: flex; justify-content: center; gap: 10px;">
+  <a href="https://www.modular.com/company/talk-to-us">
+    <img src="https://img.shields.io/badge/Subscribe-Updates-00B5AD?logo=mail.ru" alt="업데이트 구독">
+  </a>
+  <a href="https://forum.modular.com/c/">
+    <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular 포럼">
+  </a>
+  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
+    <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
+  </a>
+</p>
+<p>커뮤니티에서 GPU 프로그래밍에 대해 이야기하고, 풀이를 공유하고, 서로 도움을 주고받을 수 있습니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="reward.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="reward.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/mojolang.js"></script>
+        <script src="theme/sidebar.js"></script>
+        <script src="theme/solution.js"></script>
+        <script src="theme/tabs.js"></script>
+        <script src="theme/language-switcher.js"></script>
+        <script src="theme/livereload-poll.js"></script>
+        <script src="theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

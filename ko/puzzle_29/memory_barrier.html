@@ -1,0 +1,888 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>더블 버퍼링 스텐실 연산 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산">더블 버퍼링 스텐실 연산</a></h1>
+<blockquote>
+<p><strong>🔬 세밀한 동기화: mbarrier vs barrier()</strong></p>
+<p>이 퍼즐은 이전 퍼즐에서 사용한 기본 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 함수보다 훨씬 강력한 제어를 제공하는 <strong>명시적 메모리 배리어 API</strong>를 소개합니다.</p>
+<p><strong>기본 <code>barrier()</code>의 한계:</strong></p>
+<ul>
+<li><strong>일회성 사용</strong>: 상태 추적 없이 단일 동기화 지점만 제공</li>
+<li><strong>블록 전체 전용</strong>: 블록의 모든 스레드가 동시에 참여해야 함</li>
+<li><strong>재사용 불가</strong>: 매 barrier() 호출이 새로운 동기화 이벤트를 생성</li>
+<li><strong>세밀도 부족</strong>: 메모리 순서와 타이밍에 대한 제한적 제어</li>
+<li><strong>정적 조정</strong>: 스레드 참여 패턴의 변화에 적응 불가</li>
+</ul>
+<p><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/"><code>mbarrier API</code></a>의 기능:</strong></p>
+<ul>
+<li><strong>정밀한 제어</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a>로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정</li>
+<li><strong>상태 추적</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a>로 개별 스레드 완료를 알리고 도착 횟수를 유지</li>
+<li><strong>유연한 대기</strong>: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a>로 특정 완료 상태를 기다릴 수 있음</li>
+<li><strong>재사용 가능한 객체</strong>: 동일한 배리어를 여러 반복에 걸쳐 재초기화하고 재사용 가능</li>
+<li><strong>다중 배리어</strong>: 서로 다른 동기화 지점(초기화, 반복, 마무리)에 서로 다른 배리어 객체 사용</li>
+<li><strong>하드웨어 최적화</strong>: GPU 하드웨어 동기화 기본 요소에 직접 매핑하여 더 나은 성능</li>
+<li><strong>메모리 의미론</strong>: 메모리 가시성과 순서 보장에 대한 명시적 제어</li>
+</ul>
+<p><strong>반복 알고리즘에서 왜 중요한가:</strong>
+더블 버퍼링 패턴에서는 버퍼 교체 단계 간의 <strong>정밀한 조정</strong>이 필요합니다. 기본 <code>barrier()</code>로는 다음에 필요한 세밀한 제어를 제공할 수 없습니다:</p>
+<ul>
+<li><strong>버퍼 역할 교대</strong>: buffer_A에 대한 모든 쓰기가 완료된 후에야 buffer_A에서 읽기 시작되도록 보장</li>
+<li><strong>반복 경계</strong>: 단일 커널 내에서 여러 동기화 지점 조율</li>
+<li><strong>상태 관리</strong>: 어떤 스레드가 어떤 처리 단계를 완료했는지 추적</li>
+<li><strong>성능 최적화</strong>: 재사용 가능한 배리어 객체를 통해 동기화 오버헤드 최소화</li>
+</ul>
+<p>이 퍼즐은 반복법, 시뮬레이션 프레임워크, 고성능 이미지 처리 파이프라인 등 실제 GPU 컴퓨팅 애플리케이션에서 사용되는 <strong>동기화 패턴</strong>을 보여줍니다.</p>
+</blockquote>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>더블 버퍼링 공유 메모리를 사용하여 반복 스텐실 연산을 수행하는 커널을 구현합니다. 반복 간 안전한 버퍼 교체를 보장하기 위해 명시적 메모리 배리어로 조정합니다. 스텐실 연산은 배열의 각 요소 값을 이웃 요소들의 고정된 패턴을 기반으로 계산하는 연산 패턴입니다.</p>
+<p><strong>참고:</strong> <em>버퍼 역할이 교대합니다: <code>buffer_A</code>와 <code>buffer_B</code>가 매 반복마다 읽기와 쓰기 연산을 교대하며, mbarrier 동기화가 버퍼 교체 전에 모든 스레드의 쓰기 완료를 보장합니다.</em></p>
+<p><strong>알고리즘 아키텍처:</strong> 이 퍼즐은 두 개의 공유 메모리 버퍼가 여러 반복에 걸쳐 읽기와 쓰기 대상의 역할을 교대하는 <strong>더블 버퍼링 패턴</strong>을 구현합니다. 데이터를 한 번만 처리하는 단순한 스텐실 연산과 달리, 이 접근 방식은 버퍼 전환 중 경쟁 상태를 방지하기 위한 세심한 메모리 배리어 조정과 함께 반복적 개선을 수행합니다.</p>
+<p><strong>파이프라인 개념:</strong> 알고리즘은 반복적 스텐실 개선을 통해 데이터를 처리합니다. 각 반복은 하나의 버퍼에서 읽고 다른 버퍼에 쓰며, 버퍼들은 매 반복마다 역할을 교대하여 데이터 손상 없이 연속 처리를 가능하게 하는 핑퐁 패턴을 만듭니다.</p>
+<p><strong>데이터 의존성과 동기화:</strong> 각 반복은 이전 반복의 완성된 결과에 의존합니다:</p>
+<ul>
+<li><strong>반복 N → 반복 N+1</strong>: 현재 반복이 다음 반복이 소비하는 개선된 데이터를 생성</li>
+<li><strong>버퍼 조정</strong>: 읽기와 쓰기 버퍼가 매 반복마다 역할을 교환</li>
+<li><strong>메모리 배리어가 경쟁 상태를 방지</strong>: 새로 기록된 버퍼에서 읽기를 시작하기 전에 모든 쓰기가 완료되도록 보장</li>
+</ul>
+<p>구체적으로, 더블 버퍼링 스텐실은 세 가지 수학 연산으로 구성된 반복적 스무딩 알고리즘을 구현합니다:</p>
+<p><strong>반복 패턴 - 버퍼 교대:</strong></p>
+<p>\[\text{Iteration } i: \begin{cases}
+\text{Read from buffer_A, Write to buffer_B} &amp; \text{if } i \bmod 2 = 0 \\
+\text{Read from buffer_B, Write to buffer_A} &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>스텐실 연산 - 3점 평균:</strong></p>
+<p>\[S^{(i+1)}[j] = \frac{1}{N_j} \sum_{k=-1}^{1} S^{(i)}[j+k] \quad \text{where } j+k \in [0, 255]\]</p>
+<p>여기서 \(S^{(i)}[j]\)는 반복 \(i\) 이후 위치 \(j\)에서의 스텐실 값이고, \(N_j\)는 유효한 이웃 수입니다.</p>
+<p><strong>메모리 배리어 조정:</strong></p>
+<p>\[\text{mbarrier_arrive}() \Rightarrow \text{mbarrier_test_wait}() \Rightarrow \text{buffer swap} \Rightarrow \text{next iteration}\]</p>
+<p><strong>최종 출력 선택:</strong></p>
+<p>\[\text{Output}[j] = \begin{cases}
+\text{buffer_A}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 0 \\
+\text{buffer_B}[j] &amp; \text{if STENCIL_ITERATIONS } \bmod 2 = 1
+\end{cases}\]</p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서는 다음을 배웁니다:</p>
+<ul>
+<li>반복 알고리즘을 위한 더블 버퍼링 패턴 구현</li>
+<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한 명시적 메모리 배리어 조정</li>
+<li>반복에 걸쳐 교대하는 읽기/쓰기 버퍼 역할 관리</li>
+</ul>
+<p>핵심 통찰은 읽기와 쓰기 연산 사이의 경쟁 상태가 적절히 동기화되지 않으면 데이터를 손상시킬 수 있는 반복 알고리즘에서 버퍼 교체를 안전하게 조율하는 방법을 이해하는 것입니다.</p>
+<p><strong>왜 중요한가:</strong> 대부분의 GPU 튜토리얼은 단순한 단일 패스 알고리즘을 보여주지만, 실제 애플리케이션에서는 데이터에 대한 다중 패스를 수행하는 <strong>반복적 개선</strong>이 필요한 경우가 많습니다. 더블 버퍼링은 각 반복이 이전 반복의 완성된 결과에 의존하는 반복법, 이미지 처리 필터, 시뮬레이션 업데이트 같은 알고리즘에 필수적입니다.</p>
+<p><strong>이전 퍼즐과 현재의 동기화 비교:</strong></p>
+<ul>
+<li><strong>이전 퍼즐 (<a href="../puzzle_08/puzzle_08.html">P8</a>, <a href="../puzzle_12/puzzle_12.html">P12</a>, <a href="../puzzle_15/puzzle_15.html">P15</a>):</strong> 단일 패스 알고리즘을 위한 단순 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 호출</li>
+<li><strong>이 퍼즐:</strong> 버퍼 교체 타이밍에 대한 정밀한 제어를 위한 명시적 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></li>
+</ul>
+<p><strong>메모리 배리어 특화:</strong> 기본적인 스레드 동기화와 달리, 이 퍼즐은 메모리 연산이 언제 완료되는지에 대한 세밀한 제어를 제공하는 <strong>명시적 메모리 배리어</strong>를 사용하며, 이는 복잡한 메모리 접근 패턴에 필수적입니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<p><strong>시스템 매개변수:</strong></p>
+<ul>
+<li><strong>이미지 크기</strong>: <code>SIZE = 1024</code> 요소 (간소화를 위해 1D)</li>
+<li><strong>블록당 스레드 수</strong>: <code>TPB = 256</code> 스레드, <code>(256, 1)</code> 블록 차원으로 구성</li>
+<li><strong>그리드 구성</strong>: 전체 이미지를 타일 단위로 처리하기 위한 <code>(4, 1)</code> 블록 (총 4개 블록)</li>
+<li><strong>데이터 타입</strong>: 모든 연산에 <code>DType.float32</code></li>
+</ul>
+<p><strong>반복 매개변수:</strong></p>
+<ul>
+<li><strong>스텐실 반복 횟수</strong>: <code>STENCIL_ITERATIONS = 3</code> 개선 패스</li>
+<li><strong>버퍼 수</strong>: <code>BUFFER_COUNT = 2</code> (더블 버퍼링)</li>
+<li><strong>스텐실 커널</strong>: 반지름 1의 3점 평균</li>
+</ul>
+<p><strong>버퍼 아키텍처:</strong></p>
+<ul>
+<li><strong>buffer_A</strong>: 주 공유 메모리 버퍼 (<code>[256]</code> 요소)</li>
+<li><strong>buffer_B</strong>: 보조 공유 메모리 버퍼 (<code>[256]</code> 요소)</li>
+<li><strong>역할 교대</strong>: 매 반복마다 버퍼가 읽기 소스와 쓰기 대상 사이를 교체</li>
+</ul>
+<p><strong>처리 요구사항:</strong></p>
+<p><strong>초기화 단계:</strong></p>
+<ul>
+<li><strong>버퍼 설정</strong>: buffer_A를 입력 데이터로, buffer_B를 0으로 초기화</li>
+<li><strong>배리어 초기화</strong>: 동기화 지점을 위한 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier 객체</a> 설정</li>
+<li><strong>스레드 조정</strong>: 모든 스레드가 초기화에 참여</li>
+</ul>
+<p><strong>반복 처리:</strong></p>
+<ul>
+<li><strong>짝수 반복</strong> (0, 2, 4…): buffer_A에서 읽고 buffer_B에 쓰기</li>
+<li><strong>홀수 반복</strong> (1, 3, 5…): buffer_B에서 읽고 buffer_A에 쓰기</li>
+<li><strong>스텐실 연산</strong>: 3점 평균 \((\text{left} + \text{center} + \text{right}) / 3\)</li>
+<li><strong>경계 처리</strong>: 버퍼 가장자리의 요소에 대해 적응적 평균 사용</li>
+</ul>
+<p><strong>메모리 배리어 조정:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>: 각 스레드가 쓰기 단계 완료를 알림</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>: 모든 스레드가 쓰기를 완료할 때까지 대기</li>
+<li><strong>버퍼 교체 안전성</strong>: 다른 스레드가 아직 쓰고 있는 동안 버퍼에서 읽는 것을 방지</li>
+<li><strong>배리어 재초기화</strong>: 반복 간에 배리어 상태를 재설정</li>
+</ul>
+<p><strong>출력 단계:</strong></p>
+<ul>
+<li><strong>최종 버퍼 선택</strong>: 반복 횟수의 홀짝에 따라 활성 버퍼 선택</li>
+<li><strong>전역 메모리 쓰기</strong>: 최종 결과를 출력 배열에 복사</li>
+<li><strong>완료 배리어</strong>: 블록 종료 전 모든 쓰기 완료 보장</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">
+# Double-buffered stencil configuration
+comptime STENCIL_ITERATIONS = 3
+comptime BUFFER_COUNT = 2
+
+
+fn double_buffered_stencil_computation[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Double-buffered stencil computation with memory barrier coordination.
+
+    Iteratively applies 3-point stencil using alternating buffers.
+    Uses mbarrier APIs for precise buffer swap coordination.
+    """
+
+    # Double-buffering: Two shared memory buffers
+    buffer_A = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    buffer_B = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Memory barriers for coordinating buffer swaps
+    init_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    iter_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    final_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # Initialize barriers (only thread 0)
+    if local_i == 0:
+        mbarrier_init(init_barrier.ptr, TPB)
+        mbarrier_init(iter_barrier.ptr, TPB)
+        mbarrier_init(final_barrier.ptr, TPB)
+
+    # Initialize buffer_A with input data
+
+    # FILL ME IN (roughly 4 lines)
+
+    # Wait for buffer_A initialization
+    _ = mbarrier_arrive(init_barrier.ptr)
+    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+
+    # Iterative stencil processing with double-buffering
+    @parameter
+    for iteration in range(STENCIL_ITERATIONS):
+
+        @parameter
+        if iteration % 2 == 0:
+            # Even iteration: Read from A, Write to B
+
+            # FILL ME IN (roughly 12 lines)
+            ...
+
+        else:
+            # Odd iteration: Read from B, Write to A
+
+            # FILL ME IN (roughly 12 lines)
+            ...
+
+        # Memory barrier: wait for all writes before buffer swap
+        _ = mbarrier_arrive(iter_barrier.ptr)
+        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+
+        # Reinitialize barrier for next iteration
+        if local_i == 0:
+            mbarrier_init(iter_barrier.ptr, TPB)
+
+    # Write final results from active buffer
+    if local_i &lt; TPB and global_i &lt; size:
+
+        @parameter
+        if STENCIL_ITERATIONS % 2 == 0:
+            # Even iterations end in buffer_A
+            output[global_i] = buffer_A[local_i]
+        else:
+            # Odd iterations end in buffer_B
+            output[global_i] = buffer_B[local_i]
+
+    # Final barrier
+    _ = mbarrier_arrive(final_barrier.ptr)
+    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="버퍼-초기화"><a class="header" href="#버퍼-초기화"><strong>버퍼 초기화</strong></a></h3>
+<ul>
+<li><code>buffer_A</code>를 입력 데이터로 초기화하고, <code>buffer_B</code>는 빈 상태로 시작 가능</li>
+<li>범위를 벗어난 요소에 대해 제로 패딩을 사용한 적절한 경계 검사</li>
+<li>스레드 0만 mbarrier 객체를 초기화해야 함</li>
+<li>서로 다른 동기화 지점에 별도의 배리어 설정</li>
+</ul>
+<h3 id="반복-제어"><a class="header" href="#반복-제어"><strong>반복 제어</strong></a></h3>
+<ul>
+<li>컴파일 타임 루프 전개를 위해 <code>@parameter for iteration in range(STENCIL_ITERATIONS)</code> 사용</li>
+<li><code>iteration % 2</code>를 사용하여 읽기/쓰기 할당을 교대하면서 버퍼 역할 결정</li>
+<li>이웃 검사를 통해 유효한 범위 내에서만 스텐실 연산 적용</li>
+</ul>
+<h3 id="스텐실-연산"><a class="header" href="#스텐실-연산"><strong>스텐실 연산</strong></a></h3>
+<ul>
+<li>3점 평균 구현: <code>(left + center + right) / 3</code></li>
+<li>유효한 이웃만 평균에 포함하여 경계 조건 처리</li>
+<li>엣지 케이스를 매끄럽게 처리하기 위해 적응적 카운팅 사용</li>
+</ul>
+<h3 id="메모리-배리어-조정"><a class="header" href="#메모리-배리어-조정"><strong>메모리 배리어 조정</strong></a></h3>
+<ul>
+<li>각 스레드가 쓰기 연산을 완료한 후 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> 호출</li>
+<li>버퍼 교체 전 모든 스레드가 완료하도록 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> 사용</li>
+<li>재사용을 위해 반복 간에 배리어 재초기화: <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init"><code>mbarrier_init()</code></a></li>
+<li>경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화</li>
+</ul>
+<h3 id="출력-선택"><a class="header" href="#출력-선택"><strong>출력 선택</strong></a></h3>
+<ul>
+<li><code>STENCIL_ITERATIONS % 2</code>를 기반으로 최종 활성 버퍼 선택</li>
+<li>짝수 반복 횟수는 buffer_A에 데이터가 남음</li>
+<li>홀수 반복 횟수는 buffer_B에 데이터가 남음</li>
+<li>경계 검사를 통해 최종 결과를 글로벌 출력에 기록</li>
+</ul>
+</div>
+</details>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령을 실행합니다:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p29 --double-buffer
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p29 --double-buffer
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p29 --double-buffer
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 성공적으로 완료하면 다음과 유사한 출력이 표시됩니다:</p>
+<pre><code>Puzzle 29: GPU Synchronization Primitives
+==================================================
+TPB: 256
+SIZE: 1024
+STENCIL_ITERATIONS: 3
+BUFFER_COUNT: 2
+
+Testing Puzzle 29B: Double-Buffered Stencil Computation
+============================================================
+Double-buffered stencil completed
+Input sample: 1.0 1.0 1.0
+GPU output sample: 1.0 1.0 1.0
+✅ Double-buffered stencil test PASSED!
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn double_buffered_stencil_computation[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Double-buffered stencil computation with memory barrier coordination.
+
+    Iteratively applies 3-point stencil using alternating buffers.
+    Uses mbarrier APIs for precise buffer swap coordination.
+    """
+
+    # Double-buffering: Two shared memory buffers
+    buffer_A = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    buffer_B = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Memory barriers for coordinating buffer swaps
+    init_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    iter_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    final_barrier = LayoutTensor[
+        DType.uint64,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # Initialize barriers (only thread 0)
+    if local_i == 0:
+        mbarrier_init(init_barrier.ptr, TPB)
+        mbarrier_init(iter_barrier.ptr, TPB)
+        mbarrier_init(final_barrier.ptr, TPB)
+
+    # Initialize buffer_A with input data
+    if local_i &lt; TPB and global_i &lt; size:
+        buffer_A[local_i] = input[global_i]
+    else:
+        buffer_A[local_i] = 0.0
+
+    # Wait for buffer_A initialization
+    _ = mbarrier_arrive(init_barrier.ptr)
+    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+
+    # Iterative stencil processing with double-buffering
+    @parameter
+    for iteration in range(STENCIL_ITERATIONS):
+
+        @parameter
+        if iteration % 2 == 0:
+            # Even iteration: Read from A, Write to B
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_A[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_B[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_B[local_i] = buffer_A[local_i]
+
+        else:
+            # Odd iteration: Read from B, Write to A
+            if local_i &lt; TPB:
+                var stencil_sum: Scalar[dtype] = 0.0
+                var stencil_count: Int = 0
+
+                # 3-point stencil: [i-1, i, i+1]
+                for offset in range(-1, 2):
+                    sample_idx = local_i + offset
+                    if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                        stencil_sum += rebind[Scalar[dtype]](
+                            buffer_B[sample_idx]
+                        )
+                        stencil_count += 1
+
+                if stencil_count &gt; 0:
+                    buffer_A[local_i] = stencil_sum / stencil_count
+                else:
+                    buffer_A[local_i] = buffer_B[local_i]
+
+        # Memory barrier: wait for all writes before buffer swap
+        _ = mbarrier_arrive(iter_barrier.ptr)
+        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+
+        # Reinitialize barrier for next iteration
+        if local_i == 0:
+            mbarrier_init(iter_barrier.ptr, TPB)
+
+    # Write final results from active buffer
+    if local_i &lt; TPB and global_i &lt; size:
+
+        @parameter
+        if STENCIL_ITERATIONS % 2 == 0:
+            # Even iterations end in buffer_A
+            output[global_i] = buffer_A[local_i]
+        else:
+            # Odd iterations end in buffer_B
+            output[global_i] = buffer_B[local_i]
+
+    # Final barrier
+    _ = mbarrier_arrive(final_barrier.ptr)
+    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>핵심 통찰은 이것이 명시적 메모리 배리어 조정을 사용하는 <strong>더블 버퍼링 아키텍처 문제</strong>임을 인식하는 것입니다:</p>
+<ol>
+<li><strong>교대하는 버퍼 역할 설계</strong>: 매 반복마다 읽기/쓰기 책임을 교환</li>
+<li><strong>명시적 메모리 배리어 구현</strong>: 정밀한 동기화 제어를 위해 mbarrier API 사용</li>
+<li><strong>반복 처리 조율</strong>: 버퍼 교체 전 반복 결과가 완전히 완료되도록 보장</li>
+<li><strong>메모리 접근 패턴 최적화</strong>: 모든 처리를 빠른 공유 메모리에서 수행</li>
+</ol>
+<p><strong>상세 설명이 포함된 전체 솔루션</strong></p>
+<p>더블 버퍼링 스텐실 솔루션은 정교한 메모리 배리어 조정과 반복 처리 패턴을 보여줍니다. 이 접근 방식은 메모리 접근 타이밍에 대한 정밀한 제어가 필요한 안전한 반복적 개선 알고리즘을 가능하게 합니다.</p>
+<h2 id="더블-버퍼링-아키텍처-설계"><a class="header" href="#더블-버퍼링-아키텍처-설계"><strong>더블 버퍼링 아키텍처 설계</strong></a></h2>
+<p>이 퍼즐의 근본적인 돌파구는 단순한 스레드 동기화가 아닌 <strong>명시적 메모리 배리어 제어</strong>입니다:</p>
+<p><strong>전통적인 접근 방식:</strong> 단순한 스레드 조정을 위해 기본 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a> 사용</p>
+<ul>
+<li>모든 스레드가 서로 다른 데이터에 동일한 연산을 실행</li>
+<li>단일 배리어 호출로 스레드 완료를 동기화</li>
+<li>특정 메모리 연산 타이밍에 대한 제어 없음</li>
+</ul>
+<p><strong>이 퍼즐의 혁신:</strong> 명시적 메모리 배리어로 조정되는 서로 다른 버퍼 역할</p>
+<ul>
+<li>buffer_A와 buffer_B가 읽기 소스와 쓰기 대상 사이를 교대</li>
+<li><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>가 메모리 연산 완료에 대한 정밀한 제어를 제공</li>
+<li>명시적 조정으로 버퍼 전환 중 경쟁 상태를 방지</li>
+</ul>
+<h2 id="반복-처리-조율"><a class="header" href="#반복-처리-조율"><strong>반복 처리 조율</strong></a></h2>
+<p>단일 패스 알고리즘과 달리, 이 퍼즐은 신중한 버퍼 관리를 통한 반복적 개선을 설정합니다:</p>
+<ul>
+<li><strong>반복 0</strong>: buffer_A에서 읽기 (입력으로 초기화됨), buffer_B에 쓰기</li>
+<li><strong>반복 1</strong>: buffer_B에서 읽기 (이전 결과), buffer_A에 쓰기</li>
+<li><strong>반복 2</strong>: buffer_A에서 읽기 (이전 결과), buffer_B에 쓰기</li>
+<li><strong>교대 계속</strong>: 각 반복이 이전 반복의 결과를 개선</li>
+</ul>
+<h2 id="메모리-배리어-api-사용법"><a class="header" href="#메모리-배리어-api-사용법"><strong>메모리 배리어 API 사용법</strong></a></h2>
+<p>mbarrier 조정 패턴의 이해:</p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init">mbarrier_init()</a></strong>: 특정 스레드 수(TPB)를 지정하여 배리어 초기화</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive">mbarrier_arrive()</a></strong>: 개별 스레드의 쓰기 단계 완료를 알림</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait">mbarrier_test_wait()</a></strong>: 모든 스레드가 완료를 알릴 때까지 대기</li>
+<li><strong>재초기화</strong>: 재사용을 위해 반복 간에 배리어 상태를 재설정</li>
+</ul>
+<p><strong>핵심 타이밍 순서:</strong></p>
+<ol>
+<li><strong>모든 스레드 쓰기</strong>: 각 스레드가 할당된 버퍼 요소를 업데이트</li>
+<li><strong>완료 알림</strong>: 각 스레드가 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive"><code>mbarrier_arrive()</code></a> 호출</li>
+<li><strong>전체 대기</strong>: 모든 스레드가 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait"><code>mbarrier_test_wait()</code></a> 호출</li>
+<li><strong>진행 안전</strong>: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능</li>
+</ol>
+<h2 id="스텐실-연산-메커니즘"><a class="header" href="#스텐실-연산-메커니즘"><strong>스텐실 연산 메커니즘</strong></a></h2>
+<p>적응적 경계 처리를 포함한 3점 스텐실 연산:</p>
+<p><strong>내부 요소</strong> (인덱스 1부터 254):</p>
+<pre><code class="language-mojo"># 왼쪽, 중심, 오른쪽 이웃과의 평균
+stencil_sum = buffer[i-1] + buffer[i] + buffer[i+1]
+result[i] = stencil_sum / 3.0
+</code></pre>
+<p><strong>경계 요소</strong> (인덱스 0과 255):</p>
+<pre><code class="language-mojo"># 유효한 이웃만 평균에 포함
+stencil_count = 0
+for neighbor in valid_neighbors:
+    stencil_sum += buffer[neighbor]
+    stencil_count += 1
+result[i] = stencil_sum / stencil_count
+</code></pre>
+<h2 id="버퍼-역할-교대"><a class="header" href="#버퍼-역할-교대"><strong>버퍼 역할 교대</strong></a></h2>
+<p>핑퐁 버퍼 패턴이 데이터 무결성을 보장합니다:</p>
+<p><strong>짝수 반복</strong> (0, 2, 4…):</p>
+<ul>
+<li><strong>읽기 소스</strong>: buffer_A에 현재 데이터 포함</li>
+<li><strong>쓰기 대상</strong>: buffer_B가 업데이트된 결과를 수신</li>
+<li><strong>메모리 흐름</strong>: buffer_A → 스텐실 연산 → buffer_B</li>
+</ul>
+<p><strong>홀수 반복</strong> (1, 3, 5…):</p>
+<ul>
+<li><strong>읽기 소스</strong>: buffer_B에 현재 데이터 포함</li>
+<li><strong>쓰기 대상</strong>: buffer_A가 업데이트된 결과를 수신</li>
+<li><strong>메모리 흐름</strong>: buffer_B → 스텐실 연산 → buffer_A</li>
+</ul>
+<h2 id="경쟁-상태-방지"><a class="header" href="#경쟁-상태-방지"><strong>경쟁 상태 방지</strong></a></h2>
+<p>메모리 배리어가 여러 유형의 경쟁 상태를 제거합니다:</p>
+<p><strong>배리어 없이 (잘못된 경우)</strong>:</p>
+<pre><code class="language-mojo"># 스레드 A가 buffer_B[10]에 쓰기
+buffer_B[10] = stencil_result_A
+
+# 스레드 B가 스텐실 연산을 위해 buffer_B[10]을 즉시 읽기
+# 경쟁 상태: 스레드 B가 스레드 A의 쓰기가 완료되기 전에 이전 값을 읽을 수 있음
+stencil_input = buffer_B[10]  // 미정의 동작!
+</code></pre>
+<p><strong>배리어 사용 (올바른 경우)</strong>:</p>
+<pre><code class="language-mojo"># 모든 스레드가 결과를 쓰기
+buffer_B[local_i] = stencil_result
+
+# 쓰기 완료 알림
+mbarrier_arrive(barrier)
+
+# 모든 스레드의 쓰기 완료까지 대기
+mbarrier_test_wait(barrier, TPB)
+
+# 이제 읽기 안전 - 모든 쓰기 완료 보장
+stencil_input = buffer_B[neighbor_index]  // 항상 올바른 값을 읽음
+</code></pre>
+<h2 id="출력-버퍼-선택"><a class="header" href="#출력-버퍼-선택"><strong>출력 버퍼 선택</strong></a></h2>
+<p>최종 결과 위치는 반복 횟수의 홀짝에 따라 결정됩니다:</p>
+<p><strong>수학적 결정</strong>:</p>
+<ul>
+<li><strong>STENCIL_ITERATIONS = 3</strong> (홀수)</li>
+<li><strong>최종 활성 버퍼</strong>: 반복 2가 buffer_B에 쓰기</li>
+<li><strong>출력 소스</strong>: buffer_B에서 전역 메모리로 복사</li>
+</ul>
+<p><strong>구현 패턴</strong>:</p>
+<pre><code class="language-mojo">@parameter
+if STENCIL_ITERATIONS % 2 == 0:
+    # 짝수 총 반복 횟수는 buffer_A에서 종료
+    output[global_i] = buffer_A[local_i]
+else:
+    # 홀수 총 반복 횟수는 buffer_B에서 종료
+    output[global_i] = buffer_B[local_i]
+</code></pre>
+<h2 id="성능-특성"><a class="header" href="#성능-특성"><strong>성능 특성</strong></a></h2>
+<p><strong>메모리 계층 구조 최적화:</strong></p>
+<ul>
+<li><strong>전역 메모리</strong>: 입력 로딩과 최종 출력에만 접근</li>
+<li><strong>공유 메모리</strong>: 모든 반복 처리에 빠른 공유 메모리 사용</li>
+<li><strong>레지스터 사용량</strong>: 공유 메모리 중심으로 최소화</li>
+</ul>
+<p><strong>동기화 오버헤드:</strong></p>
+<ul>
+<li><strong>mbarrier 비용</strong>: 기본 barrier()보다 높지만 필수적인 제어를 제공</li>
+<li><strong>반복 확장성</strong>: 오버헤드가 반복 횟수에 비례하여 선형적으로 증가</li>
+<li><strong>스레드 효율성</strong>: 모든 스레드가 처리 전반에 걸쳐 활성 상태 유지</li>
+</ul>
+<h2 id="실제-응용-분야"><a class="header" href="#실제-응용-분야"><strong>실제 응용 분야</strong></a></h2>
+<p>이 더블 버퍼링 패턴은 다음 분야의 기반이 됩니다:</p>
+<p><strong>반복법:</strong></p>
+<ul>
+<li>선형 시스템을 위한 Gauss-Seidel 및 Jacobi 방법</li>
+<li>수치 정확도를 위한 반복적 개선</li>
+<li>레벨별 처리를 수행하는 다중 그리드 방법</li>
+</ul>
+<p><strong>이미지 처리:</strong></p>
+<ul>
+<li>다중 패스 필터 (양측, 유도, 엣지 보존)</li>
+<li>반복적 디노이징 알고리즘</li>
+<li>열 확산과 이방성 스무딩</li>
+</ul>
+<p><strong>시뮬레이션 알고리즘:</strong></p>
+<ul>
+<li>상태 진화를 가진 셀룰러 오토마타</li>
+<li>위치 업데이트를 수반하는 입자 시스템</li>
+<li>반복적 압력 솔빙을 사용한 유체 역학</li>
+</ul>
+<h2 id="핵심-기술적-통찰"><a class="header" href="#핵심-기술적-통찰"><strong>핵심 기술적 통찰</strong></a></h2>
+<p><strong>메모리 배리어 철학:</strong></p>
+<ul>
+<li><strong>명시적 제어</strong>: 자동 동기화 대비 메모리 연산에 대한 정밀한 타이밍 제어</li>
+<li><strong>경쟁 상태 방지</strong>: 교대하는 읽기/쓰기 패턴을 가진 모든 알고리즘에 필수</li>
+<li><strong>성능 절충</strong>: 보장된 정확성을 위한 더 높은 동기화 비용</li>
+</ul>
+<p><strong>더블 버퍼링의 이점:</strong></p>
+<ul>
+<li><strong>데이터 무결성</strong>: 쓰기 중 읽기 hazard 제거</li>
+<li><strong>알고리즘 명확성</strong>: 현재와 다음 반복 상태 간의 깔끔한 분리</li>
+<li><strong>메모리 효율성</strong>: 전역 메모리 중간 저장소 불필요</li>
+</ul>
+<p><strong>반복 관리:</strong></p>
+<ul>
+<li><strong>컴파일 타임 루프 전개</strong>: <code>@parameter for</code>가 최적화 기회를 제공</li>
+<li><strong>상태 추적</strong>: 버퍼 역할 교대가 결정적이어야 함</li>
+<li><strong>경계 처리</strong>: 적응적 스텐실 연산이 엣지 케이스를 매끄럽게 처리</li>
+</ul>
+<p>이 솔루션은 정밀한 메모리 접근 제어가 필요한 반복 GPU 알고리즘을 설계하는 방법을 보여주며, 단순한 병렬 루프를 넘어 실제 수치 소프트웨어에서 사용되는 정교한 메모리 관리 패턴으로 나아갑니다.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_29/barrier.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_30/puzzle_30.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_29/barrier.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_30/puzzle_30.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

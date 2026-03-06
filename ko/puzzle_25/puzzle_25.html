@@ -1,0 +1,412 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 25: 워프 통신 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="puzzle-25-워프-통신"><a class="header" href="#puzzle-25-워프-통신">Puzzle 25: 워프 통신</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p><strong>Puzzle 25: 워프 통신 기본 요소</strong>에서는 고급 GPU <strong>워프 레벨 통신 연산</strong> - 워프 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>과 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.</p>
+<p><strong>Part VII: GPU 워프 통신</strong>에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을 다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된 데이터 이동을 활용하는 효율적인 워프 통신 호출로 대체하는 방법을 배웁니다.</p>
+<p><strong>핵심 통찰:</strong> <em>GPU 워프는 록스텝으로 실행됩니다 - Mojo의 워프 통신 연산은 이 동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본 요소를 제공합니다.</em></p>
+<h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
+<h3 id="워프-통신-모델"><a class="header" href="#워프-통신-모델"><strong>워프 통신 모델</strong></a></h3>
+<p>GPU 워프 내 기본 통신 패턴을 이해합니다:</p>
+<pre><code>GPU 워프 (32 스레드, SIMT 록스텝 실행)
+├── 레인 0  ──shuffle_down──&gt; 레인 1  ──shuffle_down──&gt; 레인 2
+├── 레인 1  ──shuffle_down──&gt; 레인 2  ──shuffle_down──&gt; 레인 3
+├── 레인 2  ──shuffle_down──&gt; 레인 3  ──shuffle_down──&gt; 레인 4
+│   ...
+└── 레인 31 ──shuffle_down──&gt; undefined (경계)
+
+브로드캐스트 패턴:
+레인 0 ──broadcast──&gt; 모든 레인 (0, 1, 2, ..., 31)
+</code></pre>
+<p><strong>하드웨어 현실:</strong></p>
+<ul>
+<li><strong>레지스터 간 직접 통신</strong>: 데이터가 스레드 레지스터 사이를 직접 이동합니다</li>
+<li><strong>메모리 오버헤드 제로</strong>: 공유 메모리 할당이 필요하지 않습니다</li>
+<li><strong>자동 경계 처리</strong>: 하드웨어가 워프 경계의 예외 상황을 관리합니다</li>
+<li><strong>단일 사이클 연산</strong>: 하나의 명령 사이클에서 통신이 완료됩니다</li>
+</ul>
+<h3 id="mojo의-워프-통신-연산"><a class="header" href="#mojo의-워프-통신-연산"><strong>Mojo의 워프 통신 연산</strong></a></h3>
+<p><code>gpu.primitives.warp</code>의 핵심 통신 기본 요소를 배웁니다:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: 더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>: 레인 0의 값을 모든 레인에 공유 (일대다)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>: 특정 레인에서 값을 가져오기 (임의 접근)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>: 더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)</li>
+</ol>
+<blockquote>
+<p><strong>참고:</strong> 이 퍼즐은 가장 많이 사용되는 통신 패턴인 <code>shuffle_down()</code>과 <code>broadcast()</code>에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU 워프 문서</a>를 참고하세요.</p>
+</blockquote>
+<h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
+<pre><code class="language-mojo"># 복잡한 이웃 접근 패턴 (기존 방식):
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
+shared[local_i] = input[global_i]
+barrier()
+if local_i &lt; WARP_SIZE - 1:
+    next_value = shared[local_i + 1]  # 이웃 접근
+    result = next_value - shared[local_i]
+else:
+    result = 0  # 경계 처리
+barrier()
+
+# 워프 통신은 이 모든 복잡성을 제거합니다:
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # 이웃에 직접 접근
+if lane &lt; WARP_SIZE - 1:
+    result = next_val - current_val
+else:
+    result = 0
+</code></pre>
+<h3 id="워프-통신이-빛나는-순간"><a class="header" href="#워프-통신이-빛나는-순간"><strong>워프 통신이 빛나는 순간</strong></a></h3>
+<p>성능 특성을 이해합니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>통신 패턴</th><th>기존 방식</th><th>워프 연산</th></tr></thead><tbody>
+<tr><td>이웃 접근</td><td>공유 메모리</td><td>레지스터 간 직접 통신</td></tr>
+<tr><td>스텐실 연산</td><td>복잡한 인덱싱</td><td>간단한 셔플 패턴</td></tr>
+<tr><td>블록 조정</td><td>배리어 + 공유 메모리</td><td>단일 브로드캐스트</td></tr>
+<tr><td>경계 처리</td><td>수동 검사</td><td>하드웨어 자동 처리</td></tr>
+</tbody></table>
+</div>
+<h2 id="선수-지식"><a class="header" href="#선수-지식">선수 지식</a></h2>
+<p>워프 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:</p>
+<ul>
+<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해 (<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a> 참고)</li>
+<li><strong>GPU 스레드 계층 구조</strong>: 블록, 워프, 레인 번호 매기기</li>
+<li><strong>LayoutTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
+<li><strong>경계 조건 처리</strong>: 병렬 알고리즘의 가장자리 케이스 관리</li>
+</ul>
+<h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
+<h3 id="1-shuffle_down을-이용한-이웃-통신"><a class="header" href="#1-shuffle_down을-이용한-이웃-통신"><strong>1. shuffle_down을 이용한 이웃 통신</strong></a></h3>
+<p><strong>→ <a href="./warp_shuffle_down.html">warp.shuffle_down()</a></strong></p>
+<p>스텐실 연산과 유한 차분을 위한 이웃 기반 통신 패턴을 배웁니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li><code>shuffle_down()</code>으로 인접 레인 데이터 접근하기</li>
+<li>유한 차분과 이동 평균 구현</li>
+<li>워프 경계 자동 처리</li>
+<li>확장된 이웃 접근을 위한 다중 오프셋 셔플</li>
+</ul>
+<p><strong>핵심 패턴:</strong></p>
+<pre><code class="language-mojo">current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)
+if lane &lt; WARP_SIZE - 1:
+    result = compute_with_neighbors(current_val, next_val)
+</code></pre>
+<h3 id="2-브로드캐스트를-이용한-집합-조정"><a class="header" href="#2-브로드캐스트를-이용한-집합-조정"><strong>2. 브로드캐스트를 이용한 집합 조정</strong></a></h3>
+<p><strong>→ <a href="./warp_broadcast.html">warp.broadcast()</a></strong></p>
+<p>블록 레벨 조정과 집합적 의사결정을 위한 일대다 통신 패턴을 배웁니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li><code>broadcast()</code>로 계산된 값을 모든 레인에 공유</li>
+<li>블록 레벨 통계와 집합적 의사결정 구현</li>
+<li>브로드캐스트와 조건부 로직 결합</li>
+<li>고급 브로드캐스트-셔플 조정 패턴</li>
+</ul>
+<p><strong>핵심 패턴:</strong></p>
+<pre><code class="language-mojo">var shared_value = 0.0
+if lane == 0:
+    shared_value = compute_block_statistic()
+shared_value = broadcast(shared_value)
+result = use_shared_value(shared_value, local_data)
+</code></pre>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<h3 id="통신-패턴"><a class="header" href="#통신-패턴"><strong>통신 패턴</strong></a></h3>
+<p>워프 통신의 기본 패러다임을 이해합니다:</p>
+<ul>
+<li><strong>이웃 통신</strong>: 레인 간 인접 데이터 교환</li>
+<li><strong>집합 조정</strong>: 하나의 레인에서 모든 레인으로 정보 공유</li>
+<li><strong>스텐실 연산</strong>: 고정된 패턴으로 이웃 데이터 접근</li>
+<li><strong>경계 처리</strong>: 워프 가장자리에서의 통신 관리</li>
+</ul>
+<h3 id="하드웨어-최적화"><a class="header" href="#하드웨어-최적화"><strong>하드웨어 최적화</strong></a></h3>
+<p>워프 통신이 GPU 하드웨어에 매핑되는 방식을 이해합니다:</p>
+<ul>
+<li><strong>레지스터 파일 통신</strong>: 스레드 간 레지스터 직접 접근</li>
+<li><strong>SIMT 실행</strong>: 모든 레인이 통신을 동시에 실행합니다</li>
+<li><strong>제로 지연 시간</strong>: 실행 유닛 내에서 통신이 완료됩니다</li>
+<li><strong>자동 동기화</strong>: 명시적 배리어가 필요하지 않습니다</li>
+</ul>
+<h3 id="알고리즘-변환"><a class="header" href="#알고리즘-변환"><strong>알고리즘 변환</strong></a></h3>
+<p>기존 병렬 패턴을 워프 통신으로 변환합니다:</p>
+<ul>
+<li><strong>배열 이웃 접근</strong> → <code>shuffle_down()</code></li>
+<li><strong>공유 메모리 조정</strong> → <code>broadcast()</code></li>
+<li><strong>복잡한 경계 로직</strong> → 하드웨어 자동 처리</li>
+<li><strong>다단계 동기화</strong> → 단일 통신 연산</li>
+</ul>
+<h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
+<p>이웃 기반 셔플 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 브로드캐스트 패턴으로 나아갑니다.</p>
+<p>💡 <strong>성공 팁</strong>: 워프 통신을 같은 워프 내 스레드 간의 <strong>하드웨어 가속 메시지 패싱</strong>으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT 아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.</p>
+<p><strong>학습 목표</strong>: Puzzle 25를 마치면, 워프 통신이 복잡한 공유 메모리 패턴을 대체할 수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을 작성할 수 있게 됩니다.</p>
+<p><strong>시작하기</strong>: <strong><a href="./warp_shuffle_down.html">warp.shuffle_down()</a></strong> 에서 이웃 통신을 배운 다음, <strong><a href="./warp_broadcast.html">warp.broadcast()</a></strong> 에서 집합 조정 패턴으로 나아가세요.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_24/warp_extra.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_25/warp_shuffle_down.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_24/warp_extra.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_25/warp_shuffle_down.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

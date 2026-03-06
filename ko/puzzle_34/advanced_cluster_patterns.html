@@ -1,0 +1,613 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🧠 고급 클러스터 알고리즘 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="-고급-클러스터-알고리즘"><a class="header" href="#-고급-클러스터-알고리즘">🧠 고급 클러스터 알고리즘</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>이 마지막 도전에서는 <a href="../puzzle_24/puzzle_24.html">워프 레벨 (Puzzle 24-26)</a>, <a href="../puzzle_27/puzzle_27.html">블록 레벨 (Puzzle 27)</a>, 클러스터 조정에 이르기까지 <strong>GPU 프로그래밍 계층 구조의 모든 레벨</strong>을 결합하여 GPU 활용률을 극대화하는 정교한 다단계 알고리즘을 구현합니다.</p>
+<p><strong>도전 과제</strong>: <strong>워프 레벨 최적화</strong> (<code>elect_one_sync()</code>), <strong>블록 레벨 집계</strong>, <strong>클러스터 레벨 조정</strong>을 하나의 통합된 패턴으로 사용하는 계층적 클러스터 알고리즘을 구현합니다.</p>
+<p><strong>핵심 학습</strong>: 고급 연산 워크로드에서 사용되는 프로덕션 수준의 조정 패턴과 함께 완전한 GPU 프로그래밍 스택을 배웁니다.</p>
+<h2 id="문제-다단계-데이터-처리-파이프라인"><a class="header" href="#문제-다단계-데이터-처리-파이프라인">문제: 다단계 데이터 처리 파이프라인</a></h2>
+<p>실제 GPU 알고리즘은 GPU 계층 구조의 서로 다른 레벨(<a href="../puzzle_24/warp_simt.html">Puzzle 24의 워프</a>, <a href="../puzzle_27/block_sum.html">Puzzle 27의 블록</a>, 클러스터)이 조정된 연산 파이프라인에서 각각 전문화된 역할을 수행하는 <strong>계층적 조정</strong>을 필요로 하는 경우가 많으며, 이는 <a href="../puzzle_29/barrier.html">Puzzle 29의 다단계 처리</a>를 확장합니다.</p>
+<p><strong>과제</strong>: 다음과 같은 다단계 알고리즘을 구현하세요:</p>
+<ol>
+<li><strong><a href="../puzzle_24/warp_sum.html">워프 레벨</a></strong>: 효율적인 워프 내부 조정을 위해 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 사용합니다 (<a href="../puzzle_24/warp_simt.html">SIMT 실행</a>)</li>
+<li><strong><a href="../puzzle_27/block_sum.html">블록 레벨</a></strong>: <a href="../puzzle_08/puzzle_08.html">공유 메모리 조정</a>을 사용하여 워프 결과를 집계합니다</li>
+<li><strong>클러스터 레벨</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="../puzzle_29/barrier.html">Puzzle 29의 단계적 동기화</a>를 사용하여 블록 간 조정을 수행합니다</li>
+</ol>
+<h3 id="알고리즘-명세"><a class="header" href="#알고리즘-명세">알고리즘 명세</a></h3>
+<p><strong>다단계 처리 파이프라인:</strong></p>
+<ol>
+<li><strong>1단계 (<a href="../puzzle_24/puzzle_24.html">워프 레벨</a>)</strong>: 각 워프가 하나의 스레드를 선출하여 32개의 연속 요소를 합산합니다</li>
+<li><strong>2단계 (<a href="../puzzle_27/puzzle_27.html">블록 레벨</a>)</strong>: 각 블록 내의 모든 워프 합계를 집계합니다</li>
+<li><strong>3단계 (클러스터 레벨)</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로 블록 간 조정을 수행합니다</li>
+</ol>
+<p><strong>입력</strong>: 테스트를 위한 <code>(i % 50) * 0.02</code> 패턴의 1024개 float 값
+<strong>출력</strong>: 계층적 처리 효과를 보여주는 4개 블록 결과</p>
+<h2 id="설정"><a class="header" href="#설정">설정</a></h2>
+<ul>
+<li><strong>문제 크기</strong>: <code>SIZE = 1024</code> 요소</li>
+<li><strong>블록 설정</strong>: <code>TPB = 256</code> 블록당 스레드 수 <code>(256, 1)</code></li>
+<li><strong>그리드 설정</strong>: <code>CLUSTER_SIZE = 4</code> 블록 <code>(4, 1)</code></li>
+<li><strong>워프 크기</strong>: <code>WARP_SIZE = 32</code> 워프당 스레드 수 (NVIDIA 표준)</li>
+<li><strong>블록당 워프 수</strong>: <code>TPB / WARP_SIZE = 8</code> 워프</li>
+<li><strong>데이터 타입</strong>: <code>DType.float32</code></li>
+<li><strong>메모리 레이아웃</strong>: 입력 <code>Layout.row_major(SIZE)</code>, 출력 <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+</ul>
+<p><strong>처리 분배:</strong></p>
+<ul>
+<li><strong>Block 0</strong>: 256 스레드 → 8 워프 → 요소 0-255</li>
+<li><strong>Block 1</strong>: 256 스레드 → 8 워프 → 요소 256-511</li>
+<li><strong>Block 2</strong>: 256 스레드 → 8 워프 → 요소 512-767</li>
+<li><strong>Block 3</strong>: 256 스레드 → 8 워프 → 요소 768-1023</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">fn advanced_cluster_patterns[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Advanced cluster programming using cluster masks and relaxed synchronization.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # FILL IN (roughly 26 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="워프-레벨-최적화-패턴"><a class="header" href="#워프-레벨-최적화-패턴"><strong>워프 레벨 최적화 패턴</strong></a></h3>
+<ul>
+<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 사용하여 워프당 하나의 스레드를 연산용으로 선출합니다 (<a href="../puzzle_24/warp_sum.html">워프 프로그래밍 기초</a>)</li>
+<li>선출된 스레드가 32개의 연속 요소를 처리해야 합니다 (<a href="../puzzle_24/warp_simt.html">SIMT 실행</a> 활용)</li>
+<li><code>(local_i // 32) * 32</code>로 워프 시작점을 계산하여 워프 경계를 찾습니다 (<a href="../puzzle_24/puzzle_24.html">워프 개념</a>의 Lane 인덱싱)</li>
+<li>워프 결과를 <a href="../puzzle_08/puzzle_08.html">선출된 스레드 위치의 공유 메모리</a>에 저장합니다</li>
+</ul>
+<h3 id="블록-레벨-집계-전략"><a class="header" href="#블록-레벨-집계-전략"><strong>블록 레벨 집계 전략</strong></a></h3>
+<ul>
+<li>워프 처리 후 모든 워프 결과를 집계합니다 (<a href="../puzzle_27/block_sum.html">Puzzle 27의 블록 조정</a> 확장)</li>
+<li>선출된 위치에서 읽습니다: 인덱스 0, 32, 64, 96, 128, 160, 192, 224</li>
+<li><code>for i in range(0, tpb, 32)</code> 루프로 워프 리더를 순회합니다 (<a href="../puzzle_12/puzzle_12.html">리덕션 알고리즘</a>의 패턴)</li>
+<li>스레드 0만 최종 블록 합계를 계산해야 합니다 (<a href="../puzzle_29/barrier.html">배리어 조정</a>의 단일 쓰기 패턴)</li>
+</ul>
+<h3 id="클러스터-조정-흐름"><a class="header" href="#클러스터-조정-흐름"><strong>클러스터 조정 흐름</strong></a></h3>
+<ol>
+<li><strong>처리</strong>: 각 블록이 계층적 워프 최적화로 데이터를 처리합니다</li>
+<li><strong>신호</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>로 로컬 처리 완료를 알립니다</li>
+<li><strong>저장</strong>: 스레드 0이 블록 결과를 출력에 기록합니다</li>
+<li><strong>대기</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>로 모든 블록이 완료될 때까지 대기합니다</li>
+</ol>
+<h3 id="데이터-스케일링-및-경계-검사"><a class="header" href="#데이터-스케일링-및-경계-검사"><strong>데이터 스케일링 및 경계 검사</strong></a></h3>
+<ul>
+<li><code>Float32(block_id + 1)</code>로 입력을 스케일링하여 블록별 고유 패턴을 만듭니다</li>
+<li>입력을 읽기 전에 항상 <code>global_i &lt; size</code>를 검사합니다 (<a href="../puzzle_03/puzzle_03.html">Puzzle 3의 가드</a>)</li>
+<li>블록 내 처리 단계 사이에 <code>barrier()</code>를 사용합니다 (<a href="../puzzle_29/barrier.html">동기화 패턴</a>)</li>
+<li>루프에서 워프 경계 조건을 주의 깊게 처리합니다 (<a href="../puzzle_24/warp_simt.html">워프 프로그래밍</a>의 고려사항)</li>
+</ul>
+</div>
+</details>
+<h2 id="고급-클러스터-api"><a class="header" href="#고급-클러스터-api">고급 클러스터 API</a></h2>
+<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> 모듈:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: 효율적인 연산을 위한 워프 레벨 스레드 선출</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: 단계적 클러스터 조정을 위한 완료 신호</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: 모든 블록이 동기화 지점에 도달할 때까지 대기</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: 클러스터 내 고유한 블록 식별자 반환</li>
+</ul>
+<h2 id="계층적-조정-패턴"><a class="header" href="#계층적-조정-패턴">계층적 조정 패턴</a></h2>
+<p>이 퍼즐은 <strong>3단계 조정 계층 구조</strong>를 보여줍니다:</p>
+<h3 id="레벨-1-워프-조정-puzzle-24"><a class="header" href="#레벨-1-워프-조정-puzzle-24"><strong>레벨 1: 워프 조정</strong> (<a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>)</a></h3>
+<pre><code class="language-txt">Warp (32 threads) → elect_one_sync() → 1 elected thread → processes 32 elements
+</code></pre>
+<h3 id="레벨-2-블록-조정-puzzle-27"><a class="header" href="#레벨-2-블록-조정-puzzle-27"><strong>레벨 2: 블록 조정</strong> (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>)</a></h3>
+<pre><code class="language-txt">Block (8 warps) → aggregate warp results → 1 block total
+</code></pre>
+<h3 id="레벨-3-클러스터-조정-이-퍼즐"><a class="header" href="#레벨-3-클러스터-조정-이-퍼즐"><strong>레벨 3: 클러스터 조정</strong> (이 퍼즐)</a></h3>
+<pre><code class="language-txt">Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
+</code></pre>
+<p><strong>결합 효과:</strong> 1024개 스레드 → 32개 워프 리더 → 4개 블록 결과 → 조정된 클러스터 완료</p>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --advanced
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --advanced
+</code></pre>
+  </div>
+</div>
+<p><strong>예상 출력:</strong></p>
+<pre><code class="language-txt">Testing Advanced Cluster Algorithms
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Advanced cluster algorithm results:
+  Block 0 : 122.799995
+  Block 1 : 247.04001
+  Block 2 : 372.72
+  Block 3 : 499.83997
+✅ Advanced cluster patterns tests passed!
+</code></pre>
+<p><strong>성공 기준:</strong></p>
+<ul>
+<li><strong>계층적 스케일링</strong>: 결과가 다단계 조정 효과를 보여줍니다</li>
+<li><strong>워프 최적화</strong>: <code>elect_one_sync()</code>가 중복 연산을 줄입니다</li>
+<li><strong>클러스터 조정</strong>: 모든 블록이 처리를 성공적으로 완료합니다</li>
+<li><strong>성능 패턴</strong>: 더 높은 블록 ID가 비례적으로 더 큰 결과를 생성합니다</li>
+</ul>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn advanced_cluster_patterns[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Advanced cluster programming using cluster masks and relaxed synchronization.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    shared_data = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Compute cluster mask for advanced coordination
+    # base_mask = cluster_mask_base()  # Requires cluster_shape parameter
+
+    # FIX: Process data with block_idx-based scaling for guaranteed uniqueness
+    var data_scale = Float32(block_id + 1)
+    if global_i &lt; size:
+        shared_data[local_i] = input[global_i] * data_scale
+    else:
+        shared_data[local_i] = 0.0
+
+    barrier()
+
+    # Advanced pattern: Use elect_one_sync for efficient coordination
+    if elect_one_sync():  # Only one thread per warp does this work
+        var warp_sum: Float32 = 0.0
+        var warp_start = (local_i // 32) * 32  # Get warp start index
+        for i in range(32):  # Sum across warp
+            if warp_start + i &lt; tpb:
+                warp_sum += shared_data[warp_start + i][0]
+        shared_data[local_i] = warp_sum
+
+    barrier()
+
+    # Use cluster_arrive for staged synchronization in sm90+
+    cluster_arrive()
+
+    # Only first thread in each block stores result
+    if local_i == 0:
+        var block_total: Float32 = 0.0
+        for i in range(0, tpb, 32):  # Sum warp results
+            if i &lt; tpb:
+                block_total += shared_data[i][0]
+        output[block_id] = block_total
+
+    # Wait for all blocks to complete their calculations in sm90+
+    cluster_wait()
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>고급 클러스터 패턴 풀이는 GPU 활용률을 극대화하기 위해 워프, 블록, 클러스터 조정을 결합하는 정교한 3단계 계층적 최적화를 보여줍니다:</strong></p>
+<h2 id="레벨-1-워프-레벨-최적화-스레드-선출"><a class="header" href="#레벨-1-워프-레벨-최적화-스레드-선출"><strong>레벨 1: 워프 레벨 최적화 (스레드 선출)</strong></a></h2>
+<p><strong>데이터 준비 및 스케일링:</strong></p>
+<pre><code class="language-mojo">var data_scale = Float32(block_id + 1)  # Block-specific scaling factor
+if global_i &lt; size:
+    shared_data[local_i] = input[global_i] * data_scale
+else:
+    shared_data[local_i] = 0.0  # Zero-pad for out-of-bounds
+barrier()  # Ensure all threads complete data loading
+</code></pre>
+<p><strong>워프 레벨 스레드 선출:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync():  # Hardware elects exactly 1 thread per warp
+    var warp_sum: Float32 = 0.0
+    var warp_start = (local_i // 32) * 32  # Calculate warp boundary
+    for i in range(32):  # Process entire warp's data
+        if warp_start + i &lt; tpb:
+            warp_sum += shared_data[warp_start + i][0]
+    shared_data[local_i] = warp_sum  # Store result at elected thread's position
+</code></pre>
+<p><strong>워프 경계 계산 설명:</strong></p>
+<ul>
+<li><strong>스레드 37</strong> (워프 1): <code>warp_start = (37 // 32) * 32 = 1 * 32 = 32</code></li>
+<li><strong>스레드 67</strong> (워프 2): <code>warp_start = (67 // 32) * 32 = 2 * 32 = 64</code></li>
+<li><strong>스레드 199</strong> (워프 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
+</ul>
+<p><strong>선출 패턴 시각화 (TPB=256, 8 워프):</strong></p>
+<pre><code class="language-txt">Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
+Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
+Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
+Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
+Warp 4 (threads 128-159):elect_one_sync() → Thread 128 processes elements 128-159
+Warp 5 (threads 160-191):elect_one_sync() → Thread 160 processes elements 160-191
+Warp 6 (threads 192-223):elect_one_sync() → Thread 192 processes elements 192-223
+Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-255
+</code></pre>
+<h2 id="레벨-2-블록-레벨-집계-워프-리더-조정"><a class="header" href="#레벨-2-블록-레벨-집계-워프-리더-조정"><strong>레벨 2: 블록 레벨 집계 (워프 리더 조정)</strong></a></h2>
+<p><strong>워프 간 동기화:</strong></p>
+<pre><code class="language-mojo">barrier()  # Ensure all warps complete their elected computations
+</code></pre>
+<p><strong>워프 리더 집계 (스레드 0만):</strong></p>
+<pre><code class="language-mojo">if local_i == 0:
+    var block_total: Float32 = 0.0
+    for i in range(0, tpb, 32):  # Iterate through warp leader positions
+        if i &lt; tpb:
+            block_total += shared_data[i][0]  # Sum warp results
+    output[block_id] = block_total
+</code></pre>
+<p><strong>메모리 접근 패턴:</strong></p>
+<ul>
+<li>스레드 0이 다음 위치에서 읽습니다: <code>shared_data[0]</code>, <code>shared_data[32]</code>, <code>shared_data[64]</code>, <code>shared_data[96]</code>, <code>shared_data[128]</code>, <code>shared_data[160]</code>, <code>shared_data[192]</code>, <code>shared_data[224]</code></li>
+<li>이 위치들에는 선출된 스레드가 계산한 워프 합계가 저장되어 있습니다</li>
+<li>결과: 8개 워프 합계 → 1개 블록 합계</li>
+</ul>
+<h2 id="레벨-3-클러스터-레벨-단계적-동기화"><a class="header" href="#레벨-3-클러스터-레벨-단계적-동기화"><strong>레벨 3: 클러스터 레벨 단계적 동기화</strong></a></h2>
+<p><strong>단계적 동기화 접근:</strong></p>
+<pre><code class="language-mojo">cluster_arrive()  # Non-blocking: signal this block's completion
+# ... Thread 0 computes and stores block result ...
+cluster_wait()    # Blocking: wait for all blocks to complete
+</code></pre>
+<p><strong>왜 단계적 동기화를 사용할까?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> 를 최종 연산 <strong>이전에</strong> 호출하면 작업 중첩이 가능합니다</li>
+<li>다른 블록이 아직 처리 중인 동안에도 블록이 자체 결과를 계산할 수 있습니다</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> 로 결정론적 완료 순서를 보장합니다</li>
+<li>독립적인 블록 연산의 경우 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>보다 더 효율적입니다</li>
+</ul>
+<h2 id="고급-패턴-특성"><a class="header" href="#고급-패턴-특성"><strong>고급 패턴 특성</strong></a></h2>
+<p><strong>계층적 연산 축소:</strong></p>
+<ol>
+<li><strong>256개 스레드</strong> → <strong>8개 선출 스레드</strong> (블록당 32배 축소)</li>
+<li><strong>8개 워프 합계</strong> → <strong>1개 블록 합계</strong> (블록당 8배 축소)</li>
+<li><strong>4개 블록</strong> → <strong>단계적 완료</strong> (동기화된 종료)</li>
+<li><strong>전체 효율</strong>: 블록당 중복 연산 256배 축소</li>
+</ol>
+<p><strong>메모리 접근 최적화:</strong></p>
+<ul>
+<li><strong>레벨 1</strong>: <code>input[global_i]</code>에서 병합된 읽기, 공유 메모리에 스케일링된 쓰기</li>
+<li><strong>레벨 2</strong>: 선출된 스레드가 워프 레벨 집계를 수행합니다 (256개 대신 8개 연산)</li>
+<li><strong>레벨 3</strong>: 스레드 0이 블록 레벨 집계를 수행합니다 (8개 대신 1개 연산)</li>
+<li><strong>결과</strong>: 계층적 리덕션을 통해 메모리 대역폭 사용량을 최소화합니다</li>
+</ul>
+<p><strong>동기화 계층 구조:</strong></p>
+<ol>
+<li><strong><code>barrier()</code></strong>: 블록 내부 스레드 동기화 (데이터 로딩 및 워프 처리 후)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: 블록 간 신호 (논블로킹, 작업 중첩 가능)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: 블록 간 동기화 (블로킹, 완료 순서 보장)</li>
+</ol>
+<p><strong>왜 “고급“인가:</strong></p>
+<ul>
+<li><strong>다단계 최적화</strong>: 워프, 블록, 클러스터 프로그래밍 기법을 결합합니다</li>
+<li><strong>하드웨어 효율</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 활용하여 워프 활용률을 최적화합니다</li>
+<li><strong>단계적 조정</strong>: 고급 클러스터 API를 사용하여 유연한 동기화를 구현합니다</li>
+<li><strong>프로덕션 수준</strong>: 실제 GPU 라이브러리에서 사용되는 패턴을 보여줍니다</li>
+</ul>
+<p><strong>실제 성능 이점:</strong></p>
+<ul>
+<li><strong>메모리 부하 감소</strong>: 동시에 공유 메모리에 접근하는 스레드 수가 적어집니다</li>
+<li><strong>더 나은 워프 활용</strong>: 선출된 스레드가 집중적인 연산을 수행합니다</li>
+<li><strong>확장 가능한 조정</strong>: 단계적 동기화가 더 큰 클러스터 크기를 처리합니다</li>
+<li><strong>알고리즘 유연성</strong>: 복잡한 다단계 처리 파이프라인의 기반이 됩니다</li>
+</ul>
+<p><strong>복잡도 분석:</strong></p>
+<ul>
+<li><strong>워프 레벨</strong>: 선출된 스레드당 O(32) 연산 = 블록당 총 O(256)</li>
+<li><strong>블록 레벨</strong>: 블록당 O(8) 집계 연산</li>
+<li><strong>클러스터 레벨</strong>: 블록당 O(1) 동기화 오버헤드</li>
+<li><strong>전체</strong>: 대규모 병렬화 이점을 가진 선형 복잡도</li>
+</ul>
+</div>
+</details>
+<h2 id="완전한-gpu-계층-구조"><a class="header" href="#완전한-gpu-계층-구조">완전한 GPU 계층 구조</a></h2>
+<p>축하합니다! 이 퍼즐을 완료함으로써 <strong>완전한 GPU 프로그래밍 스택</strong>을 학습했습니다:</p>
+<p>✅ <strong>스레드 레벨 프로그래밍</strong>: 개별 실행 단위</br>
+✅ <strong><a href="../puzzle_24/puzzle_24.html">워프 레벨 프로그래밍</a></strong>: 32개 스레드 SIMT 조정</br>
+✅ <strong><a href="../puzzle_27/puzzle_27.html">블록 레벨 프로그래밍</a></strong>: 멀티 워프 조정과 공유 메모리</br>
+✅ <strong>🆕 클러스터 레벨 프로그래밍</strong>: SM90+ API를 활용한 멀티 블록 조정</br>
+✅ 클러스터 동기화 기본 요소로 <strong>여러 스레드 블록을 조정</strong></br>
+✅ 클러스터 API를 사용하여 <strong>단일 블록 한계를 넘어 알고리즘을 확장</strong></br>
+✅ 워프 + 블록 + 클러스터 조정을 결합한 <strong>계층적 알고리즘을 구현</strong></br>
+✅ SM90+ 클러스터 프로그래밍으로 <strong>차세대 GPU 하드웨어를 활용</strong></p>
+<h2 id="실전-응용"><a class="header" href="#실전-응용">실전 응용</a></h2>
+<p>이 퍼즐의 계층적 조정 패턴은 다음 분야의 기반이 됩니다:</p>
+<p><strong>고성능 컴퓨팅:</strong></p>
+<ul>
+<li><strong>멀티 그리드 기법</strong>: 각 레벨이 서로 다른 해상도의 그리드를 처리합니다</li>
+<li><strong>도메인 분해</strong>: 문제의 하위 도메인에 걸친 계층적 조정</li>
+<li><strong>병렬 반복법</strong>: 워프 레벨의 로컬 연산과 클러스터 레벨의 전역 통신</li>
+</ul>
+<p><strong>딥러닝:</strong></p>
+<ul>
+<li><strong>모델 병렬 처리</strong>: 각 블록이 모델의 서로 다른 구성 요소를 처리합니다</li>
+<li><strong>파이프라인 병렬 처리</strong>: 여러 트랜스포머 레이어에 걸친 단계적 처리</li>
+<li><strong>기울기 집계</strong>: 분산 학습 노드에 걸친 계층적 리덕션</li>
+</ul>
+<p><strong>그래픽스 및 시각화:</strong></p>
+<ul>
+<li><strong>멀티 패스 렌더링</strong>: 복잡한 시각 효과를 위한 단계적 처리</li>
+<li><strong>계층적 컬링</strong>: 각 레벨이 서로 다른 세분도에서 컬링합니다</li>
+<li><strong>병렬 지오메트리 처리</strong>: 조정된 변환 파이프라인</li>
+</ul>
+<h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
+<p>이제 최신 하드웨어에서 사용 가능한 <strong>최첨단 GPU 프로그래밍 기법</strong>을 배웠습니다!</p>
+<p><strong>더 많은 도전을 할 준비가 되셨나요?</strong> 다른 고급 GPU 프로그래밍 주제를 탐구하고, <a href="../puzzle_30/puzzle_30.html">Puzzle 30-32의 성능 최적화 기법</a>을 복습하고, <a href="../puzzle_30/nvidia_profiling_basics.html">NVIDIA 도구의 프로파일링 방법론</a>을 적용하거나, 이 클러스터 프로그래밍 패턴을 기반으로 자신만의 연산 워크로드를 구축해 보세요!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_34/cluster_collective_ops.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_34/cluster_collective_ops.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,822 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 31: 점유율 최적화 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="puzzle-31-점유율-최적화"><a class="header" href="#puzzle-31-점유율-최적화">Puzzle 31: 점유율 최적화</a></h1>
+<h2 id="이-퍼즐이-중요한-이유"><a class="header" href="#이-퍼즐이-중요한-이유">이 퍼즐이 중요한 이유</a></h2>
+<p><strong>Puzzle 30의 연장선:</strong> <a href="../puzzle_30/puzzle_30.html">GPU 프로파일링</a> 도구를 배우고, 메모리 접근 패턴이 어떻게 극적인 성능 차이를 만들어내는지 발견했습니다. 이제 다음 단계로 나아갈 준비가 되었습니다: <strong>리소스 최적화</strong>.</p>
+<p><strong>학습 여정:</strong></p>
+<ul>
+<li><strong>Puzzle 30</strong>에서는 NSight 프로파일링(<code>nsys</code>와 <code>ncu</code>)을 통해 성능 문제를 <strong>진단</strong>하는 법을 배웠습니다</li>
+<li><strong>Puzzle 31</strong>에서는 리소스 관리를 통해 성능을 <strong>예측하고 제어</strong>하는 법을 배웁니다</li>
+<li><strong>둘을 합치면</strong> GPU 최적화를 위한 완전한 도구 세트를 갖추게 됩니다</li>
+</ul>
+<p><strong>발견하게 될 것:</strong>
+GPU 성능은 단순히 알고리즘 효율의 문제가 아닙니다 - <strong>코드가 한정된 하드웨어 리소스를 어떻게 활용하느냐</strong>가 핵심입니다. 모든 GPU는 유한한 레지스터, 공유 메모리, 실행 유닛을 갖고 있습니다. <strong>점유율(occupancy)</strong> - <em>SM당 활성 워프 수 대비 최대 가능 워프 수의 비율</em> - 을 이해하는 것은 다음과 같은 이유로 중요합니다:</p>
+<ul>
+<li><strong>지연 시간 은닉</strong>: 메모리 대기 시간 동안 GPU가 유휴 상태에 빠지지 않도록 유지</li>
+<li><strong>리소스 할당</strong>: 레지스터, 공유 메모리, 스레드 블록 간의 균형 조절</li>
+<li><strong>성능 예측</strong>: 병목이 발생하기 전에 미리 파악</li>
+<li><strong>최적화 전략</strong>: 점유율에 집중해야 할 때와 다른 요소에 집중해야 할 때 판단</li>
+</ul>
+<p><strong>GPU를 넘어서 적용되는 원리:</strong>
+여기서 배우는 원리는 리소스를 여러 실행 유닛이 공유하는 모든 병렬 컴퓨팅 시스템에 적용됩니다 - 하이퍼스레딩을 사용하는 CPU부터 분산 컴퓨팅 클러스터까지.</p>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p><strong>GPU 점유율</strong>은 SM당 활성 워프 수 대비 최대 가능 워프 수의 비율입니다. GPU가 워프 전환을 통해 메모리 지연 시간을 얼마나 효과적으로 숨길 수 있는지를 결정합니다.</p>
+<p><strong>SAXPY</strong>는 Single-precision Alpha times X plus Y의 약자입니다. 이 퍼즐에서는 수학적으로 동일하지만 리소스 사용이 다른 세 가지 SAXPY 커널(<code>y[i] = alpha * x[i] + y[i]</code>)을 탐구합니다:</p>
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
+comptime THREADS_PER_BLOCK = (1024, 1)
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+comptime ALPHA = Float32(2.5)  # SAXPY coefficient
+
+
+fn minimal_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    alpha: Float32,
+    size: Int,
+):
+    """Minimal SAXPY kernel - simple and register-light for high occupancy."""
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    if i &lt; size:
+        # Direct computation: y[i] = alpha * x[i] + y[i]
+        # Uses minimal registers (~8), no shared memory
+        y[i] = alpha * x[i] + y[i]
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a></p>
+<pre><code class="language-mojo">fn sophisticated_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    alpha: Float32,
+    size: Int,
+):
+    """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
+    """
+    # Maximum shared memory allocation (close to 48KB limit)
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 12),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 48KB
+
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    if i &lt; size:
+        # REAL computational work that can't be optimized away - affects final result
+        base_x = x[i]
+        base_y = y[i]
+
+        # Simulate "precision enhancement" - multiple small adjustments that add up
+        # Each computation affects the final result so compiler can't eliminate them
+        # But artificially increases register pressure
+        precision_x1 = base_x * 1.0001
+        precision_x2 = precision_x1 * 0.9999
+        precision_x3 = precision_x2 * 1.000001
+        precision_x4 = precision_x3 * 0.999999
+
+        precision_y1 = base_y * 1.000005
+        precision_y2 = precision_y1 * 0.999995
+        precision_y3 = precision_y2 * 1.0000001
+        precision_y4 = precision_y3 * 0.9999999
+
+        # Multiple alpha computations for "stability" - should equal alpha
+        alpha1 = alpha * 1.00001 * 0.99999
+        alpha2 = alpha1 * 1.000001 * 0.999999
+        alpha3 = alpha2 * 1.0000001 * 0.9999999
+        alpha4 = alpha3 * 1.00000001 * 0.99999999
+
+        # Complex polynomial "optimization" - creates register pressure
+        x_power2 = precision_x4 * precision_x4
+        x_power3 = x_power2 * precision_x4
+        x_power4 = x_power3 * precision_x4
+        x_power5 = x_power4 * precision_x4
+        x_power6 = x_power5 * precision_x4
+        x_power7 = x_power6 * precision_x4
+        x_power8 = x_power7 * precision_x4
+
+        # "Advanced" mathematical series that contributes tiny amount to result
+        series_term1 = x_power2 * 0.0000001  # x^2/10M
+        series_term2 = x_power4 * 0.00000001  # x^4/100M
+        series_term3 = x_power6 * 0.000000001  # x^6/1B
+        series_term4 = x_power8 * 0.0000000001  # x^8/10B
+        series_correction = (
+            series_term1 - series_term2 + series_term3 - series_term4
+        )
+
+        # Over-engineered shared memory usage with multiple caching strategies
+        if local_i &lt; 1024:
+            shared_cache[local_i] = precision_x4
+            shared_cache[local_i + 1024] = precision_y4
+            shared_cache[local_i + 2048] = alpha4
+            shared_cache[local_i + 3072] = series_correction
+        barrier()
+
+        # Load from shared memory for "optimization"
+        cached_x = shared_cache[local_i] if local_i &lt; 1024 else precision_x4
+        cached_y = (
+            shared_cache[local_i + 1024] if local_i &lt; 1024 else precision_y4
+        )
+        cached_alpha = (
+            shared_cache[local_i + 2048] if local_i &lt; 1024 else alpha4
+        )
+        cached_correction = (
+            shared_cache[local_i + 3072] if local_i
+            &lt; 1024 else series_correction
+        )
+
+        # Final "high precision" computation - all work contributes to result
+        high_precision_result = (
+            cached_alpha * cached_x + cached_y + cached_correction
+        )
+
+        # Over-engineered result with massive resource usage but mathematically ~= alpha*x + y
+        y[i] = high_precision_result
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a></p>
+<pre><code class="language-mojo">fn balanced_kernel[
+    layout: Layout
+](
+    y: LayoutTensor[dtype, layout, MutAnyOrigin],
+    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    alpha: Float32,
+    size: Int,
+):
+    """Balanced SAXPY kernel - efficient optimization with moderate resources.
+    """
+    # Reasonable shared memory usage for effective caching (16KB)
+    shared_cache = LayoutTensor[
+        dtype,
+        Layout.row_major(1024 * 4),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()  # 16KB total
+
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    if i &lt; size:
+        # Moderate computational work that contributes to result
+        base_x = x[i]
+        base_y = y[i]
+
+        # Light precision enhancement - less than sophisticated kernel
+        enhanced_x = base_x * 1.00001 * 0.99999
+        enhanced_y = base_y * 1.00001 * 0.99999
+        stable_alpha = alpha * 1.000001 * 0.999999
+
+        # Moderate computational optimization
+        x_squared = enhanced_x * enhanced_x
+        optimization_hint = x_squared * 0.000001
+
+        # Efficient shared memory caching - only what we actually need
+        if local_i &lt; 1024:
+            shared_cache[local_i] = enhanced_x
+            shared_cache[local_i + 1024] = enhanced_y
+        barrier()
+
+        # Use cached values efficiently
+        cached_x = shared_cache[local_i] if local_i &lt; 1024 else enhanced_x
+        cached_y = (
+            shared_cache[local_i + 1024] if local_i &lt; 1024 else enhanced_y
+        )
+
+        # Balanced computation - moderate work, good efficiency
+        result = stable_alpha * cached_x + cached_y + optimization_hint
+
+        # Balanced result with moderate resource usage (~15 registers, 16KB shared)
+        y[i] = result
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a></p>
+<h2 id="도전-과제"><a class="header" href="#도전-과제">도전 과제</a></h2>
+<p>프로파일링 도구를 사용하여 세 커널을 조사하고, 점유율 최적화에 대한 분석 질문에 답하세요. 커널들은 동일한 결과를 계산하지만 리소스 사용이 극적으로 다릅니다 - 성능과 점유율이 왜 직관에 어긋나는 방식으로 동작하는지 발견하는 것이 여러분의 임무입니다!</p>
+<blockquote>
+<p>이 퍼즐에 표시된 구체적인 수치 결과는 <strong>NVIDIA A10G (Ampere 8.6)</strong> 하드웨어를 기준으로 합니다. 결과는 GPU 제조사와 아키텍처(NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5)에 따라 달라지지만, <strong>기본 개념, 방법론, 통찰은 모든 최신 GPU에 보편적으로 적용됩니다</strong>. <code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
+</blockquote>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<p><strong>요구 사항:</strong></p>
+<ul>
+<li>CUDA 툴킷이 설치된 NVIDIA GPU</li>
+<li><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>의 NSight Compute</li>
+</ul>
+<blockquote>
+<p><strong>⚠️ GPU 호환성 참고:</strong>
+기본 설정은 공격적인 값을 사용하므로 구형이나 저사양 GPU에서는 실패할 수 있습니다:</p>
+<pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M 요소 (배열당 ~256MB 메모리)
+comptime THREADS_PER_BLOCK = (1024, 1)  # 블록당 1024 스레드
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 블록
+</code></pre>
+<p><strong>실행 실패 시 <code>problems/p31/p31.mojo</code>에서 다음 값을 줄이세요:</strong></p>
+<ul>
+<li><strong>구형 GPU (Compute Capability &lt; 3.0):</strong> <code>THREADS_PER_BLOCK = (512, 1)</code>, <code>SIZE = 16 * 1024 * 1024</code> 사용</li>
+<li><strong>메모리 제한 GPU (&lt; 2GB):</strong> <code>SIZE = 8 * 1024 * 1024</code> 또는 <code>SIZE = 4 * 1024 * 1024</code> 사용</li>
+<li><strong>그리드 차원 제한:</strong> <code>BLOCKS_PER_GRID</code>는 <code>SIZE</code>에 맞춰 자동 조정됩니다</li>
+</ul>
+</blockquote>
+<p><strong>점유율 공식:</strong></p>
+<pre><code>이론적 점유율 = min(
+    SM당 레지스터 수 / (스레드당 레지스터 수 × 블록당 스레드 수),
+    SM당 공유 메모리 / 블록당 공유 메모리,
+    SM당 최대 블록 수
+) × 블록당 스레드 수 / SM당 최대 스레드 수
+</code></pre>
+<h2 id="조사-과정"><a class="header" href="#조사-과정">조사 과정</a></h2>
+<h3 id="step-1-커널-테스트"><a class="header" href="#step-1-커널-테스트">Step 1: 커널 테스트</a></h3>
+<pre><code class="language-bash">pixi shell -e nvidia
+mojo problems/p31/p31.mojo --all
+</code></pre>
+<p>세 커널 모두 동일한 결과를 내야 합니다. 미스터리: 왜 성능은 다를까요?</p>
+<h3 id="step-2-성능-벤치마크"><a class="header" href="#step-2-성능-벤치마크">Step 2: 성능 벤치마크</a></h3>
+<pre><code class="language-bash">mojo problems/p31/p31.mojo --benchmark
+</code></pre>
+<p>세 커널 모두 동일한 결과를 내야 합니다. 미스터리: 왜 성능은 다를까요?</p>
+<h3 id="step-3-프로파일링용-빌드"><a class="header" href="#step-3-프로파일링용-빌드">Step 3: 프로파일링용 빌드</a></h3>
+<pre><code class="language-bash">mojo build --debug-level=full problems/p31/p31.mojo -o problems/p31/p31_profiler
+</code></pre>
+<h3 id="step-4-리소스-사용량-프로파일링"><a class="header" href="#step-4-리소스-사용량-프로파일링">Step 4: 리소스 사용량 프로파일링</a></h3>
+<pre><code class="language-bash"># 각 커널의 리소스 사용량 프로파일링
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --minimal
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --sophisticated
+ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
+</code></pre>
+<p>점유율 분석을 위해 리소스 사용량을 기록하세요.</p>
+<h3 id="step-5-이론적-점유율-계산"><a class="header" href="#step-5-이론적-점유율-계산">Step 5: 이론적 점유율 계산</a></h3>
+<p>먼저 GPU 아키텍처와 세부 스펙을 확인합니다:</p>
+<pre><code class="language-bash">pixi run gpu-specs
+</code></pre>
+<p><strong>참고</strong>: <code>gpu-specs</code>는 GPU 제조사(NVIDIA/AMD/Apple)를 자동 감지하고 하드웨어에서 파생된 <strong>모든 아키텍처 세부 정보</strong>를 표시합니다 - 별도의 참조표가 필요 없습니다!</p>
+<p><strong>주요 아키텍처 스펙 (참고용):</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>아키텍처</th><th>Compute Cap</th><th>레지스터/SM</th><th>공유 메모리/SM</th><th>최대 스레드/SM</th><th>최대 블록/SM</th></tr></thead><tbody>
+<tr><td><strong>Hopper (H100)</strong></td><td>9.0</td><td>65,536</td><td>228KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Ada (RTX 40xx)</strong></td><td>8.9</td><td>65,536</td><td>128KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Ampere (RTX 30xx, A100, A10G)</strong></td><td>8.0, 8.6</td><td>65,536</td><td>164KB</td><td>2,048</td><td>32</td></tr>
+<tr><td><strong>Turing (RTX 20xx)</strong></td><td>7.5</td><td>65,536</td><td>96KB</td><td>1,024</td><td>16</td></tr>
+<tr><td><strong>Pascal (GTX 10xx)</strong></td><td>6.1</td><td>65,536</td><td>96KB</td><td>2,048</td><td>32</td></tr>
+</tbody></table>
+</div>
+<p><strong>📚 공식 문서:</strong></p>
+<ul>
+<li><a href="https://developer.nvidia.com/cuda-gpus">NVIDIA CUDA Compute Capability Table</a></li>
+<li><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities">CUDA Programming Guide - Compute Capabilities</a></li>
+<li><a href="https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/">Hopper Architecture In-Depth</a></li>
+<li><a href="https://www.nvidia.com/en-us/data-center/ampere-architecture/">Ampere Architecture Whitepaper</a></li>
+</ul>
+<p><strong>⚠️ 참고:</strong> 이 값들은 이론적 최대치입니다. 실제 점유율은 하드웨어 스케줄링 제약, 드라이버 오버헤드 등의 요인으로 더 낮을 수 있습니다.</p>
+<p>GPU 스펙과 점유율 공식을 사용하여:</p>
+<ul>
+<li><strong>블록당 스레드 수:</strong> 1024 (커널 설정값)</li>
+</ul>
+<p>점유율 공식과 하드웨어 스펙을 사용하여 각 커널의 이론적 점유율을 예측하세요.</p>
+<h3 id="step-6-실제-점유율-측정"><a class="header" href="#step-6-실제-점유율-측정">Step 6: 실제 점유율 측정</a></h3>
+<pre><code class="language-bash"># 각 커널의 실제 점유율 측정
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --minimal
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --sophisticated
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p31_profiler --balanced
+</code></pre>
+<p>이론적 계산과 실제 측정된 점유율을 비교하세요 - 미스터리가 드러나는 순간입니다!</p>
+<h2 id="핵심-통찰"><a class="header" href="#핵심-통찰">핵심 통찰</a></h2>
+<p>💡 <strong>점유율 임계값:</strong> 대기 시간을 숨기기에 충분한 점유율(~25-50%)을 확보하면, 그 이상의 점유율은 수확 체감 효과를 보입니다.</p>
+<p>💡 <strong>메모리 바운드 vs 연산 바운드:</strong> SAXPY는 메모리 바운드입니다. 메모리 바운드 커널에서는 메모리 대역폭이 점유율보다 더 중요한 경우가 많습니다.</p>
+<p>💡 <strong>리소스 효율:</strong> 최신 GPU는 적당한 수준의 레지스터 압박(스레드당 20-40개)을 점유율의 극적인 감소 없이 처리할 수 있습니다.</p>
+<h2 id="도전-과제-다음-질문에-답하세요"><a class="header" href="#도전-과제-다음-질문에-답하세요">도전 과제: 다음 질문에 답하세요</a></h2>
+<p><strong>위의 조사 단계를 완료한 후, 다음 분석 질문에 답하여 점유율 미스터리를 풀어보세요:</strong></p>
+<p><strong>성능 분석 (Step 2):</strong></p>
+<ol>
+<li>어떤 커널이 가장 빠르고, 어떤 커널이 가장 느린가요? 실행 시간 차이를 기록하세요.</li>
+</ol>
+<p><strong>리소스 프로파일링 (Step 4):</strong></p>
+<ol start="2">
+<li>각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 워프 수를 기록하세요.</li>
+</ol>
+<p><strong>이론적 계산 (Step 5):</strong></p>
+<ol start="3">
+<li>GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤 커널이 가장 높고/낮아야 하나요?</li>
+</ol>
+<p><strong>측정된 점유율 (Step 6):</strong></p>
+<ol start="4">
+<li>측정된 점유율 값이 계산 결과와 어떻게 비교되나요?</li>
+</ol>
+<p><strong>점유율 미스터리:</strong></p>
+<ol start="5">
+<li>리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU 아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?</li>
+<li>리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리) 성능이 거의 동일한(&lt;2% 차이) 이유는 무엇인가요?</li>
+<li>이론적 점유율 계산과 실제 GPU 동작 사이의 관계에 대해 무엇을 알 수 있나요?</li>
+<li>이 SAXPY 워크로드의 실제 성능 병목이 점유율이 아니라면 무엇인가요?</li>
+</ol>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<p><strong>탐정 도구 모음:</strong></p>
+<ul>
+<li><strong>NSight Compute (<code>ncu</code>)</strong> - 점유율과 리소스 사용량 측정</li>
+<li><strong>GPU 아키텍처 스펙</strong> - <code>pixi run gpu-specs</code>를 사용한 이론적 한계 계산</li>
+<li><strong>점유율 공식</strong> - 리소스 병목 예측</li>
+<li><strong>성능 벤치마크</strong> - 이론적 분석 검증</li>
+</ul>
+<p><strong>핵심 최적화 원칙:</strong></p>
+<ul>
+<li><strong>최적화 전에 계산하기:</strong> 코드를 작성하기 전에 점유율 공식으로 리소스 한계를 예측</li>
+<li><strong>측정으로 검증하기:</strong> 이론적 계산은 컴파일러 최적화와 하드웨어 세부 사항을 반영하지 못함</li>
+<li><strong>워크로드 특성 고려하기:</strong> 메모리 바운드 워크로드는 연산 바운드보다 점유율이 덜 필요</li>
+<li><strong>최대 점유율을 목표로 하지 않기:</strong> 충분한 점유율 + 다른 성능 요소를 최적화</li>
+<li><strong>임계값 관점으로 사고하기:</strong> 25-50% 점유율이면 대부분 대기 시간을 숨기기에 충분</li>
+<li><strong>리소스 사용량 프로파일링하기:</strong> NSight Compute로 실제 레지스터와 공유 메모리 소비량 파악</li>
+</ul>
+<p><strong>조사 접근법:</strong></p>
+<ol>
+<li><strong>벤치마킹부터 시작</strong> - 먼저 성능 차이를 확인</li>
+<li><strong>NSight Compute로 프로파일링</strong> - 실제 리소스 사용량과 점유율 데이터 확보</li>
+<li><strong>이론적 점유율 계산</strong> - GPU 스펙과 점유율 공식 활용</li>
+<li><strong>이론과 현실 비교</strong> - 미스터리가 드러나는 순간!</li>
+<li><strong>워크로드 특성 고찰</strong> - 이론과 실제가 왜 다를 수 있는지 생각해보기</li>
+</ol>
+</div>
+</details>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary><strong>심층 해설이 포함된 완전한 풀이</strong></summary>
+<p>이 점유율 탐정 사건은 리소스 사용이 GPU 성능에 어떤 영향을 미치는지 보여주고, 이론적 점유율과 실제 성능 사이의 복잡한 관계를 드러냅니다.</p>
+<blockquote>
+<p>아래 구체적인 계산은 <strong>NVIDIA A10G (Ampere 8.6)</strong> - 테스트에 사용된 GPU - 기준입니다. 결과는 GPU 아키텍처에 따라 달라지지만, 방법론과 통찰은 보편적으로 적용됩니다. <code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
+</blockquote>
+<h2 id="리소스-분석을-통한-프로파일링-근거"><a class="header" href="#리소스-분석을-통한-프로파일링-근거"><strong>리소스 분석을 통한 프로파일링 근거</strong></a></h2>
+<p><strong>NSight Compute 리소스 분석:</strong></p>
+<p><strong>실제 프로파일링 결과 (NVIDIA A10G - GPU에 따라 결과가 다를 수 있음):</strong></p>
+<ul>
+<li><strong>Minimal:</strong> 19 레지스터, ~0KB 공유 메모리 → 점유율 <strong>63.87%</strong>, <strong>327.7ms</strong></li>
+<li><strong>Balanced:</strong> 25 레지스터, 16.4KB 공유 메모리 → 점유율 <strong>65.44%</strong>, <strong>329.4ms</strong></li>
+<li><strong>Sophisticated:</strong> 40 레지스터, 49.2KB 공유 메모리 → 점유율 <strong>65.61%</strong>, <strong>330.9ms</strong></li>
+</ul>
+<p><strong>벤치마크 성능 근거:</strong></p>
+<ul>
+<li><strong>세 커널 모두 거의 동일한 성능</strong>을 보임 (~327-331ms, &lt;2% 차이)</li>
+<li>리소스 차이가 크지만 <strong>모두 비슷한 점유율</strong>을 달성 (~64-66%)</li>
+<li><strong>메모리 대역폭이 제한 요인</strong>으로 작용</li>
+</ul>
+<h2 id="점유율-계산의-실체"><a class="header" href="#점유율-계산의-실체"><strong>점유율 계산의 실체</strong></a></h2>
+<p><strong>이론적 점유율 분석 (NVIDIA A10G, Ampere 8.6):</strong></p>
+<p><strong>GPU 스펙 (<code>pixi run gpu-specs</code> 출력):</strong></p>
+<ul>
+<li><strong>SM당 레지스터:</strong> 65,536</li>
+<li><strong>SM당 공유 메모리:</strong> 164KB (아키텍처 최대치)</li>
+<li><strong>SM당 최대 스레드:</strong> 1,536 (A10G 하드웨어 제한)</li>
+<li><strong>블록당 스레드:</strong> 1,024 (커널 설정값)</li>
+<li><strong>SM당 최대 블록:</strong> 32</li>
+</ul>
+<p><strong>Minimal 커널 계산:</strong></p>
+<pre><code>레지스터 제한 = 65,536 / (19 × 1,024) = 3.36 블록/SM
+공유 메모리 제한 = 164KB / 0KB = ∞ 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
+
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(3, ∞, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>Balanced 커널 계산:</strong></p>
+<pre><code>레지스터 제한 = 65,536 / (25 × 1,024) = 2.56 블록/SM
+공유 메모리 제한 = 164KB / 16.4KB = 10 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
+
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(2, 10, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>Sophisticated 커널 계산:</strong></p>
+<pre><code>레지스터 제한 = 65,536 / (40 × 1,024) = 1.64 블록/SM
+공유 메모리 제한 = 164KB / 49.2KB = 3.33 블록/SM
+하드웨어 블록 제한 = 32 블록/SM
+
+스레드 제한 = 1,536 / 1,024 = 1 블록/SM (내림)
+실제 블록 = min(1, 3, 1) = 1 블록/SM
+이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
+</code></pre>
+<p><strong>핵심 발견: 이론과 현실이 일치한다!</strong></p>
+<ul>
+<li><strong>이론적</strong>: 모든 커널 ~66.7% (A10G의 스레드 용량에 의해 제한)</li>
+<li><strong>실측</strong>: 모두 ~64-66% (매우 근접한 결과!)</li>
+</ul>
+<p>이는 <strong>A10G의 스레드 제한이 지배적</strong>임을 보여줍니다 - SM당 최대 스레드가 1,536개이므로 1,024 스레드 블록은 1개만 들어갑니다. 이론(66.7%)과 실측(~65%) 사이의 작은 차이는 하드웨어 스케줄링 오버헤드와 드라이버 제약에서 비롯됩니다.</p>
+<h2 id="이론과-현실이-근접한-이유"><a class="header" href="#이론과-현실이-근접한-이유"><strong>이론과 현실이 근접한 이유</strong></a></h2>
+<p><strong>이론적(66.7%)과 실측(~65%) 점유율 사이 작은 차이의 원인:</strong></p>
+<ol>
+<li><strong>하드웨어 스케줄링 오버헤드</strong>: 실제 워프 스케줄러는 이론적 계산을 넘어서는 실질적 제약이 있음</li>
+<li><strong>CUDA 런타임 예약</strong>: 드라이버와 런타임 오버헤드가 가용 SM 리소스를 약간 줄임</li>
+<li><strong>메모리 컨트롤러 압박</strong>: A10G의 메모리 서브시스템이 약간의 스케줄링 제약을 만듦</li>
+<li><strong>전력 및 열 관리</strong>: 동적 주파수 조절이 최대 성능에 영향</li>
+<li><strong>명령어 캐시 효과</strong>: 실제 커널은 점유율 계산에 포착되지 않는 명령어 페치 오버헤드가 있음</li>
+</ol>
+<p><strong>핵심 통찰</strong>: 이론과 실측이 근접하다는 것(66.7% vs ~65%)은 레지스터와 공유 메모리 차이와 무관하게 <strong>A10G의 스레드 제한이 세 커널 모두를 지배</strong>한다는 뜻입니다. 진짜 병목을 정확히 짚어낸 좋은 사례입니다!</p>
+<h2 id="점유율-미스터리-해설"><a class="header" href="#점유율-미스터리-해설"><strong>점유율 미스터리 해설</strong></a></h2>
+<p><strong>미스터리의 진짜 정체:</strong></p>
+<ul>
+<li>리소스 차이가 극적인데도 <strong>세 커널 모두 거의 동일한 점유율</strong>을 달성 (~64-66%)</li>
+<li><strong>성능이 본질적으로 동일</strong> (세 커널 모두 &lt;2% 변동)</li>
+<li><strong>이론이 점유율을 정확히 예측</strong> (66.7% 이론 ≈ 65% 실측)</li>
+<li><strong>미스터리는 점유율 불일치가 아닙니다</strong> - 리소스 사용이 크게 다른데도 왜 점유율과 성능이 동일한지가 진짜 미스터리입니다!</li>
+</ul>
+<p><strong>리소스 사용이 다른데 성능이 동일한 이유:</strong></p>
+<p><strong>SAXPY 워크로드의 특성:</strong></p>
+<ul>
+<li><strong>메모리 바운드 연산:</strong> 각 스레드의 연산량이 극히 적음 (<code>y[i] = alpha * x[i] + y[i]</code>)</li>
+<li><strong>높은 메모리 트래픽:</strong> 스레드당 2개 값 읽기, 1개 값 쓰기</li>
+<li><strong>낮은 산술 강도:</strong> 12바이트 메모리 트래픽당 2 FLOPS만 수행</li>
+</ul>
+<p><strong>메모리 대역폭 분석 (A10G):</strong></p>
+<pre><code>단일 커널 패스 분석:
+- 입력 배열: 32M × 4바이트 × 2 배열 = 256MB 읽기
+- 출력 배열: 32M × 4바이트 × 1 배열 = 128MB 쓰기
+- 커널당 총량: 384MB 메모리 트래픽
+
+최대 대역폭 (A10G): 600 GB/s
+단일 패스 시간: 384MB / 600 GB/s ≈ 0.64ms 이론적 최소치
+벤치마크 시간: ~328ms (여러 반복 + 오버헤드 포함)
+</code></pre>
+<p><strong>실제 성능 결정 요인:</strong></p>
+<ol>
+<li><strong>메모리 대역폭 활용</strong>: 모든 커널이 가용 메모리 대역폭을 포화시킴</li>
+<li><strong>연산 오버헤드</strong>: Sophisticated 커널이 추가 작업을 수행 (레지스터 압박 효과)</li>
+<li><strong>공유 메모리 이점</strong>: Balanced 커널이 일부 캐싱 이점을 얻음</li>
+<li><strong>컴파일러 최적화</strong>: 최신 컴파일러가 가능한 한 레지스터 사용을 최소화</li>
+</ol>
+<h2 id="점유율-임계값-개념-이해하기"><a class="header" href="#점유율-임계값-개념-이해하기"><strong>점유율 임계값 개념 이해하기</strong></a></h2>
+<p><strong>핵심 통찰: 점유율은 “최대“가 아닌 “충분함“의 문제</strong></p>
+<p><strong>대기 시간 은닉 요구 사항:</strong></p>
+<ul>
+<li><strong>메모리 지연 시간:</strong> 최신 GPU에서 ~500-800 사이클</li>
+<li><strong>워프 스케줄링:</strong> GPU는 이 지연 시간을 숨기기 위해 충분한 워프가 필요</li>
+<li><strong>충분한 임계값:</strong> 보통 25-50% 점유율이면 대기 시간을 효과적으로 숨길 수 있음</li>
+</ul>
+<p><strong>높은 점유율이 항상 도움이 되지 않는 이유:</strong></p>
+<p><strong>리소스 경쟁:</strong></p>
+<ul>
+<li>더 많은 활성 스레드가 동일한 메모리 대역폭을 놓고 경쟁</li>
+<li>동시 접근이 많아지면 캐시 압박이 증가</li>
+<li>레지스터/공유 메모리 압박이 개별 스레드 성능을 저하시킬 수 있음</li>
+</ul>
+<p><strong>워크로드별 최적화:</strong></p>
+<ul>
+<li><strong>연산 바운드:</strong> 높은 점유율이 ALU 파이프라인 지연 시간을 숨기는 데 도움</li>
+<li><strong>메모리 바운드:</strong> 점유율과 무관하게 메모리 대역폭이 성능을 제한</li>
+<li><strong>혼합 워크로드:</strong> 점유율과 다른 최적화 요소 사이에서 균형 필요</li>
+</ul>
+<h2 id="실전-점유율-최적화-원칙"><a class="header" href="#실전-점유율-최적화-원칙"><strong>실전 점유율 최적화 원칙</strong></a></h2>
+<p><strong>체계적 점유율 분석 접근법:</strong></p>
+<p><strong>1단계: 이론적 한계 계산</strong></p>
+<pre><code class="language-bash"># GPU 스펙 확인
+pixi run gpu-specs
+</code></pre>
+<p><strong>2단계: 실제 사용량 프로파일링</strong></p>
+<pre><code class="language-bash"># 리소스 소비량 측정
+ncu --set=@occupancy --section=LaunchStats your_kernel
+
+# 달성된 점유율 측정
+ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
+</code></pre>
+<p><strong>3단계: 성능 검증</strong></p>
+<pre><code class="language-bash"># 항상 실제 성능 측정으로 검증
+ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
+</code></pre>
+<p><strong>근거 기반 의사결정 프레임워크:</strong></p>
+<pre><code>점유율 분석 → 최적화 전략:
+
+높은 점유율 (&gt;70%) + 좋은 성능:
+→ 점유율은 충분, 다른 병목에 집중
+
+낮은 점유율 (&lt;30%) + 나쁜 성능:
+→ 리소스 최적화를 통해 점유율 향상 필요
+
+적당한 점유율 (50-70%) + 나쁜 성능:
+→ 메모리 대역폭, 캐시, 연산 병목 조사 필요
+
+낮은 점유율 (&lt;30%) + 좋은 성능:
+→ 워크로드가 높은 점유율을 필요로 하지 않음 (메모리 바운드)
+</code></pre>
+<h2 id="실용적인-점유율-최적화-기법"><a class="header" href="#실용적인-점유율-최적화-기법"><strong>실용적인 점유율 최적화 기법</strong></a></h2>
+<p><strong>레지스터 최적화:</strong></p>
+<ul>
+<li><strong>적절한 데이터 타입 사용</strong>: <code>float32</code> vs <code>float64</code>, <code>int32</code> vs <code>int64</code></li>
+<li><strong>중간 변수 최소화</strong>: 컴파일러가 임시 저장소를 최적화하도록 맡기기</li>
+<li><strong>루프 전개 고려</strong>: 점유율과 명령어 수준 병렬성 사이의 균형</li>
+</ul>
+<p><strong>공유 메모리 최적화:</strong></p>
+<ul>
+<li><strong>필요한 크기 계산</strong>: 과다 할당 방지</li>
+<li><strong>타일링 전략 고려</strong>: 점유율과 데이터 재사용 사이의 균형</li>
+<li><strong>뱅크 충돌 회피</strong>: 충돌 없는 접근 패턴 설계</li>
+</ul>
+<p><strong>블록 크기 튜닝:</strong></p>
+<ul>
+<li><strong>여러 설정 테스트</strong>: 블록당 256, 512, 1024 스레드</li>
+<li><strong>워프 활용 고려</strong>: 가능하면 불완전한 워프 방지</li>
+<li><strong>점유율과 리소스 사용의 균형</strong>: 블록이 클수록 리소스 한계에 도달할 수 있음</li>
+</ul>
+<h2 id="핵심-정리-a10g-미스터리에서-보편적-원칙으로"><a class="header" href="#핵심-정리-a10g-미스터리에서-보편적-원칙으로"><strong>핵심 정리: A10G 미스터리에서 보편적 원칙으로</strong></a></h2>
+<p>이 A10G 점유율 조사는 모든 GPU 최적화에 적용되는 명확한 통찰의 진행을 보여줍니다:</p>
+<p><strong>A10G 발견 과정:</strong></p>
+<ol>
+<li><strong>스레드 제한이 모든 것을 지배</strong> - 19 vs 40 레지스터, 0KB vs 49KB 공유 메모리 차이에도 불구하고, A10G의 1,536 스레드 용량 때문에 모든 커널이 SM당 1블록이라는 동일한 제한에 걸림</li>
+<li><strong>이론이 현실과 근접하게 일치</strong> - 66.7% 이론 vs ~65% 실측 점유율은 올바른 병목을 식별했을 때 계산이 유효함을 보여줌</li>
+<li><strong>메모리 대역폭이 성능을 지배</strong> - 동일한 66.7% 점유율에서, SAXPY의 메모리 바운드 특성(600 GB/s 포화)이 리소스 차이에도 불구하고 동일한 성능을 설명</li>
+</ol>
+<p><strong>보편적인 GPU 최적화 원칙:</strong></p>
+<p><strong>진짜 병목 식별하기:</strong></p>
+<ul>
+<li><strong>모든 리소스</strong>에서 점유율 제한을 계산: 레지스터, 공유 메모리, 스레드 용량</li>
+<li>가장 제한적인 요소가 결정적 - 레지스터나 공유 메모리가 항상 병목이라고 가정하지 말 것</li>
+<li>메모리 바운드 워크로드(SAXPY 같은)는 대기 시간을 숨길 만큼 충분한 스레드만 확보되면 점유율이 아닌 대역폭이 제한 요인</li>
+</ul>
+<p><strong>점유율이 중요한 경우 vs 중요하지 않은 경우:</strong></p>
+<ul>
+<li><strong>높은 점유율이 중요</strong>: 연산 집약적 커널(GEMM, 과학 시뮬레이션)에서 ALU 파이프라인이 멈추는 시간을 다른 워프 실행으로 숨겨야 하는 경우</li>
+<li><strong>점유율이 덜 중요</strong>: 메모리 바운드 연산(BLAS Level 1, 메모리 복사)에서 점유율이 제한 요인이 되기 전에 대역폭이 포화되는 경우</li>
+<li><strong>적정 수준</strong>: 60-70% 점유율이면 대기 시간을 숨기기에 충분 - 그 이상은 진짜 병목에 집중</li>
+</ul>
+<p><strong>실전 최적화 워크플로우:</strong></p>
+<ol>
+<li><strong>먼저 프로파일링</strong> (<code>ncu --set=@occupancy</code>) - 실제 리소스 사용량과 점유율 측정</li>
+<li><strong>이론적 한계 계산</strong> - GPU 스펙 활용 (<code>pixi run gpu-specs</code>)</li>
+<li><strong>지배적 제약 식별</strong> - 레지스터, 공유 메모리, 스레드 용량, 또는 메모리 대역폭</li>
+<li><strong>병목 최적화</strong> - 제한 요인이 아닌 리소스에 시간 낭비하지 않기</li>
+<li><strong>종단간 성능으로 검증</strong> - 점유율은 성능을 위한 수단이지 목표가 아님</li>
+</ol>
+<p>A10G 사례는 <strong>체계적 병목 분석이 직관보다 낫다</strong>는 것을 완벽하게 보여줍니다 - 스레드 용량이 지배적이었기에 Sophisticated 커널의 높은 레지스터 압박은 무관했고, 동일한 점유율과 메모리 대역폭 포화가 성능 미스터리를 완전히 설명해줍니다.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_30/profile_kernels.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_32/puzzle_32.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_30/profile_kernels.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_32/puzzle_32.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📶 다단계 파이프라인 조정 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<h1 id="다단계-파이프라인-조정"><a class="header" href="#다단계-파이프라인-조정">다단계 파이프라인 조정</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>조율된 3단계 파이프라인을 통해 이미지를 처리하는 커널을 구현합니다. 서로 다른 스레드 그룹이 특화된 처리 단계를 담당하고, 명시적 배리어로 동기화됩니다.</p>
+<p><strong>참고:</strong> <em>스레드 역할이 특화되어 있습니다: Stage 1 (스레드 0-127)은 데이터를 로드하고 전처리하며, Stage 2 (스레드 128-255)는 블러 연산을 적용하고, Stage 3 (전체 스레드)은 최종 스무딩을 수행합니다.</em></p>
+<p><strong>알고리즘 아키텍처:</strong> 이 퍼즐은 하나의 GPU 블록 안에서 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하는 <strong>생산자-소비자 파이프라인</strong>을 구현합니다. 모든 스레드가 서로 다른 데이터에 대해 동일한 알고리즘을 실행하는 전통적인 GPU 프로그래밍과 달리, 이 접근 방식은 스레드를 <strong>기능별로 특화</strong>하여 분할합니다.</p>
+<p><strong>파이프라인 개념:</strong> 알고리즘은 세 개의 구분된 단계를 통해 데이터를 처리하며, 각 단계에는 서로 다른 알고리즘을 실행하는 특화된 스레드 그룹이 있습니다. 각 단계는 다음 단계가 소비하는 데이터를 생성하여, 배리어로 신중하게 동기화해야 하는 명시적 <strong>생산자-소비자 관계</strong>를 만듭니다.</p>
+<p><strong>데이터 의존성과 동기화:</strong> 각 단계는 다음 단계가 소비하는 데이터를 생성합니다:</p>
+<ul>
+<li><strong>Stage 1 → Stage 2</strong>: 첫 번째 단계가 블러 처리를 위한 전처리 데이터를 생성</li>
+<li><strong>Stage 2 → Stage 3</strong>: 두 번째 단계가 최종 스무딩을 위한 블러 결과를 생성</li>
+<li><strong>배리어가 경쟁 상태를 방지</strong>: 의존하는 단계가 시작되기 전에 해당 단계가 완전히 완료되도록 보장</li>
+</ul>
+<p>구체적으로, 다단계 파이프라인은 세 가지 수학 연산으로 구성된 조율된 이미지 처리 알고리즘을 구현합니다:</p>
+<p><strong>Stage 1 - 전처리 강화:</strong></p>
+<p>\[P[i] = I[i] \times 1.1\]</p>
+<p>여기서 \(P[i]\)는 전처리된 데이터이고 \(I[i]\)는 입력 데이터입니다.</p>
+<p><strong>Stage 2 - 수평 블러 필터:</strong></p>
+<p>\[B[i] = \frac{1}{N_i} \sum_{k=-2}^{2} P[i+k] \quad \text{where } i+k \in [0, 255]\]</p>
+<p>여기서 \(B[i]\)는 블러 결과이고, \(N_i\)는 타일 경계 내의 유효한 이웃 수입니다.</p>
+<p><strong>Stage 3 - 연쇄적 이웃 스무딩:</strong></p>
+<p>\[F[i] = \begin{cases}
+(B[i] + B[i+1]) \times 0.6 &amp; \text{if } i = 0 \\
+((B[i] + B[i-1]) \times 0.6 + B[i+1]) \times 0.6 &amp; \text{if } 0 &lt; i &lt; 255 \\
+(B[i] + B[i-1]) \times 0.6 &amp; \text{if } i = 255
+\end{cases}\]</p>
+<p>여기서 \(F[i]\)는 연쇄적 스무딩이 적용된 최종 출력입니다.</p>
+<p><strong>스레드 특화:</strong></p>
+<ul>
+<li><strong>스레드 0-127</strong>: \(i \in \{0, 1, 2, \ldots, 255\}\)에 대해 \(P[i]\) 계산 (스레드당 2개 요소)</li>
+<li><strong>스레드 128-255</strong>: \(i \in \{0, 1, 2, \ldots, 255\}\)에 대해 \(B[i]\) 계산 (스레드당 2개 요소)</li>
+<li><strong>전체 256개 스레드</strong>: \(i \in \{0, 1, 2, \ldots, 255\}\)에 대해 \(F[i]\) 계산 (스레드당 1개 요소)</li>
+</ul>
+<p><strong>동기화 지점:</strong></p>
+<p>\[\text{barrier}_1 \Rightarrow P[i] \text{ complete} \Rightarrow \text{barrier}_2 \Rightarrow B[i] \text{ complete} \Rightarrow \text{barrier}_3 \Rightarrow F[i] \text{ complete}\]</p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서는 다음을 배웁니다:</p>
+<ul>
+<li>하나의 GPU 블록 안에서 스레드 역할 특화 구현</li>
+<li>처리 단계 간 생산자-소비자 관계 조율</li>
+<li>서로 다른 알고리즘 간의 동기화를 위한 배리어 사용 (동일한 알고리즘 내부뿐 아니라)</li>
+</ul>
+<p>핵심 통찰은 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하면서 전략적 배리어 배치를 통해 조율되는 다단계 파이프라인을 어떻게 설계하는지 이해하는 것입니다.</p>
+<p><strong>왜 중요한가:</strong> 대부분의 GPU 튜토리얼은 단일 알고리즘 내에서의 배리어 사용법 - 리덕션이나 공유 메모리 연산 중 스레드를 동기화하는 것 - 을 가르칩니다. 하지만 실제 GPU 알고리즘에서는 신중하게 조율해야 하는 여러 개의 구분된 처리 단계를 포함하는 <strong>아키텍처적 복잡성</strong>이 필요한 경우가 많습니다. 이 퍼즐은 단일체적 알고리즘을 특화되고 조율된 처리 파이프라인으로 변환하는 방법을 보여줍니다.</p>
+<p><strong>이전 퍼즐과 현재의 배리어 사용 비교:</strong></p>
+<ul>
+<li><strong>이전 퍼즐 (<a href="../puzzle_08/puzzle_08.html">P8</a>, <a href="../puzzle_12/puzzle_12.html">P12</a>, <a href="../puzzle_15/puzzle_15.html">P15</a>):</strong> 모든 스레드가 동일한 알고리즘을 실행하고, 배리어는 알고리즘 단계 내에서 동기화</li>
+<li><strong>이 퍼즐:</strong> 서로 다른 스레드 그룹이 서로 다른 알고리즘을 실행하고, 배리어는 서로 다른 알고리즘 간의 조율</li>
+</ul>
+<p><strong>스레드 특화 아키텍처:</strong> 스레드가 데이터 인덱스만 다른 데이터 병렬 처리와 달리, 이 퍼즐은 파이프라인에서의 역할에 따라 스레드가 근본적으로 다른 코드 경로를 실행하는 <strong>알고리즘 병렬 처리</strong>를 구현합니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<p><strong>시스템 매개변수:</strong></p>
+<ul>
+<li><strong>이미지 크기</strong>: <code>SIZE = 1024</code> 요소 (간소화를 위해 1D)</li>
+<li><strong>블록당 스레드 수</strong>: <code>TPB = 256</code> 스레드, <code>(256, 1)</code> 블록 차원으로 구성</li>
+<li><strong>그리드 구성</strong>: 전체 이미지를 타일 단위로 처리하기 위한 <code>(4, 1)</code> 블록 (총 4개 블록)</li>
+<li><strong>데이터 타입</strong>: 모든 연산에 <code>DType.float32</code></li>
+</ul>
+<p><strong>스레드 특화 아키텍처:</strong></p>
+<ul>
+<li>
+<p><strong>Stage 1 스레드</strong>: <code>STAGE1_THREADS = 128</code> (스레드 0-127, 블록의 전반부)</p>
+<ul>
+<li><strong>역할</strong>: 전역 메모리에서 입력 데이터를 로드하고 전처리 적용</li>
+<li><strong>작업 분배</strong>: 효율적인 부하 균형을 위해 스레드당 2개 요소 처리</li>
+<li><strong>출력</strong>: <code>input_shared[256]</code>에 전처리된 데이터 채우기</li>
+</ul>
+</li>
+<li>
+<p><strong>Stage 2 스레드</strong>: <code>STAGE2_THREADS = 128</code> (스레드 128-255, 블록의 후반부)</p>
+<ul>
+<li><strong>역할</strong>: 전처리된 데이터에 수평 블러 필터 적용</li>
+<li><strong>작업 분배</strong>: 스레드당 2개의 블러 연산 처리</li>
+<li><strong>출력</strong>: <code>blur_shared[256]</code>에 블러 결과 채우기</li>
+</ul>
+</li>
+<li>
+<p><strong>Stage 3 스레드</strong>: 전체 256개 스레드 협력</p>
+<ul>
+<li><strong>역할</strong>: 최종 스무딩 및 전역 메모리로 출력</li>
+<li><strong>작업 분배</strong>: 일대일 매핑 (스레드 <code>i</code>가 요소 <code>i</code>를 처리)</li>
+<li><strong>출력</strong>: 글로벌 <code>output</code> 배열에 최종 결과 기록</li>
+</ul>
+</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">
+comptime TPB = 256  # Threads per block for pipeline stages
+comptime SIZE = 1024  # Image size (1D for simplicity)
+comptime BLOCKS_PER_GRID = (4, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+
+# Multi-stage processing configuration
+comptime STAGE1_THREADS = TPB // 2
+comptime STAGE2_THREADS = TPB // 2
+comptime BLUR_RADIUS = 2
+
+
+fn multi_stage_image_blur_pipeline[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Multi-stage image blur pipeline with barrier coordination.
+
+    Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
+    Stage 2 (threads 128-255): Apply 5-point blur with BLUR_RADIUS=2
+    Stage 3 (all threads): Final neighbor smoothing and output
+    """
+
+    # Shared memory buffers for pipeline stages
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # Stage 1: Load and preprocess (threads 0-127)
+
+    # FILL ME IN (roughly 10 lines)
+
+    barrier()  # Wait for Stage 1 completion
+
+    # Stage 2: Apply blur (threads 128-255)
+
+    # FILL ME IN (roughly 25 lines)
+
+    barrier()  # Wait for Stage 2 completion
+
+    # Stage 3: Final smoothing (all threads)
+
+    # FILL ME IN (roughly 7 lines)
+
+    barrier()  # Ensure all writes complete
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p29/p29.mojo" class="filename">전체 파일 보기: problems/p29/p29.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="스레드-역할-식별"><a class="header" href="#스레드-역할-식별"><strong>스레드 역할 식별</strong></a></h3>
+<ul>
+<li>스레드 인덱스 비교를 통해 각 스레드가 어떤 단계를 실행해야 하는지 결정</li>
+<li>Stage 1: 전반부 스레드 (스레드 0-127)</li>
+<li>Stage 2: 후반부 스레드 (스레드 128-255)</li>
+<li>Stage 3: 모든 스레드 참여</li>
+</ul>
+<h3 id="stage-1-접근-방식"><a class="header" href="#stage-1-접근-방식"><strong>Stage 1 접근 방식</strong></a></h3>
+<ul>
+<li>적절한 인덱스 비교를 통해 Stage 1 스레드 식별</li>
+<li>부하 균형을 위해 각 스레드가 여러 요소를 처리</li>
+<li>전처리 강화 계수 적용</li>
+<li>제로 패딩을 사용한 적절한 경계 처리 구현</li>
+</ul>
+<h3 id="stage-2-접근-방식"><a class="header" href="#stage-2-접근-방식"><strong>Stage 2 접근 방식</strong></a></h3>
+<ul>
+<li>Stage 2 스레드를 식별하고 인덱스를 처리 범위에 매핑</li>
+<li>이웃 요소의 평균을 구하는 블러 커널 구현</li>
+<li>유효한 이웃만 포함하여 경계 조건 처리</li>
+<li>효율성을 위해 스레드당 여러 요소 처리</li>
+</ul>
+<h3 id="stage-3-접근-방식"><a class="header" href="#stage-3-접근-방식"><strong>Stage 3 접근 방식</strong></a></h3>
+<ul>
+<li>모든 스레드가 최종 처리에 참여</li>
+<li>지정된 스케일링 계수를 사용한 이웃 스무딩 적용</li>
+<li>이웃이 존재하지 않는 경우의 엣지 케이스 처리</li>
+<li>경계 검사를 통해 글로벌 출력에 결과 기록</li>
+</ul>
+<h3 id="동기화-전략"><a class="header" href="#동기화-전략"><strong>동기화 전략</strong></a></h3>
+<ul>
+<li>경쟁 상태를 방지하기 위해 단계 사이에 배리어 배치</li>
+<li>의존하는 단계가 시작되기 전에 각 단계가 완료되도록 보장</li>
+<li>블록 종료 전 완료를 보장하기 위해 최종 배리어 사용</li>
+</ul>
+</div>
+</details>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령을 실행합니다:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p29 --multi-stage
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p29 --multi-stage
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p29 --multi-stage
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 성공적으로 완료하면 다음과 유사한 출력이 표시됩니다:</p>
+<pre><code>Puzzle 29: GPU Synchronization Primitives
+==================================================
+TPB: 256
+SIZE: 1024
+STAGE1_THREADS: 128
+STAGE2_THREADS: 128
+BLUR_RADIUS: 2
+
+Testing Puzzle 29A: Multi-Stage Pipeline Coordination
+============================================================
+Multi-stage pipeline blur completed
+Input sample: 0.0 1.01 2.02
+Output sample: 1.6665002 2.3331003 3.3996604
+✅ Multi-stage pipeline coordination test PASSED!
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Multi-stage image blur pipeline with barrier coordination.
+
+    Stage 1 (threads 0-127): Load input data and apply 1.1x preprocessing
+    Stage 2 (threads 128-255): Apply 5-point blur with BLUR_RADIUS=2
+    Stage 3 (all threads): Final neighbor smoothing and output
+    """
+
+    # Shared memory buffers for pipeline stages
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    blur_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # Stage 1: Load and preprocess (threads 0-127)
+    if local_i &lt; STAGE1_THREADS:
+        if global_i &lt; size:
+            input_shared[local_i] = input[global_i] * 1.1
+            # Each thread loads 2 elements
+            if local_i + STAGE1_THREADS &lt; size:
+                input_shared[local_i + STAGE1_THREADS] = (
+                    input[global_i + STAGE1_THREADS] * 1.1
+                )
+        else:
+            # Zero-padding for out-of-bounds
+            input_shared[local_i] = 0.0
+            if local_i + STAGE1_THREADS &lt; TPB:
+                input_shared[local_i + STAGE1_THREADS] = 0.0
+
+    barrier()  # Wait for Stage 1 completion
+
+    # Stage 2: Apply blur (threads 128-255)
+    if local_i &gt;= STAGE1_THREADS:
+        blur_idx = local_i - STAGE1_THREADS
+        var blur_sum: Scalar[dtype] = 0.0
+        blur_count = 0
+
+        # 5-point blur kernel
+        for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+            sample_idx = blur_idx + offset
+            if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                blur_count += 1
+
+        if blur_count &gt; 0:
+            blur_shared[blur_idx] = blur_sum / blur_count
+        else:
+            blur_shared[blur_idx] = 0.0
+
+        # Process second element
+        second_idx = blur_idx + STAGE1_THREADS
+        if second_idx &lt; TPB:
+            blur_sum = 0.0
+            blur_count = 0
+            for offset in range(-BLUR_RADIUS, BLUR_RADIUS + 1):
+                sample_idx = second_idx + offset
+                if sample_idx &gt;= 0 and sample_idx &lt; TPB:
+                    blur_sum += rebind[Scalar[dtype]](input_shared[sample_idx])
+                    blur_count += 1
+
+            if blur_count &gt; 0:
+                blur_shared[second_idx] = blur_sum / blur_count
+            else:
+                blur_shared[second_idx] = 0.0
+
+    barrier()  # Wait for Stage 2 completion
+
+    # Stage 3: Final smoothing (all threads)
+    if global_i &lt; size:
+        final_value = blur_shared[local_i]
+
+        # Neighbor smoothing with 0.6 scaling
+        if local_i &gt; 0:
+            final_value = (final_value + blur_shared[local_i - 1]) * 0.6
+        if local_i &lt; TPB - 1:
+            final_value = (final_value + blur_shared[local_i + 1]) * 0.6
+
+        output[global_i] = final_value
+
+    barrier()  # Ensure all writes complete
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>핵심 통찰은 이것이 스레드 역할 특화를 가진 <strong>파이프라인 아키텍처 문제</strong>임을 인식하는 것입니다:</p>
+<ol>
+<li><strong>단계별 스레드 그룹 설계</strong>: 데이터뿐만 아니라 기능별로 스레드를 분할</li>
+<li><strong>생산자-소비자 체인 구현</strong>: Stage 1이 Stage 2를 위해 생산하고, Stage 2가 Stage 3을 위해 생산</li>
+<li><strong>전략적 배리어 배치</strong>: 동일한 알고리즘 내가 아니라 서로 다른 알고리즘 간의 동기화</li>
+<li><strong>메모리 접근 패턴 최적화</strong>: 병합된 읽기와 효율적인 공유 메모리 사용 보장</li>
+</ol>
+<p><strong>상세 설명이 포함된 전체 솔루션</strong></p>
+<p>다단계 파이프라인 솔루션은 정교한 스레드 특화와 배리어 조정을 보여줍니다. 이 접근 방식은 전통적인 단일체적 GPU 알고리즘을 특화되고 조율된 처리 파이프라인으로 변환합니다.</p>
+<h2 id="파이프라인-아키텍처-설계"><a class="header" href="#파이프라인-아키텍처-설계"><strong>파이프라인 아키텍처 설계</strong></a></h2>
+<p>이 퍼즐의 근본적인 돌파구는 데이터가 아닌 <strong>역할에 의한 스레드 특화</strong>입니다:</p>
+<p><strong>전통적인 접근 방식:</strong> 모든 스레드가 서로 다른 데이터에 대해 동일한 알고리즘을 실행</p>
+<ul>
+<li>모든 스레드가 동일한 연산을 수행 (리덕션이나 행렬 연산 등)</li>
+<li>배리어는 동일한 알고리즘 단계 내에서 스레드를 동기화</li>
+<li>스레드 역할은 처리하는 데이터 인덱스만 다름</li>
+</ul>
+<p><strong>이 퍼즐의 혁신:</strong> 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행</p>
+<ul>
+<li>스레드 0-127이 로딩 및 전처리 알고리즘을 실행</li>
+<li>스레드 128-255가 블러 처리 알고리즘을 실행</li>
+<li>모든 스레드가 최종 스무딩 알고리즘에 협력</li>
+<li>배리어는 동일한 알고리즘 내가 아니라 서로 다른 알고리즘 간의 조율</li>
+</ul>
+<h2 id="생산자-소비자-조정"><a class="header" href="#생산자-소비자-조정"><strong>생산자-소비자 조정</strong></a></h2>
+<p>스레드가 동일한 알고리즘 내에서 동등한 역할을 하던 이전 퍼즐과 달리, 이 퍼즐은 명시적인 생산자-소비자 관계를 설정합니다:</p>
+<ul>
+<li><strong>Stage 1</strong>: 생산자 (Stage 2를 위한 전처리 데이터 생성)</li>
+<li><strong>Stage 2</strong>: 소비자 (Stage 1의 데이터 사용) + 생산자 (Stage 3을 위한 블러 데이터 생성)</li>
+<li><strong>Stage 3</strong>: 소비자 (Stage 2의 데이터 사용)</li>
+</ul>
+<h2 id="전략적-배리어-배치"><a class="header" href="#전략적-배리어-배치"><strong>전략적 배리어 배치</strong></a></h2>
+<p>배리어가 언제 필요하고 언제 낭비적인지 이해하기:</p>
+<ul>
+<li><strong>필요한 경우</strong>: 의존적인 단계 사이에서 경쟁 상태를 방지하기 위해</li>
+<li><strong>낭비적인 경우</strong>: 같은 단계의 독립적인 연산 내에서</li>
+<li><strong>성능 통찰</strong>: 각 배리어에는 비용이 있으므로 전략적으로 사용</li>
+</ul>
+<p><strong>핵심 동기화 지점:</strong></p>
+<ol>
+<li><strong>Stage 1 이후</strong>: Stage 2가 불완전한 전처리 데이터를 읽는 것을 방지</li>
+<li><strong>Stage 2 이후</strong>: Stage 3이 불완전한 블러 결과를 읽는 것을 방지</li>
+<li><strong>Stage 3 이후</strong>: 블록 종료 전 모든 출력 쓰기가 완료되도록 보장</li>
+</ol>
+<h2 id="스레드-활용-패턴"><a class="header" href="#스레드-활용-패턴"><strong>스레드 활용 패턴</strong></a></h2>
+<ul>
+<li><strong>Stage 1</strong>: 50% 활용 (256개 중 128개 스레드 활성, 128개 유휴)</li>
+<li><strong>Stage 2</strong>: 50% 활용 (128개 활성, 128개 유휴)</li>
+<li><strong>Stage 3</strong>: 100% 활용 (전체 256개 스레드 활성)</li>
+</ul>
+<p>이것은 서로 다른 스레드 그룹이 조율된 파이프라인 내에서 서로 다른 연산 작업에 특화되는 정교한 <strong>알고리즘 병렬 처리</strong>를 보여주며, 단순한 데이터 병렬 처리를 넘어 실제 GPU 알고리즘에 필요한 아키텍처적 사고로 나아갑니다.</p>
+<h2 id="메모리-계층-구조-최적화"><a class="header" href="#메모리-계층-구조-최적화"><strong>메모리 계층 구조 최적화</strong></a></h2>
+<p><strong>공유 메모리 아키텍처:</strong></p>
+<ul>
+<li>두 개의 특화된 버퍼가 단계 간 데이터 흐름을 처리</li>
+<li>전역 메모리 접근은 경계 연산에만 최소화</li>
+<li>모든 중간 처리에 빠른 공유 메모리 사용</li>
+</ul>
+<p><strong>접근 패턴의 이점:</strong></p>
+<ul>
+<li><strong>Stage 1</strong>: 입력 로딩을 위한 병합된 전역 메모리 읽기</li>
+<li><strong>Stage 2</strong>: 블러 처리를 위한 빠른 공유 메모리 읽기</li>
+<li><strong>Stage 3</strong>: 출력을 위한 병합된 전역 메모리 쓰기</li>
+</ul>
+<h2 id="실제-응용-분야"><a class="header" href="#실제-응용-분야"><strong>실제 응용 분야</strong></a></h2>
+<p>이 파이프라인 아키텍처 패턴은 다음 분야의 기반이 됩니다:</p>
+<p><strong>이미지 처리 파이프라인:</strong></p>
+<ul>
+<li>다단계 필터 (블러, 선명화, 엣지 검출을 순차적으로)</li>
+<li>색 공간 변환 (RGB → HSV → 처리 → RGB)</li>
+<li>다중 알고리즘 패스를 사용한 노이즈 감소</li>
+</ul>
+<p><strong>과학 연산:</strong></p>
+<ul>
+<li>다단계 유한 차분 방법을 사용한 스텐실 연산</li>
+<li>필터링, 변환, 분석 파이프라인을 사용한 신호 처리</li>
+<li>다단계 솔버 반복을 사용한 전산 유체 역학</li>
+</ul>
+<p><strong>머신러닝:</strong></p>
+<ul>
+<li>서로 다른 연산을 위해 특화된 스레드 그룹을 가진 신경망 레이어</li>
+<li>데이터 전처리 파이프라인 (조율된 단계에서 로드, 정규화, 증강)</li>
+<li>서로 다른 스레드 그룹이 서로 다른 연산을 처리하는 배치 처리</li>
+</ul>
+<h2 id="핵심-기술적-통찰"><a class="header" href="#핵심-기술적-통찰"><strong>핵심 기술적 통찰</strong></a></h2>
+<p><strong>알고리즘 병렬 처리 vs. 데이터 병렬 처리:</strong></p>
+<ul>
+<li><strong>데이터 병렬 처리</strong>: 스레드가 서로 다른 데이터 요소에 동일한 코드를 실행</li>
+<li><strong>알고리즘 병렬 처리</strong>: 스레드가 특화된 역할에 따라 근본적으로 다른 알고리즘을 실행</li>
+</ul>
+<p><strong>배리어 사용 철학:</strong></p>
+<ul>
+<li><strong>전략적 배치</strong>: 의존적인 단계 간의 경쟁 상태를 방지하기 위해 필요한 곳에만 배리어 배치</li>
+<li><strong>성능 고려사항</strong>: 각 배리어에는 동기화 오버헤드가 발생하므로 정확하지만 절제된 사용</li>
+<li><strong>정확성 보장</strong>: 적절한 배리어 배치로 스레드 실행 타이밍에 관계없이 결정적 결과를 보장</li>
+</ul>
+<p><strong>스레드 특화의 이점:</strong></p>
+<ul>
+<li><strong>알고리즘 최적화</strong>: 각 단계를 해당 연산 패턴에 맞게 최적화 가능</li>
+<li><strong>메모리 접근 최적화</strong>: 서로 다른 단계에서 서로 다른 메모리 접근 전략 사용 가능</li>
+<li><strong>리소스 활용</strong>: 복잡한 알고리즘을 특화되고 효율적인 구성 요소로 분해 가능</li>
+</ul>
+<p>이 솔루션은 복잡한 다단계 연산을 위해 스레드 특화와 전략적 동기화를 활용하는 정교한 GPU 알고리즘을 설계하는 방법을 보여주며, 단순한 병렬 루프를 넘어 실제 GPU 소프트웨어에서 사용되는 아키텍처적 접근 방식으로 나아갑니다.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_29/puzzle_29.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_29/memory_barrier.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_29/puzzle_29.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_29/memory_barrier.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

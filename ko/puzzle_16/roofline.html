@@ -1,0 +1,374 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 루프라인 모델 알아보기 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: b56756094b4bcd75258cf09bdbbf55a4bc40df8b -->
+<h1 id="gpu-성능-이해하기-루프라인-모델"><a class="header" href="#gpu-성능-이해하기-루프라인-모델">GPU 성능 이해하기: 루프라인 모델</a></h1>
+<p>기본 행렬 곱셈을 구현했으니, 이런 궁금증이 생길 수 있습니다: <em>우리 커널은 실제로 얼마나 잘 동작하고 있을까?</em> GPU의 연산 능력에 의해 제한되는 걸까, 아니면 다른 무언가가 발목을 잡고 있는 걸까?</p>
+<p><strong>루프라인 모델</strong>(<em>역주: 루프라인은 “상한선“이라는 뜻으로, 성능이 넘을 수 없는 한계를 지붕 선에 비유한 이름입니다</em>)은 GPU 최적화의 나침반입니다. 커널의 성능을 제한하는 하드웨어 병목이 무엇인지 알려주고, 가장 효과적인 최적화 방향으로 안내합니다. 감으로 개선하는 대신, 루프라인 모델이 정확히 어디에 집중해야 하는지 보여줍니다.</p>
+<h2 id="1-모든-gpu-커널의-두-가지-성능-상한"><a class="header" href="#1-모든-gpu-커널의-두-가지-성능-상한">1. 모든 GPU 커널의 두 가지 성능 상한</a></h2>
+<p>모든 GPU 커널은 두 가지 근본적인 제약 아래에서 동작합니다:</p>
+<ul>
+<li><strong>연산 상한(compute ceiling)</strong> – 코어가 부동소수점 연산을 얼마나 빠르게 수행할 수 있는가 (최대 FLOPs/s)</li>
+<li><strong>메모리 상한(memory ceiling)</strong> – 메모리 시스템이 코어에 데이터를 얼마나 빠르게 공급할 수 있는가 (최대 bytes/s)</li>
+</ul>
+<p>어떤 상한이 커널을 제약하는지 파악하는 것이 최적화 전략의 핵심입니다. 루프라인 모델은 두 가지 핵심 지표를 그래프로 표현하여 이 관계를 시각화합니다:</p>
+<p><strong>X축: 산술 강도(Arithmetic Intensity)</strong> – 데이터 1바이트당 수행하는 연산량</p>
+<p>\[\Large I = \frac{\text{Total FLOPs}}{\text{Total Bytes from Memory}} \quad [\text{FLOP/B}]\]</p>
+<p><strong>Y축: 실측 성능(Sustained Performance)</strong> – 커널이 실제로 달성하는 속도</p>
+<p>\[\Large P_{\text{sustained}} = \frac{\text{Total FLOPs}}{\text{Elapsed Time}} \quad [\text{GFLOP/s}]\]</p>
+<p>두 개의 “상한(roof)“이 달성 가능한 성능의 상한을 정합니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>상한</th><th>수식</th><th>의미</th></tr></thead><tbody>
+<tr><td><strong>메모리 상한</strong></td><td>\(P = B_{\text{peak}} \cdot I\)</td><td>기울어진 직선. 메모리 대역폭에 의해 성능이 제한됨</td></tr>
+<tr><td><strong>연산 상한</strong></td><td>\(P = P_{\text{peak}}\)</td><td>수평선. 연산 처리량에 의해 성능이 제한됨</td></tr>
+</tbody></table>
+</div>
+<p><strong>임계 강도(critical intensity)</strong></p>
+<p>\[\Large I^* = \frac{P_{\text{peak}}}{B_{\text{peak}}}\]</p>
+<p>는 커널이 메모리 바운드(\(I &lt; I^\ast\) )에서 연산 바운드(\(I &gt; I^\ast\) )로 전환되는 지점입니다.</p>
+<h2 id="2-하드웨어-예시-nvidia-a100-사양"><a class="header" href="#2-하드웨어-예시-nvidia-a100-사양">2. 하드웨어 예시: NVIDIA A100 사양</a></h2>
+<p>이론을 NVIDIA A100의 구체적인 숫자로 확인해 보겠습니다:</p>
+<p><strong>최대 FP32 처리량</strong>
+\[\Large P_{\text{peak}} = 19.5 \text{ TFLOP/s} = 19{,}500 \text{ GFLOP/s}\]</p>
+<p><strong>최대 HBM2 대역폭</strong>
+\[\Large B_{\text{peak}} = 1{,}555 \text{ GB/s}\]</p>
+<p><strong>임계 강도</strong>
+\[\Large I^* = \frac{19{,}500}{1{,}555} \approx 12.5 \text{ FLOP/B}\]</p>
+<p><em>출처: <a href="https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf">NVIDIA A100 Tensor Core GPU Architecture</a></em></p>
+<p>이는 산술 강도가 12.5 FLOP/B 미만인 커널은 메모리 바운드, 그 이상인 커널은 연산 바운드임을 뜻합니다.</p>
+<h2 id="3-행렬-곱셈-구현의-시각화"><a class="header" href="#3-행렬-곱셈-구현의-시각화">3. 행렬 곱셈 구현의 시각화</a></h2>
+<p>아래 애니메이션은 이 퍼즐의 구현들이 A100의 루프라인 모델에 어떻게 대응하는지 보여줍니다:</p>
+<p><img src="/puzzle_16/media/videos/720p30/roofline_model_viz.gif" alt="루프라인 모델 시각화" /></p>
+<p>이 시각화는 이 퍼즐에서 거치게 될 최적화 과정을 보여줍니다:</p>
+<ol>
+<li><strong>하드웨어 제약</strong> – 빨간색 메모리 상한과 파란색 연산 상한이 성능 한계를 정의</li>
+<li><strong>출발점</strong> – 기본 구현(주황색 점)이 메모리 상한 위에 위치</li>
+<li><strong>최적화 목표</strong> – 공유 메모리 버전(청록색 점)으로 산술 강도가 개선됨</li>
+<li><strong>궁극적 목표</strong> – 금색 화살표는 커널이 연산 바운드가 되는 임계 강도 지점을 가리킴</li>
+</ol>
+<h2 id="4-기본-구현-분석"><a class="header" href="#4-기본-구현-분석">4. 기본 구현 분석</a></h2>
+<p>이전 섹션의 기본 커널이 왜 이런 성능을 보이는지 살펴보겠습니다. \(2 \times 2\) 행렬 곱셈의 경우:</p>
+<p><strong>출력 원소당 연산량</strong>: \(\text{SIZE} + (\text{SIZE}-1) = 3 \text{ FLOPs }\)</p>
+<blockquote>
+<p>각 원소에는 \(\text{SIZE}\) 회의 곱셈과 \(\text{SIZE} - 1\) 회의 덧셈이 필요합니다:
+\[C_{00} = A_{00} \cdot B_{00} + A_{01} \cdot B_{10}\]
+\(\text{SIZE} = 2\) 일 때 곱셈 2회 + 덧셈 1회 = 3 FLOPs</p>
+</blockquote>
+<p><strong>출력 원소당 메모리 접근</strong>:</p>
+<ul>
+<li>행렬 A의 행: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>행렬 B의 열: \(2 \times 4 = 8\) bytes (FP32)</li>
+<li>합계: 출력 원소당 \(16\) bytes</li>
+</ul>
+<p><strong>산술 강도</strong>:
+\[\Large I_{\text{naive}} = \frac{3 \text{ FLOPs}}{16 \text{ bytes}} = 0.1875 \text{ FLOP/B}\]</p>
+<p>이 산술 강도는 A100의 임계 강도에 한참 못 미치므로, 기본 커널은 <strong>심각한 메모리 바운드</strong> 상태입니다.</p>
+<p>\[\Large I_{\text{naive}} = 0.1875 \ll I^* = 12.5\]</p>
+<p><strong>예상 성능</strong>:
+\[\Large P \approx B_{\text{peak}} \times I_{\text{naive}} = 1{,}555 \times 0.1875 \approx 292 \text{ GFLOP/s}\]</p>
+<p>이는 GPU 연산 잠재력의 \(\frac{292}{19{,}500} \approx 1.5\%\) 에 불과합니다! 시각화에서 노란색 점이 메모리 상한 위에 놓인 것이 이를 잘 보여줍니다 — 연산 상한에는 한참 미치지 못하는 수준입니다.</p>
+<h2 id="5-다음-단계-공유-메모리-최적화"><a class="header" href="#5-다음-단계-공유-메모리-최적화">5. 다음 단계: 공유 메모리 최적화</a></h2>
+<p>루프라인 모델이 알려주는 최적화 전략은 명확합니다: 중복 메모리 접근을 줄여 <strong>산술 강도를 높이는 것</strong>입니다. 공유 메모리 접근법이 바로 이를 달성합니다:</p>
+<p><strong>공유 메모리의 이점</strong>:</p>
+<ul>
+<li><strong>협력적 로딩</strong>: 스레드들이 함께 행렬 블록을 빠른 공유 메모리에 로드</li>
+<li><strong>데이터 재사용</strong>: 로드한 원소 하나를 여러 연산에 활용</li>
+<li><strong>전역 메모리 트래픽 감소</strong>: 느린 전역 메모리에 대한 접근 횟수 감소</li>
+</ul>
+<p><strong>산술 강도 개선 예상치</strong>:
+\[\Large I_{\text{shared}} = \frac{12 \text{ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\]</p>
+<p>작은 \(2 \times 2\) 규모에서는 여전히 메모리 바운드이지만, 이 2배의 산술 강도 향상은 공유 메모리 타일을 훨씬 더 많이 재사용할 수 있는 큰 행렬에서 극적인 효과를 발휘합니다.</p>
+<h2 id="6-루프라인이-알려주는-최적화-전략"><a class="header" href="#6-루프라인이-알려주는-최적화-전략">6. 루프라인이 알려주는 최적화 전략</a></h2>
+<p>루프라인 모델은 현재 성능을 진단할 뿐 아니라, 최적화 방향까지 알려줍니다. 이후 퍼즐에서 살펴볼 핵심 기법은 다음과 같습니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>기법</th><th>루프라인 효과</th><th>구현 방법</th></tr></thead><tbody>
+<tr><td><strong>공유 메모리 타일링</strong></td><td>데이터 재사용으로 산술 강도 ↑</td><td>협력적 로딩, 블록 단위 연산</td></tr>
+<tr><td><strong>레지스터 블로킹</strong></td><td>레지스터 누적으로 메모리 트래픽 감소</td><td>레지스터 변수와 루프 전개</td></tr>
+<tr><td><strong>커널 퓨전</strong></td><td>연산 결합으로 바이트당 FLOPs 증가</td><td>단일 커널에서 여러 연산 단계 처리</td></tr>
+<tr><td><strong>메모리 병합(coalescing)</strong></td><td>실효 대역폭 활용 극대화</td><td>구조화된 접근 패턴, 적절한 스레드 구성</td></tr>
+<tr><td><strong>비동기 메모리 복사</strong></td><td>전용 복사 엔진으로 연산-메모리 중첩</td><td><code>copy_dram_to_sram_async</code>와 연산 중첩</td></tr>
+<tr><td><strong>혼합 정밀도</strong></td><td>작은 데이터 타입으로 메모리 부하 감소</td><td>FP16/BF16 입력 + FP32 누적</td></tr>
+</tbody></table>
+</div>
+<p>각 기법은 커널을 루프라인 위에서 이동시킵니다 — 메모리 상한을 따라 위로(대역폭 활용 개선), 또는 오른쪽 연산 상한을 향해(산술 강도 향상).</p>
+<p><strong>비동기 연산에 대한 참고</strong>: 표준 GPU 메모리 로드(<code>ld.global</code>)는 이미 비동기입니다 — 워프는 로드한 데이터가 실제로 필요해질 때까지 계속 실행됩니다. <code>cp.async</code>(CUDA)나 <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>(Mojo) 같은 전용 비동기 복사 명령은 여기서 한 걸음 더 나아가, 전용 복사 엔진을 사용하고 레지스터를 우회하여 자원 활용을 높입니다. 단순히 동기 연산을 비동기로 바꾸는 것과는 다릅니다.</p>
+<h2 id="7-단순한-루프라인을-넘어서"><a class="header" href="#7-단순한-루프라인을-넘어서">7. 단순한 루프라인을 넘어서</a></h2>
+<p><strong>다단계 메모리</strong>: 고급 루프라인은 L2 캐시, 공유 메모리, 레지스터 대역폭에 대해 별도의 상한을 포함하여 어떤 메모리 계층이 성능을 제약하는지 식별합니다.</p>
+<p><strong>통신 루프라인</strong>: 멀티 GPU 애플리케이션에서는 메모리 대역폭 대신 인터커넥트 대역폭(NVLink, InfiniBand)을 사용하여 스케일링 효율을 분석합니다.</p>
+<p><strong>전용 유닛</strong>: 최신 GPU는 고유한 성능 특성을 가진 텐서 코어를 포함하며, 별도의 루프라인 분석이 필요합니다.</p>
+<h2 id="8-실전에서-루프라인-활용하기"><a class="header" href="#8-실전에서-루프라인-활용하기">8. 실전에서 루프라인 활용하기</a></h2>
+<ol>
+<li><strong>커널 프로파일링</strong>: Nsight Compute 같은 도구로 실제 FLOPs와 메모리 트래픽 측정</li>
+<li><strong>데이터 포인트 표시</strong>: 산술 강도와 실측 성능 계산</li>
+<li><strong>병목 식별</strong>: 메모리 바운드 커널은 메모리 상한 위에, 연산 바운드 커널은 연산 상한에 근접</li>
+<li><strong>최적화 선택</strong>: 메모리 바운드 커널에는 대역폭 개선에, 연산 바운드 커널에는 알고리즘 변경에 집중</li>
+<li><strong>측정과 반복</strong>: 최적화가 커널을 기대한 방향으로 이동시키는지 검증</li>
+</ol>
+<h2 id="공유-메모리-퍼즐과의-연결"><a class="header" href="#공유-메모리-퍼즐과의-연결">공유 메모리 퍼즐과의 연결</a></h2>
+<p>다음 섹션에서는 커널을 루프라인 위로 끌어올리기 시작하는 <strong>공유 메모리 최적화</strong>를 구현합니다. 시각화에서 볼 수 있듯이, 주황색 점(기본)에서 청록색 점(공유 메모리)으로 이동하게 됩니다 — 데이터 재사용 개선을 통한 확실한 성능 향상입니다.</p>
+<p>\(2 \times 2\) 예제에서는 연산 상한에 도달하지 못하지만, 공유 메모리가 성능에 결정적인 역할을 하는 큰 행렬에서 동일한 원리가 어떻게 확장되는지 확인할 수 있습니다. 루프라인 모델은 공유 메모리가 <strong>왜</strong> 도움이 되고 <strong>얼마나</strong> 개선을 기대할 수 있는지 이해하기 위한 이론적 토대를 제공합니다.</p>
+<p>루프라인 모델을 이해하면 GPU 최적화가 추측에서 체계적인 엔지니어링으로 바뀝니다. 이 책의 모든 최적화 기법은 이 단순하지만 강력한 성능 모델에 대한 효과로 이해할 수 있습니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_16/naïve.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_16/shared_memory.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_16/naïve.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_16/shared_memory.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

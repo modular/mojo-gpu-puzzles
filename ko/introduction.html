@@ -1,0 +1,468 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔥 소개 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/css/custom.css">
+        <link rel="stylesheet" href="theme/css/highlight.css">
+        <link rel="stylesheet" href="theme/css/tabs.css">
+        <link rel="stylesheet" href="theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: c9af1879392132dd9daba5704b3500ab642a5ae3 -->
+<h1 id="mojo--gpu-puzzles-edition-1"><a class="header" href="#mojo--gpu-puzzles-edition-1">Mojo 🔥 GPU Puzzles, Edition 1</a></h1>
+<div class="social-buttons">
+  <a href="https://github.com/modular/mojo-gpu-puzzles" target="_blank">
+    <span class="title">Puzzles Repo</span>
+    <span class="icon icon-github"></span>
+  </a>
+  <a href="https://docs.modular.com/mojo/manual/" target="_blank">
+    <span class="title">Mojo Manual</span>
+    <span class="icon icon-book"></span>
+  </a>
+  <div class="secondary">
+    <a href="https://discord.com/channels/1087530497313357884/1098713601386233997"
+      data-tooltip="Chat on Discord"
+      aria-label="Discord"
+      target="_blank">
+      <span class="icon icon-discord"></span>
+    </a>
+    <a href="https://forum.modular.com/c"
+      data-tooltip="Join the forum"
+      aria-label="Forum"
+      target="_blank">
+      <span class="icon icon-discourse"></span>
+    </a>
+    <a href="https://docs.modular.com/max/get-started/#stay-in-touch"
+      data-tooltip="Subscribe to newsletter"
+      aria-label="Newsletter"
+      target="_blank">
+      <span class="icon icon-mail"></span>
+    </a>
+  </div>
+</div>
+<blockquote>
+<p><em>“우리가 할 수 있기 전에 배워야 하는 것들은, 하면서 배운다.”</em>
+아리스토텔레스 (니코마코스 윤리학)</p>
+</blockquote>
+<p><a href="https://docs.modular.com/mojo/manual/">Mojo</a> 🔥를 사용한 GPU 프로그래밍 실습 가이드에 오신 것을 환영합니다. Mojo는 파이썬 문법과 시스템 수준의 성능을 결합한 프로그래밍 언어입니다.</p>
+<p>아래 개요 영상을 먼저 시청하거나, 계속 읽어주세요.</p>
+<div class="video-container full-width">
+<iframe src="https://www.youtube.com/embed/-VsP4kT6DjA" allowfullscreen></iframe>
+</div>
+<h2 id="왜-gpu-프로그래밍인가"><a class="header" href="#왜-gpu-프로그래밍인가">왜 GPU 프로그래밍인가?</a></h2>
+<p>GPU 프로그래밍은 전문 기술에서 현대 컴퓨팅의 핵심 인프라로 발전했습니다. 수십억 개의 매개변수를 처리하는 대규모 언어 모델부터 실시간 영상 스트림을 분석하는 컴퓨터 비전 시스템까지, GPU 가속이 오늘날의 연산 혁신을 이끌고 있습니다. 기후 모델링, 신약 발견, 양자 시뮬레이션 등 과학적 발전은 GPU만이 제공하는 대규모 병렬 처리 능력에 의존하고 있습니다. 금융 기관은 실시간 리스크 분석과 알고리즘 트레이딩에 GPU 컴퓨팅을 활용하며, 자율주행 차량은 GPU 가속 신경망을 통해 센서 데이터를 처리하여 중요한 의사결정을 내립니다.</p>
+<p>경제적 파급력도 상당합니다. GPU 컴퓨팅을 효과적으로 활용하는 조직은 개발 주기 단축, 연산 비용 절감, 그리고 이전에는 풀기 어려웠던 계산 문제를 해결할 수 있는 능력 등 상당한 경쟁 우위를 확보합니다. 계산 능력이 비즈니스 가치와 직결되는 시대에, GPU 프로그래밍 역량은 엔지니어, 연구자, 조직에게 전략적 차별화 요소입니다.</p>
+<h2 id="왜-gpu-프로그래밍에-mojo를-사용하는가"><a class="header" href="#왜-gpu-프로그래밍에-mojo를-사용하는가">왜 GPU 프로그래밍에 Mojo🔥를 사용하는가?</a></h2>
+<p>컴퓨팅 산업은 중대한 전환점에 도달했습니다. CPU 성능은 전력과 발열 제약으로 인해 클럭 속도 향상만으로는 한계에 이르렀습니다. 이에 따라 하드웨어 제조사들은 물리적 코어 수를 늘리는 방향으로 나아갔고, 이러한 멀티코어 접근 방식의 정점이 바로 수천 개의 코어가 병렬로 동작하는 현대 GPU입니다. NVIDIA H100을 예로 들면, 단일 클럭 사이클에 16,896개의 스레드를 동시에 실행하면서 270,000개 이상의 스레드를 대기시킬 수 있습니다.</p>
+<p>Mojo는 GPU 프로그래밍에 대한 실용적인 접근 방식을 제공하여, 이러한 병렬성을 더 쉽게 활용할 수 있게 합니다:</p>
+<ul>
+<li><strong>파이썬 스타일 문법</strong>으로 시스템 프로그래밍까지</li>
+<li>추상화해도 성능 손실 없이 머신 코드로 컴파일되는 <strong>제로 코스트 추상화</strong></li>
+<li>컴파일 타임에 오류를 잡는 <strong>강력한 타입 시스템</strong></li>
+<li>하드웨어 최적화를 고려한 <strong>텐서 기본 지원</strong></li>
+<li>CPU·GPU 내장 함수를 직접 호출할 수 있는 <strong>하드웨어 직접 제어</strong></li>
+<li>CPU와 GPU 모두에서 동작하는 <strong>크로스 하드웨어 이식성</strong></li>
+<li>C/C++ 대비 <strong>향상된 안전성</strong></li>
+<li><strong>낮은 진입 장벽</strong>으로 더 많은 프로그래머가 GPU 성능을 활용</li>
+</ul>
+<blockquote>
+<p><strong>Mojo🔥는 GPU 프로그래밍을 누구나 할 수 있도록 만들어 혁신을 이끌고자 합니다.</strong> &gt;<strong>익숙한 파이썬 문법을 바탕으로 GPU에 직접 접근할 수 있어, 깊은 전문 지식 없이도 CPU와 GPU를 함께 활용하는 고성능 애플리케이션을 만들 수 있습니다.</strong></p>
+</blockquote>
+<h2 id="왜-퍼즐로-배우는가"><a class="header" href="#왜-퍼즐로-배우는가">왜 퍼즐로 배우는가?</a></h2>
+<p>대부분의 GPU 프로그래밍 자료는 실습에 앞서 방대한 이론을 먼저 다룹니다. 하지만 직접 해봐야 이해되는 추상적 개념들은 입문자에게 부담이 될 수 있습니다.</p>
+<p>이 책은 다른 접근 방식을 택합니다. 실전 문제에 바로 뛰어들어, 단계적으로 개념을 발견해 나갑니다.</p>
+<p><strong>퍼즐 기반 학습의 장점:</strong></p>
+<ul>
+<li><strong>직접 체험</strong>: GPU에서 바로 실행하고 결과를 확인할 수 있습니다</li>
+<li><strong>점진적 복잡도</strong>: 각 퍼즐이 이전에 배운 개념 위에 쌓여갑니다</li>
+<li><strong>실용적 초점</strong>: 실제 계산 문제를 반영한 퍼즐로 구성되어 있습니다</li>
+<li><strong>디버깅 능력</strong>: 체계적인 디버깅 연습을 통해 문제 해결 감각을 키웁니다</li>
+<li><strong>지식 정착</strong>: 직접 풀어보는 것이 읽기만 하는 것보다 이해가 더 깊어집니다</li>
+</ul>
+<p>암기가 아닌 발견에 중점을 둡니다. 직접 실험하면서 개념을 자연스럽게 익히고, 깊은 이해와 실전 역량을 함께 쌓아갈 수 있습니다.</p>
+<blockquote>
+<p><strong>감사의 말</strong>: 이 책의 Part I과 III은 인터랙티브 NVIDIA GPU 학습 프로젝트인 <a href="https://github.com/srush/GPU-Puzzles">GPU Puzzles</a>에서 큰 영감을 받았습니다. 이 책은 해당 개념들을 Mojo의 추상화와 성능을 활용하여 재구현하고,
+Mojo에 특화된 최적화로 고급 주제를 더 넓게 다룹니다.</p>
+</blockquote>
+<h2 id="gpu-프로그래밍-사고방식"><a class="header" href="#gpu-프로그래밍-사고방식">GPU 프로그래밍 사고방식</a></h2>
+<p>효과적인 GPU 프로그래밍을 위해서는 계산을 바라보는 방식 자체를 바꿔야 합니다. 앞으로의 학습에 길잡이가 될 핵심 사고 모델을 소개합니다:</p>
+<h3 id="순차에서-병렬로-반복문을-스레드로-대체"><a class="header" href="#순차에서-병렬로-반복문을-스레드로-대체">순차에서 병렬로: 반복문을 스레드로 대체</a></h3>
+<p>기존 CPU 프로그래밍에서는 반복문으로 데이터를 하나씩 순서대로 처리합니다:</p>
+<pre><code class="language-python"># CPU 방식
+for i in range(data_size):
+    result[i] = process(data[i])
+</code></pre>
+<p>GPU 프로그래밍은 이 방식을 완전히 뒤집습니다. 데이터를 하나씩 순회하는 대신, 수천 개의 스레드를 할당하여 데이터 요소를 동시에 처리합니다:</p>
+<pre><code class="language-mojo"># GPU 방식 (개념적)
+thread_id = get_global_id()
+if thread_id &lt; data_size:
+    result[thread_id] = process(data[thread_id])
+</code></pre>
+<p>각 스레드가 하나의 데이터 요소를 맡아 처리하므로, 명시적인 반복문이 대규모 병렬 실행으로 바뀝니다. 순차 처리에서 동시 실행으로의 전환이 GPU 프로그래밍의 핵심 개념입니다.</p>
+<h3 id="데이터-위에-연산-그리드-맞추기"><a class="header" href="#데이터-위에-연산-그리드-맞추기">데이터 위에 연산 그리드 맞추기</a></h3>
+<p>데이터를 구조화된 그리드로, GPU 스레드가 이에 대응하는 연산 그리드를 형성한다고 생각해 보세요. 효과적인 GPU 프로그래밍은 이 스레드 구성을 잘 설계하여 데이터 공간을 최적으로 처리하는 것입니다:</p>
+<ul>
+<li><strong>스레드</strong>: 각각 특정 데이터 요소를 담당하는 개별 처리 단위</li>
+<li><strong>블록</strong>: 공유 메모리 접근과 동기화 기능을 갖춘 스레드 그룹</li>
+<li><strong>그리드</strong>: 전체 계산 문제를 아우르는 스레드 계층 구조</li>
+</ul>
+<p>GPU 프로그래밍을 잘하려면 메모리 접근 패턴과 동기화 요구사항을 관리하면서 병렬 효율을 최대한 끌어올리도록 이 스레드 구성의 균형을 잡아야 합니다.</p>
+<h3 id="데이터-이동-vs-연산"><a class="header" href="#데이터-이동-vs-연산">데이터 이동 vs. 연산</a></h3>
+<p>GPU 프로그래밍에서는 연산 자체보다 데이터를 옮기는 비용이 더 클 때가 많습니다:</p>
+<ul>
+<li>CPU와 GPU 간 데이터 이동은 느립니다</li>
+<li>전역 메모리에서 공유 메모리로의 이동은 그보다 빠릅니다</li>
+<li>레지스터나 공유 메모리에 이미 있는 데이터를 다루는 것은 매우 빠릅니다</li>
+</ul>
+<p>이는 프로그래밍에서 흔히 가지는 가정을 뒤집습니다. 병목은 연산이 아니라 데이터 이동입니다.</p>
+<p>이 책의 퍼즐들을 풀어가면서 이러한 원칙을 직관적으로 체득하고, 계산 문제에 접근하는 방식을 바꿔 나갈 수 있습니다.</p>
+<h2 id="학습-내용"><a class="header" href="#학습-내용">학습 내용</a></h2>
+<p>이 책은 기초 원리부터 고급 GPU 프로그래밍 기법까지 다룹니다. GPU를 알 수 없는 블랙박스로 두지 않고, 개별 스레드의 동작부터 시작하여 정교한 병렬 알고리즘까지 단계별로 이해를 쌓아갑니다. 저수준 메모리 관리와 고수준 텐서 추상화를 모두 배움으로써, 어떤 GPU 프로그래밍 과제에도 유연하게 대응할 수 있게 됩니다.</p>
+<h3 id="현재-학습-과정"><a class="header" href="#현재-학습-과정">현재 학습 과정</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>핵심 기술</th><th>상태</th><th>퍼즐</th></tr></thead><tbody>
+<tr><td>스레드/블록 기초</td><td>✅ <strong>제공 중</strong></td><td>Part I (1-8)</td></tr>
+<tr><td>GPU 프로그램 디버깅</td><td>✅ <strong>제공 중</strong></td><td>Part II (9-10)</td></tr>
+<tr><td>핵심 알고리즘</td><td>✅ <strong>제공 중</strong></td><td>Part III (11-16)</td></tr>
+<tr><td>MAX 그래프 통합</td><td>✅ <strong>제공 중</strong></td><td>Part IV (17-19)</td></tr>
+<tr><td>PyTorch 통합</td><td>✅ <strong>제공 중</strong></td><td>Part V (20-22)</td></tr>
+<tr><td>함수형 패턴 및 벤치마킹</td><td>✅ <strong>제공 중</strong></td><td>Part VI (23)</td></tr>
+<tr><td>워프 프로그래밍</td><td>✅ <strong>제공 중</strong></td><td>Part VII (24-26)</td></tr>
+<tr><td>블록 수준 프로그래밍</td><td>✅ <strong>제공 중</strong></td><td>Part VIII (27)</td></tr>
+<tr><td>고급 메모리 연산</td><td>✅ <strong>제공 중</strong></td><td>Part IX (28-29)</td></tr>
+<tr><td>성능 분석</td><td>✅ <strong>제공 중</strong></td><td>Part X (30-32)</td></tr>
+<tr><td>최신 GPU 기능</td><td>✅ <strong>제공 중</strong></td><td>Part XI (33-34)</td></tr>
+</tbody></table>
+</div>
+<h3 id="상세-학습-목표"><a class="header" href="#상세-학습-목표">상세 학습 목표</a></h3>
+<p><strong>Part I: GPU 기초 (퍼즐 1-8) ✅</strong></p>
+<ul>
+<li>스레드 인덱싱과 블록 구성 배우기</li>
+<li>메모리 접근 패턴과 가드 이해하기</li>
+<li>원시 포인터와 LayoutTensor 추상화 모두 다뤄보기</li>
+<li>스레드 간 통신을 위한 공유 메모리 기초 익히기</li>
+</ul>
+<p><strong>Part II: GPU 프로그램 디버깅 (퍼즐 9-10) ✅</strong></p>
+<ul>
+<li>GPU 디버거와 디버깅 기법 배우기</li>
+<li>새니타이저로 메모리 오류와 경쟁 상태 찾기</li>
+<li>GPU 버그를 체계적으로 식별하고 수정하기</li>
+<li>복잡한 GPU 프로그래밍 과제에 도전할 자신감 쌓기</li>
+</ul>
+<blockquote>
+<p><strong>참고</strong>: 디버깅 퍼즐을 실행하려면 NVIDIA GPU 디버깅 도구 접근을 위한 <code>pixi</code>가 필요합니다. CUDA를 지원하는 NVIDIA GPU에서만 작동합니다.</p>
+</blockquote>
+<p><strong>Part III: GPU 알고리즘 (퍼즐 11-16) ✅</strong></p>
+<ul>
+<li>병렬 리덕션과 풀링 연산 구현하기</li>
+<li>효율적인 합성곱 커널 만들기</li>
+<li>누적 합(스캔) 알고리즘 배우기</li>
+<li>타일링 전략으로 행렬 곱셈 최적화하기</li>
+</ul>
+<p><strong>Part IV: MAX 그래프 통합 (퍼즐 17-19) ✅</strong></p>
+<ul>
+<li>커스텀 MAX 그래프 연산 만들기</li>
+<li>GPU 커널과 파이썬 코드 연결하기</li>
+<li>소프트맥스, 어텐션 같은 프로덕션 수준의 연산 구현하기</li>
+</ul>
+<p><strong>Part V: PyTorch 통합 (퍼즐 20-22) ✅</strong></p>
+<ul>
+<li>Mojo GPU 커널과 PyTorch 텐서 연결하기</li>
+<li>CustomOpLibrary로 텐서 마샬링을 매끄럽게 처리하기</li>
+<li>torch.compile과 통합하여 실행 최적화하기</li>
+<li>커널 퓨전과 커스텀 역방향 패스 배우기</li>
+</ul>
+<p><strong>Part VI: Mojo 함수형 패턴 및 벤치마킹 (퍼즐 23) ✅</strong></p>
+<ul>
+<li>함수형 패턴 배우기: elementwise, tiled 처리, vectorization</li>
+<li>체계적인 성능 최적화와 트레이드오프 익히기</li>
+<li>정량적 벤치마킹으로 성능 분석하기</li>
+<li>GPU 스레딩 vs SIMD 실행 계층 구조 이해하기</li>
+</ul>
+<p><strong>Part VII: 워프 수준 프로그래밍 (퍼즐 24-26) ✅</strong></p>
+<ul>
+<li>워프 기초와 SIMT 실행 모델 배우기</li>
+<li>핵심 워프 연산 익히기: sum, shuffle_down, broadcast</li>
+<li>shuffle_xor와 prefix_sum으로 고급 패턴 구현하기</li>
+<li>워프 프로그래밍과 함수형 패턴을 효과적으로 결합하기</li>
+</ul>
+<p><strong>Part VIII: 블록 수준 프로그래밍 (퍼즐 27) ✅</strong></p>
+<ul>
+<li><code>block.sum()</code>과 <code>block.max()</code>로 블록 단위 리덕션 배우기</li>
+<li>블록 수준 누적 합 패턴과 통신 익히기</li>
+<li><code>block.broadcast()</code>로 블록 내 조율 효율적으로 구현하기</li>
+</ul>
+<p><strong>Part IX: 고급 메모리 시스템 (퍼즐 28-29) ✅</strong></p>
+<ul>
+<li>최적의 메모리 병합 패턴 구현하기</li>
+<li>비동기 메모리 연산으로 연산과 전송을 겹쳐 지연 시간 숨기기</li>
+<li>메모리 펜스와 동기화 기본 요소 배우기</li>
+<li>프리페칭과 캐시 최적화 전략 익히기</li>
+</ul>
+<p><strong>Part X: 성능 분석 및 최적화 (퍼즐 30-32) ✅</strong></p>
+<ul>
+<li>GPU 커널 프로파일링으로 병목 지점 찾기</li>
+<li>점유율과 리소스 활용도 최적화하기</li>
+<li>공유 메모리 뱅크 충돌 제거하기</li>
+</ul>
+<p><strong>Part XI: 고급 GPU 기능 (퍼즐 33-34) ✅</strong></p>
+<ul>
+<li>AI 워크로드를 위한 텐서 코어 프로그래밍 배우기</li>
+<li>현대 GPU의 클러스터 프로그래밍 배우기</li>
+</ul>
+<p>이 책은 기존 방식과 달리, 먼저 저수준 메모리 조작으로 이해를 쌓은 뒤 점진적으로 Mojo의 LayoutTensor 추상화로 전환합니다. 이를 통해 GPU 메모리 패턴에 대한 깊은 이해와 현대적 텐서 기반 접근법의 실용적 지식을 모두 얻을 수 있습니다.</p>
+<h2 id="시작할-준비가-되셨나요"><a class="header" href="#시작할-준비가-되셨나요">시작할 준비가 되셨나요?</a></h2>
+<p>GPU 프로그래밍이 왜 중요한지, Mojo가 왜 적합한지, 그리고 퍼즐로 어떻게 배우는지 살펴보았습니다. 이제 시작해 봅시다.</p>
+<p><strong>다음 단계</strong>: <a href="howto.html">퍼즐 사용 가이드</a>에서 환경 설정, 시스템 요구사항, 첫 번째 퍼즐 실행 방법을 확인하세요.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="howto.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="howto.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/mojolang.js"></script>
+        <script src="theme/sidebar.js"></script>
+        <script src="theme/solution.js"></script>
+        <script src="theme/tabs.js"></script>
+        <script src="theme/language-switcher.js"></script>
+        <script src="theme/livereload-poll.js"></script>
+        <script src="theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

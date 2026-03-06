@@ -1,0 +1,662 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔰 block.sum()의 핵심 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="blocksum의-핵심---블록-레벨-내적"><a class="header" href="#blocksum의-핵심---블록-레벨-내적">block.sum()의 핵심 - 블록 레벨 내적</a></h1>
+<p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 블록 레벨 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">sum</a> 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 블록 내 각 스레드가 하나의 요소를 처리하고 <code>block.sum()</code>으로 결과를 자동으로 합산하여, 블록 프로그래밍이 전체 스레드 블록에 걸친 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> 연산은 블록 전체 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 블록 내 모든 스레드에 걸쳐 워프 패턴을 사용하는 정교하게 최적화된 구현으로 대체합니다. LLVM 분석은 <a href="#%EA%B8%B0%EC%88%A0-%EB%B6%84%EC%84%9D-blocksum%EC%9D%80-%EC%8B%A4%EC%A0%9C%EB%A1%9C-%EB%AC%B4%EC%97%87%EC%9C%BC%EB%A1%9C-%EC%BB%B4%ED%8C%8C%EC%9D%BC%EB%90%A0%EA%B9%8C">기술 분석</a>을 참고하세요.</em></p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li><code>block.sum()</code>을 활용한 <strong>블록 레벨 리덕션</strong></li>
+<li><strong>블록 전체 동기화</strong>와 스레드 조율</li>
+<li>단일 블록 내 <strong>크로스 워프 통신</strong></li>
+<li>복잡한 패턴에서 간단한 패턴으로의 <strong>성능 변환</strong></li>
+<li><strong>스레드 0 결과 관리</strong>와 조건부 쓰기</li>
+</ul>
+<p>수학적 연산은 내적입니다:
+\[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
+<p>하지만 구현 과정에서 Mojo의 모든 블록 레벨 GPU 프로그래밍에 적용되는 기본 패턴을 배웁니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>벡터 크기: <code>SIZE = 128</code> 요소</li>
+<li>데이터 타입: <code>DType.float32</code></li>
+<li>블록 구성: <code>(128, 1)</code> 블록당 스레드 수 (<code>TPB = 128</code>)</li>
+<li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
+<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>블록당 워프 수: <code>128 / WARP_SIZE</code> (NVIDIA에서 4개, AMD에서 2개 또는 4개)</li>
+</ul>
+<h2 id="기존-방식의-복잡성-puzzle-12에서"><a class="header" href="#기존-방식의-복잡성-puzzle-12에서">기존 방식의 복잡성 (Puzzle 12에서)</a></h2>
+<p><a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>의 복잡한 방식을 떠올려 봅시다. 공유 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
+<pre><code class="language-mojo">fn traditional_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Traditional dot product using shared memory + barriers + tree reduction.
+    Educational but complex - shows the manual coordination needed."""
+
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # Each thread computes partial product
+    if global_i &lt; size:
+        a_val = rebind[Scalar[dtype]](a[global_i])
+        b_val = rebind[Scalar[dtype]](b[global_i])
+        shared[local_i] = a_val * b_val
+
+    barrier()
+
+    # Tree reduction in shared memory - complex but educational
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+        barrier()
+        stride //= 2
+
+    # Only thread 0 writes final result
+    if local_i == 0:
+        output[0] = shared[0]
+
+
+</code></pre>
+<p><strong>이 방식이 복잡한 이유:</strong></p>
+<ul>
+<li><strong>공유 메모리 할당</strong>: 블록 내에서 수동으로 메모리를 관리</li>
+<li><strong>명시적 배리어</strong>: 블록 내 모든 스레드를 동기화하기 위한 <code>barrier()</code> 호출</li>
+<li><strong>트리 리덕션</strong>: 스트라이드 기반 인덱싱을 사용하는 복잡한 루프 (64→32→16→8→4→2→1)</li>
+<li><strong>크로스 워프 조율</strong>: 여러 워프 간 동기화가 필요</li>
+<li><strong>조건부 쓰기</strong>: 스레드 0만 최종 결과를 기록</li>
+</ul>
+<p>이 방식은 전체 블록(GPU에 따라 2개 또는 4개 워프에 걸친 128 스레드)에서 동작하지만, 코드가 장황하고 오류가 발생하기 쉬우며 블록 레벨 GPU 동기화에 대한 깊은 이해가 필요합니다.</p>
+<h2 id="워프-레벨-개선-puzzle-24에서"><a class="header" href="#워프-레벨-개선-puzzle-24에서">워프 레벨 개선 (Puzzle 24에서)</a></h2>
+<p>블록 레벨 연산으로 넘어가기 전에, <a href="../puzzle_24/warp_sum.html">Puzzle 24</a>에서 <code>warp.sum()</code>을 사용하여 단일 워프 내 리덕션을 어떻게 단순화했는지 떠올려 봅시다:</p>
+<pre><code class="language-mojo">fn simple_warp_dot_product[
+    in_layout: Layout, out_layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+):
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+
+    # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
+    var partial_product: Scalar[dtype] = 0
+    if global_i &lt; size:
+        partial_product = (a[global_i] * b[global_i]).reduce_add()
+
+    # warp_sum() replaces all the shared memory + barriers + tree reduction
+    total = warp_sum(partial_product)
+
+    # Only lane 0 writes the result (all lanes have the same total)
+    if lane_id() == 0:
+        output[global_i // WARP_SIZE] = total
+
+
+</code></pre>
+<p><strong><code>warp.sum()</code>이 달성한 것:</strong></p>
+<ul>
+<li><strong>단일 워프 범위</strong>: 32 스레드(NVIDIA) 또는 32/64 스레드(AMD) 내에서 동작</li>
+<li><strong>하드웨어 셔플</strong>: 효율적인 <code>shfl.sync.bfly.b32</code> 명령 사용</li>
+<li><strong>공유 메모리 불필요</strong>: 명시적 메모리 관리 없음</li>
+<li><strong>한 줄 리덕션</strong>: <code>total = warp_sum[warp_size=WARP_SIZE](val=partial_product)</code></li>
+</ul>
+<p><strong>그러나 한계가 있습니다:</strong> <code>warp.sum()</code>은 단일 워프 내에서만 동작합니다. 여러 워프가 필요한 문제(예: 128 스레드 블록)에서는 여전히 워프 간 조율을 위해 복잡한 공유 메모리 + 배리어 방식이 필요합니다.</p>
+<p><strong>기존 방식 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p27 --traditional-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --traditional-dot-product
+</code></pre>
+  </div>
+</div>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<h3 id="blocksum-방식"><a class="header" href="#blocksum-방식"><code>block.sum()</code> 방식</a></h3>
+<p>복잡한 기존 방식을 <code>block.sum()</code>을 사용하는 간단한 블록 커널로 변환합니다:</p>
+<pre><code class="language-mojo">comptime SIZE = 128
+comptime TPB = 128
+comptime NUM_BINS = 8
+comptime in_layout = Layout.row_major(SIZE)
+comptime out_layout = Layout.row_major(1)
+comptime dtype = DType.float32
+
+
+fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    # FILL IN (roughly 6 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p27 --block-sum-dot-product
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --block-sum-dot-product
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+Expected result: 1381760.0
+Block.sum result: 1381760.0
+Block.sum() gives identical results!
+Compare the code: 15+ lines of barriers → 1 line of block.sum()!
+Just like warp.sum() but for the entire block
+</code></pre>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-세-단계-패턴-이해하기"><a class="header" href="#1-세-단계-패턴-이해하기">1. <strong>세 단계 패턴 이해하기</strong></a></h3>
+<p>모든 블록 리덕션은 동일한 개념적 패턴을 따릅니다:</p>
+<ol>
+<li>각 스레드가 자신의 로컬 기여분을 계산</li>
+<li>모든 스레드가 블록 전체 리덕션에 참여</li>
+<li>지정된 하나의 스레드가 최종 결과를 처리</li>
+</ol>
+<h3 id="2-내적-수학-기억하기"><a class="header" href="#2-내적-수학-기억하기">2. <strong>내적 수학 기억하기</strong></a></h3>
+<p>각 스레드는 벡터 <code>a</code>와 <code>b</code>에서 하나의 요소 쌍을 처리해야 합니다. 이들을 스레드 간에 합산할 수 있는 “부분 결과“로 합치는 연산은 무엇일까요?</p>
+<h3 id="3-layouttensor-인덱싱-패턴"><a class="header" href="#3-layouttensor-인덱싱-패턴">3. <strong>LayoutTensor 인덱싱 패턴</strong></a></h3>
+<p><code>LayoutTensor</code> 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요. 산술 연산을 위해 스칼라 값을 추출해야 합니다.</p>
+<h3 id="4-blocksum-api-개념"><a class="header" href="#4-blocksum-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API 개념</strong></a></h3>
+<p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
+<ul>
+<li>블록 크기를 지정하는 템플릿 파라미터</li>
+<li>결과 분배 방식을 위한 템플릿 파라미터 (<code>broadcast</code>)</li>
+<li>리듀스할 값을 담은 런타임 파라미터</li>
+</ul>
+<h3 id="5-스레드-조율-원칙"><a class="header" href="#5-스레드-조율-원칙">5. <strong>스레드 조율 원칙</strong></a></h3>
+<ul>
+<li>어떤 스레드가 처리할 유효한 데이터를 가지고 있을까요? (힌트: 경계 검사)</li>
+<li>어떤 스레드가 최종 결과를 기록해야 할까요? (힌트: 일관된 선택)</li>
+<li>그 특정 스레드를 어떻게 식별할까요? (힌트: 스레드 인덱싱)</li>
+</ul>
+</div>
+</details>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_sum_dot_product[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: Int,
+):
+    """Dot product using block.sum() - convenience function like warp.sum()!
+    Replaces manual shared memory + barriers + tree reduction with one line."""
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    # Each thread computes partial product
+    var partial_product: Scalar[dtype] = 0.0
+    if global_i &lt; size:
+        # LayoutTensor indexing `[0]` returns the underlying SIMD value
+        partial_product = a[global_i][0] * b[global_i][0]
+
+    # The magic: block.sum() replaces 15+ lines of manual reduction!
+    # Just like warp.sum() but for the entire block
+    total = block.sum[block_size=tpb, broadcast=False](
+        val=SIMD[DType.float32, 1](partial_product)
+    )
+
+    # Only thread 0 writes the result
+    if local_i == 0:
+        output[0] = total[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><code>block.sum()</code> 커널은 복잡한 블록 동기화에서 정교하게 최적화된 구현으로의 근본적인 변환을 보여줍니다:</p>
+<p><strong>기존 방식에서 사라진 것들:</strong></p>
+<ul>
+<li><strong>15줄 이상 → 8줄</strong>: 획기적인 코드 축소</li>
+<li><strong>공유 메모리 할당</strong>: 메모리 관리 불필요</li>
+<li><strong>7회 이상의 barrier() 호출</strong>: 명시적 동기화 제로</li>
+<li><strong>복잡한 트리 리덕션</strong>: 단일 함수 호출로 대체</li>
+<li><strong>스트라이드 기반 인덱싱</strong>: 완전히 제거</li>
+<li><strong>크로스 워프 조율</strong>: 최적화된 구현이 자동으로 처리</li>
+</ul>
+<p><strong>블록 전체 실행 모델:</strong></p>
+<pre><code>블록 스레드 (128 스레드, 4개 워프):
+워프 0 (스레드 0-31):
+  스레드 0: partial_product = a[0] * b[0] = 0.0
+  스레드 1: partial_product = a[1] * b[1] = 2.0
+  ...
+  스레드 31: partial_product = a[31] * b[31] = 1922.0
+
+워프 1 (스레드 32-63):
+  스레드 32: partial_product = a[32] * b[32] = 2048.0
+  ...
+
+워프 2 (스레드 64-95):
+  스레드 64: partial_product = a[64] * b[64] = 8192.0
+  ...
+
+워프 3 (스레드 96-127):
+  스레드 96: partial_product = a[96] * b[96] = 18432.0
+  스레드 127: partial_product = a[127] * b[127] = 32258.0
+
+block.sum() 하드웨어 연산:
+모든 스레드 → 0.0 + 2.0 + 1922.0 + 2048.0 + ... + 32258.0 = 1381760.0
+스레드 0이 수신 → total = 1381760.0 (broadcast=False일 때)
+</code></pre>
+<p><strong>배리어 없이 동작하는 이유:</strong></p>
+<ol>
+<li><strong>블록 전체 실행</strong>: 모든 스레드가 워프 내에서 록스텝으로 각 명령을 실행</li>
+<li><strong>내장 동기화</strong>: <code>block.sum()</code> 구현이 동기화를 내부적으로 처리</li>
+<li><strong>크로스 워프 통신</strong>: 블록 내 워프 간 최적화된 통신</li>
+<li><strong>조율된 결과 전달</strong>: 스레드 0만 최종 결과를 수신</li>
+</ol>
+<p><strong>warp.sum() (Puzzle 24)과의 비교:</strong></p>
+<ul>
+<li><strong>워프 범위</strong>: <code>warp.sum()</code>은 32/64 스레드(단일 워프) 내에서 동작</li>
+<li><strong>블록 범위</strong>: <code>block.sum()</code>은 전체 블록(여러 워프)에 걸쳐 동작</li>
+<li><strong>동일한 단순함</strong>: 둘 다 복잡한 수동 리덕션을 한 줄 호출로 대체</li>
+<li><strong>자동 조율</strong>: <code>block.sum()</code>은 <code>warp.sum()</code>이 처리할 수 없는 크로스 워프 배리어를 자동으로 처리</li>
+</ul>
+</div>
+</details>
+<h2 id="기술-분석-blocksum은-실제로-무엇으로-컴파일될까"><a class="header" href="#기술-분석-blocksum은-실제로-무엇으로-컴파일될까">기술 분석: block.sum()은 실제로 무엇으로 컴파일될까?</a></h2>
+<p><code>block.sum()</code>이 실제로 무엇을 생성하는지 이해하기 위해, 디버그 정보와 함께 퍼즐을 컴파일했습니다:</p>
+<pre><code class="language-bash">pixi run mojo build --emit llvm --debug-level=line-tables solutions/p27/p27.mojo -o solutions/p27/p27.ll
+</code></pre>
+<p>이렇게 생성된 <strong>LLVM 파일</strong> <code>solutions/p27/p27.ll</code>에는, 호환 NVIDIA GPU에서 실제 GPU 명령을 보여주는 <strong>PTX 어셈블리</strong>가 내장되어 있습니다:</p>
+<h3 id="발견-1-단일-명령이-아니다"><a class="header" href="#발견-1-단일-명령이-아니다"><strong>발견 1: 단일 명령이 아니다</strong></a></h3>
+<p><code>block.sum()</code>은 약 <strong>20개 이상의 PTX 명령</strong>으로 컴파일되며, 2단계 리덕션으로 구성됩니다:</p>
+<p><strong>1단계: 워프 레벨 리덕션 (버터플라이 셔플)</strong></p>
+<pre><code class="language-ptx">shfl.sync.bfly.b32 %r23, %r46, 16, 31, -1;   // 오프셋 16으로 셔플
+add.f32            %r24, %r46, %r23;         // 셔플된 값을 합산
+shfl.sync.bfly.b32 %r25, %r24, 8, 31, -1;    // 오프셋 8로 셔플
+add.f32            %r26, %r24, %r25;         // 셔플된 값을 합산
+// ... 오프셋 4, 2, 1에 대해 계속
+</code></pre>
+<p><strong>2단계: 크로스 워프 조율</strong></p>
+<pre><code class="language-ptx">shr.u32            %r32, %r1, 5;             // 워프 ID를 계산
+mov.b32            %r34, _global_alloc_$__gpu_shared_mem; // 공유 메모리
+bar.sync           0;                        // 배리어 동기화
+// ... 크로스 워프 리덕션을 위한 또 다른 버터플라이 셔플 시퀀스
+</code></pre>
+<h3 id="발견-2-하드웨어-최적화-구현"><a class="header" href="#발견-2-하드웨어-최적화-구현"><strong>발견 2: 하드웨어 최적화 구현</strong></a></h3>
+<ul>
+<li><strong>버터플라이 셔플</strong>: 트리 리덕션보다 효율적</li>
+<li><strong>자동 배리어 배치</strong>: 크로스 워프 동기화를 자동으로 처리</li>
+<li><strong>최적화된 메모리 접근</strong>: 공유 메모리를 전략적으로 사용</li>
+<li><strong>아키텍처 인식</strong>: 동일한 API가 NVIDIA(32 스레드 워프)와 AMD(32 또는 64 스레드 워프)에서 동작</li>
+</ul>
+<h3 id="발견-3-알고리즘-복잡도-분석"><a class="header" href="#발견-3-알고리즘-복잡도-분석"><strong>발견 3: 알고리즘 복잡도 분석</strong></a></h3>
+<p><strong>분석 접근 방식:</strong></p>
+<ol>
+<li>바이너리 ELF 섹션(<code>.nv_debug_ptx_txt</code>)에서 PTX 어셈블리를 확인</li>
+<li>개별 명령 수를 세기보다 알고리즘적 차이를 식별</li>
+</ol>
+<p><strong>관찰된 주요 알고리즘 차이:</strong></p>
+<ul>
+<li><strong>기존 방식</strong>: 공유 메모리를 사용한 트리 리덕션 + 다수의 <code>bar.sync</code> 호출</li>
+<li><strong>block.sum()</strong>: 버터플라이 셔플 패턴 + 최적화된 크로스 워프 조율</li>
+</ul>
+<p>성능 이점은 명령 수나 마법 같은 하드웨어가 아니라 <strong>정교하게 최적화된 알고리즘 선택</strong>(버터플라이 &gt; 트리)에서 비롯됩니다. 구현에 대한 자세한 내용은 Mojo gpu 모듈의 <a href="https://github.com/modular/modular/blob/main/mojo/stdlib/std/gpu/primitives/block.mojo">block.mojo</a>를 참고하세요.</p>
+<h2 id="성능-인사이트"><a class="header" href="#성능-인사이트">성능 인사이트</a></h2>
+<p><strong><code>block.sum()</code> vs 기존 방식:</strong></p>
+<ul>
+<li><strong>코드 단순함</strong>: 리덕션 부분이 15줄 이상 → 1줄로</li>
+<li><strong>메모리 사용</strong>: 공유 메모리 할당 불필요</li>
+<li><strong>동기화</strong>: 명시적 배리어 불필요</li>
+<li><strong>확장성</strong>: 하드웨어 한도 내에서 모든 블록 크기에 동작</li>
+</ul>
+<p><strong><code>block.sum()</code> vs <code>warp.sum()</code>:</strong></p>
+<ul>
+<li><strong>범위</strong>: 블록 전체(128 스레드) vs 워프 전체(32 스레드)</li>
+<li><strong>용도</strong>: 전체 블록에 걸친 리덕션이 필요할 때</li>
+<li><strong>편의성</strong>: 동일한 프로그래밍 모델, 다른 규모</li>
+</ul>
+<p><strong><code>block.sum()</code>을 사용해야 할 때:</strong></p>
+<ul>
+<li><strong>단일 블록 문제</strong>: 모든 데이터가 하나의 블록에 들어갈 때</li>
+<li><strong>블록 레벨 알고리즘</strong>: 리덕션이 필요한 공유 메모리 연산</li>
+<li><strong>확장성보다 편의성</strong>: 멀티 블록 방식보다 단순</li>
+</ul>
+<h2 id="이전-퍼즐과의-관계"><a class="header" href="#이전-퍼즐과의-관계">이전 퍼즐과의 관계</a></h2>
+<p><strong>Puzzle 12 (기존 방식)에서:</strong></p>
+<pre><code>복잡함: 공유 메모리 + 배리어 + 트리 리덕션
+↓
+단순함: block.sum() 하드웨어 기본 요소
+</code></pre>
+<p><strong>Puzzle 24 (<code>warp.sum()</code>)에서:</strong></p>
+<pre><code>워프 레벨: warp.sum() - 32 스레드 (단일 워프)
+↓
+블록 레벨: block.sum() - 128 스레드 (여러 워프)
+</code></pre>
+<p><strong>3단계 진행:</strong></p>
+<ol>
+<li><strong>수동 리덕션</strong> (Puzzle 12): 복잡한 공유 메모리 + 배리어 + 트리 리덕션</li>
+<li><strong>워프 기본 요소</strong> (Puzzle 24): <code>warp.sum()</code> - 단순하지만 단일 워프로 제한</li>
+<li><strong>블록 기본 요소</strong> (Puzzle 27): <code>block.sum()</code> - 워프의 단순함을 여러 워프로 확장</li>
+</ol>
+<p><strong>핵심 통찰:</strong> <code>block.sum()</code>은 <code>warp.sum()</code>의 단순함을 제공하면서 전체 블록으로 확장됩니다. 수동으로 구현해야 했던 복잡한 크로스 워프 조율을 자동으로 처리합니다.</p>
+<h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
+<p><code>block.sum()</code> 연산을 배웠으니, 다음으로 진행할 수 있습니다:</p>
+<ul>
+<li><strong><a href="./block_prefix_sum.html">block.prefix_sum()과 병렬 히스토그램 구간 분류</a></strong>: 블록 스레드에 걸친 누적 연산</li>
+<li><strong><a href="./block_broadcast.html">block.broadcast()와 벡터 정규화</a></strong>: 블록 내 모든 스레드에 값을 공유</li>
+</ul>
+<p>💡 <strong>핵심 요점</strong>: 블록 연산은 워프 프로그래밍 개념을 전체 스레드 블록으로 확장하여, 여러 워프에 걸쳐 동시에 동작하면서 복잡한 동기화 패턴을 대체하는 최적화된 기본 요소를 제공합니다. <code>warp.sum()</code>이 워프 레벨 리덕션을 단순화한 것처럼, <code>block.sum()</code>은 성능을 희생하지 않고 블록 레벨 리덕션을 단순화합니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_27/puzzle_27.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_27/block_prefix_sum.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_27/puzzle_27.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_27/block_prefix_sum.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

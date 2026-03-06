@@ -1,0 +1,572 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🏁 경쟁 상태 디버깅 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
+<h1 id="-경쟁-상태-디버깅"><a class="header" href="#-경쟁-상태-디버깅">🏁 경쟁 상태 디버깅</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>NVIDIA <code>compute-sanitizer</code>를 사용해 잘못된 결과를 일으키는 경쟁 상태를 식별하면서 실패하는 GPU 프로그램을 디버깅합니다. 공유 메모리 연산에서 동시성 버그를 찾는 <code>racecheck</code> 도구 사용법을 배웁니다.</p>
+<p>공유 메모리로 여러 스레드의 값을 누적해야 하는 GPU 커널이 있습니다. 테스트는 실패하는데, 로직은 올바른 것 같습니다. 당신의 과제는 실패를 일으키는 경쟁 상태를 찾아 수정하는 것입니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)  # 9개 스레드 중 4개만 활성화
+comptime dtype = DType.float32
+</code></pre>
+<h2 id="실패하는-커널"><a class="header" href="#실패하는-커널">실패하는 커널</a></h2>
+<pre><code class="language-mojo">
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: UInt,
+):
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    if row &lt; size and col &lt; size:
+        shared_sum[0] += a[row, col]
+
+    barrier()
+
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p10/p10.mojo" class="filename">전체 파일 보기: problems/p10/p10.mojo</a></p>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<pre><code class="language-bash">pixi run p10 --race-condition
+</code></pre>
+<p>출력은 다음과 같습니다</p>
+<pre><code class="language-txt">out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
+Unhandled exception caught during execution: At /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p10/p10.mojo:122:33: AssertionError: `left == right` comparison failed:
+   left: 0.0
+  right: 6.0
+</code></pre>
+<p><code>compute-sanitizer</code>가 GPU 코드의 문제를 어떻게 찾아내는지 살펴봅시다.</p>
+<h2 id="compute-sanitizer로-디버깅하기"><a class="header" href="#compute-sanitizer로-디버깅하기"><code>compute-sanitizer</code>로 디버깅하기</a></h2>
+<h3 id="1단계-racecheck로-경쟁-상태-식별"><a class="header" href="#1단계-racecheck로-경쟁-상태-식별">1단계: <code>racecheck</code>로 경쟁 상태 식별</a></h3>
+<p><code>compute-sanitizer</code>와 <code>racecheck</code> 도구를 사용하여 경쟁 상태를 식별합니다:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>출력은 다음과 같습니다</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+========= Error: Race reported between Write access at p10_shared_memory_race_...+0x140
+=========     and Read access at p10_shared_memory_race_...+0xe0 [4 hazards]
+=========     and Write access at p10_shared_memory_race_...+0x140 [5 hazards]
+=========
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)
+</code></pre>
+<p><strong>분석</strong>: 프로그램에 <strong>1개의 경쟁 상태</strong>와 <strong>9개의 개별 위험 요소</strong>가 있습니다:</p>
+<ul>
+<li><strong>4개의 read-after-write 위험 요소</strong> (다른 스레드가 쓰는 동안 읽기)</li>
+<li><strong>5개의 write-after-write 위험 요소</strong> (여러 스레드가 동시에 쓰기)</li>
+</ul>
+<h3 id="2단계-synccheck와-비교"><a class="header" href="#2단계-synccheck와-비교">2단계: <code>synccheck</code>와 비교</a></h3>
+<p>동기화 문제가 아닌 경쟁 상태인지 확인합니다:</p>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool synccheck mojo problems/p10/p10.mojo --race-condition
+</code></pre>
+<p>출력은 다음과 같습니다</p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+AssertionError: `left == right` comparison failed:
+  left: 0.0
+  right: 6.0
+========= ERROR SUMMARY: 0 errors
+</code></pre>
+<p><strong>핵심 통찰</strong>: <code>synccheck</code>가 <strong>0개의 오류</strong>를 찾았습니다 - 교착 상태 같은 동기화 문제는 없습니다. 문제는 동기화 버그가 아닌 <strong>경쟁 상태</strong>입니다.</p>
+<h2 id="교착-상태-vs-경쟁-상태-차이점-이해하기"><a class="header" href="#교착-상태-vs-경쟁-상태-차이점-이해하기">교착 상태 vs 경쟁 상태: 차이점 이해하기</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>측면</th><th>교착 상태</th><th>경쟁 상태</th></tr></thead><tbody>
+<tr><td><strong>증상</strong></td><td>프로그램이 영원히 멈춤</td><td>프로그램이 잘못된 결과 생성</td></tr>
+<tr><td><strong>실행</strong></td><td>완료되지 않음</td><td>성공적으로 완료됨</td></tr>
+<tr><td><strong>타이밍</strong></td><td>결정적으로 멈춤</td><td>비결정적 결과</td></tr>
+<tr><td><strong>근본 원인</strong></td><td>동기화 로직 오류</td><td>동기화되지 않은 데이터 접근</td></tr>
+<tr><td><strong>탐지 도구</strong></td><td><code>synccheck</code></td><td><code>racecheck</code></td></tr>
+<tr><td><strong>예시</strong></td><td><a href="../puzzle_09/third_case.html">Puzzle 09: 세 번째 사례</a> 배리어 교착 상태</td><td>공유 메모리 <code>+=</code> 연산</td></tr>
+</tbody></table>
+</div>
+<p><strong>우리 사례에서:</strong></p>
+<ul>
+<li><strong>프로그램 완료됨</strong> → 교착 상태 없음 (스레드가 멈추지 않음)</li>
+<li><strong>잘못된 결과</strong> → 경쟁 상태 (스레드들이 서로의 데이터를 손상)</li>
+<li><strong>도구 확인</strong> → <code>synccheck</code>는 0개 오류, <code>racecheck</code>는 9개 위험 요소 보고</li>
+</ul>
+<p><strong>디버깅에서 이 구분이 중요한 이유:</strong></p>
+<ul>
+<li><strong>교착 상태 디버깅</strong>: 배리어 배치, 조건부 동기화, 스레드 조율에 집중</li>
+<li><strong>경쟁 상태 디버깅</strong>: 공유 메모리 접근 패턴, 원자적 연산 (<em>역주: 중간 상태 없이 완전히 실행되거나 전혀 실행되지 않는 연산</em>), 데이터 의존성에 집중</li>
+</ul>
+<h2 id="도전-과제"><a class="header" href="#도전-과제">도전 과제</a></h2>
+<p>이 도구들을 활용하여 실패하는 커널을 수정하세요.</p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="위험-요소-분석"><a class="header" href="#위험-요소-분석">위험 요소 분석</a></h3>
+<p><code>shared_sum[0] += a[row, col]</code> 연산이 위험한 이유는 실제로 <strong>세 개의 별도 메모리 연산</strong>이기 때문입니다:</p>
+<ol>
+<li><code>shared_sum[0]</code> <strong>읽기</strong></li>
+<li>읽은 값에 <code>a[row, col]</code> <strong>더하기</strong></li>
+<li>결과를 <code>shared_sum[0]</code>에 다시 <strong>쓰기</strong></li>
+</ol>
+<p>4개의 활성 스레드(위치 (0,0), (0,1), (1,0), (1,1))에서 이 연산들이 겹칠 수 있습니다:</p>
+<ul>
+<li><strong>스레드 타이밍 중첩</strong> → 여러 스레드가 같은 초기값(0.0)을 읽음</li>
+<li><strong>업데이트 손실</strong> → 각 스레드가 <code>0.0 + 자신의_값</code>을 써서 다른 스레드의 작업을 덮어씀</li>
+<li><strong>비원자적 연산</strong> → <code>+=</code> 복합 대입은 GPU 공유 메모리에서 원자적이지 않음 (<em>역주: 실행 도중 다른 스레드가 끼어들 수 있어 중간 상태가 노출됨</em>)</li>
+</ul>
+<p><strong>정확히 9개의 위험 요소가 나오는 이유:</strong></p>
+<ul>
+<li>각 스레드가 read-modify-write를 시도</li>
+<li>4개 스레드 × 스레드당 2-3개 위험 요소 = 총 9개 위험 요소</li>
+<li><code>compute-sanitizer</code>가 모든 충돌하는 메모리 접근 쌍을 추적</li>
+</ul>
+<h3 id="경쟁-상태-디버깅-팁"><a class="header" href="#경쟁-상태-디버깅-팁">경쟁 상태 디버깅 팁</a></h3>
+<ol>
+<li><strong>데이터 경쟁에는 racecheck 사용</strong>: 공유 메모리 위험 요소와 데이터 손상 탐지</li>
+<li><strong>교착 상태에는 synccheck 사용</strong>: 동기화 버그(배리어 문제, 교착 상태) 탐지</li>
+<li><strong>공유 메모리 접근에 집중</strong>: 공유 변수에 대한 동기화되지 않은 <code>+=</code>, <code>=</code> 연산 찾기</li>
+<li><strong>패턴 식별</strong>: read-modify-write 연산이 흔한 경쟁 상태 원인</li>
+<li><strong>배리어 배치 확인</strong>: 배리어는 충돌 연산 <strong>이전에</strong> 배치해야 함, 이후가 아님</li>
+</ol>
+<p><strong>디버깅에서 이 구분이 중요한 이유:</strong></p>
+<ul>
+<li><strong>교착 상태 디버깅</strong>: 배리어 배치, 조건부 동기화, 스레드 조율에 집중</li>
+<li><strong>경쟁 상태 디버깅</strong>: 공유 메모리 접근 패턴, 원자적 연산, 데이터 의존성에 집중</li>
+</ul>
+<p><strong>피해야 할 흔한 경쟁 상태 패턴:</strong></p>
+<ul>
+<li>여러 스레드가 같은 공유 메모리 위치에 쓰기</li>
+<li>동기화되지 않은 read-modify-write 연산 (<code>+=</code>, <code>++</code> 등)</li>
+<li>경쟁 상태 이전이 아닌 이후에 배리어 배치</li>
+</ul>
+</div>
+</details>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">
+comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE, SIZE)
+
+
+fn shared_memory_race(
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: UInt,
+):
+    """Fixed: sequential access with barriers eliminates race conditions."""
+    row = thread_idx.y
+    col = thread_idx.x
+
+    shared_sum = LayoutTensor[
+        dtype,
+        Layout.row_major(1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Only thread 0 does all the accumulation work to prevent races
+    if row == 0 and col == 0:
+        # Use local accumulation first, then single write to shared memory
+        local_sum = Scalar[dtype](0.0)
+        for r in range(size):
+            for c in range(size):
+                local_sum += rebind[Scalar[dtype]](a[r, c])
+
+        shared_sum[0] = local_sum  # Single write operation
+
+    barrier()  # Ensure thread 0 completes before others read
+
+    # All threads read the safely accumulated result after synchronization
+    if row &lt; size and col &lt; size:
+        output[row, col] = shared_sum[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<h3 id="무엇이-잘못되었는지-이해하기"><a class="header" href="#무엇이-잘못되었는지-이해하기">무엇이 잘못되었는지 이해하기</a></h3>
+<h4 id="경쟁-상태-문제-패턴"><a class="header" href="#경쟁-상태-문제-패턴">경쟁 상태 문제 패턴</a></h4>
+<p>원래 실패하는 코드에는 이 핵심적인 줄이 있었습니다:</p>
+<pre><code class="language-mojo">shared_sum[0] += a[row, col]  # 경쟁 상태!
+</code></pre>
+<p>이 한 줄이 4개의 유효한 스레드 사이에서 여러 위험 요소를 일으킵니다:</p>
+<ol>
+<li><strong>스레드 (0,0)이 읽음</strong> <code>shared_sum[0]</code> (값: 0.0)</li>
+<li><strong>스레드 (0,1)이 읽음</strong> <code>shared_sum[0]</code> (값: 0.0) ← <strong>Read-after-write 위험!</strong></li>
+<li><strong>스레드 (0,0)이 씀</strong> <code>0.0 + 0</code></li>
+<li><strong>스레드 (1,0)이 씀</strong> <code>0.0 + 2</code> ← <strong>Write-after-write 위험!</strong></li>
+</ol>
+<h4 id="테스트가-실패한-이유"><a class="header" href="#테스트가-실패한-이유">테스트가 실패한 이유</a></h4>
+<ul>
+<li><code>+=</code> 연산 중 여러 스레드가 서로의 쓰기를 손상시킴</li>
+<li><code>+=</code> 연산이 중단되어 업데이트 손실 발생</li>
+<li>예상 합계 6.0 (0+1+2+3)이지만, 경쟁 상태로 인해 0.0이 됨</li>
+<li><code>barrier()</code>가 너무 늦게 옴 - 경쟁 상태가 이미 발생한 후</li>
+</ul>
+<h4 id="경쟁-상태란"><a class="header" href="#경쟁-상태란">경쟁 상태란?</a></h4>
+<p><strong>경쟁 상태</strong>는 여러 스레드가 공유 데이터에 동시에 접근하고, 결과가 예측 불가능한 스레드 실행 타이밍에 따라 달라질 때 발생합니다.</p>
+<p><strong>주요 특성:</strong></p>
+<ul>
+<li><strong>비결정적 동작</strong>: 같은 코드가 다른 실행에서 다른 결과를 낼 수 있음</li>
+<li><strong>타이밍 의존적</strong>: 결과가 어떤 스레드가 “경쟁에서 이기는지“에 따라 달라짐</li>
+<li><strong>재현하기 어려움</strong>: 특정 조건이나 하드웨어에서만 나타날 수 있음</li>
+</ul>
+<h4 id="gpu-특유의-위험성"><a class="header" href="#gpu-특유의-위험성">GPU 특유의 위험성</a></h4>
+<p><strong>대규모 병렬 처리의 영향:</strong></p>
+<ul>
+<li><strong>워프 수준 손상</strong>: 경쟁 상태가 전체 워프(32개 스레드)에 영향을 줄 수 있음</li>
+<li><strong>메모리 병합 문제</strong>: 경쟁으로 효율적인 메모리 접근 패턴이 깨질 수 있음</li>
+<li><strong>커널 전체 실패</strong>: 공유 메모리 손상이 전체 GPU 커널에 영향을 줄 수 있음</li>
+</ul>
+<p><strong>하드웨어 차이:</strong></p>
+<ul>
+<li><strong>다른 GPU 아키텍처</strong>: 경쟁 상태가 GPU 모델마다 다르게 나타날 수 있음</li>
+<li><strong>메모리 계층</strong>: L1 캐시, L2 캐시, 전역 메모리가 각각 다른 경쟁 동작을 보일 수 있음</li>
+<li><strong>워프 스케줄링</strong>: 다른 스레드 스케줄링이 다른 경쟁 상태 시나리오를 노출시킬 수 있음</li>
+</ul>
+<h3 id="전략-단일-쓰기-패턴"><a class="header" href="#전략-단일-쓰기-패턴">전략: 단일 쓰기 패턴</a></h3>
+<p>핵심은 공유 메모리에 대한 동시 쓰기를 없애는 것입니다:</p>
+<ol>
+<li><strong>Single writer</strong>: 하나의 스레드(위치 (0,0))만 모든 누적 작업 수행</li>
+<li><strong>로컬 누적</strong>: 위치 (0,0) 스레드가 로컬 변수를 사용해 반복적인 공유 메모리 접근을 피함</li>
+<li><strong>단일 공유 메모리 쓰기</strong>: 단일 쓰기 연산으로 write-write 경쟁 제거</li>
+<li><strong>배리어 동기화</strong>: writer가 완료된 후에야 다른 스레드가 읽도록 보장</li>
+<li><strong>다중 읽기</strong>: 모든 스레드가 안전하게 최종 결과를 읽음</li>
+</ol>
+<h4 id="단계별-솔루션-분석"><a class="header" href="#단계별-솔루션-분석">단계별 솔루션 분석</a></h4>
+<p><strong>1단계: 스레드 식별</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+</code></pre>
+<p>직접 좌표 검사로 위치 (0,0)의 스레드를 식별합니다.</p>
+<p><strong>2단계: 단일 스레드 누적</strong></p>
+<pre><code class="language-mojo">if row == 0 and col == 0:
+    local_sum = Scalar[dtype](0.0)
+    for r in range(size):
+        for c in range(size):
+            local_sum += rebind[Scalar[dtype]](a[r, c])
+    shared_sum[0] = local_sum  # 단일 쓰기 연산
+</code></pre>
+<p>위치 (0,0)의 스레드만 모든 누적 작업을 수행하여 경쟁 상태를 제거합니다.</p>
+<p><strong>3단계: 동기화 배리어</strong></p>
+<pre><code class="language-mojo">barrier()  # 스레드 (0,0)이 완료한 후 다른 스레드가 읽도록 보장
+</code></pre>
+<p>모든 스레드가 위치 (0,0)의 스레드가 누적을 마칠 때까지 기다립니다.</p>
+<p><strong>4단계: 안전한 병렬 읽기</strong></p>
+<pre><code class="language-mojo">if row &lt; size and col &lt; size:
+    output[row, col] = shared_sum[0]
+</code></pre>
+<p>동기화 후 모든 스레드가 안전하게 결과를 읽을 수 있습니다.</p>
+<h3 id="효율성에-관한-중요-사항"><a class="header" href="#효율성에-관한-중요-사항">효율성에 관한 중요 사항</a></h3>
+<p><strong>이 솔루션은 효율성보다 정확성을 우선합니다</strong>. 경쟁 상태는 제거하지만, 위치 (0,0) 스레드만 누적에 사용하는 것은 GPU 성능에 <strong>최적이 아닙니다</strong> - 대규모 병렬 장치에서 사실상 직렬 계산을 하는 셈입니다.</p>
+<p><strong>이어서 <a href="../../puzzle_11/puzzle_11.html">Puzzle 11: 풀링</a>에서</strong>: <strong>모든 스레드</strong>를 활용해 고성능 합산 연산을 수행하면서도 경쟁 상태를 피하는 효율적인 병렬 리덕션 알고리즘을 배웁니다. 이 퍼즐은 <strong>정확성 우선</strong>의 기초를 가르칩니다 - 경쟁 상태를 피하는 방법을 이해하고 나면, Puzzle 11에서 <strong>정확성과 성능 모두</strong>를 달성하는 방법을 보게 됩니다.</p>
+<h3 id="검증"><a class="header" href="#검증">검증</a></h3>
+<pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo solutions/p10/p10.mojo --race-condition
+</code></pre>
+<p><strong>예상 출력:</strong></p>
+<pre><code class="language-txt">========= COMPUTE-SANITIZER
+out shape: 2 x 2
+Running race condition example...
+out: HostBuffer([6.0, 6.0, 6.0, 6.0])
+expected: HostBuffer([6.0, 6.0, 6.0, 6.0])
+✅ Race condition test PASSED! (racecheck will find hazards)
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)
+</code></pre>
+<p><strong>✅ 성공:</strong> 테스트가 통과하고 경쟁 상태가 탐지되지 않았습니다!</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_10/memcheck.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_10/memcheck.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_11/puzzle_11.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

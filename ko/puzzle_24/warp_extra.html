@@ -1,0 +1,359 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🤔 언제 워프 프로그래밍을 사용할까 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<h1 id="언제-워프-프로그래밍을-사용할까"><a class="header" href="#언제-워프-프로그래밍을-사용할까">언제 워프 프로그래밍을 사용할까</a></h1>
+<h2 id="빠른-판단-가이드"><a class="header" href="#빠른-판단-가이드">빠른 판단 가이드</a></h2>
+<p><strong>✅ 워프 연산을 사용할 때:</strong></p>
+<ul>
+<li>32개 이상의 요소에 대한 리덕션 연산 (<code>sum</code>, <code>max</code>, <code>min</code>)</li>
+<li>규칙적인 메모리 접근 패턴 (인접 레인 → 인접 주소)</li>
+<li>크로스 아키텍처 이식성이 필요한 경우 (NVIDIA/RDNA 32 vs CDNA 64 스레드)</li>
+<li>더 간단하고 유지보수하기 쉬운 코드를 원할 때</li>
+</ul>
+<p><strong>❌ 기존 방식을 사용할 때:</strong></p>
+<ul>
+<li>복잡한 워프 간 동기화가 필요한 경우</li>
+<li>불규칙하거나 산발적인 메모리 접근 패턴</li>
+<li>스레드별 작업량이 다른 경우 (워프 분기 발생)</li>
+<li>문제 크기가 <code>size &lt; WARP_SIZE</code>인 경우</li>
+</ul>
+<h2 id="성능-특성"><a class="header" href="#성능-특성">성능 특성</a></h2>
+<h3 id="문제-크기별-확장성"><a class="header" href="#문제-크기별-확장성">문제 크기별 확장성</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>요소 수</th><th>워프 이점</th><th>비고</th></tr></thead><tbody>
+<tr><td>&lt; 32</td><td>없음</td><td>기존 방식이 유리</td></tr>
+<tr><td>32-1K</td><td>1.2-1.5배</td><td>이점이 나타나기 시작</td></tr>
+<tr><td>1K-32K</td><td>1.5-2.5배</td><td><strong>워프 연산이 탁월</strong></td></tr>
+<tr><td>&gt; 32K</td><td>메모리 바운드</td><td>양쪽 모두 대역폭에 의해 제한</td></tr>
+</tbody></table>
+</div>
+<h3 id="워프의-핵심-이점"><a class="header" href="#워프의-핵심-이점">워프의 핵심 이점</a></h3>
+<ul>
+<li><strong>동기화 오버헤드 제로</strong>: 배리어 비용 제거</li>
+<li><strong>최소한의 메모리 사용</strong>: 공유 메모리 할당 불필요</li>
+<li><strong>우수한 확장성</strong>: 워프 수가 늘어날수록 성능 향상</li>
+<li><strong>간결한 코드</strong>: 더 적은 줄 수, 더 적은 오류 가능성</li>
+</ul>
+<h2 id="알고리즘별-가이드"><a class="header" href="#알고리즘별-가이드">알고리즘별 가이드</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>알고리즘</th><th>권장 사항</th><th>이유</th></tr></thead><tbody>
+<tr><td><strong>내적</strong></td><td>워프 연산 (1K+ 요소)</td><td>단일 리덕션, 규칙적 접근</td></tr>
+<tr><td><strong>행렬 행/열 합계</strong></td><td>워프 연산</td><td>자연스러운 리덕션 패턴</td></tr>
+<tr><td><strong>누적 합</strong></td><td>항상 <code>prefix_sum()</code> 사용</td><td>하드웨어 최적화된 기본 요소</td></tr>
+<tr><td><strong>풀링 (max/min)</strong></td><td>워프 연산 (규칙적 윈도우)</td><td>효율적인 윈도우 리덕션</td></tr>
+<tr><td><strong>구간이 많은 히스토그램</strong></td><td>기존 방식</td><td>불규칙한 쓰기, 원자적 업데이트</td></tr>
+</tbody></table>
+</div>
+<h2 id="코드-예시"><a class="header" href="#코드-예시">코드 예시</a></h2>
+<h3 id="-워프에-적합한-경우"><a class="header" href="#-워프에-적합한-경우">✅ 워프에 적합한 경우</a></h3>
+<pre><code class="language-mojo"># 리덕션 연산
+from gpu.primitives.warp import sum, max
+var total = sum(partial_values)
+var maximum = max(partial_values)
+
+# 통신 패턴
+from gpu.primitives.warp import shuffle_idx, prefix_sum
+var broadcast = shuffle_idx(my_value, 0)
+var running_sum = prefix_sum(my_value)
+</code></pre>
+<h3 id="-기존-방식이-나은-경우"><a class="header" href="#-기존-방식이-나은-경우">❌ 기존 방식이 나은 경우</a></h3>
+<pre><code class="language-mojo"># 복잡한 다단계 동기화
+stage1_compute()
+barrier()  # 모든 스레드가 완료될 때까지 대기
+stage2_depends_on_stage1()
+
+# 불규칙한 메모리 접근
+var value = input[random_indices[global_i]]  # 산발적 읽기
+
+# 데이터 의존적 작업
+if input[global_i] &gt; threshold:
+    result = expensive_computation()  # 워프 분기 발생
+</code></pre>
+<h2 id="성능-측정"><a class="header" href="#성능-측정">성능 측정</a></h2>
+<pre><code class="language-bash"># 항상 양쪽 방식을 벤치마크하세요
+mojo p22.mojo --benchmark
+
+# 확장 패턴을 확인하세요:
+# traditional_1x:  X.XX ms
+# warp_1x:         Y.YY ms  # 더 빨라야 함
+# warp_32x:        Z.ZZ ms  # 이점이 커져야 함
+</code></pre>
+<h2 id="요약"><a class="header" href="#요약">요약</a></h2>
+<p><strong>워프 연산으로 시작하세요:</strong></p>
+<ul>
+<li>규칙적인 접근 패턴을 가진 리덕션</li>
+<li>문제 ≥ 1 워프 크기</li>
+<li>크로스 플랫폼 호환성이 필요한 경우</li>
+</ul>
+<p><strong>기존 방식을 사용하세요:</strong></p>
+<ul>
+<li>복잡한 동기화가 필요한 경우</li>
+<li>불규칙한 메모리 패턴</li>
+<li>작은 문제 또는 심한 분기</li>
+</ul>
+<p><strong>판단이 어려울 때:</strong> 양쪽 모두 구현하고 벤치마크하세요. 성능 차이를 보면 답이 나옵니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_24/warp_sum.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_25/puzzle_25.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_24/warp_sum.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_25/puzzle_25.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

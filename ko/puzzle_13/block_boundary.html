@@ -1,0 +1,565 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>⭐ 블록 경계 버전 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 29894ca396ed4e90fc447bf66b8e2a216576d8a8 -->
+<h1 id="블록-경계-버전"><a class="header" href="#블록-경계-버전">블록 경계 버전</a></h1>
+<p>1D LayoutTensor <code>a</code>와 1D LayoutTensor <code>b</code>의 1D 합성곱을 계산하여 1D LayoutTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다.</em></p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>입력 배열 크기: <code>SIZE_2 = 15</code></li>
+<li>커널 크기: <code>CONV_2 = 4</code></li>
+<li>블록당 스레드 수: <code>TPB = 8</code></li>
+<li>블록 수: 2</li>
+<li>공유 메모리: 입력용 <code>TPB + CONV_2 - 1</code>개</li>
+</ul>
+<p>참고:</p>
+<ul>
+<li><strong>확장 로딩</strong>: 경계 겹침 영역을 고려</li>
+<li><strong>블록 가장자리</strong>: 블록 경계를 넘는 데이터 처리</li>
+<li><strong>메모리 레이아웃</strong>: 공유 메모리의 효율적 활용</li>
+<li><strong>동기화</strong>: 적절한 스레드 간 조율</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime CONV_2 = 4
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime in_2_layout = Layout.row_major(SIZE_2)
+comptime out_2_layout = Layout.row_major(SIZE_2)
+comptime conv_2_layout = Layout.row_major(CONV_2)
+
+
+fn conv_1d_block_boundary[
+    in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+):
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+    # FILL ME IN (roughly 18 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p13/p13.mojo" class="filename">전체 파일 보기: problems/p13/p13.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code>으로 공유 메모리 할당</li>
+<li>메인 데이터 로드: <code>shared_a[local_i] = a[global_i]</code></li>
+<li>경계 데이터 로드: <code>if local_i &lt; CONV_2 - 1</code>일 때 다음 블록의 데이터 처리</li>
+<li>커널 로드: <code>shared_b[local_i] = b[local_i]</code></li>
+<li>입력 범위 안에서 합산: <code>if global_i + j &lt; SIZE_2</code></li>
+</ol>
+</div>
+</details>
+<h3 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h3>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p13 --block-boundary
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p13 --block-boundary
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p13 --block-boundary
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p13 --block-boundary
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0, 74.0, 80.0, 41.0, 14.0, 0.0])
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn conv_1d_block_boundary[
+    in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+):
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+    # first: need to account for padding
+    shared_a = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB + CONV_2 - 1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_b = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_2),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    if global_i &lt; SIZE_2:
+        shared_a[local_i] = a[global_i]
+    else:
+        shared_a[local_i] = 0
+
+    # second: load elements needed for convolution at block boundary
+    if local_i &lt; CONV_2 - 1:
+        # indices from next block
+        next_idx = global_i + TPB
+        if next_idx &lt; SIZE_2:
+            shared_a[TPB + local_i] = a[next_idx]
+        else:
+            # Initialize out-of-bounds elements to 0 to avoid reading from uninitialized memory
+            # which is an undefined behavior
+            shared_a[TPB + local_i] = 0
+
+    if local_i &lt; CONV_2:
+        shared_b[local_i] = b[local_i]
+
+    barrier()
+
+    if global_i &lt; SIZE_2:
+        var local_sum: output.element_type = 0
+
+        @parameter
+        for j in range(CONV_2):
+            if global_i + j &lt; SIZE_2:
+                local_sum += shared_a[local_i + j] * shared_b[j]
+
+        output[global_i] = local_sum
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>확장된 공유 메모리를 사용해 블록 경계를 넘는 1D 합성곱을 처리하는 솔루션입니다. 자세히 분석해 보겠습니다:</p>
+<h3 id="메모리-레이아웃과-크기-계산"><a class="header" href="#메모리-레이아웃과-크기-계산">메모리 레이아웃과 크기 계산</a></h3>
+<pre><code class="language-txt">테스트 구성:
+- 전체 배열 크기: SIZE_2 = 15
+- 그리드: 2 블록 × 8 스레드
+- 합성곱 커널: CONV_2 = 4
+
+Block 0 공유 메모리:  [0 1 2 3 4 5 6 7|8 9 10]  // TPB(8) + (CONV_2-1)(3) 패딩
+Block 1 공유 메모리:  [8 9 10 11 12 13 14 0|0 0 0]  // 두 번째 블록. 데이터(7) + 그리드 채움용 패딩(1) + (CONV_2-1)(3) 패딩
+
+크기 계산:
+- 메인 데이터: TPB개 (8)
+- 겹침 영역: CONV_2 - 1개 (4 - 1 = 3)
+- 합계: TPB + CONV_2 - 1 = 8 + 4 - 1 = 11개
+</code></pre>
+<h3 id="구현-상세"><a class="header" href="#구현-상세">구현 상세</a></h3>
+<ol>
+<li>
+<p><strong>공유 메모리 할당</strong>:</p>
+<pre><code class="language-mojo"># 합성곱 윈도우에 필요한 패딩을 먼저 고려
+shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+</code></pre>
+<p>이렇게 하면 블록 데이터와 겹침 영역을 모두 담기에 충분한 공간이 확보됩니다.</p>
+</li>
+<li>
+<p><strong>데이터 로딩 전략</strong>:</p>
+<pre><code class="language-mojo"># 메인 블록 데이터
+if global_i &lt; SIZE_2:
+    shared_a[local_i] = a[global_i]
+else:
+    shared_a[local_i] = 0
+
+# 다음 블록의 경계 데이터
+if local_i &lt; CONV_2 - 1:
+    next_idx = global_i + TPB
+    if next_idx &lt; SIZE_2:
+        shared_a[TPB + local_i] = a[next_idx]
+    else:
+        # 범위 밖 원소를 0으로 초기화하여
+        # 미정의 동작을 유발하는 초기화되지 않은 메모리 읽기를 방지
+        shared_a[TPB + local_i] = 0
+</code></pre>
+<ul>
+<li><code>local_i &lt; CONV_2 - 1</code>인 스레드만 경계 데이터를 로드</li>
+<li>불필요한 스레드 분기 방지</li>
+<li>메인 데이터 로드의 메모리 병합 유지</li>
+<li>범위 밖 원소를 명시적으로 0으로 초기화하여 미정의 동작 방지</li>
+</ul>
+</li>
+<li>
+<p><strong>커널 로딩</strong>:</p>
+<pre><code class="language-mojo">if local_i &lt; b_size:
+    shared_b[local_i] = b[local_i]
+</code></pre>
+<ul>
+<li>스레드당 1회 로드</li>
+<li>커널 크기로 범위 제한</li>
+</ul>
+</li>
+<li>
+<p><strong>합성곱 연산</strong>:</p>
+<pre><code class="language-mojo">if global_i &lt; SIZE_2:
+    var local_sum: output.element_type = 0
+    @parameter
+    for j in range(CONV_2):
+        if global_i + j &lt; SIZE_2:
+            local_sum += shared_a[local_i + j] * shared_b[j]
+</code></pre>
+<ul>
+<li><code>@parameter</code>로 컴파일 타임 루프 전개</li>
+<li><code>output.element_type</code>으로 적절한 타입 추론</li>
+<li>의미적으로 올바른 경계 검사: 유효한 입력 위치에서만 합성곱 계산</li>
+</ul>
+</li>
+</ol>
+<h3 id="메모리-접근-패턴-분석"><a class="header" href="#메모리-접근-패턴-분석">메모리 접근 패턴 분석</a></h3>
+<ol>
+<li>
+<p><strong>Block 0 접근 패턴</strong>:</p>
+<pre><code class="language-txt">Thread 0: [0 1 2 3] × [0 1 2 3]
+Thread 1: [1 2 3 4] × [0 1 2 3]
+Thread 2: [2 3 4 5] × [0 1 2 3]
+...
+Thread 7: [7 8 9 10] × [0 1 2 3]  // 겹침 영역 데이터 사용
+</code></pre>
+</li>
+<li>
+<p><strong>Block 1 접근 패턴</strong>:
+Thread 4부터는 <code>global_i + j &lt; SIZE_2</code>가 <code>False</code>가 되어 해당 반복을 건너뛰는 점에 주목하세요.</p>
+<pre><code class="language-txt">Thread 0: [8  9 10 11] × [0 1 2 3]
+Thread 1: [9 10 11 12] × [0 1 2 3]
+...
+Thread 4: [12 13 14] × [0 1 2]       // 끝부분 제로 패딩
+Thread 5: [13 14]    × [0 1]
+Thread 6: [14]       × [0]
+Thread 7: 건너뜀                      // 모든 j에 대해 global_i + j &lt; SIZE_2가 false, 연산 없음
+</code></pre>
+</li>
+</ol>
+<h3 id="성능-최적화"><a class="header" href="#성능-최적화">성능 최적화</a></h3>
+<ol>
+<li>
+<p><strong>메모리 병합</strong>:</p>
+<ul>
+<li>메인 데이터 로드: 인접 스레드가 연속된 메모리에 접근</li>
+<li>경계 데이터: 필요한 스레드만 참여</li>
+<li>단일 배리어 동기화 지점</li>
+</ul>
+</li>
+<li>
+<p><strong>스레드 분기 최소화</strong>:</p>
+<ul>
+<li>메인 로딩과 경계 로딩의 깔끔한 분리</li>
+<li>워프 내 균일한 연산 패턴</li>
+<li>효율적인 경계 검사</li>
+</ul>
+</li>
+<li>
+<p><strong>공유 메모리 활용</strong>:</p>
+<ul>
+<li>블록 경계 처리에 최적화된 크기 설정</li>
+<li>접근 패턴에서 뱅크 충돌 없음</li>
+<li>로드한 데이터의 효율적 재사용</li>
+</ul>
+</li>
+<li>
+<p><strong>경계 처리</strong>:</p>
+<ul>
+<li>범위 밖 원소를 명시적으로 0으로 설정하여 초기화되지 않은 공유 메모리 읽기 방지</li>
+<li><code>global_i + j &lt; SIZE_2</code>로 공유 메모리가 아닌 실제 입력 범위 기준의 경계 검사</li>
+<li>불필요한 연산 없이 적절한 엣지 케이스 처리</li>
+</ul>
+</li>
+</ol>
+<h3 id="경계-조건-개선"><a class="header" href="#경계-조건-개선">경계 조건 개선</a></h3>
+<p>이 솔루션은 공유 메모리 범위를 확인하는 대신 <code>if global_i + j &lt; SIZE_2:</code>를 사용합니다. 이 패턴은:</p>
+<ul>
+<li><strong>수학적으로 정확</strong>: 입력 데이터가 실제로 존재하는 위치에서만 합성곱 계산</li>
+<li><strong>더 효율적</strong>: 입력 배열을 넘어선 위치에 대한 불필요한 연산 회피</li>
+<li><strong>더 안전</strong>: 공유 메모리의 제로 패딩 동작에 의존하지 않음</li>
+</ul>
+<p>이 구현은 블록 간 합성곱을 효율적으로 수행하면서 다음을 유지합니다:</p>
+<ul>
+<li>적절한 경계 검사를 통한 메모리 안전성</li>
+<li>최적화된 메모리 접근을 통한 높은 성능</li>
+<li>LayoutTensor 추상화를 활용한 깔끔한 코드 구조</li>
+<li>최소한의 동기화 오버헤드</li>
+<li>수학적으로 건전한 경계 처리</li>
+</ul>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_13/simple.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_14/puzzle_14.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_13/simple.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_14/puzzle_14.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

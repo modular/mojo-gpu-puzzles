@@ -1,0 +1,704 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>⭐ 완성 버전 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="완성-버전"><a class="header" href="#완성-버전">완성 버전</a></h1>
+<p>1D LayoutTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D LayoutTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em><code>a</code>의 크기가 블록 크기보다 큰 경우, 올바른 결과를 얻으려면 여러 블록 간 동기화가 필요합니다.</em></p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>배열 크기: <code>SIZE_2 = 15</code></li>
+<li>블록당 스레드 수: <code>TPB = 8</code></li>
+<li>블록 수: 2</li>
+<li>공유 메모리: 블록당 <code>TPB</code>개 원소</li>
+</ul>
+<p>참고:</p>
+<ul>
+<li><strong>다중 블록</strong>: 입력 배열이 하나의 블록보다 클 때는 다단계 접근이 필요</li>
+<li><strong>블록 레벨 동기화</strong>: 블록 내에서는 <code>barrier()</code>로 스레드를 동기화</li>
+<li><strong>호스트 레벨 동기화</strong>: Mojo의 <code>DeviceContext</code>가 커널 실행 순서를 보장하므로, 커널들은 큐에 넣은 순서대로 실행되고 이전 커널이 끝나야 다음이 시작됩니다. 호스트에서 결과를 읽기 전에 <code>ctx.synchronize()</code>로 모든 GPU 작업 완료를 확인해야 할 수 있습니다.</li>
+<li><strong>보조 저장소</strong>: 블록 간 통신을 위해 블록 합계를 저장할 추가 공간 사용</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<p>멀티 블록 누적 합을 위해 두 개의 별도 커널 함수를 완성해야 합니다:</p>
+<ol>
+<li><strong>첫 번째 커널</strong> (<code>prefix_sum_local_phase</code>): 각 블록 내에서 로컬 누적 합을 계산하고 블록 합계를 저장</li>
+<li><strong>두 번째 커널</strong> (<code>prefix_sum_block_sum_phase</code>): 이전 블록의 합계를 후속 블록의 원소에 더함</li>
+</ol>
+<p>메인 함수가 이 커널들 사이에 필요한 호스트 측 동기화를 처리합니다.</p>
+<pre><code class="language-mojo">comptime SIZE_2 = 15
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (TPB, 1)
+comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
+comptime layout_2 = Layout.row_major(SIZE_2)
+comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
+
+
+# Kernel 1: Compute local prefix sums and store block sums in out
+fn prefix_sum_local_phase[
+    out_layout: Layout, in_layout: Layout
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: UInt,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    # FILL ME IN (roughly 20 lines)
+
+
+# Kernel 2: Add block sums to their respective blocks
+fn prefix_sum_block_sum_phase[
+    layout: Layout
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    # FILL ME IN (roughly 3 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a></p>
+<p>이 퍼즐의 핵심은 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>가 블록 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 커널을 큐에 넣어야 합니다:</p>
+<pre><code class="language-mojo">            # Phase 1: Local prefix sums
+            comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
+            ctx.enqueue_function[kernel, kernel](
+                out_tensor,
+                a_tensor,
+                UInt(size),
+                grid_dim=BLOCKS_PER_GRID_2,
+                block_dim=THREADS_PER_BLOCK_2,
+            )
+
+            # Phase 2: Add block sums
+            comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
+            ctx.enqueue_function[kernel2, kernel2](
+                out_tensor,
+                UInt(size),
+                grid_dim=BLOCKS_PER_GRID_2,
+                block_dim=THREADS_PER_BLOCK_2,
+            )
+</code></pre>
+<p>두 커널이 순차적으로 큐에 들어가지만, <code>out_tensor</code>는 두 커널의 작업이 모두 끝날 때까지 호스트로 전송되지 않는다는 점에 주목하세요. Mojo의 <code>DeviceContext</code>가 단일 실행 스트림을 사용하므로, 큐에 넣은 모든 커널이 순차적으로 실행됩니다. 호스트에서 결과를 읽기 전에 모든 GPU 작업의 완료를 명시적으로 대기하려면 <code>ctx.synchronize()</code>를 사용할 수 있습니다.</p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-기본-누적-합-위에-쌓아-올리기"><a class="header" href="#1-기본-누적-합-위에-쌓아-올리기">1. 기본 누적 합 위에 쌓아 올리기</a></h3>
+<p><a href="./simple.html">🔰 기본 버전</a>에서 단일 블록 누적 합 구현 방법을 보여줍니다. 이 접근법을 여러 블록에서 동작하도록 확장해야 합니다:</p>
+<pre><code>기본 버전 (단일 블록): [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
+
+완성 버전 (두 블록):
+Block 0: [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
+Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
+</code></pre>
+<p>그런데 두 번째 블록의 값은 어떻게 처리할까요? 첫 번째 블록의 합계를 포함해야 합니다!</p>
+<h3 id="2-2단계-접근"><a class="header" href="#2-2단계-접근">2. 2단계 접근</a></h3>
+<p>기본 누적 합으로는 블록 간 동기화가 불가능하므로, 작업을 나눕니다:</p>
+<ol>
+<li><strong>1단계</strong>: 각 블록이 로컬 누적 합을 계산 (기본 버전과 동일)</li>
+<li><strong>2단계</strong>: 각 블록이 이전 블록의 합계를 반영</li>
+</ol>
+<p>주의: <code>barrier()</code>는 하나의 블록 내에서만 스레드를 동기화합니다. 단계 간에는 호스트 레벨 동기화가 필요합니다.</p>
+<h3 id="3-확장-메모리-전략"><a class="header" href="#3-확장-메모리-전략">3. 확장 메모리 전략</a></h3>
+<p>블록끼리 직접 통신할 수 없으므로, 블록 합계를 저장할 곳이 필요합니다:</p>
+<ul>
+<li>출력 버퍼 끝에 추가 메모리를 할당</li>
+<li>각 블록의 마지막 스레드가 최종 합계를 이 추가 공간에 저장</li>
+<li>후속 블록이 이 합계를 읽어서 자기 원소에 더함</li>
+</ul>
+<h3 id="4-주요-구현-포인트"><a class="header" href="#4-주요-구현-포인트">4. 주요 구현 포인트</a></h3>
+<ul>
+<li><strong>레이아웃 차이</strong>: 입력과 출력의 형태가 다를 수 있음</li>
+<li><strong>경계 처리</strong>: 항상 <code>global_i &lt; size</code>로 배열 범위 확인</li>
+<li><strong>스레드 역할 분담</strong>: 특정 스레드(예: 마지막 스레드)만 블록 합계를 저장</li>
+<li><strong>두 커널 간 동기화</strong>: 두 번째 커널은 반드시 첫 번째 커널이 완료된 후에 실행되어야 함</li>
+</ul>
+<h3 id="5-디버깅-전략"><a class="header" href="#5-디버깅-전략">5. 디버깅 전략</a></h3>
+<p>문제가 발생하면, 1단계 이후의 중간 상태를 시각화해 보세요:</p>
+<pre><code>1단계 이후: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
+</code></pre>
+<p>여기서 <code>???</code>에는 2단계에서 사용될 블록 합계가 들어가야 합니다.</p>
+<p>중간 결과를 확인하려면 먼저 디바이스의 작업 완료를 명시적으로 보장해야 한다는 점을 기억하세요.</p>
+</div>
+</details>
+<h3 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h3>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p14 --complete
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p14 --complete
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p14 --complete
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p14 --complete
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 91.0, 105.0])
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">
+
+# Kernel 1: Compute local prefix sums and store block sums in out
+fn prefix_sum_local_phase[
+    out_layout: Layout, in_layout: Layout
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    size: UInt,
+):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+    local_i = thread_idx.x
+    shared = LayoutTensor[
+        dtype,
+        Layout.row_major(TPB),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Load data into shared memory
+    # Example with SIZE_2=15, TPB=8, BLOCKS=2:
+    # Block 0 shared mem: [0,1,2,3,4,5,6,7]
+    # Block 1 shared mem: [8,9,10,11,12,13,14,uninitialized]
+    # Note: The last position remains uninitialized since global_i &gt;= size,
+    # but this is safe because that thread doesn't participate in computation
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    barrier()
+
+    # Compute local prefix sum using parallel reduction
+    # This uses a tree-based algorithm with log(TPB) iterations
+    # Iteration 1 (offset=1):
+    #   Block 0: [0,0+1,2+1,3+2,4+3,5+4,6+5,7+6] = [0,1,3,5,7,9,11,13]
+    # Iteration 2 (offset=2):
+    #   Block 0: [0,1,3+0,5+1,7+3,9+5,11+7,13+9] = [0,1,3,6,10,14,18,22]
+    # Iteration 3 (offset=4):
+    #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
+    #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
+    offset = UInt(1)
+    for i in range(Int(log2(Scalar[dtype](TPB)))):
+        var current_val: output.element_type = 0
+        if local_i &gt;= offset and local_i &lt; TPB:
+            current_val = shared[local_i - offset]  # read
+
+        barrier()
+        if local_i &gt;= offset and local_i &lt; TPB:
+            shared[local_i] += current_val  # write
+
+        barrier()
+        offset *= 2
+
+    # Write local results to output
+    # Block 0 writes: [0,1,3,6,10,15,21,28]
+    # Block 1 writes: [8,17,27,38,50,63,77,???]
+    if global_i &lt; size:
+        output[global_i] = shared[local_i]
+
+    # Store block sums in auxiliary space
+    # Block 0: Thread 7 stores shared[7] == 28 at position size+0 (position 15)
+    # Block 1: Thread 7 stores shared[7] == ??? at position size+1 (position 16).  This sum is not needed for the final output.
+    # This gives us: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, 28,???]
+    #                                                           ↑  ↑
+    #                                                     Block sums here
+    if local_i == TPB - 1:
+        output[size + block_idx.x] = shared[local_i]
+
+
+# Kernel 2: Add block sums to their respective blocks
+fn prefix_sum_block_sum_phase[
+    layout: Layout
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
+    global_i = block_dim.x * block_idx.x + thread_idx.x
+
+    # Second pass: add previous block's sum to each element
+    # Block 0: No change needed - already correct
+    # Block 1: Add Block 0's sum (28) to each element
+    #   Before: [8,17,27,38,50,63,77]
+    #   After: [36,45,55,66,78,91,105]
+    # Final result combines both blocks:
+    # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
+    if block_idx.x &gt; 0 and global_i &lt; size:
+        prev_block_sum = output[size + block_idx.x - 1]
+        output[global_i] += prev_block_sum
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 솔루션은 여러 스레드 블록에 걸치는 배열을 처리하기 위해 2개의 커널을 사용하는 멀티 블록 누적 합을 구현합니다. 각 부분을 자세히 살펴보겠습니다:</p>
+<h2 id="블록-간-통신의-과제"><a class="header" href="#블록-간-통신의-과제">블록 간 통신의 과제</a></h2>
+<p>GPU 프로그래밍의 근본적인 제약은 <code>barrier()</code>를 사용한 스레드 동기화가 블록 내부에서만 가능하다는 점입니다. 데이터가 여러 블록에 걸쳐 있을 때 다음과 같은 과제에 직면합니다: <strong>블록이 부분 결과를 다른 블록에 어떻게 전달할 수 있을까?</strong></p>
+<h3 id="메모리-레이아웃-시각화"><a class="header" href="#메모리-레이아웃-시각화">메모리 레이아웃 시각화</a></h3>
+<p>테스트 케이스 <code>SIZE_2 = 15</code>, <code>TPB = 8</code>의 경우:</p>
+<pre><code>Input array:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+Block 0 처리: [0, 1, 2, 3, 4, 5, 6, 7]
+Block 1 처리: [8, 9, 10, 11, 12, 13, 14] (유효 원소 7개)
+</code></pre>
+<p>블록 합계를 위한 공간을 포함하도록 출력 버퍼를 확장합니다:</p>
+<pre><code>확장 버퍼: [데이터 값 (15개)] + [블록 합계 (2개)]
+           [0...14] + [block0_sum, block1_sum]
+</code></pre>
+<p>이 확장 버퍼의 크기: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
+<h2 id="1단계-커널-로컬-누적-합"><a class="header" href="#1단계-커널-로컬-누적-합">1단계 커널: 로컬 누적 합</a></h2>
+<h3 id="로컬-단계에서의-경쟁-상태-방지"><a class="header" href="#로컬-단계에서의-경쟁-상태-방지">로컬 단계에서의 경쟁 상태 방지</a></h3>
+<p>로컬 단계는 기본 버전과 동일한 명시적 동기화 패턴을 사용하여 읽기-쓰기 충돌을 방지합니다:</p>
+<ul>
+<li><strong>읽기 단계</strong>: 모든 스레드가 먼저 필요한 값을 로컬 변수 <code>current_val</code>에 읽어둠</li>
+<li><strong>동기화</strong>: <code>barrier()</code>로 모든 읽기가 완료된 후에야 쓰기가 시작되도록 보장</li>
+<li><strong>쓰기 단계</strong>: 모든 스레드가 계산된 값을 안전하게 공유 메모리에 기록</li>
+</ul>
+<p>이를 통해 병렬 리덕션 중 여러 스레드가 동시에 같은 공유 메모리 위치에 접근할 때 발생할 수 있는 경쟁 상태를 방지합니다.</p>
+<h3 id="block-0-단계별-실행"><a class="header" href="#block-0-단계별-실행">Block 0 단계별 실행</a></h3>
+<ol>
+<li>
+<p><strong>공유 메모리에 값 로드</strong>:</p>
+<pre><code>shared = [0, 1, 2, 3, 4, 5, 6, 7]
+</code></pre>
+</li>
+<li>
+<p><strong>병렬 리덕션 반복</strong> (\(\log_2(TPB) = 3\)회 반복):</p>
+<p><strong>반복 1</strong> (offset=1):</p>
+<p><strong>읽기 단계</strong>: 각 활성 스레드가 필요한 값을 읽음:</p>
+<pre><code>T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
+T₂ reads shared[1] = 1    T₆ reads shared[5] = 5
+T₃ reads shared[2] = 2    T₇ reads shared[6] = 6
+T₄ reads shared[3] = 3
+</code></pre>
+<p><strong>동기화</strong>: <code>barrier()</code>로 모든 읽기 완료를 보장</p>
+<p><strong>쓰기 단계</strong>: 각 스레드가 읽은 값을 더함:</p>
+<pre><code>shared[0] = 0              (변경 없음)
+shared[1] = 1 + 0 = 1
+shared[2] = 2 + 1 = 3
+shared[3] = 3 + 2 = 5
+shared[4] = 4 + 3 = 7
+shared[5] = 5 + 4 = 9
+shared[6] = 6 + 5 = 11
+shared[7] = 7 + 6 = 13
+</code></pre>
+<p>배리어 후: <code>shared = [0, 1, 3, 5, 7, 9, 11, 13]</code></p>
+<p><strong>반복 2</strong> (offset=2):</p>
+<p><strong>읽기 단계</strong>: 각 활성 스레드가 필요한 값을 읽음:</p>
+<pre><code>T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
+T₃ reads shared[1] = 1    T₆ reads shared[4] = 7
+T₄ reads shared[2] = 3    T₇ reads shared[5] = 9
+</code></pre>
+<p><strong>동기화</strong>: <code>barrier()</code>로 모든 읽기 완료를 보장</p>
+<p><strong>쓰기 단계</strong>: 각 스레드가 읽은 값을 더함:</p>
+<pre><code>shared[0] = 0              (변경 없음)
+shared[1] = 1              (변경 없음)
+shared[2] = 3 + 0 = 3      (변경 없음)
+shared[3] = 5 + 1 = 6
+shared[4] = 7 + 3 = 10
+shared[5] = 9 + 5 = 14
+shared[6] = 11 + 7 = 18
+shared[7] = 13 + 9 = 22
+</code></pre>
+<p>배리어 후: <code>shared = [0, 1, 3, 6, 10, 14, 18, 22]</code></p>
+<p><strong>반복 3</strong> (offset=4):</p>
+<p><strong>읽기 단계</strong>: 각 활성 스레드가 필요한 값을 읽음:</p>
+<pre><code>T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
+T₅ reads shared[1] = 1    T₇ reads shared[3] = 6
+</code></pre>
+<p><strong>동기화</strong>: <code>barrier()</code>로 모든 읽기 완료를 보장</p>
+<p><strong>쓰기 단계</strong>: 각 스레드가 읽은 값을 더함:</p>
+<pre><code>shared[0] = 0              (변경 없음)
+shared[1] = 1              (변경 없음)
+shared[2] = 3              (변경 없음)
+shared[3] = 6              (변경 없음)
+shared[4] = 10 + 0 = 10    (변경 없음)
+shared[5] = 14 + 1 = 15
+shared[6] = 18 + 3 = 21
+shared[7] = 22 + 6 = 28
+</code></pre>
+<p>배리어 후: <code>shared = [0, 1, 3, 6, 10, 15, 21, 28]</code></p>
+</li>
+<li>
+<p><strong>로컬 결과를 전역 메모리에 기록</strong>:</p>
+<pre><code>output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
+</code></pre>
+</li>
+<li>
+<p><strong>블록 합계를 보조 공간에 저장</strong> (마지막 스레드만):</p>
+<pre><code>output[15] = 28  // 위치: size + block_idx.x = 15 + 0
+</code></pre>
+</li>
+</ol>
+<h3 id="block-1-단계별-실행"><a class="header" href="#block-1-단계별-실행">Block 1 단계별 실행</a></h3>
+<ol>
+<li>
+<p><strong>공유 메모리에 값 로드</strong>:</p>
+<pre><code>shared = [8, 9, 10, 11, 12, 13, 14, 미초기화]
+</code></pre>
+<p>참고: 스레드 7은 <code>global_i = 15 &gt;= SIZE_2</code>이므로 아무것도 로드하지 않아 <code>shared[7]</code>이 미초기화 상태로 남습니다. 스레드 7은 최종 출력에 참여하지 않으므로 안전합니다.</p>
+</li>
+<li>
+<p><strong>병렬 리덕션 반복</strong> (\(\log_2(TPB) = 3\)회 반복):</p>
+<p>실제로 연산에 참여하는 것은 처음 7개 스레드뿐입니다. 세 번의 반복을 거치면:</p>
+<pre><code>shared = [8, 17, 27, 38, 50, 63, 77, 미초기화]
+</code></pre>
+</li>
+<li>
+<p><strong>로컬 결과를 전역 메모리에 기록</strong>:</p>
+<pre><code>output[8...14] = [8, 17, 27, 38, 50, 63, 77]  // 유효 출력 7개만
+</code></pre>
+</li>
+<li>
+<p><strong>블록 합계를 보조 공간에 저장</strong> (블록의 마지막 스레드만):</p>
+<pre><code>output[16] = shared[7]  // 스레드 7 (TPB-1)이 shared[7]의 값을 저장
+</code></pre>
+<p>참고: 스레드 7은 유효한 입력을 로드하지 않았지만, 블록 내 누적 합 연산에는 그대로 참여합니다. <code>shared[7]</code>은 병렬 리덕션을 거치며 갱신되지만, 미초기화 상태에서 시작했기 때문에 최종 값을 예측할 수 없습니다. 다만 Block 1이 마지막 블록이므로 이 블록 합계는 2단계에서 사용되지 않아 정확성에는 영향이 없습니다.</p>
+</li>
+</ol>
+<p>1단계 이후 출력 버퍼의 내용:</p>
+<pre><code>[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
+                                                        ^   ^
+                                                블록 합계가 여기에 저장됨
+</code></pre>
+<p>참고: 마지막 블록 합계 (???) 는 미초기화 메모리에 기반하므로 예측할 수 없지만, 최종 결과에는 영향을 주지 않습니다.</p>
+<h2 id="호스트-디바이스-동기화-실제로-필요한-시점"><a class="header" href="#호스트-디바이스-동기화-실제로-필요한-시점">호스트-디바이스 동기화: 실제로 필요한 시점</a></h2>
+<p>두 커널 단계는 <strong>명시적 동기화 없이</strong> 순차적으로 실행됩니다:</p>
+<pre><code class="language-mojo"># 1단계: 로컬 누적 합
+ctx.enqueue_function[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
+
+# 2단계: 블록 합계 더하기 (자동으로 1단계 완료를 대기)
+ctx.enqueue_function[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
+</code></pre>
+<p><strong>핵심 통찰</strong>: Mojo의 <code>DeviceContext</code>는 단일 실행 스트림(NVIDIA GPU에서는 CUDA 스트림, AMD ROCm GPU에서는 HIP 스트림)을 사용하므로, 큐에 넣은 커널이 정확히 넣은 순서대로 실행됨을 보장합니다. 커널 간에 명시적 동기화가 필요 없습니다.</p>
+<p><strong><code>ctx.synchronize()</code>가 필요한 시점</strong>:</p>
+<pre><code class="language-mojo"># 두 커널 완료 후, 호스트에서 결과를 읽기 전
+ctx.synchronize()  # 호스트가 GPU 완료를 대기
+
+with out.map_to_host() as out_host:  # 이제 GPU 결과를 안전하게 읽을 수 있음
+    print("out:", out_host)
+</code></pre>
+<p><code>ctx.synchronize()</code> 호출의 역할:</p>
+<ul>
+<li><strong>호스트-디바이스 동기화</strong>: 결과에 접근하기 전에 호스트가 모든 GPU 작업의 완료를 대기하도록 보장</li>
+<li><strong>메모리 안전성</strong>: 연산이 끝나기 전에 GPU 메모리를 읽는 것을 방지</li>
+</ul>
+<p><strong>실행 모델</strong>: 블록 내부의 스레드를 동기화하는 <code>barrier()</code>와 달리, 커널 실행 순서는 Mojo의 단일 스트림 실행 모델에서 보장되며, <code>ctx.synchronize()</code>는 호스트-디바이스 간 조율을 담당합니다.</p>
+<h2 id="2단계-커널-블록-합계-더하기"><a class="header" href="#2단계-커널-블록-합계-더하기">2단계 커널: 블록 합계 더하기</a></h2>
+<ol>
+<li>
+<p><strong>Block 0</strong>: 변경 불필요 (이미 올바른 상태).</p>
+</li>
+<li>
+<p><strong>Block 1</strong>: 각 스레드가 Block 0의 합계를 자기 원소에 더함:</p>
+<pre><code>prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
+output[global_i] += prev_block_sum
+</code></pre>
+<p>Block 1의 값이 변환됩니다:</p>
+<pre><code>Before: [8, 17, 27, 38, 50, 63, 77]
+After:  [36, 45, 55, 66, 78, 91, 105]
+</code></pre>
+</li>
+</ol>
+<h2 id="성능-및-최적화-고려-사항"><a class="header" href="#성능-및-최적화-고려-사항">성능 및 최적화 고려 사항</a></h2>
+<h3 id="주요-구현-상세"><a class="header" href="#주요-구현-상세">주요 구현 상세</a></h3>
+<p><strong>로컬 단계 동기화 패턴</strong>: 블록 내 각 반복은 엄격한 읽기 → 동기화 → 쓰기 패턴을 따릅니다:</p>
+<ol>
+<li><code>var current_val: out.element_type = 0</code> - 로컬 변수 초기화</li>
+<li><code>current_val = shared[local_i - offset]</code> - 읽기 단계 (조건 충족 시)</li>
+<li><code>barrier()</code> - 경쟁 상태 방지를 위한 명시적 동기화</li>
+<li><code>shared[local_i] += current_val</code> - 쓰기 단계 (조건 충족 시)</li>
+<li><code>barrier()</code> - 다음 반복 전 동기화</li>
+</ol>
+<p><strong>블록 간 동기화</strong>: 이 알고리즘은 두 단계의 동기화를 사용합니다:</p>
+<ul>
+<li><strong>블록 내부</strong>: 로컬 누적 합 연산 중 <code>barrier()</code>로 각 블록 내 스레드를 동기화</li>
+<li><strong>블록 간</strong>: <code>DeviceContext</code>가 큐에 넣은 커널을 순차 실행하여 1단계가 2단계 전에 완료되도록 보장. 결과를 읽기 전에 호스트-디바이스 동기화가 필요하면 <code>ctx.synchronize()</code>를 사용합니다.</li>
+</ul>
+<p><strong>경쟁 상태 방지</strong>: 로컬 단계에서 읽기와 쓰기를 명시적으로 분리하여, 병렬 리덕션 중 여러 스레드가 같은 공유 메모리 위치에 동시에 접근할 때 생길 수 있는 경쟁 상태를 방지합니다.</p>
+<ol>
+<li>
+<p><strong>작업 효율성</strong>: 이 구현의 작업 복잡도는 \(O(n \log n)\)이며, 순차 알고리즘은 \(O(n)\)입니다. 병렬 알고리즘에서 전형적인 공간-시간 트레이드오프입니다.</p>
+</li>
+<li>
+<p><strong>메모리 오버헤드</strong>: 블록 합계를 위한 추가 공간은 아주 적습니다 (블록당 원소 하나).</p>
+</li>
+</ol>
+<p>이 2개 커널 접근 방식은 블록 간 통신이 필요한 GPU 알고리즘의 기본 패턴입니다. 기수 정렬, 히스토그램 계산, 리덕션 연산 등 다른 병렬 알고리즘에도 동일한 전략을 적용할 수 있습니다.</p>
+</div>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_14/simple.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_15/puzzle_15.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_14/simple.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_15/puzzle_15.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🕵 탐정 수사: 세 번째 사례 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="-탐정-수사-세-번째-사례"><a class="header" href="#-탐정-수사-세-번째-사례">🕵 탐정 수사: 세 번째 사례</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p><a href="./first_case.html">메모리 크래시</a>와 <a href="./second_case.html">로직 버그</a> 디버깅을 익혔습니다. 이제 GPU 디버깅의 최종 보스에 도전합니다: 프로그램이 무한정 멈춰버리는 <strong>배리어 교착 상태</strong>. 오류 메시지도, 잘못된 결과도 없이 - 그저 끝없는 침묵만 있습니다.</p>
+<p><strong>디버깅 여정의 완결:</strong></p>
+<ul>
+<li><strong><a href="./first_case.html">첫 번째 사례</a></strong>: 프로그램 크래시 → 오류 신호 추적 → 메모리 버그 발견</li>
+<li><strong><a href="./second_case.html">두 번째 사례</a></strong>: 잘못된 결과 출력 → 패턴 분석 → 로직 버그 발견</li>
+<li><strong>세 번째 사례</strong>: 프로그램 무한 정지 → 스레드 상태 조사 → 조율 버그 발견</li>
+</ul>
+<p>이 고급 디버깅 챌린지에서는 공유 메모리, LayoutTensor 연산, 배리어 동기화가 얽힌 <strong>스레드 조율 실패</strong>를 조사하는 방법을 배웁니다 - 이전 사례들에서 익힌 체계적인 조사 기술을 총동원합니다.</p>
+<p><strong>사전 준비</strong>: <a href="./essentials.html">Mojo GPU 디버깅의 핵심</a>, <a href="./first_case.html">탐정 수사: 첫 번째 사례</a>, <a href="./second_case.html">탐정 수사: 두 번째 사례</a>를 먼저 완료해서 CUDA-GDB 워크플로우, 변수 검사의 한계, 체계적인 디버깅 접근법을 이해하세요. 아래 설정 명령을 실행했는지 확인하세요:</p>
+<pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
+</code></pre>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이번 디버깅 챌린지에서 배울 내용:</p>
+<ul>
+<li><strong>배리어 교착 상태 탐지</strong>: 스레드들이 동기화 지점에서 영원히 기다리게 되는 상황 식별하기</li>
+<li><strong>공유 메모리 조율</strong>: LayoutTensor를 사용한 스레드 협력 패턴 이해하기</li>
+<li><strong>조건부 실행 분석</strong>: 일부 스레드가 다른 코드 경로를 탈 때 디버깅하기</li>
+<li><strong>스레드 조율 디버깅</strong>: CUDA-GDB로 다중 스레드 동기화 실패 분석하기</li>
+</ul>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>먼저 전체 코드를 보지 않고 커널만 살펴봅시다:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+):
+    thread_id = thread_idx.x
+
+    # Shared memory workspace for collaborative processing
+    shared_workspace = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE - 1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # Phase 1: Initialize shared workspace (all threads participate)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+    barrier()
+
+    # Phase 2: Collaborative processing
+    if thread_id &lt; SIZE - 1:
+        # Apply collaborative filter with neighbors
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+        barrier()
+
+    # Phase 3: Final synchronization and output
+    barrier()
+
+    # Write filtered results back to output
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+
+
+</code></pre>
+<p>버그를 직접 경험하려면 터미널에서 다음 명령을 실행하세요 (<code>pixi</code> 전용):</p>
+<pre><code class="language-bash">pixi run -e nvidia p09 --third-case
+</code></pre>
+<p>다음과 같은 출력이 나타납니다 - <strong>프로그램이 무한정 멈춥니다</strong>:</p>
+<pre><code class="language-txt">Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+[HANGS FOREVER - Use Ctrl+C to stop]
+</code></pre>
+<p>⚠️ <strong>경고</strong>: 이 프로그램은 멈춰서 완료되지 않습니다. <code>Ctrl+C</code>로 중단하세요.</p>
+<h2 id="과제-탐정-수사"><a class="header" href="#과제-탐정-수사">과제: 탐정 수사</a></h2>
+<p><strong>도전</strong>: 프로그램이 정상적으로 시작되지만 GPU 연산 중에 멈춰서 결과를 반환하지 않습니다. 코드를 보지 않은 상태에서, 이 교착 상태를 조사하기 위한 체계적인 접근법은 무엇일까요?</p>
+<p><strong>생각해볼 점:</strong></p>
+<ul>
+<li>GPU 커널이 영영 완료되지 않게 만드는 원인은 무엇일까요?</li>
+<li>스레드 조율 문제를 어떻게 조사하시겠습니까?</li>
+<li>오류 메시지 없이 프로그램이 그냥 “멈춰버릴” 때 어떤 디버깅 전략이 통할까요?</li>
+<li>스레드들이 제대로 협력하지 않을 수도 있다면 어떻게 디버깅할까요?</li>
+<li>체계적 조사(<a href="./first_case.html">첫 번째 사례</a>)와 실행 흐름 분석(<a href="./second_case.html">두 번째 사례</a>)을 결합해서 조율 실패를 어떻게 디버깅할 수 있을까요?</li>
+</ul>
+<p>다음 명령으로 시작해 보세요:</p>
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h3 id="gdb-명령어-단축키-빠른-디버깅"><a class="header" href="#gdb-명령어-단축키-빠른-디버깅">GDB 명령어 단축키 (빠른 디버깅)</a></h3>
+<p><strong>이 단축키들</strong>을 사용하면 디버깅 세션 속도를 높일 수 있습니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>단축</th><th>전체</th><th>사용 예시</th></tr></thead><tbody>
+<tr><td><code>r</code></td><td><code>run</code></td><td><code>(cuda-gdb) r</code></td></tr>
+<tr><td><code>n</code></td><td><code>next</code></td><td><code>(cuda-gdb) n</code></td></tr>
+<tr><td><code>c</code></td><td><code>continue</code></td><td><code>(cuda-gdb) c</code></td></tr>
+<tr><td><code>b</code></td><td><code>break</code></td><td><code>(cuda-gdb) b 62</code></td></tr>
+<tr><td><code>p</code></td><td><code>print</code></td><td><code>(cuda-gdb) p thread_id</code></td></tr>
+<tr><td><code>q</code></td><td><code>quit</code></td><td><code>(cuda-gdb) q</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>아래 모든 디버깅 명령은 효율성을 위해 단축키를 사용합니다!</strong></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<ol>
+<li><strong>소리 없는 멈춤 조사</strong> - 오류 메시지 없이 프로그램이 멈춰버릴 때, GPU의 어떤 기본 요소가 무한 대기를 일으킬 수 있을까요?</li>
+<li><strong>스레드 상태 검사</strong> - <code>info cuda threads</code>로 서로 다른 스레드들이 어디서 멈췄는지 확인하세요</li>
+<li><strong>조건부 실행 분석</strong> - 어떤 스레드가 어떤 코드 경로를 실행하는지 확인하세요 (모든 스레드가 같은 경로를 따르나요?)</li>
+<li><strong>동기화 지점 조사</strong> - 스레드들이 조율해야 할 수도 있는 지점을 찾으세요</li>
+<li><strong>스레드 분기 탐지</strong> - 모든 스레드가 같은 프로그램 위치에 있나요, 아니면 일부는 다른 곳에 있나요?</li>
+<li><strong>조율 기본 요소 분석</strong> - 모든 스레드가 같은 동기화 연산에 참여하지 않으면 어떻게 될까요?</li>
+<li><strong>실행 흐름 추적</strong> - 각 스레드가 조건문을 통해 어떤 경로를 따라가는지 추적하세요</li>
+<li><strong>스레드 ID 영향 분석</strong> - 서로 다른 스레드 ID가 어떤 코드 경로를 실행할지 어떻게 영향을 미치나요?</li>
+</ol>
+</div>
+</details>
+<details class="solution-details">
+<summary><strong>💡 조사 과정과 해결책</strong></summary>
+<div class="solution-explanation">
+<h2 id="cuda-gdb로-단계별-조사"><a class="header" href="#cuda-gdb로-단계별-조사">CUDA-GDB로 단계별 조사</a></h2>
+<h3 id="1단계-실행과-초기-설정"><a class="header" href="#1단계-실행과-초기-설정">1단계: 실행과 초기 설정</a></h3>
+<h4 id="step-1-디버거-실행"><a class="header" href="#step-1-디버거-실행">Step 1: 디버거 실행</a></h4>
+<pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --third-case
+</code></pre>
+<h4 id="step-2-정지-현상-분석"><a class="header" href="#step-2-정지-현상-분석">Step 2: 정지 현상 분석</a></h4>
+<p>디버깅에 들어가기 전에 알고 있는 정보를 정리합니다:</p>
+<pre><code class="language-txt">기대값: 프로그램이 완료되고 필터링된 결과 표시
+실제: "Waiting for GPU computation to complete..."에서 멈춤
+</code></pre>
+<p><strong>🔍 초기 가설</strong>: GPU 커널이 교착 상태에 빠짐 - 어떤 동기화 기본 요소가 스레드들을 영원히 대기시키고 있습니다.</p>
+<h3 id="2단계-커널-진입"><a class="header" href="#2단계-커널-진입">2단계: 커널 진입</a></h3>
+<h4 id="step-3-실행-및-커널-진입-관찰"><a class="header" href="#step-3-실행-및-커널-진입-관찰">Step 3: 실행 및 커널 진입 관찰</a></h4>
+<pre><code class="language-bash">(cuda-gdb) r
+Starting program: .../mojo run problems/p09/p09.mojo --third-case
+
+Third Case: Advanced collaborative filtering with shared memory...
+WARNING: This may hang - use Ctrl+C to stop if needed
+
+Input array: [1, 2, 3, 4]
+Applying collaborative filter using shared memory...
+Each thread cooperates with neighbors for smoothing...
+Waiting for GPU computation to complete...
+
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
+
+CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
+    output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
+56          a: LayoutTensor[mut=False, dtype, vector_layout],
+</code></pre>
+<p><strong>🔍 주요 관찰</strong>:</p>
+<ul>
+<li><strong>Grid</strong>: (1,1,1) - 단일 블록</li>
+<li><strong>Block</strong>: (4,1,1) - 총 4개 스레드 (0, 1, 2, 3)</li>
+<li><strong>현재 스레드</strong>: (0,0,0) - 스레드 0 디버깅 중</li>
+<li><strong>함수</strong>: 공유 메모리 연산을 사용하는 collaborative_filter</li>
+</ul>
+<h4 id="step-4-초기화-과정-탐색"><a class="header" href="#step-4-초기화-과정-탐색">Step 4: 초기화 과정 탐색</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+55          output: LayoutTensor[mut=True, dtype, vector_layout],
+(cuda-gdb) n
+58          thread_id = thread_idx.x
+(cuda-gdb) n
+66          ].stack_allocation()
+(cuda-gdb) n
+69          if thread_id &lt; SIZE - 1:
+(cuda-gdb) p thread_id
+$1 = 0
+</code></pre>
+<p><strong>✅ 스레드 0 상태</strong>: <code>thread_id = 0</code>, 조건 <code>0 &lt; 3</code> 검사 직전 → <strong>True</strong></p>
+<h4 id="step-5-1단계-추적"><a class="header" href="#step-5-1단계-추적">Step 5: 1단계 추적</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+70              shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+(cuda-gdb) n
+69          if thread_id &lt; SIZE - 1:
+(cuda-gdb) n
+71          barrier()
+</code></pre>
+<p><strong>1단계 완료</strong>: 스레드 0이 초기화를 실행하고 첫 번째 배리어에 도달했습니다.</p>
+<h3 id="3단계-결정적인-배리어-조사"><a class="header" href="#3단계-결정적인-배리어-조사">3단계: 결정적인 배리어 조사</a></h3>
+<h4 id="step-6-첫-번째-배리어-검사"><a class="header" href="#step-6-첫-번째-배리어-검사">Step 6: 첫 번째 배리어 검사</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+74          if thread_id &lt; SIZE - 1:
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd3272180 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    74
+</code></pre>
+<p><strong>✅ 정상</strong>: 4개 스레드 모두 74번 줄(첫 번째 배리어 통과 후)에 있습니다. 첫 번째 배리어는 정상 작동했습니다.</p>
+<p><strong>🔍 결정적 지점</strong>: 이제 또 다른 조건문이 있는 2단계에 진입합니다.</p>
+<h4 id="step-7-2단계-추적---스레드-0-관점"><a class="header" href="#step-7-2단계-추적---스레드-0-관점">Step 7: 2단계 추적 - 스레드 0 관점</a></h4>
+<pre><code class="language-bash">(cuda-gdb) n
+76              if thread_id &gt; 0:
+</code></pre>
+<p><strong>스레드 0 분석</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → 스레드 0이 2단계 블록에 진입</p>
+<pre><code class="language-bash">(cuda-gdb) n
+78              barrier()
+</code></pre>
+<p><strong>스레드 0 경로</strong>: <code>0 &gt; 0</code> → <strong>False</strong> → 스레드 0이 내부 연산은 건너뛰지만 78번 줄의 배리어에 도달</p>
+<p><strong>결정적 순간</strong>: 스레드 0이 이제 78번 줄의 배리어에서 대기 중입니다.</p>
+<pre><code class="language-bash">(cuda-gdb) n # &lt;-- 실행하면 프로그램이 멈춥니다!
+[HANGS HERE - 프로그램이 이 지점을 넘어가지 못함]
+</code></pre>
+<h4 id="step-8-다른-스레드-조사"><a class="header" href="#step-8-다른-스레드-조사">Step 8: 다른 스레드 조사</a></h4>
+<pre><code class="language-bash">(cuda-gdb) cuda thread (1,0,0)
+[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
+78              barrier()
+(cuda-gdb) p thread_id
+$2 = 1
+(cuda-gdb) info cuda threads
+  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+Kernel 0
+*  (0,0,0)   (0,0,0)     (0,0,0)      (2,0,0)     3 0x00007fffd3273aa0 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    78
+   (0,0,0)   (3,0,0)     (0,0,0)      (3,0,0)     1 0x00007fffd3273b10 /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo    81
+</code></pre>
+<p><strong>결정적 증거 발견</strong>:</p>
+<ul>
+<li><strong>스레드 0, 1, 2</strong>: 78번 줄에서 모두 대기 중 (조건 블록 안의 배리어)</li>
+<li><strong>스레드 3</strong>: 81번 줄에 있음 (조건 블록을 지나쳤고, 배리어에 도달한 적 없음!)</li>
+</ul>
+<h4 id="step-9-스레드-3의-실행-경로-분석"><a class="header" href="#step-9-스레드-3의-실행-경로-분석">Step 9: 스레드 3의 실행 경로 분석</a></h4>
+<p><strong>🔍 info 출력으로 본 스레드 3 분석</strong>:</p>
+<ul>
+<li><strong>스레드 3</strong>: 81번 줄에 위치 (PC: 0x00007fffd3273b10)</li>
+<li><strong>2단계 조건</strong>: <code>thread_id &lt; SIZE - 1</code> → <code>3 &lt; 3</code> → <strong>False</strong></li>
+<li><strong>결과</strong>: 스레드 3은 2단계 블록(74-78번 줄)에 <strong>진입하지 않음</strong></li>
+<li><strong>결과</strong>: 스레드 3은 78번 줄의 배리어에 <strong>도달한 적 없음</strong></li>
+<li><strong>현재 상태</strong>: 스레드 3은 81번 줄(마지막 배리어)에 있고, 스레드 0,1,2는 78번 줄에서 갇혀 있음</li>
+</ul>
+<h3 id="4단계-근본-원인-분석"><a class="header" href="#4단계-근본-원인-분석">4단계: 근본 원인 분석</a></h3>
+<h4 id="step-10-교착-상태-메커니즘-식별"><a class="header" href="#step-10-교착-상태-메커니즘-식별">Step 10: 교착 상태 메커니즘 식별</a></h4>
+<pre><code class="language-mojo"># 2단계: 협력적 처리
+if thread_id &lt; SIZE - 1:        # ← 스레드 0, 1, 2만 이 블록에 진입
+    # 이웃과 협력 필터 적용
+    if thread_id &gt; 0:
+        shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    barrier()                   # ← 교착 상태: 4개 중 3개 스레드만 여기에 도달!
+</code></pre>
+<p><strong>💀 교착 상태 메커니즘</strong>:</p>
+<ol>
+<li><strong>스레드 0</strong>: <code>0 &lt; 3</code> → <strong>True</strong> → 블록 진입 → <strong>배리어에서 대기</strong> (69번 줄)</li>
+<li><strong>스레드 1</strong>: <code>1 &lt; 3</code> → <strong>True</strong> → 블록 진입 → <strong>배리어에서 대기</strong> (69번 줄)</li>
+<li><strong>스레드 2</strong>: <code>2 &lt; 3</code> → <strong>True</strong> → 블록 진입 → <strong>배리어에서 대기</strong> (69번 줄)</li>
+<li><strong>스레드 3</strong>: <code>3 &lt; 3</code> → <strong>False</strong> → <strong>블록에 진입 안 함</strong> → <strong>72번 줄로 계속 진행</strong></li>
+</ol>
+<p><strong>결과</strong>: 3개 스레드가 4번째 스레드를 영원히 기다리지만, 스레드 3은 그 배리어에 절대 도착하지 않습니다.</p>
+<h3 id="5단계-버그-확인과-해결책"><a class="header" href="#5단계-버그-확인과-해결책">5단계: 버그 확인과 해결책</a></h3>
+<h4 id="step-11-근본적인-배리어-규칙-위반"><a class="header" href="#step-11-근본적인-배리어-규칙-위반">Step 11: 근본적인 배리어 규칙 위반</a></h4>
+<p><strong>GPU 배리어 규칙</strong>: 동기화가 완료되려면 스레드 블록의 모든 스레드가 같은 배리어에 도달해야 합니다.</p>
+<p><strong>무엇이 잘못되었나</strong>:</p>
+<pre><code class="language-mojo"># ❌ 잘못된 방법: 조건문 안에 배리어
+if thread_id &lt; SIZE - 1:    # 모든 스레드가 진입하지 않음
+    # ... 연산 ...
+    barrier()               # 일부 스레드만 여기에 도달
+
+# ✅ 올바른 방법: 조건문 밖에 배리어
+if thread_id &lt; SIZE - 1:    # 모든 스레드가 진입하지 않음
+    # ... 연산 ...
+ barrier()                  # 모든 스레드가 여기에 도달
+</code></pre>
+<p><strong>수정 방법</strong>: 배리어를 조건 블록 밖으로 이동:</p>
+<pre><code class="language-mojo">fn collaborative_filter(
+    output: LayoutTensor[mut=True, dtype, vector_layout],
+    a: LayoutTensor[mut=False, dtype, vector_layout],
+):
+    thread_id = thread_idx.x
+    shared_workspace = LayoutTensor[
+        dtype,
+        Layout.row_major(SIZE-1),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # 1단계: 공유 작업공간 초기화 (모든 스레드 참여)
+    if thread_id &lt; SIZE - 1:
+        shared_workspace[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+    barrier()
+
+    # 2단계: 협력적 처리
+    if thread_id &lt; SIZE - 1:
+        if thread_id &gt; 0:
+            shared_workspace[thread_id] += shared_workspace[thread_id - 1] * 0.5
+    # ✅ 수정: 배리어를 조건문 밖으로 이동해서 모든 스레드가 도달하도록
+    barrier()
+
+    # 3단계: 최종 동기화와 출력
+    barrier()
+
+    if thread_id &lt; SIZE - 1:
+        output[thread_id] = shared_workspace[thread_id]
+    else:
+        output[thread_id] = rebind[Scalar[dtype]](a[thread_id])
+</code></pre>
+<h2 id="핵심-디버깅-교훈"><a class="header" href="#핵심-디버깅-교훈">핵심 디버깅 교훈</a></h2>
+<p><strong>배리어 교착 상태 탐지</strong>:</p>
+<ol>
+<li><strong><code>info cuda threads</code> 사용</strong> - 어떤 스레드가 어느 줄에 있는지 보여줌</li>
+<li><strong>스레드 상태 분기 찾기</strong> - 일부 스레드가 다른 프로그램 위치에 있음</li>
+<li><strong>조건부 실행 경로 추적</strong> - 모든 스레드가 같은 배리어에 도달하는지 확인</li>
+<li><strong>배리어 도달 가능성 검증</strong> - 다른 스레드들이 도달하는 배리어를 건너뛰는 스레드가 없는지 확인</li>
+</ol>
+<p><strong>실무 GPU 디버깅의 현실</strong>:</p>
+<ul>
+<li><strong>교착 상태는 소리 없는 살인자</strong> - 오류 메시지 없이 프로그램이 그냥 멈춤</li>
+<li><strong>스레드 조율 디버깅은 인내가 필요</strong> - 각 스레드 경로를 체계적으로 분석해야 함</li>
+<li><strong>조건부 배리어가 교착 상태의 1순위 원인</strong> - 모든 스레드가 같은 동기화 지점에 도달하는지 항상 확인</li>
+<li><strong>CUDA-GDB 스레드 검사가 필수</strong> - 스레드 조율 실패를 볼 수 있는 유일한 방법</li>
+</ul>
+<p><strong>고급 GPU 동기화</strong>:</p>
+<ul>
+<li><strong>배리어 규칙</strong>: 블록의 <strong>모든</strong> 스레드가 <strong>같은</strong> 배리어에 도달해야 함</li>
+<li><strong>조건부 실행의 함정</strong>: 어떤 if문이든 스레드 분기를 일으킬 수 있음</li>
+<li><strong>공유 메모리 조율</strong>: 올바른 동기화를 위해 배리어 배치에 주의 필요</li>
+<li><strong>LayoutTensor가 교착 상태를 막아주지 않음</strong>: 고수준 추상화라도 올바른 동기화는 여전히 필요</li>
+</ul>
+<p><strong>💡 핵심 통찰</strong>: 배리어 교착 상태는 GPU 버그 중 디버깅하기 가장 어려운 유형에 속합니다:</p>
+<ul>
+<li><strong>오류가 보이지 않음</strong> - 그저 무한 대기</li>
+<li><strong>다중 스레드 분석 필요</strong> - 스레드 하나만 봐서는 디버깅할 수 없음</li>
+<li><strong>조용한 실패 모드</strong> - 정확성 버그가 아닌 성능 문제처럼 보임</li>
+<li><strong>복잡한 스레드 조율</strong> - 모든 스레드에 걸쳐 실행 경로를 추적해야 함</li>
+</ul>
+<p>CUDA-GDB로 스레드 상태를 분석하고, 분기된 실행 경로를 식별하고, 배리어 도달 가능성을 검증하는 이 디버깅 방식은 실무 GPU 개발자들이 운영 시스템에서 교착 상태 문제에 맞닥뜨렸을 때 쓰는 방법과 정확히 같습니다.</p>
+</div>
+</details>
+<h2 id="다음-단계-gpu-디버깅-스킬-완성"><a class="header" href="#다음-단계-gpu-디버깅-스킬-완성">다음 단계: GPU 디버깅 스킬 완성</a></h2>
+<p><strong>GPU 디버깅 삼부작을 완료했습니다!</strong></p>
+<h3 id="완성된-gpu-디버깅-무기고"><a class="header" href="#완성된-gpu-디버깅-무기고">완성된 GPU 디버깅 무기고</a></h3>
+<p><strong><a href="./first_case.html">첫 번째 사례</a>에서 - 크래시 디버깅:</strong></p>
+<ul>
+<li>✅ 오류 메시지를 가이드 삼아 <strong>체계적인 크래시 조사</strong></li>
+<li>✅ 포인터 주소 검사를 통한 <strong>메모리 버그 탐지</strong></li>
+<li>✅ 메모리 관련 문제를 위한 <strong>CUDA-GDB 기초</strong></li>
+</ul>
+<p><strong><a href="./second_case.html">두 번째 사례</a>에서 - 로직 버그 디버깅:</strong></p>
+<ul>
+<li>✅ 뚜렷한 증상 없이 <strong>알고리즘 오류 조사</strong></li>
+<li>✅ 잘못된 결과를 근본 원인까지 추적하는 <strong>패턴 분석 기법</strong></li>
+<li>✅ 변수 검사가 안 될 때 <strong>실행 흐름 디버깅</strong></li>
+</ul>
+<p><strong><a href="./third_case.html">세 번째 사례</a>에서 - 조율 디버깅:</strong></p>
+<ul>
+<li>✅ 스레드 조율 실패를 위한 <strong>배리어 교착 상태 조사</strong></li>
+<li>✅ 고급 CUDA-GDB 기법을 사용한 <strong>다중 스레드 상태 분석</strong></li>
+<li>✅ 복잡한 병렬 프로그램을 위한 <strong>동기화 검증</strong></li>
+</ul>
+<h3 id="전문가의-gpu-디버깅-방법론"><a class="header" href="#전문가의-gpu-디버깅-방법론">전문가의 GPU 디버깅 방법론</a></h3>
+<p>실무 GPU 개발자들이 사용하는 체계적인 접근법을 익혔습니다:</p>
+<ol>
+<li><strong>증상 읽기</strong> - 크래시인가? 잘못된 결과인가? 무한 정지인가?</li>
+<li><strong>가설 수립</strong> - 메모리 문제? 로직 오류? 조율 문제?</li>
+<li><strong>증거 수집</strong> - 버그 유형에 맞춰 CUDA-GDB를 전략적으로 활용</li>
+<li><strong>체계적으로 테스트</strong> - 목표 지향적 조사를 통해 각 가설 검증</li>
+<li><strong>근본 원인 추적</strong> - 증거의 연결 고리를 따라 원천까지</li>
+</ol>
+<p><strong>업적 달성</strong>: 이제 가장 흔한 세 가지 GPU 프로그래밍 문제를 디버깅할 수 있습니다:</p>
+<ul>
+<li><strong>메모리 크래시</strong> (<a href="./first_case.html">첫 번째 사례</a>) - null 포인터, 범위 밖 접근</li>
+<li><strong>로직 버그</strong> (<a href="./second_case.html">두 번째 사례</a>) - 알고리즘 오류, 잘못된 결과</li>
+<li><strong>조율 교착 상태</strong> (<a href="./third_case.html">세 번째 사례</a>) - 배리어 동기화 실패</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_09/second_case.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_10/puzzle_10.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_09/second_case.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_10/puzzle_10.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

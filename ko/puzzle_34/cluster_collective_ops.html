@@ -1,0 +1,574 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>☸️ 클러스터 전체 집합 연산 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="-클러스터-전체-집합-연산"><a class="header" href="#-클러스터-전체-집합-연산">☸️ 클러스터 전체 집합 연산</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는 <strong>클러스터 전체 집합 연산</strong>을 구현하는 방법을 배웁니다 - <a href="../puzzle_27/block_sum.html">Puzzle 27</a>에서 익힌 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을 <strong>여러 스레드 블록</strong>에 걸쳐 확장합니다.</p>
+<p><strong>도전 과제</strong>: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별 리덕션을 하나의 전역 결과로 합치는 클러스터 전체 리덕션을 구현합니다.</p>
+<p><strong>핵심 학습</strong>: 전체 클러스터 조정을 위한 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와 효율적인 최종 리덕션을 위한 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 배웁니다.</p>
+<h2 id="문제-대규모-전역-합산"><a class="header" href="#문제-대규모-전역-합산">문제: 대규모 전역 합산</a></h2>
+<p>단일 블록은 (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>에서 배웠듯이) 스레드 수와 <a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 용량</a>에 의해 제한됩니다. <a href="../puzzle_27/block_sum.html">단일 블록 리덕션</a>을 넘어서는 <strong>대규모 데이터셋</strong>의 전역 통계(평균, 분산, 합계)를 구하려면 <strong>클러스터 전체 집합 연산</strong>이 필요합니다.</p>
+<p><strong>과제</strong>: 다음과 같은 클러스터 전체 합산 리덕션을 구현하세요:</p>
+<ol>
+<li>각 블록이 로컬 리덕션을 수행합니다 (<a href="../puzzle_27/block_sum.html">Puzzle 27의 <code>block.sum()</code></a>과 유사)</li>
+<li><a href="../puzzle_29/barrier.html">Puzzle 29의 동기화</a>를 사용하여 블록들이 부분 결과를 합칩니다</li>
+<li>선출된 하나의 스레드가 <a href="../puzzle_24/warp_sum.html">워프 선출 패턴</a>을 사용하여 최종 전역 합계를 계산합니다</li>
+</ol>
+<h3 id="문제-명세"><a class="header" href="#문제-명세">문제 명세</a></h3>
+<p><strong>알고리즘 흐름:</strong></p>
+<p><strong>1단계 - 로컬 리덕션 (각 블록 내부):</strong>
+\[R_i = \sum_{j=0}^{TPB-1} input[i \times TPB + j] \quad \text{for block } i\]</p>
+<p><strong>2단계 - 전역 집계 (클러스터 전체):</strong>
+\[\text{Global Sum} = \sum_{i=0}^{\text{CLUSTER_SIZE}-1} R_i\]</p>
+<p><strong>조정 요구사항:</strong></p>
+<ol>
+<li><strong>로컬 리덕션</strong>: 각 블록이 트리 리덕션으로 부분 합을 계산합니다</li>
+<li><strong>클러스터 동기화</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로 모든 부분 결과가 준비되었는지 보장합니다</li>
+<li><strong>최종 집계</strong>: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다</li>
+</ol>
+<h2 id="설정"><a class="header" href="#설정">설정</a></h2>
+<ul>
+<li><strong>문제 크기</strong>: <code>SIZE = 1024</code> 요소</li>
+<li><strong>블록 설정</strong>: <code>TPB = 256</code> 블록당 스레드 수 <code>(256, 1)</code></li>
+<li><strong>그리드 설정</strong>: <code>CLUSTER_SIZE = 4</code> 클러스터당 블록 수 <code>(4, 1)</code></li>
+<li><strong>데이터 타입</strong>: <code>DType.float32</code></li>
+<li><strong>메모리 레이아웃</strong>: 입력 <code>Layout.row_major(SIZE)</code>, 출력 <code>Layout.row_major(1)</code></li>
+<li><strong>임시 저장소</strong>: 부분 결과를 위한 <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+</ul>
+<p><strong>예상 결과</strong>: 수열 <code>0, 0.01, 0.02, ..., 10.23</code>의 합 = <strong>523,776</strong></p>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">fn cluster_collective_operations[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
+    size: Int,
+):
+    """Cluster-wide collective operations using real cluster APIs."""
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+
+    # FILL IN (roughly 24 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p34/p34.mojo" class="filename">전체 파일 보기: problems/p34/p34.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="로컬-리덕션-패턴"><a class="header" href="#로컬-리덕션-패턴"><strong>로컬 리덕션 패턴</strong></a></h3>
+<ul>
+<li><a href="../puzzle_27/block_sum.html">Puzzle 27의 block sum에서 사용한 트리 리덕션 패턴</a>을 활용합니다</li>
+<li>stride = <code>tpb // 2</code>로 시작하여 매 반복마다 절반으로 줄입니다 (고전적인 <a href="../puzzle_12/puzzle_12.html">Puzzle 12의 리덕션</a>)</li>
+<li>각 단계에서 <code>local_i &lt; stride</code>인 스레드만 참여합니다</li>
+<li>리덕션 단계 사이에 <code>barrier()</code>를 사용합니다 (<a href="../puzzle_29/barrier.html">Puzzle 29의 배리어 개념</a>)</li>
+</ul>
+<h3 id="클러스터-조정-전략"><a class="header" href="#클러스터-조정-전략"><strong>클러스터 조정 전략</strong></a></h3>
+<ul>
+<li>안정적인 인덱싱을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
+<li>전체 클러스터 동기화를 위해 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를 사용합니다 (arrive/wait보다 강력)</li>
+<li>최종 전역 집계는 하나의 스레드만 수행해야 합니다</li>
+</ul>
+<h3 id="효율적인-선출-패턴"><a class="header" href="#효율적인-선출-패턴"><strong>효율적인 선출 패턴</strong></a></h3>
+<ul>
+<li>첫 번째 블록(<code>my_block_rank == 0</code>) 내에서 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 사용합니다 (<a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>의 패턴)</li>
+<li>중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다</li>
+<li>선출된 스레드가 <code>temp_storage</code>에서 모든 부분 결과를 읽습니다 (<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 접근</a>과 유사)</li>
+</ul>
+<h3 id="메모리-접근-패턴"><a class="header" href="#메모리-접근-패턴"><strong>메모리 접근 패턴</strong></a></h3>
+<ul>
+<li>각 스레드가 경계 검사와 함께 <code>input[global_i]</code>를 읽습니다 (<a href="../puzzle_03/puzzle_03.html">Puzzle 3의 가드</a>)</li>
+<li>블록 내부 리덕션을 위해 <a href="../puzzle_08/puzzle_08.html">공유 메모리</a>에 중간 결과를 저장합니다</li>
+<li>블록 간 통신을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
+<li>최종 결과는 <code>output[0]</code>에 기록합니다 (<a href="../puzzle_27/block_sum.html">블록 조정</a>의 단일 쓰기 패턴)</li>
+</ul>
+</div>
+</details>
+<h2 id="클러스터-api-참조"><a class="header" href="#클러스터-api-참조">클러스터 API 참조</a></h2>
+<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> 모듈:</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: 전체 클러스터 동기화 - arrive/wait 패턴보다 강력</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: 효율적인 조정을 위해 워프 내에서 단일 스레드를 선출</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: 클러스터 내 고유한 블록 식별자를 반환</li>
+</ul>
+<h2 id="트리-리덕션-패턴"><a class="header" href="#트리-리덕션-패턴">트리 리덕션 패턴</a></h2>
+<p><a href="../puzzle_27/puzzle_27.html">Puzzle 27의 전통적인 내적</a>에서 배운 <strong>트리 리덕션 패턴</strong>을 떠올려 보세요:</p>
+<pre><code class="language-txt">Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
+Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
+Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
+Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
+...
+Stride 1:   [T0] += [T1] → Final result at T0
+</code></pre>
+<p><strong>이제 이 패턴을 클러스터 규모로 확장합니다</strong> - 각 블록이 하나의 부분 결과를 생성한 뒤, 블록 간에 결합합니다.</p>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p34 --reduction
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p34 --reduction
+</code></pre>
+  </div>
+</div>
+<p><strong>예상 출력:</strong></p>
+<pre><code class="language-txt">Testing Cluster-Wide Reduction
+SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
+Expected sum: 523776.0
+Cluster reduction result: 523776.0
+Expected: 523776.0
+Error: 0.0
+✅ Passed: Cluster reduction accuracy test
+✅ Cluster-wide collective operations tests passed!
+</code></pre>
+<p><strong>성공 기준:</strong></p>
+<ul>
+<li><strong>완벽한 정확도</strong>: 결과가 예상 합계(523,776)와 정확히 일치합니다</li>
+<li><strong>클러스터 조정</strong>: 4개 블록 모두가 부분 합에 기여합니다</li>
+<li><strong>효율적인 최종 리덕션</strong>: 선출된 단일 스레드가 최종 결과를 계산합니다</li>
+</ul>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn cluster_collective_operations[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: LayoutTensor[
+        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
+    ],
+    size: Int,
+):
+    """Cluster-wide collective operations using real cluster APIs."""
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = Int(thread_idx.x)
+    my_block_rank = Int(block_rank_in_cluster())
+    block_id = Int(block_idx.x)
+
+    # Each thread accumulates its data
+    var my_value: Float32 = 0.0
+    if global_i &lt; size:
+        my_value = input[global_i][0]
+
+    # Block-level reduction using shared memory
+    shared_mem = LayoutTensor[
+        dtype,
+        Layout.row_major(tpb),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    shared_mem[local_i] = my_value
+    barrier()
+
+    # Tree reduction within block
+    var stride = tpb // 2
+    while stride &gt; 0:
+        if local_i &lt; stride and local_i + stride &lt; tpb:
+            shared_mem[local_i] += shared_mem[local_i + stride]
+        barrier()
+        stride = stride // 2
+
+    # FIX: Store block result using block_idx for reliable indexing
+    if local_i == 0:
+        temp_storage[block_id] = shared_mem[0]
+
+    # Use cluster_sync() for full cluster synchronization
+    cluster_sync()
+
+    # Final cluster reduction (elect one thread to do the final work)
+    if elect_one_sync() and my_block_rank == 0:
+        var total: Float32 = 0.0
+        for i in range(CLUSTER_SIZE):
+            total += temp_storage[i][0]
+        output[0] = total
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><strong>클러스터 집합 연산 풀이는 분산 컴퓨팅의 고전적인 패턴을 보여줍니다: 로컬 리덕션 → 전역 조정 → 최종 집계:</strong></p>
+<h2 id="1단계-로컬-블록-리덕션-전통적-트리-리덕션"><a class="header" href="#1단계-로컬-블록-리덕션-전통적-트리-리덕션"><strong>1단계: 로컬 블록 리덕션 (전통적 트리 리덕션)</strong></a></h2>
+<p><strong>데이터 로딩 및 초기화:</strong></p>
+<pre><code class="language-mojo">var my_value: Float32 = 0.0
+if global_i &lt; size:
+    my_value = input[global_i][0]  # Load with bounds checking
+shared_mem[local_i] = my_value     # Store in shared memory
+barrier()                          # Ensure all threads complete loading
+</code></pre>
+<p><strong>트리 리덕션 알고리즘:</strong></p>
+<pre><code class="language-mojo">var stride = tpb // 2  # Start with half the threads (128)
+while stride &gt; 0:
+    if local_i &lt; stride and local_i + stride &lt; tpb:
+        shared_mem[local_i] += shared_mem[local_i + stride]
+    barrier()          # Synchronize after each reduction step
+    stride = stride // 2
+</code></pre>
+<p><strong>트리 리덕션 시각화 (TPB=256):</strong></p>
+<pre><code class="language-txt">Step 1: stride=128  [T0]+=T128, [T1]+=T129, ..., [T127]+=T255
+Step 2: stride=64   [T0]+=T64,  [T1]+=T65,  ..., [T63]+=T127
+Step 3: stride=32   [T0]+=T32,  [T1]+=T33,  ..., [T31]+=T63
+Step 4: stride=16   [T0]+=T16,  [T1]+=T17,  ..., [T15]+=T31
+Step 5: stride=8    [T0]+=T8,   [T1]+=T9,   ..., [T7]+=T15
+Step 6: stride=4    [T0]+=T4,   [T1]+=T5,   [T2]+=T6,  [T3]+=T7
+Step 7: stride=2    [T0]+=T2,   [T1]+=T3
+Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
+</code></pre>
+<p><strong>부분 결과 저장:</strong></p>
+<ul>
+<li>스레드 0만 기록합니다: <code>temp_storage[block_id] = shared_mem[0]</code></li>
+<li>각 블록이 자신의 합계를 <code>temp_storage[0]</code>, <code>temp_storage[1]</code>, <code>temp_storage[2]</code>, <code>temp_storage[3]</code>에 저장합니다</li>
+</ul>
+<h2 id="2단계-클러스터-동기화"><a class="header" href="#2단계-클러스터-동기화"><strong>2단계: 클러스터 동기화</strong></a></h2>
+<p><strong>전체 클러스터 배리어:</strong></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다 <strong>더 강력한 보장</strong>을 제공합니다</li>
+<li>어떤 블록이든 다음으로 진행하기 전에 <strong>모든 블록이 로컬 리덕션을 완료</strong>하도록 보장합니다</li>
+<li>클러스터 내 모든 블록에 걸친 하드웨어 가속 동기화입니다</li>
+</ul>
+<h2 id="3단계-최종-전역-집계"><a class="header" href="#3단계-최종-전역-집계"><strong>3단계: 최종 전역 집계</strong></a></h2>
+<p><strong>효율적인 스레드 선출:</strong></p>
+<pre><code class="language-mojo">if elect_one_sync() and my_block_rank == 0:
+    var total: Float32 = 0.0
+    for i in range(CLUSTER_SIZE):
+        total += temp_storage[i][0]  # Sum: temp[0] + temp[1] + temp[2] + temp[3]
+    output[0] = total
+</code></pre>
+<p><strong>왜 이 선출 전략을 사용할까?</strong></p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: 워프당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다</li>
+<li><strong><code>my_block_rank == 0</code></strong>: 단일 쓰기를 보장하기 위해 첫 번째 블록에서만 선출합니다</li>
+<li><strong>결과</strong>: 전체 클러스터에서 단 하나의 스레드만 최종 합산을 수행합니다</li>
+<li><strong>효율성</strong>: 1024개 전체 스레드에 걸친 중복 연산을 피합니다</li>
+</ul>
+<h2 id="핵심-기술-인사이트"><a class="header" href="#핵심-기술-인사이트"><strong>핵심 기술 인사이트</strong></a></h2>
+<p><strong>3단계 리덕션 계층 구조:</strong></p>
+<ol>
+<li><strong>스레드 → 워프</strong>: 개별 스레드가 워프 레벨 부분 합에 기여합니다</li>
+<li><strong>워프 → 블록</strong>: 트리 리덕션이 워프들을 하나의 블록 결과로 합칩니다 (256 → 1)</li>
+<li><strong>블록 → 클러스터</strong>: 단순 루프가 블록 결과를 최종 합계로 합칩니다 (4 → 1)</li>
+</ol>
+<p><strong>메모리 접근 패턴:</strong></p>
+<ul>
+<li><strong>입력</strong>: 각 요소를 정확히 한 번 읽습니다 (<code>input[global_i]</code>)</li>
+<li><strong>공유 메모리</strong>: 블록 내부 트리 리덕션을 위한 고속 작업 공간</li>
+<li><strong>임시 저장소</strong>: 저비용 블록 간 통신 (4개 값만)</li>
+<li><strong>출력</strong>: 단일 전역 결과를 한 번 기록</li>
+</ul>
+<p><strong>동기화 보장:</strong></p>
+<ul>
+<li><strong><code>barrier()</code></strong>: 블록 내 모든 스레드가 각 트리 리덕션 단계를 완료하도록 보장합니다</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>전역 배리어</strong> - 모든 블록이 동일한 실행 지점에 도달합니다</li>
+<li><strong>단일 쓰기</strong>: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다</li>
+</ul>
+<p><strong>알고리즘 복잡도 분석:</strong></p>
+<ul>
+<li><strong>트리 리덕션</strong>: O(log₂ TPB) = O(log₂ 256) = 블록당 8단계</li>
+<li><strong>클러스터 조정</strong>: O(1) 동기화 오버헤드</li>
+<li><strong>최종 집계</strong>: O(CLUSTER_SIZE) = O(4) 단순 덧셈</li>
+<li><strong>전체</strong>: 블록 내부는 로그, 블록 간은 선형</li>
+</ul>
+<p><strong>확장성 특성:</strong></p>
+<ul>
+<li><strong>블록 레벨</strong>: 로그 복잡도로 수천 개의 스레드까지 확장 가능</li>
+<li><strong>클러스터 레벨</strong>: 선형 복잡도로 수십 개의 블록까지 확장 가능</li>
+<li><strong>메모리</strong>: 임시 저장소 요구량이 클러스터 크기에 비례하여 선형 증가</li>
+<li><strong>통신</strong>: 최소한의 블록 간 데이터 이동 (블록당 하나의 값)</li>
+</ul>
+</div>
+</details>
+<h2 id="집합-연산-패턴-이해하기"><a class="header" href="#집합-연산-패턴-이해하기">집합 연산 패턴 이해하기</a></h2>
+<p>이 퍼즐은 분산 컴퓨팅에서 사용되는 고전적인 <strong>2단계 리덕션 패턴</strong>을 보여줍니다:</p>
+<ol>
+<li><strong>로컬 집계</strong>: 각 처리 단위(블록)가 자신의 데이터 영역을 리덕션합니다</li>
+<li><strong>전역 조정</strong>: 처리 단위들이 동기화하고 결과를 교환합니다</li>
+<li><strong>최종 리덕션</strong>: 선출된 하나의 단위가 모든 부분 결과를 합칩니다</li>
+</ol>
+<p><strong>단일 블록 방식과의 비교:</strong></p>
+<ul>
+<li><strong>기존 <code>block.sum()</code></strong>: 최대 256개 스레드 내에서만 동작합니다</li>
+<li><strong>클러스터 집합 연산</strong>: 여러 블록에 걸쳐 1000개 이상의 스레드로 확장됩니다</li>
+<li><strong>동일한 정확도</strong>: 둘 다 동일한 수학적 결과를 생성합니다</li>
+<li><strong>다른 규모</strong>: 클러스터 방식이 더 큰 데이터셋을 처리합니다</li>
+</ul>
+<p><strong>성능 이점</strong>:</p>
+<ul>
+<li><strong>더 큰 데이터셋</strong>: 단일 블록 용량을 초과하는 배열을 처리합니다</li>
+<li><strong>더 나은 활용률</strong>: 더 많은 GPU 연산 유닛을 동시에 사용합니다</li>
+<li><strong>확장 가능한 패턴</strong>: 복잡한 다단계 알고리즘의 기반이 됩니다</li>
+</ul>
+<p><strong>다음 단계</strong>: 최종 도전을 할 준비가 되셨나요? <strong><a href="./advanced_cluster_patterns.html">고급 클러스터 알고리즘</a></strong> 으로 이동하여 <a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>+<a href="../puzzle_27/block_sum.html">블록 조정</a>+클러스터 동기화를 결합한 계층적 패턴을 배워보세요. <a href="../puzzle_30/profile_kernels.html">성능 최적화 기법</a>을 기반으로 합니다!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_34/cluster_coordination_basics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_34/advanced_cluster_patterns.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_34/cluster_coordination_basics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_34/advanced_cluster_patterns.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

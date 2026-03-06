@@ -1,0 +1,383 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 10: 새니타이저로 메모리 오류와 경쟁 상태 찾기 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+<h1 id="puzzle-10-새니타이저로-메모리-오류와-경쟁-상태-찾기"><a class="header" href="#puzzle-10-새니타이저로-메모리-오류와-경쟁-상태-찾기">Puzzle 10: 새니타이저로 메모리 오류와 경쟁 상태 찾기</a></h1>
+<blockquote>
+<p>⚠️ 이 퍼즐은 호환되는 <strong>NVIDIA GPU</strong>에서만 작동합니다. 다른 GPU 벤더 지원을 위한 도구 개발이 진행 중입니다.</p>
+</blockquote>
+<h2 id="모든-gpu-개발자가-두려워하는-순간"><a class="header" href="#모든-gpu-개발자가-두려워하는-순간">모든 GPU 개발자가 두려워하는 순간</a></h2>
+<p>완벽해 보이는 GPU 코드를 작성했습니다. 알고리즘은 정확하고, 메모리 관리도 올바른 것 같고, 스레드 조율도 흠잡을 데 없어 보입니다. 자신 있게 테스트를 실행하면…</p>
+<ul>
+<li><strong>✅ 모든 테스트 통과</strong></li>
+<li><strong>✅ 성능도 훌륭함</strong></li>
+<li><strong>✅ 출력이 예상 결과와 일치</strong></li>
+</ul>
+<p>뿌듯하게 코드를 프로덕션에 배포합니다. 그런데 몇 주 후, 연락이 옵니다:</p>
+<ul>
+<li><strong>“프로덕션에서 애플리케이션이 크래시됐어요”</strong></li>
+<li><strong>“실행할 때마다 결과가 달라요”</strong></li>
+<li><strong>“메모리 손상이 감지됐어요”</strong></li>
+</ul>
+<p><strong>조용히 숨어드는 GPU 버그</strong>의 세계에 오신 것을 환영합니다. 대규모 병렬 처리의 그늘에 숨어 있다가 가장 예상치 못한 순간에 튀어나오는 오류들이죠. 이런 버그들은 모든 테스트를 통과하고, 99%의 경우 올바른 결과를 내다가, 가장 중요한 순간에 치명적으로 실패합니다.</p>
+<p><strong>중요</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요하며, <code>compute-sanitizer</code>가 NVIDIA CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 수 있습니다.</p>
+<h2 id="gpu-버그가-유난히-교활한-이유"><a class="header" href="#gpu-버그가-유난히-교활한-이유">GPU 버그가 유난히 교활한 이유</a></h2>
+<p>CPU 프로그램에서는 버그가 보통 즉각적인 크래시나 잘못된 결과로 자신의 존재를 알립니다. 하지만 GPU 버그는 <strong>숨기의 달인</strong>입니다:</p>
+<p><strong>조용히 데이터를 손상시키는 패턴:</strong></p>
+<ul>
+<li><strong>크래시 없는 메모리 위반</strong>: 우연히 유효한 메모리 위치를 건드리는 범위 초과 접근</li>
+<li><strong>“대부분은 잘 동작하는” 경쟁 상태</strong>: 타이밍에 따라 무작위처럼 나타나는 버그</li>
+<li><strong>스레드 조율 실패</strong>: 특정 부하 조건에서만 발생하는 교착 상태</li>
+</ul>
+<p><strong>대규모 병렬 처리에서 증폭되는 문제:</strong></p>
+<ul>
+<li><strong>한 스레드의 버그가 수천 개에 영향</strong>: 메모리 위반 하나가 전체 워프를 손상시킬 수 있음</li>
+<li><strong>경쟁 상태의 기하급수적 증가</strong>: 스레드가 많을수록 손상 가능성도 커짐</li>
+<li><strong>하드웨어 차이가 문제를 은폐</strong>: 같은 버그가 GPU 아키텍처마다 다르게 동작</li>
+</ul>
+<p>하지만 희소식이 있습니다: <strong>GPU 검사 도구를 익히면, 이렇게 찾기 어려운 버그들을 프로덕션에 도달하기 전에 잡아낼 수 있습니다</strong>.</p>
+<h2 id="새니타이저-도구-모음-nvidia-compute-sanitizer"><a class="header" href="#새니타이저-도구-모음-nvidia-compute-sanitizer">새니타이저 도구 모음: NVIDIA compute-sanitizer</a></h2>
+<p><strong>NVIDIA compute-sanitizer</strong>는 GPU 버그에 맞서 싸우는 여러분의 비밀 무기입니다. 다음을 탐지할 수 있습니다:</p>
+<ul>
+<li><strong>메모리 위반</strong>: 범위 초과 접근, 잘못된 포인터, 메모리 누수</li>
+<li><strong>경쟁 상태</strong>: 스레드 간 공유 메모리 hazard</li>
+<li><strong>동기화 버그</strong>: 교착 상태, barrier 오용, 부적절한 스레드 조율</li>
+<li><strong>그 외</strong>: <code>pixi run compute-sanitizer --help</code>로 확인</li>
+</ul>
+<p>📖 <strong>공식 문서</strong>: <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">NVIDIA Compute Sanitizer User Guide</a></p>
+<p><strong>GPU 프로그램의 X-ray</strong>라고 생각하면 됩니다. 일반 테스트로는 볼 수 없는 숨겨진 문제까지 드러내 줍니다.</p>
+<h2 id="이-퍼즐에서-배울-내용"><a class="header" href="#이-퍼즐에서-배울-내용">이 퍼즐에서 배울 내용</a></h2>
+<p>이 퍼즐에서는 가장 찾기 어려운 GPU 버그를 체계적으로 찾아 수정하는 방법을 배웁니다. 유능한 GPU 개발자와 뛰어난 개발자를 구분 짓는 탐정 기술을 익히게 됩니다.</p>
+<h3 id="익히게-될-핵심-기술"><a class="header" href="#익히게-될-핵심-기술"><strong>익히게 될 핵심 기술</strong></a></h3>
+<ol>
+<li><strong>숨은 버그 찾기</strong> - 테스트로는 잡히지 않는 문제 발견</li>
+<li><strong>메모리 손상 조사</strong> - 피해가 발생하기 전에 미정의 동작 추적</li>
+<li><strong>경쟁 상태 탐지</strong> - 동시성 위험 요소를 찾아내고 제거</li>
+<li><strong>도구 선택 능력</strong> - 상황에 맞는 새니타이저 선택</li>
+<li><strong>프로덕션 디버깅 자신감</strong> - 사용자에게 도달하기 전에 버그 포착</li>
+</ol>
+<h3 id="실전-버그-사냥-시나리오"><a class="header" href="#실전-버그-사냥-시나리오"><strong>실전 버그 사냥 시나리오</strong></a></h3>
+<p>가장 위험한 두 종류의 GPU 버그를 조사합니다:</p>
+<ul>
+<li><strong>메모리 위반</strong> - 경고 없이 데이터를 망가뜨리는 조용한 암살자</li>
+<li><strong>경쟁 상태</strong> - 결과를 예측 불가능하게 만드는 혼돈의 씨앗</li>
+</ul>
+<p>각 시나리오에서 일반 테스트로는 보이지 않는 단서를 따라가며, GPU 버그 탐정처럼 사고하는 법을 배웁니다.</p>
+<h2 id="버그-사냥-여정"><a class="header" href="#버그-사냥-여정">버그 사냥 여정</a></h2>
+<p>이 퍼즐은 조용한 손상을 발견하는 것부터 병렬 디버깅을 배우는 것까지, 체계적으로 설계된 과정을 안내합니다:</p>
+<h3 id="-메모리-위반-탐지"><a class="header" href="#-메모리-위반-탐지">👮🏼‍♂️ <a href="./memcheck.html">메모리 위반 탐지</a></a></h3>
+<p><strong>메모리 위반 조사</strong> - 테스트는 통과해도 메모리는 거짓말을 할 때</p>
+<ul>
+<li>테스트를 통과하면서도 메모리 범죄를 저지르는 프로그램 조사</li>
+<li>미정의 동작(UB)의 징후를 알아보는 법 익히기</li>
+<li><code>memcheck</code> 학습 - 메모리 위반을 잡아내는 탐지기</li>
+<li>GPU 하드웨어가 메모리 오류를 숨기는 이유 이해</li>
+<li>체계적인 메모리 접근 검증 실습</li>
+</ul>
+<p><strong>목표</strong>: 방치하면 프로덕션까지 발견되지 않았을 메모리 위반 탐지 능력</p>
+<h3 id="-경쟁-상태-디버깅"><a class="header" href="#-경쟁-상태-디버깅">🏁 <a href="./racecheck.html">경쟁 상태 디버깅</a></a></h3>
+<p><strong>동시성 버그 조사</strong> - 스레드들이 서로 발목을 잡을 때</p>
+<ul>
+<li>스레드 타이밍 때문에 무작위로 실패하는 프로그램 조사</li>
+<li>데이터가 손상되기 전에 공유 메모리 위험 요소 식별법 익히기</li>
+<li><code>racecheck</code> 학습 - 경쟁 상태를 잡아내는 탐지기</li>
+<li>다양한 동시성 버그에 대해 <code>racecheck</code> vs <code>synccheck</code> 비교</li>
+<li>스레드 동기화 전략 실습</li>
+</ul>
+<p><strong>목표</strong>: 고급 동시성 디버깅 - 수천 개의 병렬 스레드를 길들이는 능력</p>
+<h2 id="gpu-탐정-마인드셋"><a class="header" href="#gpu-탐정-마인드셋">GPU 탐정 마인드셋</a></h2>
+<p>GPU 검사를 하려면 <strong>병렬 프로그램 탐정</strong>이 되어야 합니다. 다음과 같은 사건을 조사하게 됩니다:</p>
+<ul>
+<li><strong>증거가 숨겨져 있다</strong> - 직접 관찰할 수 없는 병렬 실행 속에서 버그가 발생</li>
+<li><strong>용의자가 수없이 많다</strong> - 수천 개의 스레드 중 어떤 조합이든 범인일 수 있음</li>
+<li><strong>범행이 간헐적이다</strong> - 경쟁 상태와 타이밍에 따른 실패</li>
+<li><strong>전문 도구가 필요하다</strong> - 일반 디버깅으로는 볼 수 없는 것을 새니타이저가 보여줌</li>
+</ul>
+<p>하지만 훌륭한 탐정처럼, 여러분도 다음을 배우게 됩니다:</p>
+<ul>
+<li><strong>보이지 않는 단서 따라가기</strong> - 메모리 접근 패턴, 스레드 타이밍, 동기화 지점</li>
+<li><strong>병렬적으로 사고하기</strong> - 수천 개의 스레드가 동시에 어떻게 상호작용하는지 고려</li>
+<li><strong>미래의 범죄 예방하기</strong> - 개발 워크플로우에 검사 도구 통합</li>
+<li><strong>도구 믿기</strong> - 수동 테스트로는 드러낼 수 없는 것을 새니타이저에 맡기기</li>
+</ul>
+<h2 id="시작하기-전에"><a class="header" href="#시작하기-전에">시작하기 전에</a></h2>
+<p><strong>알아야 할 것</strong>:</p>
+<ul>
+<li>Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, 배리어)</li>
+<li><strong><a href="https://docs.modular.com/max/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
+<li><code>compute-sanitizer</code> 접근을 위한 <code>pixi</code> 패키지 매니저 환경 설정</li>
+<li><strong>선행 퍼즐</strong>: <a href="../puzzle_04/introduction_layout_tensor.html">Puzzle 4</a>와 <a href="../puzzle_08/layout_tensor.html">Puzzle 8</a> 숙지 권장</li>
+</ul>
+<p><strong>목표</strong>:</p>
+<ul>
+<li>전문 GPU 개발팀에서 사용하는 <strong>프로덕션급 디버깅 기술</strong></li>
+<li>비용이 큰 프로덕션 장애를 예방하는 <strong>숨은 버그 탐지 기술</strong></li>
+<li>가장 까다로운 동시성 시나리오에서도 <strong>병렬 디버깅 자신감</strong></li>
+<li>GPU 프로그래밍 커리어 전반에 도움이 될 <strong>도구 전문성</strong></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_09/third_case.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_10/memcheck.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_09/third_case.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_10/memcheck.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

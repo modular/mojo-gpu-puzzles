@@ -1,0 +1,768 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>⬇️ warp.shuffle_down() - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="warpshuffle_down-일대일-통신"><a class="header" href="#warpshuffle_down-일대일-통신"><code>warp.shuffle_down()</code> 일대일 통신</a></h1>
+<p>워프 레벨 이웃 통신에서는 <code>shuffle_down()</code>을 사용하여 워프 내 인접 레인의 데이터에 접근할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 유한 차분, 이동 평균, 이웃 기반 계산을 효율적으로 수행할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down()</a> 연산은 SIMT 실행을 활용하여 각 레인이 같은 워프 내 이웃의 데이터에 접근할 수 있게 하며, 효율적인 스텐실 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다.</em></p>
+<blockquote>
+<p><strong>스텐실 연산이란?</strong> <a href="https://en.wikipedia.org/wiki/Iterative_%EC%8A%A4%ED%85%90%EC%8B%A4_Loops">스텐실</a> 연산은 각 출력 요소가 이웃 입력 요소의 고정된 패턴에 의존하는 계산입니다. 대표적인 예로 유한 차분(도함수), 합성곱, 이동 평균이 있습니다. “스텐실“은 이웃 접근 패턴을 가리킵니다 - 예를 들어 <code>[i-1, i, i+1]</code>을 읽는 3점 스텐실이나 <code>[i-2, i-1, i, i+1, i+2]</code>를 읽는 5점 스텐실이 있습니다.</p>
+</blockquote>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li><code>shuffle_down()</code>을 활용한 <strong>워프 레벨 데이터 셔플</strong></li>
+<li>스텐실 계산을 위한 <strong>이웃 접근 패턴</strong></li>
+<li>워프 가장자리에서의 <strong>경계 처리</strong></li>
+<li>확장된 이웃 접근을 위한 <strong>다중 오프셋 셔플</strong></li>
+<li>멀티 블록 시나리오에서의 <strong>워프 간 조정</strong></li>
+</ul>
+<p><code>shuffle_down</code> 연산은 각 레인이 더 높은 인덱스의 레인에서 데이터를 가져올 수 있게 합니다:
+\[\Large \text{shuffle_down}(\text{value}, \text{offset}) = \text{value_from_lane}(\text{lane_id} + \text{offset})\]</p>
+<p>이를 통해 복잡한 이웃 접근 패턴이 간단한 워프 레벨 연산으로 변환되어, 명시적 메모리 인덱싱 없이 효율적인 스텐실 계산이 가능합니다.</p>
+<h2 id="1-기본-이웃-차분"><a class="header" href="#1-기본-이웃-차분">1. 기본 이웃 차분</a></h2>
+<h3 id="구성"><a class="header" href="#구성">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
+<li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
+<li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
+<li>데이터 타입: <code>DType.float32</code></li>
+<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="shuffle_down-개념"><a class="header" href="#shuffle_down-개념">shuffle_down 개념</a></h3>
+<p>기존 이웃 접근 방식은 복잡한 인덱싱과 경계 검사가 필요합니다:</p>
+<pre><code class="language-mojo"># 기존 방식 - 복잡하고 오류가 발생하기 쉬움
+if global_i &lt; size - 1:
+    next_value = input[global_i + 1]  # 범위 초과 가능성
+    result = next_value - current_value
+</code></pre>
+<p><strong>기존 방식의 문제점:</strong></p>
+<ul>
+<li><strong>경계 검사</strong>: 배열 경계를 수동으로 확인해야 함</li>
+<li><strong>메모리 접근</strong>: 별도의 메모리 로드가 필요</li>
+<li><strong>동기화</strong>: 공유 메모리 패턴에서 배리어가 필요할 수 있음</li>
+<li><strong>복잡한 로직</strong>: 경계의 예외 상황 처리가 장황해짐</li>
+</ul>
+<p><code>shuffle_down()</code>을 사용하면 이웃 접근이 간결해집니다:</p>
+<pre><code class="language-mojo"># 워프 셔플 방식 - 간단하고 안전
+current_val = input[global_i]
+next_val = shuffle_down(current_val, 1)  # lane+1에서 값 가져오기
+if lane &lt; WARP_SIZE - 1:
+    result = next_val - current_val
+</code></pre>
+<p><strong>shuffle_down의 장점:</strong></p>
+<ul>
+<li><strong>메모리 오버헤드 제로</strong>: 추가 메모리 접근 불필요</li>
+<li><strong>자동 경계 처리</strong>: 하드웨어가 워프 경계를 관리</li>
+<li><strong>동기화 불필요</strong>: SIMT 실행이 정확성을 보장</li>
+<li><strong>조합 가능</strong>: 다른 워프 연산과 쉽게 결합</li>
+</ul>
+<h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
+<p><code>shuffle_down()</code>으로 다음 요소에 접근하여 유한 차분을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> 각 요소의 이산 도함수(유한 차분)를 계산합니다:
+\[\Large \text{output}[i] = \text{input}[i+1] - \text{input}[i]\]</p>
+<p>입력 데이터 <code>[0, 1, 4, 9, 16, 25, ...]</code> (제곱수: <code>i * i</code>)를 차분값 <code>[1, 3, 5, 7, 9, ...]</code> (홀수)로 변환하여, 이차 함수의 이산 도함수를 효과적으로 계산합니다.</p>
+<pre><code class="language-mojo">comptime SIZE = WARP_SIZE
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
+comptime dtype = DType.float32
+comptime layout = Layout.row_major(SIZE)
+
+
+fn neighbor_difference[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Compute finite differences: output[i] = input[i+1] - input[i]
+    Uses shuffle_down(val, 1) to get the next neighbor's value.
+    Works across multiple blocks, each processing one warp worth of data.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
+
+    # FILL IN (roughly 7 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p25/p25.mojo" class="filename">전체 파일 보기: problems/p25/p25.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-shuffle_down-이해하기"><a class="header" href="#1-shuffle_down-이해하기">1. <strong>shuffle_down 이해하기</strong></a></h3>
+<p><code>shuffle_down(value, offset)</code> 연산은 각 레인이 더 높은 인덱스의 레인에서 데이터를 받을 수 있게 합니다. 명시적 메모리 로드 없이 이웃 요소에 접근하는 방법을 살펴보세요.</p>
+<p><strong><code>shuffle_down(val, 1)</code>이 하는 일:</strong></p>
+<ul>
+<li>레인 0이 레인 1의 값을 받음</li>
+<li>레인 1이 레인 2의 값을 받음</li>
+<li>…</li>
+<li>레인 30이 레인 31의 값을 받음</li>
+<li>레인 31은 미정의 값을 받음 (경계 검사로 처리)</li>
+</ul>
+<h3 id="2-워프-경계-고려사항"><a class="header" href="#2-워프-경계-고려사항">2. <strong>워프 경계 고려사항</strong></a></h3>
+<p>워프의 가장자리에서 어떤 일이 일어나는지 생각해 보세요. 일부 레인은 셔플 연산으로 접근할 유효한 이웃이 없을 수 있습니다.</p>
+<p><strong>과제:</strong> 워프 경계에서 셔플 연산이 미정의 데이터를 반환할 수 있는 경우를 처리하도록 알고리즘을 설계하세요.</p>
+<p><code>WARP_SIZE = 32</code>에서의 이웃 차분:</p>
+<ul>
+<li>
+<p><strong>유효한 차분</strong> (<code>lane &lt; WARP_SIZE - 1</code>): <strong>레인 0-30</strong> (31개 레인)</p>
+<ul>
+<li><strong>조건</strong>: \(\text{lane_id}() \in {0, 1, \cdots, 30}\)</li>
+<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 다음 이웃의 값을 성공적으로 가져옴</li>
+<li><strong>결과</strong>: <code>output[i] = input[i+1] - input[i]</code> (유한 차분)</li>
+</ul>
+</li>
+<li>
+<p><strong>경계 케이스</strong> (else): <strong>레인 31</strong> (1개 레인)</p>
+<ul>
+<li><strong>조건</strong>: \(\text{lane_id}() = 31\)</li>
+<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 미정의 데이터를 반환 (레인 32가 없음)</li>
+<li><strong>결과</strong>: <code>output[i] = 0</code> (차분 계산 불가)</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-레인-식별"><a class="header" href="#3-레인-식별">3. <strong>레인 식별</strong></a></h3>
+<pre><code class="language-mojo">lane = lane_id()  # 0부터 WARP_SIZE-1까지 반환
+</code></pre>
+<p><strong>레인 번호 매기기:</strong> 각 워프 내에서 레인은 0, 1, 2, …, <code>WARP_SIZE-1</code>로 번호가 매겨집니다</p>
+</div>
+</details>
+<p><strong>이웃 차분 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p25 --neighbor
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --neighbor
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37.0, 39.0, 41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 59.0, 61.0, 0.0]
+✅ Basic neighbor difference test passed!
+</code></pre>
+<h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn neighbor_difference[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Compute finite differences: output[i] = input[i+1] - input[i]
+    Uses shuffle_down(val, 1) to get the next neighbor's value.
+    Works across multiple blocks, each processing one warp worth of data.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
+
+    if global_i &lt; size:
+        # Get current value
+        current_val = input[global_i]
+
+        # Get next neighbor's value using shuffle_down
+        next_val = shuffle_down(current_val, 1)
+
+        # Compute difference - valid within warp boundaries
+        # Last lane of each warp has no valid neighbor within the warp
+        # Note there's only one warp in this test, so we don't need to check global_i &lt; size - 1
+        # We'll see how this works with multiple blocks in the next tests
+        if lane &lt; WARP_SIZE - 1:
+            output[global_i] = next_val - current_val
+        else:
+            # Last thread in warp or last thread overall, set to 0
+            output[global_i] = 0
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 솔루션은 <code>shuffle_down()</code>이 기존 배열 인덱싱을 효율적인 워프 레벨 통신으로 어떻게 변환하는지 보여줍니다.</p>
+<p><strong>알고리즘 분석:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]           # 각 레인이 자신의 요소를 읽음
+    next_val = shuffle_down(current_val, 1) # 하드웨어가 데이터를 오른쪽으로 이동
+
+    if lane &lt; WARP_SIZE - 1:
+        output[global_i] = next_val - current_val  # 차분 계산
+    else:
+        output[global_i] = 0                       # 경계 처리
+</code></pre>
+<p><strong>SIMT 실행 상세 분석:</strong></p>
+<pre><code>사이클 1: 모든 레인이 동시에 값을 로드
+  레인 0: current_val = input[0] = 0
+  레인 1: current_val = input[1] = 1
+  레인 2: current_val = input[2] = 4
+  ...
+  레인 31: current_val = input[31] = 961
+
+사이클 2: shuffle_down(current_val, 1)이 모든 레인에서 실행
+  레인 0: 레인 1에서 current_val 수신 → next_val = 1
+  레인 1: 레인 2에서 current_val 수신 → next_val = 4
+  레인 2: 레인 3에서 current_val 수신 → next_val = 9
+  ...
+  레인 30: 레인 31에서 current_val 수신 → next_val = 961
+  레인 31: 미정의 수신 (레인 32 없음) → next_val = ?
+
+사이클 3: 차분 계산 (레인 0-30만 해당)
+  레인 0: output[0] = 1 - 0 = 1
+  레인 1: output[1] = 4 - 1 = 3
+  레인 2: output[2] = 9 - 4 = 5
+  ...
+  레인 31: output[31] = 0 (경계 조건)
+</code></pre>
+<p><strong>수학적 통찰:</strong> 이산 도함수 연산자 \(D\)를 구현합니다:
+\[\Large D\lbrack f\rbrack(i) = f(i+1) - f(i)\]</p>
+<p>이차 입력 \(f(i) = i^2\)에 대해:
+\[\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\]</p>
+<p><strong>shuffle_down이 우월한 이유:</strong></p>
+<ol>
+<li><strong>메모리 효율성</strong>: 기존 방식은 <code>input[global_i + 1]</code> 로드가 필요하여 캐시 미스를 유발할 수 있음</li>
+<li><strong>경계 안전성</strong>: 범위 초과 접근 위험이 없음 - 하드웨어가 워프 경계를 처리</li>
+<li><strong>SIMT 최적화</strong>: 단일 명령이 모든 레인을 동시에 처리</li>
+<li><strong>레지스터 통신</strong>: 데이터가 메모리 계층 구조가 아닌 레지스터 사이를 이동</li>
+</ol>
+<p><strong>성능 특성:</strong></p>
+<ul>
+<li><strong>지연 시간</strong>: 1 사이클 (메모리 접근의 100+ 사이클 대비)</li>
+<li><strong>대역폭</strong>: 0 바이트 (기존 방식의 스레드당 4바이트 대비)</li>
+<li><strong>병렬성</strong>: 32개 레인 모두 동시에 처리</li>
+</ul>
+</div>
+</details>
+<h2 id="2-다중-오프셋-이동-평균"><a class="header" href="#2-다중-오프셋-이동-평균">2. 다중 오프셋 이동 평균</a></h2>
+<h3 id="구성-1"><a class="header" href="#구성-1">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>SIZE_2 = 64</code> (멀티 블록 시나리오)</li>
+<li>그리드 구성: <code>BLOCKS_PER_GRID = (2, 1)</code> 그리드당 블록 수</li>
+<li>블록 구성: <code>THREADS_PER_BLOCK = (WARP_SIZE, 1)</code> 블록당 스레드 수</li>
+</ul>
+<h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
+<p>여러 <code>shuffle_down</code> 연산을 사용하여 3점 이동 평균을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> 세 개의 연속 요소를 사용하여 슬라이딩 윈도우 평균을 계산합니다:
+\[\Large \text{output}[i] = \frac{1}{3}\left(\text{input}[i] + \text{input}[i+1] + \text{input}[i+2]\right)\]</p>
+<p><strong>경계 처리:</strong> 워프 경계에서 알고리즘이 우아하게 적응합니다:</p>
+<ul>
+<li><strong>3점 전체 윈도우</strong>: \(\text{output}[i] = \frac{1}{3}\sum_{k=0}^{2} \text{input}[i+k]\) - 모든 이웃이 사용 가능할 때</li>
+<li><strong>2점 윈도우</strong>: \(\text{output}[i] = \frac{1}{2}\sum_{k=0}^{1} \text{input}[i+k]\) - 다음 이웃만 사용 가능할 때</li>
+<li><strong>1점 윈도우</strong>: \(\text{output}[i] = \text{input}[i]\) - 이웃이 사용 불가할 때</li>
+</ul>
+<p>이는 <code>shuffle_down()</code>이 워프 범위 내에서 자동 경계 처리와 함께 효율적인 스텐실 연산을 가능하게 하는 방법을 보여줍니다.</p>
+<pre><code class="language-mojo">comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
+
+
+fn moving_average_3[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
+    Uses shuffle_down with offsets 1 and 2 to access neighbors.
+    Works within warp boundaries across multiple blocks.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
+
+    # FILL IN (roughly 10 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-다중-오프셋-셔플-패턴"><a class="header" href="#1-다중-오프셋-셔플-패턴">1. <strong>다중 오프셋 셔플 패턴</strong></a></h3>
+<p>이 퍼즐은 여러 이웃에 동시에 접근해야 합니다. 서로 다른 오프셋으로 셔플 연산을 사용해야 합니다.</p>
+<p><strong>핵심 질문:</strong></p>
+<ul>
+<li><code>input[i+1]</code>과 <code>input[i+2]</code>를 셔플 연산으로 어떻게 가져올 수 있을까요?</li>
+<li>셔플 오프셋과 이웃 거리의 관계는 무엇일까요?</li>
+<li>같은 소스 값에 대해 여러 번 셔플을 수행할 수 있을까요?</li>
+</ul>
+<p><strong>시각화 개념:</strong></p>
+<pre><code>현재 레인이 필요한 값: current_val, next_val, next_next_val
+셔플 오프셋:        0 (직접),    1,        2
+</code></pre>
+<p><strong>생각해 보세요:</strong> 몇 번의 셔플 연산이 필요하고, 어떤 오프셋을 사용해야 할까요?</p>
+<h3 id="2-단계적-경계-처리"><a class="header" href="#2-단계적-경계-처리">2. <strong>단계적 경계 처리</strong></a></h3>
+<p>단순한 이웃 차분과 달리, 이 퍼즐은 2개의 이웃에 접근해야 하므로 여러 경계 시나리오가 있습니다.</p>
+<p><strong>고려할 경계 시나리오:</strong></p>
+<ul>
+<li><strong>전체 윈도우:</strong> 레인이 두 이웃 모두 접근 가능 → 3개 값 모두 사용</li>
+<li><strong>부분 윈도우:</strong> 레인이 1개 이웃만 접근 가능 → 2개 값 사용</li>
+<li><strong>윈도우 없음:</strong> 레인이 이웃에 접근 불가 → 1개 값 사용</li>
+</ul>
+<p><strong>비판적 사고:</strong></p>
+<ul>
+<li>어떤 레인이 각 카테고리에 해당할까요?</li>
+<li>값이 적을 때 평균의 가중치를 어떻게 조정해야 할까요?</li>
+<li>어떤 경계 조건을 검사해야 할까요?</li>
+</ul>
+<p><strong>고려할 패턴:</strong></p>
+<pre><code>if (두 이웃 모두 접근 가능):
+    # 3점 평균
+elif (한 이웃만 접근 가능):
+    # 2점 평균
+else:
+    # 1점 (평균 없음)
+</code></pre>
+<h3 id="3-멀티-블록-조정"><a class="header" href="#3-멀티-블록-조정">3. <strong>멀티 블록 조정</strong></a></h3>
+<p>이 퍼즐은 여러 블록을 사용하며, 각 블록이 데이터의 다른 영역을 처리합니다.</p>
+<p><strong>중요한 고려사항:</strong></p>
+<ul>
+<li>각 블록은 레인 0부터 WARP_SIZE-1까지의 자체 워프를 가짐</li>
+<li>경계 조건은 각 워프 내에서 독립적으로 적용</li>
+<li>블록마다 레인 번호가 초기화됨</li>
+</ul>
+<p><strong>생각해 볼 질문:</strong></p>
+<ul>
+<li>경계 로직이 블록 0과 블록 1 모두에서 올바르게 동작하나요?</li>
+<li>레인 경계와 전역 배열 경계를 모두 검사하고 있나요?</li>
+<li>서로 다른 블록에서 <code>global_i</code>와 <code>lane_id()</code>의 관계는 어떻게 될까요?</li>
+</ul>
+<p><strong>디버깅 팁:</strong> 각 블록의 경계 레인에서 어떤 일이 일어나는지 추적하여 로직을 테스트하세요.</p>
+</div>
+</details>
+<p><strong>이동 평균 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p25 --average
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p25 --average
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p25 --average
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE_2:  64
+output: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
+expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.333334, 36.333332, 45.333332, 55.333332, 66.333336, 78.333336, 91.333336, 105.333336, 120.333336, 136.33333, 153.33333, 171.33333, 190.33333, 210.33333, 231.33333, 253.33333, 276.33334, 300.33334, 325.33334, 351.33334, 378.33334, 406.33334, 435.33334, 465.33334, 496.33334, 512.0, 528.0, 595.3333, 630.3333, 666.3333, 703.3333, 741.3333, 780.3333, 820.3333, 861.3333, 903.3333, 946.3333, 990.3333, 1035.3334, 1081.3334, 1128.3334, 1176.3334, 1225.3334, 1275.3334, 1326.3334, 1378.3334, 1431.3334, 1485.3334, 1540.3334, 1596.3334, 1653.3334, 1711.3334, 1770.3334, 1830.3334, 1891.3334, 1953.3334, 2016.3334, 2048.0, 2080.0])
+✅ Moving average test passed!
+</code></pre>
+<h3 id="솔루션-1"><a class="header" href="#솔루션-1">솔루션</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn moving_average_3[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
+    Uses shuffle_down with offsets 1 and 2 to access neighbors.
+    Works within warp boundaries across multiple blocks.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = Int(lane_id())
+
+    if global_i &lt; size:
+        # Get current, next, and next+1 values
+        current_val = input[global_i]
+        next_val = shuffle_down(current_val, 1)
+        next_next_val = shuffle_down(current_val, 2)
+
+        # Compute 3-point average - valid within warp boundaries
+        if lane &lt; WARP_SIZE - 2 and global_i &lt; size - 2:
+            output[global_i] = (current_val + next_val + next_next_val) / 3.0
+        elif lane &lt; WARP_SIZE - 1 and global_i &lt; size - 1:
+            # Second-to-last in warp: only current + next available
+            output[global_i] = (current_val + next_val) / 2.0
+        else:
+            # Last thread in warp or boundary cases: only current available
+            output[global_i] = current_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 솔루션은 복잡한 스텐실 연산을 위한 고급 다중 오프셋 셔플을 보여줍니다.</p>
+<p><strong>전체 알고리즘 분석:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    # 단계 1: 여러 셔플로 필요한 데이터 모두 확보
+    current_val = input[global_i]                   # 직접 접근
+    next_val = shuffle_down(current_val, 1)         # 오른쪽 이웃
+    next_next_val = shuffle_down(current_val, 2)    # 오른쪽+1 이웃
+
+    # 단계 2: 사용 가능한 데이터에 따른 적응형 계산
+    if lane &lt; WARP_SIZE - 2 and global_i &lt; size - 2:
+        # 3점 스텐실 전체 사용 가능
+        output[global_i] = (current_val + next_val + next_next_val) / 3.0
+    elif lane &lt; WARP_SIZE - 1 and global_i &lt; size - 1:
+        # 2점 스텐실만 사용 가능 (워프 경계 근처)
+        output[global_i] = (current_val + next_val) / 2.0
+    else:
+        # 스텐실 사용 불가 (워프 경계)
+        output[global_i] = current_val
+</code></pre>
+<p><strong>다중 오프셋 실행 추적 (<code>WARP_SIZE = 32</code>):</strong></p>
+<pre><code>초기 상태 (블록 0, 요소 0-31):
+  레인 0: current_val = input[0] = 1
+  레인 1: current_val = input[1] = 2
+  레인 2: current_val = input[2] = 4
+  ...
+  레인 31: current_val = input[31] = X
+
+첫 번째 셔플: shuffle_down(current_val, 1)
+  레인 0: next_val = input[1] = 2
+  레인 1: next_val = input[2] = 4
+  레인 2: next_val = input[3] = 7
+  ...
+  레인 30: next_val = input[31] = X
+  레인 31: next_val = 미정의
+
+두 번째 셔플: shuffle_down(current_val, 2)
+  레인 0: next_next_val = input[2] = 4
+  레인 1: next_next_val = input[3] = 7
+  레인 2: next_next_val = input[4] = 11
+  ...
+  레인 29: next_next_val = input[31] = X
+  레인 30: next_next_val = 미정의
+  레인 31: next_next_val = 미정의
+
+계산 단계:
+  레인 0-29: 3점 전체 평균 → (current + next + next_next) / 3
+  레인 30:   2점 평균 → (current + next) / 2
+  레인 31:   1점 평균 → current (그대로 전달)
+</code></pre>
+<p><strong>수학적 기반:</strong> 가변 폭 이산 합성곱을 구현합니다:
+\[\Large h[i] = \sum_{k=0}^{K(i)-1} w_k^{(i)} \cdot f[i+k]\]</p>
+<p>위치에 따라 커널이 적응합니다:</p>
+<ul>
+<li><strong>내부 점</strong>: \(K(i) = 3\), \(\mathbf{w}^{(i)} = [\frac{1}{3}, \frac{1}{3}, \frac{1}{3}]\)</li>
+<li><strong>경계 근처</strong>: \(K(i) = 2\), \(\mathbf{w}^{(i)} = [\frac{1}{2}, \frac{1}{2}]\)</li>
+<li><strong>경계</strong>: \(K(i) = 1\), \(\mathbf{w}^{(i)} = [1]\)</li>
+</ul>
+<p><strong>멀티 블록 조정:</strong> <code>SIZE_2 = 64</code>와 2개 블록:</p>
+<pre><code>블록 0 (전역 인덱스 0-31):
+  전역 인덱스 29, 30, 31에 레인 경계 적용
+
+블록 1 (전역 인덱스 32-63):
+  전역 인덱스 61, 62, 63에 레인 경계 적용
+  레인 번호 초기화: global_i=32 → lane=0, global_i=63 → lane=31
+</code></pre>
+<p><strong>성능 최적화:</strong></p>
+<ol>
+<li><strong>병렬 데이터 확보</strong>: 두 셔플 연산이 동시에 실행</li>
+<li><strong>조건부 분기</strong>: GPU가 프레디케이션을 통해 분기 레인을 효율적으로 처리</li>
+<li><strong>메모리 병합</strong>: 순차적 전역 메모리 접근 패턴이 GPU에 최적</li>
+<li><strong>레지스터 재사용</strong>: 모든 중간 값이 레지스터에 유지</li>
+</ol>
+<p><strong>신호 처리 관점:</strong> 이것은 임펄스 응답 \(h[n] = \frac{1}{3}[\delta[n] + \delta[n-1] + \delta[n-2]]\)를 가진 인과 FIR 필터로, 차단 주파수 \(f_c \approx 0.25f_s\)에서 스무딩을 제공합니다.</p>
+</div>
+</details>
+<h2 id="요약"><a class="header" href="#요약">요약</a></h2>
+<p>이 섹션의 핵심 패턴은 다음과 같습니다</p>
+<pre><code class="language-mojo">current_val = input[global_i]
+neighbor_val = shuffle_down(current_val, offset)
+if lane &lt; WARP_SIZE - offset:
+    result = compute(current_val, neighbor_val)
+</code></pre>
+<p><strong>핵심 장점:</strong></p>
+<ul>
+<li><strong>하드웨어 효율성</strong>: 레지스터 간 직접 통신</li>
+<li><strong>경계 안전성</strong>: 자동 워프 범위 처리</li>
+<li><strong>SIMT 최적화</strong>: 단일 명령, 모든 레인 병렬 처리</li>
+</ul>
+<p><strong>활용 분야</strong>: 유한 차분, 스텐실 연산, 이동 평균, 합성곱.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_25/puzzle_25.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_25/warp_broadcast.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_25/puzzle_25.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_25/warp_broadcast.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

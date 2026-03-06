@@ -1,0 +1,575 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🧠 워프 레인과 SIMT 실행 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 43fce1182f8029e7edc50157aed0e6ebb8129d42 -->
+<h1 id="-워프-레인과-simt-실행"><a class="header" href="#-워프-레인과-simt-실행">🧠 워프 레인과 SIMT 실행</a></h1>
+<h2 id="워프-프로그래밍-vs-simd-멘탈-모델"><a class="header" href="#워프-프로그래밍-vs-simd-멘탈-모델">워프 프로그래밍 vs SIMD 멘탈 모델</a></h2>
+<h3 id="워프란-무엇인가"><a class="header" href="#워프란-무엇인가">워프란 무엇인가?</a></h3>
+<p><strong>워프</strong>는 32개(또는 64개)의 GPU 스레드가 서로 다른 데이터에 대해 <strong>동일한 명령을 동시에 실행</strong>하는 그룹입니다. 각 스레드가 벡터 프로세서의 “레인” 역할을 하는 <strong>동기화된 벡터 유닛</strong>이라고 생각하면 됩니다.</p>
+<p><strong>간단한 예시:</strong></p>
+<pre><code class="language-mojo">from gpu.primitives.warp import sum
+# 워프 내 32개 스레드가 동시에 실행:
+var my_value = input[my_thread_id]     # 각 스레드가 서로 다른 데이터를 가져옴
+var warp_total = sum(my_value)         # 모든 스레드가 하나의 합계에 기여
+</code></pre>
+<p>무슨 일이 일어난 걸까요? 32개의 개별 스레드가 복잡한 조율을 하는 대신, <strong>워프</strong>가 자동으로 동기화하여 하나의 결과를 만들어냈습니다. 이것이 바로 <strong>SIMT(Single Instruction, Multiple Thread)</strong> 실행입니다.</p>
+<h3 id="simt-vs-simd-비교"><a class="header" href="#simt-vs-simd-비교">SIMT vs SIMD 비교</a></h3>
+<p>CPU 벡터 프로그래밍(SIMD)에 익숙하다면, GPU 워프는 비슷하지만 핵심적인 차이가 있습니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>관점</th><th>CPU SIMD (예: AVX)</th><th>GPU 워프 (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>프로그래밍 모델</strong></td><td>명시적 벡터 연산</td><td>스레드 기반 프로그래밍</td></tr>
+<tr><td><strong>데이터 폭</strong></td><td>고정 (256/512 비트)</td><td>유연 (32/64 스레드)</td></tr>
+<tr><td><strong>동기화</strong></td><td>명령 내 암시적</td><td>워프 내 암시적</td></tr>
+<tr><td><strong>통신</strong></td><td>메모리/레지스터 경유</td><td>셔플 연산 경유</td></tr>
+<tr><td><strong>분기 처리</strong></td><td>해당 없음</td><td>하드웨어 마스킹</td></tr>
+<tr><td><strong>예시</strong></td><td><code>a + b</code></td><td><code>sum(thread_value)</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>CPU SIMD 방식 (C++ intrinsics):</strong></p>
+<pre><code class="language-cpp">// 명시적 벡터 연산 - 8개의 float를 병렬로
+__m256 result = _mm256_add_ps(a, b);   // 8쌍을 동시에 덧셈
+</code></pre>
+<p><strong>CPU SIMD 방식 (Mojo):</strong></p>
+<pre><code class="language-mojo"># Mojo에서 SIMD는 일급 시민 타입이므로 a, b가 SIMD 타입이면
+# 덧셈이 병렬로 수행됩니다
+var result = a + b # 8쌍을 동시에 덧셈
+</code></pre>
+<p><strong>GPU SIMT 방식 (Mojo):</strong></p>
+<pre><code class="language-mojo"># 스레드 기반 코드가 벡터 연산으로 변환됩니다
+from gpu.primitives.warp import sum
+
+var my_data = input[thread_id]         # 각 스레드가 자기 요소를 가져옴
+var partial = my_data * coefficient    # 모든 스레드가 동시에 계산
+var total = sum(partial)               # 하드웨어가 합산을 조율
+</code></pre>
+<h3 id="워프를-강력하게-만드는-핵심-개념"><a class="header" href="#워프를-강력하게-만드는-핵심-개념">워프를 강력하게 만드는 핵심 개념</a></h3>
+<p><strong>1. 레인 식별:</strong> 각 스레드는 사실상 비용 없이 접근할 수 있는 “레인 ID” (0~31)를 갖습니다</p>
+<pre><code class="language-mojo">var my_lane = lane_id()  # 하드웨어 레지스터를 읽을 뿐
+</code></pre>
+<p><strong>2. 암시적 동기화:</strong> 워프 내에서 배리어가 필요 없습니다</p>
+<pre><code class="language-mojo"># 그냥 동작 - 모든 스레드가 자동으로 동기화
+var sum = sum(my_contribution)
+</code></pre>
+<p><strong>3. 효율적인 통신:</strong> 메모리 없이도 스레드 간 데이터 공유가 가능합니다</p>
+<pre><code class="language-mojo"># 레인 0의 값을 다른 모든 레인으로 전달
+var broadcasted = shuffle_idx(my_value, 0)
+</code></pre>
+<p><strong>핵심 통찰:</strong> SIMT를 사용하면 자연스러운 스레드 코드를 작성하면서도 효율적인 벡터 연산으로 실행할 수 있어, 스레드 프로그래밍의 편리함과 벡터 처리의 성능을 모두 얻을 수 있습니다.</p>
+<h3 id="gpu-실행-계층-구조에서-워프의-위치"><a class="header" href="#gpu-실행-계층-구조에서-워프의-위치">GPU 실행 계층 구조에서 워프의 위치</a></h3>
+<p>워프가 전체 GPU 실행 모델과 어떻게 연결되는지 자세히 알아보려면 <a href="../puzzle_23/gpu-thread-vs-simd.html">GPU 스레딩 vs SIMD 개념</a>을 참고하세요. 워프의 위치는 다음과 같습니다:</p>
+<pre><code>GPU 디바이스
+├── 그리드 (전체 문제)
+│   ├── 블록 1 (스레드 그룹, 공유 메모리)
+│   │   ├── 워프 1 (32 스레드, 록스텝 실행) ← 이 레벨
+│   │   │   ├── 스레드 1 → SIMD 연산
+│   │   │   ├── 스레드 2 → SIMD 연산
+│   │   │   └── ... (총 32개 스레드)
+│   │   └── 워프 2 (32 스레드)
+│   └── 블록 2 (독립적인 그룹)
+</code></pre>
+<p><strong>워프 프로그래밍은 “워프 레벨“에서 동작합니다</strong> - 단일 워프 내의 32개 스레드를 모두 조율하는 연산을 다루며, 그렇지 않으면 복잡한 공유 메모리 조율이 필요한 <code>sum()</code> 같은 강력한 기본 요소를 사용할 수 있습니다.</p>
+<p>이 멘탈 모델은 문제가 워프 연산에 자연스럽게 매핑되는 경우와 기존의 공유 메모리 방식이 필요한 경우를 구분하는 데 도움이 됩니다.</p>
+<h2 id="워프-프로그래밍의-하드웨어-기반"><a class="header" href="#워프-프로그래밍의-하드웨어-기반">워프 프로그래밍의 하드웨어 기반</a></h2>
+<p><strong>Single Instruction, Multiple Thread(SIMT)</strong> 실행을 이해하는 것은 효과적인 워프 프로그래밍에 필수적입니다. 이것은 단순한 소프트웨어 추상화가 아니라, GPU 하드웨어가 실리콘 수준에서 실제로 작동하는 방식입니다.</p>
+<h2 id="simt-실행이란"><a class="header" href="#simt-실행이란">SIMT 실행이란?</a></h2>
+<p><strong>SIMT</strong>란 워프 내에서 모든 스레드가 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을 <strong>동시에</strong> 실행한다는 뜻입니다. 이는 완전히 다른 명령을 독립적으로 실행할 수 있는 CPU 스레드와 근본적으로 다릅니다.</p>
+<h3 id="cpu-vs-gpu-실행-모델"><a class="header" href="#cpu-vs-gpu-실행-모델">CPU vs GPU 실행 모델</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>관점</th><th>CPU (MIMD)</th><th>GPU 워프 (SIMT)</th></tr></thead><tbody>
+<tr><td><strong>명령 모델</strong></td><td>Multiple Instructions, Multiple Data</td><td>Single Instruction, Multiple Thread</td></tr>
+<tr><td><strong>Core 1</strong></td><td><code>add r1, r2</code></td><td><code>add r1, r2</code></td></tr>
+<tr><td><strong>Core 2</strong></td><td><code>load r3, [mem]</code></td><td><code>add r1, r2</code> (동일 명령)</td></tr>
+<tr><td><strong>Core 3</strong></td><td><code>branch loop</code></td><td><code>add r1, r2</code> (동일 명령)</td></tr>
+<tr><td><strong>… Core 32</strong></td><td><code>다른 명령</code></td><td><code>add r1, r2</code> (동일 명령)</td></tr>
+<tr><td><strong>실행 방식</strong></td><td>독립적, 비동기</td><td>동기화, 록스텝</td></tr>
+<tr><td><strong>스케줄링</strong></td><td>복잡, OS 관리</td><td>단순, 하드웨어 관리</td></tr>
+<tr><td><strong>데이터</strong></td><td>독립적인 데이터 세트</td><td>서로 다른 데이터, 같은 연산</td></tr>
+</tbody></table>
+</div>
+<p><strong>GPU 워프 실행 패턴:</strong></p>
+<ul>
+<li><strong>명령</strong>: 32개 레인 모두 동일: <code>add r1, r2</code></li>
+<li><strong>레인 0</strong>: <code>Data0</code>에 연산 → <code>Result0</code></li>
+<li><strong>레인 1</strong>: <code>Data1</code>에 연산 → <code>Result1</code></li>
+<li><strong>레인 2</strong>: <code>Data2</code>에 연산 → <code>Result2</code></li>
+<li><strong>… (모든 레인이 동시에 실행)</strong></li>
+<li><strong>레인 31</strong>: <code>Data31</code>에 연산 → <code>Result31</code></li>
+</ul>
+<p><strong>핵심 통찰:</strong> 모든 레인이 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을 <strong>동시에</strong> 실행합니다.</p>
+<h3 id="simt가-gpu에-적합한-이유"><a class="header" href="#simt가-gpu에-적합한-이유">SIMT가 GPU에 적합한 이유</a></h3>
+<p>GPU는 지연 시간이 아닌 <strong>처리량</strong>에 최적화되어 있습니다. SIMT가 가능하게 하는 것들:</p>
+<ul>
+<li><strong>하드웨어 단순화</strong>: 하나의 명령 디코더가 32개 또는 64개 스레드를 처리</li>
+<li><strong>실행 효율성</strong>: 워프 내 스레드 간 복잡한 스케줄링 불필요</li>
+<li><strong>메모리 대역폭</strong>: 병합된 메모리 접근 패턴</li>
+<li><strong>전력 효율성</strong>: 레인 전체에 걸쳐 제어 로직 공유</li>
+</ul>
+<h2 id="워프-실행-메커니즘"><a class="header" href="#워프-실행-메커니즘">워프 실행 메커니즘</a></h2>
+<h3 id="레인-번호와-식별"><a class="header" href="#레인-번호와-식별">레인 번호와 식별</a></h3>
+<p>워프 내 각 스레드는 0부터 <code>WARP_SIZE-1</code>까지의 <strong>레인 ID</strong>를 갖습니다:</p>
+<pre><code class="language-mojo">from gpu import lane_id
+from gpu.primitives.warp import WARP_SIZE
+
+# 커널 함수 내에서:
+my_lane = lane_id()  # 0-31 (NVIDIA/RDNA) 또는 0-63 (CDNA) 반환
+</code></pre>
+<p><strong>핵심 통찰:</strong> <code>lane_id()</code>는 <strong>비용이 없습니다</strong> - 값을 계산하는 것이 아니라 하드웨어 레지스터를 읽을 뿐입니다.</p>
+<h3 id="워프-내-동기화"><a class="header" href="#워프-내-동기화">워프 내 동기화</a></h3>
+<p>SIMT의 가장 강력한 측면: <strong>암시적 동기화</strong>.</p>
+<pre><code class="language-mojo"># thread_idx.x &lt; WARP_SIZE인 경우의 예시
+
+# 1. 기존 공유 메모리 방식:
+shared[thread_idx.x] = partial_result
+barrier()  # 명시적 동기화 필요
+var total = shared[0] + shared[1] + ... + shared[WARP_SIZE] # 합산 리덕션
+
+# 2. 워프 방식:
+from gpu.primitives.warp import sum
+
+var total = sum(partial_result)  # 암시적 동기화!
+</code></pre>
+<p><strong>왜 배리어가 필요 없을까요?</strong> 모든 레인이 각 명령을 정확히 같은 시점에 실행하기 때문입니다. <code>sum()</code>이 시작될 때, 모든 레인은 이미 <code>partial_result</code> 계산을 마친 상태입니다.</p>
+<h2 id="워프-분기와-수렴"><a class="header" href="#워프-분기와-수렴">워프 분기와 수렴</a></h2>
+<h3 id="조건-코드에서-무슨-일이-일어날까"><a class="header" href="#조건-코드에서-무슨-일이-일어날까">조건 코드에서 무슨 일이 일어날까?</a></h3>
+<pre><code class="language-mojo">if lane_id() % 2 == 0:
+    # 짝수 레인이 이 경로를 실행
+    result = compute_even()
+else:
+    # 홀수 레인이 이 경로를 실행
+    result = compute_odd()
+# 모든 레인이 여기서 수렴
+</code></pre>
+<p><strong>하드웨어 동작 단계:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>단계</th><th>페이즈</th><th>활성 레인</th><th>대기 레인</th><th>효율</th><th>성능 비용</th></tr></thead><tbody>
+<tr><td><strong>1</strong></td><td>조건 평가</td><td>32개 레인 전부</td><td>없음</td><td>100%</td><td>정상 속도</td></tr>
+<tr><td><strong>2</strong></td><td>짝수 레인 분기</td><td>레인 0,2,4…30 (16개)</td><td>레인 1,3,5…31 (16개)</td><td>50%</td><td><strong>2배 느림</strong></td></tr>
+<tr><td><strong>3</strong></td><td>홀수 레인 분기</td><td>레인 1,3,5…31 (16개)</td><td>레인 0,2,4…30 (16개)</td><td>50%</td><td><strong>2배 느림</strong></td></tr>
+<tr><td><strong>4</strong></td><td>수렴</td><td>32개 레인 전부</td><td>없음</td><td>100%</td><td>정상 속도 복귀</td></tr>
+</tbody></table>
+</div>
+<p><strong>예시 분석:</strong></p>
+<ul>
+<li><strong>2단계</strong>: 짝수 레인만 <code>compute_even()</code>을 실행하고 홀수 레인은 대기</li>
+<li><strong>3단계</strong>: 홀수 레인만 <code>compute_odd()</code>를 실행하고 짝수 레인은 대기</li>
+<li><strong>총 소요 시간</strong>: <code>time(compute_even) + time(compute_odd)</code> (순차 실행)</li>
+<li><strong>분기 없는 경우</strong>: <code>max(time(compute_even), time(compute_odd))</code> (병렬 실행)</li>
+</ul>
+<p><strong>성능 영향:</strong></p>
+<ol>
+<li><strong>분기</strong>: 워프가 실행을 분리 - 일부 레인은 활성, 나머지는 대기</li>
+<li><strong>순차 실행</strong>: 서로 다른 경로가 병렬이 아닌 순차적으로 실행</li>
+<li><strong>수렴</strong>: 모든 레인이 다시 합류하여 함께 진행</li>
+<li><strong>비용</strong>: 분기가 있는 워프는 통합 실행 대비 2배 이상의 시간 소요</li>
+</ol>
+<h3 id="워프-효율을-위한-모범-사례"><a class="header" href="#워프-효율을-위한-모범-사례">워프 효율을 위한 모범 사례</a></h3>
+<h3 id="워프-효율-패턴"><a class="header" href="#워프-효율-패턴">워프 효율 패턴</a></h3>
+<p><strong>✅ 우수: 균일 실행 (100% 효율)</strong></p>
+<pre><code class="language-mojo"># 모든 레인이 같은 작업 수행 - 분기 없음
+var partial = a[global_i] * b[global_i]
+var total = sum(partial)
+</code></pre>
+<p><em>성능: 32개 레인 모두 동시 활성</em></p>
+<p><strong>⚠️ 허용: 예측 가능한 분기 (~95% 효율)</strong></p>
+<pre><code class="language-mojo"># lane_id() 기반 분기 - 하드웨어 최적화됨
+if lane_id() == 0:
+    output[block_idx] = sum(partial)
+</code></pre>
+<p><em>성능: 단일 레인의 짧은 연산, 예측 가능한 패턴</em></p>
+<p><strong>🔶 주의: 구조화된 분기 (~50-75% 효율)</strong></p>
+<pre><code class="language-mojo"># 규칙적인 패턴은 컴파일러가 최적화 가능
+if (global_i / 4) % 2 == 0:
+    result = method_a()
+else:
+    result = method_b()
+</code></pre>
+<p><em>성능: 예측 가능한 그룹, 일부 최적화 가능</em></p>
+<p><strong>❌ 회피: 데이터 의존적 분기 (~25-50% 효율)</strong></p>
+<pre><code class="language-mojo"># 데이터에 따라 레인마다 다른 경로를 탈 수 있음
+if input[global_i] &gt; threshold:  # 예측 불가능한 분기
+    result = expensive_computation()
+else:
+    result = simple_computation()
+</code></pre>
+<p><em>성능: 무작위 분기가 워프 효율을 떨어뜨림</em></p>
+<p><strong>💀 최악: 중첩된 데이터 의존적 분기 (~10-25% 효율)</strong></p>
+<pre><code class="language-mojo"># 예측 불가능한 분기의 다단계 중첩
+if input[global_i] &gt; threshold1:
+    if input[global_i] &gt; threshold2:
+        result = very_expensive()
+    else:
+        result = expensive()
+else:
+    result = simple()
+</code></pre>
+<p><em>성능: 워프 효율이 사실상 무너짐</em></p>
+<h2 id="크로스-아키텍처-호환성"><a class="header" href="#크로스-아키텍처-호환성">크로스 아키텍처 호환성</a></h2>
+<h3 id="nvidia-vs-amd-워프-크기"><a class="header" href="#nvidia-vs-amd-워프-크기">NVIDIA vs AMD 워프 크기</a></h3>
+<pre><code class="language-mojo">from gpu.primitives.warp import WARP_SIZE
+
+# NVIDIA GPUs:     WARP_SIZE = 32
+# AMD RDNA GPUs:   WARP_SIZE = 32 (wavefront32 모드)
+# AMD CDNA GPUs:   WARP_SIZE = 64 (전통적인 wavefront64)
+</code></pre>
+<p><strong>왜 중요할까요:</strong></p>
+<ul>
+<li><strong>메모리 패턴</strong>: 병합된 접근이 워프 크기에 의존</li>
+<li><strong>알고리즘 설계</strong>: 리덕션 트리가 워프 크기를 고려해야 함</li>
+<li><strong>성능 확장</strong>: AMD에서 워프당 레인이 2배</li>
+</ul>
+<h3 id="이식-가능한-워프-코드-작성"><a class="header" href="#이식-가능한-워프-코드-작성">이식 가능한 워프 코드 작성</a></h3>
+<h3 id="아키텍처-적응-전략"><a class="header" href="#아키텍처-적응-전략">아키텍처 적응 전략</a></h3>
+<p><strong>✅ 이식 가능: 항상 <code>WARP_SIZE</code> 사용</strong></p>
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)  # 자동으로 적응
+comptime ELEMENTS_PER_WARP = WARP_SIZE       # 하드웨어에 맞게 확장
+</code></pre>
+<p><em>결과: NVIDIA/AMD (32)와 AMD (64) 모두에서 최적으로 동작</em></p>
+<p><strong>❌ 잘못된 방식: 워프 크기를 하드코딩하지 마세요</strong></p>
+<pre><code class="language-mojo">comptime THREADS_PER_BLOCK = (32, 1)  # AMD GPU에서 동작 안 함!
+comptime REDUCTION_SIZE = 32          # AMD에서 잘못된 값!
+</code></pre>
+<p><em>결과: AMD에서 성능 저하, 정확성 문제 가능</em></p>
+<h3 id="실제-하드웨어-영향"><a class="header" href="#실제-하드웨어-영향">실제 하드웨어 영향</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>GPU 아키텍처</th><th>WARP_SIZE</th><th>워프당 메모리</th><th>리덕션 단계</th><th>레인 패턴</th></tr></thead><tbody>
+<tr><td><strong>NVIDIA/AMD RDNA</strong></td><td>32</td><td>128 bytes (4×32)</td><td>5단계: 32→16→8→4→2→1</td><td>레인 0-31</td></tr>
+<tr><td><strong>AMD CDNA</strong></td><td>64</td><td>256 bytes (4×64)</td><td>6단계: 64→32→16→8→4→2→1</td><td>레인 0-63</td></tr>
+</tbody></table>
+</div>
+<p><strong>64 vs 32의 성능 차이:</strong></p>
+<ul>
+<li><strong>CDNA 장점</strong>: 워프당 2배의 메모리 대역폭</li>
+<li><strong>CDNA 장점</strong>: 워프당 2배의 연산량</li>
+<li><strong>NVIDIA/RDNA 장점</strong>: 블록당 더 많은 워프 (더 높은 점유율)</li>
+<li><strong>코드 이식성</strong>: 같은 소스 코드로 양쪽 모두 최적 성능</li>
+</ul>
+<h2 id="워프와-메모리-접근-패턴"><a class="header" href="#워프와-메모리-접근-패턴">워프와 메모리 접근 패턴</a></h2>
+<h3 id="병합된-메모리-접근-패턴"><a class="header" href="#병합된-메모리-접근-패턴">병합된 메모리 접근 패턴</a></h3>
+<p><strong>✅ 완벽: 병합된 접근 (100% 대역폭 활용)</strong></p>
+<pre><code class="language-mojo"># 인접 레인 → 인접 메모리 주소
+var value = input[global_i]  # 레인 0→input[0], 레인 1→input[1], 등
+</code></pre>
+<p><strong>메모리 접근 패턴:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>접근 패턴</th><th>NVIDIA/RDNA (32 레인)</th><th>CDNA (64 레인)</th><th>대역폭 활용</th><th>성능</th></tr></thead><tbody>
+<tr><td><strong>✅ 병합</strong></td><td>레인 N → 주소 4×N</td><td>레인 N → 주소 4×N</td><td>100%</td><td>최적</td></tr>
+<tr><td></td><td>1회 트랜잭션: 128 bytes</td><td>1회 트랜잭션: 256 bytes</td><td>전체 버스 폭</td><td>빠름</td></tr>
+<tr><td><strong>❌ 분산</strong></td><td>레인 N → 임의 주소</td><td>레인 N → 임의 주소</td><td>~6%</td><td>최악</td></tr>
+<tr><td></td><td>32회 개별 트랜잭션</td><td>64회 개별 트랜잭션</td><td>대부분 유휴 버스</td><td><strong>32배 느림</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>주소 예시:</strong></p>
+<ul>
+<li><strong>병합</strong>: 레인 0→0, 레인 1→4, 레인 2→8, 레인 3→12, …</li>
+<li><strong>분산</strong>: 레인 0→1000, 레인 1→52, 레인 2→997, 레인 3→8, …</li>
+</ul>
+<h3 id="공유-메모리-뱅크-충돌"><a class="header" href="#공유-메모리-뱅크-충돌">공유 메모리 뱅크 충돌</a></h3>
+<p><strong>뱅크 충돌이란?</strong></p>
+<p>GPU 공유 메모리가 동시 접근이 가능한 32개의 독립적인 <strong>뱅크</strong>로 나뉘어 있다고 가정합니다. <strong>뱅크 충돌</strong>은 워프 내 여러 스레드가 같은 뱅크의 서로 다른 주소에 동시에 접근하려 할 때 발생합니다. 이 경우 하드웨어가 접근을 <strong>직렬화</strong>해야 하므로, 단일 사이클이어야 할 연산이 여러 사이클로 늘어납니다.</p>
+<p><strong>핵심 개념:</strong></p>
+<ul>
+<li><strong>충돌 없음</strong>: 각 스레드가 서로 다른 뱅크에 접근 → 모든 접근이 동시에 발생 (1 사이클)</li>
+<li><strong>뱅크 충돌</strong>: 여러 스레드가 같은 뱅크에 접근 → 접근이 순차적으로 발생 (N개 스레드에 N 사이클)</li>
+<li><strong>브로드캐스트</strong>: 모든 스레드가 같은 주소에 접근 → 하드웨어가 1 사이클로 최적화</li>
+</ul>
+<p><strong>공유 메모리 뱅크 구성:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>뱅크</th><th>주소 (바이트 오프셋)</th><th>예시 데이터 (float32)</th></tr></thead><tbody>
+<tr><td>뱅크 0</td><td>0, 128, 256, 384, …</td><td><code>shared[0]</code>, <code>shared[32]</code>, <code>shared[64]</code>, …</td></tr>
+<tr><td>뱅크 1</td><td>4, 132, 260, 388, …</td><td><code>shared[1]</code>, <code>shared[33]</code>, <code>shared[65]</code>, …</td></tr>
+<tr><td>뱅크 2</td><td>8, 136, 264, 392, …</td><td><code>shared[2]</code>, <code>shared[34]</code>, <code>shared[66]</code>, …</td></tr>
+<tr><td>…</td><td>…</td><td>…</td></tr>
+<tr><td>뱅크 31</td><td>124, 252, 380, 508, …</td><td><code>shared[31]</code>, <code>shared[63]</code>, <code>shared[95]</code>, …</td></tr>
+</tbody></table>
+</div>
+<p><strong>뱅크 충돌 예시:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>접근 패턴</th><th>뱅크 사용</th><th>사이클</th><th>성능</th><th>설명</th></tr></thead><tbody>
+<tr><td><strong>✅ 순차적</strong></td><td><code>shared[thread_idx.x]</code></td><td>1 사이클</td><td>100%</td><td>각 레인이 다른 뱅크 접근</td></tr>
+<tr><td></td><td>레인 0→뱅크 0, 레인 1→뱅크 1, …</td><td></td><td>최적</td><td>충돌 없음</td></tr>
+<tr><td><strong>✅ 동일 인덱스</strong></td><td><code>shared[0]</code></td><td>1 사이클</td><td>100%</td><td>모든 레인이 같은 주소에서 브로드캐스트</td></tr>
+<tr><td></td><td>32개 레인 전부→뱅크 0 (같은 주소)</td><td></td><td>최적</td><td>충돌 없음</td></tr>
+<tr><td><strong>❌ 스트라이드 2</strong></td><td><code>shared[thread_idx.x * 2]</code></td><td>2 사이클</td><td>50%</td><td>뱅크당 2개 레인</td></tr>
+<tr><td></td><td>레인 0,16→뱅크 0; 레인 1,17→뱅크 1</td><td></td><td><strong>2배 느림</strong></td><td>직렬화된 접근</td></tr>
+<tr><td><strong>💀 스트라이드 32</strong></td><td><code>shared[thread_idx.x * 32]</code></td><td>32 사이클</td><td>3%</td><td>모든 레인이 같은 뱅크 접근</td></tr>
+<tr><td></td><td>32개 레인 전부→뱅크 0 (다른 주소)</td><td></td><td><strong>32배 느림</strong></td><td>완전히 직렬화</td></tr>
+</tbody></table>
+</div>
+<h2 id="워프-프로그래밍의-실전-활용"><a class="header" href="#워프-프로그래밍의-실전-활용">워프 프로그래밍의 실전 활용</a></h2>
+<h3 id="워프-연산이-가장-효과적인-경우"><a class="header" href="#워프-연산이-가장-효과적인-경우">워프 연산이 가장 효과적인 경우</a></h3>
+<ol>
+<li><strong>리덕션 연산</strong>: <code>sum()</code>, <code>max()</code> 등</li>
+<li><strong>브로드캐스트 연산</strong>: <code>shuffle_idx()</code>로 값 공유</li>
+<li><strong>이웃 통신</strong>: <code>shuffle_down()</code>으로 슬라이딩 윈도우</li>
+<li><strong>누적 합 연산</strong>: <code>prefix_sum()</code>으로 scan 알고리즘</li>
+</ol>
+<h3 id="성능-특성"><a class="header" href="#성능-특성">성능 특성</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>연산 유형</th><th>기존 방식</th><th>워프 연산</th></tr></thead><tbody>
+<tr><td><strong>리덕션 (32개 요소)</strong></td><td>~20개 명령</td><td>10개 명령</td></tr>
+<tr><td><strong>메모리 트래픽</strong></td><td>높음</td><td>최소</td></tr>
+<tr><td><strong>동기화 비용</strong></td><td>비용 높음</td><td>무료</td></tr>
+<tr><td><strong>코드 복잡도</strong></td><td>높음</td><td>낮음</td></tr>
+</tbody></table>
+</div>
+<h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
+<p>SIMT의 기반을 이해했으니, 이 개념이 어떻게 강력한 워프 연산을 가능하게 하는지 알아볼 차례입니다. 다음 섹션에서는 <code>sum()</code>이 복잡한 리덕션 패턴을 간단하고 효율적인 함수 호출로 어떻게 변환하는지 보여줍니다.</p>
+<p><strong>→ 다음: <a href="./warp_sum.html">warp.sum()의 핵심</a></strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_24/puzzle_24.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_24/warp_sum.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_24/puzzle_24.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_24/warp_sum.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

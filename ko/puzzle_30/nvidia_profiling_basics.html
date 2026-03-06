@@ -1,0 +1,878 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📚 NVIDIA 프로파일링 기초 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 08367c0bf8d5dce82c5cd30526d2924f809cecb1 -->
+<h1 id="-nvidia-프로파일링-기초"><a class="header" href="#-nvidia-프로파일링-기초">📚 NVIDIA 프로파일링 기초</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>지금까지 GPU 프로그래밍의 기초와 고급 패턴을 배웠습니다. Part II에서는 <code>compute-sanitizer</code>와 <code>cuda-gdb</code>를 사용한 <strong>정확성</strong> 디버깅 기법을, 다른 파트에서는 워프 프로그래밍, 메모리 시스템, 블록 레벨 연산 등 다양한 GPU 기능을 다뤘습니다. 커널이 올바르게 동작하긴 합니다 - 하지만 <strong>빠르기도</strong> 할까요?</p>
+<blockquote>
+<p>이 튜토리얼은 <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling">CUDA Best Practices Guide</a>에서 권장하는 NVIDIA 프로파일링 방법론을 따릅니다.</p>
+</blockquote>
+<p><strong>핵심 통찰</strong>: 올바른 커널이라도 최적의 성능보다 수십 배나 느릴 수 있습니다. 프로파일링은 동작하는 코드와 고성능 코드 사이의 격차를 좁힙니다.</p>
+<h2 id="프로파일링-도구-모음"><a class="header" href="#프로파일링-도구-모음">프로파일링 도구 모음</a></h2>
+<p>pixi를 통해 <code>cuda-toolkit</code>이 설치되어 있으므로, NVIDIA의 전문 프로파일링 도구를 바로 사용할 수 있습니다:</p>
+<h3 id="nsight-systems-nsys---전체-그림-도구"><a class="header" href="#nsight-systems-nsys---전체-그림-도구">NSight Systems (<code>nsys</code>) - “전체 그림” 도구</a></h3>
+<p><strong>용도</strong>: 시스템 전체 성능 분석 (<a href="https://docs.nvidia.com/nsight-systems/">NSight Systems 문서</a>)</p>
+<ul>
+<li>CPU-GPU 상호작용의 타임라인 뷰</li>
+<li>메모리 전송 병목</li>
+<li>커널 실행 오버헤드</li>
+<li>멀티 GPU 조율</li>
+<li>API 호출 추적</li>
+</ul>
+<p><strong>사용 가능한 인터페이스</strong>: 커맨드라인 (<code>nsys</code>) 및 GUI (<code>nsys-ui</code>)</p>
+<p><strong>사용 시점</strong>:</p>
+<ul>
+<li>전체 애플리케이션 흐름 파악</li>
+<li>CPU-GPU 동기화 문제 식별</li>
+<li>메모리 전송 패턴 분석</li>
+<li>커널 실행 병목 발견</li>
+</ul>
+<pre><code class="language-bash"># 도움말 보기
+pixi run nsys --help
+
+# 기본 시스템 전체 프로파일링
+pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
+
+# 대화형 분석
+pixi run nsys stats --force-export=true timeline.nsys-rep
+</code></pre>
+<h3 id="nsight-compute-ncu---커널-심층-분석-도구"><a class="header" href="#nsight-compute-ncu---커널-심층-분석-도구">NSight Compute (<code>ncu</code>) - “커널 심층 분석” 도구</a></h3>
+<p><strong>용도</strong>: 상세한 단일 커널 성능 분석 (<a href="https://docs.nvidia.com/nsight-compute/">NSight Compute 문서</a>)</p>
+<ul>
+<li>루프라인 모델 분석</li>
+<li>메모리 계층 구조 활용도</li>
+<li>워프 실행 효율</li>
+<li>레지스터/공유 메모리 사용량</li>
+<li>연산 유닛 활용도</li>
+</ul>
+<p><strong>사용 가능한 인터페이스</strong>: 커맨드라인 (<code>ncu</code>) 및 GUI (<code>ncu-ui</code>)</p>
+<p><strong>사용 시점</strong>:</p>
+<ul>
+<li>특정 커널 성능 최적화</li>
+<li>메모리 접근 패턴 파악</li>
+<li>연산 바운드 vs 메모리 바운드 커널 분석</li>
+<li>워프 분기 문제 식별</li>
+</ul>
+<pre><code class="language-bash"># 도움말 보기
+pixi run ncu --help
+
+# 상세 커널 프로파일링
+pixi run ncu --set full --output kernel_profile mojo your_program.mojo
+
+# 특정 커널에 집중
+pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
+</code></pre>
+<h2 id="도구-선택-의사결정-트리"><a class="header" href="#도구-선택-의사결정-트리">도구 선택 의사결정 트리</a></h2>
+<pre><code>성능 문제 발생
+      |
+      v
+어떤 커널인지 아는가?
+    |           |
+  아니오         예
+    |           |
+    v           v
+NSight    커널 고유의 문제인가?
+Systems       |         |
+    |       아니오       예
+    v         |         |
+타임라인        |         v
+분석    &lt;------+   NSight Compute
+                        |
+                        v
+                   커널 심층 분석
+</code></pre>
+<p><strong>빠른 의사결정 가이드</strong>:</p>
+<ul>
+<li>병목이 어디인지 모르겠으면 <strong>NSight Systems (<code>nsys</code>)부터 시작</strong></li>
+<li>최적화할 커널을 정확히 알면 <strong>NSight Compute (<code>ncu</code>) 사용</strong></li>
+<li>종합적인 분석이 필요하면 <strong>둘 다 사용</strong> (일반적인 워크플로우)</li>
+</ul>
+<h2 id="실습-nsight-systems로-시스템-전체-프로파일링"><a class="header" href="#실습-nsight-systems로-시스템-전체-프로파일링">실습: NSight Systems로 시스템 전체 프로파일링</a></h2>
+<p><a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 행렬 곱셈 구현들을 프로파일링하여 성능 차이를 파악해 봅시다.</p>
+<blockquote>
+<p><strong>GUI 참고</strong>: NSight Systems와 Compute GUI (<code>nsys-ui</code>, <code>ncu-ui</code>)는 디스플레이와 OpenGL 지원이 필요합니다. X11 포워딩이 없는 헤드리스 서버나 원격 시스템에서는 커맨드라인 버전 (<code>nsys</code>, <code>ncu</code>)을 사용하여 <code>nsys stats</code>와 <code>ncu --import --page details</code>로 텍스트 기반 분석을 수행하세요. <code>.nsys-rep</code>와 <code>.ncu-rep</code> 파일을 로컬 머신으로 전송하여 GUI로 분석할 수도 있습니다.</p>
+</blockquote>
+<h3 id="step-1-프로파일링을-위한-코드-준비"><a class="header" href="#step-1-프로파일링을-위한-코드-준비">Step 1: 프로파일링을 위한 코드 준비</a></h3>
+<p><strong>중요</strong>: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를 포함하여 빌드합니다:</p>
+<pre><code class="language-bash">pixi shell -e nvidia
+# 최적화를 유지하면서 전체 디버그 정보 포함 빌드 (포괄적인 소스 매핑용)
+mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
+
+# 최적화 빌드 테스트
+./solutions/p16/p16_optimized --naive
+</code></pre>
+<p><strong>이것이 중요한 이유</strong>:</p>
+<ul>
+<li><strong>전체 디버그 정보</strong>: 프로파일러를 위한 완전한 심볼 테이블, 변수명, 소스 라인 매핑 제공</li>
+<li><strong>포괄적 분석</strong>: NSight 도구가 성능 데이터를 특정 코드 위치와 연결 가능</li>
+<li><strong>최적화 유지</strong>: 프로덕션 빌드와 일치하는 현실적인 성능 측정 보장</li>
+</ul>
+<h3 id="step-2-시스템-전체-프로파일-수집"><a class="header" href="#step-2-시스템-전체-프로파일-수집">Step 2: 시스템 전체 프로파일 수집</a></h3>
+<pre><code class="language-bash"># 포괄적 추적으로 최적화 빌드 프로파일링
+nsys profile \
+  --trace=cuda,nvtx \
+  --output=matmul_naive \
+  --force-overwrite=true \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+<p><strong>명령어 분석</strong>:</p>
+<ul>
+<li><code>--trace=cuda,nvtx</code>: CUDA API 호출 및 커스텀 어노테이션 캡처</li>
+<li><code>--output=matmul_naive</code>: 프로파일을 <code>matmul_naive.nsys-rep</code>로 저장</li>
+<li><code>--force-overwrite=true</code>: 기존 프로파일 덮어쓰기</li>
+<li>마지막 인수: Mojo 프로그램</li>
+</ul>
+<h3 id="step-3-타임라인-분석"><a class="header" href="#step-3-타임라인-분석">Step 3: 타임라인 분석</a></h3>
+<pre><code class="language-bash"># 텍스트 기반 통계 생성
+nsys stats --force-export=true matmul_naive.nsys-rep
+
+# 주요 지표 확인:
+# - GPU 활용률
+# - 메모리 전송 시간
+# - 커널 실행 시간
+# - CPU-GPU 동기화 간격
+</code></pre>
+<p><strong>확인할 수 있는 결과</strong> (2×2 행렬 곱셈의 실제 출력):</p>
+<pre><code class="language-txt">** CUDA API Summary (cuda_api_sum):
+ Time (%)  Total Time (ns)  Num Calls  Avg (ns)   Med (ns)  Min (ns)  Max (ns)  StdDev (ns)          Name
+ --------  ---------------  ---------  ---------  --------  --------  --------  -----------  --------------------
+     81.9          8617962          3  2872654.0    2460.0      1040   8614462    4972551.6  cuMemAllocAsync
+     15.1          1587808          4   396952.0    5965.5      3810   1572067     783412.3  cuMemAllocHost_v2
+      0.6            67152          1    67152.0   67152.0     67152     67152          0.0  cuModuleLoadDataEx
+      0.4            44961          1    44961.0   44961.0     44961     44961          0.0  cuLaunchKernelEx
+
+** CUDA GPU Kernel Summary (cuda_gpu_kern_sum):
+ Time (%)  Total Time (ns)  Instances  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)                    Name
+ --------  ---------------  ---------  --------  --------  --------  --------  -----------  ----------------------------------------
+    100.0             1920          1    1920.0    1920.0      1920      1920          0.0  p16_naive_matmul_Layout_Int6A6AcB6A6AsA6A6A
+
+** CUDA GPU MemOps Summary (by Time) (cuda_gpu_mem_time_sum):
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     49.4             4224      3    1408.0    1440.0      1312      1472         84.7  [CUDA memcpy Device-to-Host]
+     36.0             3072      4     768.0     528.0       416      1600        561.0  [CUDA memset]
+     14.6             1248      3     416.0     416.0       416       416          0.0  [CUDA memcpy Host-to-Device]
+</code></pre>
+<p><strong>주요 성능 통찰</strong>:</p>
+<ul>
+<li><strong>메모리 할당이 지배적</strong>: 전체 시간의 81.9%가 <code>cuMemAllocAsync</code>에 소비</li>
+<li><strong>커널은 번개처럼 빠름</strong>: 실행 시간 1,920 ns (0.000001920초)에 불과</li>
+<li><strong>메모리 전송 내역</strong>: 49.4% Device→Host, 36.0% memset, 14.6% Host→Device</li>
+<li><strong>아주 작은 데이터</strong>: 모든 메모리 연산이 0.001 MB 미만 (float32 4개 = 16바이트)</li>
+</ul>
+<h3 id="step-4-구현-비교"><a class="header" href="#step-4-구현-비교">Step 4: 구현 비교</a></h3>
+<p>다른 버전들을 프로파일링하고 비교합니다:</p>
+<pre><code class="language-bash"># pixi shell 상태를 유지하세요 `pixi run -e nvidia`
+
+# 공유 메모리 버전 프로파일링
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_shared ./solutions/p16/p16_optimized --single-block
+
+# Tiled 버전 프로파일링
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_tiled ./solutions/p16/p16_optimized --tiled
+
+# 관용적 Tiled 버전 프로파일링
+nsys profile --trace=cuda,nvtx --force-overwrite=true --output=matmul_idiomatic_tiled ./solutions/p16/p16_optimized --idiomatic-tiled
+
+# 각 구현을 개별적으로 분석 (nsys stats는 한 번에 하나의 파일만 처리)
+nsys stats --force-export=true matmul_shared.nsys-rep
+nsys stats --force-export=true matmul_tiled.nsys-rep
+nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep
+</code></pre>
+<p><strong>결과 비교 방법</strong>:</p>
+<ol>
+<li><strong>GPU Kernel Summary 확인</strong> - 구현 간 실행 시간 비교</li>
+<li><strong>Memory Operations 확인</strong> - 공유 메모리가 전역 메모리 트래픽을 줄이는지 확인</li>
+<li><strong>API 오버헤드 비교</strong> - 모두 비슷한 메모리 할당 패턴을 가져야 함</li>
+</ol>
+<p><strong>수동 비교 워크플로우</strong>:</p>
+<pre><code class="language-bash"># 각 분석 결과를 저장하여 비교
+nsys stats --force-export=true matmul_naive.nsys-rep &gt; naive_stats.txt
+nsys stats --force-export=true matmul_shared.nsys-rep &gt; shared_stats.txt
+nsys stats --force-export=true matmul_tiled.nsys-rep &gt; tiled_stats.txt
+nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep &gt; idiomatic_tiled_stats.txt
+</code></pre>
+<p><strong>공정한 비교 결과</strong> (실제 프로파일링 출력):</p>
+<h3 id="비교-1-2-x-2-행렬"><a class="header" href="#비교-1-2-x-2-행렬">비교 1: 2 x 2 행렬</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>구현</th><th>메모리 할당</th><th>커널 실행</th><th>성능</th></tr></thead><tbody>
+<tr><td><strong>Naive</strong></td><td>81.9% cuMemAllocAsync</td><td>✅ 1,920 ns</td><td>기준선</td></tr>
+<tr><td><strong>Shared</strong> (<code>--single-block</code>)</td><td>81.8% cuMemAllocAsync</td><td>✅ 1,984 ns</td><td><strong>+3.3% 느림</strong></td></tr>
+</tbody></table>
+</div>
+<h3 id="비교-2-9-x-9-행렬"><a class="header" href="#비교-2-9-x-9-행렬">비교 2: 9 x 9 행렬</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>구현</th><th>메모리 할당</th><th>커널 실행</th><th>성능</th></tr></thead><tbody>
+<tr><td><strong>Tiled</strong> (수동)</td><td>81.1% cuMemAllocAsync</td><td>✅ 2,048 ns</td><td>기준선</td></tr>
+<tr><td><strong>Idiomatic Tiled</strong></td><td>81.6% cuMemAllocAsync</td><td>✅ 2,368 ns</td><td><strong>+15.6% 느림</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>공정 비교에서 얻은 핵심 통찰</strong>:</p>
+<p><strong>두 행렬 크기 모두 GPU 작업에는 너무 작음!</strong>:</p>
+<ul>
+<li><strong>2×2 행렬</strong>: 4개 요소 - 완전히 오버헤드가 지배</li>
+<li><strong>9×9 행렬</strong>: 81개 요소 - 여전히 오버헤드가 지배</li>
+<li><strong>실제 GPU 워크로드</strong>: 차원당 수천~수백만 개 요소</li>
+</ul>
+<p><strong>이 결과가 실제로 보여주는 것</strong>:</p>
+<ul>
+<li><strong>모든 변형이 메모리 할당에 지배됨</strong> (시간의 81% 이상)</li>
+<li><strong>커널 실행은 의미 없음</strong> - 설정 비용에 비하면 미미</li>
+<li><strong>“최적화“가 오히려 해로울 수 있음</strong>: 공유 메모리가 3.3%, async_copy가 15.6% 오버헤드 추가</li>
+<li><strong>진짜 교훈</strong>: 작은 워크로드에서는 알고리즘 선택이 무의미 - 오버헤드가 모든 것을 압도</li>
+</ul>
+<p><strong>이런 결과가 나오는 이유</strong>:</p>
+<ul>
+<li>GPU 설정 비용(메모리 할당, 커널 실행)은 문제 크기에 관계없이 고정</li>
+<li>작은 문제에서는 이 고정 비용이 연산 시간을 무색하게 만듦</li>
+<li>큰 문제를 위해 설계된 최적화가 작은 문제에서는 오버헤드가 됨</li>
+</ul>
+<p><strong>실무 프로파일링 교훈</strong>:</p>
+<ul>
+<li><strong>문제 크기 맥락이 중요</strong>: 2×2와 9×9 모두 GPU에게는 작음</li>
+<li><strong>고정 비용이 작은 문제를 지배</strong>: 메모리 할당, 커널 실행 오버헤드</li>
+<li><strong>“최적화“가 작은 워크로드에 해로울 수 있음</strong>: 공유 메모리, 비동기 연산이 오버헤드 추가</li>
+<li><strong>작은 문제를 최적화하지 말 것</strong>: 실제 워크로드로 확장 가능한 알고리즘에 집중</li>
+<li><strong>항상 벤치마킹할 것</strong>: “더 좋은” 코드에 대한 가정은 흔히 틀림</li>
+</ul>
+<p><strong>작은 커널 프로파일링의 이해</strong>:
+이 2×2 행렬 예제는 <strong>전형적인 작은 커널 패턴</strong>을 보여줍니다:</p>
+<ul>
+<li>실제 연산(행렬 곱셈)은 극히 빠름 (1,920 ns)</li>
+<li>메모리 설정 오버헤드가 전체 시간을 지배 (실행의 97% 이상)</li>
+<li>이것이 <strong>실무 GPU 최적화</strong>가 다음에 집중하는 이유입니다:
+<ul>
+<li><strong>연산 일괄 처리</strong>로 설정 비용 분산</li>
+<li><strong>메모리 재사용</strong>으로 할당 오버헤드 감소</li>
+<li>연산이 병목이 되는 <strong>더 큰 문제 크기</strong></li>
+</ul>
+</li>
+</ul>
+<h2 id="실습-nsight-compute로-커널-심층-분석"><a class="header" href="#실습-nsight-compute로-커널-심층-분석">실습: NSight Compute로 커널 심층 분석</a></h2>
+<p>이제 특정 커널의 성능 특성을 심층적으로 들여다봅시다.</p>
+<h3 id="step-1-특정-커널-프로파일링"><a class="header" href="#step-1-특정-커널-프로파일링">Step 1: 특정 커널 프로파일링</a></h3>
+<pre><code class="language-bash"># 활성 shell 상태인지 확인
+pixi shell -e nvidia
+
+# Naive MatMul 커널을 상세 프로파일링 (최적화 빌드 사용)
+ncu \
+  --set full \
+  -o kernel_analysis \
+  --force-overwrite \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+<blockquote>
+<p><strong>흔한 문제: 권한 오류</strong></p>
+<p><code>ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters</code> 오류가 발생하면 다음 해결 방법을 시도하세요:</p>
+<pre><code class="language-bash"># NVIDIA 드라이버 옵션 추가 (rmmod보다 안전)
+echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc/modprobe.d/nvidia-kernel-common.conf
+
+# 커널 파라미터 설정
+sudo sysctl -w kernel.perf_event_paranoid=0
+
+# 영구 적용
+echo 'kernel.perf_event_paranoid=0' | sudo tee -a /etc/sysctl.conf
+
+# 드라이버 변경 사항 적용을 위해 재부팅 필요
+sudo reboot
+
+# 그런 다음 ncu 명령을 다시 실행
+ncu \
+  --set full \
+  -o kernel_analysis \
+  --force-overwrite \
+  ./solutions/p16/p16_optimized --naive
+</code></pre>
+</blockquote>
+<h3 id="step-2-주요-지표-분석"><a class="header" href="#step-2-주요-지표-분석">Step 2: 주요 지표 분석</a></h3>
+<pre><code class="language-bash"># 상세 보고서 생성 (올바른 구문)
+ncu --import kernel_analysis.ncu-rep --page details
+</code></pre>
+<p><strong>실제 NSight Compute 출력</strong> (2×2 Naive MatMul):</p>
+<pre><code class="language-txt">GPU Speed Of Light Throughput
+----------------------- ----------- ------------
+DRAM Frequency              Ghz         6.10
+SM Frequency                Ghz         1.30
+Elapsed Cycles            cycle         3733
+Memory Throughput             %         1.02
+DRAM Throughput               %         0.19
+Duration                     us         2.88
+Compute (SM) Throughput       %         0.00
+----------------------- ----------- ------------
+
+Launch Statistics
+-------------------------------- --------------- ---------------
+Block Size                                                     9
+Grid Size                                                      1
+Threads                           thread               9
+Waves Per SM                                                0.00
+-------------------------------- --------------- ---------------
+
+Occupancy
+------------------------------- ----------- ------------
+Theoretical Occupancy                 %        33.33
+Achieved Occupancy                    %         2.09
+------------------------------- ----------- ------------
+</code></pre>
+<p><strong>실제 데이터에서 얻은 핵심 통찰</strong>:</p>
+<h4 id="성능-분석---냉혹한-현실"><a class="header" href="#성능-분석---냉혹한-현실">성능 분석 - 냉혹한 현실</a></h4>
+<ul>
+<li><strong>Compute Throughput: 0.00%</strong> - GPU가 연산적으로 완전히 유휴 상태</li>
+<li><strong>Memory Throughput: 1.02%</strong> - 메모리 대역폭을 거의 사용하지 않음</li>
+<li><strong>Achieved Occupancy: 2.09%</strong> - GPU 능력의 2%만 사용 중</li>
+<li><strong>Grid Size: 1 블록</strong> - 80개 멀티프로세서를 완전히 낭비!</li>
+</ul>
+<h4 id="성능이-이렇게-낮은-이유"><a class="header" href="#성능이-이렇게-낮은-이유">성능이 이렇게 낮은 이유</a></h4>
+<ul>
+<li><strong>작은 문제 크기</strong>: 2×2 행렬 = 총 4개 요소</li>
+<li><strong>잘못된 실행 구성</strong>: 1개 블록에 9개 스레드 (32의 배수여야 함)</li>
+<li><strong>심각한 과소 활용</strong>: SM당 0.00 wave (효율을 위해 수천 개 필요)</li>
+</ul>
+<h4 id="nsight-compute의-핵심-최적화-권고사항"><a class="header" href="#nsight-compute의-핵심-최적화-권고사항">NSight Compute의 핵심 최적화 권고사항</a></h4>
+<ul>
+<li><strong>“Est. Speedup: 98.75%”</strong> - 80개 SM을 모두 사용하도록 그리드 크기 증가</li>
+<li><strong>“Est. Speedup: 71.88%”</strong> - 스레드 블록을 32의 배수로 사용</li>
+<li><strong>“Kernel grid is too small”</strong> - GPU 효율을 위해 훨씬 큰 문제 필요</li>
+</ul>
+<h3 id="step-3-현실-직시"><a class="header" href="#step-3-현실-직시">Step 3: 현실 직시</a></h3>
+<p><strong>이 프로파일링 데이터가 알려주는 것</strong>:</p>
+<ol>
+<li><strong>작은 문제는 GPU에게 독</strong>: 2×2 행렬은 GPU 리소스를 완전히 낭비</li>
+<li><strong>실행 구성이 중요</strong>: 잘못된 스레드/블록 크기가 성능을 죽임</li>
+<li><strong>규모가 알고리즘보다 중요</strong>: 근본적으로 작은 문제는 어떤 최적화로도 해결 불가</li>
+<li><strong>NSight Compute는 정직함</strong>: 커널 성능이 낮을 때 그대로 알려줌</li>
+</ol>
+<p><strong>진짜 교훈</strong>:</p>
+<ul>
+<li><strong>토이 문제를 최적화하지 말 것</strong> - 실제 GPU 워크로드를 대표하지 않음</li>
+<li><strong>현실적인 워크로드에 집중</strong> - 최적화가 실제로 의미 있는 1000×1000+ 행렬</li>
+<li><strong>프로파일링으로 최적화를 안내</strong> - 단, 최적화할 가치가 있는 문제에만</li>
+</ul>
+<p><strong>2×2 예제의 경우</strong>: 정교한 알고리즘(공유 메모리, tiling)이 이미 오버헤드가 지배적인 워크로드에 오버헤드만 추가합니다.</p>
+<h2 id="프로파일러-출력을-성능-탐정처럼-읽기"><a class="header" href="#프로파일러-출력을-성능-탐정처럼-읽기">프로파일러 출력을 성능 탐정처럼 읽기</a></h2>
+<h3 id="자주-나타나는-성능-패턴"><a class="header" href="#자주-나타나는-성능-패턴">자주 나타나는 성능 패턴</a></h3>
+<h4 id="패턴-1-메모리-바운드-커널"><a class="header" href="#패턴-1-메모리-바운드-커널">패턴 1: 메모리 바운드 커널</a></h4>
+<p><strong>NSight Systems가 보여주는 것</strong>: 긴 메모리 전송 시간
+<strong>NSight Compute가 보여주는 것</strong>: 높은 메모리 처리량, 낮은 연산 활용도
+<strong>해결책</strong>: 메모리 접근 패턴 최적화, 공유 메모리 사용</p>
+<h4 id="패턴-2-낮은-점유율"><a class="header" href="#패턴-2-낮은-점유율">패턴 2: 낮은 점유율</a></h4>
+<p><strong>NSight Systems가 보여주는 것</strong>: 짧은 커널 실행과 간격
+<strong>NSight Compute가 보여주는 것</strong>: 실제 점유율이 낮음
+<strong>해결책</strong>: 레지스터 사용량 줄이기, 블록 크기 최적화</p>
+<h4 id="패턴-3-워프-분기"><a class="header" href="#패턴-3-워프-분기">패턴 3: 워프 분기</a></h4>
+<p><strong>NSight Systems가 보여주는 것</strong>: 불규칙한 커널 실행 패턴
+<strong>NSight Compute가 보여주는 것</strong>: 낮은 워프 실행 효율
+<strong>해결책</strong>: 조건 분기 최소화, 알고리즘 재구성</p>
+<h3 id="프로파일링-탐정-워크플로우"><a class="header" href="#프로파일링-탐정-워크플로우">프로파일링 탐정 워크플로우</a></h3>
+<pre><code class="language-txt">성능 문제 발생
+     |
+     v
+NSight Systems: 전체 그림
+        |
+        v
+GPU를 잘 활용하고 있는가?
+    |             |
+  아니오           예
+    |             |
+    v             v
+CPU-GPU    NSight Compute: 커널 상세
+파이프라인          |
+수정               v
+        메모리 또는 연산 바운드인가?
+          |       |       |
+         메모리   연산    둘 다 아님
+          |       |       |
+          v       v       v
+        메모리    산술     점유율
+        접근     최적화    확인
+        최적화
+</code></pre>
+<h2 id="프로파일링-모범-사례"><a class="header" href="#프로파일링-모범-사례">프로파일링 모범 사례</a></h2>
+<p>포괄적인 프로파일링 지침은 <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics">Best Practices Guide - Performance Metrics</a>를 참고하세요.</p>
+<h3 id="이렇게-하세요"><a class="header" href="#이렇게-하세요">이렇게 하세요</a></h3>
+<ol>
+<li><strong>대표적인 워크로드를 프로파일링</strong>: 현실적인 데이터 크기와 패턴 사용</li>
+<li><strong>전체 디버그 정보로 빌드</strong>: 최적화와 함께 포괄적인 프로파일링 데이터 및 소스 매핑을 위해 <code>--debug-level=full</code> 사용</li>
+<li><strong>GPU 워밍업</strong>: 커널을 여러 번 실행한 후 후반 반복을 프로파일링</li>
+<li><strong>대안 비교</strong>: 항상 여러 구현을 프로파일링</li>
+<li><strong>핫스팟에 집중</strong>: 가장 시간이 오래 걸리는 커널을 최적화</li>
+</ol>
+<h3 id="이렇게-하지-마세요"><a class="header" href="#이렇게-하지-마세요">이렇게 하지 마세요</a></h3>
+<ol>
+<li><strong>디버그 정보 없이 프로파일링하지 말 것</strong>: 성능을 소스 코드에 매핑할 수 없음 (<code>mojo build --help</code>)</li>
+<li><strong>단일 실행만 프로파일링하지 말 것</strong>: GPU 성능은 실행마다 달라질 수 있음</li>
+<li><strong>메모리 전송을 무시하지 말 것</strong>: CPU-GPU 전송이 흔히 지배적</li>
+<li><strong>섣불리 최적화하지 말 것</strong>: 먼저 프로파일링, 그다음 최적화</li>
+</ol>
+<h3 id="흔한-함정과-해결책"><a class="header" href="#흔한-함정과-해결책">흔한 함정과 해결책</a></h3>
+<h4 id="함정-1-콜드-스타트-효과"><a class="header" href="#함정-1-콜드-스타트-효과">함정 1: 콜드 스타트 효과</a></h4>
+<pre><code class="language-bash"># 잘못된 방법: 첫 번째 실행을 프로파일링
+nsys profile mojo your_program.mojo
+
+# 올바른 방법: 워밍업 후 프로파일링
+nsys profile --delay=5 mojo your_program.mojo  # GPU 워밍업 대기
+</code></pre>
+<h4 id="함정-2-잘못된-빌드-구성"><a class="header" href="#함정-2-잘못된-빌드-구성">함정 2: 잘못된 빌드 구성</a></h4>
+<pre><code class="language-bash"># 잘못된 방법: 전체 디버그 빌드 (최적화 비활성화) 즉, `--no-optimization`
+mojo build -O0 your_program.mojo -o your_program
+
+# 잘못된 방법: 디버그 정보 없음 (소스 매핑 불가)
+mojo build your_program.mojo -o your_program
+
+# 올바른 방법: 프로파일링을 위한 전체 디버그 정보 포함 최적화 빌드
+mojo build --debug-level=full your_program.mojo -o optimized_program
+nsys profile ./optimized_program
+</code></pre>
+<h4 id="함정-3-메모리-전송-무시"><a class="header" href="#함정-3-메모리-전송-무시">함정 3: 메모리 전송 무시</a></h4>
+<pre><code class="language-txt"># NSight Systems에서 이 패턴을 찾아보세요:
+CPU -&gt; GPU transfer: 50ms
+Kernel execution: 2ms
+GPU -&gt; CPU transfer: 48ms
+# 총: 100ms (커널은 겨우 2%!)
+</code></pre>
+<p><strong>해결책</strong>: 전송과 연산을 중첩하고 전송 빈도를 줄이기 (Part IX에서 다룸)</p>
+<h4 id="함정-4-단일-커널에만-집중"><a class="header" href="#함정-4-단일-커널에만-집중">함정 4: 단일 커널에만 집중</a></h4>
+<pre><code class="language-bash"># 잘못된 방법: "느린" 커널만 프로파일링
+ncu --kernel-name regex:slow_kernel program
+
+# 올바른 방법: 먼저 전체 애플리케이션을 프로파일링
+nsys profile mojo program.mojo  # 실제 병목 찾기
+</code></pre>
+<h2 id="모범-사례와-고급-옵션"><a class="header" href="#모범-사례와-고급-옵션">모범 사례와 고급 옵션</a></h2>
+<h3 id="고급-nsight-systems-프로파일링"><a class="header" href="#고급-nsight-systems-프로파일링">고급 NSight Systems 프로파일링</a></h3>
+<p>포괄적인 시스템 전체 분석을 위해 다음 고급 <code>nsys</code> 플래그를 사용합니다:</p>
+<pre><code class="language-bash"># 프로덕션급 프로파일링 명령
+nsys profile \
+  --gpu-metrics-devices=all \
+  --trace=cuda,osrt,nvtx \
+  --trace-fork-before-exec=true \
+  --cuda-memory-usage=true \
+  --cuda-um-cpu-page-faults=true \
+  --cuda-um-gpu-page-faults=true \
+  --opengl-gpu-workload=false \
+  --delay=2 \
+  --duration=30 \
+  --sample=cpu \
+  --cpuctxsw=process-tree \
+  --output=comprehensive_profile \
+  --force-overwrite=true \
+  ./your_program
+</code></pre>
+<p><strong>플래그 설명</strong>:</p>
+<ul>
+<li><code>--gpu-metrics-devices=all</code>: 모든 디바이스에서 GPU 지표 수집</li>
+<li><code>--trace=cuda,osrt,nvtx</code>: 포괄적 API 추적</li>
+<li><code>--cuda-memory-usage=true</code>: 메모리 할당/해제 추적</li>
+<li><code>--cuda-um-cpu/gpu-page-faults=true</code>: Unified Memory 페이지 폴트 모니터링</li>
+<li><code>--delay=2</code>: 프로파일링 전 2초 대기 (콜드 스타트 회피)</li>
+<li><code>--duration=30</code>: 최대 30초간 프로파일링</li>
+<li><code>--sample=cpu</code>: 핫스팟 분석을 위한 CPU 샘플링 포함</li>
+<li><code>--cpuctxsw=process-tree</code>: CPU 컨텍스트 스위치 추적</li>
+</ul>
+<h3 id="고급-nsight-compute-프로파일링"><a class="header" href="#고급-nsight-compute-프로파일링">고급 NSight Compute 프로파일링</a></h3>
+<p>포괄적 지표를 포함한 상세 커널 분석:</p>
+<pre><code class="language-bash"># 모든 지표 세트로 전체 커널 분석
+ncu \
+  --set full \
+  --import-source=on \
+  --kernel-id=:::1 \
+  --launch-skip=0 \
+  --launch-count=1 \
+  --target-processes=all \
+  --replay-mode=kernel \
+  --cache-control=all \
+  --clock-control=base \
+  --apply-rules=yes \
+  --check-exit-code=yes \
+  --export=detailed_analysis \
+  --force-overwrite \
+  ./your_program
+
+# 특정 성능 측면에 집중
+ncu \
+  --set=@roofline \
+  --section=InstructionStats \
+  --section=LaunchStats \
+  --section=Occupancy \
+  --section=SpeedOfLight \
+  --section=WarpStateStats \
+  --metrics=sm__cycles_elapsed.avg,dram__throughput.avg.pct_of_peak_sustained_elapsed \
+  --kernel-name regex:your_kernel_.* \
+  --export=targeted_analysis \
+  ./your_program
+</code></pre>
+<p><strong>주요 NSight Compute 플래그</strong>:</p>
+<ul>
+<li><code>--set full</code>: 사용 가능한 모든 지표 수집 (포괄적이지만 느림)</li>
+<li><code>--set @roofline</code>: 루프라인 분석에 최적화된 세트</li>
+<li><code>--import-source=on</code>: 결과를 소스 코드에 매핑</li>
+<li><code>--replay-mode=kernel</code>: 정확한 측정을 위해 커널 리플레이</li>
+<li><code>--cache-control=all</code>: 일관된 결과를 위한 GPU 캐시 제어</li>
+<li><code>--clock-control=base</code>: 기본 주파수로 클럭 고정</li>
+<li><code>--section=SpeedOfLight</code>: Speed of Light 분석 포함</li>
+<li><code>--metrics=...</code>: 특정 지표만 수집</li>
+<li><code>--kernel-name regex:pattern</code>: 정규식 패턴으로 커널 지정 (<code>--kernel-regex</code>가 아님)</li>
+</ul>
+<h3 id="프로파일링-워크플로우-모범-사례"><a class="header" href="#프로파일링-워크플로우-모범-사례">프로파일링 워크플로우 모범 사례</a></h3>
+<h4 id="1-점진적-프로파일링-전략"><a class="header" href="#1-점진적-프로파일링-전략">1. 점진적 프로파일링 전략</a></h4>
+<pre><code class="language-bash"># Step 1: 빠른 개요 (빠름)
+nsys profile --trace=cuda --duration=10 --output=quick_look ./program
+
+# Step 2: 상세 시스템 분석 (중간)
+nsys profile --trace=cuda,osrt,nvtx --cuda-memory-usage=true --output=detailed ./program
+
+# Step 3: 커널 심층 분석 (느리지만 포괄적)
+ncu --set=@roofline --kernel-name regex:hotspot_kernel ./program
+</code></pre>
+<h4 id="2-신뢰성을-위한-다중-실행-분석"><a class="header" href="#2-신뢰성을-위한-다중-실행-분석">2. 신뢰성을 위한 다중 실행 분석</a></h4>
+<pre><code class="language-bash"># 여러 번 프로파일링하고 비교
+for i in {1..5}; do
+  nsys profile --output=run_${i} ./program
+  nsys stats run_${i}.nsys-rep &gt; stats_${i}.txt
+done
+
+# 결과 비교
+diff stats_1.txt stats_2.txt
+</code></pre>
+<h4 id="3-타겟-커널-프로파일링"><a class="header" href="#3-타겟-커널-프로파일링">3. 타겟 커널 프로파일링</a></h4>
+<pre><code class="language-bash"># 먼저 핫스팟 커널 식별
+nsys profile --trace=cuda,nvtx --output=overview ./program
+nsys stats overview.nsys-rep | grep -A 10 "GPU Kernel Summary"
+
+# 그런 다음 특정 커널 프로파일링
+ncu --kernel-name="identified_hotspot_kernel" --set full ./program
+</code></pre>
+<h3 id="환경-및-빌드-모범-사례"><a class="header" href="#환경-및-빌드-모범-사례">환경 및 빌드 모범 사례</a></h3>
+<h4 id="최적-빌드-구성"><a class="header" href="#최적-빌드-구성">최적 빌드 구성</a></h4>
+<pre><code class="language-bash"># 프로파일링용: 전체 디버그 정보 포함 최적화 빌드
+mojo build --debug-level=full --optimization-level=3 program.mojo -o program_profile
+
+# 빌드 설정 확인
+mojo build --help | grep -E "(debug|optimization)"
+</code></pre>
+<h4 id="프로파일링-환경-설정"><a class="header" href="#프로파일링-환경-설정">프로파일링 환경 설정</a></h4>
+<pre><code class="language-bash"># 일관된 결과를 위해 GPU 부스트 비활성화
+sudo nvidia-smi -ac 1215,1410  # 메모리 및 GPU 클럭 고정
+
+# 결정론적 동작 설정
+export CUDA_LAUNCH_BLOCKING=1  # 정확한 타이밍을 위한 동기식 실행
+
+# 프로파일링을 위한 드라이버 제한 완화
+echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc/modprobe.d/nvidia-kernel-common.conf
+</code></pre>
+<h4 id="메모리-및-성능-격리"><a class="header" href="#메모리-및-성능-격리">메모리 및 성능 격리</a></h4>
+<pre><code class="language-bash"># 프로파일링 전 GPU 메모리 초기화
+nvidia-smi --gpu-reset
+
+# 다른 GPU 프로세스 비활성화
+sudo fuser -v /dev/nvidia*  # GPU 사용 중인 프로세스 확인
+sudo pkill -f cuda  # 필요시 CUDA 프로세스 종료
+
+# 높은 우선순위로 실행
+sudo nice -n -20 nsys profile ./program
+</code></pre>
+<h3 id="분석-및-보고-모범-사례"><a class="header" href="#분석-및-보고-모범-사례">분석 및 보고 모범 사례</a></h3>
+<h4 id="종합-보고서-생성"><a class="header" href="#종합-보고서-생성">종합 보고서 생성</a></h4>
+<pre><code class="language-bash"># 여러 보고서 형식 생성
+nsys stats --report=cuda_api_sum,cuda_gpu_kern_sum,cuda_gpu_mem_time_sum --format=csv --output=. profile.nsys-rep
+
+# 외부 분석을 위해 내보내기
+nsys export --type=sqlite profile.nsys-rep
+nsys export --type=json profile.nsys-rep
+
+# 비교 보고서 생성
+nsys stats --report=cuda_gpu_kern_sum baseline.nsys-rep &gt; baseline_kernels.txt
+nsys stats --report=cuda_gpu_kern_sum optimized.nsys-rep &gt; optimized_kernels.txt
+diff -u baseline_kernels.txt optimized_kernels.txt
+</code></pre>
+<h4 id="성능-회귀-테스트"><a class="header" href="#성능-회귀-테스트">성능 회귀 테스트</a></h4>
+<pre><code class="language-bash">#!/bin/bash
+# CI/CD용 자동화 프로파일링 스크립트
+BASELINE_TIME=$(nsys stats baseline.nsys-rep | grep "Total Time" | awk '{print $3}')
+CURRENT_TIME=$(nsys stats current.nsys-rep | grep "Total Time" | awk '{print $3}')
+
+REGRESSION_THRESHOLD=1.10  # 10% 성능 저하 임계값
+if (( $(echo "$CURRENT_TIME &gt; $BASELINE_TIME * $REGRESSION_THRESHOLD" | bc -l) )); then
+    echo "Performance regression detected: ${CURRENT_TIME}ns vs ${BASELINE_TIME}ns"
+    exit 1
+fi
+</code></pre>
+<h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
+<p>프로파일링 기초를 이해했으니:</p>
+<ol>
+<li><strong>기존 커널로 연습</strong>: 이미 풀었던 퍼즐들을 프로파일링해 보세요</li>
+<li><strong>최적화 준비</strong>: Puzzle 31에서 이 통찰을 점유율 최적화에 활용합니다</li>
+<li><strong>도구 익히기</strong>: 다양한 NSight Systems와 NSight Compute 옵션을 실험해 보세요</li>
+</ol>
+<p><strong>기억하세요</strong>: 프로파일링은 단순히 느린 코드를 찾는 것이 아닙니다 - 프로그램의 동작을 이해하고 근거 있는 최적화 결정을 내리는 것입니다.</p>
+<p>추가 프로파일링 자료:</p>
+<ul>
+<li><a href="https://docs.nvidia.com/cuda/profiler-users-guide/">NVIDIA Profiler User’s Guide</a></li>
+<li><a href="https://docs.nvidia.com/nsight-systems/UserGuide/">NSight Systems User Guide</a></li>
+<li><a href="https://docs.nvidia.com/nsight-compute/NsightComputeCli/">NSight Compute CLI User Guide</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_30/puzzle_30.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_30/profile_kernels.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_30/puzzle_30.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_30/profile_kernels.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

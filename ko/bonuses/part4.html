@@ -1,0 +1,329 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🎯 보너스 챌린지 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 7a8e8be1635ae0615b896ce069f6c241d562343a -->
+<h1 id="보너스-챌린지"><a class="header" href="#보너스-챌린지">보너스 챌린지</a></h1>
+<h2 id="챌린지-i-고급-소프트맥스-구현"><a class="header" href="#챌린지-i-고급-소프트맥스-구현">챌린지 I: 고급 소프트맥스 구현</a></h2>
+<p><em>이 챌린지는 <a href="../puzzle_18/puzzle_18.html">Puzzle 18: 소프트맥스 Op</a>의 확장입니다</em></p>
+<p>소프트맥스 구현을 확장하는 고급 챌린지들입니다:</p>
+<h3 id="1-대규모-소프트맥스-tpb--size-처리"><a class="header" href="#1-대규모-소프트맥스-tpb--size-처리">1. 대규모 소프트맥스: <code>TPB &lt; SIZE</code> 처리</a></h3>
+<p>입력 크기가 블록당 스레드 수를 초과하면(<code>TPB &lt; SIZE</code>), 단일 블록이 전체 배열을 처리할 수 없어 현재 구현이 동작하지 않습니다. 이를 해결하는 두 가지 접근법이 있습니다:</p>
+<h4 id="11-버퍼-리덕션"><a class="header" href="#11-버퍼-리덕션">1.1 버퍼 리덕션</a></h4>
+<ul>
+<li>블록 단위 결과(최댓값과 합계)를 디바이스 메모리에 저장합니다</li>
+<li>두 번째 커널을 사용하여 이 중간 결과들에 대해 리덕션을 수행합니다</li>
+<li>전역 최댓값과 합계를 사용하는 최종 정규화 단계를 구현합니다</li>
+</ul>
+<h4 id="12-2단계-소프트맥스"><a class="header" href="#12-2단계-소프트맥스">1.2 2단계 소프트맥스</a></h4>
+<ul>
+<li>1차: 각 블록이 로컬 최댓값을 계산합니다</li>
+<li>동기화 후 전역 최댓값을 계산합니다</li>
+<li>2차: \(e^{x-max}\)와 로컬 합계를 계산합니다</li>
+<li>동기화 후 전역 합계를 계산합니다</li>
+<li>최종: 전역 합계를 사용하여 정규화합니다</li>
+</ul>
+<h3 id="2-배치-소프트맥스"><a class="header" href="#2-배치-소프트맥스">2. 배치 소프트맥스</a></h3>
+<p>벡터 배치(2D 입력 텐서)에 대한 소프트맥스를 다음 변형으로 구현합니다:</p>
+<ul>
+<li>행 단위 소프트맥스: 각 행에 독립적으로 소프트맥스를 적용합니다</li>
+<li>열 단위 소프트맥스: 각 열에 독립적으로 소프트맥스를 적용합니다</li>
+<li>두 구현 간의 성능 차이를 비교합니다</li>
+</ul>
+<h2 id="챌린지-ii-고급-어텐션-메커니즘"><a class="header" href="#챌린지-ii-고급-어텐션-메커니즘">챌린지 II: 고급 어텐션 메커니즘</a></h2>
+<p><em>이 챌린지는 <a href="../puzzle_19/puzzle_19.html">Puzzle 19: 어텐션 Op</a>의 확장입니다</em></p>
+<p>벡터 어텐션 구현을 기반으로, 어텐션 메커니즘의 한계를 넓혀보는 고급 챌린지들입니다:</p>
+<h3 id="1-더-긴-시퀀스-길이"><a class="header" href="#1-더-긴-시퀀스-길이">1. 더 긴 시퀀스 길이</a></h3>
+<p>기존 커널을 사용하여 더 긴 시퀀스를 처리하도록 어텐션 메커니즘을 확장합니다:</p>
+<h4 id="11-시퀀스-길이-확장"><a class="header" href="#11-시퀀스-길이-확장">1.1 시퀀스 길이 확장</a></h4>
+<ul>
+<li><code>SEQ_LEN = 32</code>와 <code>SEQ_LEN = 64</code>를 처리하도록 어텐션 구현을 수정합니다</li>
+<li><code>TPB</code>(블록당 스레드 수) 파라미터를 그에 맞게 업데이트합니다</li>
+<li>전치 커널이 더 큰 행렬 크기를 올바르게 처리하는지 확인합니다</li>
+</ul>
+<h4 id="12-동적-시퀀스-길이"><a class="header" href="#12-동적-시퀀스-길이">1.2 동적 시퀀스 길이</a></h4>
+<ul>
+<li>런타임에 가변 시퀀스 길이를 처리할 수 있는 어텐션을 구현합니다</li>
+<li><code>SEQ_LEN</code>보다 짧은 시퀀스를 처리하기 위해 커널에 경계 검사를 추가합니다</li>
+<li>고정 시퀀스 길이 처리와 동적 시퀀스 길이 처리의 성능을 비교합니다</li>
+</ul>
+<h3 id="2-배치-벡터-어텐션"><a class="header" href="#2-배치-벡터-어텐션">2. 배치 벡터 어텐션</a></h3>
+<p>여러 어텐션 연산을 동시에 처리하도록 확장합니다:</p>
+<h4 id="21-배치-처리"><a class="header" href="#21-배치-처리">2.1 배치 처리</a></h4>
+<ul>
+<li>여러 쿼리 벡터를 한 번에 처리하도록 어텐션 연산을 수정합니다</li>
+<li>입력 형태: Q(batch_size, d), K(seq_len, d), V(seq_len, d)</li>
+<li>출력 형태: (batch_size, d)</li>
+<li>적절한 인덱싱으로 기존 커널을 재사용합니다</li>
+</ul>
+<h4 id="22-배치를-위한-메모리-최적화"><a class="header" href="#22-배치를-위한-메모리-최적화">2.2 배치를 위한 메모리 최적화</a></h4>
+<ul>
+<li>배치 요소 간 버퍼를 재사용하여 메모리 할당을 최소화합니다</li>
+<li>다양한 배치 크기(2, 4, 8)에서 성능을 비교합니다</li>
+<li>메모리 사용 패턴을 분석합니다</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_19/puzzle_19.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_20/puzzle_20.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_19/puzzle_19.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_20/puzzle_20.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

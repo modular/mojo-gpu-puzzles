@@ -1,0 +1,826 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>📡 block.broadcast()와 벡터 정규화 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="blockbroadcast와-벡터-정규화"><a class="header" href="#blockbroadcast와-벡터-정규화">block.broadcast()와 벡터 정규화</a></h1>
+<p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a> 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해 어떻게 함께 동작하는지 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다: 리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li><code>block.broadcast()</code>를 활용한 <strong>블록 레벨 브로드캐스트</strong></li>
+<li><strong>하나→전체 통신</strong> 패턴</li>
+<li><strong>소스 스레드 지정</strong>과 파라미터 제어</li>
+<li>여러 연산을 결합하는 <strong>완전한 블록 연산 워크플로우</strong></li>
+<li>조율된 블록 기본 요소를 사용한 <strong>실제 알고리즘 구현</strong></li>
+</ul>
+<p>이 알고리즘은 벡터 평균 정규화를 보여줍니다:
+\[\Large \text{output}[i] = \frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\]</p>
+<p>각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을 받아 자신의 요소를 정규화합니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>벡터 크기: <code>SIZE = 128</code> 요소</li>
+<li>데이터 타입: <code>DType.float32</code></li>
+<li>블록 구성: <code>(128, 1)</code> 블록당 스레드 수 (<code>TPB = 128</code>)</li>
+<li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
+<li>레이아웃: <code>Layout.row_major(SIZE)</code> (입력과 출력 모두 1D row-major)</li>
+<li>테스트 데이터: 1-8 반복 값, 평균 = 4.5</li>
+<li>예상 출력: 평균이 1.0인 정규화된 벡터</li>
+</ul>
+<h2 id="도전-과제-블록-전체-계산과-분배의-조율"><a class="header" href="#도전-과제-블록-전체-계산과-분배의-조율">도전 과제: 블록 전체 계산과 분배의 조율</a></h2>
+<p>기존의 평균 정규화 방식은 복잡한 조율이 필요합니다:</p>
+<pre><code class="language-python"># 순차적 방식 - 병렬성을 활용하지 못함
+total = sum(input_array)
+mean = total / len(input_array)
+output_array = [x / mean for x in input_array]
+</code></pre>
+<p><strong>단순한 GPU 병렬화의 문제점:</strong></p>
+<ul>
+<li><strong>다중 커널 실행</strong>: 평균 계산과 정규화에 각각 별도의 패스가 필요</li>
+<li><strong>전역 메모리 왕복</strong>: 평균을 전역 메모리에 저장했다가 나중에 다시 읽기</li>
+<li><strong>동기화 복잡성</strong>: 계산 단계 간에 배리어가 필요</li>
+<li><strong>스레드 분기</strong>: 서로 다른 스레드가 서로 다른 작업을 수행</li>
+</ul>
+<p><strong>기존 GPU 풀이의 복잡성:</strong></p>
+<pre><code class="language-mojo"># 1단계: 합계를 구하기 위한 리덕션 (복잡한 공유 메모리 + 배리어)
+shared_sum[local_i] = my_value
+barrier()
+# 여러 barrier() 호출이 필요한 수동 트리 리덕션...
+
+# 2단계: 스레드 0이 평균을 계산
+if local_i == 0:
+    mean = shared_sum[0] / size
+    shared_mean[0] = mean
+
+barrier()
+
+# 3단계: 모든 스레드가 평균을 읽고 정규화
+mean = shared_mean[0]  # 모두가 같은 값을 읽음
+output[global_i] = my_value / mean
+</code></pre>
+<h2 id="고급-방식-blocksum--blockbroadcast-조율"><a class="header" href="#고급-방식-blocksum--blockbroadcast-조율">고급 방식: <code>block.sum()</code> + <code>block.broadcast()</code> 조율</a></h2>
+<p>다단계 조율을 간결한 블록 연산 워크플로우로 변환합니다:</p>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<h3 id="완전한-블록-연산-워크플로우"><a class="header" href="#완전한-블록-연산-워크플로우">완전한 블록 연산 워크플로우</a></h3>
+<p>블록 연산 도구 모음 전체를 사용하여 고급 벡터 평균 정규화를 구현합니다:</p>
+<pre><code class="language-mojo">
+comptime vector_layout = Layout.row_major(SIZE)
+
+
+fn block_normalize_vector[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    size: Int,
+):
+    """Vector mean normalization using block.sum() + block.broadcast() combination.
+
+    This demonstrates the complete block operations workflow:
+    1. Use block.sum() to compute sum of all elements (all → one)
+    2. Thread 0 computes mean = sum / size
+    3. Use block.broadcast() to share mean to all threads (one → all)
+    4. Each thread normalizes: output[i] = input[i] / mean
+    """
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    # Step 1: Each thread loads its element
+
+    # FILL IN (roughly 3 lines)
+
+    # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
+
+    # FILL IN (1 line)
+
+    # Step 3: Thread 0 computes mean value
+
+    # FILL IN (roughly 4 lines)
+
+    # Step 4: block.broadcast() shares mean to ALL threads!
+    # This completes the block operations trilogy demonstration
+
+    # FILL IN (1 line)
+
+    # Step 5: Each thread normalizes by the mean
+
+    # FILL IN (roughly 3 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p27/p27.mojo" class="filename">전체 파일 보기: problems/p27/p27.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-완전한-워크플로우-구조-모든-이전-연산을-기반으로-구축"><a class="header" href="#1-완전한-워크플로우-구조-모든-이전-연산을-기반으로-구축">1. <strong>완전한 워크플로우 구조 (모든 이전 연산을 기반으로 구축)</strong></a></h3>
+<p>알고리즘은 완벽한 블록 연산 패턴을 따릅니다:</p>
+<ol>
+<li>각 스레드가 자신의 요소를 로드 (모든 이전 퍼즐에서 익숙한 패턴)</li>
+<li><code>block.sum()</code>으로 합계를 계산 (이 퍼즐의 앞부분에서 배운 내용)</li>
+<li>스레드 0이 합계로부터 평균을 계산</li>
+<li><code>block.broadcast()</code>로 평균을 모든 스레드에 공유 (새로운 내용!)</li>
+<li>각 스레드가 브로드캐스트된 평균으로 정규화</li>
+</ol>
+<h3 id="2-데이터-로딩과-합계-계산-익숙한-패턴"><a class="header" href="#2-데이터-로딩과-합계-계산-익숙한-패턴">2. <strong>데이터 로딩과 합계 계산 (익숙한 패턴)</strong></a></h3>
+<p>기존 LayoutTensor 패턴으로 요소를 로드합니다:</p>
+<pre><code class="language-mojo">var my_value: Scalar[dtype] = 0.0
+if global_i &lt; size:
+    my_value = input_data[global_i][0]  # SIMD 추출
+</code></pre>
+<p>그런 다음 앞서 배운 내적과 동일하게 <code>block.sum()</code>을 사용합니다:</p>
+<pre><code class="language-mojo">total_sum = block.sum[block_size=tpb, broadcast=False](...)
+</code></pre>
+<h3 id="3-평균-계산-스레드-0만"><a class="header" href="#3-평균-계산-스레드-0만">3. <strong>평균 계산 (스레드 0만)</strong></a></h3>
+<p>스레드 0만 평균을 계산해야 합니다:</p>
+<pre><code class="language-mojo">var mean_value: Scalar[dtype] = 1.0  # 안전한 기본값
+if local_i == 0:
+    # total_sum과 size로 평균 계산
+</code></pre>
+<p><strong>왜 스레드 0인가?</strong> <code>block.sum()</code> 패턴에서 스레드 0이 결과를 받는 것과 일관성을 유지합니다.</p>
+<h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
+<p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
+<ul>
+<li>템플릿 파라미터: <code>dtype</code>, <code>width</code>, <code>block_size</code></li>
+<li>런타임 파라미터: <code>val</code> (브로드캐스트할 SIMD 값), <code>src_thread</code> (기본값=0)</li>
+</ul>
+<p>호출 패턴은 기존 템플릿 스타일을 따릅니다:</p>
+<pre><code class="language-mojo">result = block.broadcast[
+    dtype = DType.float32,
+    width = 1,
+    block_size = tpb
+](val=SIMD[DType.float32, 1](value_to_broadcast), src_thread=UInt(0))
+</code></pre>
+<h3 id="5-브로드캐스트-패턴-이해하기"><a class="header" href="#5-브로드캐스트-패턴-이해하기">5. <strong>브로드캐스트 패턴 이해하기</strong></a></h3>
+<p><strong>핵심 통찰</strong>: <code>block.broadcast()</code>는 하나의 스레드에서 값을 가져와 모든 스레드에 전달합니다:</p>
+<ul>
+<li><strong>스레드 0</strong>이 계산된 평균값을 가지고 있음</li>
+<li><strong>모든 스레드</strong>가 같은 평균값이 필요</li>
+<li><strong><code>block.broadcast()</code></strong> 가 스레드 0의 값을 모두에게 복사</li>
+</ul>
+<p>이것은 <code>block.sum()</code>(전체→하나)의 반대이며, <code>block.prefix_sum()</code>(전체→각각 위치)과도 다릅니다.</p>
+<h3 id="6-최종-정규화-단계"><a class="header" href="#6-최종-정규화-단계">6. <strong>최종 정규화 단계</strong></a></h3>
+<p>모든 스레드가 브로드캐스트된 평균을 받으면, 자신의 요소를 정규화합니다:</p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    normalized_value = my_value / broadcasted_mean[0]  # SIMD 추출
+    output_data[global_i] = normalized_value
+</code></pre>
+<p><strong>SIMD 추출</strong>: <code>block.broadcast()</code>가 SIMD를 반환하므로 <code>[0]</code>으로 스칼라를 추출해야 합니다.</p>
+<h3 id="7-이전-퍼즐에서의-패턴-인식"><a class="header" href="#7-이전-퍼즐에서의-패턴-인식">7. <strong>이전 퍼즐에서의 패턴 인식</strong></a></h3>
+<ul>
+<li><strong>스레드 인덱싱</strong>: 항상 동일한 <code>global_i</code>, <code>local_i</code> 패턴</li>
+<li><strong>경계 검사</strong>: 동일한 <code>if global_i &lt; size</code> 검증</li>
+<li><strong>SIMD 처리</strong>: 동일한 <code>[0]</code> 추출 패턴</li>
+<li><strong>블록 연산</strong>: <code>block.sum()</code>과 동일한 템플릿 파라미터 스타일</li>
+</ul>
+<p>각 블록 연산이 일관된 패턴을 따르는 것이 핵심입니다!</p>
+</div>
+</details>
+<p><strong>block.broadcast() 방식 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p27 --normalize
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p27 --normalize
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">SIZE: 128
+TPB: 128
+
+Input sample: 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 ...
+Sum value: 576.0
+Mean value: 4.5
+
+Mean Normalization Results:
+Normalized sample: 0.22222222 0.44444445 0.6666667 0.8888889 1.1111112 1.3333334 1.5555556 1.7777778 ...
+
+Output sum: 128.0
+Output mean: 1.0
+✅ Success: Output mean is 1.0 (should be close to 1.0)
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn block_normalize_vector[
+    in_layout: Layout, out_layout: Layout, tpb: Int
+](
+    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    size: Int,
+):
+    """Vector mean normalization using block.sum() + block.broadcast() combination.
+
+    This demonstrates the complete block operations workflow:
+    1. Use block.sum() to compute sum of all elements (all → one)
+    2. Thread 0 computes mean = sum / size
+    3. Use block.broadcast() to share mean to all threads (one → all)
+    4. Each thread normalizes: output[i] = input[i] / mean
+    """
+
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    local_i = thread_idx.x
+
+    # Step 1: Each thread loads its element
+    var my_value: Scalar[dtype] = 0.0
+    if global_i &lt; size:
+        my_value = input_data[global_i][0]  # Extract SIMD value
+
+    # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
+    total_sum = block.sum[block_size=tpb, broadcast=False](
+        val=SIMD[DType.float32, 1](my_value)
+    )
+
+    # Step 3: Thread 0 computes mean value
+    var mean_value: Scalar[dtype] = 1.0  # Default to avoid division by zero
+    if local_i == 0:
+        if total_sum[0] &gt; 0.0:
+            mean_value = total_sum[0] / Float32(size)
+
+    # Step 4: block.broadcast() shares mean to ALL threads!
+    # This completes the block operations trilogy demonstration
+    broadcasted_mean = block.broadcast[
+        dtype = DType.float32, width=1, block_size=tpb
+    ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
+
+    # Step 5: Each thread normalizes by the mean
+    if global_i &lt; size:
+        normalized_value = my_value / broadcasted_mean[0]
+        output_data[global_i] = normalized_value
+
+
+</code></pre>
+<div class="solution-explanation">
+<p><code>block.broadcast()</code> 커널은 세 가지 기본 통신 패턴을 모두 결합하여 수학적으로 검증 가능한 결과를 생성하는 실제 알고리즘으로 완전한 블록 연산 워크플로우를 보여줍니다:</p>
+<h2 id="구체적인-실행을-통한-완전한-알고리즘-분석"><a class="header" href="#구체적인-실행을-통한-완전한-알고리즘-분석"><strong>구체적인 실행을 통한 완전한 알고리즘 분석:</strong></a></h2>
+<h3 id="1단계-병렬-데이터-로딩-모든-이전-퍼즐에서-확립된-패턴"><a class="header" href="#1단계-병렬-데이터-로딩-모든-이전-퍼즐에서-확립된-패턴"><strong>1단계: 병렬 데이터 로딩 (모든 이전 퍼즐에서 확립된 패턴)</strong></a></h3>
+<pre><code>스레드 인덱싱 (모든 퍼즐에서 일관됨):
+  global_i = block_dim.x * block_idx.x + thread_idx.x  // 입력 배열 위치에 매핑
+  local_i = thread_idx.x                              // 블록 내 위치 (0-127)
+
+LayoutTensor 패턴을 사용한 병렬 요소 로딩:
+  스레드 0:   my_value = input_data[0][0] = 1.0    // 첫 번째 순환 값
+  스레드 1:   my_value = input_data[1][0] = 2.0    // 두 번째 순환 값
+  스레드 7:   my_value = input_data[7][0] = 8.0    // 마지막 순환 값
+  스레드 8:   my_value = input_data[8][0] = 1.0    // 순환 반복: 1,2,3,4,5,6,7,8,1,2...
+  스레드 15:  my_value = input_data[15][0] = 8.0   // 15 % 8 = 7, 8번째 값
+  스레드 127: my_value = input_data[127][0] = 8.0  // 127 % 8 = 7, 8번째 값
+
+128개 스레드가 동시에 로드 - 완벽한 병렬 효율!
+</code></pre>
+<h3 id="2단계-블록-전체-합계-리덕션-앞서-배운-blocksum-지식-활용"><a class="header" href="#2단계-블록-전체-합계-리덕션-앞서-배운-blocksum-지식-활용"><strong>2단계: 블록 전체 합계 리덕션 (앞서 배운 block.sum() 지식 활용)</strong></a></h3>
+<pre><code>128개 스레드에 걸친 block.sum() 조율:
+  기여분 분석:
+    - 값 1,2,3,4,5,6,7,8이 각각 16번 반복 (128/8 = 16)
+    - 스레드 기여분: 16×1 + 16×2 + 16×3 + 16×4 + 16×5 + 16×6 + 16×7 + 16×8
+    - 수학적 합계: 16 × (1+2+3+4+5+6+7+8) = 16 × 36 = 576.0
+
+block.sum() 하드웨어 실행:
+  모든 스레드 → [리덕션 트리] → 스레드 0
+  total_sum = SIMD[DType.float32, 1](576.0)  // 스레드 0만 이 값을 수신
+
+스레드 1-127: total_sum에 접근 불가 (block.sum에서 broadcast=False)
+</code></pre>
+<h3 id="3단계-독점적-평균-계산-단일-스레드-처리"><a class="header" href="#3단계-독점적-평균-계산-단일-스레드-처리"><strong>3단계: 독점적 평균 계산 (단일 스레드 처리)</strong></a></h3>
+<pre><code>스레드 0이 핵심 계산을 수행:
+  입력: total_sum[0] = 576.0, size = 128
+  계산: mean_value = 576.0 / 128.0 = 4.5
+
+  검증: 기대 평균 = (1+2+3+4+5+6+7+8)/8 = 36/8 = 4.5 ✓
+
+다른 모든 스레드 (1-127):
+  mean_value = 1.0 (기본 안전 값)
+  이 값들은 무관 - 브로드캐스트로 덮어씌워질 예정
+
+핵심 통찰: 이 시점에서 올바른 평균값을 가진 것은 스레드 0뿐입니다!
+</code></pre>
+<h3 id="4단계-블록-전체-브로드캐스트-분배-하나--전체-통신"><a class="header" href="#4단계-블록-전체-브로드캐스트-분배-하나--전체-통신"><strong>4단계: 블록 전체 브로드캐스트 분배 (하나 → 전체 통신)</strong></a></h3>
+<pre><code>block.broadcast() API 실행:
+  소스: src_thread = UInt(0) → 스레드 0의 mean_value = 4.5
+  대상: 블록 내 모든 128 스레드
+
+브로드캐스트 전:
+  스레드 0:   mean_value = 4.5  ← 진실의 원천
+  스레드 1:   mean_value = 1.0  ← 덮어씌워질 예정
+  스레드 2:   mean_value = 1.0  ← 덮어씌워질 예정
+  ...
+  스레드 127: mean_value = 1.0  ← 덮어씌워질 예정
+
+block.broadcast() 실행 후:
+  스레드 0:   broadcasted_mean[0] = 4.5  ← 자신의 값을 다시 수신
+  스레드 1:   broadcasted_mean[0] = 4.5  ← 이제 올바른 값을 가짐!
+  스레드 2:   broadcasted_mean[0] = 4.5  ← 이제 올바른 값을 가짐!
+  ...
+  스레드 127: broadcasted_mean[0] = 4.5  ← 이제 올바른 값을 가짐!
+
+결과: 완벽한 동기화 - 모든 스레드가 동일한 평균값을 가짐!
+</code></pre>
+<h3 id="5단계-병렬-평균-정규화-조율된-처리"><a class="header" href="#5단계-병렬-평균-정규화-조율된-처리"><strong>5단계: 병렬 평균 정규화 (조율된 처리)</strong></a></h3>
+<pre><code>각 스레드가 브로드캐스트된 평균을 사용하여 독립적으로 정규화:
+  스레드 0:   normalized = 1.0 / 4.5 = 0.22222222...
+  스레드 1:   normalized = 2.0 / 4.5 = 0.44444444...
+  스레드 2:   normalized = 3.0 / 4.5 = 0.66666666...
+  스레드 7:   normalized = 8.0 / 4.5 = 1.77777777...
+  스레드 8:   normalized = 1.0 / 4.5 = 0.22222222...  (패턴 반복)
+  ...
+
+수학적 검증:
+  출력 합계 = (0.222... + 0.444... + ... + 1.777...) × 16 = 4.5 × 16 × 2 = 128.0
+  출력 평균 = 128.0 / 128 = 1.0  완벽한 정규화!
+
+각 값을 원래 평균으로 나누면 평균이 1.0인 출력을 생성
+</code></pre>
+<h3 id="6단계-정확성-검증"><a class="header" href="#6단계-정확성-검증"><strong>6단계: 정확성 검증</strong></a></h3>
+<pre><code>입력 분석:
+  - 합계: 576.0, 평균: 4.5
+  - 최댓값: 8.0, 최솟값: 1.0
+  - 범위: [1.0, 8.0]
+
+출력 분석:
+  - 합계: 128.0, 평균: 1.0 ✓
+  - 최댓값: 1.777..., 최솟값: 0.222...
+  - 범위: [0.222, 1.777] (모든 값이 1/4.5 비율로 스케일링)
+
+비례 관계 보존:
+  - 원래 8:1 비율이 1.777:0.222 = 8:1로 유지 ✓
+  - 모든 상대적 크기가 완벽하게 유지
+</code></pre>
+<h2 id="이-완전한-워크플로우가-수학적계산적으로-우수한-이유"><a class="header" href="#이-완전한-워크플로우가-수학적계산적으로-우수한-이유"><strong>이 완전한 워크플로우가 수학적·계산적으로 우수한 이유:</strong></a></h2>
+<h3 id="기술적-정확성과-검증"><a class="header" href="#기술적-정확성과-검증"><strong>기술적 정확성과 검증:</strong></a></h3>
+<pre><code>수학적 정확성 증명:
+  입력: x₁, x₂, ..., xₙ (n = 128)
+  평균: μ = (∑xᵢ)/n = 576/128 = 4.5
+
+  정규화: yᵢ = xᵢ/μ
+  출력 평균: (∑yᵢ)/n = (∑xᵢ/μ)/n = (1/μ)(∑xᵢ)/n = (1/μ)μ = 1 ✓
+
+알고리즘이 증명 가능하게 올바른 수학적 결과를 생성합니다.
+</code></pre>
+<h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
+<ul>
+<li><strong>스레드 조율의 진화</strong>: 동일한 <code>global_i</code>, <code>local_i</code> 패턴이지만 블록 기본 요소 사용</li>
+<li><strong>메모리 접근 패턴</strong>: 동일한 LayoutTensor SIMD 추출 <code>[0]</code>이지만 최적화된 워크플로우</li>
+<li><strong>복잡성 제거</strong>: 20줄 이상의 수동 배리어를 2개의 블록 연산으로 대체</li>
+<li><strong>교육적 진행</strong>: 수동 → 자동, 복잡 → 단순, 오류 발생 가능 → 신뢰성</li>
+</ul>
+<h3 id="blocksum-완벽한-통합과의-연결"><a class="header" href="#blocksum-완벽한-통합과의-연결"><strong><a href="./block_sum.html"><code>block.sum()</code></a> (완벽한 통합)과의 연결:</strong></a></h3>
+<ul>
+<li><strong>API 일관성</strong>: 동일한 템플릿 구조 <code>[block_size=tpb, broadcast=False]</code></li>
+<li><strong>결과 흐름 설계</strong>: 스레드 0이 합계를 수신하고, 자연스럽게 파생 파라미터를 계산</li>
+<li><strong>매끄러운 조합</strong>: <code>block.sum()</code>의 출력이 계산 + 브로드캐스트의 입력이 됨</li>
+<li><strong>성능 최적화</strong>: 단일 커널 워크플로우 vs 다중 패스 방식</li>
+</ul>
+<h3 id="blockprefix_sum-상보적-통신과의-연결"><a class="header" href="#blockprefix_sum-상보적-통신과의-연결"><strong><a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a> (상보적 통신)과의 연결:</strong></a></h3>
+<ul>
+<li>
+<p><strong>분배 패턴</strong>: <code>prefix_sum</code>은 고유한 위치를, <code>broadcast</code>는 공유 값을 제공</p>
+</li>
+<li>
+<p><strong>사용 시나리오</strong>: <code>prefix_sum</code>은 병렬 파티셔닝용, <code>broadcast</code>는 매개변수 공유용</p>
+</li>
+<li>
+<p><strong>템플릿 일관성</strong>: 모든 연산에서 동일한 <code>dtype</code>, <code>block_size</code> 파라미터 패턴</p>
+</li>
+<li>
+<p><strong>SIMD 처리 통일성</strong>: 모든 블록 연산이 <code>[0]</code> 추출이 필요한 SIMD를 반환</p>
+</li>
+</ul>
+<h3 id="고급-알고리즘-인사이트"><a class="header" href="#고급-알고리즘-인사이트"><strong>고급 알고리즘 인사이트:</strong></a></h3>
+<pre><code>통신 패턴 비교:
+  기존 방식:
+    1. 수동 리덕션:         O(log n), 명시적 배리어 필요
+    2. 공유 메모리 쓰기:     O(1), 동기화 필요
+    3. 공유 메모리 읽기:     O(1), 뱅크 충돌 가능성
+    총합: 다수의 동기화 지점, 오류 발생 가능
+
+  블록 연산 방식:
+    1. block.sum():        O(log n), 하드웨어 최적화, 자동 배리어
+    2. 계산:                O(1), 단일 스레드
+    3. block.broadcast():  O(log n), 하드웨어 최적화, 자동 분배
+    총합: 두 개의 기본 요소, 자동 동기화, 증명된 정확성
+</code></pre>
+<h3 id="실제-응용-알고리즘-패턴"><a class="header" href="#실제-응용-알고리즘-패턴"><strong>실제 응용 알고리즘 패턴:</strong></a></h3>
+<pre><code>일반적인 병렬 알고리즘 구조:
+  1단계: 병렬 데이터 처리        → 모든 스레드가 기여
+  2단계: 전역 파라미터 계산      → 하나의 스레드가 계산
+  3단계: 파라미터 분배          → 모든 스레드가 수신
+  4단계: 조율된 병렬 출력        → 모든 스레드가 처리
+
+이 정확한 패턴이 등장하는 분야:
+  - 배치 정규화 (딥러닝)
+  - 히스토그램 균등화 (이미지 처리)
+  - 반복적 수치 해법 (과학 연산)
+  - 조명 계산 (컴퓨터 그래픽)
+
+평균 정규화는 이 근본적인 패턴의 완벽한 교육 사례입니다.
+</code></pre>
+<h2 id="블록-연산-3부작-완성"><a class="header" href="#블록-연산-3부작-완성"><strong>블록 연산 3부작 완성:</strong></a></h2>
+<h3 id="1-blocksum---전체하나-reduction"><a class="header" href="#1-blocksum---전체하나-reduction"><strong>1. <code>block.sum()</code> - 전체→하나 (Reduction)</strong></a></h3>
+<ul>
+<li><strong>입력</strong>: 모든 스레드가 값을 제공</li>
+<li><strong>출력</strong>: 스레드 0이 집계된 결과를 수신</li>
+<li><strong>용도</strong>: 합계, 최댓값 계산 등</li>
+</ul>
+<h3 id="2-blockprefix_sum---전체각각-scan"><a class="header" href="#2-blockprefix_sum---전체각각-scan"><strong>2. <code>block.prefix_sum()</code> - 전체→각각 (Scan)</strong></a></h3>
+<ul>
+<li><strong>입력</strong>: 모든 스레드가 값을 제공</li>
+<li><strong>출력</strong>: 각 스레드가 누적 위치를 수신</li>
+<li><strong>용도</strong>: 쓰기 위치 계산, 병렬 파티셔닝</li>
+</ul>
+<h3 id="3-blockbroadcast---하나전체-broadcast"><a class="header" href="#3-blockbroadcast---하나전체-broadcast"><strong>3. <code>block.broadcast()</code> - 하나→전체 (Broadcast)</strong></a></h3>
+<ul>
+<li><strong>입력</strong>: 하나의 스레드가 값을 제공 (일반적으로 스레드 0)</li>
+<li><strong>출력</strong>: 모든 스레드가 같은 값을 수신</li>
+<li><strong>용도</strong>: 계산된 매개변수 공유, 설정값 분배</li>
+</ul>
+</div>
+</details>
+<p><strong>완전한 블록 연산 진행:</strong></p>
+<ol>
+<li><strong>수동 조율</strong> (<a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>): 병렬 기초 이해</li>
+<li><strong>워프 기본 요소</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): 하드웨어 가속 패턴 학습</li>
+<li><strong>블록 리덕션</strong> (<a href="./block_sum.html"><code>block.sum()</code></a>): 전체→하나 통신 학습</li>
+<li><strong>블록 스캔</strong> (<a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): 전체→각각 통신 학습</li>
+<li><strong>블록 브로드캐스트</strong> (<code>block.broadcast()</code>): 하나→전체 통신 학습</li>
+</ol>
+<p><strong>전체 그림:</strong> 블록 연산은 고급 병렬 알고리즘을 위한 기본 통신 빌딩 블록을 제공하며, 복잡한 수동 조율을 깔끔하고 조합 가능한 기본 요소로 대체합니다.</p>
+<h2 id="성능-인사이트와-기술-분석"><a class="header" href="#성능-인사이트와-기술-분석">성능 인사이트와 기술 분석</a></h2>
+<h3 id="정량적-성능-비교"><a class="header" href="#정량적-성능-비교"><strong>정량적 성능 비교:</strong></a></h3>
+<p><strong><code>block.broadcast()</code> vs 기존 공유 메모리 방식 (참고용):</strong></p>
+<p><strong>기존 수동 방식:</strong></p>
+<pre><code>1단계: 수동 리덕션
+  • 공유 메모리 할당: ~5 사이클
+  • 배리어 동기화: ~10 사이클
+  • 트리 리덕션 루프: ~15 사이클
+  • 오류 발생 가능한 수동 인덱싱
+
+2단계: 평균 계산: ~2 사이클
+
+3단계: 공유 메모리 브로드캐스트
+  • 공유 메모리에 수동 쓰기: ~2 사이클
+  • 배리어 동기화: ~10 사이클
+  • 모든 스레드 읽기: ~3 사이클
+
+총합: ~47 사이클
+  + 동기화 오버헤드
+  + 경쟁 상태 가능성
+  + 수동 오류 디버깅
+</code></pre>
+<p><strong>블록 연산 방식:</strong></p>
+<pre><code>1단계: block.sum()
+  • 하드웨어 최적화: ~3 사이클
+  • 자동 배리어: 명시적 비용 0
+  • 최적화된 리덕션: ~8 사이클
+  • 검증된 올바른 구현
+
+2단계: 평균 계산: ~2 사이클
+
+3단계: block.broadcast()
+  • 하드웨어 최적화: ~4 사이클
+  • 자동 분배: 명시적 비용 0
+  • 검증된 올바른 구현
+
+총합: ~17 사이클
+  + 자동 최적화
+  + 보장된 정확성
+  + 조합 가능한 설계
+</code></pre>
+<h3 id="메모리-계층-구조-이점"><a class="header" href="#메모리-계층-구조-이점"><strong>메모리 계층 구조 이점:</strong></a></h3>
+<p><strong>캐시 효율:</strong></p>
+<ul>
+<li><strong>block.sum()</strong>: 최적화된 메모리 접근 패턴으로 캐시 미스 감소</li>
+<li><strong>block.broadcast()</strong>: 효율적인 분배로 메모리 대역폭 사용 최소화</li>
+<li><strong>결합 워크플로우</strong>: 단일 커널이 전역 메모리 왕복을 100% 감소</li>
+</ul>
+<p><strong>메모리 대역폭 활용:</strong></p>
+<pre><code>기존 멀티 커널 방식:
+  커널 1: 입력 → 리덕션 → 전역 메모리 쓰기
+  커널 2: 전역 메모리 읽기 → 브로드캐스트 → 출력
+  총 전역 메모리 전송: 배열 크기의 3배
+
+블록 연산 단일 커널:
+  입력 → block.sum() → block.broadcast() → 출력
+  총 전역 메모리 전송: 배열 크기의 2배 (33% 개선)
+</code></pre>
+<h3 id="각-블록-연산의-최적-사용-시나리오"><a class="header" href="#각-블록-연산의-최적-사용-시나리오"><strong>각 블록 연산의 최적 사용 시나리오:</strong></a></h3>
+<p><strong><code>block.sum()</code> 최적 시나리오:</strong></p>
+<ul>
+<li><strong>데이터 집계</strong>: 합계, 평균, 최댓값/최솟값 계산</li>
+<li><strong>리덕션 패턴</strong>: 전체→하나 통신이 필요한 모든 경우</li>
+<li><strong>통계 연산</strong>: 평균, 분산, 상관관계 계산</li>
+</ul>
+<p><strong><code>block.prefix_sum()</code> 최적 시나리오:</strong></p>
+<ul>
+<li><strong>병렬 파티셔닝</strong>: 스트림 컴팩션, 히스토그램 구간 분류</li>
+<li><strong>쓰기 위치 계산</strong>: 병렬 출력 생성</li>
+<li><strong>병렬 알고리즘</strong>: 정렬, 검색, 데이터 재구성</li>
+</ul>
+<p><strong><code>block.broadcast()</code> 최적 시나리오:</strong></p>
+<ul>
+<li><strong>매개변수 분배</strong>: 계산된 값을 모든 스레드에 공유</li>
+<li><strong>설정 전파</strong>: 모드 플래그, 스케일링 팩터, 임계값</li>
+<li><strong>조율된 처리</strong>: 모든 스레드가 동일한 계산된 매개변수가 필요할 때</li>
+</ul>
+<h3 id="조합의-이점"><a class="header" href="#조합의-이점"><strong>조합의 이점:</strong></a></h3>
+<pre><code>개별 연산:   좋은 성능, 제한된 범위
+결합 연산:   탁월한 성능, 포괄적인 알고리즘
+
+실제 응용에서 볼 수 있는 조합 예시:
+• block.sum() + block.broadcast():       정규화 알고리즘
+• block.prefix_sum() + block.sum():      고급 파티셔닝
+• 세 가지 모두 결합:                      복잡한 병렬 알고리즘
+• 기존 패턴과 함께:                       하이브리드 최적화 전략
+</code></pre>
+<h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
+<p>완전한 블록 연산 3부작을 배웠으니, 다음으로 진행할 수 있습니다:</p>
+<ul>
+<li><strong>멀티 블록 알고리즘</strong>: 여러 스레드 블록에 걸친 연산 조율</li>
+<li><strong>고급 병렬 패턴</strong>: 복잡한 알고리즘을 위한 블록 연산 결합</li>
+<li><strong>메모리 계층 구조 최적화</strong>: 효율적인 데이터 이동 패턴</li>
+<li><strong>알고리즘 설계</strong>: 블록 연산 빌딩 블록을 사용한 병렬 알고리즘 구조화</li>
+<li><strong>성능 최적화</strong>: 최적의 블록 크기와 연산 조합 선택</li>
+</ul>
+<p>💡 <strong>핵심 요점</strong>: 블록 연산 3부작(<code>sum</code>, <code>prefix_sum</code>, <code>broadcast</code>)은 블록 레벨 병렬 프로그래밍을 위한 완전한 통신 기본 요소를 제공합니다. 이 연산들을 조합하면 GPU 하드웨어 최적화를 활용하는 깔끔하고 유지보수하기 쉬운 코드로 고급 병렬 알고리즘을 구현할 수 있습니다. 평균 정규화는 이 연산들이 함께 작동하여 실제 연산 문제를 효율적으로 해결하는 방법을 보여줍니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_27/block_prefix_sum.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_28/puzzle_28.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_27/block_prefix_sum.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_28/puzzle_28.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 26: 고급 워프 패턴 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="puzzle-26-고급-워프-패턴"><a class="header" href="#puzzle-26-고급-워프-패턴">Puzzle 26: 고급 워프 패턴</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p><strong>Puzzle 26: 고급 워프 통신 기본 요소</strong>에서는 정교한 GPU <strong>워프 레벨 버터플라이 통신과 병렬 스캔 연산</strong> - 워프 내에서 효율적인 트리 기반 알고리즘과 병렬 리덕션을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>을 사용한 버터플라이 네트워크와 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>을 사용한 하드웨어 최적화 병렬 스캔을 배우며, 복잡한 다단계 공유 메모리 알고리즘 없이 이를 구현하는 방법을 익힙니다.</p>
+<p><strong>달성 목표:</strong> 복잡한 공유 메모리 + 배리어 + 다단계 리덕션 패턴에서 벗어나, 하드웨어 최적화된 버터플라이 네트워크와 병렬 스캔 유닛을 활용하는 우아한 단일 함수 호출 알고리즘으로 전환합니다.</p>
+<p><strong>핵심 통찰:</strong> <em>GPU 워프는 하드웨어에서 정교한 트리 기반 통신과 병렬 스캔 연산을 수행할 수 있습니다 - Mojo의 고급 워프 기본 요소는 버터플라이 네트워크와 전용 스캔 유닛을 활용하여 \(O(\log n)\) 알고리즘을 단일 명령 수준의 간결함으로 제공합니다.</em></p>
+<h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
+<h3 id="고급-워프-통신-모델"><a class="header" href="#고급-워프-통신-모델"><strong>고급 워프 통신 모델</strong></a></h3>
+<p>GPU 워프 내 정교한 통신 패턴을 이해합니다:</p>
+<pre><code>GPU 워프 버터플라이 네트워크 (32 스레드, XOR 기반 통신)
+Offset 16: Lane 0 ↔ Lane 16, Lane 1 ↔ Lane 17, ..., Lane 15 ↔ Lane 31
+Offset 8:  Lane 0 ↔ Lane 8,  Lane 1 ↔ Lane 9,  ..., Lane 23 ↔ Lane 31
+Offset 4:  Lane 0 ↔ Lane 4,  Lane 1 ↔ Lane 5,  ..., Lane 27 ↔ Lane 31
+Offset 2:  Lane 0 ↔ Lane 2,  Lane 1 ↔ Lane 3,  ..., Lane 29 ↔ Lane 31
+Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
+
+하드웨어 누적 합 (병렬 스캔 가속)
+입력:  [1, 2, 3, 4, 5, 6, 7, 8, ...]
+출력: [1, 3, 6, 10, 15, 21, 28, 36, ...] (inclusive scan)
+</code></pre>
+<p><strong>하드웨어 현실:</strong></p>
+<ul>
+<li><strong>버터플라이 네트워크</strong>: XOR 기반 통신이 최적의 트리 토폴로지를 생성합니다</li>
+<li><strong>전용 스캔 유닛</strong>: 하드웨어 가속 병렬 누적 합 연산</li>
+<li><strong>로그 복잡도</strong>: \(O(\log n)\) 알고리즘이 \(O(n)\) 순차 패턴을 대체합니다</li>
+<li><strong>단일 사이클 연산</strong>: 복잡한 리덕션이 전용 하드웨어에서 처리됩니다</li>
+</ul>
+<h3 id="mojo의-고급-워프-연산"><a class="header" href="#mojo의-고급-워프-연산"><strong>Mojo의 고급 워프 연산</strong></a></h3>
+<p><code>gpu.primitives.warp</code>의 정교한 통신 기본 요소를 배웁니다:</p>
+<ol>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: 트리 알고리즘을 위한 XOR 기반 버터플라이 통신</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: 하드웨어 가속 병렬 스캔 연산</li>
+<li><strong>고급 조정 패턴</strong>: 여러 기본 요소를 결합한 복잡한 알고리즘</li>
+</ol>
+<blockquote>
+<p><strong>참고:</strong> 이 기본 요소들은 병렬 리덕션, 스트림 컴팩션, quicksort 파티셔닝, FFT 연산 등 공유 메모리 조정 코드가 수십 줄 필요했을 정교한 병렬 알고리즘을 가능하게 합니다.</p>
+</blockquote>
+<h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
+<pre><code class="language-mojo"># 복잡한 병렬 리덕션 (기존 방식 - Puzzle 14 참고):
+shared = LayoutTensor[
+    dtype,
+    Layout.row_major(WARP_SIZE),
+    MutAnyOrigin,
+    address_space = AddressSpace.SHARED,
+].stack_allocation()
+shared[local_i] = input[global_i]
+barrier()
+offset = 1
+for i in range(Int(log2(Scalar[dtype](WARP_SIZE)))):
+    var current_val: output.element_type = 0
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        current_val = shared[local_i - offset]
+    barrier()
+    if local_i &gt;= offset and local_i &lt; WARP_SIZE:
+        shared[local_i] += current_val
+    barrier()
+    offset *= 2
+
+# 고급 워프 기본 요소가 이 모든 복잡성을 제거합니다:
+current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)  # 단일 호출!
+output[global_i] = scan_result
+</code></pre>
+<h3 id="고급-워프-연산이-빛나는-순간"><a class="header" href="#고급-워프-연산이-빛나는-순간"><strong>고급 워프 연산이 빛나는 순간</strong></a></h3>
+<p>성능 특성을 이해합니다:</p>
+<div class="table-wrapper"><table><thead><tr><th>알고리즘 패턴</th><th>기존 방식</th><th>고급 워프 연산</th></tr></thead><tbody>
+<tr><td>병렬 리덕션</td><td>공유 메모리 + 배리어</td><td>단일 <code>shuffle_xor</code> 트리</td></tr>
+<tr><td>누적 합/스캔 연산</td><td>다단계 알고리즘</td><td>하드웨어 <code>prefix_sum</code></td></tr>
+<tr><td>스트림 컴팩션</td><td>복잡한 인덱싱</td><td><code>prefix_sum</code> + 조정</td></tr>
+<tr><td>Quicksort 파티션</td><td>수동 위치 계산</td><td>결합된 기본 요소</td></tr>
+<tr><td>트리 알고리즘</td><td>재귀적 공유 메모리</td><td>버터플라이 통신</td></tr>
+</tbody></table>
+</div>
+<h2 id="선수-지식"><a class="header" href="#선수-지식">선수 지식</a></h2>
+<p>고급 워프 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:</p>
+<ul>
+<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해 (<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a>와 <a href="../puzzle_25/puzzle_25.html">Puzzle 25: 워프 통신</a> 참고)</li>
+<li><strong>병렬 알고리즘 이론</strong>: 트리 리덕션, 병렬 스캔, 버터플라이 네트워크</li>
+<li><strong>GPU 메모리 계층 구조</strong>: 공유 메모리 패턴과 동기화 (<a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a> 참고)</li>
+<li><strong>수학 연산</strong>: XOR 연산과 로그 복잡도에 대한 이해</li>
+</ul>
+<h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
+<h3 id="1-shuffle_xor을-이용한-버터플라이-통신"><a class="header" href="#1-shuffle_xor을-이용한-버터플라이-통신"><strong>1. shuffle_xor을 이용한 버터플라이 통신</strong></a></h3>
+<p><strong>→ <a href="./warp_shuffle_xor.html">warp.shuffle_xor()와 버터플라이 네트워크</a></strong></p>
+<p>효율적인 트리 알고리즘과 병렬 리덕션을 위한 XOR 기반 버터플라이 통신 패턴을 배웁니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li><code>shuffle_xor()</code>으로 버터플라이 네트워크 토폴로지 구성하기</li>
+<li>트리 통신을 활용한 \(O(\log n)\) 병렬 리덕션 구현</li>
+<li>XOR 기반 레인 페어링과 통신 패턴 이해</li>
+<li>다중 값 리덕션을 위한 고급 조건부 버터플라이 연산</li>
+</ul>
+<p><strong>핵심 패턴:</strong></p>
+<pre><code class="language-mojo">max_val = input[global_i]
+offset = WARP_SIZE // 2
+while offset &gt; 0:
+    max_val = max(max_val, shuffle_xor(max_val, offset))
+    offset //= 2
+# 모든 레인이 전역 최댓값을 가지게 됩니다
+</code></pre>
+<h3 id="2-prefix_sum을-이용한-하드웨어-가속-병렬-스캔"><a class="header" href="#2-prefix_sum을-이용한-하드웨어-가속-병렬-스캔"><strong>2. prefix_sum을 이용한 하드웨어 가속 병렬 스캔</strong></a></h3>
+<p><strong>→ <a href="./warp_prefix_sum.html">warp.prefix_sum()과 스캔 연산</a></strong></p>
+<p>복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 최적화 병렬 스캔 연산을 배웁니다.</p>
+<p><strong>배울 내용:</strong></p>
+<ul>
+<li><code>prefix_sum()</code>을 활용한 하드웨어 가속 누적 연산</li>
+<li>스트림 컴팩션과 병렬 파티셔닝 구현</li>
+<li><code>prefix_sum</code>과 <code>shuffle_xor</code>을 결합한 고급 조정</li>
+<li>Inclusive vs exclusive 스캔 패턴 이해</li>
+</ul>
+<p><strong>핵심 패턴:</strong></p>
+<pre><code class="language-mojo">current_val = input[global_i]
+scan_result = prefix_sum[exclusive=False](current_val)
+output[global_i] = scan_result  # 하드웨어 최적화 누적 합
+</code></pre>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<h3 id="버터플라이-네트워크-통신"><a class="header" href="#버터플라이-네트워크-통신"><strong>버터플라이 네트워크 통신</strong></a></h3>
+<p>XOR 기반 통신 토폴로지를 이해합니다:</p>
+<ul>
+<li><strong>XOR 페어링</strong>: <code>lane_id ⊕ mask</code>가 대칭 통신 쌍을 생성합니다</li>
+<li><strong>트리 리덕션</strong>: 계층적 데이터 교환을 통한 로그 복잡도</li>
+<li><strong>병렬 조정</strong>: 모든 레인이 리덕션에 동시에 참여합니다</li>
+<li><strong>동적 알고리즘</strong>: 2의 거듭제곱 <code>WARP_SIZE</code> (32, 64 등) 어디서나 동작합니다</li>
+</ul>
+<h3 id="하드웨어-가속-병렬-스캔"><a class="header" href="#하드웨어-가속-병렬-스캔"><strong>하드웨어 가속 병렬 스캔</strong></a></h3>
+<p>전용 스캔 유닛의 능력을 이해합니다:</p>
+<ul>
+<li><strong>누적 합 연산</strong>: 하드웨어 가속을 활용한 누적 연산</li>
+<li><strong>스트림 컴팩션</strong>: 병렬 필터링과 데이터 재배치</li>
+<li><strong>단일 함수 간결성</strong>: 복잡한 알고리즘이 단일 호출로 변환됩니다</li>
+<li><strong>동기화 불필요</strong>: 하드웨어가 모든 조정을 내부적으로 처리합니다</li>
+</ul>
+<h3 id="알고리즘-복잡도-변환"><a class="header" href="#알고리즘-복잡도-변환"><strong>알고리즘 복잡도 변환</strong></a></h3>
+<p>기존 패턴을 고급 워프 연산으로 변환합니다:</p>
+<ul>
+<li><strong>순차 리덕션</strong> (\(O(n)\)) → <strong>버터플라이 리덕션</strong> (\(O(\log n)\))</li>
+<li><strong>다단계 스캔 알고리즘</strong> → <strong>단일 하드웨어 prefix_sum</strong></li>
+<li><strong>복잡한 공유 메모리 패턴</strong> → <strong>레지스터 전용 연산</strong></li>
+<li><strong>명시적 동기화</strong> → <strong>하드웨어 관리 조정</strong></li>
+</ul>
+<h3 id="고급-조정-패턴"><a class="header" href="#고급-조정-패턴"><strong>고급 조정 패턴</strong></a></h3>
+<p>여러 기본 요소를 결합한 정교한 알고리즘:</p>
+<ul>
+<li><strong>이중 리덕션</strong>: 버터플라이 패턴을 활용한 동시 min/max 추적</li>
+<li><strong>병렬 파티셔닝</strong>: quicksort 스타일 연산을 위한 <code>shuffle_xor</code> + <code>prefix_sum</code></li>
+<li><strong>조건부 연산</strong>: 전역 조정을 통한 레인 기반 출력 선택</li>
+<li><strong>다중 기본 요소 알고리즘</strong>: 최적 성능의 복잡한 병렬 패턴</li>
+</ul>
+<h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
+<p>고급 GPU 워프 레벨 통신을 활용할 준비가 되셨나요? 버터플라이 네트워크 연산으로 트리 기반 통신을 이해한 다음, 하드웨어 가속 병렬 스캔으로 나아가 최적의 알고리즘 성능을 달성하세요.</p>
+<p>💡 <strong>성공 팁</strong>: 고급 워프 연산을 <strong>하드웨어 가속 병렬 알고리즘 빌딩 블록</strong>으로 생각하세요. 이 기본 요소들은 복잡한 공유 메모리 알고리즘의 전체 범주를 단일 최적화 함수 호출로 대체합니다.</p>
+<p><strong>학습 목표</strong>: Puzzle 26을 마치면, 고급 워프 기본 요소가 복잡한 다단계 알고리즘을 대체할 수 있는 상황을 인식하여 훨씬 간단하고 빠른 트리 기반 리덕션, 병렬 스캔, 조정 패턴을 작성할 수 있게 됩니다.</p>
+<p><strong>시작하기</strong>: <strong><a href="./warp_shuffle_xor.html">warp.shuffle_xor()와 버터플라이 네트워크</a></strong> 에서 버터플라이 통신을 배운 다음, <strong><a href="./warp_prefix_sum.html">warp.prefix_sum()과 스캔 연산</a></strong> 에서 하드웨어 가속 병렬 스캔 패턴으로 나아가세요!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_25/warp_broadcast.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_26/warp_shuffle_xor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_25/warp_broadcast.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_26/warp_shuffle_xor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

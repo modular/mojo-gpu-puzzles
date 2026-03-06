@@ -1,0 +1,649 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🕵 캐시 히트의 역설 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
+<h1 id="-캐시-히트의-역설"><a class="header" href="#-캐시-히트의-역설">🕵 캐시 히트의 역설</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>첫 번째 <strong>프로파일링 탐정 사건</strong>에 오신 것을 환영합니다! 세 개의 GPU 커널이 모두 동일한 벡터 덧셈 <code>output[i] = a[i] + b[i]</code>을 수행합니다. 당연히 성능도 같겠죠?</p>
+<p><strong>아닙니다!</strong> 이 커널들의 성능 차이는 극적입니다 - 하나는 나머지보다 <strong>수십 배나 느립니다</strong>. 여러분의 임무: 방금 배운 <a href="./nvidia_profiling_basics.html">프로파일링 도구</a>를 활용하여 <strong>왜</strong> 그런지 밝혀내세요.</p>
+<h2 id="도전-과제"><a class="header" href="#도전-과제">도전 과제</a></h2>
+<p>GPU 최적화에 대한 기존 상식을 완전히 뒤집는 <strong>성능 미스터리</strong>에 오신 것을 환영합니다! 눈앞에는 겉보기에 동일한 벡터 덧셈 커널 세 개가 있고, 모두 정확히 같은 수학 연산을 수행합니다:</p>
+<pre><code>output[i] = a[i] + b[i]  // 단순한 산술 연산 - 뭐가 잘못될 수 있을까?
+</code></pre>
+<p><strong>충격적인 현실:</strong></p>
+<ul>
+<li><strong>세 커널 모두 동일하고 정확한 결과를 생성합니다</strong></li>
+<li><strong>하나의 커널이 나머지보다 ~50배 느립니다</strong></li>
+<li><strong>가장 느린 커널이 가장 높은 캐시 히트율을 보입니다</strong> (예상과 정반대!)</li>
+<li><strong>일반적인 성능 직관이 완전히 빗나갑니다</strong></li>
+</ul>
+<p><strong>탐정 임무:</strong></p>
+<ol>
+<li><strong>성능 범인 식별</strong> - 어떤 커널이 치명적으로 느린가?</li>
+<li><strong>캐시의 역설 규명</strong> - 높은 캐시 히트가 왜 낮은 성능을 의미하는가?</li>
+<li><strong>메모리 접근 패턴 해독</strong> - 동일한 연산이 어떻게 이렇게 다르게 동작하는가?</li>
+<li><strong>프로파일링 방법론 학습</strong> - 추측이 아닌 NSight 도구로 근거를 확보하라</li>
+</ol>
+<p><strong>왜 중요한가:</strong> 이 퍼즐은 CPU 기반 직관에 도전하는 GPU 성능의 근본 원리를 드러냅니다. 여기서 기르는 역량은 메모리 접근 패턴이 알고리즘 복잡도보다 중요한 실무 GPU 최적화에 직접 적용됩니다.</p>
+<p><strong>반전:</strong> 이 과정은 프로덕션 성능 이슈를 디버깅하듯이, <strong>소스 코드를 먼저 보지 않고</strong> 프로파일링 도구만으로 접근합니다. 프로파일링 결과를 얻은 후에 코드를 들여다봅니다.</p>
+<h2 id="탐정-도구-모음"><a class="header" href="#탐정-도구-모음">탐정 도구 모음</a></h2>
+<p>프로파일링 튜토리얼에서 배운 도구들:</p>
+<ul>
+<li><strong>NSight Systems (<code>nsys</code>)</strong> - 어떤 커널이 느린지 찾기</li>
+<li><strong>NSight Compute (<code>ncu</code>)</strong> - 커널이 왜 느린지 분석하기</li>
+<li><strong>메모리 효율 지표</strong> - 비효율적인 접근 패턴 탐지</li>
+</ul>
+<h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
+<h3 id="step-1-벤치마크-실행"><a class="header" href="#step-1-벤치마크-실행">Step 1: 벤치마크 실행</a></h3>
+<pre><code class="language-bash">pixi shell -e nvidia
+mojo problems/p30/p30.mojo --benchmark
+</code></pre>
+<p>커널 간에 극적인 실행 시간 차이를 확인할 수 있습니다! 하나의 커널이 나머지보다 <strong>훨씬 느립니다</strong>. 코드를 <strong>보지 않고</strong> 프로파일링 도구만으로 원인을 찾아내는 것이 목표입니다.</p>
+<p><strong>출력 예시:</strong></p>
+<pre><code>| name    | met (ms)  | iters |
+| ------- | --------- | ----- |
+| kernel1 | 171.85    | 11    |
+| kernel2 | 1546.68   | 11    |  &lt;- 이것만 유독 느리다!
+| kernel3 | 172.18    | 11    |
+</code></pre>
+<h3 id="step-2-프로파일링을-위한-빌드-준비"><a class="header" href="#step-2-프로파일링을-위한-빌드-준비">Step 2: 프로파일링을 위한 빌드 준비</a></h3>
+<p><strong>필수</strong>: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를 포함하여 빌드합니다:</p>
+<pre><code class="language-bash">mojo build --debug-level=full problems/p30/p30.mojo -o problems/p30/p30_profiler
+</code></pre>
+<p><strong>중요한 이유</strong>:</p>
+<ul>
+<li><strong>전체 디버그 정보</strong>: 프로파일러에 완전한 심볼 테이블, 변수명, 소스 라인 매핑을 제공</li>
+<li><strong>종합 분석</strong>: NSight 도구가 성능 데이터를 특정 코드 위치와 연관 짓는 것이 가능</li>
+<li><strong>최적화 유지</strong>: 프로덕션 빌드와 동일한 현실적인 성능 측정 보장</li>
+</ul>
+<h2 id="step-3-시스템-전체-조사-nsight-systems"><a class="header" href="#step-3-시스템-전체-조사-nsight-systems">Step 3: 시스템 전체 조사 (NSight Systems)</a></h2>
+<p>각 커널을 프로파일링하여 전체 그림을 확인합니다:</p>
+<pre><code class="language-bash"># 최적화 빌드로 각 커널을 개별 프로파일링 (콜드 스타트 방지를 위한 워밍업 포함)
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel1_profile ./problems/p30/p30_profiler --kernel1
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel2_profile ./problems/p30/p30_profiler --kernel2
+nsys profile --trace=cuda,osrt,nvtx --delay=2 --output=./problems/p30/kernel3_profile ./problems/p30/p30_profiler --kernel3
+
+# 결과 분석
+nsys stats --force-export=true ./problems/p30/kernel1_profile.nsys-rep &gt; ./problems/p30/kernel1_profile.txt
+nsys stats --force-export=true ./problems/p30/kernel2_profile.nsys-rep &gt; ./problems/p30/kernel2_profile.txt
+nsys stats --force-export=true ./problems/p30/kernel3_profile.nsys-rep &gt; ./problems/p30/kernel3_profile.txt
+</code></pre>
+<p><strong>확인할 사항:</strong></p>
+<ul>
+<li><strong>GPU 커널 요약</strong> - 어떤 커널이 가장 오래 걸리는가?</li>
+<li><strong>커널 실행 시간</strong> - 차이가 얼마나 나는가?</li>
+<li><strong>메모리 전송 패턴</strong> - 구현 간에 비슷한가?</li>
+</ul>
+<h2 id="step-4-커널-심층-분석-nsight-compute"><a class="header" href="#step-4-커널-심층-분석-nsight-compute">Step 4: 커널 심층 분석 (NSight Compute)</a></h2>
+<p>느린 커널을 식별한 후, NSight Compute로 분석합니다:</p>
+<pre><code class="language-bash"># 최적화 빌드로 각 커널의 메모리 패턴 심층 분석
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel1_analysis ./problems/p30/p30_profiler --kernel1
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel2_analysis ./problems/p30/p30_profiler --kernel2
+ncu --set=@roofline --section=MemoryWorkloadAnalysis -f -o ./problems/p30/kernel3_analysis ./problems/p30/p30_profiler --kernel3
+
+# 결과 확인
+ncu --import ./problems/p30/kernel1_analysis.ncu-rep --page details
+ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
+ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
+</code></pre>
+<p><strong>위 명령어를 실행하면 다음과 같은 출력이 나타납니다:</strong></p>
+<pre><code>Kernel1: Memory Throughput: ~308 Gbyte/s, Max Bandwidth: ~51%
+Kernel2: Memory Throughput: ~6 Gbyte/s,   Max Bandwidth: ~12%
+Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
+</code></pre>
+<p><strong>주요 조사 지표:</strong></p>
+<ul>
+<li><strong>Memory Throughput (Gbyte/s)</strong> - 실제 달성한 메모리 대역폭</li>
+<li><strong>Max Bandwidth (%)</strong> - 이론적 최대 대역폭 대비 활용률</li>
+<li><strong>L1/TEX Hit Rate (%)</strong> - L1 캐시 효율</li>
+<li><strong>L2 Hit Rate (%)</strong> - L2 캐시 효율</li>
+</ul>
+<p><strong>🤔 반직관적인 결과</strong>: Kernel2가 <strong>가장 높은</strong> 캐시 히트율을 보이면서 <strong>가장 낮은</strong> 성능을 보입니다! 이것이 풀어야 할 핵심 미스터리입니다.</p>
+<h2 id="step-5-탐정-질문"><a class="header" href="#step-5-탐정-질문">Step 5: 탐정 질문</a></h2>
+<p>프로파일링 근거를 바탕으로 커널 코드 <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>를 살펴보며 다음 질문에 답해 보세요:</p>
+<h3 id="성능-분석"><a class="header" href="#성능-분석">성능 분석</a></h3>
+<ol>
+<li><strong>어떤 커널이 가장 높은 Memory Throughput을 달성하는가?</strong> (Gbyte/s 값 확인)</li>
+<li><strong>어떤 커널의 Max Bandwidth 활용률이 가장 낮은가?</strong> (백분율 비교)</li>
+<li><strong>메모리 처리량의 성능 격차는 얼마인가?</strong> (가장 빠른 것과 가장 느린 것의 배수 차이)</li>
+</ol>
+<h3 id="캐시의-역설"><a class="header" href="#캐시의-역설">캐시의 역설</a></h3>
+<ol>
+<li><strong>어떤 커널의 L1/TEX Hit Rate가 가장 높은가?</strong></li>
+<li><strong>어떤 커널의 L2 Hit Rate가 가장 높은가?</strong></li>
+<li><strong>🤯 캐시 히트율이 가장 높은 커널이 왜 성능이 가장 나쁜가?</strong></li>
+</ol>
+<h3 id="메모리-접근-패턴-탐구"><a class="header" href="#메모리-접근-패턴-탐구">메모리 접근 패턴 탐구</a></h3>
+<ol>
+<li><strong>높은 캐시 히트율이 실제로 성능 문제를 나타낼 수 있는가?</strong></li>
+<li><strong>어떤 메모리 접근 패턴이 높은 캐시 히트와 낮은 처리량을 동시에 유발하는가?</strong></li>
+<li><strong>왜 “효율적인 캐싱“이 “비효율적인 메모리 접근“의 증상일 수 있는가?</strong></li>
+</ol>
+<h3 id="아하-순간"><a class="header" href="#아하-순간">“아하!” 순간</a></h3>
+<ol>
+<li><strong>프로파일링 근거를 바탕으로, 이 사례가 보여주는 GPU 메모리의 근본 원리는 무엇인가?</strong></li>
+</ol>
+<p><strong>발견할 핵심 통찰</strong>: 때로는 <strong>높은 캐시 히트율이 성능 승리가 아니라 위험 신호</strong>입니다!</p>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<p>이 미스터리는 GPU 성능의 근본 원리를 드러냅니다: 커널이 동일한 연산을 수행하더라도 <strong>메모리 바운드 연산에서는 메모리 접근 패턴이 성능을 지배합니다</strong>.</p>
+<p><strong>프로파일링 근거가 밝히는 것:</strong></p>
+<ol>
+<li><strong>성능 위계</strong>: Kernel1과 Kernel3은 빠르고, Kernel2는 치명적으로 느림 (수십 배 차이)</li>
+<li><strong>메모리 처리량이 답을 말해준다</strong>: 빠른 커널은 높은 대역폭 활용률을 달성하고, 느린 커널은 최소한의 활용률만 달성</li>
+<li><strong>캐시의 역설</strong>: 가장 느린 커널이 <strong>가장 높은</strong> 캐시 히트율을 보임 - 높은 캐시 히트가 <strong>비효율적인</strong> 메모리 접근 패턴을 나타낼 수 있음을 시사</li>
+<li><strong>메모리 바운드 GPU 워크로드에서는 메모리 접근 패턴이 알고리즘 복잡도보다 중요</strong></li>
+</ol>
+<details class="solution-details">
+<summary><strong>상세 솔루션과 심층 설명</strong></summary>
+<p>이 프로파일링 탐정 사건은 커널이 동일한 수학 연산을 수행하더라도 메모리 접근 패턴이 어떻게 수십 배의 성능 차이를 만들어내는지 보여줍니다.</p>
+<h2 id="프로파일링으로-확인한-성능-근거"><a class="header" href="#프로파일링으로-확인한-성능-근거"><strong>프로파일링으로 확인한 성능 근거</strong></a></h2>
+<p><strong>NSight Systems 타임라인 분석:</strong></p>
+<ul>
+<li><strong>Kernel 1</strong>: 짧은 실행 시간 - <strong>효율적</strong></li>
+<li><strong>Kernel 3</strong>: Kernel 1과 유사 - <strong>효율적</strong></li>
+<li><strong>Kernel 2</strong>: 극적으로 긴 실행 시간 - <strong>비효율적</strong></li>
+</ul>
+<p><strong>NSight Compute 메모리 분석 (하드웨어 무관한 패턴):</strong></p>
+<ul>
+<li><strong>효율적인 커널 (1 &amp; 3)</strong>: 높은 메모리 처리량, 양호한 대역폭 활용률, 보통 수준의 캐시 히트율</li>
+<li><strong>비효율적인 커널 (2)</strong>: 매우 낮은 메모리 처리량, 열악한 대역폭 활용률, <strong>극도로 높은 캐시 히트율</strong></li>
+</ul>
+<h2 id="캐시의-역설-규명"><a class="header" href="#캐시의-역설-규명"><strong>캐시의 역설 규명</strong></a></h2>
+<p><strong>🤯 반직관적인 발견:</strong></p>
+<ul>
+<li><strong>Kernel2가 가장 높은 캐시 히트율</strong>을 보이면서 <strong>성능은 최악</strong></li>
+<li><strong>기존 상식에 대한 도전</strong>: “높은 캐시 히트 = 좋은 성능”</li>
+<li><strong>진실</strong>: 높은 캐시 히트율은 <strong>비효율적인 메모리 접근 패턴의 증상</strong>일 수 있음</li>
+</ul>
+<p><strong>캐시의 역설이 발생하는 이유:</strong></p>
+<p><strong>전통적인 CPU 직관 (GPU에서는 틀림):</strong></p>
+<ul>
+<li>캐시 히트율이 높을수록 항상 성능이 좋다</li>
+<li>캐시 히트는 메모리 트래픽을 줄여 효율을 높인다</li>
+</ul>
+<p><strong>GPU 메모리의 현실 (올바른 이해):</strong></p>
+<ul>
+<li>메모리 바운드 워크로드에서는 <strong>병합이 캐싱보다 중요</strong></li>
+<li><strong>비효율적인 접근 패턴</strong>은 인위적으로 캐시 히트율을 부풀릴 수 있음</li>
+<li><strong>메모리 대역폭 활용률</strong>이 진정한 성능 지표</li>
+</ul>
+<h2 id="근본-원인-분석---메모리-접근-패턴"><a class="header" href="#근본-원인-분석---메모리-접근-패턴"><strong>근본 원인 분석 - 메모리 접근 패턴</strong></a></h2>
+<p><strong>p30.mojo의 실제 커널 구현:</strong></p>
+<p><strong>Kernel 1 - 효율적인 병합 접근:</strong></p>
+<pre><code class="language-mojo">fn kernel1[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    if i &lt; size:
+        output[i] = a[i] + b[i]
+
+
+</code></pre>
+<p><em>표준 스레드 인덱싱 - 인접 스레드가 인접 메모리에 접근</em></p>
+<p><strong>Kernel 2 - 비효율적인 스트라이드 접근:</strong></p>
+<pre><code class="language-mojo">fn kernel2[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    stride = 512
+
+    i = tid
+    while i &lt; size:
+        output[i] = a[i] + b[i]
+        i += stride
+
+
+</code></pre>
+<p><em>큰 stride=512로 메모리 접근 간격 발생 - 동일한 연산이지만 흩어진 접근</em></p>
+<p><strong>Kernel 3 - 효율적인 역순 접근:</strong></p>
+<pre><code class="language-mojo">fn kernel3[
+    layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    size: Int,
+):
+    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    total_threads = (SIZE // 1024) * 1024
+
+    for step in range(0, size, total_threads):
+        forward_i = step + tid
+        if forward_i &lt; size:
+            reverse_i = size - 1 - forward_i
+            output[reverse_i] = a[reverse_i] + b[reverse_i]
+
+
+</code></pre>
+<p><em>역순 인덱싱이지만 여전히 예측 가능 - 인접 스레드가 인접 주소에 접근 (방향만 반대)</em></p>
+<p><strong>패턴 분석:</strong></p>
+<ul>
+<li><strong>Kernel 1</strong>: 전형적인 병합 접근 - 인접 스레드가 인접 메모리에 접근</li>
+<li><strong>Kernel 2</strong>: 치명적인 스트라이드 접근 - 스레드가 512개 요소씩 건너뜀</li>
+<li><strong>Kernel 3</strong>: 역순이지만 워프 내에서는 병합 유지 - 예측 가능한 패턴</li>
+</ul>
+<h2 id="메모리-시스템-이해"><a class="header" href="#메모리-시스템-이해"><strong>메모리 시스템 이해</strong></a></h2>
+<p><strong>GPU 메모리 아키텍처 기초:</strong></p>
+<ul>
+<li><strong>워프 실행</strong>: 32개 스레드가 함께 실행</li>
+<li><strong>캐시 라인 크기</strong>: 128바이트 (float32 값 32개)</li>
+<li><strong>병합 요건</strong>: 인접 스레드가 인접 메모리에 접근해야 함</li>
+</ul>
+<p><strong>p30.mojo 설정 상세:</strong></p>
+<pre><code class="language-mojo">comptime SIZE = 16 * 1024 * 1024          # 16M 요소 (float32 데이터 64MB)
+comptime THREADS_PER_BLOCK = (1024, 1)    # 블록당 1024 스레드
+comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 총 16,384 블록
+comptime dtype = DType.float32             # 요소당 4바이트
+</code></pre>
+<p><strong>이 설정이 중요한 이유:</strong></p>
+<ul>
+<li><strong>대용량 데이터셋 (16M)</strong>: 메모리 접근 패턴의 차이가 명확하게 드러남</li>
+<li><strong>블록당 1024 스레드</strong>: CUDA 최대 스레드 수</li>
+<li><strong>블록당 32개 워프</strong>: 각 블록에 32개의 워프(각 32 스레드)가 포함</li>
+</ul>
+<p><strong>메모리 접근 효율 시각화:</strong></p>
+<pre><code>KERNEL 1 (병합):                KERNEL 2 (stride 512):
+워프 스레드 0-31:               워프 스레드 0-31:
+  Thread 0: Memory[0]            Thread 0: Memory[0]
+  Thread 1: Memory[1]            Thread 1: Memory[512]
+  Thread 2: Memory[2]            Thread 2: Memory[1024]
+  ...                           ...
+  Thread 31: Memory[31]          Thread 31: Memory[15872]
+
+결과: 캐시 라인 1회 fetch          결과: 별도의 캐시 라인 32회 fetch
+상태: ~308 GB/s 처리량            상태: ~6 GB/s 처리량
+캐시: 효율적 활용                  캐시: 같은 라인을 반복 히트!
+</code></pre>
+<p><strong>KERNEL 3 (역순이지만 병합):</strong></p>
+<pre><code>워프 스레드 0-31 (첫 번째 반복):
+  Thread 0: Memory[SIZE-1]     (reverse_i = SIZE-1-0)
+  Thread 1: Memory[SIZE-2]     (reverse_i = SIZE-1-1)
+  Thread 2: Memory[SIZE-3]     (reverse_i = SIZE-1-2)
+  ...
+  Thread 31: Memory[SIZE-32]   (reverse_i = SIZE-1-31)
+
+결과: 인접한 주소 (방향만 반대)
+상태: ~310 GB/s 처리량 (Kernel 1과 거의 동일)
+캐시: 역순임에도 효율적 활용
+</code></pre>
+<h2 id="캐시의-역설-설명"><a class="header" href="#캐시의-역설-설명"><strong>캐시의 역설 설명</strong></a></h2>
+<p><strong>Kernel2 (stride=512)가 높은 캐시 히트율에도 성능이 나쁜 이유:</strong></p>
+<p><strong>stride=512의 재앙 설명:</strong></p>
+<pre><code class="language-mojo"># 각 스레드가 큰 간격으로 여러 요소를 처리:
+Thread 0: elements [0, 512, 1024, 1536, 2048, ...]
+Thread 1: elements [1, 513, 1025, 1537, 2049, ...]
+Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
+...
+</code></pre>
+<p><strong>이것이 캐시의 역설을 만드는 이유:</strong></p>
+<ol>
+<li><strong>캐시 라인 반복</strong>: 512개 요소를 건너뛰어도 겹치는 캐시 라인 영역 안에 머무름</li>
+<li><strong>거짓 효율의 환상</strong>: 같은 캐시 라인에 반복 접근 = 인위적으로 높은 “히트율”</li>
+<li><strong>대역폭 재앙</strong>: 32개 스레드 × 32개 별도 캐시 라인 = 막대한 메모리 트래픽</li>
+<li><strong>워프 실행 불일치</strong>: GPU는 병합 접근에 맞게 설계되었지만, 흩어진 접근을 받음</li>
+</ol>
+<p><strong>float32 (각 4바이트) 구체 예시:</strong></p>
+<ul>
+<li><strong>캐시 라인</strong>: 128바이트 = float32 값 32개</li>
+<li><strong>stride 512</strong>: 스레드가 512×4 = 2048바이트 = 16 캐시 라인 간격으로 점프!</li>
+<li><strong>워프 영향</strong>: 32개 스레드가 1개 대신 32개의 서로 다른 캐시 라인을 필요로 함</li>
+</ul>
+<p><strong>핵심 통찰</strong>: Kernel2의 높은 캐시 히트는 <strong>비효율적으로 가져온 데이터에 대한 반복 접근</strong>이지, 현명한 캐싱이 아닙니다!</p>
+<h2 id="프로파일링-방법론-통찰"><a class="header" href="#프로파일링-방법론-통찰"><strong>프로파일링 방법론 통찰</strong></a></h2>
+<p><strong>체계적 탐정 접근법:</strong></p>
+<p><strong>1단계: NSight Systems (전체 그림)</strong></p>
+<ul>
+<li>어떤 커널이 느린지 식별</li>
+<li>명백한 병목 배제 (메모리 전송, API 오버헤드)</li>
+<li>커널 실행 시간 차이에 집중</li>
+</ul>
+<p><strong>2단계: NSight Compute (심층 분석)</strong></p>
+<ul>
+<li>메모리 처리량 지표 분석</li>
+<li>대역폭 활용률 백분율 비교</li>
+<li>캐시 히트율과 패턴 조사</li>
+</ul>
+<p><strong>3단계: 근거를 이론으로 연결</strong></p>
+<pre><code>프로파일링 근거 → 코드 분석:
+
+NSight Compute 결과:              실제 코드 패턴:
+- Kernel1: ~308 GB/s            → i = block_idx*block_dim + thread_idx (병합)
+- Kernel2: ~6 GB/s, 99% L2 hits → i += 512 (치명적 stride)
+- Kernel3: ~310 GB/s            → reverse_i = size-1-forward_i (역순 병합)
+
+프로파일러 데이터가 메모리 접근 효율을 직접 드러냅니다!
+</code></pre>
+<p><strong>근거에서 코드로의 연결:</strong></p>
+<ul>
+<li><strong>높은 처리량 + 보통 캐시 히트율</strong> = 병합 접근 (Kernel 1 &amp; 3)</li>
+<li><strong>낮은 처리량 + 높은 캐시 히트율</strong> = 비효율적 스트라이드 접근 (Kernel 2)</li>
+<li><strong>메모리 대역폭 활용률</strong>이 캐시 통계와 무관하게 진정한 효율을 드러냄</li>
+</ul>
+<h2 id="실무-성능-시사점"><a class="header" href="#실무-성능-시사점"><strong>실무 성능 시사점</strong></a></h2>
+<p><strong>이 패턴이 영향을 미치는 GPU 응용 분야:</strong></p>
+<p><strong>과학 컴퓨팅:</strong></p>
+<ul>
+<li><strong>스텐실 연산</strong>: 그리드 시뮬레이션에서의 이웃 접근 패턴</li>
+<li><strong>선형 대수</strong>: 행렬 순회 순서 (행 우선 vs 열 우선)</li>
+<li><strong>편미분 방정식 풀이</strong>: 유한 차분법에서의 격자점 접근 패턴</li>
+</ul>
+<p><strong>그래픽스 및 이미지 처리:</strong></p>
+<ul>
+<li><strong>텍스처 필터링</strong>: 셰이더에서의 샘플 접근 패턴</li>
+<li><strong>이미지 합성곱</strong>: 필터 커널의 메모리 접근</li>
+<li><strong>색 공간 변환</strong>: 채널 인터리빙 전략</li>
+</ul>
+<p><strong>머신러닝:</strong></p>
+<ul>
+<li><strong>행렬 연산</strong>: GEMM에서의 메모리 레이아웃 최적화</li>
+<li><strong>텐서 축약</strong>: 다차원 배열 접근 패턴</li>
+<li><strong>데이터 로딩</strong>: 배치 처리와 전처리 파이프라인</li>
+</ul>
+<h2 id="gpu-최적화의-근본-원칙"><a class="header" href="#gpu-최적화의-근본-원칙"><strong>GPU 최적화의 근본 원칙</strong></a></h2>
+<p><strong>메모리 우선 최적화 전략:</strong></p>
+<ol>
+<li><strong>메모리 패턴이 지배</strong>: 접근 패턴이 알고리즘 복잡도보다 더 중요한 경우가 많음</li>
+<li><strong>병합이 핵심</strong>: 인접 스레드가 인접 메모리에 접근하도록 설계</li>
+<li><strong>대역폭 활용률 측정</strong>: 캐시 통계가 아닌 실제 처리량에 집중</li>
+<li><strong>체계적 프로파일링</strong>: NSight 도구로 실제 병목을 파악</li>
+</ol>
+<p><strong>핵심 기술 통찰:</strong></p>
+<ul>
+<li><strong>메모리 바운드 워크로드</strong>: 대역폭 활용률이 성능을 결정</li>
+<li><strong>캐시 지표의 함정</strong>: 높은 히트율이 항상 효율을 의미하지는 않음</li>
+<li><strong>워프 레벨 사고</strong>: 32개 스레드 실행 그룹을 위한 접근 패턴 설계</li>
+<li><strong>하드웨어 인식 프로그래밍</strong>: GPU 메모리 계층 구조 이해가 필수</li>
+</ul>
+<h2 id="핵심-교훈"><a class="header" href="#핵심-교훈"><strong>핵심 교훈</strong></a></h2>
+<p>이번에 탐구한 사례는 <strong>GPU 성능 최적화가 CPU 직관을 버리고 메모리 중심 사고로 전환할 것을</strong> 요구한다는 점을 보여줍니다:</p>
+<p><strong>핵심 통찰:</strong></p>
+<ul>
+<li>높은 캐시 히트율은 좋은 성능이 아니라 비효율적인 메모리 접근 패턴을 나타낼 수 있음</li>
+<li>메모리 대역폭 활용률이 캐시 통계보다 중요</li>
+<li>단순한 병합 패턴이 복잡한 알고리즘보다 더 빠른 경우가 많음</li>
+<li>프로파일링 도구가 직관으로는 알 수 없는 성능의 진실을 드러냄</li>
+</ul>
+<p><strong>실전 방법론:</strong></p>
+<ul>
+<li>NSight Systems와 NSight Compute로 체계적으로 프로파일링</li>
+<li>인접 스레드가 인접 메모리에 접근하도록 설계 (병합)</li>
+<li>직관이 아닌 프로파일러 근거를 바탕으로 최적화 결정</li>
+</ul>
+<p>캐시의 역설은 <strong>아키텍처에 대한 이해 없이 고수준 지표에 의존하면 잘못된 결론에 이를 수 있다</strong>는 점을 보여줍니다 - GPU 프로그래밍을 넘어 두루 적용되는 교훈입니다.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_30/nvidia_profiling_basics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_31/puzzle_31.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_30/nvidia_profiling_basics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_31/puzzle_31.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

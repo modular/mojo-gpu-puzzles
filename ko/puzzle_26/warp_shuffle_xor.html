@@ -1,0 +1,980 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🦋 warp.shuffle_xor()와 버터플라이 네트워크 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="warpshuffle_xor-버터플라이-통신"><a class="header" href="#warpshuffle_xor-버터플라이-통신"><code>warp.shuffle_xor()</code> 버터플라이 통신</a></h1>
+<p>워프 레벨 버터플라이 통신에서는 <code>shuffle_xor()</code>을 사용하여 워프 내에 정교한 트리 기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 효율적인 병렬 리덕션, 정렬 네트워크, 고급 조정 알고리즘을 구현할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a> 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, 워프 크기에 대해 \(O(\log n)\) 복잡도로 확장되는 효율적인 버터플라이 네트워크와 병렬 알고리즘을 가능하게 합니다.</em></p>
+<blockquote>
+<p><strong>버터플라이 네트워크란?</strong> <a href="https://en.wikipedia.org/wiki/Butterfly_network">버터플라이 네트워크</a>는 스레드들이 인덱스의 XOR 패턴에 따라 데이터를 교환하는 통신 토폴로지입니다. 이름은 시각적으로 그렸을 때 나비 날개처럼 보이는 연결 패턴에서 유래했습니다. 이 네트워크는 \(O(\log n)\) 통신 복잡도를 가능하게 하기 때문에 FFT, bitonic 정렬, 병렬 리덕션 같은 병렬 알고리즘의 기반이 됩니다.</p>
+</blockquote>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li><code>shuffle_xor()</code>을 활용한 <strong>XOR 기반 통신 패턴</strong></li>
+<li>병렬 알고리즘을 위한 <strong>버터플라이 네트워크 토폴로지</strong></li>
+<li>\(O(\log n)\) 복잡도의 <strong>트리 기반 병렬 리덕션</strong></li>
+<li>고급 조정을 위한 <strong>조건부 버터플라이 연산</strong></li>
+<li>복잡한 공유 메모리를 대체하는 <strong>하드웨어 최적화 병렬 기본 요소</strong></li>
+</ul>
+<p><code>shuffle_xor</code> 연산은 각 레인이 <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a> 패턴에 따라 다른 레인과 데이터를 교환할 수 있게 합니다:
+\[\Large \text{shuffle_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
+<p>이를 통해 복잡한 병렬 알고리즘이 우아한 버터플라이 통신 패턴으로 변환되어, 명시적 조정 없이 효율적인 트리 리덕션과 정렬 네트워크가 가능합니다.</p>
+<h2 id="1-기본-버터플라이-페어-교환"><a class="header" href="#1-기본-버터플라이-페어-교환">1. 기본 버터플라이 페어 교환</a></h2>
+<h3 id="구성"><a class="header" href="#구성">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
+<li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
+<li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
+<li>데이터 타입: <code>DType.float32</code></li>
+<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="shuffle_xor-개념"><a class="header" href="#shuffle_xor-개념">shuffle_xor 개념</a></h3>
+<p>기존 페어 교환 방식은 복잡한 인덱싱과 조정이 필요합니다:</p>
+<pre><code class="language-mojo"># 기존 방식 - 복잡하고 동기화가 필요
+shared_memory[lane] = input[global_i]
+barrier()
+if lane % 2 == 0:
+    partner = lane + 1
+else:
+    partner = lane - 1
+if partner &lt; WARP_SIZE:
+    swapped_val = shared_memory[partner]
+</code></pre>
+<p><strong>기존 방식의 문제점:</strong></p>
+<ul>
+<li><strong>메모리 오버헤드</strong>: 공유 메모리 할당이 필요</li>
+<li><strong>동기화</strong>: 명시적 배리어가 필요</li>
+<li><strong>복잡한 로직</strong>: 수동 파트너 계산과 경계 검사</li>
+<li><strong>낮은 확장성</strong>: 하드웨어 통신을 활용하지 못함</li>
+</ul>
+<p><code>shuffle_xor()</code>을 사용하면 페어 교환이 우아해집니다:</p>
+<pre><code class="language-mojo"># 버터플라이 XOR 방식 - 간단하고 하드웨어 최적화
+current_val = input[global_i]
+swapped_val = shuffle_xor(current_val, 1)  # 1과 XOR하면 페어가 생성됨
+output[global_i] = swapped_val
+</code></pre>
+<p><strong>shuffle_xor의 장점:</strong></p>
+<ul>
+<li><strong>메모리 오버헤드 제로</strong>: 레지스터 간 직접 통신</li>
+<li><strong>동기화 불필요</strong>: SIMT 실행이 정확성을 보장</li>
+<li><strong>하드웨어 최적화</strong>: 모든 레인에 대해 단일 명령으로 처리</li>
+<li><strong>버터플라이 기반</strong>: 복잡한 병렬 알고리즘의 빌딩 블록</li>
+</ul>
+<h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
+<p><code>shuffle_xor()</code>을 사용하여 인접 페어 간 값을 교환하는 페어 교환을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> XOR 패턴으로 인접 페어를 만들어 값을 교환합니다:
+\[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
+<p>입력 데이터 <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code>을 페어 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>으로 변환하며, 각 페어 <code>(i, i+1)</code>이 XOR 통신으로 값을 교환합니다.</p>
+<pre><code class="language-mojo">
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-shuffle_xor-이해하기"><a class="header" href="#1-shuffle_xor-이해하기">1. <strong>shuffle_xor 이해하기</strong></a></h3>
+<p><code>shuffle_xor(value, mask)</code> 연산은 각 레인이 XOR 마스크만큼 차이나는 레인과 데이터를 교환할 수 있게 합니다. 서로 다른 마스크 값으로 레인 ID를 XOR했을 때 어떤 일이 일어나는지 생각해 보세요.</p>
+<p><strong>탐구할 핵심 질문:</strong></p>
+<ul>
+<li>레인 0이 마스크 1로 XOR하면 어떤 파트너를 얻나요?</li>
+<li>레인 1이 마스크 1로 XOR하면 어떤 파트너를 얻나요?</li>
+<li>패턴이 보이나요?</li>
+</ul>
+<p><strong>힌트</strong>: 처음 몇 개의 레인 ID에 대해 XOR 연산을 직접 해보면 페어링 패턴을 이해할 수 있습니다.</p>
+<h3 id="2-xor-페어-패턴"><a class="header" href="#2-xor-페어-패턴">2. <strong>XOR 페어 패턴</strong></a></h3>
+<p>레인 ID의 이진 표현과 최하위 비트를 뒤집으면 어떻게 되는지 생각해 보세요.</p>
+<p><strong>고려할 질문:</strong></p>
+<ul>
+<li>짝수 레인을 1과 XOR하면 어떻게 되나요?</li>
+<li>홀수 레인을 1과 XOR하면 어떻게 되나요?</li>
+<li>왜 이것이 완벽한 페어를 만드나요?</li>
+</ul>
+<h3 id="3-경계-검사-불필요"><a class="header" href="#3-경계-검사-불필요">3. <strong>경계 검사 불필요</strong></a></h3>
+<p><code>shuffle_down()</code>과 달리 <code>shuffle_xor()</code> 연산은 워프 경계 내에서 유지됩니다. 작은 마스크로의 XOR이 절대로 범위 밖의 레인 ID를 만들지 않는 이유를 생각해 보세요.</p>
+<p><strong>생각해 보세요</strong>: 유효한 레인 ID를 1과 XOR했을 때 나올 수 있는 최대 레인 ID는 얼마인가요?</p>
+</div>
+</details>
+<p><strong>버터플라이 페어 교환 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p26 --pair-swap
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --pair-swap
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
+expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 12.0, 15.0, 14.0, 17.0, 16.0, 19.0, 18.0, 21.0, 20.0, 23.0, 22.0, 25.0, 24.0, 27.0, 26.0, 29.0, 28.0, 31.0, 30.0]
+✅ Butterfly pair swap test passed!
+</code></pre>
+<h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_pair_swap[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Basic butterfly pair swap: Exchange values between adjacent pairs using XOR pattern.
+    Each thread exchanges its value with its XOR-1 neighbor, creating pairs: (0,1), (2,3), (4,5), etc.
+    Uses shuffle_xor(val, 1) to swap values within each pair.
+    This is the foundation of butterfly network communication patterns.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+
+        # Exchange with XOR-1 neighbor using butterfly pattern
+        # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
+        swapped_val = shuffle_xor(current_val, 1)
+
+        # For demonstration, we'll store the swapped value
+        # In real applications, this might be used for sorting, reduction, etc.
+        output[global_i] = swapped_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 풀이는 <code>shuffle_xor()</code>이 XOR 통신 패턴을 통해 완벽한 페어 교환을 어떻게 만드는지 보여줍니다.</p>
+<p><strong>알고리즘 분석:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]              # 각 레인이 자신의 요소를 읽음
+    swapped_val = shuffle_xor(current_val, 1)  # XOR로 페어 교환 생성
+
+    # 교환된 값을 저장
+    output[global_i] = swapped_val
+</code></pre>
+<p><strong>SIMT 실행 상세 분석:</strong></p>
+<pre><code>사이클 1: 모든 레인이 동시에 값을 로드
+  Lane 0: current_val = input[0] = 0
+  Lane 1: current_val = input[1] = 1
+  Lane 2: current_val = input[2] = 2
+  Lane 3: current_val = input[3] = 3
+  ...
+  Lane 31: current_val = input[31] = 31
+
+사이클 2: shuffle_xor(current_val, 1)이 모든 레인에서 실행
+  Lane 0: Lane 1에서 수신 (0⊕1=1) → swapped_val = 1
+  Lane 1: Lane 0에서 수신 (1⊕1=0) → swapped_val = 0
+  Lane 2: Lane 3에서 수신 (2⊕1=3) → swapped_val = 3
+  Lane 3: Lane 2에서 수신 (3⊕1=2) → swapped_val = 2
+  ...
+  Lane 30: Lane 31에서 수신 (30⊕1=31) → swapped_val = 31
+  Lane 31: Lane 30에서 수신 (31⊕1=30) → swapped_val = 30
+
+사이클 3: 결과 저장
+  Lane 0: output[0] = 1
+  Lane 1: output[1] = 0
+  Lane 2: output[2] = 3
+  Lane 3: output[3] = 2
+  ...
+</code></pre>
+<p><strong>수학적 통찰:</strong> XOR 속성을 활용한 완벽한 페어 교환을 구현합니다:
+\[\Large \text{XOR}(i, 1) = \begin{cases}
+i + 1 &amp; \text{if } i \bmod 2 = 0 \\
+i - 1 &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>shuffle_xor이 우월한 이유:</strong></p>
+<ol>
+<li><strong>완벽한 대칭</strong>: 모든 레인이 정확히 하나의 페어에 참여</li>
+<li><strong>조정 불필요</strong>: 모든 페어가 동시에 교환</li>
+<li><strong>하드웨어 최적화</strong>: 워프 전체에 대해 단일 명령으로 처리</li>
+<li><strong>버터플라이 기반</strong>: 복잡한 병렬 알고리즘의 빌딩 블록</li>
+</ol>
+<p><strong>성능 특성:</strong></p>
+<ul>
+<li><strong>지연 시간</strong>: 1 사이클 (하드웨어 레지스터 교환)</li>
+<li><strong>대역폭</strong>: 0 바이트 (메모리 트래픽 없음)</li>
+<li><strong>병렬성</strong>: WARP_SIZE개 레인 모두 동시에 교환</li>
+<li><strong>확장성</strong>: 데이터 크기에 관계없이 \(O(1)\) 복잡도</li>
+</ul>
+</div>
+</details>
+<h2 id="2-버터플라이-병렬-최댓값"><a class="header" href="#2-버터플라이-병렬-최댓값">2. 버터플라이 병렬 최댓값</a></h2>
+<h3 id="구성-1"><a class="header" href="#구성-1">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
+<li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
+<li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
+</ul>
+<h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
+<p>감소하는 offset으로 버터플라이 <code>shuffle_xor</code>을 사용하여 병렬 최댓값 리덕션을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> 트리 리덕션을 통해 모든 워프 레인에서 최댓값을 계산합니다:
+\[\Large \text{max_result} = \max_{i=0}^{\small\text{WARP_SIZE}-1} \text{input}[i]\]</p>
+<p><strong>버터플라이 리덕션 패턴:</strong> XOR 오프셋을 <code>WARP_SIZE/2</code>에서 <code>1</code>까지 절반씩 줄여가며, 통신 범위가 단계마다 반으로 좁아지는 이진 트리를 구성합니다:</p>
+<ul>
+<li><strong>1단계</strong>: <code>WARP_SIZE/2</code> 거리의 레인과 비교 (워프 전체를 포괄)</li>
+<li><strong>2단계</strong>: <code>WARP_SIZE/4</code> 거리의 레인과 비교 (범위를 절반으로 좁힘)</li>
+<li><strong>3단계</strong>: <code>WARP_SIZE/8</code> 거리의 레인과 비교</li>
+<li><strong>4단계</strong>: <code>offset = 1</code>이 될 때까지 계속 절반으로 줄임</li>
+</ul>
+<p>\(\log_2(\text{WARP_SIZE})\) 단계를 거치면 모든 레인이 전역 최댓값을 갖게 됩니다. 이 방식은 모든 <code>WARP_SIZE</code> (32, 64 등)에서 동작합니다.</p>
+<pre><code class="language-mojo">fn butterfly_parallel_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Parallel maximum reduction using butterfly pattern.
+    Uses shuffle_xor with decreasing offsets starting from WARP_SIZE/2 down to 1.
+    Each step reduces the active range by half until all threads have the maximum value.
+    This implements an efficient O(log n) parallel reduction algorithm that works
+    for any WARP_SIZE (32, 64, etc.).
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+
+    # FILL ME IN (roughly 7 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-버터플라이-리덕션-이해하기"><a class="header" href="#1-버터플라이-리덕션-이해하기">1. <strong>버터플라이 리덕션 이해하기</strong></a></h3>
+<p>버터플라이 리덕션은 이진 트리 통신 패턴을 생성합니다. 각 단계에서 문제 크기를 체계적으로 줄이는 방법을 생각해 보세요.</p>
+<p><strong>핵심 질문:</strong></p>
+<ul>
+<li>최대 범위를 커버하려면 시작 offset이 얼마여야 하나요?</li>
+<li>단계 사이에 오프셋을 어떻게 변경해야 하나요?</li>
+<li>언제 리덕션을 멈춰야 하나요?</li>
+</ul>
+<p><strong>힌트</strong>: “버터플라이“라는 이름은 통신 패턴에서 유래합니다 - 작은 예제에 대해 직접 그려보세요.</p>
+<h3 id="2-xor-리덕션-특성"><a class="header" href="#2-xor-리덕션-특성">2. <strong>XOR 리덕션 특성</strong></a></h3>
+<p>XOR은 각 단계에서 겹치지 않는 통신 페어를 생성합니다. 이것이 병렬 리덕션에서 왜 중요한지 생각해 보세요.</p>
+<p><strong>생각해 보세요:</strong></p>
+<ul>
+<li>서로 다른 오프셋으로의 XOR이 어떻게 다른 통신 패턴을 만드나요?</li>
+<li>같은 단계에서 레인들이 왜 서로 간섭하지 않나요?</li>
+<li>XOR이 트리 리덕션에 특히 적합한 이유는 무엇인가요?</li>
+</ul>
+<h3 id="3-최댓값-누적"><a class="header" href="#3-최댓값-누적">3. <strong>최댓값 누적</strong></a></h3>
+<p>각 레인은 자신의 “영역“에서 최댓값의 지식을 점진적으로 쌓아가야 합니다.</p>
+<p><strong>알고리즘 구조:</strong></p>
+<ul>
+<li>자신의 값으로 시작</li>
+<li>각 단계에서 이웃의 값과 비교</li>
+<li>최댓값을 유지하고 계속 진행</li>
+</ul>
+<p><strong>핵심 통찰</strong>: 각 단계 후, “지식의 영역“이 두 배로 확장됩니다.</p>
+<ul>
+<li>마지막 단계 후: 각 레인이 전역 최댓값을 알게 됩니다</li>
+</ul>
+<h3 id="4-이-패턴이-동작하는-이유"><a class="header" href="#4-이-패턴이-동작하는-이유">4. <strong>이 패턴이 동작하는 이유</strong></a></h3>
+<p>버터플라이 리덕션은 \(\log_2(\text{WARP_SIZE})\) 단계 후에 다음을 보장합니다:</p>
+<ul>
+<li><strong>모든 레인</strong>이 <strong>다른 모든 레인의</strong> 값을 간접적으로 확인</li>
+<li><strong>중복 통신 없음</strong>: 각 페어가 단계당 정확히 한 번 교환</li>
+<li><strong>최적 복잡도</strong>: \(O(n)\) 순차 비교 대신 \(O(\log n)\) 단계</li>
+</ul>
+<p><strong>추적 예제</strong> (4개 레인, 값 [3, 1, 7, 2]):</p>
+<pre><code>초기 상태: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
+
+1단계 (offset=2): 0 ↔ 2, 1 ↔ 3
+  Lane 0: max(3, 7) = 7
+  Lane 1: max(1, 2) = 2
+  Lane 2: max(7, 3) = 7
+  Lane 3: max(2, 1) = 2
+
+2단계 (offset=1): 0 ↔ 1, 2 ↔ 3
+  Lane 0: max(7, 2) = 7
+  Lane 1: max(2, 7) = 7
+  Lane 2: max(7, 2) = 7
+  Lane 3: max(2, 7) = 7
+
+결과: 모든 레인이 전역 최댓값 = 7을 가짐
+</code></pre>
+</div>
+</details>
+<p><strong>버터플라이 병렬 최댓값 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p26 --parallel-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --parallel-max
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE:  32
+output: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
+expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0]
+✅ Butterfly parallel max test passed!
+</code></pre>
+<h3 id="솔루션-1"><a class="header" href="#솔루션-1">솔루션</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_parallel_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Parallel maximum reduction using butterfly pattern.
+    Uses shuffle_xor with decreasing offsets (16, 8, 4, 2, 1) to perform tree-based reduction.
+    Each step reduces the active range by half until all threads have the maximum value.
+    This implements an efficient O(log n) parallel reduction algorithm.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+
+    if global_i &lt; size:
+        max_val = input[global_i]
+
+        # Butterfly reduction tree: dynamic for any WARP_SIZE (32, 64, etc.)
+        # Start with half the warp size and reduce by half each step
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            max_val = max(max_val, shuffle_xor(max_val, offset))
+            offset //= 2
+
+        # All threads now have the maximum value across the entire warp
+        output[global_i] = max_val
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 풀이는 <code>shuffle_xor()</code>이 \(O(\log n)\) 복잡도의 효율적인 병렬 리덕션 트리를 어떻게 생성하는지 보여줍니다.</p>
+<p><strong>전체 알고리즘 분석:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    max_val = input[global_i]  # 로컬 값으로 시작
+
+    # 버터플라이 리덕션 트리: 모든 WARP_SIZE에 동적으로 대응
+    offset = WARP_SIZE // 2
+    while offset &gt; 0:
+        max_val = max(max_val, shuffle_xor(max_val, offset))
+        offset //= 2
+
+    output[global_i] = max_val  # 모든 레인이 전역 최댓값을 가짐
+</code></pre>
+<p><strong>버터플라이 실행 추적 (8-레인 예제, 값 [0,2,4,6,8,10,12,1000]):</strong></p>
+<pre><code>초기 상태:
+  Lane 0: max_val = 0,    Lane 1: max_val = 2
+  Lane 2: max_val = 4,    Lane 3: max_val = 6
+  Lane 4: max_val = 8,    Lane 5: max_val = 10
+  Lane 6: max_val = 12,   Lane 7: max_val = 1000
+
+1단계: shuffle_xor(max_val, 4) - 절반 교환
+  Lane 0↔4: max(0,8)=8,     Lane 1↔5: max(2,10)=10
+  Lane 2↔6: max(4,12)=12,   Lane 3↔7: max(6,1000)=1000
+  Lane 4↔0: max(8,0)=8,     Lane 5↔1: max(10,2)=10
+  Lane 6↔2: max(12,4)=12,   Lane 7↔3: max(1000,6)=1000
+
+2단계: shuffle_xor(max_val, 2) - 1/4 교환
+  Lane 0↔2: max(8,12)=12,   Lane 1↔3: max(10,1000)=1000
+  Lane 2↔0: max(12,8)=12,   Lane 3↔1: max(1000,10)=1000
+  Lane 4↔6: max(8,12)=12,   Lane 5↔7: max(10,1000)=1000
+  Lane 6↔4: max(12,8)=12,   Lane 7↔5: max(1000,10)=1000
+
+3단계: shuffle_xor(max_val, 1) - 페어 교환
+  Lane 0↔1: max(12,1000)=1000,  Lane 1↔0: max(1000,12)=1000
+  Lane 2↔3: max(12,1000)=1000,  Lane 3↔2: max(1000,12)=1000
+  Lane 4↔5: max(12,1000)=1000,  Lane 5↔4: max(1000,12)=1000
+  Lane 6↔7: max(12,1000)=1000,  Lane 7↔6: max(1000,12)=1000
+
+최종 결과: 모든 레인의 max_val = 1000
+</code></pre>
+<p><strong>수학적 통찰:</strong> 버터플라이 통신으로 병렬 리덕션 연산자를 구현합니다:
+\[\Large \text{Reduce}(\oplus, [a_0, a_1, \ldots, a_{n-1}]) = a_0 \oplus a_1 \oplus \cdots \oplus a_{n-1}\]</p>
+<p>여기서 \(\oplus\)는 <code>max</code> 연산이며, 버터플라이 패턴이 최적 \(O(\log n)\) 복잡도를 보장합니다.</p>
+<p><strong>버터플라이 리덕션이 우월한 이유:</strong></p>
+<ol>
+<li><strong>로그 복잡도</strong>: 순차 리덕션의 \(O(n)\)에 비해 \(O(\log n)\)</li>
+<li><strong>완벽한 부하 분산</strong>: 모든 레인이 각 단계에서 동등하게 참여</li>
+<li><strong>메모리 병목 없음</strong>: 순수 레지스터 간 통신</li>
+<li><strong>하드웨어 최적화</strong>: GPU 버터플라이 네트워크에 직접 매핑</li>
+</ol>
+<p><strong>성능 특성:</strong></p>
+<ul>
+<li><strong>단계 수</strong>: \(\log_2(\text{WARP_SIZE})\) (예: 32-스레드 워프는 5단계, 64-스레드 워프는 6단계)</li>
+<li><strong>단계당 지연 시간</strong>: 1 사이클 (레지스터 교환 + 비교)</li>
+<li><strong>총 지연 시간</strong>: 순차 방식의 \((\text{WARP_SIZE}-1)\) 사이클 대비 \(\log_2(\text{WARP_SIZE})\) 사이클</li>
+<li><strong>병렬성</strong>: 알고리즘 전체에서 모든 레인이 활성 상태</li>
+</ul>
+</div>
+</details>
+<h2 id="3-버터플라이-조건부-최댓값"><a class="header" href="#3-버터플라이-조건부-최댓값">3. 버터플라이 조건부 최댓값</a></h2>
+<h3 id="구성-2"><a class="header" href="#구성-2">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>SIZE_2 = 64</code> (멀티 블록 시나리오)</li>
+<li>그리드 구성: <code>BLOCKS_PER_GRID_2 = (2, 1)</code> 그리드당 블록 수</li>
+<li>블록 구성: <code>THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)</code> 블록당 스레드 수</li>
+</ul>
+<h3 id="완성할-코드-2"><a class="header" href="#완성할-코드-2">완성할 코드</a></h3>
+<p>짝수 레인은 최댓값을, 홀수 레인은 최솟값을 저장하는 조건부 버터플라이 리덕션을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> 최댓값과 최솟값 모두에 대해 버터플라이 리덕션을 수행한 후, 레인 홀짝에 따라 조건부로 출력합니다:
+\[\Large \text{output}[i] = \begin{cases}
+\max_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 0 \\
+\min_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 1
+\end{cases}\]</p>
+<p><strong>이중 리덕션 패턴:</strong> 버터플라이 트리를 통해 최댓값과 최솟값을 동시에 추적한 후, 레인 ID 홀짝에 따라 조건부로 출력합니다. 이는 버터플라이 패턴이 복잡한 다중 값 리덕션으로 어떻게 확장되는지를 보여줍니다.</p>
+<pre><code class="language-mojo">comptime SIZE_2 = 64
+comptime BLOCKS_PER_GRID_2 = (2, 1)
+comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
+comptime layout_2 = Layout.row_major(SIZE_2)
+
+
+fn butterfly_conditional_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Conditional butterfly maximum: Perform butterfly max reduction, but only store result
+    in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
+    Demonstrates conditional logic combined with butterfly communication patterns.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = lane_id()
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+        min_val = current_val
+
+        # FILL ME IN (roughly 11 lines)
+
+
+</code></pre>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-이중-추적-버터플라이-리덕션"><a class="header" href="#1-이중-추적-버터플라이-리덕션">1. <strong>이중 추적 버터플라이 리덕션</strong></a></h3>
+<p>이 퍼즐은 버터플라이 트리를 통해 두 가지 다른 값을 동시에 추적해야 합니다. 여러 리덕션을 병렬로 실행하는 방법을 생각해 보세요.</p>
+<p><strong>핵심 질문:</strong></p>
+<ul>
+<li>리덕션 과정에서 최댓값과 최솟값을 어떻게 동시에 유지할 수 있나요?</li>
+<li>두 연산에 같은 버터플라이 패턴을 사용할 수 있나요?</li>
+<li>어떤 변수를 추적해야 하나요?</li>
+</ul>
+<h3 id="2-조건부-출력-로직"><a class="header" href="#2-조건부-출력-로직">2. <strong>조건부 출력 로직</strong></a></h3>
+<p>버터플라이 리덕션을 완료한 후, 레인 홀짝에 따라 다른 값을 출력해야 합니다.</p>
+<p><strong>고려할 점:</strong></p>
+<ul>
+<li>레인이 짝수인지 홀수인지 어떻게 판별하나요?</li>
+<li>어떤 레인이 최댓값을, 어떤 레인이 최솟값을 출력해야 하나요?</li>
+<li>레인 ID에 어떻게 접근하나요?</li>
+</ul>
+<h3 id="3-min과-max-동시-버터플라이-리덕션"><a class="header" href="#3-min과-max-동시-버터플라이-리덕션">3. <strong>min과 max 동시 버터플라이 리덕션</strong></a></h3>
+<p>이 과제의 핵심은 같은 버터플라이 통신 패턴으로 min과 max를 효율적으로 병렬 계산하는 것입니다.</p>
+<p><strong>생각해 보세요:</strong></p>
+<ul>
+<li>min과 max에 별도의 셔플 연산이 필요한가요?</li>
+<li>두 연산에 같은 이웃 값을 재사용할 수 있나요?</li>
+<li>두 리덕션 모두 올바르게 완료되려면 어떻게 해야 하나요?</li>
+</ul>
+<h3 id="4-멀티-블록-경계-고려사항"><a class="header" href="#4-멀티-블록-경계-고려사항">4. <strong>멀티 블록 경계 고려사항</strong></a></h3>
+<p>이 퍼즐은 여러 블록을 사용합니다. 이것이 리덕션 범위에 어떤 영향을 미치는지 생각해 보세요.</p>
+<p><strong>중요한 고려사항:</strong></p>
+<ul>
+<li>각 버터플라이 리덕션의 범위는 어디까지인가요?</li>
+<li>블록 구조가 레인 번호 매기기에 어떤 영향을 미치나요?</li>
+<li>전역 min/max를 계산하나요, 블록별 min/max를 계산하나요?</li>
+</ul>
+</div>
+</details>
+<p><strong>버터플라이 조건부 최댓값 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p26 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p26 --conditional-max
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p26 --conditional-max
+</code></pre>
+  </div>
+</div>
+<p>풀었을 때의 예상 출력:</p>
+<pre><code class="language-txt">WARP_SIZE:  32
+SIZE_2:  64
+output: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0, 63.0, 32.0]
+✅ Butterfly conditional max test passed!
+</code></pre>
+<h3 id="솔루션-2"><a class="header" href="#솔루션-2">솔루션</a></h3>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">fn butterfly_conditional_max[
+    layout: Layout, size: Int
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+):
+    """
+    Conditional butterfly maximum: Perform butterfly max reduction, but only store result
+    in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
+    Demonstrates conditional logic combined with butterfly communication patterns.
+    """
+    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    lane = lane_id()
+
+    if global_i &lt; size:
+        current_val = input[global_i]
+        min_val = current_val
+
+        # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
+        offset = WARP_SIZE // 2
+        while offset &gt; 0:
+            neighbor_val = shuffle_xor(current_val, offset)
+            current_val = max(current_val, neighbor_val)
+
+            min_neighbor_val = shuffle_xor(min_val, offset)
+            min_val = min(min_val, min_neighbor_val)
+
+            offset //= 2
+
+        # Conditional output: max for even lanes, min for odd lanes
+        if lane % 2 == 0:
+            output[global_i] = current_val  # Maximum
+        else:
+            output[global_i] = min_val  # Minimum
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>이 풀이는 이중 추적과 조건부 출력을 사용하는 고급 버터플라이 리덕션을 보여줍니다.</p>
+<p><strong>전체 알고리즘 분석:</strong></p>
+<pre><code class="language-mojo">if global_i &lt; size:
+    current_val = input[global_i]
+    min_val = current_val  # 최솟값을 별도로 추적
+
+    # max와 min 동시 버터플라이 리덕션 (log_2(WARP_SIZE) 단계)
+    offset = WARP_SIZE // 2
+    while offset &gt; 0:
+        neighbor_val = shuffle_xor(current_val, offset)
+        current_val = max(current_val, neighbor_val)    # Max 리덕션
+
+        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_val = min(min_val, min_neighbor_val)        # Min 리덕션
+
+        offset //= 2
+
+    # 레인 홀짝에 따른 조건부 출력
+    if lane % 2 == 0:
+        output[global_i] = current_val  # 짝수 레인: 최댓값
+    else:
+        output[global_i] = min_val      # 홀수 레인: 최솟값
+</code></pre>
+<p><strong>이중 리덕션 실행 추적 (4-레인 예제, 값 [3, 1, 7, 2]):</strong></p>
+<pre><code>초기 상태:
+  Lane 0: current_val=3, min_val=3
+  Lane 1: current_val=1, min_val=1
+  Lane 2: current_val=7, min_val=7
+  Lane 3: current_val=2, min_val=2
+
+1단계: shuffle_xor(current_val, 2)와 shuffle_xor(min_val, 2) - 절반 교환
+  Lane 0↔2: max_neighbor=7, min_neighbor=7 → current_val=max(3,7)=7, min_val=min(3,7)=3
+  Lane 1↔3: max_neighbor=2, min_neighbor=2 → current_val=max(1,2)=2, min_val=min(1,2)=1
+  Lane 2↔0: max_neighbor=3, min_neighbor=3 → current_val=max(7,3)=7, min_val=min(7,3)=3
+  Lane 3↔1: max_neighbor=1, min_neighbor=1 → current_val=max(2,1)=2, min_val=min(2,1)=1
+
+2단계: shuffle_xor(current_val, 1)와 shuffle_xor(min_val, 1) - 페어 교환
+  Lane 0↔1: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
+  Lane 1↔0: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
+  Lane 2↔3: max_neighbor=2, min_neighbor=1 → current_val=max(7,2)=7, min_val=min(3,1)=1
+  Lane 3↔2: max_neighbor=7, min_neighbor=3 → current_val=max(2,7)=7, min_val=min(1,3)=1
+
+최종 결과: 모든 레인이 current_val=7 (전역 max)과 min_val=1 (전역 min)을 가짐
+</code></pre>
+<p><strong>동적 알고리즘</strong> (모든 WARP_SIZE에서 동작):</p>
+<pre><code class="language-mojo">offset = WARP_SIZE // 2
+while offset &gt; 0:
+    neighbor_val = shuffle_xor(current_val, offset)
+    current_val = max(current_val, neighbor_val)
+
+    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_val = min(min_val, min_neighbor_val)
+
+    offset //= 2
+</code></pre>
+<p><strong>수학적 통찰:</strong> 조건부 디멀티플렉싱을 사용하는 이중 병렬 리덕션을 구현합니다:
+\[\Large \begin{align}
+\text{max_result} &amp;= \max_{i=0}^{n-1} \text{input}[i] \\
+\text{min_result} &amp;= \min_{i=0}^{n-1} \text{input}[i] \\
+\text{output}[i] &amp;= \text{lane_parity}(i) \; \text{?} \; \text{min_result} : \text{max_result}
+\end{align}\]</p>
+<p><strong>이중 버터플라이 리덕션이 동작하는 이유:</strong></p>
+<ol>
+<li><strong>독립적 리덕션</strong>: Max와 min 리덕션은 수학적으로 독립</li>
+<li><strong>병렬 실행</strong>: 둘 다 같은 버터플라이 통신 패턴을 사용 가능</li>
+<li><strong>통신 공유</strong>: 같은 셔플 연산이 두 리덕션 모두에 활용</li>
+<li><strong>조건부 출력</strong>: 레인 홀짝이 어떤 결과를 출력할지 결정</li>
+</ol>
+<p><strong>성능 특성:</strong></p>
+<ul>
+<li><strong>통신 단계</strong>: \(\log_2(\text{WARP_SIZE})\) (단일 리덕션과 동일)</li>
+<li><strong>단계당 연산</strong>: 단일 리덕션의 1개 대비 2개 연산 (max + min)</li>
+<li><strong>메모리 효율성</strong>: 복잡한 공유 메모리 방식 대비 스레드당 레지스터 2개</li>
+<li><strong>출력 유연성</strong>: 서로 다른 레인이 다른 리덕션 결과를 출력 가능</li>
+</ul>
+</div>
+</details>
+<h2 id="요약"><a class="header" href="#요약">요약</a></h2>
+<p><code>shuffle_xor()</code> 기본 요소는 효율적인 병렬 알고리즘의 기반이 되는 강력한 버터플라이 통신 패턴을 가능하게 합니다. 세 가지 문제를 통해 다음을 배웠습니다:</p>
+<h3 id="핵심-버터플라이-패턴"><a class="header" href="#핵심-버터플라이-패턴"><strong>핵심 버터플라이 패턴</strong></a></h3>
+<ol>
+<li>
+<p><strong>페어 교환</strong> (<code>shuffle_xor(value, 1)</code>):</p>
+<ul>
+<li>완벽한 인접 페어 생성: (0,1), (2,3), (4,5), …</li>
+<li>메모리 오버헤드 제로의 \(O(1)\) 복잡도</li>
+<li>정렬 네트워크와 데이터 재배치의 기반</li>
+</ul>
+</li>
+<li>
+<p><strong>트리 리덕션</strong> (동적 offset: <code>WARP_SIZE/2</code> → <code>1</code>):</p>
+<ul>
+<li>로그 병렬 리덕션: 순차의 \(O(n)\) 대비 \(O(\log n)\)</li>
+<li>모든 결합 연산에 적용 가능 (max, min, sum 등)</li>
+<li>모든 워프 레인에 걸쳐 최적의 부하 분산</li>
+</ul>
+</li>
+<li>
+<p><strong>조건부 다중 리덕션</strong> (이중 추적 + 레인 홀짝):</p>
+<ul>
+<li>여러 리덕션을 동시에 병렬 수행</li>
+<li>스레드 특성에 따른 조건부 출력</li>
+<li>명시적 동기화 없는 고급 조정</li>
+</ul>
+</li>
+</ol>
+<h3 id="핵심-알고리즘-통찰"><a class="header" href="#핵심-알고리즘-통찰"><strong>핵심 알고리즘 통찰</strong></a></h3>
+<p><strong>XOR 통신 특성:</strong></p>
+<ul>
+<li><code>shuffle_xor(value, mask)</code>가 대칭적이고 겹치지 않는 페어를 생성</li>
+<li>각 마스크가 고유한 통신 토폴로지를 생성</li>
+<li>이진 XOR 패턴에서 버터플라이 네트워크가 자연스럽게 도출</li>
+</ul>
+<p><strong>동적 알고리즘 설계:</strong></p>
+<pre><code class="language-mojo">offset = WARP_SIZE // 2
+while offset &gt; 0:
+    neighbor_val = shuffle_xor(current_val, offset)
+    current_val = operation(current_val, neighbor_val)
+    offset //= 2
+</code></pre>
+<p><strong>성능 이점:</strong></p>
+<ul>
+<li><strong>하드웨어 최적화</strong>: 레지스터 간 직접 통신</li>
+<li><strong>동기화 불필요</strong>: SIMT 실행이 정확성을 보장</li>
+<li><strong>확장 가능한 복잡도</strong>: 모든 WARP_SIZE (32, 64 등)에서 \(O(\log n)\)</li>
+<li><strong>메모리 효율성</strong>: 공유 메모리 불필요</li>
+</ul>
+<h3 id="실용적-활용"><a class="header" href="#실용적-활용"><strong>실용적 활용</strong></a></h3>
+<p>이 버터플라이 패턴들의 기반이 되는 분야:</p>
+<ul>
+<li><strong>병렬 리덕션</strong>: 합계, max, min, 논리 연산</li>
+<li><strong>누적 합/스캔 연산</strong>: 누적 합, 병렬 정렬</li>
+<li><strong>FFT 알고리즘</strong>: 신호 처리와 합성곱</li>
+<li><strong>Bitonic 정렬</strong>: 병렬 정렬 네트워크</li>
+<li><strong>그래프 알고리즘</strong>: 트리 순회와 연결성</li>
+</ul>
+<p><code>shuffle_xor()</code> 기본 요소는 복잡한 병렬 조정을 우아하고 하드웨어 최적화된 통신 패턴으로 변환하며, 다양한 GPU 아키텍처에서 효율적으로 확장됩니다.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_26/puzzle_26.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_26/warp_prefix_sum.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_26/puzzle_26.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_26/warp_prefix_sum.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>

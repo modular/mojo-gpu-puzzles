@@ -59,9 +59,31 @@
         <link rel="stylesheet" href="theme/css/custom.css">
         <link rel="stylesheet" href="theme/css/highlight.css">
         <link rel="stylesheet" href="theme/css/tabs.css">
+        <link rel="stylesheet" href="theme/css/language-switcher.css">
 
-        <!-- MathJax -->
-        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
 
         <!-- Provide site root and default themes to javascript -->
         <script>
@@ -157,6 +179,7 @@
                     <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                         <i class="fa fa-search"></i>
                     </button>
+                    <div id="language-switcher-placeholder"></div>
                     <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
                         <i class="theme-toggle"></i>
                     </button>
@@ -16566,7 +16589,7 @@ Cycle 3: Difference computation (lanes 0-30 only)
   Lane 31: output[31] = 0 (boundary condition)
 </code></pre>
 <p><strong>Mathematical insight:</strong> This implements the discrete derivative operator \(D\):
-\[\Large D<a href="puzzle_25/i">f</a> = f(i+1) - f(i)\]</p>
+\[\Large D\lbrack f\rbrack(i) = f(i+1) - f(i)\]</p>
 <p>For our quadratic input \(f(i) = i^2\):
 \[\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\]</p>
 <p><strong>Why shuffle_down is superior:</strong></p>
@@ -18000,7 +18023,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <li>After final step: Each lane knows global maximum</li>
 </ul>
 <h3 id="4-why-this-pattern-works"><a class="header" href="#4-why-this-pattern-works">4. <strong>Why this pattern works</strong></a></h3>
-<p>The butterfly reduction guarantees that after \(\log_2(\text{WARP\_SIZE})\) steps:</p>
+<p>The butterfly reduction guarantees that after \(\log_2(\text{WARP_SIZE})\) steps:</p>
 <ul>
 <li><strong>Every lane</strong> has seen <strong>every other lane’s</strong> value indirectly</li>
 <li><strong>No redundant communication</strong>: Each pair exchanges exactly once per step</li>
@@ -18962,12 +18985,12 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot)
 </code></pre>
 <p><strong>Mathematical insight:</strong> This implements parallel partitioning with dual warp primitives:
 \[\Large \begin{align}
-\text{left\_pos}[i] &amp;= \text{prefix\<em>sum}</em>{\text{exclusive}}(\text{predicate\_left}[i]) \\
-\text{right\_pos}[i] &amp;= \text{prefix\<em>sum}</em>{\text{exclusive}}(\text{predicate\_right}[i]) \\
-\text{left\_total} &amp;= \text{butterfly\_reduce}(\text{predicate\_left}) \\
-\text{final\_pos}[i] &amp;= \begin{cases}
-\text{left\_pos}[i] &amp; \text{if } \text{input}[i] &lt; \text{pivot} \\
-\text{left\_total} + \text{right\_pos}[i] &amp; \text{if } \text{input}[i] \geq \text{pivot}
+\text{left_pos}[i] &amp;= \text{prefix_sum}_{\text{exclusive}}(\text{predicate_left}[i]) \\
+\text{right_pos}[i] &amp;= \text{prefix_sum}_{\text{exclusive}}(\text{predicate_right}[i]) \\
+\text{left_total} &amp;= \text{butterfly_reduce}(\text{predicate_left}) \\
+\text{final_pos}[i] &amp;= \begin{cases}
+\text{left_pos}[i] &amp; \text{if } \text{input}[i] &lt; \text{pivot} \\
+\text{left_total} + \text{right_pos}[i] &amp; \text{if } \text{input}[i] \geq \text{pivot}
 \end{cases}
 \end{align}\]</p>
 <p><strong>Why this multi-primitive approach works:</strong></p>
@@ -26266,13 +26289,13 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </details>
 <h2 id="the-complete-gpu-hierarchy"><a class="header" href="#the-complete-gpu-hierarchy">The complete GPU hierarchy</a></h2>
 <p>Congratulations! By completing this puzzle, you’ve learned <strong>the complete GPU programming stack</strong>:</p>
-<p>✅ <strong>Thread-level programming</strong>: Individual execution units
-✅ <strong><a href="puzzle_34/../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT coordination
-✅ <strong><a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level programming</a></strong>: Multi-warp coordination and shared memory
-✅ <strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs
-✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization primitives
-✅ <strong>Scale algorithms beyond single-block limitations</strong> using cluster APIs
-✅ <strong>Implement hierarchical algorithms</strong> combining warp + block + cluster coordination
+<p>✅ <strong>Thread-level programming</strong>: Individual execution units</br>
+✅ <strong><a href="puzzle_34/../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT coordination</br>
+✅ <strong><a href="puzzle_34/../puzzle_27/puzzle_27.html">Block-level programming</a></strong>: Multi-warp coordination and shared memory</br>
+✅ <strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs</br>
+✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization primitives</br>
+✅ <strong>Scale algorithms beyond single-block limitations</strong> using cluster APIs</br>
+✅ <strong>Implement hierarchical algorithms</strong> combining warp + block + cluster coordination</br>
 ✅ <strong>Utilize next-generation GPU hardware</strong> with SM90+ cluster programming</p>
 <h2 id="real-world-applications-2"><a class="header" href="#real-world-applications-2">Real-world applications</a></h2>
 <p>The hierarchical coordination patterns from this puzzle are fundamental to:</p>
@@ -26337,6 +26360,7 @@ cluster_wait()    # Blocking: wait for all blocks to complete
         <script src="theme/solution.js"></script>
         <script src="theme/init-amplitude.js"></script>
         <script src="theme/tabs.js"></script>
+        <script src="theme/language-switcher.js"></script>
 
         <script>
         window.addEventListener('load', function() {

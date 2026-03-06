@@ -1,0 +1,733 @@
+<!DOCTYPE HTML>
+<html lang="ko" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Puzzle 28: 비동기 메모리 연산과 복사 중첩 - Mojo 🔥 GPU 퍼즐</title>
+
+
+        <!-- Custom HTML head -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+        
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+        
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" id="theme">
+        
+        <!-- Additional meta tags -->
+        <meta property="og:title" content="Mojo🔥 GPU Puzzles">
+        <meta property="og:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta property="og:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <meta property="og:url" content="https://puzzles.modular.com/">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:image:alt" content="Mojo GPU Puzzles Logo">
+        <meta name="twitter:title" content="Mojo🔥 GPU Puzzles">
+        <meta name="twitter:description" content="Learn GPU Programming in Mojo🔥 Through Interactive Puzzles">
+        <meta name="twitter:image" content="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+        <link rel="icon" type="image/png" href="https://puzzles.modular.com/puzzles_images/puzzle-mark.png">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/css/custom.css">
+        <link rel="stylesheet" href="../theme/css/highlight.css">
+        <link rel="stylesheet" href="../theme/css/tabs.css">
+        <link rel="stylesheet" href="../theme/css/language-switcher.css">
+
+        <!--
+            MathJax locale fix: In non-English locales (e.g. lang="ko"), browsers apply CJK
+            font fallback to MathJax's font measurement div, causing incorrect bounding box
+            widths for long formulas. Fix: temporarily set lang="en" on <html> during
+            MathJax's entire startup, then restore the original lang. Individual .MathJax
+            elements keep lang="en" to prevent visual CJK font fallback.
+        -->
+        <script type="text/x-mathjax-config">
+            (function() {
+                var html = document.documentElement;
+                var origLang = html.getAttribute('lang');
+                if (origLang && origLang !== 'en') {
+                    html.setAttribute('lang', 'en');
+                    MathJax.Hub.Register.StartupHook("End", function() {
+                        html.setAttribute('lang', origLang);
+                        document.querySelectorAll('.MathJax, .MathJax_Display').forEach(function(el) {
+                            el.setAttribute('lang', 'en');
+                        });
+                    });
+                }
+            })();
+        </script>
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "ayu";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <button class="collapse-sidebar" aria-label="Collapse sidebar"></button>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Toggle color mode and talk to us buttons -->
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!event.target.matches('.theme-toggle')) return;
+                event.preventDefault();
+                const prevTheme = theme;
+                html.classList.remove(theme);
+                const newTheme = prevTheme === 'ayu' ? 'light' : 'ayu'
+                html.classList.add(newTheme);
+                theme = newTheme
+                localStorage.setItem('mdbook-theme', theme);
+            }, false);
+            document.addEventListener('click', function() {
+                if (!event.target.matches('.log-in')) return;
+                event.preventDefault();
+                window.amplitude.logEvent('LoginClickedFromPuzzles');
+                window.open('https://developer.modular.com', '_blank');
+            });
+        </script>
+
+        <div class="page-header">
+            <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                <i class="fa fa-bars"></i>
+            </label>
+            <div id="menu-bar" class="menu-bar">
+                <div class="left-buttons">
+                    <div class="logo-section">
+                        <a class="desktop-logo-link" href="https://modular.com"></a>
+                        <a class="mobile-logo-link" href="https://builds.modular.com"></a>
+                        <div class="slash">/</div>
+                        <a class="internal-link" ref="/">Puzzles</a>
+                    </div>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Dark</button></li>
+                        </ul>
+                    </div>
+                <div class="right-buttons">
+                    <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <div id="language-switcher-placeholder"></div>
+                    <button id="theme-toggle" class="icon-button theme-toggle-btn" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="false" aria-expanded="false">
+                        <i class="theme-toggle"></i>
+                    </button>
+                    <a class="menu-btn print" href="../print.html" title="Print this book" aria-label="Print this book">
+                        <i id="print-button" class="fa fa-print"></i>
+                    </a>
+                    <a class="menu-btn" href="https://github.com/modular/mojo-gpu-puzzles" title="Git repository" aria-label="Git repository">
+                        <i id="git-repository-button" class="fa fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+            <div class="page">
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<h1 id="puzzle-28-비동기-메모리-연산과-복사-중첩"><a class="header" href="#puzzle-28-비동기-메모리-연산과-복사-중첩">Puzzle 28: 비동기 메모리 연산과 복사 중첩</a></h1>
+<p><strong>GPU 메모리 병목 현상:</strong> 실제 GPU 알고리즘 대부분은 좌절스러운 벽에 부딪힙니다 - 연산 능력이 아니라 <strong>메모리 대역폭</strong>에 의해 제한된다는 것입니다. 비싼 GPU 코어가 느린 DRAM에서 데이터가 도착하기를 기다리며 놀고 있는 것이죠.</p>
+<p>GPU 프로그래밍에서 흔히 볼 수 있는 상황을 살펴보겠습니다:</p>
+<pre><code class="language-mojo"># 성능의 적 - 순차적 메모리 연산
+load_input_tile()     # ← DRAM 대기 500 사이클
+load_kernel_data()    # ← 또 100 사이클 대기
+barrier()             # ← 모든 스레드가 유휴 대기
+compute()             # ← 드디어 실제 연산 50 사이클
+# 총: 650 사이클, 연산 활용률 겨우 7.7%!
+</code></pre>
+<p><strong>이렇게 할 수 있다면 어떨까요?</strong></p>
+<pre><code class="language-mojo"># 성능 개선 - 중첩 연산
+launch_async_load()   # ← 백그라운드에서 500 사이클 전송 시작
+load_small_data()     # ← 대기 중 유용한 작업 100 사이클
+wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
+# 총: ~550 사이클, 45% 향상!
+</code></pre>
+<p><strong>이것이 비동기 메모리 연산의 위력입니다</strong> - 느린 알고리즘과 GPU의 잠재력을 최대한 발휘하는 알고리즘의 차이를 만들어 냅니다.</p>
+<h2 id="왜-중요한가"><a class="header" href="#왜-중요한가">왜 중요한가</a></h2>
+<p>이 퍼즐에서는 <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>의 메모리 바운드 1D 합성곱을 <strong>연산 뒤에 메모리 지연 시간을 숨기는</strong> 고성능 구현으로 변환합니다. 단순한 학술적 연습이 아닙니다 - 이 패턴들은 다음 분야의 핵심입니다:</p>
+<ul>
+<li><strong>딥러닝</strong>: 가중치와 활성화값의 효율적 로딩</li>
+<li><strong>과학 연산</strong>: 스텐실 연산에서 데이터 전송 중첩</li>
+<li><strong>이미지 처리</strong>: 메모리 계층 구조를 통한 대규모 데이터셋 스트리밍</li>
+<li><strong>모든 메모리 바운드 알고리즘</strong>: 대기 시간을 생산적인 작업으로 전환</li>
+</ul>
+<h2 id="사전-준비"><a class="header" href="#사전-준비">사전 준비</a></h2>
+<p>시작하기 전에 다음 내용을 확실히 이해하고 있어야 합니다:</p>
+<p><strong>필수 GPU 프로그래밍 개념:</strong></p>
+<ul>
+<li><strong>공유 메모리 프로그래밍</strong> (<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>) - matmul 패턴을 확장합니다</li>
+<li><strong>메모리 병합(coalescing)</strong> (<a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>) - 최적의 비동기 전송에 필수</li>
+<li><strong>타일 기반 처리</strong> (<a href="../puzzle_23/puzzle_23.html">Puzzle 23</a>) - 이 최적화의 기반</li>
+</ul>
+<p><strong>하드웨어 이해:</strong></p>
+<ul>
+<li>GPU 메모리 계층 구조 (DRAM → 공유 메모리 → 레지스터)</li>
+<li>스레드 블록 구성과 동기화</li>
+<li>메모리 지연 시간 vs. 대역폭에 대한 기본 이해</li>
+</ul>
+<p><strong>API 숙지:</strong> <a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<blockquote>
+<p><strong>⚠️ 하드웨어 호환성 참고:</strong> 이 퍼즐은 최신 GPU 아키텍처가 필요할 수 있는 비동기 복사 연산(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>)을 사용합니다. <code>.async</code> 수정자나 지원되지 않는 연산 관련 컴파일 오류가 발생하면 해당 GPU가 이 기능을 지원하지 않는 것일 수 있습니다. 그래도 메모리 최적화 패턴을 이해하는 데 개념은 여전히 유용합니다.</p>
+<p><strong>GPU 컴퓨팅 능력 확인:</strong></p>
+<pre><code class="language-bash">nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
+</code></pre>
+<ul>
+<li><strong>SM_70 이상</strong> (예: V100, T4, A10G, RTX 20+ 시리즈): 기본 비동기 복사 지원</li>
+<li><strong>SM_80 이상</strong> (예: A100, RTX 30+ 시리즈): 전체 비동기 복사 기능</li>
+<li><strong>SM_90 이상</strong> (예: H100, RTX 40+ 시리즈): 고급 TMA 연산 지원</li>
+</ul>
+</blockquote>
+<h2 id="학습-내용"><a class="header" href="#학습-내용">학습 내용</a></h2>
+<p>이 퍼즐을 마치면 다음을 직접 경험하게 됩니다:</p>
+<h3 id="핵심-기법"><a class="header" href="#핵심-기법"><strong>핵심 기법</strong></a></h3>
+<ul>
+<li><strong>비동기 복사 기본 요소</strong>: 백그라운드 DRAM→SRAM 전송 시작</li>
+<li><strong>지연 시간 은폐(latency hiding)</strong>: 비용이 큰 메모리 연산을 유용한 연산과 중첩</li>
+<li><strong>스레드 레이아웃 최적화</strong>: 메모리 접근 패턴을 하드웨어에 맞추기</li>
+<li><strong>파이프라인 프로그래밍</strong>: 메모리 활용을 극대화하도록 알고리즘 구조화</li>
+</ul>
+<h3 id="주요-api"><a class="header" href="#주요-api"><strong>주요 API</strong></a></h3>
+<p><a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16의 관용적 matmul</a>에서 소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:</p>
+<ul>
+<li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: 전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>: 공유 메모리 접근 전 전송 완료 동기화</li>
+</ul>
+<p><strong>Puzzle 16과 다른 점은?</strong> Puzzle 16에서는 matmul의 깔끔한 타일 로딩을 위해 비동기 복사를 사용했다면, 이 퍼즐은 <strong>지연 시간 은폐</strong>에 집중합니다 - 비용이 큰 메모리 연산과 유용한 연산 작업을 중첩하도록 알고리즘을 구조화하는 것입니다.</p>
+<h3 id="성능-효과"><a class="header" href="#성능-효과"><strong>성능 효과</strong></a></h3>
+<p>이 기법들은 다음과 같은 방식으로 메모리 바운드 알고리즘의 <strong>성능을 크게 향상</strong>시킵니다:</p>
+<ul>
+<li><strong>DRAM 지연 시간 숨기기</strong>: 유휴 대기를 생산적인 연산 시간으로 전환</li>
+<li><strong>대역폭 극대화</strong>: 최적의 메모리 접근 패턴으로 캐시 미스 방지</li>
+<li><strong>파이프라인 효율</strong>: 메모리 전송이 병렬로 일어나는 동안 연산 유닛을 바쁘게 유지</li>
+</ul>
+<blockquote>
+<p><strong>비동기 복사 연산이란?</strong> <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution">비동기 복사 연산</a>은 GPU 블록이 다른 작업을 계속하는 동안 백그라운드에서 실행되는 메모리 전송을 시작할 수 있게 해줍니다. 이를 통해 연산과 메모리 이동을 중첩할 수 있으며, 이는 메모리 바운드 알고리즘의 근본적인 최적화 기법입니다.</p>
+</blockquote>
+<p>💡 <strong>성공 팁</strong>: 이것을 <strong>GPU 메모리를 위한 파이프라인 프로그래밍</strong>으로 생각하세요 - 단계를 중첩하고, 지연 시간을 숨기고, 처리량을 극대화합니다. 목표는 데이터가 백그라운드에서 이동하는 동안 비싼 연산 유닛을 바쁘게 유지하는 것입니다.</p>
+<h2 id="헤일로-영역-이해하기"><a class="header" href="#헤일로-영역-이해하기">헤일로 영역 이해하기</a></h2>
+<p>비동기 복사 연산으로 들어가기 전에, 합성곱과 같은 스텐실 연산의 타일 기반 처리에 필수적인 <strong>헤일로 영역</strong>(ghost cell 또는 guard cell이라고도 함)을 이해하는 것이 중요합니다.</p>
+<h3 id="헤일로-영역이란"><a class="header" href="#헤일로-영역이란">헤일로 영역이란?</a></h3>
+<p><strong>헤일로 영역</strong>은 스텐실 연산에 필요한 이웃 데이터를 제공하기 위해 처리 타일의 경계를 넘어 확장되는 <strong>추가 요소</strong>입니다. 타일 가장자리 근처의 요소를 처리할 때, 스텐실 연산은 인접 타일의 데이터에 접근해야 합니다.</p>
+<h3 id="헤일로-영역이-필요한-이유"><a class="header" href="#헤일로-영역이-필요한-이유">헤일로 영역이 필요한 이유</a></h3>
+<p>타일에서 5점 커널을 사용하는 1D 합성곱을 생각해 봅시다:</p>
+<pre><code>원본 데이터:      [... | a b c d e f g h i j k l m n o | ...]
+처리 타일:              [c d e f g h i j k l m n o]
+                            ^                 ^
+                      왼쪽 타일에서        오른쪽 타일에서
+                      이웃 필요           이웃 필요
+
+헤일로 포함:       [a b | c d e f g h i j k l m n o | p q]
+                 ^^^                               ^^^
+                 왼쪽 헤일로                     오른쪽 헤일로
+</code></pre>
+<p><strong>주요 특성:</strong></p>
+<ul>
+<li><strong>헤일로 크기</strong>: 일반적으로 각 측면에 <code>KERNEL_SIZE // 2</code>개 요소</li>
+<li><strong>목적</strong>: 타일 경계에서 정확한 스텐실 연산 가능</li>
+<li><strong>내용</strong>: 이웃 타일의 데이터 복사본 또는 경계 조건</li>
+<li><strong>메모리 오버헤드</strong>: 큰 연산 이점을 위한 적은 추가 저장 공간</li>
+</ul>
+<h3 id="합성곱에서의-헤일로-영역"><a class="header" href="#합성곱에서의-헤일로-영역">합성곱에서의 헤일로 영역</a></h3>
+<p>5점 합성곱 커널 \([k_0, k_1, k_2, k_3, k_4]\)의 경우:</p>
+<ul>
+<li><strong>중심 요소</strong>: \(k_2\)가 현재 처리 요소와 정렬</li>
+<li><strong>왼쪽 이웃</strong>: \(k_0, k_1\)은 왼쪽 2개 요소 필요</li>
+<li><strong>오른쪽 이웃</strong>: \(k_3, k_4\)은 오른쪽 2개 요소 필요</li>
+<li><strong>헤일로 크기</strong>: 각 측면에 <code>HALO_SIZE = 5 // 2 = 2</code>개 요소</li>
+</ul>
+<p><strong>헤일로 영역 없이:</strong></p>
+<ul>
+<li>타일 경계 요소에서 전체 합성곱을 수행할 수 없음</li>
+<li>잘못된 출력이나 복잡한 경계 처리 로직이 필요</li>
+<li>분산된 메모리 접근 패턴으로 성능 저하</li>
+</ul>
+<p><strong>헤일로 영역 사용 시:</strong></p>
+<ul>
+<li>모든 타일 요소가 로컬 데이터를 사용하여 전체 합성곱 수행 가능</li>
+<li>예측 가능한 메모리 접근으로 간결하고 효율적인 연산</li>
+<li>더 나은 캐시 활용과 메모리 병합</li>
+</ul>
+<p>이 개념은 비동기 복사 연산을 구현할 때 특히 중요합니다. 헤일로 영역을 올바르게 로딩하고 동기화해야 여러 타일에 걸친 정확한 병렬 연산을 보장할 수 있습니다.</p>
+<h2 id="비동기-복사-중첩을-활용한-1d-합성곱"><a class="header" href="#비동기-복사-중첩을-활용한-1d-합성곱">비동기 복사 중첩을 활용한 1D 합성곱</a></h2>
+<p><strong><a href="../puzzle_13/puzzle_13.html">Puzzle 13</a> 기반:</strong> 이 퍼즐은 Puzzle 13의 1D 합성곱을 다시 다루지만, 이번에는 비동기 복사 연산으로 메모리 지연 시간을 연산 뒤에 숨기는 최적화를 적용합니다. 단순한 동기식 메모리 접근 대신, 하드웨어 가속을 사용하여 비용이 큰 DRAM 전송과 유용한 작업을 중첩합니다.</p>
+<h3 id="구성"><a class="header" href="#구성">구성</a></h3>
+<ul>
+<li>벡터 크기: <code>VECTOR_SIZE = 16384</code> (여러 블록에 걸친 16K 요소)</li>
+<li>타일 크기: <code>CONV_TILE_SIZE = 256</code> (처리 타일 크기)</li>
+<li>블록 구성: 블록당 <code>(256, 1)</code> 스레드</li>
+<li>그리드 구성: 그리드당 <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> 블록 (64개 블록)</li>
+<li>커널 크기: <code>KERNEL_SIZE = 5</code> (Puzzle 13과 동일한 간단한 1D 합성곱)</li>
+<li>데이터 타입: <code>DType.float32</code></li>
+<li>레이아웃: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
+</ul>
+<h3 id="비동기-복사의-기회"><a class="header" href="#비동기-복사의-기회">비동기 복사의 기회</a></h3>
+<p><strong>Puzzle 16 기반:</strong> matmul에서 깔끔한 타일 로딩을 위해 <code>copy_dram_to_sram_async</code>를 사용하는 것을 이미 보셨습니다. 이제 고성능 메모리 바운드 알고리즘의 핵심인 <strong>지연 시간 은폐 기능</strong>에 집중합니다.</p>
+<p>기존의 동기식 메모리 로딩은 전송 중 연산 유닛을 유휴 상태로 대기하게 합니다. 비동기 복사 연산은 전송과 유용한 작업의 중첩을 가능하게 합니다:</p>
+<pre><code class="language-mojo"># 동기식 접근 - 비효율적:
+for i in range(CONV_TILE_SIZE):
+    input_shared[i] = input[base_idx + i]  # 각 로드가 DRAM을 기다림
+for i in range(KERNEL_SIZE):
+    kernel_shared[i] = kernel[i]           # DRAM 추가 대기
+barrier()  # 연산 시작 전 모든 스레드 대기
+# ↑ 총 시간 = input_transfer_time + kernel_transfer_time
+
+# 비동기 복사 접근 - 효율적:
+copy_dram_to_sram_async[thread_layout](input_shared, input_tile)  # 백그라운드 전송 시작
+# 입력이 백그라운드에서 전송되는 동안, 커널을 동기식으로 로딩
+for i in range(KERNEL_SIZE):
+    kernel_shared[i] = kernel[i]  # 비동기 입력 전송과 중첩
+async_copy_wait_all()  # 두 연산이 모두 완료될 때만 대기
+# ↑ 총 시간 = MAX(input_transfer_time, kernel_transfer_time)
+</code></pre>
+<p><strong>비동기 복사가 잘 동작하는 이유:</strong></p>
+<ul>
+<li><strong>전용 복사 엔진</strong>: 최신 GPU는 레지스터를 우회하고 진정한 연산-메모리 중첩을 가능하게 하는 전용 하드웨어를 갖추고 있습니다 (<a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16</a>에서 설명)</li>
+<li><strong>지연 시간 은폐</strong>: GPU 스레드가 다른 연산을 실행하는 동안 메모리 전송이 이루어집니다</li>
+<li><strong>최적의 병합</strong>: 스레드 레이아웃이 효율적인 DRAM 접근 패턴을 보장합니다</li>
+<li><strong>리소스 활용</strong>: 연산 유닛이 유휴 대기 대신 계속 바쁘게 동작합니다</li>
+</ul>
+<h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
+<p>Puzzle 16의 matmul 구현 패턴을 따라, 비동기 복사 연산으로 메모리 전송과 연산을 중첩하는 1D 합성곱을 구현하세요.</p>
+<p><strong>수학적 연산:</strong> 비동기 복사를 활용하여 대규모 벡터에 대한 1D 합성곱을 효율적으로 계산합니다:
+\[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
+<p><strong>비동기 복사 알고리즘:</strong></p>
+<ol>
+<li><strong>비동기 타일 로딩:</strong> 입력 데이터의 백그라운드 DRAM→SRAM 전송 시작</li>
+<li><strong>중첩 연산:</strong> 입력 전송 중 작은 커널 데이터 로딩</li>
+<li><strong>동기화:</strong> 전송 완료 대기 후 공유 메모리를 사용하여 연산</li>
+</ol>
+<pre><code class="language-mojo">comptime VECTOR_SIZE = 16384
+comptime CONV_TILE_SIZE = 256
+comptime KERNEL_SIZE = 5
+comptime HALO_SIZE = KERNEL_SIZE // 2  # Halo elements needed for boundary
+comptime BUFFER_SIZE = CONV_TILE_SIZE + 2 * HALO_SIZE  # Include halo for boundary conditions
+comptime BLOCKS_PER_GRID_ASYNC = (
+    VECTOR_SIZE + CONV_TILE_SIZE - 1
+) // CONV_TILE_SIZE
+comptime THREADS_PER_BLOCK_ASYNC = 256
+comptime dtype = DType.float32
+comptime layout_async = Layout.row_major(VECTOR_SIZE)
+
+
+fn async_copy_overlap_convolution[
+    dtype: DType, layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+):
+    """Demonstrates async copy operations building on p14 patterns.
+
+    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
+    for efficient memory transfers, extending the patterns from p14 matmul.
+    """
+
+    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    # FILL IN HERE (roughly 19 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p28/p28.mojo" class="filename">전체 파일 보기: problems/p28/p28.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<h3 id="1-비동기-복사-메커니즘-이해"><a class="header" href="#1-비동기-복사-메커니즘-이해">1. <strong>비동기 복사 메커니즘 이해</strong></a></h3>
+<p>비동기 복사 연산은 블록이 다른 코드를 계속 실행하는 동안 백그라운드 전송을 시작합니다.</p>
+<p><strong>탐구할 핵심 질문:</strong></p>
+<ul>
+<li>DRAM에서 공유 메모리로 어떤 데이터를 전송해야 하는가?</li>
+<li>전송이 백그라운드에서 일어나는 동안 어떤 연산을 실행할 수 있는가?</li>
+<li>하드웨어가 여러 동시 연산을 어떻게 조율하는가?</li>
+</ul>
+<p><strong>스레드 레이아웃 고려사항:</strong></p>
+<ul>
+<li>블록에는 <code>THREADS_PER_BLOCK_ASYNC = 256</code>개의 스레드가 있습니다</li>
+<li>타일에는 <code>CONV_TILE_SIZE = 256</code>개의 요소가 있습니다</li>
+<li>어떤 레이아웃 패턴이 최적의 메모리 병합을 보장하는가?</li>
+</ul>
+<h3 id="2-중첩-기회-파악"><a class="header" href="#2-중첩-기회-파악">2. <strong>중첩 기회 파악</strong></a></h3>
+<p>목표는 유용한 연산 뒤에 메모리 지연 시간을 숨기는 것입니다.</p>
+<p><strong>분석 접근법:</strong></p>
+<ul>
+<li>어떤 연산이 순차적으로 vs. 병렬로 일어나야 하는가?</li>
+<li>어떤 데이터 전송이 큰(비용이 높은) vs. 작은(비용이 낮은)가?</li>
+<li>병렬 실행을 최대화하도록 알고리즘을 어떻게 구조화할 수 있는가?</li>
+</ul>
+<p><strong>메모리 계층 구조 고려사항:</strong></p>
+<ul>
+<li>큰 입력 타일: 256 요소 × 4 바이트 = 1KB 전송</li>
+<li>작은 커널: 5 요소 × 4 바이트 = 20 바이트</li>
+<li>어떤 전송이 비동기 최적화의 이점을 가장 많이 받는가?</li>
+</ul>
+<h3 id="3-동기화-전략"><a class="header" href="#3-동기화-전략">3. <strong>동기화 전략</strong></a></h3>
+<p>적절한 동기화는 성능을 희생하지 않으면서 정확성을 보장합니다.</p>
+<p><strong>타이밍 분석:</strong></p>
+<ul>
+<li>각 연산이 실제로 데이터가 준비되어야 하는 시점은 언제인가?</li>
+<li>정확성을 위해 필요한 최소한의 동기화는 무엇인가?</li>
+<li>데이터 의존성을 유지하면서 불필요한 정체를 어떻게 피할 수 있는가?</li>
+</ul>
+<p><strong>경쟁 상태 방지:</strong></p>
+<ul>
+<li>전송이 완료되기 전에 연산이 시작되면 어떻게 되는가?</li>
+<li>메모리 펜스와 배리어가 서로 다른 메모리 연산을 어떻게 조율하는가?</li>
+</ul>
+</div>
+</details>
+<p><strong>비동기 복사 중첩 테스트:</strong></p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p28
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p28
+</code></pre>
+  </div>
+</div>
+<h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
+<details class="solution-details">
+<summary><strong>상세 설명이 포함된 전체 솔루션</strong></summary>
+<p>비동기 복사 중첩 솔루션는 비용이 큰 DRAM 전송과 유용한 연산을 중첩하여 메모리 지연 시간을 숨기는 방법을 보여줍니다:</p>
+<pre><code class="language-mojo">fn async_copy_overlap_convolution[
+    dtype: DType, layout: Layout
+](
+    output: LayoutTensor[dtype, layout, MutAnyOrigin],
+    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+):
+    """Demonstrates async copy operations building on p14 patterns.
+
+    This shows how to use copy_dram_to_sram_async and async_copy_wait_all
+    for efficient memory transfers, extending the patterns from p14 matmul.
+    """
+
+    # Shared memory buffers (like p14, but without .fill(0) to avoid race)
+    input_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(CONV_TILE_SIZE),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+    kernel_shared = LayoutTensor[
+        dtype,
+        Layout.row_major(KERNEL_SIZE),
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    local_i = Int(thread_idx.x)
+
+    # Phase 1: Launch async copy for input tile
+    # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
+    input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
+
+    # Use async copy with thread layout matching p14 pattern
+    comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+    copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
+
+    # Phase 2: Load kernel synchronously (small data)
+    if local_i &lt; KERNEL_SIZE:
+        kernel_shared[local_i] = kernel[local_i]
+
+    # Phase 3: Wait for async copy to complete
+    async_copy_wait_all()  # Always wait since we always do async copy
+    barrier()  # Sync all threads
+
+    # Phase 4: Compute convolution
+    global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
+    if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
+        var result: output.element_type = 0
+
+        # Simple convolution avoiding boundary issues
+        if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
+            # Full convolution for center elements
+            for k in range(KERNEL_SIZE):
+                input_idx = local_i + k - HALO_SIZE
+                if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
+                    result += input_shared[input_idx] * kernel_shared[k]
+        else:
+            # For boundary elements, just copy input (no convolution)
+            result = input_shared[local_i]
+
+        output[global_i] = result
+
+
+</code></pre>
+<h4 id="단계별-분석"><a class="header" href="#단계별-분석"><strong>단계별 분석</strong></a></h4>
+<p><strong>Phase 1: 비동기 복사 시작</strong></p>
+<pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
+input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
+</code></pre>
+<ul>
+<li>
+<p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는 <code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile"><code>tile</code> 메서드</a>는 경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.</p>
+</li>
+<li>
+<p><strong>스레드 레이아웃</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code>는 블록 구성과 일치하는 <code>256 x 1</code> 레이아웃을 생성합니다. 이것은 <strong>필수</strong>입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.</p>
+</li>
+<li>
+<p><strong>비동기 복사 시작</strong>: <code>copy_dram_to_sram_async</code>는 DRAM에서 공유 메모리로의 백그라운드 전송을 시작합니다. 하드웨어가 256개의 float(1KB)를 복사하는 동안 블록은 계속 실행됩니다.</p>
+</li>
+</ul>
+<p><strong>Phase 2: 중첩 연산</strong></p>
+<pre><code class="language-mojo"># Phase 2: Load kernel synchronously (small data)
+if local_i &lt; KERNEL_SIZE:
+    kernel_shared[local_i] = kernel[local_i]
+</code></pre>
+<ul>
+<li>
+<p><strong>동시 실행</strong>: 1KB 입력 타일이 백그라운드에서 전송되는 동안, 스레드들은 작은 20바이트 커널을 동기식으로 로딩합니다. 이 중첩이 핵심 최적화입니다.</p>
+</li>
+<li>
+<p><strong>크기 기반 전략</strong>: 큰 전송(입력 타일)은 비동기 복사를, 작은 전송(커널)은 동기식 로딩을 사용합니다. 이는 복잡성과 성능 이점의 균형을 맞춥니다.</p>
+</li>
+</ul>
+<p><strong>Phase 3: 동기화</strong></p>
+<pre><code class="language-mojo"># Phase 3: Wait for async copy to complete
+async_copy_wait_all()  # Always wait since we always do async copy
+barrier()  # Sync all threads
+</code></pre>
+<ul>
+<li>
+<p><strong>전송 완료</strong>: <code>async_copy_wait_all()</code>은 모든 비동기 전송이 완료될 때까지 대기합니다. <code>input_shared</code>에 접근하기 전에 반드시 필요합니다.</p>
+</li>
+<li>
+<p><strong>스레드 동기화</strong>: <code>barrier()</code>는 모든 스레드가 연산으로 넘어가기 전에 완료된 전송을 확인하도록 보장합니다.</p>
+</li>
+</ul>
+<p><strong>Phase 4: 연산</strong></p>
+<pre><code class="language-mojo"># Phase 4: Compute convolution
+global_i = block_idx.x * CONV_TILE_SIZE + local_i
+if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
+    var result: output.element_type = 0
+
+    if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
+        # Full convolution for center elements
+        for k in range(KERNEL_SIZE):
+            input_idx = local_i + k - HALO_SIZE
+            if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
+                result += input_shared[input_idx] * kernel_shared[k]
+    else:
+        # For boundary elements, just copy input (no convolution)
+        result = input_shared[local_i]
+
+    output[global_i] = result
+</code></pre>
+<ul>
+<li>
+<p><strong>빠른 공유 메모리 접근</strong>: 모든 연산이 미리 로드된 공유 메모리 데이터를 사용하여, 연산 집약적인 합성곱 루프에서 느린 DRAM 접근을 피합니다.</p>
+</li>
+<li>
+<p><strong>단순화된 경계 처리</strong>: 이 구현은 타일 경계 근처 요소를 처리하기 위해 실용적인 접근 방식을 사용합니다:</p>
+<ul>
+<li><strong>중심 요소</strong> (<code>local_i &gt;= HALO_SIZE</code>이고 <code>local_i &lt; CONV_TILE_SIZE - HALO_SIZE</code>): 공유 메모리 데이터를 사용하여 전체 5점 합성곱 적용</li>
+<li><strong>경계 요소</strong> (각 타일의 처음 2개와 마지막 2개 요소): 복잡한 경계 로직을 피하기 위해 합성곱 없이 입력을 직접 복사</li>
+</ul>
+<p><strong>교육적 근거</strong>: 이 접근 방식은 복잡한 경계 처리보다 비동기 복사 패턴 시연을 우선시합니다. <code>HALO_SIZE = 2</code>인 256개 요소 타일에서, 요소 0-1과 254-255는 입력 복사를, 요소 2-253은 전체 합성곱을 사용합니다. 이를 통해 동작하는 구현을 제공하면서 메모리 최적화에 초점을 유지합니다.</p>
+</li>
+</ul>
+<h4 id="성능-분석"><a class="header" href="#성능-분석"><strong>성능 분석</strong></a></h4>
+<p><strong>비동기 복사 없이 (동기식):</strong></p>
+<pre><code>Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
+           = Large_DRAM_transfer + Small_DRAM_transfer + convolution
+           = Major_latency + Minor_latency + computation_work
+</code></pre>
+<p><strong>비동기 복사 사용 (중첩):</strong></p>
+<pre><code>Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
+           = MAX(Major_latency, Minor_latency) + computation_work
+           = Major_latency + computation_work
+</code></pre>
+<p><strong>성능 향상</strong>: 더 큰 입력 전송 뒤에 더 작은 커널 전송의 지연 시간을 숨김으로써 성능이 향상됩니다. 실제 성능 향상 폭은 전송의 상대적 크기와 사용 가능한 메모리 대역폭에 따라 달라집니다. 더 큰 중첩이 가능한 메모리 바운드 시나리오에서는 성능 향상이 훨씬 클 수 있습니다.</p>
+<h4 id="핵심-기술적-통찰"><a class="header" href="#핵심-기술적-통찰"><strong>핵심 기술적 통찰</strong></a></h4>
+<ol>
+<li>
+<p><strong>스레드 레이아웃 매칭</strong>: <code>Layout.row_major(256, 1)</code> 레이아웃이 블록의 <code>(256, 1)</code> 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.</p>
+</li>
+<li>
+<p><strong>경쟁 상태 방지</strong>: 적절한 순서 지정(비동기 복사 → 커널 로드 → 대기 → 배리어 → 연산)으로 공유 메모리를 손상시킬 수 있는 모든 경쟁 상태를 제거합니다.</p>
+</li>
+<li>
+<p><strong>하드웨어 최적화</strong>: 최신 GPU는 비동기 복사 연산을 위한 전용 하드웨어를 갖추고 있어, 메모리 유닛과 연산 유닛 사이의 진정한 병렬 처리가 가능합니다.</p>
+</li>
+<li>
+<p><strong>메모리 계층 구조 활용</strong>: 이 패턴은 데이터를 계층 구조를 통해 효율적으로 이동시킵니다: DRAM → 공유 메모리 → 레지스터 → 연산.</p>
+</li>
+<li>
+<p><strong>테스트-구현 일관성</strong>: 테스트 검증 로직은 <code>local_i_in_tile = i % CONV_TILE_SIZE</code>를 검사하여 각 요소가 합성곱 결과(중심 요소)를 기대해야 하는지 입력 복사(경계 요소)를 기대해야 하는지 판별하며, 경계 처리 전략과 일치합니다. 이를 통해 단순화된 경계 접근 방식의 정확한 검증을 보장합니다.</p>
+</li>
+</ol>
+<p>이 솔루션는 단순한 메모리 바운드 합성곱을 유용한 작업 뒤에 메모리 지연 시간을 숨기는 최적화된 구현으로 변환하여, 고성능 GPU 프로그래밍의 기본 원리를 보여줍니다.</p>
+</details>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../puzzle_27/block_broadcast.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../puzzle_29/puzzle_29.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../puzzle_27/block_broadcast.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../puzzle_29/puzzle_29.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/mojolang.js"></script>
+        <script src="../theme/sidebar.js"></script>
+        <script src="../theme/solution.js"></script>
+        <script src="../theme/tabs.js"></script>
+        <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
+
+
+    </div>
+    </body>
+</html>
