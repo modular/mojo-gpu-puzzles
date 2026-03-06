@@ -9,6 +9,7 @@ __pycache__
 # Book artifacts
 book/book
 book/html
+book/html-*
 
 book/src/puzzle_*/media/images/
 book/src/puzzle_*/media/texts/
@@ -23,6 +24,9 @@ book/src/puzzle_*/media/videos/*/partial_movie_files/
 
 # rules
 .cursor/
+.claude/
+.agents/
+.agent/
 
 # llvm
 *.ll

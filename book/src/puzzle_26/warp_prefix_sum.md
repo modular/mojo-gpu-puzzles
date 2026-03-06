@@ -445,12 +445,12 @@ Final result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot)
 
 **Mathematical insight:** This implements parallel partitioning with dual warp primitives:
 \\[\\Large \\begin{align}
-\\text{left\\_pos}[i] &= \\text{prefix\\_sum}_{\\text{exclusive}}(\\text{predicate\\_left}[i]) \\\\
-\\text{right\\_pos}[i] &= \\text{prefix\\_sum}_{\\text{exclusive}}(\\text{predicate\\_right}[i]) \\\\
-\\text{left\\_total} &= \\text{butterfly\\_reduce}(\\text{predicate\\_left}) \\\\
-\\text{final\\_pos}[i] &= \\begin{cases}
-\\text{left\\_pos}[i] & \\text{if } \\text{input}[i] < \\text{pivot} \\\\
-\\text{left\\_total} + \\text{right\\_pos}[i] & \\text{if } \\text{input}[i] \\geq \\text{pivot}
+\\text{left\_pos}[i] &= \\text{prefix\_sum}\_{\\text{exclusive}}(\\text{predicate\_left}[i]) \\\\
+\\text{right\_pos}[i] &= \\text{prefix\_sum}\_{\\text{exclusive}}(\\text{predicate\_right}[i]) \\\\
+\\text{left\_total} &= \\text{butterfly\_reduce}(\\text{predicate\_left}) \\\\
+\\text{final\_pos}[i] &= \\begin{cases}
+\\text{left\_pos}[i] & \\text{if } \\text{input}[i] < \\text{pivot} \\\\
+\\text{left\_total} + \\text{right\_pos}[i] & \\text{if } \\text{input}[i] \\geq \\text{pivot}
 \\end{cases}
 \\end{align}\\]
 

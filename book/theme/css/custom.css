@@ -1290,3 +1290,55 @@ main .content {
   opacity: 1;
   visibility: visible;
 }
+
+/* Translation Status Warning Banner */
+.i18n-outdated-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 16px 0 24px 0;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-left: 4px solid #ff9800;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.i18n-warning-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.i18n-warning-text {
+  color: #664d03;
+}
+
+.i18n-warning-text a {
+  color: #533f03;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.i18n-warning-text a:hover {
+  color: #3d2e02;
+}
+
+/* Dark theme adjustments for warning banner */
+.ayu .i18n-outdated-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.ayu .i18n-warning-text {
+  color: #ffc107;
+}
+
+.ayu .i18n-warning-text a {
+  color: #ffca28;
+}
+
+.ayu .i18n-warning-text a:hover {
+  color: #ffd54f;
+}

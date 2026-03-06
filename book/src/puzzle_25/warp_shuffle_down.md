@@ -228,7 +228,7 @@ Cycle 3: Difference computation (lanes 0-30 only)
 ```
 
 **Mathematical insight:** This implements the discrete derivative operator \\(D\\):
-\\[\\Large D[f](i) = f(i+1) - f(i)\\]
+\\[\\Large D\\lbrack f\\rbrack(i) = f(i+1) - f(i)\\]
 
 For our quadratic input \\(f(i) = i^2\\):
 \\[\\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\\]

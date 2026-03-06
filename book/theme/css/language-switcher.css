@@ -1,0 +1,95 @@
+/* Material Symbols for language icon */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=language');
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Language Switcher Dropdown Styles */
+
+.language-switcher {
+    position: relative;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.lang-dropdown-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 50%;
+    color: var(--fg);
+    transition: background-color 0.2s;
+}
+
+.lang-dropdown-btn:hover {
+    background-color: var(--modular-color-emphasis);
+}
+
+
+.lang-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    padding: 4px 0;
+    background: var(--bg);
+    border: 1px solid var(--quote-border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    list-style: none;
+    min-width: 120px;
+    z-index: 1000;
+}
+
+.language-switcher.open .lang-dropdown {
+    display: block;
+}
+
+.lang-item {
+    display: block;
+    padding: 8px 16px;
+    color: var(--fg);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.lang-item:hover {
+    background-color: var(--quote-bg);
+}
+
+.lang-item-current {
+    font-weight: 700;
+    cursor: default;
+    background-color: var(--quote-bg);
+}
+
+/* Dark theme adjustments */
+.ayu .lang-dropdown,
+.navy .lang-dropdown,
+.coal .lang-dropdown {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

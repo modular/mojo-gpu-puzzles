@@ -315,7 +315,7 @@ Each lane needs to progressively build up knowledge of the maximum value in its 
 
 ### 4. **Why this pattern works**
 
-The butterfly reduction guarantees that after \\(\\log_2(\\text{WARP\\_SIZE})\\) steps:
+The butterfly reduction guarantees that after \\(\\log_2(\\text{WARP\_SIZE})\\) steps:
 
 - **Every lane** has seen **every other lane's** value indirectly
 - **No redundant communication**: Each pair exchanges exactly once per step
