@@ -283,7 +283,7 @@ fn kernel[
     print(tensor)
 
 
-def main():
+def main() raises:
     ctx = DeviceContext()
 
     a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
