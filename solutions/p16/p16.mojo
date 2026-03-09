@@ -228,7 +228,7 @@ fn matmul_idiomatic_tiled[
 # ANCHOR_END: matmul_idiomatic_tiled_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         size = (
             SIZE_TILED if argv()[1] == "--idiomatic-tiled"

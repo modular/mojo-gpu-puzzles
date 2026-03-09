@@ -24,7 +24,7 @@ fn add_10_blocks_2d(
 # ANCHOR_END: add_10_blocks_2d_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out.enqueue_fill(0)

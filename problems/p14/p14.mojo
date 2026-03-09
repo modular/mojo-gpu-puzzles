@@ -62,7 +62,7 @@ fn prefix_sum_block_sum_phase[
 # ANCHOR_END: prefix_sum_complete
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         if len(argv()) != 2 or argv()[1] not in [
             "--simple",

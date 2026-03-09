@@ -30,7 +30,7 @@ fn pooling(
 # ANCHOR_END: pooling
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)

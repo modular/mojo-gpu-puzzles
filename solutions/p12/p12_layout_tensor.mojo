@@ -55,7 +55,7 @@ fn dot_product[
 # ANCHOR_END: dot_product_layout_tensor_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](1)
         out.enqueue_fill(0)

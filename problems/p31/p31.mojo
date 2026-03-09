@@ -297,7 +297,7 @@ fn benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     b.iter_custom[balanced_workflow](bench_ctx)
 
 
-def test_minimal():
+def test_minimal() raises:
     """Test minimal kernel."""
     print("Testing minimal kernel...")
     with DeviceContext() as ctx:
@@ -340,7 +340,7 @@ def test_minimal():
         print("✅ Minimal kernel test passed")
 
 
-def test_sophisticated():
+def test_sophisticated() raises:
     """Test sophisticated kernel."""
     print("Testing sophisticated kernel...")
     with DeviceContext() as ctx:
@@ -384,7 +384,7 @@ def test_sophisticated():
         print("✅ Sophisticated kernel test passed")
 
 
-def test_balanced():
+def test_balanced() raises:
     """Test balanced kernel."""
     print("Testing balanced kernel...")
     with DeviceContext() as ctx:
@@ -428,7 +428,7 @@ def test_balanced():
         print("✅ Balanced kernel test passed")
 
 
-def main():
+def main() raises:
     """Run the occupancy efficiency mystery tests."""
     args = argv()
     if len(args) < 2:

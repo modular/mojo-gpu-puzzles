@@ -47,7 +47,7 @@ fn add_10_shared_layout_tensor[
 # ANCHOR_END: add_10_shared_layout_tensor_solution
 
 
-def main():
+def main() raises:
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)

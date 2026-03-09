@@ -241,7 +241,7 @@ fn tensor_core_matrix_multiplication[
 # ANCHOR_END: tensor_core_matrix_multiplication
 
 
-def main():
+def main() raises:
     print("Puzzle 33: Tensor Core Operations")
 
     if len(argv()) < 2:
