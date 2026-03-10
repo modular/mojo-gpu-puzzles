@@ -10,7 +10,7 @@
     <span class="icon icon-book"></span>
   </a>
   <div class="secondary">
-    <a href="https://discord.com/invite/modular"
+    <a href="https://discord.gg/modular"
       data-tooltip="Chat on Discord"
       aria-label="Discord"
       target="_blank">
