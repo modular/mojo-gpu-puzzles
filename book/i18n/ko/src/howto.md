@@ -487,7 +487,7 @@ Kaggle은 Colab보다 넉넉한 무료 GPU 사용 시간을 제공합니다:
   <a href="https://forum.modular.com/c/">
     <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular 포럼">
   </a>
-  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
+  <a href="https://discord.gg/modular">
     <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
   </a>
 </p>

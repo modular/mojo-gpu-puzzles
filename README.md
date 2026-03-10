@@ -31,7 +31,7 @@
   <a href="https://forum.modular.com/c/">
     <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular Forum">
   </a>
-  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
+  <a href="https://discord.gg/modular">
     <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
   </a>
 </p>
@@ -176,7 +176,7 @@ Please feel free to:
   <a href="https://forum.modular.com/c/">
     <img src="https://img.shields.io/badge/Modular-Forum-9B59B6?logo=discourse" alt="Modular Forum">
   </a>
-  <a href="https://discord.com/channels/1087530497313357884/1098713601386233997">
+  <a href="https://discord.gg/modular">
     <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
   </a>
 </p>

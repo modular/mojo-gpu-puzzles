@@ -12,7 +12,7 @@
     <span class="icon icon-book"></span>
   </a>
   <div class="secondary">
-    <a href="https://discord.com/channels/1087530497313357884/1098713601386233997"
+    <a href="https://discord.gg/modular"
       data-tooltip="Chat on Discord"
       aria-label="Discord"
       target="_blank">
