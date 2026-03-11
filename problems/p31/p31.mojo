@@ -227,7 +227,9 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_sophisticated_parameterized[
+    test_size: Int
+](mut b: Bencher) raises:
     @parameter
     @always_inline
     def sophisticated_workflow(ctx: DeviceContext) raises:
