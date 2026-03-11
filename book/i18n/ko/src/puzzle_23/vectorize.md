@@ -241,7 +241,7 @@ actual_tile_size = tile_end - tile_start
 ### 2. **벡터화 함수 패턴**
 
 ```mojo
-fn vectorized_add[
+def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
@@ -340,7 +340,7 @@ actual_tile_size = tile_end - tile_start
 **자동 벡터화 메커니즘:**
 
 ```mojo
-fn vectorized_add[
+def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i

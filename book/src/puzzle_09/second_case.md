@@ -266,7 +266,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-31      fn process_sliding_window(
+31      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1

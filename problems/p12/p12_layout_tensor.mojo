@@ -16,7 +16,7 @@ comptime layout = Layout.row_major(SIZE)
 comptime out_layout = Layout.row_major(1)
 
 
-fn dot_product[
+def dot_product[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],

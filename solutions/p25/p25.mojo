@@ -14,7 +14,7 @@ comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: neighbor_difference_solution
-fn neighbor_difference[
+def neighbor_difference[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -56,7 +56,7 @@ comptime layout_2 = Layout.row_major(SIZE_2)
 
 
 # ANCHOR: moving_average_3_solution
-fn moving_average_3[
+def moving_average_3[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -91,7 +91,7 @@ fn moving_average_3[
 
 
 # ANCHOR: broadcast_shuffle_coordination_solution
-fn broadcast_shuffle_coordination[
+def broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -137,7 +137,7 @@ fn broadcast_shuffle_coordination[
 
 
 # ANCHOR: basic_broadcast_solution
-fn basic_broadcast[
+def basic_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -172,7 +172,7 @@ fn basic_broadcast[
 
 
 # ANCHOR: conditional_broadcast_solution
-fn conditional_broadcast[
+def conditional_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

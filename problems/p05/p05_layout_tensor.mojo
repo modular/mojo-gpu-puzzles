@@ -13,7 +13,7 @@ comptime a_layout = Layout.row_major(1, SIZE)
 comptime b_layout = Layout.row_major(SIZE, 1)
 
 
-fn broadcast_add[
+def broadcast_add[
     out_layout: Layout,
     a_layout: Layout,
     b_layout: Layout,

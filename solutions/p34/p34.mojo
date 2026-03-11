@@ -21,7 +21,7 @@ comptime out_layout = Layout.row_major(1)
 
 
 # ANCHOR: cluster_coordination_basics_solution
-fn cluster_coordination_basics[
+def cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -76,7 +76,7 @@ fn cluster_coordination_basics[
 
 
 # ANCHOR: cluster_collective_operations_solution
-fn cluster_collective_operations[
+def cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -134,7 +134,7 @@ fn cluster_collective_operations[
 
 
 # ANCHOR: advanced_cluster_patterns_solution
-fn advanced_cluster_patterns[
+def advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],

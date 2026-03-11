@@ -28,7 +28,7 @@ comptime SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
 # The approach still tiles all three LayoutTensors (a, b, and output) into identical square tiles
 # of size (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) with each thread loading one element
 # from a and b, and writing one element to output.
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     a_layout: Layout,
     b_layout: Layout,
     out_layout: Layout,
@@ -117,7 +117,7 @@ fn matmul_idiomatic_tiled[
 
 
 # ANCHOR: transpose_kernel_solution
-fn transpose_kernel[
+def transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
     rows: Int,
@@ -159,7 +159,7 @@ fn transpose_kernel[
 
 
 # Apply softmax to attention scores taken from p16
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -231,7 +231,7 @@ fn softmax_gpu_kernel[
 
 
 # CPU implementation for vector attention
-fn attention_cpu_kernel[
+def attention_cpu_kernel[
     layout_q: Layout,
     layout_k: Layout,
     layout_v: Layout,
@@ -284,7 +284,7 @@ fn attention_cpu_kernel[
 @compiler.register("attention")
 struct AttentionCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,  # "cpu" or "gpu"
         seq_len: Int,
         d: Int,

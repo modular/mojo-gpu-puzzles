@@ -106,7 +106,7 @@ uv run poe p24 --traditional
 `simple_warp_dot_product` 함수를 **6줄 이내**로 완성해야 합니다:
 
 ```mojo
-fn simple_warp_dot_product[...](output, a, b):
+def simple_warp_dot_product[...](output, a, b):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # 여기를 채우세요 (최대 6줄)
 ```
@@ -259,7 +259,7 @@ warp_sum() 하드웨어 연산:
 ```mojo
 @parameter
 @always_inline
-fn compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     idx = indices[0]
     # 여기를 채우세요 (최대 10줄)
 ```

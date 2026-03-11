@@ -10,7 +10,7 @@ comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
 
 
-fn add_10_blocks_2d(
+def add_10_blocks_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

@@ -9,7 +9,7 @@ comptime THREADS_PER_BLOCK = 256
 
 
 # ANCHOR: embedding_kernel_coalesced_solution
-fn embedding_kernel_coalesced[
+def embedding_kernel_coalesced[
     indices_layout: Layout,
     weights_layout: Layout,
     out_layout: Layout,
@@ -61,7 +61,7 @@ fn embedding_kernel_coalesced[
 
 
 # ANCHOR: embedding_kernel_2d_solution
-fn embedding_kernel_2d[
+def embedding_kernel_2d[
     indices_layout: Layout,
     weights_layout: Layout,
     out_layout: Layout,
@@ -123,7 +123,7 @@ from gpu.host import DeviceBuffer
 @compiler.register("embedding")
 struct EmbeddingCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,
         batch_size: Int,
         seq_len: Int,
@@ -210,7 +210,7 @@ struct EmbeddingCustomOp:
 @compiler.register("embedding_2d")
 struct Embedding2DCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,
         batch_size: Int,
         seq_len: Int,

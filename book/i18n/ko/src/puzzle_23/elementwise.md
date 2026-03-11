@@ -48,7 +48,7 @@
 ```mojo
 @parameter
 @always_inline
-fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     # 구현 코드
 ```
 
@@ -222,7 +222,7 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ```mojo
 @parameter
 @always_inline
-fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
 ```
 
 **매개변수 분석:**

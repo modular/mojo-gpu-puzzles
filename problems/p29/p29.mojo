@@ -29,7 +29,7 @@ comptime STAGE2_THREADS = TPB // 2
 comptime BLUR_RADIUS = 2
 
 
-fn multi_stage_image_blur_pipeline[
+def multi_stage_image_blur_pipeline[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -88,7 +88,7 @@ comptime STENCIL_ITERATIONS = 3
 comptime BUFFER_COUNT = 2
 
 
-fn double_buffered_stencil_computation[
+def double_buffered_stencil_computation[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

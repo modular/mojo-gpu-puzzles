@@ -12,7 +12,7 @@ comptime out_layout = Layout.row_major(SIZE, SIZE)
 comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
-fn add_10_blocks_2d[
+def add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](

@@ -15,7 +15,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn no_conflict_kernel[
+def no_conflict_kernel[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -58,7 +58,7 @@ fn no_conflict_kernel[
 
 
 # ANCHOR: two_way_conflict_kernel
-fn two_way_conflict_kernel[
+def two_way_conflict_kernel[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -107,10 +107,10 @@ fn two_way_conflict_kernel[
 
 @parameter
 @always_inline
-fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
+def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn kernel_workflow(ctx: DeviceContext) raises:
+    def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
@@ -143,10 +143,10 @@ fn benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
+def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn kernel_workflow(ctx: DeviceContext) raises:
+    def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
@@ -177,7 +177,7 @@ fn benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     b.iter_custom[kernel_workflow](bench_ctx)
 
 
-fn test_no_conflict() raises:
+def test_no_conflict() raises:
     """Test that no-conflict kernel produces correct results."""
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -211,7 +211,7 @@ fn test_no_conflict() raises:
         print("✅ No-conflict kernel: PASSED")
 
 
-fn test_two_way_conflict() raises:
+def test_two_way_conflict() raises:
     """Test that 2-way conflict kernel produces identical results."""
     with DeviceContext() as ctx:
         out = ctx.enqueue_create_buffer[dtype](SIZE)
@@ -245,7 +245,7 @@ fn test_two_way_conflict() raises:
         print("✅ Two-way conflict kernel: PASSED")
 
 
-fn main() raises:
+def main() raises:
     if len(argv()) < 2:
         print(
             "Usage: mojo p32.mojo [--test] [--benchmark] [--no-conflict]"

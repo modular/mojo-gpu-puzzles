@@ -252,7 +252,7 @@ Our GPU kernel implements the numerically stable softmax algorithm with highly o
 #### Kernel signature and memory management
 
 ```mojo
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,

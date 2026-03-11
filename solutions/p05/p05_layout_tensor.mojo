@@ -13,7 +13,7 @@ comptime b_layout = Layout.row_major(SIZE, 1)
 
 
 # ANCHOR: broadcast_add_layout_tensor_solution
-fn broadcast_add[
+def broadcast_add[
     out_layout: Layout,
     a_layout: Layout,
     b_layout: Layout,

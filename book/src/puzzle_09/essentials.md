@@ -694,7 +694,7 @@ $3 = {0}                  # Still zero - computation hasn't executed yet!
 Output:
 
 ```
-13      fn add_10(         # Steps to function signature line after computation
+13      def add_10(         # Steps to function signature line after computation
 ```
 
 ```gdb
@@ -730,7 +730,7 @@ Output:
 
 ```
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-13      fn add_10(         # Thread 1 is also at function signature
+13      def add_10(         # Thread 1 is also at function signature
 ```
 
 ```gdb

@@ -696,7 +696,7 @@ $3 = {0}                  # 아직 0 - 연산이 아직 실행되지 않음!
 출력:
 
 ```
-13      fn add_10(         # 연산 후 함수 시그니처 줄로 이동
+13      def add_10(         # 연산 후 함수 시그니처 줄로 이동
 ```
 
 ```gdb
@@ -732,7 +732,7 @@ $5 = (!pop.scalar<f32> * @register) 0x302000200
 
 ```
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
-13      fn add_10(         # 스레드 1도 함수 시그니처에 있음
+13      def add_10(         # 스레드 1도 함수 시그니처에 있음
 ```
 
 ```gdb
