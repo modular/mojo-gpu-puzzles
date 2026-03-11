@@ -10,41 +10,41 @@ system-requirements = { cuda = "12" }
 channels = ["nvidia"]
 
 [feature.nvidia.target.linux-64.dependencies]
-cuda-toolkit = "12.*" # for compute-sanitizer etc.
-cuda-gdb = "12.*"     # for GPU kernel debugging
-nsight-compute = "*"  # interactive kernel profiling
+cuda-toolkit = ">=12.9.1,<13" # for compute-sanitizer etc.
+cuda-gdb = ">=12.9.79,<13"     # for GPU kernel debugging
+nsight-compute = ">=2025.2.1.3,<2026"  # interactive kernel profiling
 
 [feature.nvidia.target.linux-64.pypi-dependencies]
-torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/cu128" }
-nvidia-ml-py = "*"
+torch = { version = "*", index = "https://download.pytorch.org/whl/cu128" }
+nvidia-ml-py = ">=13.590.48, <14"
 
 [feature.nvidia.target.linux-aarch64.dependencies]
-cuda-toolkit = "12.*" # for compute-sanitizer etc.
-cuda-gdb = "12.*"     # for GPU kernel debugging
-nsight-compute = "*"  # interactive kernel profiling
+cuda-toolkit = ">=12.9.1,<13" # for compute-sanitizer etc.
+cuda-gdb = ">=12.9.79,<13"     # for GPU kernel debugging
+nsight-compute = ">=2025.2.1.3,<2026"  # interactive kernel profiling
 
 [feature.nvidia.target.linux-aarch64.pypi-dependencies]
-torch = { version = "==2.9.0", index = "https://download.pytorch.org/whl/cu130" }
-nvidia-ml-py = "*"
+torch = { version = "*", index = "https://download.pytorch.org/whl/cu130" }
+nvidia-ml-py = ">=13.590.48, <14"
 
 [feature.amd]
 system-requirements = {}
 
 [feature.amd.target.linux-64.pypi-dependencies]
-torch = { version = "==2.7.1", index = "https://download.pytorch.org/whl/rocm6.3" }
-pytorch-triton-rocm = {version = "*", index = "https://download.pytorch.org/whl/rocm6.3" }
+torch = { version = "*", index = "https://download.pytorch.org/whl/rocm6.3" }
+pytorch-triton-rocm = { version = ">=3.5.1, <4", index = "https://download.pytorch.org/whl/rocm6.3" }
 
 [feature.apple]
 system-requirements = { macos = "15.0" }
 
 [dependencies]
-python = "==3.12"
-mojo = "<1.0.0" # includes `mojo-compiler`, lsp, debugger, formatter etc.
-max = "==26.3.0.dev2026031105"
-bash = ">=5.2.21,<6"
-manim = ">=0.18.1,<0.19"
-mdbook = ">=0.4.48,<0.5"
-pre-commit = ">=4.2.0,<5"
+python = ">=3.12.13,<3.13"
+mojo = ">=0.26.3.0.dev2026031105,<0.27" # includes `mojo-compiler`, lsp, debugger, formatter etc.
+max = ">=26.3.0.dev2026031105,<27"
+bash = ">=5.2.37,<6"
+manim = ">=0.19.1,<0.20"
+mdbook = ">=0.5.2,<0.6"
+pre-commit = ">=4.5.1,<5"
 
 [environments]
 nvidia = { features = ["nvidia"], solve-group = "nvidia" }
