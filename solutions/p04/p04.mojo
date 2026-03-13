@@ -10,7 +10,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: add_10_2d_solution
-fn add_10_2d(
+def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

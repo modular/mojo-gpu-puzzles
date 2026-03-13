@@ -123,7 +123,7 @@ ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shap
 
 - Parameters are passed as a dictionary to the operation
 - These become compile-time parameters in the Mojo kernel
-- Must match the parameter names in the Mojo `@staticmethod fn execute` signature
+- Must match the parameter names in the Mojo `@staticmethod def execute` signature
 
 ### 4. **Same Kernel, Different Integration**
 

@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn pooling[
+def pooling[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

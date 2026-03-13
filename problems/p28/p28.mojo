@@ -20,7 +20,7 @@ comptime dtype = DType.float32
 comptime layout_async = Layout.row_major(VECTOR_SIZE)
 
 
-fn async_copy_overlap_convolution[
+def async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

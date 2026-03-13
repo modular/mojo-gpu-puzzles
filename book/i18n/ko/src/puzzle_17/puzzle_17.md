@@ -160,7 +160,7 @@ Verification passed: Custom kernel results match NumPy calculation
    @compiler.register("conv1d")
    struct Conv1DCustomOp:
        @staticmethod
-       fn execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
+       def execute[target: StaticString, input_size: Int, conv_size: Int, dtype: DType = DType.float32](
            output: OutputTensor[rank=1],
            input: InputTensor[dtype = output.dtype, rank = output.rank],
            kernel: InputTensor[dtype = output.dtype, rank = output.rank],
@@ -217,7 +217,7 @@ Verification passed: Custom kernel results match NumPy calculation
 @compiler.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
-    fn execute[...](
+    def execute[...](
         output: OutputTensor[rank=1],
         input: InputTensor[dtype = output.dtype, rank = output.rank],
         kernel: InputTensor[type = output.dtype, rank = output.rank],

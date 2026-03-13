@@ -17,7 +17,7 @@ comptime TRANSPOSE_BLOCK_DIM_XY = 16  # Square blocks for input and output
 
 # ANCHOR: matmul_idiomatic_tiled
 # Idiomatic tiled matmul from p19.mojo
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     a_layout: Layout,
     b_layout: Layout,
     out_layout: Layout,
@@ -109,7 +109,7 @@ fn matmul_idiomatic_tiled[
 
 
 # ANCHOR: layernorm_kernel_solution
-fn layernorm_kernel[
+def layernorm_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     output_layout: Layout,
@@ -160,7 +160,7 @@ fn layernorm_kernel[
 
 
 # ANCHOR: transpose_kernel_solution
-fn transpose_kernel[
+def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
     rows: UInt,
@@ -204,7 +204,7 @@ fn transpose_kernel[
 
 
 # ANCHOR: add_bias_kernel
-fn add_bias_kernel[
+def add_bias_kernel[
     input_layout: Layout,
     bias_layout: Layout,
     output_layout: Layout,
@@ -234,7 +234,7 @@ fn add_bias_kernel[
 
 
 # ANCHOR: minimal_fused_forward_kernel_solution
-fn minimal_fused_kernel[
+def minimal_fused_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     weight_layout: Layout,
@@ -299,7 +299,7 @@ fn minimal_fused_kernel[
 
 
 # ANCHOR: minimal_fused_backward_kernel_solution
-fn minimal_fused_kernel_backward[
+def minimal_fused_kernel_backward[
     grad_output_layout: Layout,
     input_layout: Layout,
     ln_params_layout: Layout,
@@ -483,7 +483,7 @@ fn minimal_fused_kernel_backward[
 @compiler.register("layernorm_linear")
 struct LayerNormLinearCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,
         algorithm: StaticString,
         batch_size: Int,
@@ -722,7 +722,7 @@ struct LayerNormLinearCustomOp:
 @compiler.register("layernorm_linear_backward")
 struct LayerNormLinearBackwardCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,
         batch_size: Int,
         seq_len: Int,

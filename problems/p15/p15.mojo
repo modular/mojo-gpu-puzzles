@@ -17,7 +17,7 @@ comptime in_layout = Layout.row_major(BATCH, SIZE)
 comptime out_layout = Layout.row_major(BATCH, 1)
 
 
-fn axis_sum[
+def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],

@@ -11,7 +11,7 @@ from math import floor
 
 
 # ANCHOR: traditional_dot_product
-fn traditional_dot_product[
+def traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -63,7 +63,7 @@ comptime out_layout = Layout.row_major(1)
 comptime dtype = DType.float32
 
 
-fn block_sum_dot_product[
+def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -86,7 +86,7 @@ fn block_sum_dot_product[
 comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
-fn block_histogram_bin_extract[
+def block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -136,7 +136,7 @@ fn block_histogram_bin_extract[
 comptime vector_layout = Layout.row_major(SIZE)
 
 
-fn block_normalize_vector[
+def block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],

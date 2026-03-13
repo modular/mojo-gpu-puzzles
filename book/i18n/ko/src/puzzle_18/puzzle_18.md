@@ -254,7 +254,7 @@ GPU 커널은 고도로 최적화된 병렬 리덕션 기법을 사용하여 수
 #### 커널 시그니처와 메모리 관리
 
 ```mojo
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,

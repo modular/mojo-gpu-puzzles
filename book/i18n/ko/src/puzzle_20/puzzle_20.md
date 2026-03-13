@@ -125,7 +125,7 @@ ops.conv1d[{"input_size": input_tensor.shape[0], "conv_size": kernel_tensor.shap
 
 - 파라미터는 딕셔너리 형태로 연산에 전달됩니다
 - 이 값들은 Mojo 커널의 컴파일 타임 파라미터가 됩니다
-- Mojo `@staticmethod fn execute` 시그니처의 파라미터 이름과 일치해야 합니다
+- Mojo `@staticmethod def execute` 시그니처의 파라미터 이름과 일치해야 합니다
 
 ### 4. **같은 커널, 다른 통합 방식**
 

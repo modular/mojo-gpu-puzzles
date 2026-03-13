@@ -17,7 +17,7 @@ comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
 
 
 # ANCHOR: elementwise_add_solution
-fn elementwise_add[
+def elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
@@ -27,7 +27,7 @@ fn elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn add[
+    def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
@@ -52,7 +52,7 @@ fn elementwise_add[
 comptime TILE_SIZE = 32
 
 
-fn tiled_elementwise_add[
+def tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -67,7 +67,7 @@ fn tiled_elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn process_tiles[
+    def process_tiles[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
@@ -91,7 +91,7 @@ fn tiled_elementwise_add[
 
 
 # ANCHOR: manual_vectorized_tiled_elementwise_add_solution
-fn manual_vectorized_tiled_elementwise_add[
+def manual_vectorized_tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -110,7 +110,7 @@ fn manual_vectorized_tiled_elementwise_add[
 
     @parameter
     @always_inline
-    fn process_manual_vectorized_tiles[
+    def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
@@ -141,7 +141,7 @@ fn manual_vectorized_tiled_elementwise_add[
 
 
 # ANCHOR: vectorize_within_tiles_elementwise_add_solution
-fn vectorize_within_tiles_elementwise_add[
+def vectorize_within_tiles_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -158,7 +158,7 @@ fn vectorize_within_tiles_elementwise_add[
     # Each tile contains tile_size elements (not SIMD groups)
     @parameter
     @always_inline
-    fn process_tile_with_vectorize[
+    def process_tile_with_vectorize[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
@@ -166,7 +166,7 @@ fn vectorize_within_tiles_elementwise_add[
         tile_end = min(tile_start + tile_size, size)
         actual_tile_size = tile_end - tile_start
 
-        fn vectorized_add[
+        def vectorized_add[
             width: Int
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
@@ -190,7 +190,7 @@ fn vectorize_within_tiles_elementwise_add[
 
 @parameter
 @always_inline
-fn benchmark_elementwise_parameterized[
+def benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
@@ -219,7 +219,7 @@ fn benchmark_elementwise_parameterized[
 
     @parameter
     @always_inline
-    fn elementwise_workflow(ctx: DeviceContext) raises:
+    def elementwise_workflow(ctx: DeviceContext) raises:
         elementwise_add[layout, dtype, SIMD_WIDTH, rank, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
@@ -231,7 +231,7 @@ fn benchmark_elementwise_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_tiled_parameterized[
+def benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
@@ -254,7 +254,7 @@ fn benchmark_tiled_parameterized[
 
     @parameter
     @always_inline
-    fn tiled_workflow(ctx: DeviceContext) raises:
+    def tiled_workflow(ctx: DeviceContext) raises:
         tiled_elementwise_add[
             layout, dtype, SIMD_WIDTH, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
@@ -266,7 +266,7 @@ fn benchmark_tiled_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_manual_vectorized_parameterized[
+def benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
@@ -289,7 +289,7 @@ fn benchmark_manual_vectorized_parameterized[
 
     @parameter
     @always_inline
-    fn manual_vectorized_workflow(ctx: DeviceContext) raises:
+    def manual_vectorized_workflow(ctx: DeviceContext) raises:
         manual_vectorized_tiled_elementwise_add[
             layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
@@ -301,7 +301,7 @@ fn benchmark_manual_vectorized_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_vectorized_parameterized[
+def benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
@@ -324,7 +324,7 @@ fn benchmark_vectorized_parameterized[
 
     @parameter
     @always_inline
-    fn vectorized_workflow(ctx: DeviceContext) raises:
+    def vectorized_workflow(ctx: DeviceContext) raises:
         vectorize_within_tiles_elementwise_add[
             layout, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)

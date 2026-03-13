@@ -12,7 +12,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: add_10_shared_solution
-fn add_10_shared(
+def add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

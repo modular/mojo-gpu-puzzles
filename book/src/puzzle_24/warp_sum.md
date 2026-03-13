@@ -104,7 +104,7 @@ Transform the complex traditional approach into a simple warp kernel using `warp
 You need to complete the `simple_warp_dot_product` function with **6 lines or fewer**:
 
 ```mojo
-fn simple_warp_dot_product[...](output, a, b):
+def simple_warp_dot_product[...](output, a, b):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 ```
@@ -257,7 +257,7 @@ You need to complete the `compute_dot_product` function with **10 lines or fewer
 ```mojo
 @parameter
 @always_inline
-fn compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     idx = indices[0]
     # FILL IN (10 lines at most)
 ```

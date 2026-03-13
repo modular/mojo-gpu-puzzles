@@ -7,7 +7,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 
-fn kernel[
+def kernel[
     dtype: DType, layout: Layout
 ](tensor: LayoutTensor[dtype, layout, MutAnyOrigin]):
     print("Before:")

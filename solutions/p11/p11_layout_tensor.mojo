@@ -13,7 +13,7 @@ comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: pooling_layout_tensor_solution
-fn pooling[
+def pooling[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

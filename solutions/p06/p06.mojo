@@ -10,7 +10,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: add_10_blocks_solution
-fn add_10_blocks(
+def add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

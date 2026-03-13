@@ -31,7 +31,7 @@ comptime in_layout = Layout.row_major(SIZE)
 comptime out_layout = Layout.row_major(1)
 
 
-fn traditional_dot_product_p12_style[
+def traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -72,7 +72,7 @@ fn traditional_dot_product_p12_style[
 
 
 # ANCHOR: simple_warp_kernel
-fn simple_warp_dot_product[
+def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -87,7 +87,7 @@ fn simple_warp_dot_product[
 
 
 # ANCHOR: functional_warp_approach
-fn functional_warp_dot_product[
+def functional_warp_dot_product[
     layout: Layout,
     out_layout: Layout,
     dtype: DType,
@@ -102,7 +102,7 @@ fn functional_warp_dot_product[
 ) raises:
     @parameter
     @always_inline
-    fn compute_dot_product[
+    def compute_dot_product[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
         idx = indices[0]
@@ -116,7 +116,7 @@ fn functional_warp_dot_product[
 # ANCHOR_END: functional_warp_approach
 
 
-fn expected_output[
+def expected_output[
     dtype: DType, n_warps: Int
 ](
     expected: HostBuffer[dtype],
@@ -134,7 +134,7 @@ fn expected_output[
             expected[i_warp] = warp_sum
 
 
-fn rand_int[
+def rand_int[
     dtype: DType, size: Int
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
@@ -142,7 +142,7 @@ fn rand_int[
             buff_host[i] = Int(random_float64(min, max))
 
 
-fn check_result[
+def check_result[
     dtype: DType, size: Int, print_result: Bool = False
 ](actual: DeviceBuffer[dtype], expected: HostBuffer[dtype]) raises:
     with actual.map_to_host() as actual_host:
@@ -156,7 +156,7 @@ fn check_result[
 
 @parameter
 @always_inline
-fn benchmark_simple_warp_parameterized[
+def benchmark_simple_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
@@ -186,7 +186,7 @@ fn benchmark_simple_warp_parameterized[
 
     @parameter
     @always_inline
-    fn traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises:
         comptime kernel = simple_warp_dot_product[
             in_layout, out_layout, test_size
         ]
@@ -208,7 +208,7 @@ fn benchmark_simple_warp_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_functional_warp_parameterized[
+def benchmark_functional_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
@@ -236,7 +236,7 @@ fn benchmark_functional_warp_parameterized[
 
     @parameter
     @always_inline
-    fn functional_warp_workflow(ctx: DeviceContext) raises:
+    def functional_warp_workflow(ctx: DeviceContext) raises:
         functional_warp_dot_product[
             in_layout, out_layout, dtype, SIMD_WIDTH, 1, test_size
         ](out_tensor, a_tensor, b_tensor, ctx)
@@ -251,7 +251,7 @@ fn benchmark_functional_warp_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_traditional_parameterized[
+def benchmark_traditional_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
@@ -280,7 +280,7 @@ fn benchmark_traditional_parameterized[
 
     @parameter
     @always_inline
-    fn traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises:
         ctx.enqueue_function[
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],

@@ -17,7 +17,7 @@ comptime out_layout = Layout.row_major(SIZE)
 comptime conv_layout = Layout.row_major(CONV)
 
 
-fn conv_1d_simple[
+def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -41,7 +41,7 @@ comptime out_2_layout = Layout.row_major(SIZE_2)
 comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
-fn conv_1d_block_boundary[
+def conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],

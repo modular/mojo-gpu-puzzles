@@ -10,7 +10,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: add_solution
-fn add(
+def add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
