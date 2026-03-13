@@ -1,7 +1,7 @@
-from gpu import thread_idx
-from gpu.host import DeviceContext
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from testing import assert_equal
+from std.testing import assert_equal
 
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1

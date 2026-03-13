@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 3
 comptime SIZE = 2
@@ -150,7 +150,7 @@ def matmul_tiled[
 # ANCHOR_END: matmul_tiled_solution
 
 # ANCHOR: matmul_idiomatic_tiled_solution
-from gpu.memory import async_copy_wait_all
+from std.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
 comptime NUM_THREADS = TPB * TPB

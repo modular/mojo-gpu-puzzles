@@ -1,9 +1,9 @@
-from math import ceildiv
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from gpu.host import DeviceContext
+from std.math import ceildiv
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 # ANCHOR: embedding_kernel_coalesced
 comptime THREADS_PER_BLOCK = 256
@@ -97,10 +97,10 @@ def embedding_kernel_2d[
 # ANCHOR_END: embedding_kernel_2d
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
+from std.memory import UnsafePointer
+from std.gpu.host import DeviceBuffer
 
 
 @compiler.register("embedding")

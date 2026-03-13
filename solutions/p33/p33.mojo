@@ -1,12 +1,12 @@
-from gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
-from gpu.host import DeviceContext
+from std.gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
-from gpu.memory import async_copy_wait_all, AddressSpace
-from utils import Index
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.gpu.memory import async_copy_wait_all, AddressSpace
+from std.utils import Index
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 comptime dtype = DType.float32
 comptime SIZE = 1024

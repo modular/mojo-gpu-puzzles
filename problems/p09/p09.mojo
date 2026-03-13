@@ -1,10 +1,10 @@
-from memory import UnsafePointer
-from gpu import thread_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.memory import UnsafePointer
+from std.gpu import thread_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from testing import assert_equal
-from sys import argv
+from std.testing import assert_equal
+from std.sys import argv
 
 comptime SIZE = 4
 comptime MATRIX_SIZE = 3

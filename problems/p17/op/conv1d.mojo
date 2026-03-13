@@ -1,6 +1,6 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 # ANCHOR: conv1d_kernel
@@ -68,10 +68,10 @@ def conv1d_kernel[
 
 # ANCHOR: conv1d_custom_op
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
+from std.memory import UnsafePointer
+from std.gpu.host import DeviceBuffer
 
 
 @compiler.register("conv1d")

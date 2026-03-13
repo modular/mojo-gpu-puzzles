@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_dim, block_idx
-from gpu.host import DeviceContext
+from std.gpu import thread_idx, block_dim, block_idx
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_almost_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.sys import argv
+from std.testing import assert_almost_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 comptime SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
 comptime THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block

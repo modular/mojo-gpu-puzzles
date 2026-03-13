@@ -1,13 +1,13 @@
-from math import sqrt
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import async_copy_wait_all, AddressSpace
-from os.atomic import Atomic
+from std.math import sqrt
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import async_copy_wait_all, AddressSpace
+from std.os.atomic import Atomic
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from utils import StaticTuple
+from std.utils import StaticTuple
 
 comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
 comptime MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY

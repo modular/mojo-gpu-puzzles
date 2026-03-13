@@ -1,7 +1,7 @@
-from memory import UnsafePointer
-from gpu import thread_idx, block_idx, block_dim
-from gpu.host import DeviceContext
-from testing import assert_equal
+from std.memory import UnsafePointer
+from std.gpu import thread_idx, block_idx, block_dim
+from std.gpu.host import DeviceContext
+from std.testing import assert_equal
 
 # ANCHOR: add_10_blocks
 comptime SIZE = 9

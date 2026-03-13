@@ -1,8 +1,8 @@
-from memory import UnsafePointer, stack_allocation
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
-from testing import assert_equal
+from std.memory import UnsafePointer, stack_allocation
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
+from std.testing import assert_equal
 
 comptime TPB = 4
 comptime SIZE = 8

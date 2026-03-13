@@ -1,15 +1,15 @@
-from math import ceildiv
-from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
-from algorithm.functional import elementwise
+from std.math import ceildiv
+from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from utils import IndexList
-from sys import argv, simd_width_of, align_of
-from testing import assert_equal
-from random import random_float64
-from benchmark import (
+from std.utils import IndexList
+from std.sys import argv, simd_width_of, align_of
+from std.testing import assert_equal
+from std.random import random_float64
+from std.benchmark import (
     Bench,
     BenchConfig,
     Bencher,

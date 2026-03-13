@@ -1,7 +1,7 @@
-from memory import UnsafePointer
-from gpu import thread_idx
-from gpu.host import DeviceContext
-from testing import assert_equal
+from std.memory import UnsafePointer
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
+from std.testing import assert_equal
 
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1

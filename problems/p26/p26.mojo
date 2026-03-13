@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, lane_id
-from gpu.host import DeviceContext
-from gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
+from std.gpu import thread_idx, block_idx, block_dim, lane_id
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 # ANCHOR: butterfly_pair_swap
 comptime SIZE = WARP_SIZE
@@ -165,7 +165,7 @@ def test_butterfly_pair_swap() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i
+                input_host[i] = Float32(i)
 
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
@@ -187,10 +187,10 @@ def test_butterfly_pair_swap() raises:
         for i in range(SIZE):
             if i % 2 == 0:
                 # Even positions get odd values
-                expected_buf[i] = i + 1
+                expected_buf[i] = Float32(i + 1)
             else:
                 # Odd positions get even values
-                expected_buf[i] = i - 1
+                expected_buf[i] = Float32(i - 1)
 
         with output_buf.map_to_host() as output_host:
             print("output:", output_host)
@@ -210,9 +210,9 @@ def test_butterfly_parallel_max() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i * 2
+                input_host[i] = Float32(i * 2)
             # Make sure we have a clear maximum
-            input_host[SIZE - 1] = 1000.0
+            input_host[SIZE - 1] = Float32(1000.0)
 
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
@@ -252,9 +252,9 @@ def test_butterfly_conditional_max() raises:
             for i in range(SIZE_2):
                 if i < 9:
                     values = [3, 1, 7, 2, 9, 4, 8, 5, 6]
-                    input_host[i] = values[i]
+                    input_host[i] = Float32(values[i])
                 else:
-                    input_host[i] = i % 10
+                    input_host[i] = Float32(i % 10)
 
         input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
@@ -310,7 +310,7 @@ def test_warp_inclusive_prefix_sum() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i + 1
+                input_host[i] = Float32(i + 1)
 
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
@@ -355,7 +355,7 @@ def test_warp_partition() raises:
             # Create: [3, 7, 1, 8, 2, 9, 4, 6, ...]
             test_values = [3, 7, 1, 8, 2, 9, 4, 6, 0, 10, 3, 11, 1, 12, 4, 13]
             for i in range(SIZE):
-                input_host[i] = test_values[i % len(test_values)]
+                input_host[i] = Float32(test_values[i % len(test_values)])
 
         input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
         output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)

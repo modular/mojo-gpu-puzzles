@@ -1,13 +1,13 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.host.compile import get_gpu_target
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.host.compile import get_gpu_target
 from layout import Layout, LayoutTensor
-from utils import Index, IndexList
-from math import log2
-from algorithm.functional import elementwise, vectorize
-from sys import simd_width_of, argv, align_of
-from testing import assert_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.utils import Index, IndexList
+from std.math import log2
+from std.algorithm.functional import elementwise, vectorize
+from std.sys import simd_width_of, argv, align_of
+from std.testing import assert_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 comptime SIZE = 1024
 comptime rank = 1

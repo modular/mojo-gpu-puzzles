@@ -1,15 +1,15 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.sync import (
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.sync import (
     mbarrier_init,
     mbarrier_arrive,
     mbarrier_test_wait,
 )
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import argv, info
-from testing import assert_true, assert_almost_equal
+from std.sys import argv, info
+from std.testing import assert_true, assert_almost_equal
 
 comptime TPB = 256  # Threads per block for pipeline stages
 comptime SIZE = 1024  # Image size (1D for simplicity)

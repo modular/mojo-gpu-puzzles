@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace, async_copy_wait_all
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import argv, info
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv, info
+from std.testing import assert_equal, assert_almost_equal
 
 # ANCHOR: async_copy_overlap_convolution
 comptime VECTOR_SIZE = 16384

@@ -1,16 +1,16 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.primitives.cluster import (
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
     cluster_arrive,
     cluster_wait,
     elect_one_sync,
 )
-from gpu.memory import AddressSpace
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal, assert_true
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal, assert_true
 
 comptime SIZE = 1024
 comptime TPB = 256

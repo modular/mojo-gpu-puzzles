@@ -1,13 +1,13 @@
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from os.atomic import Atomic
-from gpu.primitives.warp import WARP_SIZE
-from gpu.primitives import block
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.os.atomic import Atomic
+from std.gpu.primitives.warp import WARP_SIZE
+from std.gpu.primitives import block
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
-from math import floor
+from std.sys import argv
+from std.testing import assert_equal
+from std.math import floor
 
 comptime SIZE = 128
 comptime TPB = 128

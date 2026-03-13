@@ -1,4 +1,4 @@
-from gpu.host import DeviceContext
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 
 comptime HEIGHT = 2

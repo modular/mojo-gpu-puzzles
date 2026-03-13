@@ -1,7 +1,7 @@
-from gpu.host import DeviceContext
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from testing import assert_almost_equal
-from bit import log2_ceil
+from std.testing import assert_almost_equal
+from std.bit import log2_ceil
 
 from op import softmax_gpu_kernel, softmax_cpu_kernel
 

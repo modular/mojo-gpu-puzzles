@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, lane_id
-from gpu.host import DeviceContext
-from gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
+from std.gpu import thread_idx, block_idx, block_dim, lane_id
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 
 comptime SIZE = WARP_SIZE

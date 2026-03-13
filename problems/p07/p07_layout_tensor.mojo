@@ -1,7 +1,7 @@
-from gpu import thread_idx, block_idx, block_dim
-from gpu.host import DeviceContext
+from std.gpu import thread_idx, block_idx, block_dim
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from testing import assert_equal
+from std.testing import assert_equal
 
 # ANCHOR: add_10_blocks_2d_layout_tensor
 comptime SIZE = 5

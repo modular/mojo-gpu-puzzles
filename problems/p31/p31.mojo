@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_almost_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.sys import argv
+from std.testing import assert_almost_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: minimal_kernel
 comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects

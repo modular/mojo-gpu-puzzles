@@ -1,9 +1,9 @@
-from testing import assert_equal
-from gpu.host import DeviceContext
+from std.testing import assert_equal
+from std.gpu.host import DeviceContext
 
 # ANCHOR: dot_product_layout_tensor
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
