@@ -231,6 +231,7 @@ def main() raises:
                 result = result_host[0]
                 print("Traditional result:", result)
                 assert_equal(result, expected)
+                print("Puzzle 27 complete ✅")
                 print("Complex: shared memory + barriers + tree reduction")
 
         elif argv()[1] == "--block-sum-dot-product":
@@ -273,6 +274,7 @@ def main() raises:
                 result = result_host[0]
                 print("Block.sum result:", result)
                 assert_equal(result, expected)
+                print("Puzzle 27 complete ✅")
                 print("Block.sum() gives identical results!")
                 print(
                     "Compare the code: 15+ lines of barriers → 1 line of"
@@ -445,6 +447,7 @@ def main() raises:
                     output_mean,
                     "(should be close to 1.0)",
                 )
+                print("Puzzle 27 complete ✅")
         else:
             print(
                 "Available options: [--traditional-dot-product |"

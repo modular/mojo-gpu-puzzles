@@ -81,3 +81,4 @@ def main() raises:
                     assert_equal(
                         out_buf_host[i * SIZE + j], expected_buf[i * SIZE + j]
                     )
+            print("Puzzle 05 complete ✅")

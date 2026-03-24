@@ -229,7 +229,7 @@ def test_kernel1() raises:
                 var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
-        print("✅ Kernel 1 test passed")
+        print("Puzzle 30 complete ✅")
 
 
 def test_kernel2() raises:
@@ -275,7 +275,7 @@ def test_kernel2() raises:
                     assert_almost_equal(expected, actual)
                     processed += 1
 
-        print("✅ Kernel 2 test passed,", processed, "elements processed")
+        print("Puzzle 30 complete ✅")
 
 
 def test_kernel3() raises:
@@ -318,7 +318,7 @@ def test_kernel3() raises:
                 var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
-        print("✅ Kernel 3 test passed")
+        print("Puzzle 30 complete ✅")
 
 
 def main() raises:

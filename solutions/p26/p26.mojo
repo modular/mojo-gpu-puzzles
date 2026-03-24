@@ -272,7 +272,7 @@ def test_butterfly_pair_swap() raises:
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
 
-    print("✅ Butterfly pair swap test passed!")
+    print("Butterfly pair swap test: passed")
 
 
 def test_butterfly_parallel_max() raises:
@@ -316,7 +316,7 @@ def test_butterfly_parallel_max() raises:
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], 1000.0, rtol=1e-5)
 
-    print("✅ Butterfly parallel max test passed!")
+    print("Butterfly parallel max test: passed")
 
 
 def test_butterfly_conditional_max() raises:
@@ -380,7 +380,7 @@ def test_butterfly_conditional_max() raises:
                 else:
                     assert_almost_equal(output_host[i], min_val, rtol=1e-5)
 
-    print("✅ Butterfly conditional max test passed!")
+    print("Butterfly conditional max test: passed")
 
 
 def test_warp_inclusive_prefix_sum() raises:
@@ -426,7 +426,7 @@ def test_warp_inclusive_prefix_sum() raises:
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
 
-    print("✅ Warp inclusive prefix sum test passed!")
+    print("Warp inclusive prefix sum test: passed")
 
 
 def test_warp_partition() raises:
@@ -522,7 +522,7 @@ def test_warp_partition() raises:
                 if output_host[i] < pivot_value:
                     print("ERROR: Right partition contains value < pivot")
 
-    print("✅ Warp partition test passed!")
+    print("Warp partition test: passed")
 
 
 def main() raises:
@@ -538,18 +538,23 @@ def main() raises:
     if test_type == "--pair-swap":
         print("SIZE: ", SIZE)
         test_butterfly_pair_swap()
+        print("Puzzle 26 complete ✅")
     elif test_type == "--parallel-max":
         print("SIZE: ", SIZE)
         test_butterfly_parallel_max()
+        print("Puzzle 26 complete ✅")
     elif test_type == "--conditional-max":
         print("SIZE: ", SIZE_2)
         test_butterfly_conditional_max()
+        print("Puzzle 26 complete ✅")
     elif test_type == "--prefix-sum":
         print("SIZE: ", SIZE)
         test_warp_inclusive_prefix_sum()
+        print("Puzzle 26 complete ✅")
     elif test_type == "--partition":
         print("SIZE: ", SIZE)
         test_warp_partition()
+        print("Puzzle 26 complete ✅")
     else:
         print(
             "Usage: p24.mojo"

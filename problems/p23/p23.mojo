@@ -347,6 +347,7 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--tiled":
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
@@ -360,6 +361,7 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--manual-vectorized":
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
@@ -373,6 +375,7 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--vectorized":
         out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
@@ -386,6 +389,7 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--benchmark":
         print("Running P21 GPU Benchmarks...")

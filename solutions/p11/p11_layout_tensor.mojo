@@ -92,3 +92,4 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 11 complete ✅")

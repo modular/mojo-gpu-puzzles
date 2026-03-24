@@ -177,7 +177,7 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 assert_equal(output_host[i], expected_buf[i])
 
-    print("✅ Basic neighbor difference test passed!")
+    print("Neighbor difference test: passed")
 
 
 def test_moving_average() raises:
@@ -244,7 +244,7 @@ def test_moving_average() raises:
             for i in range(SIZE_2):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-5)
 
-    print("✅ Moving average test passed!")
+    print("Moving average test: passed")
 
 
 def test_broadcast_shuffle_coordination() raises:
@@ -302,7 +302,7 @@ def test_broadcast_shuffle_coordination() raises:
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
 
-    print("✅ Broadcast + Shuffle coordination test passed!")
+    print("Broadcast + shuffle coordination test: passed")
 
 
 def test_basic_broadcast() raises:
@@ -351,7 +351,7 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
 
-    print("✅ Basic broadcast test passed!")
+    print("Basic broadcast test: passed")
 
 
 def test_conditional_broadcast() raises:
@@ -415,7 +415,7 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 assert_almost_equal(output_host[i], expected_buf[i], rtol=1e-4)
 
-    print("✅ Conditional broadcast test passed!")
+    print("Conditional broadcast test: passed")
 
 
 def main() raises:
@@ -431,18 +431,23 @@ def main() raises:
     if test_type == "--neighbor":
         print("SIZE: ", SIZE)
         test_neighbor_difference()
+        print("Puzzle 25 complete ✅")
     elif test_type == "--average":
         print("SIZE_2: ", SIZE_2)
         test_moving_average()
+        print("Puzzle 25 complete ✅")
     elif test_type == "--broadcast-basic":
         print("SIZE: ", SIZE)
         test_basic_broadcast()
+        print("Puzzle 25 complete ✅")
     elif test_type == "--broadcast-conditional":
         print("SIZE: ", SIZE)
         test_conditional_broadcast()
+        print("Puzzle 25 complete ✅")
     elif test_type == "--broadcast-shuffle-coordination":
         print("SIZE: ", SIZE)
         test_broadcast_shuffle_coordination()
+        print("Puzzle 25 complete ✅")
     else:
         print(
             "Usage: p23.mojo"

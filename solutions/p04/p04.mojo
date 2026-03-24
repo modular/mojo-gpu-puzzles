@@ -56,3 +56,4 @@ def main() raises:
             for y in range(SIZE):
                 for x in range(SIZE):
                     assert_equal(out_host[y * SIZE + x], expected[y * SIZE + x])
+            print("Puzzle 04 complete ✅")

@@ -162,3 +162,4 @@ def main() raises:
                     assert_equal(
                         out_host[col * size + row], expected[col * size + row]
                     )
+            print("Puzzle 16 complete ✅")

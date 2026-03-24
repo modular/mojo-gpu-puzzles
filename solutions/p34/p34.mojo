@@ -259,7 +259,7 @@ def main() raises:
                 assert_true(
                     result_host[3] > result_host[2]
                 )  # Block 3 > Block 2
-                print("✅ Multi-block coordination tests passed!")
+                print("Puzzle 34 complete ✅")
 
         elif argv()[1] == "--reduction":
             print("Testing Cluster-Wide Reduction")
@@ -315,7 +315,7 @@ def main() raises:
                     result, expected_sum, atol=10.0
                 )  # Reasonable tolerance for cluster coordination
                 print("✅ Passed: Cluster reduction accuracy test")
-                print("✅ Cluster-wide collective operations tests passed!")
+                print("Puzzle 34 complete ✅")
 
         elif argv()[1] == "--advanced":
             print("Testing Advanced Cluster Algorithms")
@@ -375,7 +375,7 @@ def main() raises:
                     result_host[3] > result_host[2]
                 )  # Block 3 > Block 2
 
-                print("✅ Advanced cluster patterns tests passed!")
+                print("Puzzle 34 complete ✅")
 
         else:
             print(

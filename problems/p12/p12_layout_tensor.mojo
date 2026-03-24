@@ -71,3 +71,4 @@ def main() raises:
             print("out:", out_host)
             print("expected:", expected)
             assert_equal(out_host[0], expected[0])
+            print("Puzzle 12 complete ✅")

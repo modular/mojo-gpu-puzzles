@@ -382,6 +382,7 @@ def main() raises:
                 ](out_tensor, a_tensor, b_tensor, ctx)
             expected_output[dtype, n_warps](expected, a, b)
             check_result[dtype, n_warps, True](out, expected)
+            print("Puzzle 24 complete ✅")
             ctx.synchronize()
     elif argv()[1] == "--benchmark":
         print("-" * 80)
