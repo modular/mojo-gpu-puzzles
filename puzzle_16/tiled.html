@@ -290,17 +290,17 @@ comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
 comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
-fn matmul_tiled[
+def matmul_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + thread_idx.y
-    tiled_col = block_idx.x * TPB + thread_idx.x
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TPB + thread_idx.y
+    var tiled_col = block_idx.x * TPB + thread_idx.x
     # FILL ME IN (roughly 20 lines)
 
 
@@ -403,36 +403,35 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <h2 id="solution-manual-tiling"><a class="header" href="#solution-manual-tiling">Solution: Manual tiling</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn matmul_tiled[
+<pre><code class="language-mojo">def matmul_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TPB + local_row
+    var tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var acc: output.element_type = 0
 
     # Iterate over tiles to compute matrix product
-    @parameter
-    for tile in range((size + TPB - 1) // TPB):
+    comptime for tile in range((size + TPB - 1) // TPB):
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
             a_shared[local_row, local_col] = a[
@@ -449,9 +448,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
         # Matrix multiplication within the tile
         if tiled_row &lt; size and tiled_col &lt; size:
-
-            @parameter
-            for k in range(min(Int(TPB), Int(size - tile * TPB))):
+            comptime for k in range(min(Int(TPB), Int(size - tile * TPB))):
                 acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -602,38 +599,38 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 <h2 id="solution-idiomatic-layouttensor-tiling"><a class="header" href="#solution-idiomatic-layouttensor-tiling">Solution: Idiomatic LayoutTensor tiling</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">from gpu.memory import async_copy_wait_all
+<pre><code class="language-mojo">from std.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
 comptime NUM_THREADS = TPB * TPB
 comptime BLOCK_DIM_COUNT = 2
 
 
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TPB + local_row
+    var tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
-    a_shared = LayoutTensor[
+    var out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var acc: output.element_type = 0
@@ -643,11 +640,12 @@ fn matmul_idiomatic_tiled[
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
-    @parameter
-    for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
+    comptime for idx in range(
+        size // TPB
+    ):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
-        b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
+        var a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
+        var b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -666,8 +664,7 @@ fn matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        @parameter
-        for k in range(TPB):
+        comptime for k in range(TPB):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()

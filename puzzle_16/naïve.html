@@ -234,8 +234,8 @@ This is the most straightforward implementation where each thread computes one e
 <li>Output: <code>Layout.row_major(SIZE, SIZE)</code></li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace
+<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
@@ -247,15 +247,15 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE, SIZE)
 
 
-fn naive_matmul[
+def naive_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 6 lines)
 
 
@@ -305,21 +305,20 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn naive_matmul[
+<pre><code class="language-mojo">def naive_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
 
     if row &lt; size and col &lt; size:
         var acc: output.element_type = 0
 
-        @parameter
-        for k in range(size):
+        comptime for k in range(size):
             acc += a[row, k] * b[k, col]
 
         output[row, col] = acc

@@ -232,13 +232,13 @@ comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
 
 
-fn add_10_2d(
+def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -287,13 +287,13 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn add_10_2d(
+<pre><code class="language-mojo">def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row &lt; size and col &lt; size:
         output[row * size + col] = a[row * size + col] + 10.0
 

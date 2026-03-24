@@ -376,7 +376,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <h2 id="root-cause-analysis---memory-access-patterns"><a class="header" href="#root-cause-analysis---memory-access-patterns"><strong>Root cause analysis - memory access patterns</strong></a></h2>
 <p><strong>Actual Kernel Implementations from p30.mojo:</strong></p>
 <p><strong>Kernel 1 - Efficient Coalesced Access:</strong></p>
-<pre><code class="language-mojo">fn kernel1[
+<pre><code class="language-mojo">def kernel1[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -384,7 +384,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i &lt; size:
         output[i] = a[i] + b[i]
 
@@ -392,7 +392,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </code></pre>
 <p><em>Standard thread indexing - adjacent threads access adjacent memory</em></p>
 <p><strong>Kernel 2 - Inefficient Strided Access:</strong></p>
-<pre><code class="language-mojo">fn kernel2[
+<pre><code class="language-mojo">def kernel2[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -400,10 +400,10 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    stride = 512
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var stride = 512
 
-    i = tid
+    var i = tid
     while i &lt; size:
         output[i] = a[i] + b[i]
         i += stride
@@ -412,7 +412,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </code></pre>
 <p><em>Large stride=512 creates memory access gaps - same operation but scattered access</em></p>
 <p><strong>Kernel 3 - Efficient Reverse Access:</strong></p>
-<pre><code class="language-mojo">fn kernel3[
+<pre><code class="language-mojo">def kernel3[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -420,13 +420,13 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    total_threads = (SIZE // 1024) * 1024
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
-        forward_i = step + tid
+        var forward_i = step + tid
         if forward_i &lt; size:
-            reverse_i = size - 1 - forward_i
+            var reverse_i = size - 1 - forward_i
             output[reverse_i] = a[reverse_i] + b[reverse_i]
 
 

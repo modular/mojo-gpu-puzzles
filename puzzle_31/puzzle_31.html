@@ -238,7 +238,7 @@ comptime layout = Layout.row_major(SIZE)
 comptime ALPHA = Float32(2.5)  # SAXPY coefficient
 
 
-fn minimal_kernel[
+def minimal_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -247,7 +247,7 @@ fn minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i &lt; size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -256,7 +256,7 @@ fn minimal_kernel[
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
-<pre><code class="language-mojo">fn sophisticated_kernel[
+<pre><code class="language-mojo">def sophisticated_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -267,55 +267,55 @@ fn minimal_kernel[
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    shared_cache = LayoutTensor[
+    var shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 12),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     if i &lt; size:
         # REAL computational work that can't be optimized away - affects final result
-        base_x = x[i]
-        base_y = y[i]
+        var base_x = x[i]
+        var base_y = y[i]
 
         # Simulate "precision enhancement" - multiple small adjustments that add up
         # Each computation affects the final result so compiler can't eliminate them
         # But artificially increases register pressure
-        precision_x1 = base_x * 1.0001
-        precision_x2 = precision_x1 * 0.9999
-        precision_x3 = precision_x2 * 1.000001
-        precision_x4 = precision_x3 * 0.999999
+        var precision_x1 = base_x * 1.0001
+        var precision_x2 = precision_x1 * 0.9999
+        var precision_x3 = precision_x2 * 1.000001
+        var precision_x4 = precision_x3 * 0.999999
 
-        precision_y1 = base_y * 1.000005
-        precision_y2 = precision_y1 * 0.999995
-        precision_y3 = precision_y2 * 1.0000001
-        precision_y4 = precision_y3 * 0.9999999
+        var precision_y1 = base_y * 1.000005
+        var precision_y2 = precision_y1 * 0.999995
+        var precision_y3 = precision_y2 * 1.0000001
+        var precision_y4 = precision_y3 * 0.9999999
 
         # Multiple alpha computations for "stability" - should equal alpha
-        alpha1 = alpha * 1.00001 * 0.99999
-        alpha2 = alpha1 * 1.000001 * 0.999999
-        alpha3 = alpha2 * 1.0000001 * 0.9999999
-        alpha4 = alpha3 * 1.00000001 * 0.99999999
+        var alpha1 = alpha * 1.00001 * 0.99999
+        var alpha2 = alpha1 * 1.000001 * 0.999999
+        var alpha3 = alpha2 * 1.0000001 * 0.9999999
+        var alpha4 = alpha3 * 1.00000001 * 0.99999999
 
         # Complex polynomial "optimization" - creates register pressure
-        x_power2 = precision_x4 * precision_x4
-        x_power3 = x_power2 * precision_x4
-        x_power4 = x_power3 * precision_x4
-        x_power5 = x_power4 * precision_x4
-        x_power6 = x_power5 * precision_x4
-        x_power7 = x_power6 * precision_x4
-        x_power8 = x_power7 * precision_x4
+        var x_power2 = precision_x4 * precision_x4
+        var x_power3 = x_power2 * precision_x4
+        var x_power4 = x_power3 * precision_x4
+        var x_power5 = x_power4 * precision_x4
+        var x_power6 = x_power5 * precision_x4
+        var x_power7 = x_power6 * precision_x4
+        var x_power8 = x_power7 * precision_x4
 
         # "Advanced" mathematical series that contributes tiny amount to result
-        series_term1 = x_power2 * 0.0000001  # x^2/10M
-        series_term2 = x_power4 * 0.00000001  # x^4/100M
-        series_term3 = x_power6 * 0.000000001  # x^6/1B
-        series_term4 = x_power8 * 0.0000000001  # x^8/10B
-        series_correction = (
+        var series_term1 = x_power2 * 0.0000001  # x^2/10M
+        var series_term2 = x_power4 * 0.00000001  # x^4/100M
+        var series_term3 = x_power6 * 0.000000001  # x^6/1B
+        var series_term4 = x_power8 * 0.0000000001  # x^8/10B
+        var series_correction = (
             series_term1 - series_term2 + series_term3 - series_term4
         )
 
@@ -328,20 +328,20 @@ fn minimal_kernel[
         barrier()
 
         # Load from shared memory for "optimization"
-        cached_x = shared_cache[local_i] if local_i &lt; 1024 else precision_x4
-        cached_y = (
+        var cached_x = shared_cache[local_i] if local_i &lt; 1024 else precision_x4
+        var cached_y = (
             shared_cache[local_i + 1024] if local_i &lt; 1024 else precision_y4
         )
-        cached_alpha = (
+        var cached_alpha = (
             shared_cache[local_i + 2048] if local_i &lt; 1024 else alpha4
         )
-        cached_correction = (
+        var cached_correction = (
             shared_cache[local_i + 3072] if local_i
             &lt; 1024 else series_correction
         )
 
         # Final "high precision" computation - all work contributes to result
-        high_precision_result = (
+        var high_precision_result = (
             cached_alpha * cached_x + cached_y + cached_correction
         )
 
@@ -351,7 +351,7 @@ fn minimal_kernel[
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
-<pre><code class="language-mojo">fn balanced_kernel[
+<pre><code class="language-mojo">def balanced_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -362,29 +362,29 @@ fn minimal_kernel[
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    shared_cache = LayoutTensor[
+    var shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 4),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     if i &lt; size:
         # Moderate computational work that contributes to result
-        base_x = x[i]
-        base_y = y[i]
+        var base_x = x[i]
+        var base_y = y[i]
 
         # Light precision enhancement - less than sophisticated kernel
-        enhanced_x = base_x * 1.00001 * 0.99999
-        enhanced_y = base_y * 1.00001 * 0.99999
-        stable_alpha = alpha * 1.000001 * 0.999999
+        var enhanced_x = base_x * 1.00001 * 0.99999
+        var enhanced_y = base_y * 1.00001 * 0.99999
+        var stable_alpha = alpha * 1.000001 * 0.999999
 
         # Moderate computational optimization
-        x_squared = enhanced_x * enhanced_x
-        optimization_hint = x_squared * 0.000001
+        var x_squared = enhanced_x * enhanced_x
+        var optimization_hint = x_squared * 0.000001
 
         # Efficient shared memory caching - only what we actually need
         if local_i &lt; 1024:
@@ -393,13 +393,13 @@ fn minimal_kernel[
         barrier()
 
         # Use cached values efficiently
-        cached_x = shared_cache[local_i] if local_i &lt; 1024 else enhanced_x
-        cached_y = (
+        var cached_x = shared_cache[local_i] if local_i &lt; 1024 else enhanced_x
+        var cached_y = (
             shared_cache[local_i + 1024] if local_i &lt; 1024 else enhanced_y
         )
 
         # Balanced computation - moderate work, good efficiency
-        result = stable_alpha * cached_x + cached_y + optimization_hint
+        var result = stable_alpha * cached_x + cached_y + optimization_hint
 
         # Balanced result with moderate resource usage (~15 registers, 16KB shared)
         y[i] = result

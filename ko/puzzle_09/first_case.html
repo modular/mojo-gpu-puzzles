@@ -226,11 +226,11 @@
 </ul>
 <h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
 <p>먼저 전체 코드를 보지 않고 커널만 살펴봅시다:</p>
-<pre><code class="language-mojo">fn add_10(
+<pre><code class="language-mojo">def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     output[i] = a[i] + 10.0
 
 

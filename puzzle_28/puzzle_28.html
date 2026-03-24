@@ -392,7 +392,7 @@ comptime dtype = DType.float32
 comptime layout_async = Layout.row_major(VECTOR_SIZE)
 
 
-fn async_copy_overlap_convolution[
+def async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -406,17 +406,17 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = LayoutTensor[
+    var input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    kernel_shared = LayoutTensor[
+    var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)
@@ -499,7 +499,7 @@ fn async_copy_overlap_convolution[
 <details class="solution-details">
 <summary><strong>Complete Solution with Detailed Explanation</strong></summary>
 <p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
-<pre><code class="language-mojo">fn async_copy_overlap_convolution[
+<pre><code class="language-mojo">def async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -513,24 +513,24 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = LayoutTensor[
+    var input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    kernel_shared = LayoutTensor[
+    var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_i = Int(thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
+    var input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -545,7 +545,7 @@ fn async_copy_overlap_convolution[
     barrier()  # Sync all threads
 
     # Phase 4: Compute convolution
-    global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
+    var global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
     if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
         var result: output.element_type = 0
 
@@ -553,7 +553,7 @@ fn async_copy_overlap_convolution[
         if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
             # Full convolution for center elements
             for k in range(KERNEL_SIZE):
-                input_idx = local_i + k - HALO_SIZE
+                var input_idx = local_i + k - HALO_SIZE
                 if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
                     result += input_shared[input_idx] * kernel_shared[k]
         else:

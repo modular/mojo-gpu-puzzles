@@ -269,13 +269,13 @@
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <p>이 퍼즐을 완성하려면 Mojo 파일에서 GPU와 CPU 커널을 모두 구현하고, 파이썬 코드에서 그래프 정의를 완성해야 합니다.</p>
 <h3 id="1-softmaxmojo에서-gpu-커널-구현하기"><a class="header" href="#1-softmaxmojo에서-gpu-커널-구현하기">1. <code>softmax.mojo</code>에서 GPU 커널 구현하기</a></h3>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace
+<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from math import exp
-from bit import log2_ceil
-from utils.numerics import max_finite, min_finite
+from std.math import exp
+from std.bit import log2_ceil
+from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
@@ -285,7 +285,7 @@ comptime GRID_DIM_X = 1
 comptime BLOCK_DIM_X = 1 &lt;&lt; log2_ceil(SIZE)
 
 
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -316,7 +316,7 @@ fn softmax_gpu_kernel[
 </div>
 </details>
 <h3 id="2-softmaxmojo에서-cpu-커널-구현하기"><a class="header" href="#2-softmaxmojo에서-cpu-커널-구현하기">2. <code>softmax.mojo</code>에서 CPU 커널 구현하기</a></h3>
-<pre><code class="language-mojo">fn softmax_cpu_kernel[
+<pre><code class="language-mojo">def softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -467,7 +467,7 @@ Sum of all probabilities on GPU: 1.0
 <p>하지만 수치 오버플로우를 방지하기 위해 더 안정적인 형태를 사용합니다:</p>
 <p>$$\Large \text{softmax}(x_i) = \frac{e^{x_i - \max(x)}}{\sum_{j=1}^{n} e^{x_j - \max(x)}}$$</p>
 <h3 id="gpu-커널-구현"><a class="header" href="#gpu-커널-구현">GPU 커널 구현</a></h3>
-<pre><code class="language-mojo">fn softmax_gpu_kernel[
+<pre><code class="language-mojo">def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -478,19 +478,19 @@ Sum of all probabilities on GPU: 1.0
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    shared_max = LayoutTensor[
+    var shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(thread_idx.x)
+    var global_i = Int(thread_idx.x)
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
@@ -503,7 +503,7 @@ Sum of all probabilities on GPU: 1.0
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = BLOCK_DIM_X // 2
+    var stride = BLOCK_DIM_X // 2
     while stride &gt; 0:
         if global_i &lt; stride:
             shared_max[global_i] = max(
@@ -512,7 +512,7 @@ Sum of all probabilities on GPU: 1.0
         barrier()
         stride = stride // 2
 
-    block_max = shared_max[0]
+    var block_max = shared_max[0]
 
     # Initialize out-of-bounds (shared_max[global_i], global_i &gt;= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
@@ -531,7 +531,7 @@ Sum of all probabilities on GPU: 1.0
         barrier()
         stride = stride // 2
 
-    block_sum = shared_sum[0]
+    var block_sum = shared_sum[0]
 
     # Normalize by sum
     if global_i &lt; input_size:
@@ -542,7 +542,7 @@ Sum of all probabilities on GPU: 1.0
 <div class="solution-explanation">
 GPU 커널은 고도로 최적화된 병렬 리덕션 기법을 사용하여 수치적으로 안정적인 소프트맥스 알고리즘을 구현합니다. 커널을 상세히 분석해 보겠습니다:
 <h4 id="커널-시그니처와-메모리-관리"><a class="header" href="#커널-시그니처와-메모리-관리">커널 시그니처와 메모리 관리</a></h4>
-<pre><code class="language-mojo">fn softmax_gpu_kernel[
+<pre><code class="language-mojo">def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -665,7 +665,7 @@ if global_i &lt; input_size:
 <p>이 알고리즘은 수치적으로도 견고합니다. 최댓값 차감 기법을 적용하여 신경망 활성화에서 흔한 넓은 범위의 값에서도 정밀도를 유지하며, 오버플로우/언더플로우 가능성을 처리합니다.</p>
 </div>
 <h3 id="cpu-폴백-구현"><a class="header" href="#cpu-폴백-구현">CPU 폴백 구현</a></h3>
-<pre><code class="language-mojo">fn softmax_cpu_kernel[
+<pre><code class="language-mojo">def softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,

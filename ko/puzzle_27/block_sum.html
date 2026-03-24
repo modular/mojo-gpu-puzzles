@@ -235,7 +235,7 @@
 </ul>
 <h2 id="기존-방식의-복잡성-puzzle-12에서"><a class="header" href="#기존-방식의-복잡성-puzzle-12에서">기존 방식의 복잡성 (Puzzle 12에서)</a></h2>
 <p><a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>의 복잡한 방식을 떠올려 봅시다. 공유 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
-<pre><code class="language-mojo">fn traditional_dot_product[
+<pre><code class="language-mojo">def traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -246,19 +246,19 @@
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i &lt; size:
-        a_val = rebind[Scalar[dtype]](a[global_i])
-        b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = rebind[Scalar[dtype]](a[global_i])
+        var b_val = rebind[Scalar[dtype]](b[global_i])
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -288,14 +288,14 @@
 <p>이 방식은 전체 블록(GPU에 따라 2개 또는 4개 워프에 걸친 128 스레드)에서 동작하지만, 코드가 장황하고 오류가 발생하기 쉬우며 블록 레벨 GPU 동기화에 대한 깊은 이해가 필요합니다.</p>
 <h2 id="워프-레벨-개선-puzzle-24에서"><a class="header" href="#워프-레벨-개선-puzzle-24에서">워프 레벨 개선 (Puzzle 24에서)</a></h2>
 <p>블록 레벨 연산으로 넘어가기 전에, <a href="../puzzle_24/warp_sum.html">Puzzle 24</a>에서 <code>warp.sum()</code>을 사용하여 단일 워프 내 리덕션을 어떻게 단순화했는지 떠올려 봅시다:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[
+<pre><code class="language-mojo">def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -303,7 +303,7 @@
         partial_product = (a[global_i] * b[global_i]).reduce_add()
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
-    total = warp_sum(partial_product)
+    var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
@@ -355,7 +355,7 @@ comptime out_layout = Layout.row_major(1)
 comptime dtype = DType.float32
 
 
-fn block_sum_dot_product[
+def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -366,8 +366,8 @@ fn block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
 
@@ -434,7 +434,7 @@ Just like warp.sum() but for the entire block
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn block_sum_dot_product[
+<pre><code class="language-mojo">def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -445,8 +445,8 @@ Just like warp.sum() but for the entire block
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Each thread computes partial product
     var partial_product: Scalar[dtype] = 0.0
@@ -456,7 +456,7 @@ Just like warp.sum() but for the entire block
 
     # The magic: block.sum() replaces 15+ lines of manual reduction!
     # Just like warp.sum() but for the entire block
-    total = block.sum[block_size=tpb, broadcast=False](
+    var total = block.sum[block_size=tpb, broadcast=False](
         val=SIMD[DType.float32, 1](partial_product)
     )
 

@@ -242,7 +242,7 @@ comptime in_layout = Layout.row_major(SIZE)
 comptime out_layout = Layout.row_major(1)
 
 
-fn traditional_dot_product_p12_style[
+def traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -252,14 +252,14 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     if global_i &lt; size:
         shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
@@ -268,7 +268,7 @@ fn traditional_dot_product_p12_style[
 
     barrier()
 
-    stride = WARP_SIZE // 2
+    var stride = WARP_SIZE // 2
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]
@@ -316,14 +316,14 @@ fn traditional_dot_product_p12_style[
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <h3 id="1-simple-warp-kernel-approach"><a class="header" href="#1-simple-warp-kernel-approach">1. Simple warp kernel approach</a></h3>
 <p>Transform the complex traditional approach into a simple warp kernel using <code>warp_sum()</code>:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[
+<pre><code class="language-mojo">def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     # FILL IN (6 lines at most)
 
 
@@ -334,7 +334,7 @@ fn traditional_dot_product_p12_style[
 <div class="solution-tips">
 <h3 id="1-understanding-the-simple-warp-kernel-structure"><a class="header" href="#1-understanding-the-simple-warp-kernel-structure">1. <strong>Understanding the simple warp kernel structure</strong></a></h3>
 <p>You need to complete the <code>simple_warp_dot_product</code> function with <strong>6 lines or fewer</strong>:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[...](output, a, b):
+<pre><code class="language-mojo">def simple_warp_dot_product[...](output, a, b):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 </code></pre>
@@ -398,14 +398,14 @@ expected: 10416.0
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn simple_warp_dot_product[
+<pre><code class="language-mojo">def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -413,7 +413,7 @@ expected: 10416.0
         partial_product = (a[global_i] * b[global_i]).reduce_add()
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
-    total = warp_sum(partial_product)
+    var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
@@ -454,7 +454,7 @@ All lanes receive → total = 10416.0 (broadcast result)
 </details>
 <h3 id="2-functional-approach"><a class="header" href="#2-functional-approach">2. Functional approach</a></h3>
 <p>Now implement the same warp dot product using Mojo’s functional programming patterns:</p>
-<pre><code class="language-mojo">fn functional_warp_dot_product[
+<pre><code class="language-mojo">def functional_warp_dot_product[
     layout: Layout,
     out_layout: Layout,
     dtype: DType,
@@ -469,10 +469,10 @@ All lanes receive → total = 10416.0 (broadcast result)
 ) raises:
     @parameter
     @always_inline
-    fn compute_dot_product[
+    def compute_dot_product[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
         print("idx:", idx)
         # FILL IN (10 lines at most)
 
@@ -488,7 +488,7 @@ All lanes receive → total = 10416.0 (broadcast result)
 <p>You need to complete the <code>compute_dot_product</code> function with <strong>10 lines or fewer</strong>:</p>
 <pre><code class="language-mojo">@parameter
 @always_inline
-fn compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+def compute_dot_product[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
     idx = indices[0]
     # FILL IN (10 lines at most)
 </code></pre>
@@ -556,7 +556,7 @@ expected: 10416.0
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn functional_warp_dot_product[
+<pre><code class="language-mojo">def functional_warp_dot_product[
     layout: Layout,
     out_layout: Layout,
     dtype: DType,
@@ -571,22 +571,22 @@ expected: 10416.0
 ) raises:
     @parameter
     @always_inline
-    fn compute_dot_product[
+    def compute_dot_product[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx &lt; size:
-            a_val = a.load[1](Index(idx))
-            b_val = b.load[1](Index(idx))
+            var a_val = a.load[1](Index(idx))
+            var b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
 
         # Warp magic - combines all WARP_SIZE partial products!
-        total = warp_sum(partial_product)
+        var total = warp_sum(partial_product)
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:

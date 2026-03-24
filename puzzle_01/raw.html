@@ -240,11 +240,11 @@ comptime THREADS_PER_BLOCK = SIZE
 comptime dtype = DType.float32
 
 
-fn add_10(
+def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     # FILL ME IN (roughly 1 line)
 
 
@@ -293,11 +293,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn add_10(
+<pre><code class="language-mojo">def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     output[i] = a[i] + 10.0
 
 

@@ -236,7 +236,7 @@ comptime a_layout = Layout.row_major(1, SIZE)
 comptime b_layout = Layout.row_major(SIZE, 1)
 
 
-fn broadcast_add[
+def broadcast_add[
     out_layout: Layout,
     a_layout: Layout,
     b_layout: Layout,
@@ -246,8 +246,8 @@ fn broadcast_add[
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -296,7 +296,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn broadcast_add[
+<pre><code class="language-mojo">def broadcast_add[
     out_layout: Layout,
     a_layout: Layout,
     b_layout: Layout,
@@ -306,8 +306,8 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row &lt; size and col &lt; size:
         output[row, col] = a[0, col] + b[row, 0]
 

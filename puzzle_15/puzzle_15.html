@@ -238,8 +238,8 @@ Row 2: [12, 13, 14, 15, 16, 17] → Block(0,2)
 Row 3: [18, 19, 20, 21, 22, 23] → Block(0,3)
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to Complete</a></h2>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace
+<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
@@ -253,16 +253,16 @@ comptime in_layout = Layout.row_major(BATCH, SIZE)
 comptime out_layout = Layout.row_major(BATCH, 1)
 
 
-fn axis_sum[
+def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    batch = block_idx.y
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var batch = block_idx.y
     # FILL ME IN (roughly 15 lines)
 
 
@@ -312,21 +312,21 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn axis_sum[
+<pre><code class="language-mojo">def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    batch = block_idx.y
-    cache = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var batch = block_idx.y
+    var cache = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Visualize:
@@ -346,7 +346,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     barrier()
 
     # do reduction sum per each block
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride &gt; 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0

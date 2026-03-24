@@ -235,27 +235,27 @@
 </ul>
 <h3 id="the-prefix_sum-advantage"><a class="header" href="#the-prefix_sum-advantage">The <code>prefix_sum</code> advantage</a></h3>
 <p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>, we implemented this the hard way with explicit shared memory management:</p>
-<pre><code class="language-mojo">fn prefix_sum_simple[
+<pre><code class="language-mojo">def prefix_sum_simple[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    shared = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
     barrier()
 
-    offset = UInt(1)
+    var offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; size:
@@ -298,7 +298,7 @@ output[global_i] = scan_result
 <p><strong>Mathematical operation:</strong> Compute cumulative sum where each lane gets the sum of all elements up to and including its position:
 \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
 <p>This transforms input data <code>[1, 2, 3, 4, 5, ...]</code> into cumulative sums <code>[1, 3, 6, 10, 15, ...]</code>, where each position contains the sum of all previous elements plus itself.</p>
-<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+<pre><code class="language-mojo">def warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -324,7 +324,7 @@ output[global_i] = scan_result
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # FILL ME IN (roughly 4 lines)
 
@@ -396,7 +396,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn warp_inclusive_prefix_sum[
+<pre><code class="language-mojo">def warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -421,14 +421,14 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
         # But it only works within the current warp (WARP_SIZE threads)
-        scan_result = prefix_sum[exclusive=False](
+        var scan_result = prefix_sum[exclusive=False](
             rebind[Scalar[dtype]](current_val)
         )
 
@@ -520,7 +520,7 @@ Cycle 3: Store results
 <li><strong><code>prefix_sum()</code></strong>: Exclusive scan for position calculation within partitions</li>
 </ol>
 <p>This demonstrates the power of combining multiple warp primitives for complex parallel algorithms within a single warp.</p>
-<pre><code class="language-mojo">fn warp_partition[
+<pre><code class="language-mojo">def warp_partition[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -541,12 +541,12 @@ Cycle 3: Store results
 
     Example with pivot=5:
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
-    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # FILL ME IN (roughly 13 lines)
 
@@ -616,7 +616,7 @@ pivot: 5.0
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn warp_partition[
+<pre><code class="language-mojo">def warp_partition[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -637,26 +637,30 @@ pivot: 5.0
 
     Example with pivot=5:
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
-    Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
+    var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # Phase 1: Create warp-level predicates
-        predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(0.0)
-        predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(0.0)
+        var predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(
+            0.0
+        )
+        var predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(
+            0.0
+        )
 
         # Phase 2: Warp-level prefix sum to get positions within warp
-        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
-        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+        var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+        var warp_right_pos = prefix_sum[exclusive=True](predicate_right)
 
         # Phase 3: Get total left count using shuffle_xor reduction
-        warp_left_total = predicate_left
+        var warp_left_total = predicate_left
 
         # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset &gt; 0:
             warp_left_total += shuffle_xor(warp_left_total, offset)
             offset //= 2

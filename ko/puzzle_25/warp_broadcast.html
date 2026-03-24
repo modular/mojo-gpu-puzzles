@@ -278,7 +278,7 @@ result = use_collective_value(collective_value)
 <li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
 </ul>
 <h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
-<pre><code class="language-mojo">fn basic_broadcast[
+<pre><code class="language-mojo">def basic_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -288,8 +288,8 @@ result = use_collective_value(collective_value)
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
     if global_i &lt; size:
         var broadcast_value: output.element_type = 0.0
 
@@ -364,7 +364,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn basic_broadcast[
+<pre><code class="language-mojo">def basic_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -374,14 +374,14 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
         var broadcast_value: output.element_type = 0.0
         if lane == 0:
-            block_start = Int(block_idx.x * block_dim.x)
+            var block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:
@@ -471,7 +471,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 </ul>
 <h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
-<pre><code class="language-mojo">fn conditional_broadcast[
+<pre><code class="language-mojo">def conditional_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -481,15 +481,15 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
     if global_i &lt; size:
         var decision_value: output.element_type = 0.0
 
         # FILL IN (roughly 10 lines)
 
-        current_input = input[global_i]
-        threshold = decision_value / 2.0
+        var current_input = input[global_i]
+        var threshold = decision_value / 2.0
         if current_input &gt;= threshold:
             output[global_i] = current_input * 2.0  # Double if &gt;= threshold
         else:
@@ -570,7 +570,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <h3 id="솔루션-1"><a class="header" href="#솔루션-1">솔루션</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn conditional_broadcast[
+<pre><code class="language-mojo">def conditional_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -580,18 +580,18 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 analyzes block-local data and makes decision (find max of first 8 in block)
         var decision_value: output.element_type = 0.0
         if lane == 0:
-            block_start = Int(block_idx.x * block_dim.x)
+            var block_start = Int(block_idx.x * block_dim.x)
             decision_value = input[block_start] if block_start &lt; size else 0.0
             for i in range(1, min(8, min(WARP_SIZE, size - block_start))):
                 if block_start + i &lt; size:
-                    current_val = input[block_start + i]
+                    var current_val = input[block_start + i]
                     if current_val &gt; decision_value:
                         decision_value = current_val
 
@@ -599,8 +599,8 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
         decision_value = broadcast(decision_value)
 
         # Step 3: All lanes apply conditional logic based on broadcast decision
-        current_input = input[global_i]
-        threshold = decision_value / 2.0
+        var current_input = input[global_i]
+        var threshold = decision_value / 2.0
         if current_input &gt;= threshold:
             output[global_i] = current_input * 2.0  # Double if &gt;= threshold
         else:
@@ -707,7 +707,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 </ul>
 <h3 id="완성할-코드-2"><a class="header" href="#완성할-코드-2">완성할 코드</a></h3>
-<pre><code class="language-mojo">fn broadcast_shuffle_coordination[
+<pre><code class="language-mojo">def broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -718,8 +718,8 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
     if global_i &lt; size:
         var scale_factor: output.element_type = 0.0
 
@@ -799,7 +799,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 <h3 id="솔루션-2"><a class="header" href="#솔루션-2">솔루션</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn broadcast_shuffle_coordination[
+<pre><code class="language-mojo">def broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -810,15 +810,15 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 computes block-local scaling factor
         var scale_factor: output.element_type = 0.0
         if lane == 0:
             # Compute average of first 4 elements in this block's data
-            block_start = Int(block_idx.x * block_dim.x)
+            var block_start = Int(block_idx.x * block_dim.x)
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:
@@ -829,8 +829,8 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
         scale_factor = broadcast(scale_factor)
 
         # Step 3: Each lane gets current and next values
-        current_val = input[global_i]
-        next_val = shuffle_down(current_val, 1)
+        var current_val = input[global_i]
+        var next_val = shuffle_down(current_val, 1)
 
         # Step 4: Apply broadcast factor with neighbor coordination
         if lane &lt; WARP_SIZE - 1 and global_i &lt; size - 1:

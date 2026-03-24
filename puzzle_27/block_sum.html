@@ -234,7 +234,7 @@
 </ul>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
 <p>Recall the complex approach from <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> that required shared memory, barriers, and tree reduction:</p>
-<pre><code class="language-mojo">fn traditional_dot_product[
+<pre><code class="language-mojo">def traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -245,19 +245,19 @@
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i &lt; size:
-        a_val = rebind[Scalar[dtype]](a[global_i])
-        b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = rebind[Scalar[dtype]](a[global_i])
+        var b_val = rebind[Scalar[dtype]](b[global_i])
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -287,14 +287,14 @@
 <p>This works across the entire block (128 threads across 2 or 4 warps depending on GPU), but it’s verbose, error-prone, and requires deep understanding of block-level GPU synchronization.</p>
 <h2 id="the-warp-level-improvement-from-puzzle-24"><a class="header" href="#the-warp-level-improvement-from-puzzle-24">The warp-level improvement (from Puzzle 24)</a></h2>
 <p>Before jumping to block-level operations, recall how <a href="../puzzle_24/warp_sum.html">Puzzle 24</a> simplified reduction within a single warp using <code>warp.sum()</code>:</p>
-<pre><code class="language-mojo">fn simple_warp_dot_product[
+<pre><code class="language-mojo">def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -302,7 +302,7 @@
         partial_product = (a[global_i] * b[global_i]).reduce_add()
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
-    total = warp_sum(partial_product)
+    var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
@@ -354,7 +354,7 @@ comptime out_layout = Layout.row_major(1)
 comptime dtype = DType.float32
 
 
-fn block_sum_dot_product[
+def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -365,8 +365,8 @@ fn block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
 
@@ -433,7 +433,7 @@ Just like warp.sum() but for the entire block
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn block_sum_dot_product[
+<pre><code class="language-mojo">def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -444,8 +444,8 @@ Just like warp.sum() but for the entire block
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Each thread computes partial product
     var partial_product: Scalar[dtype] = 0.0
@@ -455,7 +455,7 @@ Just like warp.sum() but for the entire block
 
     # The magic: block.sum() replaces 15+ lines of manual reduction!
     # Just like warp.sum() but for the entire block
-    total = block.sum[block_size=tpb, broadcast=False](
+    var total = block.sum[block_size=tpb, broadcast=False](
         val=SIMD[DType.float32, 1](partial_product)
     )
 

@@ -264,7 +264,7 @@ tensor[1, 2] = 2.0  # 마지막 요소
 </ul>
 <h2 id="간단한-예제"><a class="header" href="#간단한-예제">간단한 예제</a></h2>
 <p>LayoutTensor의 기본을 보여주는 간단한 예제로 모든 것을 정리해봅시다:</p>
-<pre><code class="language-mojo">from gpu.host import DeviceContext
+<pre><code class="language-mojo">from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 
 comptime HEIGHT = 2
@@ -273,7 +273,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 
-fn kernel[
+def kernel[
     dtype: DType, layout: Layout
 ](tensor: LayoutTensor[dtype, layout, MutAnyOrigin]):
     print("Before:")

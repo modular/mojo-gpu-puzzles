@@ -236,10 +236,10 @@
 comptime rank = 1
 comptime layout = Layout.row_major(SIZE)
 comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
+comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
-fn elementwise_add[
+def elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
@@ -249,10 +249,10 @@ fn elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn add[
+    def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
         print("idx:", idx)
         # FILL IN (2 to 4 lines)
 
@@ -268,7 +268,7 @@ fn elementwise_add[
 <p><code>elementwise</code> 함수는 다음과 같은 정확한 시그니처를 가진 중첩 함수를 기대합니다:</p>
 <pre><code class="language-mojo">@parameter
 @always_inline
-fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
     # 구현 코드
 </code></pre>
 <p><strong>각 부분이 중요한 이유:</strong></p>
@@ -357,7 +357,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn elementwise_add[
+<pre><code class="language-mojo">def elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
@@ -367,16 +367,16 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ) raises:
     @parameter
     @always_inline
-    fn add[
+    def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.aligned_load[width=simd_width](Index(idx))
-        b_simd = b.aligned_load[width=simd_width](Index(idx))
-        ret = a_simd + b_simd
+        var a_simd = a.aligned_load[width=simd_width](Index(idx))
+        var b_simd = b.aligned_load[width=simd_width](Index(idx))
+        var ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
@@ -411,7 +411,7 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 <h3 id="2-심층-분석-중첩-함수-아키텍처"><a class="header" href="#2-심층-분석-중첩-함수-아키텍처">2. <strong>심층 분석: 중첩 함수 아키텍처</strong></a></h3>
 <pre><code class="language-mojo">@parameter
 @always_inline
-fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
 </code></pre>
 <p><strong>매개변수 분석:</strong></p>
 <ul>

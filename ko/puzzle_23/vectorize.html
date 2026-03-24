@@ -240,7 +240,7 @@
 </ul>
 <h2 id="1-수동-벡터화-방식"><a class="header" href="#1-수동-벡터화-방식">1. 수동 벡터화 방식</a></h2>
 <h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
-<pre><code class="language-mojo">fn manual_vectorized_tiled_elementwise_add[
+<pre><code class="language-mojo">def manual_vectorized_tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -259,19 +259,19 @@
 
     @parameter
     @always_inline
-    fn process_manual_vectorized_tiles[
+    def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
         print("tile_id:", tile_id)
-        output_tile = output.tile[chunk_size](tile_id)
-        a_tile = a.tile[chunk_size](tile_id)
-        b_tile = b.tile[chunk_size](tile_id)
+        var output_tile = output.tile[chunk_size](tile_id)
+        var a_tile = a.tile[chunk_size](tile_id)
+        var b_tile = b.tile[chunk_size](tile_id)
 
         # FILL IN (7 lines at most)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = (size + chunk_size - 1) // chunk_size
     elementwise[
         process_manual_vectorized_tiles, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -346,7 +346,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h3 id="수동-벡터화-풀이"><a class="header" href="#수동-벡터화-풀이">수동 벡터화 풀이</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn manual_vectorized_tiled_elementwise_add[
+<pre><code class="language-mojo">def manual_vectorized_tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -365,28 +365,27 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
     @parameter
     @always_inline
-    fn process_manual_vectorized_tiles[
+    def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
 
-        output_tile = output.tile[chunk_size](tile_id)
-        a_tile = a.tile[chunk_size](tile_id)
-        b_tile = b.tile[chunk_size](tile_id)
+        var output_tile = output.tile[chunk_size](tile_id)
+        var a_tile = a.tile[chunk_size](tile_id)
+        var b_tile = b.tile[chunk_size](tile_id)
 
-        @parameter
-        for i in range(tile_size):
-            global_start = tile_id * chunk_size + i * simd_width
+        comptime for i in range(tile_size):
+            var global_start = tile_id * chunk_size + i * simd_width
 
-            a_vec = a.aligned_load[simd_width](Index(global_start))
-            b_vec = b.aligned_load[simd_width](Index(global_start))
-            ret = a_vec + b_vec
+            var a_vec = a.aligned_load[simd_width](Index(global_start))
+            var b_vec = b.aligned_load[simd_width](Index(global_start))
+            var ret = a_vec + b_vec
             # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
 
             output.store[simd_width](Index(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = (size + chunk_size - 1) // chunk_size
     elementwise[
         process_manual_vectorized_tiles, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -445,7 +444,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 </details>
 <h2 id="2-mojo-vectorize-방식"><a class="header" href="#2-mojo-vectorize-방식">2. Mojo vectorize 방식</a></h2>
 <h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
-<pre><code class="language-mojo">fn vectorize_within_tiles_elementwise_add[
+<pre><code class="language-mojo">def vectorize_within_tiles_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -462,13 +461,13 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     # Each tile contains tile_size elements (not SIMD groups)
     @parameter
     @always_inline
-    fn process_tile_with_vectorize[
+    def process_tile_with_vectorize[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
-        tile_start = tile_id * tile_size
-        tile_end = min(tile_start + tile_size, size)
-        actual_tile_size = tile_end - tile_start
+        var tile_id = indices[0]
+        var tile_start = tile_id * tile_size
+        var tile_end = min(tile_start + tile_size, size)
+        var actual_tile_size = tile_end - tile_start
         print(
             "tile_id:",
             tile_id,
@@ -482,7 +481,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 
         # FILL IN (9 lines at most)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[
         process_tile_with_vectorize, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -500,7 +499,7 @@ actual_tile_size = tile_end - tile_start
 </code></pre>
 <p>마지막 타일이 <code>tile_size</code>보다 작을 수 있는 경우를 처리합니다.</p>
 <h3 id="2-벡터화-함수-패턴"><a class="header" href="#2-벡터화-함수-패턴">2. <strong>벡터화 함수 패턴</strong></a></h3>
-<pre><code class="language-mojo">fn vectorized_add[
+<pre><code class="language-mojo">def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
@@ -553,7 +552,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h3 id="mojo-vectorize-풀이"><a class="header" href="#mojo-vectorize-풀이">Mojo vectorize 풀이</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn vectorize_within_tiles_elementwise_add[
+<pre><code class="language-mojo">def vectorize_within_tiles_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -570,28 +569,28 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     # Each tile contains tile_size elements (not SIMD groups)
     @parameter
     @always_inline
-    fn process_tile_with_vectorize[
+    def process_tile_with_vectorize[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
-        tile_start = tile_id * tile_size
-        tile_end = min(tile_start + tile_size, size)
-        actual_tile_size = tile_end - tile_start
+        var tile_id = indices[0]
+        var tile_start = tile_id * tile_size
+        var tile_end = min(tile_start + tile_size, size)
+        var actual_tile_size = tile_end - tile_start
 
-        fn vectorized_add[
+        def vectorized_add[
             width: Int
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
-            global_idx = tile_start + i
+            var global_idx = tile_start + i
             if global_idx + width &lt;= size:
-                a_vec = a.aligned_load[width](Index(global_idx))
-                b_vec = b.aligned_load[width](Index(global_idx))
-                result = a_vec + b_vec
+                var a_vec = a.aligned_load[width](Index(global_idx))
+                var b_vec = b.aligned_load[width](Index(global_idx))
+                var result = a_vec + b_vec
                 output.store[width](Index(global_idx), result)
 
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[
         process_tile_with_vectorize, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -613,7 +612,7 @@ tile_end = min(tile_start + tile_size, size)
 actual_tile_size = tile_end - tile_start
 </code></pre>
 <p><strong>자동 벡터화 메커니즘:</strong></p>
-<pre><code class="language-mojo">fn vectorized_add[
+<pre><code class="language-mojo">def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i

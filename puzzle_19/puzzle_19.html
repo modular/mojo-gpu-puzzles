@@ -315,7 +315,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <p>To complete this puzzle, we’ll leverage the tiled matmul kernel from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and the softmax kernel from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. You only need to implement the transpose kernel in the Mojo file using shared memory.</p>
 <h3 id="1-implement-the-transpose-kernel"><a class="header" href="#1-implement-the-transpose-kernel">1. Implement the transpose kernel</a></h3>
-<pre><code class="language-mojo">fn transpose_kernel[
+<pre><code class="language-mojo">def transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
     rows: Int,
@@ -411,14 +411,14 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
             ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
-            k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
                 seq_len * d
             )  # K^T as (d, seq_len)
-            scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
+            var k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             # FILL ME IN 1 line
@@ -574,7 +574,7 @@ Output vector norms:
 </ul>
 <p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
 <h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation</a></h3>
-<pre><code class="language-mojo">fn transpose_kernel[
+<pre><code class="language-mojo">def transpose_kernel[
     layout_in: Layout,  # Layout for input matrix (seq_len, d)
     layout_out: Layout,  # Layout for output matrix (d, seq_len)
     rows: Int,
@@ -585,26 +585,26 @@ Output vector norms:
     inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    shared_tile = LayoutTensor[
+    var shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_row = Int(thread_idx.y)
-    local_col = Int(thread_idx.x)
+    var local_row = Int(thread_idx.y)
+    var local_col = Int(thread_idx.x)
 
-    global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -627,7 +627,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 <h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration</a></h3>
 <pre><code class="language-mojo">
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
-            q_2d = q_tensor.reshape[layout_q_2d]()
+            var q_2d = q_tensor.reshape[layout_q_2d]()
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
             comptime kernel = transpose_kernel[
@@ -643,7 +643,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -&gt; (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
-            scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
+            var scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
                 scores_weights_buf
             )
             comptime kernel2 = matmul_idiomatic_tiled[
@@ -664,7 +664,7 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             )
 
             # Step 4: Reshape scores from (1, seq_len) to (seq_len,) for softmax
-            weights = scores_2d.reshape[layout_scores]()
+            var weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
             comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
@@ -676,11 +676,11 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
             )
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
-            weights_2d = weights.reshape[layout_weights_2d]()
+            var weights_2d = weights.reshape[layout_weights_2d]()
 
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -&gt; (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
-            result_2d = output_tensor.reshape[layout_result_2d]()
+            var result_2d = output_tensor.reshape[layout_result_2d]()
             comptime kernel4 = matmul_idiomatic_tiled[
                 layout_weights_2d,
                 layout_v,

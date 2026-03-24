@@ -235,10 +235,10 @@
 comptime rank = 1
 comptime layout = Layout.row_major(SIZE)
 comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
+comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
-fn elementwise_add[
+def elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
@@ -248,10 +248,10 @@ fn elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn add[
+    def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
         print("idx:", idx)
         # FILL IN (2 to 4 lines)
 
@@ -267,7 +267,7 @@ fn elementwise_add[
 <p>The <code>elementwise</code> function expects a nested function with this exact signature:</p>
 <pre><code class="language-mojo">@parameter
 @always_inline
-fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
     # Your implementation here
 </code></pre>
 <p><strong>Why each part matters:</strong></p>
@@ -356,7 +356,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn elementwise_add[
+<pre><code class="language-mojo">def elementwise_add[
     layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
     output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
@@ -366,16 +366,16 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 ) raises:
     @parameter
     @always_inline
-    fn add[
+    def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        idx = indices[0]
+        var idx = indices[0]
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.aligned_load[width=simd_width](Index(idx))
-        b_simd = b.aligned_load[width=simd_width](Index(idx))
-        ret = a_simd + b_simd
+        var a_simd = a.aligned_load[width=simd_width](Index(idx))
+        var b_simd = b.aligned_load[width=simd_width](Index(idx))
+        var ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
@@ -410,7 +410,7 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 <h3 id="2-deep-dive-nested-function-architecture"><a class="header" href="#2-deep-dive-nested-function-architecture">2. <strong>Deep dive: nested function architecture</strong></a></h3>
 <pre><code class="language-mojo">@parameter
 @always_inline
-fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
+def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; None:
 </code></pre>
 <p><strong>Parameter Analysis:</strong></p>
 <ul>

@@ -245,7 +245,7 @@
 </ul>
 <p><strong>예상 결과</strong>: 수열 <code>0, 0.01, 0.02, ..., 10.23</code>의 합 = <strong>523,776</strong></p>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">fn cluster_collective_operations[
+<pre><code class="language-mojo">def cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -256,8 +256,8 @@
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # FILL IN (roughly 24 lines)
 
@@ -346,7 +346,7 @@ Error: 0.0
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn cluster_collective_operations[
+<pre><code class="language-mojo">def cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -357,10 +357,10 @@ Error: 0.0
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
     # Each thread accumulates its data
     var my_value: Float32 = 0.0
@@ -368,11 +368,11 @@ Error: 0.0
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = LayoutTensor[
+    var shared_mem = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()

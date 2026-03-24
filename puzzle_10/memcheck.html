@@ -216,13 +216,13 @@
 <h2 id="the-silent-memory-bug-discovery"><a class="header" href="#the-silent-memory-bug-discovery">The silent memory bug discovery</a></h2>
 <h3 id="test-passes-but-is-my-code-actually-correct"><a class="header" href="#test-passes-but-is-my-code-actually-correct">Test passes, but is my code actually correct?</a></h3>
 <p>Let’s start with a seemingly innocent program that appears to work perfectly (this is <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a> without guards):</p>
-<pre><code class="language-mojo">fn add_10_2d(
+<pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     output[row, col] = a[row, col] + 10.0
 
 
@@ -347,13 +347,13 @@ Running memory bug example (bounds checking issue)...
 <h2 id="fixing-the-memory-violation"><a class="header" href="#fixing-the-memory-violation">Fixing the memory violation</a></h2>
 <h3 id="the-solution"><a class="header" href="#the-solution">The solution</a></h3>
 <p>As we saw in <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>, we need to bound-check as follows:</p>
-<pre><code class="language-mojo">fn add_10_2d(
+<pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if col &lt; size and row &lt; size:
         output[row, col] = a[row, col] + 10.0
 

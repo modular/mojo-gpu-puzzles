@@ -238,7 +238,7 @@
 <pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
-fn tiled_elementwise_add[
+def tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -253,18 +253,18 @@ fn tiled_elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn process_tiles[
+    def process_tiles[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
         print("tile_id:", tile_id)
-        output_tile = output.tile[tile_size](tile_id)
-        a_tile = a.tile[tile_size](tile_id)
-        b_tile = b.tile[tile_size](tile_id)
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         # FILL IN (6 lines at most)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 
 
@@ -360,7 +360,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
-fn tiled_elementwise_add[
+def tiled_elementwise_add[
     layout: Layout,
     dtype: DType,
     simd_width: Int,
@@ -375,23 +375,22 @@ fn tiled_elementwise_add[
 ) raises:
     @parameter
     @always_inline
-    fn process_tiles[
+    def process_tiles[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
 
-        output_tile = output.tile[tile_size](tile_id)
-        a_tile = a.tile[tile_size](tile_id)
-        b_tile = b.tile[tile_size](tile_id)
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
-        @parameter
-        for i in range(tile_size):
-            a_vec = a_tile.load[simd_width](Index(i))
-            b_vec = b_tile.load[simd_width](Index(i))
-            ret = a_vec + b_vec
+        comptime for i in range(tile_size):
+            var a_vec = a_tile.load[simd_width](Index(i))
+            var b_vec = b_tile.load[simd_width](Index(i))
+            var ret = a_vec + b_vec
             output_tile.store[simd_width](Index(i), ret)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 
 

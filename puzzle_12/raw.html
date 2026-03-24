@@ -244,7 +244,7 @@ comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
 
 
-fn dot_product(
+def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
@@ -300,19 +300,19 @@ expected: HostBuffer([140.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn dot_product(
+<pre><code class="language-mojo">def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    shared = stack_allocation[
+    var shared = stack_allocation[
         TPB,
         Scalar[dtype],
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ]()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     if global_i &lt; size:
         shared[local_i] = a[global_i] * b[global_i]
 
@@ -328,7 +328,7 @@ expected: HostBuffer([140.0])
     # and warps can be scheduled independently.
     # However, shared memory does not have such issues as long as we use `barrier()`
     # correctly when we're in the same thread block.
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]

@@ -308,7 +308,7 @@ comptime STAGE2_THREADS = TPB // 2
 comptime BLUR_RADIUS = 2
 
 
-fn multi_stage_image_blur_pipeline[
+def multi_stage_image_blur_pipeline[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -323,21 +323,21 @@ fn multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = LayoutTensor[
+    var input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    blur_shared = LayoutTensor[
+    var blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Stage 1: Load and preprocess (threads 0-127)
 
@@ -439,7 +439,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn multi_stage_image_blur_pipeline[
+<pre><code class="language-mojo">def multi_stage_image_blur_pipeline[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -454,21 +454,21 @@ Output sample: 1.6665002 2.3331003 3.3996604
     """
 
     # Shared memory buffers for pipeline stages
-    input_shared = LayoutTensor[
+    var input_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    blur_shared = LayoutTensor[
+    var blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Stage 1: Load and preprocess (threads 0-127)
     if local_i &lt; STAGE1_THREADS:
@@ -489,7 +489,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
 
     # Stage 2: Apply blur (threads 128-255)
     if local_i &gt;= STAGE1_THREADS:
-        blur_idx = local_i - STAGE1_THREADS
+        var blur_idx = local_i - STAGE1_THREADS
         var blur_sum: Scalar[dtype] = 0.0
         blur_count = 0
 
@@ -506,7 +506,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
             blur_shared[blur_idx] = 0.0
 
         # Process second element
-        second_idx = blur_idx + STAGE1_THREADS
+        var second_idx = blur_idx + STAGE1_THREADS
         if second_idx &lt; TPB:
             blur_sum = 0.0
             blur_count = 0

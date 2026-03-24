@@ -225,11 +225,11 @@
 </ul>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
-<pre><code class="language-mojo">fn add_10(
+<pre><code class="language-mojo">def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     output[i] = a[i] + 10.0
 
 

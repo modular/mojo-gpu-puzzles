@@ -228,7 +228,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn no_conflict_kernel[
+def no_conflict_kernel[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -242,15 +242,15 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    shared_buf = LayoutTensor[
+    var shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Load from global memory to shared memory - no conflicts
     if global_i &lt; size:
@@ -268,7 +268,7 @@ fn no_conflict_kernel[
 
 
 </code></pre>
-<pre><code class="language-mojo">fn two_way_conflict_kernel[
+<pre><code class="language-mojo">def two_way_conflict_kernel[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -282,18 +282,18 @@ fn no_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    shared_buf = LayoutTensor[
+    var shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # CONFLICT: stride-2 access creates 2-way bank conflicts
-    conflict_index = (local_i * 2) % TPB
+    var conflict_index = (local_i * 2) % TPB
 
     # Load with bank conflicts
     if global_i &lt; size:

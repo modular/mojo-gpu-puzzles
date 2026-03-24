@@ -231,20 +231,20 @@
 </ul>
 <h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
 <p>먼저 전체 코드를 보지 않고 커널만 살펴봅시다:</p>
-<pre><code class="language-mojo">fn process_sliding_window(
+<pre><code class="language-mojo">def process_sliding_window(
     output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
-    thread_id = thread_idx.x
+    var thread_id = thread_idx.x
 
     # Each thread processes a sliding window of 3 elements
-    window_sum = Scalar[dtype](0.0)
+    var window_sum = Scalar[dtype](0.0)
 
     # Sum elements in sliding window: [i-1, i, i+1]
     for offset in range(ITER):
-        idx = Int(thread_id) + offset - 1
+        var idx = Int(thread_id) + offset - 1
         if 0 &lt;= idx &lt; SIZE:
-            value = rebind[Scalar[dtype]](a[idx])
+            var value = rebind[Scalar[dtype]](a[idx])
             window_sum += value
 
     output[thread_id] = window_sum

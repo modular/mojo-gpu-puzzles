@@ -378,7 +378,7 @@
 <h4 id="행렬-곱셈-커널"><a class="header" href="#행렬-곱셈-커널">행렬 곱셈 커널</a></h4>
 <p><a href="../puzzle_16/puzzle_16.html">Puzzle 16: 행렬 곱셈 (MatMul)</a>에서 사용한 타일링 행렬 곱셈 커널을 선형 변환에 재사용합니다. 이 커널은 다양한 행렬 크기를 안전하게 처리하기 위한 경계 검사를 포함합니다:</p>
 <pre><code class="language-mojo"># Idiomatic tiled matmul from p19.mojo
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     a_layout: Layout,
     b_layout: Layout,
     out_layout: Layout,
@@ -392,26 +392,26 @@ fn matmul_idiomatic_tiled[
     b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
-    tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
+    var tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+    var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         Int(block_idx.y), Int(block_idx.x)
     )
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
 
@@ -422,13 +422,14 @@ fn matmul_idiomatic_tiled[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
-    @parameter
-    for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
+    comptime for idx in range(
+        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+    ):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
         )
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             idx, Int(block_idx.x)
         )
 
@@ -449,8 +450,7 @@ fn matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        @parameter
-        for k in range(MATMUL_BLOCK_DIM_XY):
+        comptime for k in range(MATMUL_BLOCK_DIM_XY):
             if (
                 tiled_row &lt; rows and tiled_col &lt; cols
             ):  # Only perform calculation for valid outputs
@@ -469,7 +469,7 @@ fn matmul_idiomatic_tiled[
 </code></pre>
 <h4 id="전치-커널"><a class="header" href="#전치-커널">전치 커널</a></h4>
 <p>효율적인 메모리 접근 패턴을 위해 공유 메모리 타일링을 사용하는 전치 커널입니다:</p>
-<pre><code class="language-mojo">fn transpose_kernel[
+<pre><code class="language-mojo">def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
     rows: UInt,
@@ -482,26 +482,26 @@ fn matmul_idiomatic_tiled[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = LayoutTensor[
+    var shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_row = thread_idx.y
-    local_col = thread_idx.x
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
 
-    global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
-    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
-    out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -512,7 +512,7 @@ fn matmul_idiomatic_tiled[
 </code></pre>
 <h4 id="bias-합산-커널"><a class="header" href="#bias-합산-커널">Bias 합산 커널</a></h4>
 <p>Bias 항을 더하는 간단한 요소별 합산 커널입니다:</p>
-<pre><code class="language-mojo">fn add_bias_kernel[
+<pre><code class="language-mojo">def add_bias_kernel[
     input_layout: Layout,
     bias_layout: Layout,
     output_layout: Layout,
@@ -525,9 +525,9 @@ fn matmul_idiomatic_tiled[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
-    out_idx = Int(thread_idx.x)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
+    var out_idx = Int(thread_idx.x)
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or out_idx &gt;= output_dim:
         return
@@ -545,7 +545,7 @@ fn matmul_idiomatic_tiled[
 <li>이 통계량을 사용하여 입력 정규화</li>
 <li>스케일 \(\gamma\)과 시프트 \(\beta\) 파라미터 적용</li>
 </ol>
-<pre><code class="language-mojo">fn layernorm_kernel[
+<pre><code class="language-mojo">def layernorm_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     output_layout: Layout,
@@ -558,9 +558,9 @@ fn matmul_idiomatic_tiled[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
-    hidden_idx = Int(thread_idx.x)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
+    var hidden_idx = Int(thread_idx.x)
 
     if (
         batch_idx &gt;= batch_size
@@ -701,7 +701,7 @@ UNFUSED Algorithm Test Completed!
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn layernorm_kernel[
+<pre><code class="language-mojo">def layernorm_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     output_layout: Layout,
@@ -715,9 +715,9 @@ UNFUSED Algorithm Test Completed!
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
-    hidden_idx = Int(thread_idx.x)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
+    var hidden_idx = Int(thread_idx.x)
 
     if (
         batch_idx &gt;= batch_size
@@ -730,19 +730,18 @@ UNFUSED Algorithm Test Completed!
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
-        val = input[batch_idx, seq_idx, h]
+    comptime for h in range(hidden_dim):
+        var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    mean_val = sum_val / hidden_dim
-    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-    inv_std = 1.0 / sqrt(var_val + 1e-5)
+    var mean_val = sum_val / hidden_dim
+    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Apply LayerNorm to this element
-    input_val = input[batch_idx, seq_idx, hidden_idx]
-    normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
+    var input_val = input[batch_idx, seq_idx, hidden_idx]
+    var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
         ln_weight[hidden_idx]
     ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
     output[batch_idx, seq_idx, hidden_idx] = normalized
@@ -892,7 +891,7 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </details>
 <h3 id="2-퓨전-커널-구현"><a class="header" href="#2-퓨전-커널-구현">2. 퓨전 커널 구현</a></h3>
 <p>퓨전 커널은 LayerNorm과 Linear 연산을 하나의 GPU 커널로 결합합니다:</p>
-<pre><code class="language-mojo">fn minimal_fused_kernel[
+<pre><code class="language-mojo">def minimal_fused_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     weight_layout: Layout,
@@ -914,8 +913,8 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -1048,7 +1047,7 @@ FUSED Algorithm Test Completed!
 <h2 id="솔루션-1"><a class="header" href="#솔루션-1">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn minimal_fused_kernel[
+<pre><code class="language-mojo">def minimal_fused_kernel[
     input_layout: Layout,
     ln_params_layout: Layout,
     weight_layout: Layout,
@@ -1071,8 +1070,8 @@ FUSED Algorithm Test Completed!
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -1081,25 +1080,22 @@ FUSED Algorithm Test Completed!
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
-        val = input[batch_idx, seq_idx, h]
+    comptime for h in range(hidden_dim):
+        var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    mean_val = sum_val / hidden_dim
-    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-    inv_std = 1.0 / sqrt(var_val + 1e-5)
+    var mean_val = sum_val / hidden_dim
+    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Compute all outputs for this sequence position
-    @parameter
-    for out_idx in range(output_dim):
+    comptime for out_idx in range(output_dim):
         var acc: Scalar[dtype] = 0
 
-        @parameter
-        for h in range(hidden_dim):
-            input_val = input[batch_idx, seq_idx, h]
-            normalized = (input_val - mean_val) * inv_std * rebind[
+        comptime for h in range(hidden_dim):
+            var input_val = input[batch_idx, seq_idx, h]
+            var normalized = (input_val - mean_val) * inv_std * rebind[
                 Scalar[dtype]
             ](ln_weight[h]) + rebind[Scalar[dtype]](ln_bias[h])
             acc += rebind[Scalar[dtype]](normalized * linear_weight[out_idx, h])

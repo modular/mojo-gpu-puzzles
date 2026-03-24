@@ -263,7 +263,7 @@ tensor[1, 2] = 2.0  # Last element
 </ul>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
 <p>Let’s put everything together with a simple example that demonstrates the basics of LayoutTensor:</p>
-<pre><code class="language-mojo">from gpu.host import DeviceContext
+<pre><code class="language-mojo">from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
 
 comptime HEIGHT = 2
@@ -272,7 +272,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(HEIGHT, WIDTH)
 
 
-fn kernel[
+def kernel[
     dtype: DType, layout: Layout
 ](tensor: LayoutTensor[dtype, layout, MutAnyOrigin]):
     print("Before:")

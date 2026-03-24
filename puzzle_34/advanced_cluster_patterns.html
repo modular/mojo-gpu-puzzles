@@ -248,7 +248,7 @@
 <li><strong>Block 3</strong>: 256 threads → 8 warps → elements 768-1023</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">fn advanced_cluster_patterns[
+<pre><code class="language-mojo">def advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -257,8 +257,8 @@
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # FILL IN (roughly 26 lines)
 
@@ -353,7 +353,7 @@ Advanced cluster algorithm results:
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary>Click to reveal solution</summary>
-<pre><code class="language-mojo">fn advanced_cluster_patterns[
+<pre><code class="language-mojo">def advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -362,16 +362,16 @@ Advanced cluster algorithm results:
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Compute cluster mask for advanced coordination

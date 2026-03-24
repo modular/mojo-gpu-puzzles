@@ -335,7 +335,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 <h3 id="solution"><a class="header" href="#solution">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn butterfly_pair_swap[
+<pre><code class="language-mojo">def butterfly_pair_swap[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -347,14 +347,14 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # Exchange with XOR-1 neighbor using butterfly pattern
         # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
-        swapped_val = shuffle_xor(current_val, 1)
+        var swapped_val = shuffle_xor(current_val, 1)
 
         # For demonstration, we'll store the swapped value
         # In real applications, this might be used for sorting, reduction, etc.
@@ -437,7 +437,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <li><strong>Step 4</strong>: Continue halving until <code>offset = 1</code></li>
 </ul>
 <p>After \(\log_2(\text{WARP_SIZE})\) steps, all lanes have the global maximum. This works for any <code>WARP_SIZE</code> (32, 64, etc.).</p>
-<pre><code class="language-mojo">fn butterfly_parallel_max[
+<pre><code class="language-mojo">def butterfly_parallel_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -450,7 +450,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
     This implements an efficient O(log n) parallel reduction algorithm that works
     for any WARP_SIZE (32, 64, etc.).
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # FILL ME IN (roughly 7 lines)
 
@@ -544,7 +544,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <h3 id="solution-1"><a class="header" href="#solution-1">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn butterfly_parallel_max[
+<pre><code class="language-mojo">def butterfly_parallel_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -556,14 +556,14 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     Each step reduces the active range by half until all threads have the maximum value.
     This implements an efficient O(log n) parallel reduction algorithm.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i &lt; size:
-        max_val = input[global_i]
+        var max_val = input[global_i]
 
         # Butterfly reduction tree: dynamic for any WARP_SIZE (32, 64, etc.)
         # Start with half the warp size and reduce by half each step
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset &gt; 0:
             max_val = max(max_val, shuffle_xor(max_val, offset))
             offset //= 2
@@ -654,7 +654,7 @@ comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = Layout.row_major(SIZE_2)
 
 
-fn butterfly_conditional_max[
+def butterfly_conditional_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -665,12 +665,12 @@ fn butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = lane_id()
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = lane_id()
 
     if global_i &lt; size:
-        current_val = input[global_i]
-        min_val = current_val
+        var current_val = input[global_i]
+        var min_val = current_val
 
         # FILL ME IN (roughly 11 lines)
 
@@ -743,7 +743,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 <h3 id="solution-2"><a class="header" href="#solution-2">Solution</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn butterfly_conditional_max[
+<pre><code class="language-mojo">def butterfly_conditional_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -754,20 +754,20 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = lane_id()
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = lane_id()
 
     if global_i &lt; size:
-        current_val = input[global_i]
-        min_val = current_val
+        var current_val = input[global_i]
+        var min_val = current_val
 
         # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            neighbor_val = shuffle_xor(current_val, offset)
+            var neighbor_val = shuffle_xor(current_val, offset)
             current_val = max(current_val, neighbor_val)
 
-            min_neighbor_val = shuffle_xor(min_val, offset)
+            var min_neighbor_val = shuffle_xor(min_val, offset)
             min_val = min(min_val, min_neighbor_val)
 
             offset //= 2

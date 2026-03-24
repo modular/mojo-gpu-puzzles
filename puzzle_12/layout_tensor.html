@@ -236,8 +236,8 @@
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace
+<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
@@ -250,7 +250,7 @@ comptime layout = Layout.row_major(SIZE)
 comptime out_layout = Layout.row_major(1)
 
 
-fn dot_product[
+def dot_product[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -308,7 +308,7 @@ expected: HostBuffer([140.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn dot_product[
+<pre><code class="language-mojo">def dot_product[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -316,14 +316,14 @@ expected: HostBuffer([140.0])
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Compute element-wise multiplication into shared memory
     if global_i &lt; size:
@@ -333,7 +333,7 @@ expected: HostBuffer([140.0])
     barrier()
 
     # Parallel reduction in shared memory
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]

@@ -245,15 +245,15 @@ comptime out_layout = Layout.row_major(SIZE)
 comptime conv_layout = Layout.row_major(CONV)
 
 
-fn conv_1d_simple[
+def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 14 lines)
 
 
@@ -304,26 +304,26 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn conv_1d_simple[
+<pre><code class="language-mojo">def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = Int(thread_idx.x)
-    shared_a = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = Int(thread_idx.x)
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
@@ -350,8 +350,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
-        @parameter
-        for j in range(CONV):
+        comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j &lt; SIZE:
                 local_sum += shared_a[local_i + j] * shared_b[j]

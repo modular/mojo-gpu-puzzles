@@ -217,13 +217,13 @@
 <h2 id="조용한-메모리-버그의-발견"><a class="header" href="#조용한-메모리-버그의-발견">조용한 메모리 버그의 발견</a></h2>
 <h3 id="테스트는-통과했지만-코드가-정말-올바른-걸까"><a class="header" href="#테스트는-통과했지만-코드가-정말-올바른-걸까">테스트는 통과했지만, 코드가 정말 올바른 걸까?</a></h3>
 <p>얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>입니다):</p>
-<pre><code class="language-mojo">fn add_10_2d(
+<pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     output[row, col] = a[row, col] + 10.0
 
 
@@ -348,13 +348,13 @@ Running memory bug example (bounds checking issue)...
 <h2 id="메모리-위반-수정하기"><a class="header" href="#메모리-위반-수정하기">메모리 위반 수정하기</a></h2>
 <h3 id="해결책"><a class="header" href="#해결책">해결책</a></h3>
 <p><a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:</p>
-<pre><code class="language-mojo">fn add_10_2d(
+<pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if col &lt; size and row &lt; size:
         output[row, col] = a[row, col] + 10.0
 

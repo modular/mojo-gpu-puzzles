@@ -238,7 +238,7 @@ comptime out_layout = Layout.row_major(SIZE, SIZE)
 comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
-fn add_10_blocks_2d[
+def add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
@@ -246,8 +246,8 @@ fn add_10_blocks_2d[
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -296,7 +296,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn add_10_blocks_2d[
+<pre><code class="language-mojo">def add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](
@@ -304,8 +304,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
     if row &lt; size and col &lt; size:
         output[row, col] = a[row, col] + 10.0
 

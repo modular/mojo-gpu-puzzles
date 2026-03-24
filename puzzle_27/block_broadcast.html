@@ -273,7 +273,7 @@ output[global_i] = my_value / mean
 comptime vector_layout = Layout.row_major(SIZE)
 
 
-fn block_normalize_vector[
+def block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -289,8 +289,8 @@ fn block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
 
@@ -425,7 +425,7 @@ Output mean: 1.0
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn block_normalize_vector[
+<pre><code class="language-mojo">def block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -441,8 +441,8 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
     var my_value: Scalar[dtype] = 0.0
@@ -450,7 +450,7 @@ Output mean: 1.0
         my_value = input_data[global_i][0]  # Extract SIMD value
 
     # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
-    total_sum = block.sum[block_size=tpb, broadcast=False](
+    var total_sum = block.sum[block_size=tpb, broadcast=False](
         val=SIMD[DType.float32, 1](my_value)
     )
 
@@ -462,13 +462,13 @@ Output mean: 1.0
 
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration
-    broadcasted_mean = block.broadcast[
-        dtype = DType.float32, width=1, block_size=tpb
+    var broadcasted_mean = block.broadcast[
+        dtype=DType.float32, width=1, block_size=tpb
     ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
 
     # Step 5: Each thread normalizes by the mean
     if global_i &lt; size:
-        normalized_value = my_value / broadcasted_mean[0]
+        var normalized_value = my_value / broadcasted_mean[0]
         output_data[global_i] = normalized_value
 
 

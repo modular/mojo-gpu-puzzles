@@ -256,7 +256,7 @@ for element in data:
 <pre><code class="language-mojo">comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
-fn block_histogram_bin_extract[
+def block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -274,8 +274,8 @@ fn block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
 
@@ -428,7 +428,7 @@ Bin 7 extracted elements:
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn block_histogram_bin_extract[
+<pre><code class="language-mojo">def block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -446,8 +446,8 @@ Bin 7 extracted elements:
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
     var my_value: Scalar[dtype] = 0.0
@@ -471,8 +471,8 @@ Bin 7 extracted elements:
 
     # Step 3: Use block.prefix_sum() for parallel bin extraction!
     # This computes where each thread should write within the target bin
-    write_offset = block.prefix_sum[
-        dtype = DType.int32, block_size=tpb, exclusive=True
+    var write_offset = block.prefix_sum[
+        dtype=DType.int32, block_size=tpb, exclusive=True
     ](val=SIMD[DType.int32, 1](belongs_to_target))
 
     # Step 4: Extract and pack elements belonging to target_bin
@@ -482,7 +482,7 @@ Bin 7 extracted elements:
     # Step 5: Final thread computes total count for this bin
     if local_i == tpb - 1:
         # Inclusive sum = exclusive sum + my contribution
-        total_count = write_offset[0] + belongs_to_target
+        var total_count = write_offset[0] + belongs_to_target
         count_output[0] = total_count
 
 

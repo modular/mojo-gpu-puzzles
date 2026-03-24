@@ -276,7 +276,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn neighbor_difference[
+def neighbor_difference[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -287,8 +287,8 @@ fn neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     # FILL IN (roughly 7 lines)
 
@@ -371,7 +371,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 <h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn neighbor_difference[
+<pre><code class="language-mojo">def neighbor_difference[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -382,15 +382,15 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Get current value
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # Get next neighbor's value using shuffle_down
-        next_val = shuffle_down(current_val, 1)
+        var next_val = shuffle_down(current_val, 1)
 
         # Compute difference - valid within warp boundaries
         # Last lane of each warp has no valid neighbor within the warp
@@ -482,7 +482,7 @@ comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = Layout.row_major(SIZE_2)
 
 
-fn moving_average_3[
+def moving_average_3[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -493,8 +493,8 @@ fn moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     # FILL IN (roughly 10 lines)
 
@@ -585,7 +585,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 <h3 id="솔루션-1"><a class="header" href="#솔루션-1">솔루션</a></h3>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">fn moving_average_3[
+<pre><code class="language-mojo">def moving_average_3[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -596,14 +596,14 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Get current, next, and next+1 values
-        current_val = input[global_i]
-        next_val = shuffle_down(current_val, 1)
-        next_next_val = shuffle_down(current_val, 2)
+        var current_val = input[global_i]
+        var next_val = shuffle_down(current_val, 1)
+        var next_next_val = shuffle_down(current_val, 2)
 
         # Compute 3-point average - valid within warp boundaries
         if lane &lt; WARP_SIZE - 2 and global_i &lt; size - 2:

@@ -377,7 +377,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <h2 id="근본-원인-분석---메모리-접근-패턴"><a class="header" href="#근본-원인-분석---메모리-접근-패턴"><strong>근본 원인 분석 - 메모리 접근 패턴</strong></a></h2>
 <p><strong>p30.mojo의 실제 커널 구현:</strong></p>
 <p><strong>Kernel 1 - 효율적인 병합 접근:</strong></p>
-<pre><code class="language-mojo">fn kernel1[
+<pre><code class="language-mojo">def kernel1[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -385,7 +385,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i &lt; size:
         output[i] = a[i] + b[i]
 
@@ -393,7 +393,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </code></pre>
 <p><em>표준 스레드 인덱싱 - 인접 스레드가 인접 메모리에 접근</em></p>
 <p><strong>Kernel 2 - 비효율적인 스트라이드 접근:</strong></p>
-<pre><code class="language-mojo">fn kernel2[
+<pre><code class="language-mojo">def kernel2[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -401,10 +401,10 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    stride = 512
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var stride = 512
 
-    i = tid
+    var i = tid
     while i &lt; size:
         output[i] = a[i] + b[i]
         i += stride
@@ -413,7 +413,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </code></pre>
 <p><em>큰 stride=512로 메모리 접근 간격 발생 - 동일한 연산이지만 흩어진 접근</em></p>
 <p><strong>Kernel 3 - 효율적인 역순 접근:</strong></p>
-<pre><code class="language-mojo">fn kernel3[
+<pre><code class="language-mojo">def kernel3[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -421,13 +421,13 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    total_threads = (SIZE // 1024) * 1024
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
-        forward_i = step + tid
+        var forward_i = step + tid
         if forward_i &lt; size:
-            reverse_i = size - 1 - forward_i
+            var reverse_i = size - 1 - forward_i
             output[reverse_i] = a[reverse_i] + b[reverse_i]
 
 
