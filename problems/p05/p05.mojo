@@ -10,7 +10,7 @@ comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
 
 
-fn broadcast_add(
+def broadcast_add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],

@@ -10,7 +10,7 @@ comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
 
 
-fn conv1d_kernel[
+def conv1d_kernel[
     in_layout: Layout,
     out_layout: Layout,
     conv_layout: Layout,
@@ -77,7 +77,7 @@ from gpu.host import DeviceBuffer
 @compiler.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         # The kind of device this will be run on: "cpu" or "gpu"
         target: StaticString,
         input_size: Int,

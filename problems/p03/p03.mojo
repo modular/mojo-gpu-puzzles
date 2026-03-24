@@ -10,7 +10,7 @@ comptime THREADS_PER_BLOCK = 8
 comptime dtype = DType.float32
 
 
-fn add_10_guard(
+def add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

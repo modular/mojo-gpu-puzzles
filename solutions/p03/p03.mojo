@@ -10,7 +10,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: add_10_guard_solution
-fn add_10_guard(
+def add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,

@@ -22,7 +22,7 @@ comptime THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 
 
 # ANCHOR: matmul_idiomatic_tiled_solution
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -121,7 +121,7 @@ comptime BLOCKS_PER_GRID_TENSOR_CORE = (
 )
 
 
-fn tensor_core_matrix_multiplication[
+def tensor_core_matrix_multiplication[
     dtype: DType,
     layout_a: Layout,
     layout_b: Layout,

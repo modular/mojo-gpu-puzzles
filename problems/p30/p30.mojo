@@ -16,7 +16,7 @@ comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: kernel1
-fn kernel1[
+def kernel1[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -33,7 +33,7 @@ fn kernel1[
 
 
 # ANCHOR: kernel2
-fn kernel2[
+def kernel2[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -54,7 +54,7 @@ fn kernel2[
 
 
 # ANCHOR: kernel3
-fn kernel3[
+def kernel3[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -77,10 +77,10 @@ fn kernel3[
 
 @parameter
 @always_inline
-fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn kernel1_workflow(ctx: DeviceContext) raises:
+    def kernel1_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
@@ -115,10 +115,10 @@ fn benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn kernel2_workflow(ctx: DeviceContext) raises:
+    def kernel2_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
@@ -153,10 +153,10 @@ fn benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn kernel3_workflow(ctx: DeviceContext) raises:
+    def kernel3_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)

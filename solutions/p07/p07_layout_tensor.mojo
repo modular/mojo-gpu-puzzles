@@ -12,7 +12,7 @@ comptime a_layout = Layout.row_major(SIZE, SIZE)
 
 
 # ANCHOR: add_10_blocks_2d_layout_tensor_solution
-fn add_10_blocks_2d[
+def add_10_blocks_2d[
     out_layout: Layout,
     a_layout: Layout,
 ](

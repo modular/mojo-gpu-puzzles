@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn butterfly_pair_swap[
+def butterfly_pair_swap[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -34,7 +34,7 @@ fn butterfly_pair_swap[
 
 
 # ANCHOR: butterfly_parallel_max
-fn butterfly_parallel_max[
+def butterfly_parallel_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -62,7 +62,7 @@ comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = Layout.row_major(SIZE_2)
 
 
-fn butterfly_conditional_max[
+def butterfly_conditional_max[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -87,7 +87,7 @@ fn butterfly_conditional_max[
 
 
 # ANCHOR: warp_inclusive_prefix_sum
-fn warp_inclusive_prefix_sum[
+def warp_inclusive_prefix_sum[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -122,7 +122,7 @@ fn warp_inclusive_prefix_sum[
 
 
 # ANCHOR: warp_partition
-fn warp_partition[
+def warp_partition[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

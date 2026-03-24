@@ -17,7 +17,7 @@ comptime GRID_DIM_X = 1
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -36,7 +36,7 @@ fn softmax_gpu_kernel[
 
 
 # ANCHOR: softmax_cpu_kernel
-fn softmax_cpu_kernel[
+def softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -61,7 +61,7 @@ from tensor import InputTensor, OutputTensor
 @compiler.register("softmax")
 struct SoftmaxCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,  # "cpu" or "gpu"
         input_size: Int,
         dtype: DType = DType.float32,

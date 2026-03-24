@@ -16,7 +16,7 @@ comptime ITER = 2
 
 
 # ANCHOR: first_crash
-fn add_10(
+def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
@@ -28,7 +28,7 @@ fn add_10(
 
 
 # ANCHOR: second_crash
-fn process_sliding_window(
+def process_sliding_window(
     output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
@@ -51,7 +51,7 @@ fn process_sliding_window(
 
 
 # ANCHOR: third_crash
-fn collaborative_filter(
+def collaborative_filter(
     output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):

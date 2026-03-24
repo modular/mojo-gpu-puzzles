@@ -14,7 +14,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 # ANCHOR: naive_matmul_solution
-fn naive_matmul[
+def naive_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -38,7 +38,7 @@ fn naive_matmul[
 
 
 # ANCHOR: single_block_matmul_solution
-fn single_block_matmul[
+def single_block_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -89,7 +89,7 @@ comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 # ANCHOR: matmul_tiled_solution
-fn matmul_tiled[
+def matmul_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
@@ -157,7 +157,7 @@ comptime NUM_THREADS = TPB * TPB
 comptime BLOCK_DIM_COUNT = 2
 
 
-fn matmul_idiomatic_tiled[
+def matmul_idiomatic_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],

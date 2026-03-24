@@ -12,7 +12,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: dot_product_solution
-fn dot_product(
+def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],

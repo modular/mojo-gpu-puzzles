@@ -16,7 +16,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE, SIZE)
 
 
-fn naive_matmul[
+def naive_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -32,7 +32,7 @@ fn naive_matmul[
 
 
 # ANCHOR: single_block_matmul
-fn single_block_matmul[
+def single_block_matmul[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -55,7 +55,7 @@ comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
 comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
-fn matmul_tiled[
+def matmul_tiled[
     layout: Layout, size: UInt
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],

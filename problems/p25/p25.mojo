@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn neighbor_difference[
+def neighbor_difference[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -39,7 +39,7 @@ comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
 comptime layout_2 = Layout.row_major(SIZE_2)
 
 
-fn moving_average_3[
+def moving_average_3[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -60,7 +60,7 @@ fn moving_average_3[
 
 
 # ANCHOR: broadcast_shuffle_coordination
-fn broadcast_shuffle_coordination[
+def broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -83,7 +83,7 @@ fn broadcast_shuffle_coordination[
 
 
 # ANCHOR: basic_broadcast
-fn basic_broadcast[
+def basic_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -105,7 +105,7 @@ fn basic_broadcast[
 
 
 # ANCHOR: conditional_broadcast
-fn conditional_broadcast[
+def conditional_broadcast[
     layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

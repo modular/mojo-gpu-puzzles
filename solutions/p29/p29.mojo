@@ -25,7 +25,7 @@ comptime BLUR_RADIUS = 2
 
 
 # ANCHOR: multi_stage_pipeline_solution
-fn multi_stage_image_blur_pipeline[
+def multi_stage_image_blur_pipeline[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -133,7 +133,7 @@ comptime BUFFER_COUNT = 2
 
 
 # ANCHOR: double_buffered_stencil_solution
-fn double_buffered_stencil_computation[
+def double_buffered_stencil_computation[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

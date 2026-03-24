@@ -12,7 +12,7 @@ comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
 
 
-fn dot_product(
+def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],

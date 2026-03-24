@@ -15,7 +15,7 @@ comptime layout = Layout.row_major(SIZE)
 comptime ALPHA = Float32(2.5)  # SAXPY coefficient
 
 
-fn minimal_kernel[
+def minimal_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -35,7 +35,7 @@ fn minimal_kernel[
 
 
 # ANCHOR: sophisticated_kernel
-fn sophisticated_kernel[
+def sophisticated_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -132,7 +132,7 @@ fn sophisticated_kernel[
 
 
 # ANCHOR: balanced_kernel
-fn balanced_kernel[
+def balanced_kernel[
     layout: Layout
 ](
     y: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -191,10 +191,10 @@ fn balanced_kernel[
 
 @parameter
 @always_inline
-fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn minimal_workflow(ctx: DeviceContext) raises:
+    def minimal_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)
@@ -227,10 +227,10 @@ fn benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn sophisticated_workflow(ctx: DeviceContext) raises:
+    def sophisticated_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)
@@ -263,10 +263,10 @@ fn benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-fn benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
-    fn balanced_workflow(ctx: DeviceContext) raises:
+    def balanced_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
         y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)

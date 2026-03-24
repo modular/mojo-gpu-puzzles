@@ -10,7 +10,7 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: broadcast_add_solution
-fn broadcast_add(
+def broadcast_add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],

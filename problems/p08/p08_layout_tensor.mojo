@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn add_10_shared_layout_tensor[
+def add_10_shared_layout_tensor[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],

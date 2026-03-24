@@ -15,7 +15,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn prefix_sum_simple[
+def prefix_sum_simple[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -39,7 +39,7 @@ comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-fn prefix_sum_local_phase[
+def prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -52,7 +52,7 @@ fn prefix_sum_local_phase[
 
 
 # Kernel 2: Add block sums to their respective blocks
-fn prefix_sum_block_sum_phase[
+def prefix_sum_block_sum_phase[
     layout: Layout
 ](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
     global_i = block_dim.x * block_idx.x + thread_idx.x

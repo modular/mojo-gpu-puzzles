@@ -15,7 +15,7 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE, SIZE)
 
 
-fn shared_memory_race(
+def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
@@ -52,7 +52,7 @@ fn shared_memory_race(
 
 
 # ANCHOR: add_10_2d_solution
-fn add_10_2d(
+def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
