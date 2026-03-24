@@ -1,16 +1,16 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.primitives.cluster import (
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
     cluster_arrive,
     cluster_wait,
     elect_one_sync,
 )
-from gpu.memory import AddressSpace
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal, assert_true
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal, assert_true
 
 comptime SIZE = 1024
 comptime TPB = 256
@@ -21,7 +21,7 @@ comptime out_layout = Layout.row_major(1)
 
 
 # ANCHOR: cluster_coordination_basics_solution
-fn cluster_coordination_basics[
+def cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -29,18 +29,18 @@ fn cluster_coordination_basics[
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
@@ -76,7 +76,7 @@ fn cluster_coordination_basics[
 
 
 # ANCHOR: cluster_collective_operations_solution
-fn cluster_collective_operations[
+def cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -87,10 +87,10 @@ fn cluster_collective_operations[
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
     # Each thread accumulates its data
     var my_value: Float32 = 0.0
@@ -98,11 +98,11 @@ fn cluster_collective_operations[
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = LayoutTensor[
+    var shared_mem = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()
@@ -134,7 +134,7 @@ fn cluster_collective_operations[
 
 
 # ANCHOR: advanced_cluster_patterns_solution
-fn advanced_cluster_patterns[
+def advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -143,16 +143,16 @@ fn advanced_cluster_patterns[
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Compute cluster mask for advanced coordination
@@ -269,7 +269,7 @@ def main() raises:
             input_buf.enqueue_fill(0)
             output_buf = ctx.enqueue_create_buffer[dtype](1)
             output_buf.enqueue_fill(0)
-            temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            var temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             temp_buf.enqueue_fill(0)
 
             var expected_sum: Float32 = 0.0
@@ -286,7 +286,7 @@ def main() raises:
             var output_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
                 output_buf
             )
-            temp_tensor = LayoutTensor[
+            var temp_tensor = LayoutTensor[
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](temp_buf)
 

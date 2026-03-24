@@ -1,11 +1,11 @@
-from memory import UnsafePointer
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace
+from std.memory import UnsafePointer
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from math import exp
-from bit import log2_ceil
-from utils.numerics import max_finite, min_finite
+from std.math import exp
+from std.bit import log2_ceil
+from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
@@ -16,7 +16,7 @@ comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 
 # ANCHOR: softmax_gpu_kernel_solution
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -27,19 +27,19 @@ fn softmax_gpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    shared_max = LayoutTensor[
+    var shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(thread_idx.x)
+    var global_i = Int(thread_idx.x)
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
@@ -52,7 +52,7 @@ fn softmax_gpu_kernel[
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = BLOCK_DIM_X // 2
+    var stride = BLOCK_DIM_X // 2
     while stride > 0:
         if global_i < stride:
             shared_max[global_i] = max(
@@ -61,7 +61,7 @@ fn softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_max = shared_max[0]
+    var block_max = shared_max[0]
 
     # Initialize out-of-bounds (shared_max[global_i], global_i >= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
@@ -80,7 +80,7 @@ fn softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_sum = shared_sum[0]
+    var block_sum = shared_sum[0]
 
     # Normalize by sum
     if global_i < input_size:
@@ -91,7 +91,7 @@ fn softmax_gpu_kernel[
 
 
 # ANCHOR: softmax_cpu_kernel_solution
-fn softmax_cpu_kernel[
+def softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -119,20 +119,20 @@ fn softmax_cpu_kernel[
 # ANCHOR_END: softmax_cpu_kernel_solution
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 
 @compiler.register("softmax")
 struct SoftmaxCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,  # "cpu" or "gpu"
         input_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1],
-        input: InputTensor[rank = output.rank],
+        output: OutputTensor[rank=1, static_spec=_],
+        input: InputTensor[rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
@@ -143,9 +143,8 @@ struct SoftmaxCustomOp:
             input.to_layout_tensor()
         )
 
-        @parameter
-        if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+        comptime if target == "gpu":
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](

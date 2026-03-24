@@ -1,17 +1,17 @@
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from os.atomic import Atomic
-from gpu.primitives.warp import WARP_SIZE
-from gpu.primitives import block
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.os.atomic import Atomic
+from std.gpu.primitives.warp import WARP_SIZE
+from std.gpu.primitives import block
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
-from math import floor
+from std.sys import argv
+from std.testing import assert_equal
+from std.math import floor
 
 
 # ANCHOR: traditional_dot_product
-fn traditional_dot_product[
+def traditional_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -22,19 +22,19 @@ fn traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i < size:
-        a_val = rebind[Scalar[dtype]](a[global_i])
-        b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = rebind[Scalar[dtype]](a[global_i])
+        var b_val = rebind[Scalar[dtype]](b[global_i])
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -63,7 +63,7 @@ comptime out_layout = Layout.row_major(1)
 comptime dtype = DType.float32
 
 
-fn block_sum_dot_product[
+def block_sum_dot_product[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -74,8 +74,8 @@ fn block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
 
@@ -86,7 +86,7 @@ fn block_sum_dot_product[
 comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
 
 
-fn block_histogram_bin_extract[
+def block_histogram_bin_extract[
     in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -104,8 +104,8 @@ fn block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
 
@@ -136,7 +136,7 @@ fn block_histogram_bin_extract[
 comptime vector_layout = Layout.row_major(SIZE)
 
 
-fn block_normalize_vector[
+def block_normalize_vector[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
     input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
@@ -152,8 +152,8 @@ fn block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
 
@@ -322,15 +322,15 @@ def main() raises:
                 )
 
                 # Create output buffers for this bin
-                bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
+                var bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
                 bin_data.enqueue_fill(0)
-                bin_count = ctx.enqueue_create_buffer[DType.int32](1)
+                var bin_count = ctx.enqueue_create_buffer[DType.int32](1)
                 bin_count.enqueue_fill(0)
 
-                bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
+                var bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
                     bin_data
                 )
-                count_tensor = LayoutTensor[
+                var count_tensor = LayoutTensor[
                     DType.int32, out_layout, MutAnyOrigin
                 ](bin_count)
 
@@ -377,7 +377,7 @@ def main() raises:
             # Create input data with known values for easy verification
             input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             output_buf.enqueue_fill(0)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
@@ -406,9 +406,9 @@ def main() raises:
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
-                output_buf
-            )
+            var output_tensor = LayoutTensor[
+                dtype, vector_layout, MutAnyOrigin
+            ](output_buf)
 
             # Execute vector normalization kernel
             comptime kernel = block_normalize_vector[

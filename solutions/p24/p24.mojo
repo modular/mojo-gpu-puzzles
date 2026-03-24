@@ -1,15 +1,15 @@
-from math import ceildiv
-from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
-from gpu.memory import AddressSpace
-from algorithm.functional import elementwise
+from std.math import ceildiv
+from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu.memory import AddressSpace
+from std.algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from utils import Index, IndexList
-from sys import argv, simd_width_of, align_of
-from testing import assert_equal
-from random import random_float64
-from benchmark import (
+from std.utils import Index, IndexList
+from std.sys import argv, simd_width_of, align_of
+from std.testing import assert_equal
+from std.random import random_float64
+from std.benchmark import (
     Bench,
     BenchConfig,
     Bencher,
@@ -31,7 +31,7 @@ comptime out_layout = Layout.row_major(1)
 
 
 # ANCHOR: traditional_approach_from_p12
-fn traditional_dot_product_p12_style[
+def traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -41,14 +41,14 @@ fn traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     if global_i < size:
         shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
@@ -57,7 +57,7 @@ fn traditional_dot_product_p12_style[
 
     barrier()
 
-    stride = WARP_SIZE // 2
+    var stride = WARP_SIZE // 2
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]
@@ -72,14 +72,14 @@ fn traditional_dot_product_p12_style[
 
 
 # ANCHOR: simple_warp_kernel_solution
-fn simple_warp_dot_product[
+def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -87,7 +87,7 @@ fn simple_warp_dot_product[
         partial_product = (a[global_i] * b[global_i]).reduce_add()
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
-    total = warp_sum(partial_product)
+    var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
@@ -98,7 +98,7 @@ fn simple_warp_dot_product[
 
 
 # ANCHOR: functional_warp_approach_solution
-fn functional_warp_dot_product[
+def functional_warp_dot_product[
     layout: Layout,
     out_layout: Layout,
     dtype: DType,
@@ -113,22 +113,22 @@ fn functional_warp_dot_product[
 ) raises:
     @parameter
     @always_inline
-    fn compute_dot_product[
+    def compute_dot_product[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        idx = indices[0]
+        var idx = indices[0]
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            a_val = a.load[1](Index(idx))
-            b_val = b.load[1](Index(idx))
+            var a_val = a.load[1](Index(idx))
+            var b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
 
         # Warp magic - combines all WARP_SIZE partial products!
-        total = warp_sum(partial_product)
+        var total = warp_sum(partial_product)
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
@@ -141,7 +141,7 @@ fn functional_warp_dot_product[
 # ANCHOR_END: functional_warp_approach_solution
 
 
-fn expected_output[
+def expected_output[
     dtype: DType, n_warps: Int
 ](
     expected: HostBuffer[dtype],
@@ -150,7 +150,7 @@ fn expected_output[
 ) raises:
     with a.map_to_host() as a_host, b.map_to_host() as b_host:
         for i_warp in range(n_warps):
-            i_warp_in_buff = WARP_SIZE * i_warp
+            var i_warp_in_buff = WARP_SIZE * i_warp
             var warp_sum: Scalar[dtype] = 0
             for i in range(WARP_SIZE):
                 warp_sum += (
@@ -159,7 +159,7 @@ fn expected_output[
             expected[i_warp] = warp_sum
 
 
-fn rand_int[
+def rand_int[
     dtype: DType, size: Int
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
@@ -167,7 +167,7 @@ fn rand_int[
             buff_host[i] = Int(random_float64(min, max))
 
 
-fn check_result[
+def check_result[
     dtype: DType, size: Int, print_result: Bool = False
 ](actual: DeviceBuffer[dtype], expected: HostBuffer[dtype]) raises:
     with actual.map_to_host() as actual_host:
@@ -181,7 +181,7 @@ fn check_result[
 
 @parameter
 @always_inline
-fn benchmark_simple_warp_parameterized[
+def benchmark_simple_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
@@ -190,28 +190,28 @@ fn benchmark_simple_warp_parameterized[
     comptime n_threads = WARP_SIZE
     comptime n_blocks = (ceildiv(test_size, n_threads), 1)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
-    fn traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises:
         comptime kernel = simple_warp_dot_product[
             in_layout, out_layout, test_size
         ]
@@ -233,35 +233,35 @@ fn benchmark_simple_warp_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_functional_warp_parameterized[
+def benchmark_functional_warp_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
     comptime in_layout = Layout.row_major(test_size)
     comptime out_layout = Layout.row_major(n_warps)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
-    fn functional_warp_workflow(ctx: DeviceContext) raises:
+    def functional_warp_workflow(ctx: DeviceContext) raises:
         functional_warp_dot_product[
             in_layout, out_layout, dtype, SIMD_WIDTH, 1, test_size
         ](out_tensor, a_tensor, b_tensor, ctx)
@@ -276,7 +276,7 @@ fn benchmark_functional_warp_parameterized[
 
 @parameter
 @always_inline
-fn benchmark_traditional_parameterized[
+def benchmark_traditional_parameterized[
     test_size: Int
 ](mut bencher: Bencher) raises:
     comptime n_warps = test_size // WARP_SIZE
@@ -284,28 +284,28 @@ fn benchmark_traditional_parameterized[
     comptime out_layout = Layout.row_major(n_warps)
     comptime n_blocks = (ceildiv(test_size, WARP_SIZE), 1)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
-    fn traditional_workflow(ctx: DeviceContext) raises:
+    def traditional_workflow(ctx: DeviceContext) raises:
         ctx.enqueue_function[
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
             traditional_dot_product_p12_style[in_layout, out_layout, test_size],
@@ -332,18 +332,18 @@ def main() raises:
         print("SIMD_WIDTH:", SIMD_WIDTH)
         comptime n_warps = SIZE // WARP_SIZE
         with DeviceContext() as ctx:
-            out = ctx.enqueue_create_buffer[dtype](n_warps)
+            var out = ctx.enqueue_create_buffer[dtype](n_warps)
             out.enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
-            b = ctx.enqueue_create_buffer[dtype](SIZE)
+            var b = ctx.enqueue_create_buffer[dtype](SIZE)
             b.enqueue_fill(0)
-            expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
+            var expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
             expected.enqueue_fill(0)
 
-            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
@@ -385,8 +385,8 @@ def main() raises:
             ctx.synchronize()
     elif argv()[1] == "--benchmark":
         print("-" * 80)
-        bench_config = BenchConfig(max_iters=100, num_warmup_iters=1)
-        bench = Bench(bench_config.copy())
+        var bench_config = BenchConfig(max_iters=100, num_warmup_iters=1)
+        var bench = Bench(bench_config.copy())
 
         print("Testing SIZE=1 x WARP_SIZE, BLOCKS=1")
         bench.bench_function[benchmark_traditional_parameterized[WARP_SIZE]](

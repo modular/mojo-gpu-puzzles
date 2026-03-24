@@ -1,7 +1,7 @@
-from memory import UnsafePointer
-from gpu import thread_idx
-from gpu.host import DeviceContext
-from testing import assert_equal
+from std.memory import UnsafePointer
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
+from std.testing import assert_equal
 
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
@@ -10,14 +10,14 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: broadcast_add_solution
-fn broadcast_add(
+def broadcast_add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row < size and col < size:
         output[row * size + col] = a[col] + b[row]
 
@@ -27,13 +27,13 @@ fn broadcast_add(
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out.enqueue_fill(0)
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):

@@ -1,8 +1,8 @@
-from memory import UnsafePointer, stack_allocation
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
-from testing import assert_equal
+from std.memory import UnsafePointer, stack_allocation
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 8
@@ -12,18 +12,18 @@ comptime dtype = DType.float32
 
 
 # ANCHOR: pooling_solution
-fn pooling(
+def pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    shared = stack_allocation[
+    var shared = stack_allocation[
         TPB,
         Scalar[dtype],
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ]()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     if global_i < size:
         shared[local_i] = a[global_i]
 
@@ -44,9 +44,9 @@ fn pooling(
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
@@ -60,15 +60,15 @@ def main() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected.enqueue_fill(0)
 
         ctx.synchronize()
 
         with a.map_to_host() as a_host:
-            ptr = a_host
+            var ptr = a_host
             for i in range(SIZE):
-                s = Scalar[dtype](0)
+                var s = Scalar[dtype](0)
                 for j in range(max(i - 2, 0), i + 1):
                     s += ptr[j]
 

@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from math import log2
-from testing import assert_equal
+from std.sys import argv
+from std.math import log2
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 8
@@ -15,27 +15,27 @@ comptime layout = Layout.row_major(SIZE)
 
 
 # ANCHOR: prefix_sum_simple_solution
-fn prefix_sum_simple[
+def prefix_sum_simple[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    shared = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < size:
         shared[local_i] = a[global_i]
 
     barrier()
 
-    offset = UInt(1)
+    var offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i >= offset and local_i < size:
@@ -66,20 +66,20 @@ comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-fn prefix_sum_local_phase[
+def prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    shared = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Load data into shared memory
@@ -102,7 +102,7 @@ fn prefix_sum_local_phase[
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
     #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
-    offset = UInt(1)
+    var offset = UInt(1)
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i >= offset and local_i < TPB:
@@ -132,10 +132,10 @@ fn prefix_sum_local_phase[
 
 
 # Kernel 2: Add block sums to their respective blocks
-fn prefix_sum_block_sum_phase[
+def prefix_sum_block_sum_phase[
     layout: Layout
 ](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
     # Block 0: No change needed - already correct
@@ -145,7 +145,7 @@ fn prefix_sum_block_sum_phase[
     # Final result combines both blocks:
     # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
     if block_idx.x > 0 and global_i < size:
-        prev_block_sum = output[size + block_idx.x - 1]
+        var prev_block_sum = output[size + block_idx.x - 1]
         output[global_i] += prev_block_sum
 
 
@@ -154,17 +154,17 @@ fn prefix_sum_block_sum_phase[
 
 def main() raises:
     with DeviceContext() as ctx:
-        use_simple = argv()[1] == "--simple"
-        size = SIZE if use_simple else SIZE_2
-        num_blocks = (size + TPB - 1) // TPB
+        var use_simple = argv()[1] == "--simple"
+        var size = SIZE if use_simple else SIZE_2
+        var num_blocks = (size + TPB - 1) // TPB
 
         if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
             raise Error("Extended buffer too small for the number of blocks")
 
-        buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size)
+        var buffer_size = size if use_simple else EXTENDED_SIZE
+        var out = ctx.enqueue_create_buffer[dtype](buffer_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:
@@ -211,7 +211,7 @@ def main() raises:
             # ANCHOR_END: prefix_sum_complete_block_level_sync
 
         # Verify results for both cases
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
         ctx.synchronize()
 

@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import async_copy_wait_all, AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import async_copy_wait_all, AddressSpace
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import argv, info
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv, info
+from std.testing import assert_equal, assert_almost_equal
 
 
 comptime VECTOR_SIZE = 16384
@@ -21,7 +21,7 @@ comptime layout_async = Layout.row_major(VECTOR_SIZE)
 
 
 # ANCHOR: async_copy_overlap_convolution_solution
-fn async_copy_overlap_convolution[
+def async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
@@ -35,24 +35,24 @@ fn async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    input_shared = LayoutTensor[
+    var input_shared = LayoutTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    kernel_shared = LayoutTensor[
+    var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_i = Int(thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
+    var input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -67,7 +67,7 @@ fn async_copy_overlap_convolution[
     barrier()  # Sync all threads
 
     # Phase 4: Compute convolution
-    global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
+    var global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
     if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
         var result: output.element_type = 0
 
@@ -75,7 +75,7 @@ fn async_copy_overlap_convolution[
         if local_i >= HALO_SIZE and local_i < CONV_TILE_SIZE - HALO_SIZE:
             # Full convolution for center elements
             for k in range(KERNEL_SIZE):
-                input_idx = local_i + k - HALO_SIZE
+                var input_idx = local_i + k - HALO_SIZE
                 if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
                     result += input_shared[input_idx] * kernel_shared[k]
         else:
@@ -91,11 +91,11 @@ fn async_copy_overlap_convolution[
 def test_async_copy_overlap_convolution() raises:
     """Test async copy overlap with 1D convolution."""
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](VECTOR_SIZE)
         output_buf.enqueue_fill(0)
-        kernel_buf = ctx.enqueue_create_buffer[dtype](KERNEL_SIZE)
+        var kernel_buf = ctx.enqueue_create_buffer[dtype](KERNEL_SIZE)
         kernel_buf.enqueue_fill(0)
 
         # Create test data: consecutive integers [1, 2, 3, ..., VECTOR_SIZE]
@@ -108,13 +108,13 @@ def test_async_copy_overlap_convolution() raises:
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Float32(i + 1)
 
-        input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
+        var input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
             input_buf
         )
-        output_tensor = LayoutTensor[dtype, layout_async, MutAnyOrigin](
+        var output_tensor = LayoutTensor[dtype, layout_async, MutAnyOrigin](
             output_buf
         )
-        kernel_tensor = LayoutTensor[
+        var kernel_tensor = LayoutTensor[
             mut=False, dtype, Layout.row_major(KERNEL_SIZE)
         ](kernel_buf)
 
@@ -156,7 +156,7 @@ def test_async_copy_overlap_convolution() raises:
                         # Boundary elements: copy input
                         expected_val = input_host[i]
 
-                    actual = output_host[i]
+                    var actual = output_host[i]
                     print(
                         "  Index",
                         i,

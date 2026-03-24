@@ -113,11 +113,11 @@ Each benchmark follows a streamlined pattern:
 
 ```mojo
 @parameter
-fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
+def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     # Setup: Create buffers and initialize data
     @parameter
-    fn pattern_workflow(ctx: DeviceContext) raises:
+    def pattern_workflow(ctx: DeviceContext) raises:
       # Compute: Execute the algorithm being measured
 
     b.iter_custom[pattern_workflow](bench_ctx)

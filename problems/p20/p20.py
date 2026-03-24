@@ -4,7 +4,7 @@ import numpy as np
 
 # ANCHOR: conv1d_pytorch
 import torch
-from max.torch import CustomOpLibrary
+from max.experimental.torch import CustomOpLibrary
 
 
 def conv1d_pytorch(

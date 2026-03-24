@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from math import log2
-from testing import assert_equal
+from std.sys import argv
+from std.math import log2
+from std.testing import assert_equal
 
 # ANCHOR: prefix_sum_simple
 comptime TPB = 8
@@ -15,15 +15,15 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-fn prefix_sum_simple[
+def prefix_sum_simple[
     layout: Layout
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
 
 
@@ -39,23 +39,23 @@ comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-fn prefix_sum_local_phase[
+def prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 20 lines)
 
 
 # Kernel 2: Add block sums to their respective blocks
-fn prefix_sum_block_sum_phase[
+def prefix_sum_block_sum_phase[
     layout: Layout
 ](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
 
@@ -72,18 +72,18 @@ def main() raises:
                 "Expected one command-line argument: '--simple' or '--complete'"
             )
 
-        use_simple = argv()[1] == "--simple"
+        var use_simple = argv()[1] == "--simple"
 
-        size = SIZE if use_simple else SIZE_2
-        num_blocks = (size + TPB - 1) // TPB
+        var size = SIZE if use_simple else SIZE_2
+        var num_blocks = (size + TPB - 1) // TPB
 
         if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
             raise Error("Extended buffer too small for the number of blocks")
 
-        buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size)
+        var buffer_size = size if use_simple else EXTENDED_SIZE
+        var out = ctx.enqueue_create_buffer[dtype](buffer_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:
@@ -133,7 +133,7 @@ def main() raises:
             # ANCHOR_END: prefix_sum_complete_block_level_sync
 
         # Verify results for both cases
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
         ctx.synchronize()
 

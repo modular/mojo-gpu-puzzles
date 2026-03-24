@@ -288,7 +288,7 @@ if thread_id < SIZE - 1:    # Not all threads enter
 
 **The Fix**: Move the barrier outside the conditional block:
 ```mojo
-fn collaborative_filter(
+def collaborative_filter(
     output: LayoutTensor[mut=True, dtype, vector_layout],
     a: LayoutTensor[mut=False, dtype, vector_layout],
 ):

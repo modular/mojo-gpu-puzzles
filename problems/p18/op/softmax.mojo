@@ -1,13 +1,13 @@
-from memory import UnsafePointer
+from std.memory import UnsafePointer
 
 # ANCHOR: softmax_gpu_kernel
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from math import exp
-from bit import log2_ceil
-from utils.numerics import max_finite, min_finite
+from std.math import exp
+from std.bit import log2_ceil
+from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
@@ -17,7 +17,7 @@ comptime GRID_DIM_X = 1
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 
-fn softmax_gpu_kernel[
+def softmax_gpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -36,7 +36,7 @@ fn softmax_gpu_kernel[
 
 
 # ANCHOR: softmax_cpu_kernel
-fn softmax_cpu_kernel[
+def softmax_cpu_kernel[
     layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
@@ -54,20 +54,20 @@ fn softmax_cpu_kernel[
 # ANCHOR_END: softmax_cpu_kernel
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 
 @compiler.register("softmax")
 struct SoftmaxCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         target: StaticString,  # "cpu" or "gpu"
         input_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1],
-        input: InputTensor[rank = output.rank],
+        output: OutputTensor[rank=1, static_spec=_],
+        input: InputTensor[rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
@@ -78,9 +78,8 @@ struct SoftmaxCustomOp:
             input.to_layout_tensor()
         )
 
-        @parameter
-        if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+        comptime if target == "gpu":
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](

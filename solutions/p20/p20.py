@@ -2,7 +2,7 @@ from typing import Optional
 from pathlib import Path
 import numpy as np
 import torch
-from max.torch import CustomOpLibrary
+from max.experimental.torch import CustomOpLibrary
 
 
 def conv1d_pytorch(

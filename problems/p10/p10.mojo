@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from testing import assert_equal
-from sys import argv
+from std.testing import assert_equal
+from std.sys import argv
 
 # ANCHOR: shared_memory_race
 
@@ -14,19 +14,19 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE, SIZE)
 
 
-fn shared_memory_race(
+def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
 
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     if row < size and col < size:
@@ -42,13 +42,13 @@ fn shared_memory_race(
 
 
 # ANCHOR: add_10_2d_no_guard
-fn add_10_2d(
+def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     output[row, col] = a[row, col] + 10.0
 
 
@@ -63,25 +63,25 @@ def main() raises:
         )
         return
 
-    flag = argv()[1]
+    var flag = argv()[1]
 
     with DeviceContext() as ctx:
-        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf).reshape[
-            layout
-        ]()
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            out_buf
+        ).reshape[layout]()
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
 
-        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
                 a_host[i] = i
 
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a).reshape[
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a).reshape[
             layout
         ]()
 
@@ -113,7 +113,7 @@ def main() raises:
 
         elif flag == "--race-condition":
             print("Running race condition example...")
-            total_sum = Scalar[dtype](0.0)
+            var total_sum = Scalar[dtype](0.0)
             with a.map_to_host() as a_host:
                 for i in range(SIZE * SIZE):
                     total_sum += a_host[i]  # Sum: 0 + 1 + 2 + 3 = 6

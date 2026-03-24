@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 # ANCHOR: conv_1d_simple
 comptime TPB = 8
@@ -17,15 +17,15 @@ comptime out_layout = Layout.row_major(SIZE)
 comptime conv_layout = Layout.row_major(CONV)
 
 
-fn conv_1d_simple[
+def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 14 lines)
 
 
@@ -41,15 +41,15 @@ comptime out_2_layout = Layout.row_major(SIZE_2)
 comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
-fn conv_1d_block_boundary[
+def conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     # FILL ME IN (roughly 18 lines)
 
 
@@ -58,13 +58,13 @@ fn conv_1d_block_boundary[
 
 def main() raises:
     with DeviceContext() as ctx:
-        size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
-        conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        out = ctx.enqueue_create_buffer[dtype](size)
+        var size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
+        var conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
+        var out = ctx.enqueue_create_buffer[dtype](size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](conv)
+        var b = ctx.enqueue_create_buffer[dtype](conv)
         b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
@@ -113,7 +113,7 @@ def main() raises:
             )
 
         ctx.synchronize()
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:

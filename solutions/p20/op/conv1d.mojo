@@ -1,16 +1,16 @@
 # same as p15/op/conv1d.mojo
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
 
 
-fn conv1d_kernel[
+def conv1d_kernel[
     in_layout: Layout,
     out_layout: Layout,
     conv_layout: Layout,
@@ -22,20 +22,20 @@ fn conv1d_kernel[
     input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
     kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    shared_a = LayoutTensor[
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < input_size:
         shared_a[local_i] = input[global_i]
@@ -43,7 +43,7 @@ fn conv1d_kernel[
     # second: load elements needed for convolution at block boundary
     if local_i < conv_size - 1:
         # indices from next block
-        next_idx = global_i + TPB
+        var next_idx = global_i + TPB
         if next_idx < input_size:
             shared_a[TPB + local_i] = input[next_idx]
         else:
@@ -59,8 +59,7 @@ fn conv1d_kernel[
     if global_i < input_size:
         var local_sum: output.element_type = 0
 
-        @parameter
-        for j in range(conv_size):
+        comptime for j in range(conv_size):
             if local_i + j < TPB + conv_size - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
@@ -68,38 +67,37 @@ fn conv1d_kernel[
 
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
+from std.memory import UnsafePointer
+from std.gpu.host import DeviceBuffer
 
 
 @compiler.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
-    fn execute[
+    def execute[
         # The kind of device this will be run on: "cpu" or "gpu"
         target: StaticString,
         input_size: Int,
         conv_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=1],
-        input: InputTensor[dtype=dtype, rank = output.rank],
-        kernel: InputTensor[dtype=dtype, rank = output.rank],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
+        kernel: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:
-        out_tensor = output.to_layout_tensor()
-        input_tensor = input.to_layout_tensor()
-        kernel_tensor = kernel.to_layout_tensor()
+        var out_tensor = output.to_layout_tensor()
+        var input_tensor = input.to_layout_tensor()
+        var kernel_tensor = kernel.to_layout_tensor()
         comptime in_layout = input_tensor.layout
         comptime out_layout = out_tensor.layout
         comptime conv_layout = kernel_tensor.layout
 
-        @parameter
-        if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+        comptime if target == "gpu":
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](

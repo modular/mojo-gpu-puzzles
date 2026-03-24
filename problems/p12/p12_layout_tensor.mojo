@@ -1,9 +1,9 @@
-from testing import assert_equal
-from gpu.host import DeviceContext
+from std.testing import assert_equal
+from std.gpu.host import DeviceContext
 
 # ANCHOR: dot_product_layout_tensor
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 
 
@@ -16,7 +16,7 @@ comptime layout = Layout.row_major(SIZE)
 comptime out_layout = Layout.row_major(1)
 
 
-fn dot_product[
+def dot_product[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
@@ -33,11 +33,11 @@ fn dot_product[
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](1)
+        var out = ctx.enqueue_create_buffer[dtype](1)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
@@ -45,9 +45,9 @@ def main() raises:
                 a_host[i] = i
                 b_host[i] = i
 
-        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         comptime kernel = dot_product[layout, out_layout]
         ctx.enqueue_function[kernel, kernel](
@@ -59,7 +59,7 @@ def main() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](1)
+        var expected = ctx.enqueue_create_host_buffer[dtype](1)
         expected.enqueue_fill(0)
         ctx.synchronize()
 

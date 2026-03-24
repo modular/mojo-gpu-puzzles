@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 6
@@ -17,26 +17,26 @@ comptime conv_layout = Layout.row_major(CONV)
 
 
 # ANCHOR: conv_1d_simple_solution
-fn conv_1d_simple[
+def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = Int(thread_idx.x)
-    shared_a = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = Int(thread_idx.x)
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
@@ -63,8 +63,7 @@ fn conv_1d_simple[
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
-        @parameter
-        for j in range(CONV):
+        comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j < SIZE:
                 local_sum += shared_a[local_i + j] * shared_b[j]
@@ -84,27 +83,27 @@ comptime conv_2_layout = Layout.row_major(CONV_2)
 
 
 # ANCHOR: conv_1d_block_boundary_solution
-fn conv_1d_block_boundary[
+def conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    shared_a = LayoutTensor[
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV_2),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE_2:
         shared_a[local_i] = a[global_i]
@@ -114,7 +113,7 @@ fn conv_1d_block_boundary[
     # second: load elements needed for convolution at block boundary
     if local_i < CONV_2 - 1:
         # indices from next block
-        next_idx = global_i + TPB
+        var next_idx = global_i + TPB
         if next_idx < SIZE_2:
             shared_a[TPB + local_i] = a[next_idx]
         else:
@@ -130,8 +129,7 @@ fn conv_1d_block_boundary[
     if global_i < SIZE_2:
         var local_sum: output.element_type = 0
 
-        @parameter
-        for j in range(CONV_2):
+        comptime for j in range(CONV_2):
             if global_i + j < SIZE_2:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
@@ -143,13 +141,13 @@ fn conv_1d_block_boundary[
 
 def main() raises:
     with DeviceContext() as ctx:
-        size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
-        conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        out = ctx.enqueue_create_buffer[dtype](size)
+        var size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
+        var conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
+        var out = ctx.enqueue_create_buffer[dtype](size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](conv)
+        var b = ctx.enqueue_create_buffer[dtype](conv)
         b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
@@ -191,7 +189,7 @@ def main() raises:
             raise Error("Invalid argument")
 
         ctx.synchronize()
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:

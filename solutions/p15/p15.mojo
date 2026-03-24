@@ -1,8 +1,8 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from testing import assert_equal
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime BATCH = 4
@@ -15,21 +15,21 @@ comptime out_layout = Layout.row_major(BATCH, 1)
 
 
 # ANCHOR: axis_sum_solution
-fn axis_sum[
+def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    batch = block_idx.y
-    cache = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    var batch = block_idx.y
+    var cache = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Visualize:
@@ -49,7 +49,7 @@ fn axis_sum[
     barrier()
 
     # do reduction sum per each block
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride > 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0
@@ -75,17 +75,17 @@ fn axis_sum[
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](BATCH)
+        var out = ctx.enqueue_create_buffer[dtype](BATCH)
         out.enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE)
+        var inp = ctx.enqueue_create_buffer[dtype](BATCH * SIZE)
         inp.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
                 for col in range(SIZE):
                     inp_host[row * SIZE + col] = row * SIZE + col
 
-        out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
+        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+        var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
         comptime kernel = axis_sum[in_layout, out_layout]
         ctx.enqueue_function[kernel, kernel](
@@ -96,7 +96,7 @@ def main() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](BATCH)
+        var expected = ctx.enqueue_create_host_buffer[dtype](BATCH)
         expected.enqueue_fill(0)
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
