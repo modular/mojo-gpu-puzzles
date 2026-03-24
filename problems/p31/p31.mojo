@@ -50,7 +50,7 @@ def sophisticated_kernel[
         dtype,
         Layout.row_major(1024 * 12),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
     var i = Int(block_dim.x * block_idx.x + thread_idx.x)
@@ -147,7 +147,7 @@ def balanced_kernel[
         dtype,
         Layout.row_major(1024 * 4),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
     var i = Int(block_dim.x * block_idx.x + thread_idx.x)
@@ -227,7 +227,9 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
 @parameter
 @always_inline
-def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises:
+def benchmark_sophisticated_parameterized[
+    test_size: Int
+](mut b: Bencher) raises:
     @parameter
     @always_inline
     def sophisticated_workflow(ctx: DeviceContext) raises:

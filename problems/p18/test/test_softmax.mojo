@@ -21,7 +21,9 @@ def test_softmax() raises:
         # for CPU testing
         var expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
         expected.enqueue_fill(0)
-        var expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](expected)
+        var expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            expected
+        )
         # Initialize input with more reasonable values
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):

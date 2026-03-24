@@ -67,7 +67,7 @@ struct SoftmaxCustomOp:
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1, static_spec=_],
-        input: InputTensor[rank = output.rank, static_spec=_],
+        input: InputTensor[rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!

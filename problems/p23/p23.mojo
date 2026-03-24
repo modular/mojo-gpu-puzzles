@@ -14,7 +14,7 @@ comptime SIZE = 1024
 comptime rank = 1
 comptime layout = Layout.row_major(SIZE)
 comptime dtype = DType.float32
-comptime SIMD_WIDTH = simd_width_of[dtype, target = get_gpu_target()]()
+comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
 def elementwise_add[

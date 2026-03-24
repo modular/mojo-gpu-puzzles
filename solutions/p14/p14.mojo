@@ -28,7 +28,7 @@ def prefix_sum_simple[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < size:
         shared[local_i] = a[global_i]
@@ -79,7 +79,7 @@ def prefix_sum_local_phase[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Load data into shared memory

@@ -38,13 +38,13 @@ def async_copy_overlap_convolution[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var kernel_shared = LayoutTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # FILL IN HERE (roughly 19 lines)

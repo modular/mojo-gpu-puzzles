@@ -25,7 +25,7 @@ def add_10_shared_layout_tensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x

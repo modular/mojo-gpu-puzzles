@@ -30,13 +30,13 @@ def conv_1d_simple[
         dtype,
         Layout.row_major(SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
@@ -97,13 +97,13 @@ def conv_1d_block_boundary[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV_2),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < SIZE_2:
         shared_a[local_i] = a[global_i]

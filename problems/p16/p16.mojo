@@ -133,15 +133,15 @@ def main() raises:
             )
         elif argv()[1] == "--tiled":
             # Need to update the layout of the tensors to the tiled layout
-            var out_tensor_tiled = LayoutTensor[dtype, layout_tiled, MutAnyOrigin](
-                out
-            )
-            var a_tensor_tiled = LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin](
-                inp1
-            )
-            var b_tensor_tiled = LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin](
-                inp2
-            )
+            var out_tensor_tiled = LayoutTensor[
+                dtype, layout_tiled, MutAnyOrigin
+            ](out)
+            var a_tensor_tiled = LayoutTensor[
+                dtype, layout_tiled, ImmutAnyOrigin
+            ](inp1)
+            var b_tensor_tiled = LayoutTensor[
+                dtype, layout_tiled, ImmutAnyOrigin
+            ](inp2)
 
             comptime kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
             ctx.enqueue_function[kernel, kernel](

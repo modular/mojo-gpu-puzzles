@@ -62,7 +62,7 @@ def collaborative_filter(
         dtype,
         Layout.row_major(SIZE - 1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Phase 1: Initialize shared workspace (all threads participate)

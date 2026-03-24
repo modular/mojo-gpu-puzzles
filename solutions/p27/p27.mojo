@@ -68,7 +68,7 @@ def traditional_dot_product[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var local_i = Int(thread_idx.x)
@@ -144,7 +144,7 @@ def block_histogram_bin_extract[
     # Step 3: Use block.prefix_sum() for parallel bin extraction!
     # This computes where each thread should write within the target bin
     var write_offset = block.prefix_sum[
-        dtype = DType.int32, block_size=tpb, exclusive=True
+        dtype=DType.int32, block_size=tpb, exclusive=True
     ](val=SIMD[DType.int32, 1](belongs_to_target))
 
     # Step 4: Extract and pack elements belonging to target_bin
@@ -202,7 +202,7 @@ def block_normalize_vector[
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration
     var broadcasted_mean = block.broadcast[
-        dtype = DType.float32, width=1, block_size=tpb
+        dtype=DType.float32, width=1, block_size=tpb
     ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
 
     # Step 5: Each thread normalizes by the mean
@@ -440,9 +440,9 @@ def main() raises:
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            var output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
-                output_buf
-            )
+            var output_tensor = LayoutTensor[
+                dtype, vector_layout, MutAnyOrigin
+            ](output_buf)
 
             # Execute vector normalization kernel
             comptime kernel = block_normalize_vector[

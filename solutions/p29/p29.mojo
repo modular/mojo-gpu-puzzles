@@ -44,13 +44,13 @@ def multi_stage_image_blur_pipeline[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var blur_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
@@ -151,13 +151,13 @@ def double_buffered_stencil_computation[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var buffer_B = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
@@ -165,19 +165,19 @@ def double_buffered_stencil_computation[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var iter_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var final_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
@@ -201,7 +201,6 @@ def double_buffered_stencil_computation[
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
-
         comptime if iteration % 2 == 0:
             # Even iteration: Read from A, Write to B
             if local_i < TPB:
@@ -252,7 +251,6 @@ def double_buffered_stencil_computation[
 
     # Write final results from active buffer
     if local_i < TPB and global_i < size:
-
         comptime if STENCIL_ITERATIONS % 2 == 0:
             # Even iterations end in buffer_A
             output[global_i] = buffer_A[local_i]

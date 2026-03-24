@@ -46,13 +46,13 @@ def matmul_idiomatic_tiled[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var acc: output.element_type = 0
@@ -70,12 +70,12 @@ def matmul_idiomatic_tiled[
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
             thread_layout=load_a_layout,
-            num_threads = TILE_SIZE * TILE_SIZE,
+            num_threads=TILE_SIZE * TILE_SIZE,
             block_dim_count=BLOCK_DIM_COUNT,
         ](a_shared, a_tile)
         copy_dram_to_sram_async[
             thread_layout=load_b_layout,
-            num_threads = TILE_SIZE * TILE_SIZE,
+            num_threads=TILE_SIZE * TILE_SIZE,
             block_dim_count=BLOCK_DIM_COUNT,
         ](b_shared, b_tile)
 
@@ -161,13 +161,13 @@ def tensor_core_matrix_multiplication[
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
@@ -175,14 +175,12 @@ def tensor_core_matrix_multiplication[
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
-        address_space = AddressSpace.LOCAL,
+        address_space=AddressSpace.LOCAL,
     ].stack_allocation()
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
-
         comptime for i in range(WM):
-
             comptime for j in range(WN):
                 C_warp_accum[i, j] = 0.0
 
@@ -196,12 +194,12 @@ def tensor_core_matrix_multiplication[
         var B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
 
         copy_dram_to_sram_async[
-            thread_layout = Layout.row_major(4, 8),
+            thread_layout=Layout.row_major(4, 8),
             num_threads=256,
             block_dim_count=BLOCK_DIM_COUNT,
         ](A_sram_tile.vectorize[1, 4](), A_dram_tile.vectorize[1, 4]())
         copy_dram_to_sram_async[
-            thread_layout = Layout.row_major(4, 8),
+            thread_layout=Layout.row_major(4, 8),
             num_threads=256,
             block_dim_count=BLOCK_DIM_COUNT,
         ](B_sram_tile.vectorize[1, 4](), B_dram_tile.vectorize[1, 4]())
@@ -214,9 +212,7 @@ def tensor_core_matrix_multiplication[
             var B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
 
             comptime for mma_k in range(BK // MMA_K):
-
                 comptime for mma_m in range(WM // MMA_M):
-
                     comptime for mma_n in range(WN // MMA_N):
                         var A_mma_tile = A_warp_tile.tile[MMA_M, MMA_K](
                             mma_m, mma_k
@@ -236,9 +232,7 @@ def tensor_core_matrix_multiplication[
 
     # Store the final per-warp accumulation to the output warp tile
     if warp_is_active:
-
         comptime for mma_m in range(WM // MMA_M):
-
             comptime for mma_n in range(WN // MMA_N):
                 var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
                 var Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)

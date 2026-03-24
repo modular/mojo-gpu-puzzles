@@ -40,7 +40,7 @@ def cluster_coordination_basics[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank

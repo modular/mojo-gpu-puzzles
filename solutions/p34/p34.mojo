@@ -40,7 +40,7 @@ def cluster_coordination_basics[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
@@ -102,7 +102,7 @@ def cluster_collective_operations[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     shared_mem[local_i] = my_value
     barrier()
@@ -152,7 +152,7 @@ def advanced_cluster_patterns[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     # Compute cluster mask for advanced coordination

@@ -26,7 +26,7 @@ def shared_memory_race(
         dtype,
         Layout.row_major(1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     if row < size and col < size:
@@ -68,9 +68,9 @@ def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf).reshape[
-            layout
-        ]()
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            out_buf
+        ).reshape[layout]()
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)

@@ -28,13 +28,13 @@ def conv1d_kernel[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     if global_i < input_size:
         shared_a[local_i] = input[global_i]
@@ -83,8 +83,8 @@ struct Conv1DCustomOp:
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1, static_spec=_],
-        input: InputTensor[rank = output.rank, static_spec=_],
-        kernel: InputTensor[rank = output.rank, static_spec=_],
+        input: InputTensor[rank=output.rank, static_spec=_],
+        kernel: InputTensor[rank=output.rank, static_spec=_],
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:

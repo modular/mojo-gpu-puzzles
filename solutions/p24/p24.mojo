@@ -45,7 +45,7 @@ def traditional_dot_product_p12_style[
         dtype,
         Layout.row_major(WARP_SIZE),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var local_i = Int(thread_idx.x)

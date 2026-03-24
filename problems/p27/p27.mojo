@@ -26,7 +26,7 @@ def traditional_dot_product[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var local_i = Int(thread_idx.x)
@@ -406,9 +406,9 @@ def main() raises:
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            var output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
-                output_buf
-            )
+            var output_tensor = LayoutTensor[
+                dtype, vector_layout, MutAnyOrigin
+            ](output_buf)
 
             # Execute vector normalization kernel
             comptime kernel = block_normalize_vector[

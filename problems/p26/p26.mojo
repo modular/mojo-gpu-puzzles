@@ -167,8 +167,12 @@ def test_butterfly_pair_swap() raises:
             for i in range(SIZE):
                 input_host[i] = i
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = butterfly_pair_swap[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -214,8 +218,12 @@ def test_butterfly_parallel_max() raises:
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = butterfly_parallel_max[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -256,8 +264,12 @@ def test_butterfly_conditional_max() raises:
                 else:
                     input_host[i] = i % 10
 
-        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = butterfly_conditional_max[layout_2, SIZE_2]
         ctx.enqueue_function[kernel, kernel](
@@ -312,8 +324,12 @@ def test_warp_inclusive_prefix_sum() raises:
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = warp_inclusive_prefix_sum[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -353,12 +369,33 @@ def test_warp_partition() raises:
         var pivot_value = Float32(5.0)
         with input_buf.map_to_host() as input_host:
             # Create: [3, 7, 1, 8, 2, 9, 4, 6, ...]
-            var test_values = [3, 7, 1, 8, 2, 9, 4, 6, 0, 10, 3, 11, 1, 12, 4, 13]
+            var test_values = [
+                3,
+                7,
+                1,
+                8,
+                2,
+                9,
+                4,
+                6,
+                0,
+                10,
+                3,
+                11,
+                1,
+                12,
+                4,
+                13,
+            ]
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = warp_partition[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](

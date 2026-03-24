@@ -224,8 +224,12 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 input_host[i] = i * i
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = neighbor_difference[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -269,8 +273,12 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + i + 1
 
-        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = moving_average_3[layout_2, SIZE_2]
         ctx.enqueue_function[kernel, kernel](
@@ -336,8 +344,12 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = ((i - 4) % 4) * 2 + 1
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = broadcast_shuffle_coordination[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -387,8 +399,12 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = basic_broadcast[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -444,8 +460,12 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_buf
+        )
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+            output_buf
+        )
 
         comptime kernel = conditional_broadcast[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](

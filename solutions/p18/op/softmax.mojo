@@ -31,13 +31,13 @@ def softmax_gpu_kernel[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var global_i = Int(thread_idx.x)
 
@@ -132,7 +132,7 @@ struct SoftmaxCustomOp:
         dtype: DType = DType.float32,
     ](
         output: OutputTensor[rank=1, static_spec=_],
-        input: InputTensor[rank = output.rank, static_spec=_],
+        input: InputTensor[rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!

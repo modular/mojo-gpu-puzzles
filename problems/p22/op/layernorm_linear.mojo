@@ -46,13 +46,13 @@ def matmul_idiomatic_tiled[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
 
@@ -63,7 +63,9 @@ def matmul_idiomatic_tiled[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
-    comptime for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
+    comptime for idx in range(
+        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+    ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
@@ -161,7 +163,7 @@ def transpose_kernel[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var local_row = thread_idx.y
@@ -357,12 +359,12 @@ struct LayerNormLinearCustomOp:
         hidden_dim: Int,
         output_dim: Int,
     ](
-        output: OutputTensor[dtype = DType.float32, rank=3, static_spec=_],
-        input: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
-        ln_weight: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        ln_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        linear_weight: InputTensor[dtype = DType.float32, rank=2, static_spec=_],
-        linear_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        output: OutputTensor[dtype=DType.float32, rank=3, static_spec=_],
+        input: InputTensor[dtype=DType.float32, rank=3, static_spec=_],
+        ln_weight: InputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        ln_bias: InputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        linear_weight: InputTensor[dtype=DType.float32, rank=2, static_spec=_],
+        linear_bias: InputTensor[dtype=DType.float32, rank=1, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         comptime input_layout = input.static_spec.to_layout()
@@ -460,9 +462,9 @@ struct LayerNormLinearCustomOp:
                 ](matmul_buffer)
 
                 # Create transposed weight matrix: [output_dim, hidden_dim] -> [hidden_dim, output_dim]
-                var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[dtype](
-                    hidden_dim * output_dim
-                )
+                var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[
+                    dtype
+                ](hidden_dim * output_dim)
                 var transposed_weight_tensor = LayoutTensor[
                     dtype,
                     Layout.row_major(hidden_dim, output_dim),
@@ -587,16 +589,18 @@ struct LayerNormLinearBackwardCustomOp:
         hidden_dim: Int,
         output_dim: Int,
     ](
-        grad_input: OutputTensor[dtype = DType.float32, rank=3, static_spec=_],
-        grad_ln_weight: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        grad_ln_bias: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        grad_weight: OutputTensor[dtype = DType.float32, rank=2, static_spec=_],
-        grad_bias: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        grad_output: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
-        input: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
-        ln_weight: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        ln_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
-        linear_weight: InputTensor[dtype = DType.float32, rank=2, static_spec=_],
+        grad_input: OutputTensor[dtype=DType.float32, rank=3, static_spec=_],
+        grad_ln_weight: OutputTensor[
+            dtype=DType.float32, rank=1, static_spec=_
+        ],
+        grad_ln_bias: OutputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        grad_weight: OutputTensor[dtype=DType.float32, rank=2, static_spec=_],
+        grad_bias: OutputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        grad_output: InputTensor[dtype=DType.float32, rank=3, static_spec=_],
+        input: InputTensor[dtype=DType.float32, rank=3, static_spec=_],
+        ln_weight: InputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        ln_bias: InputTensor[dtype=DType.float32, rank=1, static_spec=_],
+        linear_weight: InputTensor[dtype=DType.float32, rank=2, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         comptime grad_output_layout = grad_output.static_spec.to_layout()

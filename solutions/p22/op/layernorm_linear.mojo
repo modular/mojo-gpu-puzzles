@@ -44,13 +44,13 @@ def matmul_idiomatic_tiled[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
     var acc: output.element_type = 0
 
@@ -61,7 +61,9 @@ def matmul_idiomatic_tiled[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
-    comptime for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
+    comptime for idx in range(
+        (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
+    ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
@@ -174,7 +176,7 @@ def transpose_kernel[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var local_row = thread_idx.y
@@ -372,7 +374,6 @@ def minimal_fused_kernel_backward[
 
     # Step 3: Atomically accumulate gradients w.r.t. linear weight
     comptime for out_idx in range(output_dim):
-
         comptime for h in range(hidden_dim):
             var input_val = input[batch_idx, seq_idx, h]
             var normalized = (input_val - mean_val) * inv_std
@@ -581,9 +582,9 @@ struct LayerNormLinearCustomOp:
                 ](matmul_buffer)
 
                 # Create transposed weight matrix: [output_dim, hidden_dim] -> [hidden_dim, output_dim]
-                var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[dtype](
-                    hidden_dim * output_dim
-                )
+                var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[
+                    dtype
+                ](hidden_dim * output_dim)
                 var transposed_weight_tensor = LayoutTensor[
                     dtype,
                     Layout.row_major(hidden_dim, output_dim),

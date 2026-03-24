@@ -33,7 +33,7 @@ def no_conflict_kernel[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
@@ -76,7 +76,7 @@ def two_way_conflict_kernel[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
-        address_space = AddressSpace.SHARED,
+        address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
