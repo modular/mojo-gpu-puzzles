@@ -239,7 +239,7 @@ Handle cases where the last tile might be smaller than `tile_size`.
 ### 2. **Vectorized function pattern**
 
 ```mojo
-fn vectorized_add[
+def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i
@@ -338,7 +338,7 @@ actual_tile_size = tile_end - tile_start
 **Automatic vectorization mechanism:**
 
 ```mojo
-fn vectorized_add[
+def vectorized_add[
   width: Int
 ](i: Int) unified {read tile_start, read a, read b, mut output}:
     global_idx = tile_start + i

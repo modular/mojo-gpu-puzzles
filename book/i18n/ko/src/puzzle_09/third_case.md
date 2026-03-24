@@ -310,7 +310,7 @@ if thread_id < SIZE - 1:    # 모든 스레드가 진입하지 않음
 **수정 방법**: 배리어를 조건 블록 밖으로 이동:
 
 ```mojo
-fn collaborative_filter(
+def collaborative_filter(
     output: LayoutTensor[mut=True, dtype, vector_layout],
     a: LayoutTensor[mut=False, dtype, vector_layout],
 ):

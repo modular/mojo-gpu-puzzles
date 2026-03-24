@@ -46,7 +46,7 @@ The `elementwise` function expects a nested function with this exact signature:
 ```mojo
 @parameter
 @always_inline
-fn your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
     # Your implementation here
 ```
 
@@ -220,7 +220,7 @@ elementwise[add_function, simd_width, target="gpu"](size, ctx)
 ```mojo
 @parameter
 @always_inline
-fn add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
+def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -> None:
 ```
 
 **Parameter Analysis:**

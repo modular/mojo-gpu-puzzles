@@ -115,11 +115,11 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 
 ```mojo
 @parameter
-fn benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
+def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bencher) raises:
     bench_ctx = DeviceContext()
     # 셋업: 버퍼 생성 및 데이터 초기화
     @parameter
-    fn pattern_workflow(ctx: DeviceContext) raises:
+    def pattern_workflow(ctx: DeviceContext) raises:
       # 연산: 측정 대상 알고리즘 실행
 
     b.iter_custom[pattern_workflow](bench_ctx)
