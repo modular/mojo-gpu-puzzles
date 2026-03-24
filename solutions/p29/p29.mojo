@@ -1,15 +1,15 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.sync import (
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.sync import (
     mbarrier_init,
     mbarrier_arrive,
     mbarrier_test_wait,
 )
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from sys import argv, info
-from testing import assert_true, assert_almost_equal
+from std.sys import argv, info
+from std.testing import assert_true, assert_almost_equal
 
 comptime TPB = 256  # Threads per block for pipeline stages
 comptime SIZE = 1024  # Image size (1D for simplicity)
@@ -75,7 +75,7 @@ def multi_stage_image_blur_pipeline[
 
     # Stage 2: Apply blur (threads 128-255)
     if local_i >= STAGE1_THREADS:
-        blur_idx = local_i - STAGE1_THREADS
+        var blur_idx = local_i - STAGE1_THREADS
         var blur_sum: Scalar[dtype] = 0.0
         blur_count = 0
 
@@ -92,7 +92,7 @@ def multi_stage_image_blur_pipeline[
             blur_shared[blur_idx] = 0.0
 
         # Process second element
-        second_idx = blur_idx + STAGE1_THREADS
+        var second_idx = blur_idx + STAGE1_THREADS
         if second_idx < TPB:
             blur_sum = 0.0
             blur_count = 0
@@ -274,9 +274,9 @@ def double_buffered_stencil_computation[
 def test_multi_stage_pipeline() raises:
     """Test Puzzle 26A: Multi-Stage Pipeline Coordination."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](SIZE)
+        var inp = ctx.enqueue_create_buffer[dtype](SIZE)
         inp.enqueue_fill(0)
 
         # Initialize input with a simple pattern
@@ -286,8 +286,8 @@ def test_multi_stage_pipeline() raises:
                 inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         comptime kernel = multi_stage_image_blur_pipeline[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -336,9 +336,9 @@ def test_double_buffered_stencil() raises:
     """Test Puzzle 26B: Double-Buffered Stencil Computation."""
     with DeviceContext() as ctx:
         # Test Puzzle 26B: Double-Buffered Stencil Computation
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[dtype](SIZE)
+        var inp = ctx.enqueue_create_buffer[dtype](SIZE)
         inp.enqueue_fill(0)
 
         # Initialize input with a different pattern for stencil testing
@@ -348,8 +348,8 @@ def test_double_buffered_stencil() raises:
                 inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 26B
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         comptime kernel = double_buffered_stencil_computation[layout]
         ctx.enqueue_function[kernel, kernel](

@@ -1,13 +1,13 @@
-from memory import UnsafePointer
+from std.memory import UnsafePointer
 
 # ANCHOR: softmax_gpu_kernel
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from math import exp
-from bit import log2_ceil
-from utils.numerics import max_finite, min_finite
+from std.math import exp
+from std.bit import log2_ceil
+from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
@@ -54,7 +54,7 @@ def softmax_cpu_kernel[
 # ANCHOR_END: softmax_cpu_kernel
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 
@@ -80,7 +80,7 @@ struct SoftmaxCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](

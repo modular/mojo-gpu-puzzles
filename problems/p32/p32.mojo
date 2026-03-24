@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_almost_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.sys import argv
+from std.testing import assert_almost_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: no_conflict_kernel
 comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
@@ -180,17 +180,17 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
 def test_no_conflict() raises:
     """Test that no-conflict kernel produces correct results."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Float32(i + 1)
 
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = LayoutTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -205,7 +205,7 @@ def test_no_conflict() raises:
 
         with out.map_to_host() as result:
             for i in range(min(SIZE, 10)):
-                expected = Float32((i + 11) * 2)
+                var expected = Float32((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
         print("✅ No-conflict kernel: PASSED")
@@ -214,17 +214,17 @@ def test_no_conflict() raises:
 def test_two_way_conflict() raises:
     """Test that 2-way conflict kernel produces identical results."""
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = Float32(i + 1)
 
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = LayoutTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -239,7 +239,7 @@ def test_two_way_conflict() raises:
 
         with out.map_to_host() as result:
             for i in range(min(SIZE, 10)):
-                expected = Float32((i + 11) * 2)
+                var expected = Float32((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
         print("✅ Two-way conflict kernel: PASSED")
@@ -266,7 +266,7 @@ def main() raises:
         print("Benchmarking bank conflict patterns...")
         print("-" * 50)
 
-        bench = Bench()
+        var bench = Bench()
 
         print("\nNo-conflict kernel (optimal):")
         bench.bench_function[benchmark_no_conflict[SIZE]](

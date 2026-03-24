@@ -1,13 +1,13 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.host.compile import get_gpu_target
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.host.compile import get_gpu_target
 from layout import Layout, LayoutTensor
-from utils import IndexList
-from math import log2
-from algorithm.functional import elementwise, vectorize
-from sys import simd_width_of, argv, align_of
-from testing import assert_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.utils import IndexList
+from std.math import log2
+from std.algorithm.functional import elementwise, vectorize
+from std.sys import simd_width_of, argv, align_of
+from std.testing import assert_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: elementwise_add
 comptime SIZE = 1024
@@ -64,9 +64,9 @@ def tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        output_tile = output.tile[tile_size](tile_id)
-        a_tile = a.tile[tile_size](tile_id)
-        b_tile = b.tile[tile_size](tile_id)
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
         # FILL IN (6 lines at most)
 
@@ -102,9 +102,9 @@ def manual_vectorized_tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
         print("tile_id:", tile_id)
-        output_tile = output.tile[chunk_size](tile_id)
-        a_tile = a.tile[chunk_size](tile_id)
-        b_tile = b.tile[chunk_size](tile_id)
+        var output_tile = output.tile[chunk_size](tile_id)
+        var a_tile = a.tile[chunk_size](tile_id)
+        var b_tile = b.tile[chunk_size](tile_id)
 
         # FILL IN (7 lines at most)
 
@@ -391,8 +391,8 @@ def main() raises:
         print("Running P21 GPU Benchmarks...")
         print("SIMD width:", SIMD_WIDTH)
         print("-" * 80)
-        bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
-        bench = Bench(bench_config.copy())
+        var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
+        var bench = Bench(bench_config.copy())
 
         print("Testing SIZE=16, TILE=4")
         bench.bench_function[benchmark_elementwise_parameterized[16, 4]](

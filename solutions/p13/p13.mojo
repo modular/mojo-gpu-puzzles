@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 6
@@ -114,7 +114,7 @@ def conv_1d_block_boundary[
     # second: load elements needed for convolution at block boundary
     if local_i < CONV_2 - 1:
         # indices from next block
-        next_idx = global_i + TPB
+        var next_idx = global_i + TPB
         if next_idx < SIZE_2:
             shared_a[TPB + local_i] = a[next_idx]
         else:
@@ -143,13 +143,13 @@ def conv_1d_block_boundary[
 
 def main() raises:
     with DeviceContext() as ctx:
-        size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
-        conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
-        out = ctx.enqueue_create_buffer[dtype](size)
+        var size = SIZE_2 if argv()[1] == "--block-boundary" else SIZE
+        var conv = CONV_2 if argv()[1] == "--block-boundary" else CONV
+        var out = ctx.enqueue_create_buffer[dtype](size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](conv)
+        var b = ctx.enqueue_create_buffer[dtype](conv)
         b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
@@ -191,7 +191,7 @@ def main() raises:
             raise Error("Invalid argument")
 
         ctx.synchronize()
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:

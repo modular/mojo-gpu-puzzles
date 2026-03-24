@@ -1,15 +1,15 @@
-from math import ceildiv
-from gpu import thread_idx, block_idx, block_dim, barrier, lane_id
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
-from gpu.memory import AddressSpace
-from algorithm.functional import elementwise
+from std.math import ceildiv
+from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
+from std.gpu.memory import AddressSpace
+from std.algorithm.functional import elementwise
 from layout import Layout, LayoutTensor
-from utils import Index, IndexList
-from sys import argv, simd_width_of, align_of
-from testing import assert_equal
-from random import random_float64
-from benchmark import (
+from std.utils import Index, IndexList
+from std.sys import argv, simd_width_of, align_of
+from std.testing import assert_equal
+from std.random import random_float64
+from std.benchmark import (
     Bench,
     BenchConfig,
     Bencher,
@@ -121,8 +121,8 @@ def functional_warp_dot_product[
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx < size:
-            a_val = a.load[1](Index(idx))
-            b_val = b.load[1](Index(idx))
+            var a_val = a.load[1](Index(idx))
+            var b_val = b.load[1](Index(idx))
             partial_product = a_val * b_val
         else:
             partial_product = 0.0
@@ -150,7 +150,7 @@ def expected_output[
 ) raises:
     with a.map_to_host() as a_host, b.map_to_host() as b_host:
         for i_warp in range(n_warps):
-            i_warp_in_buff = WARP_SIZE * i_warp
+            var i_warp_in_buff = WARP_SIZE * i_warp
             var warp_sum: Scalar[dtype] = 0
             for i in range(WARP_SIZE):
                 warp_sum += (
@@ -332,18 +332,18 @@ def main() raises:
         print("SIMD_WIDTH:", SIMD_WIDTH)
         comptime n_warps = SIZE // WARP_SIZE
         with DeviceContext() as ctx:
-            out = ctx.enqueue_create_buffer[dtype](n_warps)
+            var out = ctx.enqueue_create_buffer[dtype](n_warps)
             out.enqueue_fill(0)
-            a = ctx.enqueue_create_buffer[dtype](SIZE)
+            var a = ctx.enqueue_create_buffer[dtype](SIZE)
             a.enqueue_fill(0)
-            b = ctx.enqueue_create_buffer[dtype](SIZE)
+            var b = ctx.enqueue_create_buffer[dtype](SIZE)
             b.enqueue_fill(0)
-            expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
+            var expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
             expected.enqueue_fill(0)
 
-            out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-            a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-            b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
@@ -385,8 +385,8 @@ def main() raises:
             ctx.synchronize()
     elif argv()[1] == "--benchmark":
         print("-" * 80)
-        bench_config = BenchConfig(max_iters=100, num_warmup_iters=1)
-        bench = Bench(bench_config.copy())
+        var bench_config = BenchConfig(max_iters=100, num_warmup_iters=1)
+        var bench = Bench(bench_config.copy())
 
         print("Testing SIZE=1 x WARP_SIZE, BLOCKS=1")
         bench.bench_function[benchmark_traditional_parameterized[WARP_SIZE]](

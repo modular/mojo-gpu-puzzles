@@ -1,13 +1,13 @@
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from os.atomic import Atomic
-from gpu.primitives.warp import WARP_SIZE
-from gpu.primitives import block
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.os.atomic import Atomic
+from std.gpu.primitives.warp import WARP_SIZE
+from std.gpu.primitives import block
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
-from math import floor
+from std.sys import argv
+from std.testing import assert_equal
+from std.math import floor
 
 comptime SIZE = 128
 comptime TPB = 128
@@ -75,8 +75,8 @@ def traditional_dot_product[
 
     # Each thread computes partial product
     if global_i < size:
-        a_val = rebind[Scalar[dtype]](a[global_i])
-        b_val = rebind[Scalar[dtype]](b[global_i])
+        var a_val = rebind[Scalar[dtype]](a[global_i])
+        var b_val = rebind[Scalar[dtype]](b[global_i])
         shared[local_i] = a_val * b_val
 
     barrier()
@@ -154,7 +154,7 @@ def block_histogram_bin_extract[
     # Step 5: Final thread computes total count for this bin
     if local_i == tpb - 1:
         # Inclusive sum = exclusive sum + my contribution
-        total_count = write_offset[0] + belongs_to_target
+        var total_count = write_offset[0] + belongs_to_target
         count_output[0] = total_count
 
 
@@ -207,7 +207,7 @@ def block_normalize_vector[
 
     # Step 5: Each thread normalizes by the mean
     if global_i < size:
-        normalized_value = my_value / broadcasted_mean[0]
+        var normalized_value = my_value / broadcasted_mean[0]
         output_data[global_i] = normalized_value
 
 
@@ -356,15 +356,15 @@ def main() raises:
                 )
 
                 # Create output buffers for this bin
-                bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
+                var bin_data = ctx.enqueue_create_buffer[dtype](SIZE)
                 bin_data.enqueue_fill(0)
-                bin_count = ctx.enqueue_create_buffer[DType.int32](1)
+                var bin_count = ctx.enqueue_create_buffer[DType.int32](1)
                 bin_count.enqueue_fill(0)
 
-                bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
+                var bin_tensor = LayoutTensor[dtype, bin_layout, MutAnyOrigin](
                     bin_data
                 )
-                count_tensor = LayoutTensor[
+                var count_tensor = LayoutTensor[
                     DType.int32, out_layout, MutAnyOrigin
                 ](bin_count)
 
@@ -411,7 +411,7 @@ def main() raises:
             # Create input data with known values for easy verification
             input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
-            output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             input_buf.enqueue_fill(0)
 
             # Create test data: values like [1, 2, 3, 4, 5, ..., 8, 1, 2, 3, ...]
@@ -440,7 +440,7 @@ def main() raises:
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+            var output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
                 output_buf
             )
 

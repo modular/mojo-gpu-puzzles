@@ -1,13 +1,13 @@
-from math import sqrt
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.memory import AddressSpace, async_copy_wait_all
-from os.atomic import Atomic
+from std.math import sqrt
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace, async_copy_wait_all
+from std.os.atomic import Atomic
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from utils import StaticTuple
+from std.utils import StaticTuple
 
 comptime MATMUL_BLOCK_DIM_XY = 16  # Square blocks for a, b and output
 comptime MATMUL_NUM_THREADS = MATMUL_BLOCK_DIM_XY * MATMUL_BLOCK_DIM_XY
@@ -66,10 +66,10 @@ def matmul_idiomatic_tiled[
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
         )
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             idx, Int(block_idx.x)
         )
 
@@ -398,7 +398,7 @@ struct LayerNormLinearCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
 
             # ANCHOR: layernorm_linear_custom_op
             @parameter
@@ -428,10 +428,10 @@ struct LayerNormLinearCustomOp:
             elif algorithm == "unfused":
                 # unfused case
                 # Create intermediate normalized tensor
-                normalized_buffer = gpu_ctx.enqueue_create_buffer[dtype](
+                var normalized_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * hidden_dim
                 )
-                normalized_tensor = LayoutTensor[
+                var normalized_tensor = LayoutTensor[
                     dtype, input_layout, MutAnyOrigin
                 ](normalized_buffer)
 
@@ -454,33 +454,33 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Step 2: Matmul on normalized data
-                total_rows = batch_size * seq_len
-                blocks_x = (total_rows + TPB - 1) // TPB
-                blocks_y = (output_dim + TPB - 1) // TPB
+                var total_rows = batch_size * seq_len
+                var blocks_x = (total_rows + TPB - 1) // TPB
+                var blocks_y = (output_dim + TPB - 1) // TPB
 
                 # Create intermediate result without bias
-                matmul_buffer = gpu_ctx.enqueue_create_buffer[dtype](
+                var matmul_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * output_dim
                 )
-                matmul_tensor = LayoutTensor[
+                var matmul_tensor = LayoutTensor[
                     dtype, output_layout, MutAnyOrigin
                 ](matmul_buffer)
 
                 # Create transposed weight matrix: [output_dim, hidden_dim] -> [hidden_dim, output_dim]
-                transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[dtype](
+                var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     hidden_dim * output_dim
                 )
-                transposed_weight_tensor = LayoutTensor[
+                var transposed_weight_tensor = LayoutTensor[
                     dtype,
                     Layout.row_major(hidden_dim, output_dim),
                     MutAnyOrigin,
                 ](transposed_weight_buffer)
 
                 # Transpose the weight matrix
-                transpose_blocks_x = (
+                var transpose_blocks_x = (
                     hidden_dim + TRANSPOSE_BLOCK_DIM_XY - 1
                 ) // TRANSPOSE_BLOCK_DIM_XY
-                transpose_blocks_y = (
+                var transpose_blocks_y = (
                     output_dim + TRANSPOSE_BLOCK_DIM_XY - 1
                 ) // TRANSPOSE_BLOCK_DIM_XY
                 comptime kernel2 = transpose_kernel[
@@ -497,10 +497,10 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Reshape tensors for matmul: [batch*seq, hidden] @ [hidden, output] -> [batch*seq, output]
-                flat_normalized = normalized_tensor.reshape[
+                var flat_normalized = normalized_tensor.reshape[
                     Layout.row_major(batch_size * seq_len, hidden_dim)
                 ]()
-                flat_matmul = matmul_tensor.reshape[
+                var flat_matmul = matmul_tensor.reshape[
                     Layout.row_major(batch_size * seq_len, output_dim)
                 ]()
 
@@ -521,7 +521,7 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Step 3: Add bias - reshape matmul result back to 3D for bias addition
-                reshaped_matmul = matmul_tensor.reshape[
+                var reshaped_matmul = matmul_tensor.reshape[
                     Layout.row_major(batch_size, seq_len, output_dim)
                 ]()
 
@@ -553,21 +553,21 @@ struct LayerNormLinearCustomOp:
                         sum_val += rebind[Scalar[dtype]](
                             input_tensor[batch, seq, h]
                         )
-                    mean_val = sum_val / hidden_dim
+                    var mean_val = sum_val / hidden_dim
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
-                        diff = input_tensor[batch, seq, h] - mean_val
+                        var diff = input_tensor[batch, seq, h] - mean_val
                         var_sum += rebind[Scalar[dtype]](diff * diff)
-                    var_val = var_sum / hidden_dim
-                    inv_std = 1.0 / sqrt(var_val + 1e-5)
+                    var var_val = var_sum / hidden_dim
+                    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Apply LayerNorm and Linear in one step (truly fused)
                     for out_idx in range(output_dim):
                         var acc: Scalar[dtype] = 0
                         for h in range(hidden_dim):
-                            input_val = input_tensor[batch, seq, h]
-                            normalized = (
+                            var input_val = input_tensor[batch, seq, h]
+                            var normalized = (
                                 input_val - mean_val
                             ) * inv_std * ln_weight_tensor[h] + ln_bias_tensor[
                                 h
@@ -649,7 +649,7 @@ struct LayerNormLinearBackwardCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
 
             # Launch backward kernel
             comptime kernel = minimal_fused_kernel_backward[
@@ -711,14 +711,14 @@ struct LayerNormLinearBackwardCustomOp:
                         sum_val += rebind[Scalar[dtype]](
                             input_tensor[batch, seq, h]
                         )
-                    mean_val = sum_val / hidden_dim
+                    var mean_val = sum_val / hidden_dim
 
                     var var_sum: Scalar[dtype] = 0
                     for h in range(hidden_dim):
-                        diff = input_tensor[batch, seq, h] - mean_val
+                        var diff = input_tensor[batch, seq, h] - mean_val
                         var_sum += rebind[Scalar[dtype]](diff * diff)
-                    var_val = var_sum / hidden_dim
-                    inv_std = 1.0 / sqrt(var_val + 1e-5)
+                    var var_val = var_sum / hidden_dim
+                    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
                     # Gradient w.r.t. linear bias
                     for out_idx in range(output_dim):
@@ -734,7 +734,7 @@ struct LayerNormLinearBackwardCustomOp:
                                 input_tensor[batch, seq, h]
                             )
                             normalized = (input_val - mean_val) * inv_std
-                            ln_output_val = (
+                            var ln_output_val = (
                                 normalized * ln_weight_tensor[h]
                                 + ln_bias_tensor[h]
                             )

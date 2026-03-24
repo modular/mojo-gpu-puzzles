@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -42,7 +42,7 @@ def conv1d_kernel[
     # second: load elements needed for convolution at block boundary
     if local_i < conv_size - 1:
         # indices from next block
-        next_idx = global_i + TPB
+        var next_idx = global_i + TPB
         if next_idx < input_size:
             shared_a[TPB + local_i] = input[next_idx]
         else:
@@ -67,10 +67,10 @@ def conv1d_kernel[
 
 
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
+from std.memory import UnsafePointer
+from std.gpu.host import DeviceBuffer
 
 
 @compiler.register("conv1d")
@@ -98,7 +98,7 @@ struct Conv1DCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output_tensor.dtype](

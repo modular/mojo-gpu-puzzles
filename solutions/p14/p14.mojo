@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from math import log2
-from testing import assert_equal
+from std.sys import argv
+from std.math import log2
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 8
@@ -145,7 +145,7 @@ def prefix_sum_block_sum_phase[
     # Final result combines both blocks:
     # [0,1,3,6,10,15,21,28, 36,45,55,66,78,91,105]
     if block_idx.x > 0 and global_i < size:
-        prev_block_sum = output[size + block_idx.x - 1]
+        var prev_block_sum = output[size + block_idx.x - 1]
         output[global_i] += prev_block_sum
 
 
@@ -154,17 +154,17 @@ def prefix_sum_block_sum_phase[
 
 def main() raises:
     with DeviceContext() as ctx:
-        use_simple = argv()[1] == "--simple"
-        size = SIZE if use_simple else SIZE_2
-        num_blocks = (size + TPB - 1) // TPB
+        var use_simple = argv()[1] == "--simple"
+        var size = SIZE if use_simple else SIZE_2
+        var num_blocks = (size + TPB - 1) // TPB
 
         if not use_simple and num_blocks > EXTENDED_SIZE - SIZE_2:
             raise Error("Extended buffer too small for the number of blocks")
 
-        buffer_size = size if use_simple else EXTENDED_SIZE
-        out = ctx.enqueue_create_buffer[dtype](buffer_size)
+        var buffer_size = size if use_simple else EXTENDED_SIZE
+        var out = ctx.enqueue_create_buffer[dtype](buffer_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](size)
+        var a = ctx.enqueue_create_buffer[dtype](size)
         a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:
@@ -211,7 +211,7 @@ def main() raises:
             # ANCHOR_END: prefix_sum_complete_block_level_sync
 
         # Verify results for both cases
-        expected = ctx.enqueue_create_host_buffer[dtype](size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size)
         expected.enqueue_fill(0)
         ctx.synchronize()
 

@@ -1,13 +1,13 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.host.compile import get_gpu_target
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.host.compile import get_gpu_target
 from layout import Layout, LayoutTensor
-from utils import Index, IndexList
-from math import log2
-from algorithm.functional import elementwise, vectorize
-from sys import simd_width_of, argv, align_of
-from testing import assert_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.utils import Index, IndexList
+from std.math import log2
+from std.algorithm.functional import elementwise, vectorize
+from std.sys import simd_width_of, argv, align_of
+from std.testing import assert_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 comptime SIZE = 1024
 comptime rank = 1
@@ -78,9 +78,9 @@ def tiled_elementwise_add[
 
         @parameter
         for i in range(tile_size):
-            a_vec = a_tile.load[simd_width](Index(i))
-            b_vec = b_tile.load[simd_width](Index(i))
-            ret = a_vec + b_vec
+            var a_vec = a_tile.load[simd_width](Index(i))
+            var b_vec = b_tile.load[simd_width](Index(i))
+            var ret = a_vec + b_vec
             output_tile.store[simd_width](Index(i), ret)
 
     num_tiles = (size + tile_size - 1) // tile_size
@@ -115,17 +115,17 @@ def manual_vectorized_tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -> None:
         tile_id = indices[0]
 
-        output_tile = output.tile[chunk_size](tile_id)
-        a_tile = a.tile[chunk_size](tile_id)
-        b_tile = b.tile[chunk_size](tile_id)
+        var output_tile = output.tile[chunk_size](tile_id)
+        var a_tile = a.tile[chunk_size](tile_id)
+        var b_tile = b.tile[chunk_size](tile_id)
 
         @parameter
         for i in range(tile_size):
-            global_start = tile_id * chunk_size + i * simd_width
+            var global_start = tile_id * chunk_size + i * simd_width
 
-            a_vec = a.aligned_load[simd_width](Index(global_start))
-            b_vec = b.aligned_load[simd_width](Index(global_start))
-            ret = a_vec + b_vec
+            var a_vec = a.aligned_load[simd_width](Index(global_start))
+            var b_vec = b.aligned_load[simd_width](Index(global_start))
+            var ret = a_vec + b_vec
             # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
 
             output.store[simd_width](Index(global_start), ret)
@@ -171,9 +171,9 @@ def vectorize_within_tiles_elementwise_add[
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
             global_idx = tile_start + i
             if global_idx + width <= size:
-                a_vec = a.aligned_load[width](Index(global_idx))
-                b_vec = b.aligned_load[width](Index(global_idx))
-                result = a_vec + b_vec
+                var a_vec = a.aligned_load[width](Index(global_idx))
+                var b_vec = b.aligned_load[width](Index(global_idx))
+                var result = a_vec + b_vec
                 output.store[width](Index(global_idx), result)
 
         # Use vectorize within each tile
@@ -414,8 +414,8 @@ def main() raises:
         print("Running P21 GPU Benchmarks...")
         print("SIMD width:", SIMD_WIDTH)
         print("-" * 80)
-        bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
-        bench = Bench(bench_config.copy())
+        var bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
+        var bench = Bench(bench_config.copy())
 
         print("Testing SIZE=16, TILE=4")
         bench.bench_function[benchmark_elementwise_parameterized[16, 4]](

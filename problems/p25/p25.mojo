@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, lane_id
-from gpu.host import DeviceContext
-from gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
+from std.gpu import thread_idx, block_idx, block_dim, lane_id
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 # ANCHOR: neighbor_difference
 comptime SIZE = WARP_SIZE
@@ -24,8 +24,8 @@ def neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     # FILL IN (roughly 7 lines)
 
@@ -50,8 +50,8 @@ def moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     # FILL IN (roughly 10 lines)
 
@@ -72,7 +72,7 @@ def broadcast_shuffle_coordination[
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var lane = Int(lane_id())
     if global_i < size:
         var scale_factor: output.element_type = 0.0
 
@@ -94,7 +94,7 @@ def basic_broadcast[
     Each lane then uses this broadcast value in its own computation.
     """
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var lane = Int(lane_id())
     if global_i < size:
         var broadcast_value: output.element_type = 0.0
 
@@ -116,14 +116,14 @@ def conditional_broadcast[
     All lanes apply different logic based on the broadcast decision.
     """
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var lane = Int(lane_id())
     if global_i < size:
         var decision_value: output.element_type = 0.0
 
         # FILL IN (roughly 10 lines)
 
-        current_input = input[global_i]
-        threshold = decision_value / 2.0
+        var current_input = input[global_i]
+        var threshold = decision_value / 2.0
         if current_input >= threshold:
             output[global_i] = current_input * 2.0  # Double if >= threshold
         else:
@@ -136,17 +136,17 @@ def conditional_broadcast[
 def test_neighbor_difference() raises:
     with DeviceContext() as ctx:
         # Create test data: [0, 1, 4, 9, 16, 25, ...] (squares)
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = i * i
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = neighbor_difference[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -156,7 +156,7 @@ def test_neighbor_difference() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
@@ -179,9 +179,9 @@ def test_neighbor_difference() raises:
 def test_moving_average() raises:
     with DeviceContext() as ctx:
         # Create test data: [1, 2, 4, 7, 11, 16, 22, 29, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
@@ -189,8 +189,8 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + i + 1
 
-        input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
         comptime kernel = moving_average_3[layout_2, SIZE_2]
         ctx.enqueue_function[kernel, kernel](
@@ -200,18 +200,18 @@ def test_moving_average() raises:
             block_dim=THREADS_PER_BLOCK_2,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
         with input_buf.map_to_host() as input_host:
             for block in range(BLOCKS_PER_GRID_2[0]):
-                warp_start = block * WARP_SIZE
-                warp_end = min(warp_start + WARP_SIZE, SIZE_2)
+                var warp_start = block * WARP_SIZE
+                var warp_end = min(warp_start + WARP_SIZE, SIZE_2)
 
                 for i in range(warp_start, warp_end):
-                    lane = i % WARP_SIZE
+                    var lane = i % WARP_SIZE
                     if lane < WARP_SIZE - 2 and i < SIZE_2 - 2:
                         # 3-point average within warp
                         expected_buf[i] = (
@@ -242,9 +242,9 @@ def test_moving_average() raises:
 def test_broadcast_shuffle_coordination() raises:
     with DeviceContext() as ctx:
         # Create test data: [2, 4, 6, 8, 1, 3, 5, 7, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
@@ -255,8 +255,8 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = ((i - 4) % 4) * 2 + 1
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = broadcast_shuffle_coordination[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -266,14 +266,14 @@ def test_broadcast_shuffle_coordination() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 computes scale_factor from first 4 elements in block: (2+4+6+8)/4 = 5.0
-            expected_scale = Float32(5.0)
+            var expected_scale = Float32(5.0)
 
             for i in range(SIZE):
                 if i < SIZE - 1:
@@ -296,17 +296,17 @@ def test_broadcast_shuffle_coordination() raises:
 def test_basic_broadcast() raises:
     with DeviceContext() as ctx:
         # Create test data: [1, 2, 3, 4, 5, 6, 7, 8, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = basic_broadcast[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -316,14 +316,14 @@ def test_basic_broadcast() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 computes broadcast_value from first 4 elements: 1+2+3+4 = 10
-            expected_broadcast = Float32(10.0)
+            var expected_broadcast = Float32(10.0)
             for i in range(SIZE):
                 expected_buf[i] = expected_broadcast + input_host[i]
 
@@ -341,14 +341,14 @@ def test_basic_broadcast() raises:
 def test_conditional_broadcast() raises:
     with DeviceContext() as ctx:
         # Create test data: [3, 1, 7, 2, 9, 4, 6, 8, ...]
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             # Create pattern with known max
-            test_values = [
+            var test_values = [
                 Float32(3.0),
                 Float32(1.0),
                 Float32(7.0),
@@ -361,8 +361,8 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = conditional_broadcast[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -372,15 +372,15 @@ def test_conditional_broadcast() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 finds max of first 8 elements in block: max(3,1,7,2,9,4,6,8) = 9.0, threshold = 4.5
-            expected_max = Float32(9.0)
-            threshold = expected_max / 2.0
+            var expected_max = Float32(9.0)
+            var threshold = expected_max / 2.0
             for i in range(SIZE):
                 if input_host[i] >= threshold:
                     expected_buf[i] = input_host[i] * 2.0

@@ -1,10 +1,10 @@
-from gpu import thread_idx, block_dim, block_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_dim, block_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_almost_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.sys import argv
+from std.testing import assert_almost_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 # ANCHOR: minimal_kernel
 comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
@@ -58,43 +58,43 @@ def sophisticated_kernel[
 
     if i < size:
         # REAL computational work that can't be optimized away - affects final result
-        base_x = x[i]
-        base_y = y[i]
+        var base_x = x[i]
+        var base_y = y[i]
 
         # Simulate "precision enhancement" - multiple small adjustments that add up
         # Each computation affects the final result so compiler can't eliminate them
         # But artificially increases register pressure
-        precision_x1 = base_x * 1.0001
-        precision_x2 = precision_x1 * 0.9999
-        precision_x3 = precision_x2 * 1.000001
-        precision_x4 = precision_x3 * 0.999999
+        var precision_x1 = base_x * 1.0001
+        var precision_x2 = precision_x1 * 0.9999
+        var precision_x3 = precision_x2 * 1.000001
+        var precision_x4 = precision_x3 * 0.999999
 
-        precision_y1 = base_y * 1.000005
-        precision_y2 = precision_y1 * 0.999995
-        precision_y3 = precision_y2 * 1.0000001
-        precision_y4 = precision_y3 * 0.9999999
+        var precision_y1 = base_y * 1.000005
+        var precision_y2 = precision_y1 * 0.999995
+        var precision_y3 = precision_y2 * 1.0000001
+        var precision_y4 = precision_y3 * 0.9999999
 
         # Multiple alpha computations for "stability" - should equal alpha
-        alpha1 = alpha * 1.00001 * 0.99999
-        alpha2 = alpha1 * 1.000001 * 0.999999
-        alpha3 = alpha2 * 1.0000001 * 0.9999999
-        alpha4 = alpha3 * 1.00000001 * 0.99999999
+        var alpha1 = alpha * 1.00001 * 0.99999
+        var alpha2 = alpha1 * 1.000001 * 0.999999
+        var alpha3 = alpha2 * 1.0000001 * 0.9999999
+        var alpha4 = alpha3 * 1.00000001 * 0.99999999
 
         # Complex polynomial "optimization" - creates register pressure
-        x_power2 = precision_x4 * precision_x4
-        x_power3 = x_power2 * precision_x4
-        x_power4 = x_power3 * precision_x4
-        x_power5 = x_power4 * precision_x4
-        x_power6 = x_power5 * precision_x4
-        x_power7 = x_power6 * precision_x4
-        x_power8 = x_power7 * precision_x4
+        var x_power2 = precision_x4 * precision_x4
+        var x_power3 = x_power2 * precision_x4
+        var x_power4 = x_power3 * precision_x4
+        var x_power5 = x_power4 * precision_x4
+        var x_power6 = x_power5 * precision_x4
+        var x_power7 = x_power6 * precision_x4
+        var x_power8 = x_power7 * precision_x4
 
         # "Advanced" mathematical series that contributes tiny amount to result
-        series_term1 = x_power2 * 0.0000001  # x^2/10M
-        series_term2 = x_power4 * 0.00000001  # x^4/100M
-        series_term3 = x_power6 * 0.000000001  # x^6/1B
-        series_term4 = x_power8 * 0.0000000001  # x^8/10B
-        series_correction = (
+        var series_term1 = x_power2 * 0.0000001  # x^2/10M
+        var series_term2 = x_power4 * 0.00000001  # x^4/100M
+        var series_term3 = x_power6 * 0.000000001  # x^6/1B
+        var series_term4 = x_power8 * 0.0000000001  # x^8/10B
+        var series_correction = (
             series_term1 - series_term2 + series_term3 - series_term4
         )
 
@@ -107,20 +107,20 @@ def sophisticated_kernel[
         barrier()
 
         # Load from shared memory for "optimization"
-        cached_x = shared_cache[local_i] if local_i < 1024 else precision_x4
-        cached_y = (
+        var cached_x = shared_cache[local_i] if local_i < 1024 else precision_x4
+        var cached_y = (
             shared_cache[local_i + 1024] if local_i < 1024 else precision_y4
         )
-        cached_alpha = (
+        var cached_alpha = (
             shared_cache[local_i + 2048] if local_i < 1024 else alpha4
         )
-        cached_correction = (
+        var cached_correction = (
             shared_cache[local_i + 3072] if local_i
             < 1024 else series_correction
         )
 
         # Final "high precision" computation - all work contributes to result
-        high_precision_result = (
+        var high_precision_result = (
             cached_alpha * cached_x + cached_y + cached_correction
         )
 
@@ -155,17 +155,17 @@ def balanced_kernel[
 
     if i < size:
         # Moderate computational work that contributes to result
-        base_x = x[i]
-        base_y = y[i]
+        var base_x = x[i]
+        var base_y = y[i]
 
         # Light precision enhancement - less than sophisticated kernel
-        enhanced_x = base_x * 1.00001 * 0.99999
-        enhanced_y = base_y * 1.00001 * 0.99999
-        stable_alpha = alpha * 1.000001 * 0.999999
+        var enhanced_x = base_x * 1.00001 * 0.99999
+        var enhanced_y = base_y * 1.00001 * 0.99999
+        var stable_alpha = alpha * 1.000001 * 0.999999
 
         # Moderate computational optimization
-        x_squared = enhanced_x * enhanced_x
-        optimization_hint = x_squared * 0.000001
+        var x_squared = enhanced_x * enhanced_x
+        var optimization_hint = x_squared * 0.000001
 
         # Efficient shared memory caching - only what we actually need
         if local_i < 1024:
@@ -174,13 +174,13 @@ def balanced_kernel[
         barrier()
 
         # Use cached values efficiently
-        cached_x = shared_cache[local_i] if local_i < 1024 else enhanced_x
-        cached_y = (
+        var cached_x = shared_cache[local_i] if local_i < 1024 else enhanced_x
+        var cached_y = (
             shared_cache[local_i + 1024] if local_i < 1024 else enhanced_y
         )
 
         # Balanced computation - moderate work, good efficiency
-        result = stable_alpha * cached_x + cached_y + optimization_hint
+        var result = stable_alpha * cached_x + cached_y + optimization_hint
 
         # Balanced result with moderate resource usage (~15 registers, 16KB shared)
         y[i] = result
@@ -301,9 +301,9 @@ def test_minimal() raises:
     """Test minimal kernel."""
     print("Testing minimal kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        var y = ctx.enqueue_create_buffer[dtype](SIZE)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        var x = ctx.enqueue_create_buffer[dtype](SIZE)
         x.enqueue_fill(0)
 
         # Initialize test data
@@ -313,8 +313,8 @@ def test_minimal() raises:
                 y_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -331,10 +331,10 @@ def test_minimal() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i]
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Float32(
                     i + 2
                 )  # original y[i] was (i + 2)
-                actual = y_host[i]
+                var actual = y_host[i]
                 assert_almost_equal(expected, actual)
 
         print("✅ Minimal kernel test passed")
@@ -344,9 +344,9 @@ def test_sophisticated() raises:
     """Test sophisticated kernel."""
     print("Testing sophisticated kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        var y = ctx.enqueue_create_buffer[dtype](SIZE)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        var x = ctx.enqueue_create_buffer[dtype](SIZE)
         x.enqueue_fill(0)
 
         # Initialize test data
@@ -356,8 +356,8 @@ def test_sophisticated() raises:
                 y_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -374,10 +374,10 @@ def test_sophisticated() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i] (with precision tolerance)
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Float32(
                     i + 2
                 )  # original y[i] was (i + 2)
-                actual = y_host[i]
+                var actual = y_host[i]
                 # Higher tolerance for sophisticated kernel's precision enhancements
                 assert_almost_equal(expected, actual, rtol=1e-3, atol=1e-3)
 
@@ -388,9 +388,9 @@ def test_balanced() raises:
     """Test balanced kernel."""
     print("Testing balanced kernel...")
     with DeviceContext() as ctx:
-        y = ctx.enqueue_create_buffer[dtype](SIZE)
+        var y = ctx.enqueue_create_buffer[dtype](SIZE)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](SIZE)
+        var x = ctx.enqueue_create_buffer[dtype](SIZE)
         x.enqueue_fill(0)
 
         # Initialize test data
@@ -400,8 +400,8 @@ def test_balanced() raises:
                 y_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -418,10 +418,10 @@ def test_balanced() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i] (with precision tolerance)
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Float32(
                     i + 2
                 )  # original y[i] was (i + 2)
-                actual = y_host[i]
+                var actual = y_host[i]
                 # Higher tolerance for balanced kernel's precision enhancements
                 assert_almost_equal(expected, actual, rtol=1e-4, atol=1e-4)
 
@@ -449,7 +449,7 @@ def main() raises:
     run_benchmark = False
 
     for i in range(1, len(args)):
-        arg = args[i]
+        var arg = args[i]
         if arg == "--minimal":
             run_minimal = True
         elif arg == "--sophisticated":
@@ -486,7 +486,7 @@ def main() raises:
         test_balanced()
 
     elif run_benchmark:
-        bench = Bench()
+        var bench = Bench()
         print("Benchmarking Minimal Kernel (High Occupancy)")
         bench.bench_function[benchmark_minimal_parameterized[SIZE]](
             BenchId("minimal")

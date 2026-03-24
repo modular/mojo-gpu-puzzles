@@ -1,12 +1,12 @@
-from gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace, async_copy_wait_all
+from std.gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
-from utils import Index
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.utils import Index
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 comptime dtype = DType.float32
 comptime SIZE = 1024
@@ -64,8 +64,8 @@ def matmul_idiomatic_tiled[
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TILE_SIZE, TILE_SIZE](Int(block_idx.y), idx)
-        b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, Int(block_idx.x))
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](Int(block_idx.y), idx)
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -192,8 +192,8 @@ def tensor_core_matrix_multiplication[
     for k_i in range(K // BK):
         barrier()
 
-        A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
-        B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
+        var A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
+        var B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
 
         copy_dram_to_sram_async[
             thread_layout = Layout.row_major(4, 8),
@@ -210,8 +210,8 @@ def tensor_core_matrix_multiplication[
         barrier()
 
         if warp_is_active:
-            A_warp_tile = A_sram_tile.tile[WM, BK](warp_y, 0)
-            B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
+            var A_warp_tile = A_sram_tile.tile[WM, BK](warp_y, 0)
+            var B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
 
             @parameter
             for mma_k in range(BK // MMA_K):
@@ -233,8 +233,8 @@ def tensor_core_matrix_multiplication[
             @parameter
             for mma_n in range(WN // MMA_N):
                 var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
-                Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
-                frag = mma_op.load_c(Acc_mma_tile)
+                var Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
+                var frag = mma_op.load_c(Acc_mma_tile)
                 mma_op.store_d(C_mma_tile, frag)
 
 
@@ -264,18 +264,18 @@ def main() raises:
 
     with DeviceContext() as ctx:
         # Create buffers
-        out_tensor_core = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var out_tensor_core = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_tensor_core.enqueue_fill(0)
-        inp1 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        inp2 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        var inp1 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var inp2 = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
 
         # Initialize data (like p16.mojo)
         with inp1.map_to_host() as inp1_host, inp2.map_to_host() as inp2_host:
             for row in range(SIZE):
                 for col in range(SIZE):
-                    val = row * SIZE + col
+                    var val = row * SIZE + col
                     inp1_host[row * SIZE + col] = val
                     inp2_host[row * SIZE + col] = Float32(2.0) * val
 
@@ -287,11 +287,11 @@ def main() raises:
                             inp1_host[i * SIZE + k] * inp2_host[k * SIZE + j]
                         )
         # Create layout tensors
-        out_tensor_core_layout = LayoutTensor[dtype, layout](
+        var out_tensor_core_layout = LayoutTensor[dtype, layout](
             out_tensor_core.unsafe_ptr()
         )
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp1)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp1)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")
@@ -388,7 +388,7 @@ def main() raises:
                 )
 
                 tc_success = True
-                error_count = 0
+                var error_count = 0
                 for i in range(SIZE * SIZE):
                     try:
                         assert_almost_equal(
@@ -396,9 +396,9 @@ def main() raises:
                         )
                     except:
                         if error_count < 10:  # Show first 10 failures
-                            row = i // SIZE
-                            col = i % SIZE
-                            diff = abs(tc_host[i] - expected[i])
+                            var row = i // SIZE
+                            var col = i % SIZE
+                            var diff = abs(tc_host[i] - expected[i])
                             print(
                                 "FAIL[",
                                 i,

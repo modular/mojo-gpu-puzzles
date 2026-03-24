@@ -1,14 +1,14 @@
-from memory import UnsafePointer
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext, HostBuffer, DeviceBuffer
-from gpu.memory import AddressSpace, async_copy_wait_all
+from std.memory import UnsafePointer
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
+from std.gpu.memory import AddressSpace, async_copy_wait_all
 from layout import Layout, LayoutTensor
 from layout.layout_tensor import copy_dram_to_sram_async
-from math import exp
-from bit import log2_ceil
-from utils.numerics import max_finite, min_finite
+from std.math import exp
+from std.bit import log2_ceil
+from std.utils.numerics import max_finite, min_finite
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
 
 comptime SEQ_LEN = 16  # This must be equal to SEQ_LEN in p19.py
@@ -75,10 +75,10 @@ def matmul_idiomatic_tiled[
     @parameter
     for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
-        a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
         )
-        b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+        var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             idx, Int(block_idx.x)
         )
 
@@ -361,19 +361,19 @@ struct AttentionCustomOp:
             ) // MATMUL_BLOCK_DIM_XY
 
             # Allocate minimal temporary buffers - reuse same buffer for different shapes
-            k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](
                 seq_len * d
             )  # K^T as (d, seq_len)
-            scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
+            var scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](
                 seq_len
             )  # Reused for scores and weights
 
-            k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
+            var k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
 
             # ANCHOR: attention_orchestration_solution
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
-            q_2d = q_tensor.reshape[layout_q_2d]()
+            var q_2d = q_tensor.reshape[layout_q_2d]()
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
             comptime kernel = transpose_kernel[
@@ -389,7 +389,7 @@ struct AttentionCustomOp:
             # Step 3: Compute attention scores using matmul: Q @ K^T = (1, d) @ (d, seq_len) -> (1, seq_len)
             # This computes Q · K^T[i] = Q · K[i] for each column i of K^T (which is row i of K)
             # Reuse scores_weights_buf as (1, seq_len) for scores
-            scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
+            var scores_2d = LayoutTensor[dtype, layout_scores_2d, MutAnyOrigin](
                 scores_weights_buf
             )
             comptime kernel2 = matmul_idiomatic_tiled[
@@ -410,7 +410,7 @@ struct AttentionCustomOp:
             )
 
             # Step 4: Reshape scores from (1, seq_len) to (seq_len,) for softmax
-            weights = scores_2d.reshape[layout_scores]()
+            var weights = scores_2d.reshape[layout_scores]()
 
             # Step 5: Apply softmax to get attention weights
             comptime kernel3 = softmax_gpu_kernel[layout_scores, seq_len, dtype]
@@ -422,11 +422,11 @@ struct AttentionCustomOp:
             )
 
             # Step 6: Reshape weights from (seq_len,) to (1, seq_len) for final matmul
-            weights_2d = weights.reshape[layout_weights_2d]()
+            var weights_2d = weights.reshape[layout_weights_2d]()
 
             # Step 7: Compute final result using matmul: weights @ V = (1, seq_len) @ (seq_len, d) -> (1, d)
             # Reuse out_tensor reshaped as (1, d) for result
-            result_2d = output_tensor.reshape[layout_result_2d]()
+            var result_2d = output_tensor.reshape[layout_result_2d]()
             comptime kernel4 = matmul_idiomatic_tiled[
                 layout_weights_2d,
                 layout_v,

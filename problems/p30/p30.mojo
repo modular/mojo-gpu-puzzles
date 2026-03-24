@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_dim, block_idx
-from gpu.host import DeviceContext
+from std.gpu import thread_idx, block_dim, block_idx
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_almost_equal
-from benchmark import Bench, BenchConfig, Bencher, BenchId, keep
+from std.sys import argv
+from std.testing import assert_almost_equal
+from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
 
 comptime SIZE = 16 * 1024 * 1024  # 16M elements - large enough to show memory patterns
 comptime THREADS_PER_BLOCK = (1024, 1)  # Max CUDA threads per block
@@ -66,9 +66,9 @@ def kernel3[
     total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
-        forward_i = step + tid
+        var forward_i = step + tid
         if forward_i < size:
-            reverse_i = size - 1 - forward_i
+            var reverse_i = size - 1 - forward_i
             output[reverse_i] = a[reverse_i] + b[reverse_i]
 
 
@@ -193,11 +193,11 @@ def test_kernel1() raises:
     """Test kernel 1."""
     print("Testing kernel 1...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
 
         # Initialize test data
@@ -207,9 +207,9 @@ def test_kernel1() raises:
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function[kernel1[layout], kernel1[layout]](
             out_tensor,
@@ -225,8 +225,8 @@ def test_kernel1() raises:
         # Verify results
         with out.map_to_host() as out_host, a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(10):  # Check first 10
-                expected = a_host[i] + b_host[i]
-                actual = out_host[i]
+                var expected = a_host[i] + b_host[i]
+                var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
         print("✅ Kernel 1 test passed")
@@ -236,11 +236,11 @@ def test_kernel2() raises:
     """Test kernel 2."""
     print("Testing kernel 2...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
 
         # Initialize test data
@@ -250,9 +250,9 @@ def test_kernel2() raises:
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function[kernel2[layout], kernel2[layout]](
             out_tensor,
@@ -270,8 +270,8 @@ def test_kernel2() raises:
         with out.map_to_host() as out_host, a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
                 if out_host[i] != 0:  # This element was processed
-                    expected = a_host[i] + b_host[i]
-                    actual = out_host[i]
+                    var expected = a_host[i] + b_host[i]
+                    var actual = out_host[i]
                     assert_almost_equal(expected, actual)
                     processed += 1
 
@@ -282,11 +282,11 @@ def test_kernel3() raises:
     """Test kernel 3."""
     print("Testing kernel 3...")
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
-        b = ctx.enqueue_create_buffer[dtype](SIZE)
+        var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
 
         # Initialize test data
@@ -296,9 +296,9 @@ def test_kernel3() raises:
                 b_host[i] = Float32(i + 2)
 
         # Create LayoutTensors
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
 
         ctx.enqueue_function[kernel3[layout], kernel3[layout]](
             out_tensor,
@@ -314,8 +314,8 @@ def test_kernel3() raises:
         # Verify results
         with out.map_to_host() as out_host, a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                expected = a_host[i] + b_host[i]
-                actual = out_host[i]
+                var expected = a_host[i] + b_host[i]
+                var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
         print("✅ Kernel 3 test passed")
@@ -342,7 +342,7 @@ def main() raises:
     run_benchmark = False
 
     for i in range(1, len(args)):
-        arg = args[i]
+        var arg = args[i]
         if arg == "--kernel1":
             run_kernel1 = True
         elif arg == "--kernel2":
@@ -383,7 +383,7 @@ def main() raises:
         print("Use nsys/ncu to profile these for detailed analysis!")
         print("-" * 50)
 
-        bench = Bench()
+        var bench = Bench()
 
         print("Benchmarking Kernel 1")
         bench.bench_function[benchmark_kernel1_parameterized[SIZE]](

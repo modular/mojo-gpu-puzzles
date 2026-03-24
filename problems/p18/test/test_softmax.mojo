@@ -1,7 +1,7 @@
-from gpu.host import DeviceContext
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from testing import assert_almost_equal
-from bit import log2_ceil
+from std.testing import assert_almost_equal
+from std.bit import log2_ceil
 
 from op import softmax_gpu_kernel, softmax_cpu_kernel
 
@@ -14,14 +14,14 @@ comptime dtype = DType.float32
 
 def test_softmax() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        var out = ctx.enqueue_create_buffer[DType.float32](SIZE)
         out.enqueue_fill(0)
-        inp = ctx.enqueue_create_buffer[DType.float32](SIZE)
+        var inp = ctx.enqueue_create_buffer[DType.float32](SIZE)
         inp.enqueue_fill(0)
         # for CPU testing
-        expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
+        var expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
         expected.enqueue_fill(0)
-        expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](expected)
+        var expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](expected)
         # Initialize input with more reasonable values
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
@@ -37,8 +37,8 @@ def test_softmax() raises:
             )
 
         # for GPU testing
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         # Compute expected results using our CPU kernel
         softmax_cpu_kernel[layout, SIZE, dtype](

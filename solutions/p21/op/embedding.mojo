@@ -1,9 +1,9 @@
-from math import ceildiv
-from gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from gpu.host import DeviceContext
+from std.math import ceildiv
+from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime THREADS_PER_BLOCK = 256
 
@@ -114,10 +114,10 @@ def embedding_kernel_2d[
 
 # ANCHOR: embedding_custom_op_solution
 import compiler
-from runtime.asyncrt import DeviceContextPtr
+from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
-from memory import UnsafePointer
-from gpu.host import DeviceBuffer
+from std.memory import UnsafePointer
+from std.gpu.host import DeviceBuffer
 
 
 @compiler.register("embedding")
@@ -151,7 +151,7 @@ struct EmbeddingCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -165,8 +165,8 @@ struct EmbeddingCustomOp:
             )
 
             # Calculate 1D grid dimensions (matching kernel's flat indexing)
-            total_elements = batch_size * seq_len * embed_dim
-            blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
+            var total_elements = batch_size * seq_len * embed_dim
+            var blocks = max(1, ceildiv(total_elements, THREADS_PER_BLOCK))
 
             # Compile and launch optimized kernel
             comptime kernel = embedding_kernel_coalesced[
@@ -179,7 +179,7 @@ struct EmbeddingCustomOp:
                 embed_dim,
                 output.dtype,
             ]
-            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,
@@ -193,7 +193,7 @@ struct EmbeddingCustomOp:
         elif target == "cpu":
             for batch in range(batch_size):
                 for seq in range(seq_len):
-                    token_idx_val = Int(indices_tensor[batch, seq])
+                    var token_idx_val = Int(indices_tensor[batch, seq])
                     if token_idx_val >= 0 and token_idx_val < vocab_size:
                         for emb in range(embed_dim):
                             output_tensor[batch, seq, emb] = weights_tensor[
@@ -238,7 +238,7 @@ struct Embedding2DCustomOp:
 
         @parameter
         if target == "gpu":
-            gpu_ctx = ctx.get_device_context()
+            var gpu_ctx = ctx.get_device_context()
 
             # Zero out output tensor
             gpu_ctx.enqueue_memset(
@@ -252,11 +252,11 @@ struct Embedding2DCustomOp:
             )
 
             # Calculate 2D grid dimensions for non-coalesced access
-            total_positions = batch_size * seq_len
+            var total_positions = batch_size * seq_len
             comptime BLOCK_X = 16  # batch*seq dimension
             comptime BLOCK_Y = 16  # embed dimension
-            blocks_x = max(1, ceildiv(total_positions, BLOCK_X))
-            blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
+            var blocks_x = max(1, ceildiv(total_positions, BLOCK_X))
+            var blocks_y = max(1, ceildiv(embed_dim, BLOCK_Y))
 
             # Compile and launch 2D kernel
             comptime kernel = embedding_kernel_2d[
@@ -270,7 +270,7 @@ struct Embedding2DCustomOp:
                 output.dtype,
             ]
 
-            compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
+            var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
 
             gpu_ctx.enqueue_function(
                 compiled_kernel,
@@ -285,7 +285,7 @@ struct Embedding2DCustomOp:
             # Same CPU fallback as 1D version
             for batch in range(batch_size):
                 for seq in range(seq_len):
-                    token_idx_val = Int(indices_tensor[batch, seq])
+                    var token_idx_val = Int(indices_tensor[batch, seq])
                     if token_idx_val >= 0 and token_idx_val < vocab_size:
                         for emb in range(embed_dim):
                             output_tensor[batch, seq, emb] = weights_tensor[

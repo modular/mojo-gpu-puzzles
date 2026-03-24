@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal
+from std.sys import argv
+from std.testing import assert_equal
 
 comptime TPB = 3
 comptime SIZE = 2
@@ -150,7 +150,7 @@ def matmul_tiled[
 # ANCHOR_END: matmul_tiled_solution
 
 # ANCHOR: matmul_idiomatic_tiled_solution
-from gpu.memory import async_copy_wait_all
+from std.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
 
 comptime NUM_THREADS = TPB * TPB
@@ -194,8 +194,8 @@ def matmul_idiomatic_tiled[
     @parameter
     for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
-        b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
+        var a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
+        var b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -230,23 +230,23 @@ def matmul_idiomatic_tiled[
 
 def main() raises:
     with DeviceContext() as ctx:
-        size = (
+        var size = (
             SIZE_TILED if argv()[1] == "--idiomatic-tiled"
             or argv()[1] == "--tiled" else SIZE
         )
-        out = ctx.enqueue_create_buffer[dtype](size * size)
+        var out = ctx.enqueue_create_buffer[dtype](size * size)
         out.enqueue_fill(0)
-        inp1 = ctx.enqueue_create_buffer[dtype](size * size)
+        var inp1 = ctx.enqueue_create_buffer[dtype](size * size)
         inp1.enqueue_fill(0)
-        inp2 = ctx.enqueue_create_buffer[dtype](size * size)
+        var inp2 = ctx.enqueue_create_buffer[dtype](size * size)
         inp2.enqueue_fill(0)
-        expected = ctx.enqueue_create_host_buffer[dtype](size * size)
+        var expected = ctx.enqueue_create_host_buffer[dtype](size * size)
         expected.enqueue_fill(0)
 
         with inp1.map_to_host() as inp1_host, inp2.map_to_host() as inp2_host:
             for row in range(size):
                 for col in range(size):
-                    val = row * size + col
+                    var val = row * size + col
                     # row major: placing elements row by row
                     inp1_host[row * size + col] = val
                     inp2_host[row * size + col] = Float32(2.0) * val
@@ -259,9 +259,9 @@ def main() raises:
                             inp1_host[i * size + k] * inp2_host[k * size + j]
                         )
 
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp1)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp1)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
             comptime kernel = naive_matmul[layout, UInt(SIZE)]

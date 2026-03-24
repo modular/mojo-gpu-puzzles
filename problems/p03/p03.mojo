@@ -1,7 +1,7 @@
-from memory import UnsafePointer
-from gpu import thread_idx
-from gpu.host import DeviceContext
-from testing import assert_equal
+from std.memory import UnsafePointer
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
+from std.testing import assert_equal
 
 # ANCHOR: add_10_guard
 comptime SIZE = 4
@@ -15,7 +15,7 @@ def add_10_guard(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -24,9 +24,9 @@ def add_10_guard(
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
@@ -40,7 +40,7 @@ def main() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected.enqueue_fill(0)
         ctx.synchronize()
 

@@ -1,16 +1,16 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.primitives.cluster import (
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
     cluster_arrive,
     cluster_wait,
     elect_one_sync,
 )
-from gpu.memory import AddressSpace
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal, assert_true
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal, assert_true
 
 comptime SIZE = 1024
 comptime TPB = 256
@@ -33,7 +33,7 @@ def cluster_coordination_basics[
     local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
-    my_block_rank = Int(block_rank_in_cluster())
+    var my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
     shared_data = LayoutTensor[
@@ -145,7 +145,7 @@ def advanced_cluster_patterns[
     """
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
+    var my_block_rank = Int(block_rank_in_cluster())
     block_id = Int(block_idx.x)
 
     shared_data = LayoutTensor[
@@ -269,7 +269,7 @@ def main() raises:
             input_buf.enqueue_fill(0)
             output_buf = ctx.enqueue_create_buffer[dtype](1)
             output_buf.enqueue_fill(0)
-            temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
+            var temp_buf = ctx.enqueue_create_buffer[dtype](CLUSTER_SIZE)
             temp_buf.enqueue_fill(0)
 
             var expected_sum: Float32 = 0.0
@@ -286,7 +286,7 @@ def main() raises:
             var output_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
                 output_buf
             )
-            temp_tensor = LayoutTensor[
+            var temp_tensor = LayoutTensor[
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](temp_buf)
 

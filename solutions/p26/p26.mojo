@@ -1,9 +1,9 @@
-from gpu import thread_idx, block_idx, block_dim, lane_id
-from gpu.host import DeviceContext
-from gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
+from std.gpu import thread_idx, block_idx, block_dim, lane_id
+from std.gpu.host import DeviceContext
+from std.gpu.primitives.warp import shuffle_xor, prefix_sum, WARP_SIZE
 from layout import Layout, LayoutTensor
-from sys import argv
-from testing import assert_equal, assert_almost_equal
+from std.sys import argv
+from std.testing import assert_equal, assert_almost_equal
 
 
 comptime SIZE = WARP_SIZE
@@ -29,11 +29,11 @@ def butterfly_pair_swap[
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # Exchange with XOR-1 neighbor using butterfly pattern
         # Lane 0 exchanges with lane 1, lane 2 with lane 3, etc.
-        swapped_val = shuffle_xor(current_val, 1)
+        var swapped_val = shuffle_xor(current_val, 1)
 
         # For demonstration, we'll store the swapped value
         # In real applications, this might be used for sorting, reduction, etc.
@@ -59,11 +59,11 @@ def butterfly_parallel_max[
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
-        max_val = input[global_i]
+        var max_val = input[global_i]
 
         # Butterfly reduction tree: dynamic for any WARP_SIZE (32, 64, etc.)
         # Start with half the warp size and reduce by half each step
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset > 0:
             max_val = max(max_val, shuffle_xor(max_val, offset))
             offset //= 2
@@ -97,16 +97,16 @@ def butterfly_conditional_max[
     lane = lane_id()
 
     if global_i < size:
-        current_val = input[global_i]
-        min_val = current_val
+        var current_val = input[global_i]
+        var min_val = current_val
 
         # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset > 0:
-            neighbor_val = shuffle_xor(current_val, offset)
+            var neighbor_val = shuffle_xor(current_val, offset)
             current_val = max(current_val, neighbor_val)
 
-            min_neighbor_val = shuffle_xor(min_val, offset)
+            var min_neighbor_val = shuffle_xor(min_val, offset)
             min_val = min(min_val, min_neighbor_val)
 
             offset //= 2
@@ -150,11 +150,11 @@ def warp_inclusive_prefix_sum[
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # This one call replaces ~30 lines of complex shared memory logic from Puzzle 12!
         # But it only works within the current warp (WARP_SIZE threads)
-        scan_result = prefix_sum[exclusive=False](
+        var scan_result = prefix_sum[exclusive=False](
             rebind[Scalar[dtype]](current_val)
         )
 
@@ -186,26 +186,26 @@ def warp_partition[
 
     Example with pivot=5:
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
-    Result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot).
+    var Result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot).
     """
     global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
-        current_val = input[global_i]
+        var current_val = input[global_i]
 
         # Phase 1: Create warp-level predicates
-        predicate_left = Float32(1.0) if current_val < pivot else Float32(0.0)
-        predicate_right = Float32(1.0) if current_val >= pivot else Float32(0.0)
+        var predicate_left = Float32(1.0) if current_val < pivot else Float32(0.0)
+        var predicate_right = Float32(1.0) if current_val >= pivot else Float32(0.0)
 
         # Phase 2: Warp-level prefix sum to get positions within warp
-        warp_left_pos = prefix_sum[exclusive=True](predicate_left)
-        warp_right_pos = prefix_sum[exclusive=True](predicate_right)
+        var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
+        var warp_right_pos = prefix_sum[exclusive=True](predicate_right)
 
         # Phase 3: Get total left count using shuffle_xor reduction
-        warp_left_total = predicate_left
+        var warp_left_total = predicate_left
 
         # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
-        offset = WARP_SIZE // 2
+        var offset = WARP_SIZE // 2
         while offset > 0:
             warp_left_total += shuffle_xor(warp_left_total, offset)
             offset //= 2
@@ -224,17 +224,17 @@ def warp_partition[
 
 def test_butterfly_pair_swap() raises:
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = i
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_pair_swap[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -244,7 +244,7 @@ def test_butterfly_pair_swap() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
         ctx.synchronize()
 
@@ -269,9 +269,9 @@ def test_butterfly_pair_swap() raises:
 
 def test_butterfly_parallel_max() raises:
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
@@ -280,8 +280,8 @@ def test_butterfly_parallel_max() raises:
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_parallel_max[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -293,7 +293,7 @@ def test_butterfly_parallel_max() raises:
 
         ctx.synchronize()
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(1000.0)
 
         # All threads should have the maximum value (1000.0)
@@ -309,21 +309,21 @@ def test_butterfly_parallel_max() raises:
 
 def test_butterfly_conditional_max() raises:
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE_2)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE_2):
                 if i < 9:
-                    values = [3, 1, 7, 2, 9, 4, 8, 5, 6]
+                    var values = [3, 1, 7, 2, 9, 4, 8, 5, 6]
                     input_host[i] = values[i]
                 else:
                     input_host[i] = i % 10
 
-        input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](output_buf)
 
         comptime kernel = butterfly_conditional_max[layout_2, SIZE_2]
         ctx.enqueue_function[kernel, kernel](
@@ -335,7 +335,7 @@ def test_butterfly_conditional_max() raises:
 
         ctx.synchronize()
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE_2)
         expected_buf.enqueue_fill(0)
 
         # Expected: even lanes get max, odd lanes get min
@@ -369,17 +369,17 @@ def test_butterfly_conditional_max() raises:
 
 def test_warp_inclusive_prefix_sum() raises:
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = warp_inclusive_prefix_sum[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -389,7 +389,7 @@ def test_warp_inclusive_prefix_sum() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
 
         ctx.synchronize()
@@ -411,21 +411,21 @@ def test_warp_inclusive_prefix_sum() raises:
 
 def test_warp_partition() raises:
     with DeviceContext() as ctx:
-        input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         input_buf.enqueue_fill(0)
-        output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+        var output_buf = ctx.enqueue_create_buffer[dtype](SIZE)
         output_buf.enqueue_fill(0)
 
         # Create test data: mix of values above and below pivot
-        pivot_value = Float32(5.0)
+        var pivot_value = Float32(5.0)
         with input_buf.map_to_host() as input_host:
             # Create: [3, 7, 1, 8, 2, 9, 4, 6, ...]
-            test_values = [3, 7, 1, 8, 2, 9, 4, 6, 0, 10, 3, 11, 1, 12, 4, 13]
+            var test_values = [3, 7, 1, 8, 2, 9, 4, 6, 0, 10, 3, 11, 1, 12, 4, 13]
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
-        output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
+        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](input_buf)
+        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](output_buf)
 
         comptime kernel = warp_partition[layout, SIZE]
         ctx.enqueue_function[kernel, kernel](
@@ -436,15 +436,15 @@ def test_warp_partition() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected_buf.enqueue_fill(0)
 
         ctx.synchronize()
 
         # Create expected results: elements < 5 on left, >= 5 on right
         with input_buf.map_to_host() as input_host:
-            left_values = List[Float32]()
-            right_values = List[Float32]()
+            var left_values = List[Float32]()
+            var right_values = List[Float32]()
 
             for i in range(SIZE):
                 if input_host[i] < pivot_value:

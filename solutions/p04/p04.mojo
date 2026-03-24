@@ -1,7 +1,7 @@
-from memory import UnsafePointer
-from gpu import thread_idx
-from gpu.host import DeviceContext
-from testing import assert_equal
+from std.memory import UnsafePointer
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
+from std.testing import assert_equal
 
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
@@ -26,11 +26,11 @@ def add_10_2d(
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out.enqueue_fill(0)
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:

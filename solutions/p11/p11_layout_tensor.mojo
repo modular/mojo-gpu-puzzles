@@ -1,8 +1,8 @@
-from gpu import thread_idx, block_idx, block_dim, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from testing import assert_equal
+from std.testing import assert_equal
 
 comptime TPB = 8
 comptime SIZE = 8
@@ -55,17 +55,17 @@ def pooling[
 
 def main() raises:
     with DeviceContext() as ctx:
-        out = ctx.enqueue_create_buffer[dtype](SIZE)
+        var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(0)
 
         with a.map_to_host() as a_host:
             for i in range(SIZE):
                 a_host[i] = i
 
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
 
         ctx.enqueue_function[pooling[layout], pooling[layout]](
             out_tensor,
@@ -75,14 +75,14 @@ def main() raises:
             block_dim=THREADS_PER_BLOCK,
         )
 
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
         expected.enqueue_fill(0)
         ctx.synchronize()
 
         with a.map_to_host() as a_host:
-            ptr = a_host
+            var ptr = a_host
             for i in range(SIZE):
-                s = Scalar[dtype](0)
+                var s = Scalar[dtype](0)
                 for j in range(max(i - 2, 0), i + 1):
                     s += ptr[j]
                 expected[i] = s

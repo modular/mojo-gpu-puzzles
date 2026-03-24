@@ -1,10 +1,10 @@
-from memory import UnsafePointer
-from gpu import thread_idx, barrier
-from gpu.host import DeviceContext
-from gpu.memory import AddressSpace
+from std.memory import UnsafePointer
+from std.gpu import thread_idx, barrier
+from std.gpu.host import DeviceContext
+from std.gpu.memory import AddressSpace
 from layout import Layout, LayoutTensor
-from testing import assert_equal
-from sys import argv
+from std.testing import assert_equal
+from std.sys import argv
 
 comptime SIZE = 4
 comptime MATRIX_SIZE = 3
@@ -39,9 +39,9 @@ def process_sliding_window(
 
     # Sum elements in sliding window: [i-1, i, i+1]
     for offset in range(ITER):
-        idx = Int(thread_id) + offset - 1
+        var idx = Int(thread_id) + offset - 1
         if 0 <= idx < SIZE:
-            value = rebind[Scalar[dtype]](a[idx])
+            var value = rebind[Scalar[dtype]](a[idx])
             window_sum += value
 
     output[thread_id] = window_sum
@@ -107,7 +107,7 @@ def main() raises:
 
         with DeviceContext() as ctx:
             input_buf = ctx.enqueue_create_buffer[dtype](0)
-            result_buf = ctx.enqueue_create_buffer[dtype](SIZE)
+            var result_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             result_buf.enqueue_fill(0)
 
             # Enqueue function
@@ -169,10 +169,10 @@ def main() raises:
                 print("Actual result:", output_host)
 
                 # Expected sliding window results
-                expected_0 = Scalar[dtype](1.0)
-                expected_1 = Scalar[dtype](3.0)
-                expected_2 = Scalar[dtype](6.0)
-                expected_3 = Scalar[dtype](5.0)
+                var expected_0 = Scalar[dtype](1.0)
+                var expected_1 = Scalar[dtype](3.0)
+                var expected_2 = Scalar[dtype](6.0)
+                var expected_3 = Scalar[dtype](5.0)
                 print("Expected: [1.0, 3.0, 6.0, 5.0]")
 
                 # Check if results match expected pattern

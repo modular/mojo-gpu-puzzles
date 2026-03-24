@@ -1,7 +1,7 @@
-from gpu import thread_idx
-from gpu.host import DeviceContext
+from std.gpu import thread_idx
+from std.gpu.host import DeviceContext
 from layout import Layout, LayoutTensor
-from testing import assert_equal
+from std.testing import assert_equal
 
 # ANCHOR: add_10_2d_layout_tensor
 comptime SIZE = 2
@@ -16,8 +16,8 @@ def add_10_2d(
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
@@ -26,22 +26,22 @@ def add_10_2d(
 
 def main() raises:
     with DeviceContext() as ctx:
-        out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf)
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
-        expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
+        var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
 
-        a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
+        var a = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
                 a_host[i] = i
                 expected[i] = a_host[i] + 10
 
-        a_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
+        var a_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
 
         ctx.enqueue_function[add_10_2d, add_10_2d](
             out_tensor,
