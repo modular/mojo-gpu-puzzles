@@ -288,10 +288,10 @@ struct AttentionCustomOp:
         d: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1],  # Output vector (d,)
-        q: InputTensor[rank=1],  # Query vector (d,)
-        k: InputTensor[rank=2],  # Key matrix (seq_len, d)
-        v: InputTensor[rank=2],  # Value matrix (seq_len, d)
+        output: OutputTensor[rank=1, static_spec=_],  # Output vector (d,)
+        q: InputTensor[rank=1, static_spec=_],  # Query vector (d,)
+        k: InputTensor[rank=2, static_spec=_],  # Key matrix (seq_len, d)
+        v: InputTensor[rank=2, static_spec=_],  # Value matrix (seq_len, d)
         ctx: DeviceContextPtr,
     ) raises:
         # Define layouts
@@ -315,8 +315,7 @@ struct AttentionCustomOp:
             v.to_layout_tensor()
         )
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = rebind[DeviceContext](ctx[])
 
             # Define layouts for matrix multiplication

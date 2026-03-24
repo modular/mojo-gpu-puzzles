@@ -131,8 +131,8 @@ struct SoftmaxCustomOp:
         input_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1],
-        input: InputTensor[rank = output.rank],
+        output: OutputTensor[rank=1, static_spec=_],
+        input: InputTensor[rank = output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
@@ -143,8 +143,7 @@ struct SoftmaxCustomOp:
             input.to_layout_tensor()
         )
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(

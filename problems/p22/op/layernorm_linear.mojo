@@ -357,12 +357,12 @@ struct LayerNormLinearCustomOp:
         hidden_dim: Int,
         output_dim: Int,
     ](
-        output: OutputTensor[dtype = DType.float32, rank=3],
-        input: InputTensor[dtype = DType.float32, rank=3],
-        ln_weight: InputTensor[dtype = DType.float32, rank=1],
-        ln_bias: InputTensor[dtype = DType.float32, rank=1],
-        linear_weight: InputTensor[dtype = DType.float32, rank=2],
-        linear_bias: InputTensor[dtype = DType.float32, rank=1],
+        output: OutputTensor[dtype = DType.float32, rank=3, static_spec=_],
+        input: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
+        ln_weight: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        ln_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        linear_weight: InputTensor[dtype = DType.float32, rank=2, static_spec=_],
+        linear_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         comptime input_layout = input.static_spec.to_layout()
@@ -391,13 +391,11 @@ struct LayerNormLinearCustomOp:
             LayoutTensor[dtype, bias_layout, ImmutAnyOrigin]
         ](linear_bias.to_layout_tensor())
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
 
             # ANCHOR: layernorm_linear_custom_op
-            @parameter
-            if algorithm == "fused":
+            comptime if algorithm == "fused":
                 # fused case - one thread per sequence position
                 comptime kernel = minimal_fused_kernel[
                     input_layout,
@@ -589,16 +587,16 @@ struct LayerNormLinearBackwardCustomOp:
         hidden_dim: Int,
         output_dim: Int,
     ](
-        grad_input: OutputTensor[dtype = DType.float32, rank=3],
-        grad_ln_weight: OutputTensor[dtype = DType.float32, rank=1],
-        grad_ln_bias: OutputTensor[dtype = DType.float32, rank=1],
-        grad_weight: OutputTensor[dtype = DType.float32, rank=2],
-        grad_bias: OutputTensor[dtype = DType.float32, rank=1],
-        grad_output: InputTensor[dtype = DType.float32, rank=3],
-        input: InputTensor[dtype = DType.float32, rank=3],
-        ln_weight: InputTensor[dtype = DType.float32, rank=1],
-        ln_bias: InputTensor[dtype = DType.float32, rank=1],
-        linear_weight: InputTensor[dtype = DType.float32, rank=2],
+        grad_input: OutputTensor[dtype = DType.float32, rank=3, static_spec=_],
+        grad_ln_weight: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        grad_ln_bias: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        grad_weight: OutputTensor[dtype = DType.float32, rank=2, static_spec=_],
+        grad_bias: OutputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        grad_output: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
+        input: InputTensor[dtype = DType.float32, rank=3, static_spec=_],
+        ln_weight: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        ln_bias: InputTensor[dtype = DType.float32, rank=1, static_spec=_],
+        linear_weight: InputTensor[dtype = DType.float32, rank=2, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
         comptime grad_output_layout = grad_output.static_spec.to_layout()
@@ -642,8 +640,7 @@ struct LayerNormLinearBackwardCustomOp:
             LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
         ](linear_weight.to_layout_tensor())
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
 
             # Launch backward kernel

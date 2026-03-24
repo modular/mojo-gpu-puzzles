@@ -131,14 +131,11 @@ struct EmbeddingCustomOp:
         embed_dim: Int,
     ](
         output: OutputTensor[
-            dtype = DType.float32, rank=3
-        ],  # [batch_size, seq_len, embed_dim]
+            dtype = DType.float32, rank=3, static_spec=_],  # [batch_size, seq_len, embed_dim]
         indices: InputTensor[
-            dtype = DType.int32, rank=2
-        ],  # [batch_size, seq_len]
+            dtype = DType.int32, rank=2, static_spec=_],  # [batch_size, seq_len]
         weights: InputTensor[
-            dtype = output.dtype, rank=2
-        ],  # [vocab_size, embed_dim]
+            dtype = output.dtype, rank=2, static_spec=_],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
         var output_tensor = output.to_layout_tensor()
@@ -149,8 +146,7 @@ struct EmbeddingCustomOp:
         comptime weights_layout = weights_tensor.layout
         comptime out_layout = output_tensor.layout
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
 
             # Zero out output tensor
@@ -218,14 +214,11 @@ struct Embedding2DCustomOp:
         embed_dim: Int,
     ](
         output: OutputTensor[
-            dtype = DType.float32, rank=3
-        ],  # [batch_size, seq_len, embed_dim]
+            dtype = DType.float32, rank=3, static_spec=_],  # [batch_size, seq_len, embed_dim]
         indices: InputTensor[
-            dtype = DType.int32, rank=2
-        ],  # [batch_size, seq_len]
+            dtype = DType.int32, rank=2, static_spec=_],  # [batch_size, seq_len]
         weights: InputTensor[
-            dtype = output.dtype, rank=2
-        ],  # [vocab_size, embed_dim]
+            dtype = output.dtype, rank=2, static_spec=_],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
         var output_tensor = output.to_layout_tensor()
@@ -236,8 +229,7 @@ struct Embedding2DCustomOp:
         comptime weights_layout = weights_tensor.layout
         comptime out_layout = output_tensor.layout
 
-        @parameter
-        if target == "gpu":
+        comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
 
             # Zero out output tensor

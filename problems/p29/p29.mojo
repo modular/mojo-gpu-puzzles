@@ -155,8 +155,7 @@ def double_buffered_stencil_computation[
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
 
-        @parameter
-        if iteration % 2 == 0:
+        comptime if iteration % 2 == 0:
             # Even iteration: Read from A, Write to B
 
             # FILL ME IN (roughly 12 lines)
@@ -179,8 +178,7 @@ def double_buffered_stencil_computation[
     # Write final results from active buffer
     if local_i < TPB and global_i < size:
 
-        @parameter
-        if STENCIL_ITERATIONS % 2 == 0:
+        comptime if STENCIL_ITERATIONS % 2 == 0:
             # Even iterations end in buffer_A
             output[global_i] = buffer_A[local_i]
         else:
