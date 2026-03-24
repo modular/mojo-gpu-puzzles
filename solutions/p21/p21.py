@@ -1,7 +1,7 @@
 import time
 import torch
 from pathlib import Path
-from max.torch import CustomOpLibrary
+from max.experimental.torch import CustomOpLibrary
 
 mojo_kernels = Path(__file__).parent / "op"
 ops = CustomOpLibrary(mojo_kernels)

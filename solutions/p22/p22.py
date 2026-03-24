@@ -6,7 +6,7 @@ import warnings
 import logging
 
 import torch
-from max.torch import CustomOpLibrary
+from max.experimental.torch import CustomOpLibrary
 
 # Suppress PyTorch internal logging that causes cudagraphs messages
 logging.getLogger("torch._dynamo").setLevel(logging.WARNING)
