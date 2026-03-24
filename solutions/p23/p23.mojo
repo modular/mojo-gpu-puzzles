@@ -30,13 +30,13 @@ def elementwise_add[
     def add[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        idx = indices[0]
+        var idx = indices[0]
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        a_simd = a.aligned_load[width=simd_width](Index(idx))
-        b_simd = b.aligned_load[width=simd_width](Index(idx))
-        ret = a_simd + b_simd
+        var a_simd = a.aligned_load[width=simd_width](Index(idx))
+        var b_simd = b.aligned_load[width=simd_width](Index(idx))
+        var ret = a_simd + b_simd
         # print(
         #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
         # )
@@ -70,20 +70,19 @@ def tiled_elementwise_add[
     def process_tiles[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
 
-        output_tile = output.tile[tile_size](tile_id)
-        a_tile = a.tile[tile_size](tile_id)
-        b_tile = b.tile[tile_size](tile_id)
+        var output_tile = output.tile[tile_size](tile_id)
+        var a_tile = a.tile[tile_size](tile_id)
+        var b_tile = b.tile[tile_size](tile_id)
 
-        @parameter
-        for i in range(tile_size):
+        comptime for i in range(tile_size):
             var a_vec = a_tile.load[simd_width](Index(i))
             var b_vec = b_tile.load[simd_width](Index(i))
             var ret = a_vec + b_vec
             output_tile.store[simd_width](Index(i), ret)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 
 
@@ -113,14 +112,13 @@ def manual_vectorized_tiled_elementwise_add[
     def process_manual_vectorized_tiles[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        tile_id = indices[0]
+        var tile_id = indices[0]
 
         var output_tile = output.tile[chunk_size](tile_id)
         var a_tile = a.tile[chunk_size](tile_id)
         var b_tile = b.tile[chunk_size](tile_id)
 
-        @parameter
-        for i in range(tile_size):
+        comptime for i in range(tile_size):
             var global_start = tile_id * chunk_size + i * simd_width
 
             var a_vec = a.aligned_load[simd_width](Index(global_start))
@@ -131,7 +129,7 @@ def manual_vectorized_tiled_elementwise_add[
             output.store[simd_width](Index(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
-    num_tiles = (size + chunk_size - 1) // chunk_size
+    var num_tiles = (size + chunk_size - 1) // chunk_size
     elementwise[
         process_manual_vectorized_tiles, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -161,15 +159,15 @@ def vectorize_within_tiles_elementwise_add[
     def process_tile_with_vectorize[
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        tile_id = indices[0]
-        tile_start = tile_id * tile_size
-        tile_end = min(tile_start + tile_size, size)
-        actual_tile_size = tile_end - tile_start
+        var tile_id = indices[0]
+        var tile_start = tile_id * tile_size
+        var tile_end = min(tile_start + tile_size, size)
+        var actual_tile_size = tile_end - tile_start
 
         def vectorized_add[
             width: Int
         ](i: Int) unified {read tile_start, read a, read b, mut output}:
-            global_idx = tile_start + i
+            var global_idx = tile_start + i
             if global_idx + width <= size:
                 var a_vec = a.aligned_load[width](Index(global_idx))
                 var b_vec = b.aligned_load[width](Index(global_idx))
@@ -179,7 +177,7 @@ def vectorize_within_tiles_elementwise_add[
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)
 
-    num_tiles = (size + tile_size - 1) // tile_size
+    var num_tiles = (size + tile_size - 1) // tile_size
     elementwise[
         process_tile_with_vectorize, num_threads_per_tile, target="gpu"
     ](num_tiles, ctx)
@@ -193,13 +191,13 @@ def vectorize_within_tiles_elementwise_add[
 def benchmark_elementwise_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     comptime layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -207,13 +205,13 @@ def benchmark_elementwise_parameterized[
             a_host[i] = 2 * i
             b_host[i] = 2 * i + 1
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
+    var a_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
         a.unsafe_ptr()
     )
-    b_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
+    var b_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
         b_buf.unsafe_ptr()
     )
-    out_tensor = LayoutTensor[mut=True, dtype, layout, MutAnyOrigin](
+    var out_tensor = LayoutTensor[mut=True, dtype, layout, MutAnyOrigin](
         out.unsafe_ptr()
     )
 
@@ -234,13 +232,13 @@ def benchmark_elementwise_parameterized[
 def benchmark_tiled_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     comptime layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -248,9 +246,9 @@ def benchmark_tiled_parameterized[
             a_host[i] = 2 * i
             b_host[i] = 2 * i + 1
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+    var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
     @parameter
     @always_inline
@@ -269,13 +267,13 @@ def benchmark_tiled_parameterized[
 def benchmark_manual_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     comptime layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -283,9 +281,9 @@ def benchmark_manual_vectorized_parameterized[
             a_host[i] = 2 * i
             b_host[i] = 2 * i + 1
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+    var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
     @parameter
     @always_inline
@@ -304,13 +302,13 @@ def benchmark_manual_vectorized_parameterized[
 def benchmark_vectorized_parameterized[
     test_size: Int, tile_size: Int
 ](mut b: Bencher) raises:
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     comptime layout = Layout.row_major(test_size)
-    out = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var out = bench_ctx.enqueue_create_buffer[dtype](test_size)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b_buf = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b_buf.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -318,9 +316,9 @@ def benchmark_vectorized_parameterized[
             a_host[i] = 2 * i
             b_host[i] = 2 * i + 1
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
-    out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+    var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
+    var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
 
     @parameter
     @always_inline
@@ -335,14 +333,14 @@ def benchmark_vectorized_parameterized[
 
 
 def main() raises:
-    ctx = DeviceContext()
-    out = ctx.enqueue_create_buffer[dtype](SIZE)
+    var ctx = DeviceContext()
+    var out = ctx.enqueue_create_buffer[dtype](SIZE)
     out.enqueue_fill(0)
-    a = ctx.enqueue_create_buffer[dtype](SIZE)
+    var a = ctx.enqueue_create_buffer[dtype](SIZE)
     a.enqueue_fill(0)
-    b = ctx.enqueue_create_buffer[dtype](SIZE)
+    var b = ctx.enqueue_create_buffer[dtype](SIZE)
     b.enqueue_fill(0)
-    expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
+    var expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
     expected.enqueue_fill(0)
 
     with a.map_to_host() as a_host, b.map_to_host() as b_host:
@@ -351,8 +349,8 @@ def main() raises:
             b_host[i] = 2 * i + 1
             expected[i] = a_host[i] + b_host[i]
 
-    a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
-    b_tensor = LayoutTensor[mut=False, dtype, layout](b.unsafe_ptr())
+    var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
+    var b_tensor = LayoutTensor[mut=False, dtype, layout](b.unsafe_ptr())
 
     ctx.synchronize()
 

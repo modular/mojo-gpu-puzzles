@@ -29,14 +29,14 @@ def cluster_coordination_basics[
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
     var my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
@@ -87,10 +87,10 @@ def cluster_collective_operations[
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
-    my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
+    var my_block_rank = Int(block_rank_in_cluster())
+    var block_id = Int(block_idx.x)
 
     # Each thread accumulates its data
     var my_value: Float32 = 0.0
@@ -98,7 +98,7 @@ def cluster_collective_operations[
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    shared_mem = LayoutTensor[
+    var shared_mem = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
@@ -143,12 +143,12 @@ def advanced_cluster_patterns[
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     var my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,

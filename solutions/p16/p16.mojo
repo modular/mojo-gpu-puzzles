@@ -21,14 +21,13 @@ def naive_matmul[
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
 
     if row < size and col < size:
         var acc: output.element_type = 0
 
-        @parameter
-        for k in range(size):
+        comptime for k in range(size):
             acc += a[row, k] * b[k, col]
 
         output[row, col] = acc
@@ -45,18 +44,18 @@ def single_block_matmul[
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
-    local_row = thread_idx.y
-    local_col = thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
 
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
@@ -72,8 +71,7 @@ def single_block_matmul[
     if row < size and col < size:
         var acc: output.element_type = 0
 
-        @parameter
-        for k in range(size):
+        comptime for k in range(size):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         output[row, col] = acc
@@ -96,18 +94,18 @@ def matmul_tiled[
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TPB + local_row
+    var tiled_col = block_idx.x * TPB + local_col
 
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
@@ -117,8 +115,7 @@ def matmul_tiled[
     var acc: output.element_type = 0
 
     # Iterate over tiles to compute matrix product
-    @parameter
-    for tile in range((size + TPB - 1) // TPB):
+    comptime for tile in range((size + TPB - 1) // TPB):
         # Load A tile - global row stays the same, col determined by tile
         if tiled_row < size and (tile * TPB + local_col) < size:
             a_shared[local_row, local_col] = a[
@@ -136,8 +133,7 @@ def matmul_tiled[
         # Matrix multiplication within the tile
         if tiled_row < size and tiled_col < size:
 
-            @parameter
-            for k in range(min(Int(TPB), Int(size - tile * TPB))):
+            comptime for k in range(min(Int(TPB), Int(size - tile * TPB))):
                 acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()
@@ -164,20 +160,20 @@ def matmul_idiomatic_tiled[
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
     b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
 ):
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = block_idx.y * TPB + local_row
-    tiled_col = block_idx.x * TPB + local_col
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * TPB + local_row
+    var tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
-    a_shared = LayoutTensor[
+    var out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
         MutAnyOrigin,
@@ -191,8 +187,7 @@ def matmul_idiomatic_tiled[
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
-    @parameter
-    for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
+    comptime for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
         var a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
         var b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
@@ -214,8 +209,7 @@ def matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        @parameter
-        for k in range(TPB):
+        comptime for k in range(TPB):
             acc += a_shared[local_row, k] * b_shared[k, local_col]
 
         barrier()

@@ -42,22 +42,22 @@ def matmul_idiomatic_tiled[
     b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
-    local_row = Int(thread_idx.y)
-    local_col = Int(thread_idx.x)
-    tiled_row = Int(block_idx.y) * MATMUL_BLOCK_DIM_XY + local_row
-    tiled_col = Int(block_idx.x) * MATMUL_BLOCK_DIM_XY + local_col
+    var local_row = Int(thread_idx.y)
+    var local_col = Int(thread_idx.x)
+    var tiled_row = Int(block_idx.y) * MATMUL_BLOCK_DIM_XY + local_row
+    var tiled_col = Int(block_idx.x) * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+    var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         Int(block_idx.y), Int(block_idx.x)
     )
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
@@ -72,8 +72,7 @@ def matmul_idiomatic_tiled[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
-    @parameter
-    for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
+    comptime for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
@@ -99,8 +98,7 @@ def matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        @parameter
-        for k in range(MATMUL_BLOCK_DIM_XY):
+        comptime for k in range(MATMUL_BLOCK_DIM_XY):
             if (
                 tiled_row < rows and tiled_col < cols
             ):  # Only perform calculation for valid outputs
@@ -128,26 +126,26 @@ def transpose_kernel[
     inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    shared_tile = LayoutTensor[
+    var shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_row = Int(thread_idx.y)
-    local_col = Int(thread_idx.x)
+    var local_row = Int(thread_idx.y)
+    var local_col = Int(thread_idx.x)
 
-    global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row < rows and global_col < cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -170,19 +168,19 @@ def softmax_gpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    shared_max = LayoutTensor[
+    var shared_max = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(thread_idx.x)
+    var global_i = Int(thread_idx.x)
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
@@ -195,7 +193,7 @@ def softmax_gpu_kernel[
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = SOFTMAX_BLOCK_DIM_X // 2
+    var stride = SOFTMAX_BLOCK_DIM_X // 2
     while stride > 0:
         if global_i < stride:
             shared_max[global_i] = max(
@@ -204,7 +202,7 @@ def softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_max = shared_max[0]
+    var block_max = shared_max[0]
 
     # Initialize out-of-bounds (shared_max[global_i], global_i >= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
@@ -223,7 +221,7 @@ def softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_sum = shared_sum[0]
+    var block_sum = shared_sum[0]
 
     # Normalize by sum
     if global_i < input_size:

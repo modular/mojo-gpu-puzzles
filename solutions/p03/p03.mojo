@@ -15,7 +15,7 @@ def add_10_guard(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     if i < size:
         output[i] = a[i] + 10.0
 

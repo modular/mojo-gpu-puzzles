@@ -23,8 +23,8 @@ def broadcast_add[
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row < size and col < size:
         output[row, col] = a[0, col] + b[row, 0]
 

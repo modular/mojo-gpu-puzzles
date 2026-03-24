@@ -22,14 +22,14 @@ def traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i < size:

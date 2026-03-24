@@ -18,13 +18,13 @@ def dot_product(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    shared = stack_allocation[
+    var shared = stack_allocation[
         TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     if global_i < size:
         shared[local_i] = a[global_i] * b[global_i]
 
@@ -40,7 +40,7 @@ def dot_product(
     # and warps can be scheduled independently.
     # However, shared memory does not have such issues as long as we use `barrier()`
     # correctly when we're in the same thread block.
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]

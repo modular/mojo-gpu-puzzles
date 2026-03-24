@@ -16,8 +16,8 @@ def add_10_2d(
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if col < size and row < size:
         output[row, col] = a[row, col] + 10.0
 

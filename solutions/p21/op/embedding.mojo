@@ -33,20 +33,20 @@ def embedding_kernel_coalesced[
     """
 
     # Simple 1D indexing - each thread = one output element
-    global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    total_elements = batch_size * seq_len * embed_dim
+    var global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var total_elements = batch_size * seq_len * embed_dim
 
     if global_idx >= total_elements:
         return
 
     # Convert to (batch, seq, embed) coordinates
-    batch_idx = global_idx // (seq_len * embed_dim)
-    remaining = global_idx % (seq_len * embed_dim)
-    seq_idx = remaining // embed_dim
-    embed_idx = remaining % embed_dim
+    var batch_idx = global_idx // (seq_len * embed_dim)
+    var remaining = global_idx % (seq_len * embed_dim)
+    var seq_idx = remaining // embed_dim
+    var embed_idx = remaining % embed_dim
 
     # Get token index
-    token_idx_val = Int(indices[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Simple, correct assignment
     if token_idx_val >= 0 and token_idx_val < vocab_size:
@@ -85,21 +85,21 @@ def embedding_kernel_2d[
     """
 
     # 2D grid indexing
-    batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
+    var batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
 
-    total_positions = batch_size * seq_len
+    var total_positions = batch_size * seq_len
 
     # Bounds check
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
 
     # Convert to (batch, seq) coordinates
-    batch_idx = batch_seq_idx // seq_len
-    seq_idx = batch_seq_idx % seq_len
+    var batch_idx = batch_seq_idx // seq_len
+    var seq_idx = batch_seq_idx % seq_len
 
     # Get token index
-    token_idx_val = Int(indices[batch_idx, seq_idx])
+    var token_idx_val = Int(indices[batch_idx, seq_idx])
 
     # Assignment with 2D grid pattern
     if token_idx_val >= 0 and token_idx_val < vocab_size:
@@ -141,9 +141,9 @@ struct EmbeddingCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        indices_tensor = indices.to_layout_tensor()
-        weights_tensor = weights.to_layout_tensor()
+        var output_tensor = output.to_layout_tensor()
+        var indices_tensor = indices.to_layout_tensor()
+        var weights_tensor = weights.to_layout_tensor()
 
         comptime indices_layout = indices_tensor.layout
         comptime weights_layout = weights_tensor.layout
@@ -228,9 +228,9 @@ struct Embedding2DCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        indices_tensor = indices.to_layout_tensor()
-        weights_tensor = weights.to_layout_tensor()
+        var output_tensor = output.to_layout_tensor()
+        var indices_tensor = indices.to_layout_tensor()
+        var weights_tensor = weights.to_layout_tensor()
 
         comptime indices_layout = indices_tensor.layout
         comptime weights_layout = weights_tensor.layout

@@ -17,13 +17,13 @@ def pooling(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    shared = stack_allocation[
+    var shared = stack_allocation[
         TPB,
         Scalar[dtype],
         address_space = AddressSpace.SHARED,
     ]()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     if global_i < size:
         shared[local_i] = a[global_i]
 

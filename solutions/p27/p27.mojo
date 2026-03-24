@@ -29,8 +29,8 @@ def block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Each thread computes partial product
     var partial_product: Scalar[dtype] = 0.0
@@ -40,7 +40,7 @@ def block_sum_dot_product[
 
     # The magic: block.sum() replaces 15+ lines of manual reduction!
     # Just like warp.sum() but for the entire block
-    total = block.sum[block_size=tpb, broadcast=False](
+    var total = block.sum[block_size=tpb, broadcast=False](
         val=SIMD[DType.float32, 1](partial_product)
     )
 
@@ -64,14 +64,14 @@ def traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Each thread computes partial product
     if global_i < size:
@@ -118,8 +118,8 @@ def block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Step 1: Each thread determines its bin and element value
     var my_value: Scalar[dtype] = 0.0
@@ -143,7 +143,7 @@ def block_histogram_bin_extract[
 
     # Step 3: Use block.prefix_sum() for parallel bin extraction!
     # This computes where each thread should write within the target bin
-    write_offset = block.prefix_sum[
+    var write_offset = block.prefix_sum[
         dtype = DType.int32, block_size=tpb, exclusive=True
     ](val=SIMD[DType.int32, 1](belongs_to_target))
 
@@ -180,8 +180,8 @@ def block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
     var my_value: Scalar[dtype] = 0.0
@@ -189,7 +189,7 @@ def block_normalize_vector[
         my_value = input_data[global_i][0]  # Extract SIMD value
 
     # Step 2: Use block.sum() to compute total sum (familiar from earlier!)
-    total_sum = block.sum[block_size=tpb, broadcast=False](
+    var total_sum = block.sum[block_size=tpb, broadcast=False](
         val=SIMD[DType.float32, 1](my_value)
     )
 
@@ -201,7 +201,7 @@ def block_normalize_vector[
 
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration
-    broadcasted_mean = block.broadcast[
+    var broadcasted_mean = block.broadcast[
         dtype = DType.float32, width=1, block_size=tpb
     ](val=SIMD[DType.float32, 1](mean_value), src_thread=UInt(0))
 

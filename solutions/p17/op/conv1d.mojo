@@ -21,16 +21,16 @@ def conv1d_kernel[
     input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
     kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    shared_a = LayoutTensor[
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(conv_size),
         MutAnyOrigin,
@@ -58,8 +58,7 @@ def conv1d_kernel[
     if global_i < input_size:
         var local_sum: output.element_type = 0
 
-        @parameter
-        for j in range(conv_size):
+        comptime for j in range(conv_size):
             if local_i + j < TPB + conv_size - 1:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 
@@ -89,9 +88,9 @@ struct Conv1DCustomOp:
         # the context is needed for some GPU calls
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        input_tensor = input.to_layout_tensor()
-        kernel_tensor = kernel.to_layout_tensor()
+        var output_tensor = output.to_layout_tensor()
+        var input_tensor = input.to_layout_tensor()
+        var kernel_tensor = kernel.to_layout_tensor()
         comptime in_layout = input_tensor.layout
         comptime out_layout = output_tensor.layout
         comptime conv_layout = kernel_tensor.layout

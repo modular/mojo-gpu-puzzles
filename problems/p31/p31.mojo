@@ -24,7 +24,7 @@ def minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i < size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -46,15 +46,15 @@ def sophisticated_kernel[
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    shared_cache = LayoutTensor[
+    var shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 12),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     if i < size:
         # REAL computational work that can't be optimized away - affects final result
@@ -143,15 +143,15 @@ def balanced_kernel[
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    shared_cache = LayoutTensor[
+    var shared_cache = LayoutTensor[
         dtype,
         Layout.row_major(1024 * 4),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     if i < size:
         # Moderate computational work that contributes to result
@@ -196,9 +196,9 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def minimal_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size)
+        var y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size)
+        var x = ctx.enqueue_create_buffer[dtype](test_size)
         x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
@@ -206,8 +206,8 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -221,7 +221,7 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[minimal_workflow](bench_ctx)
 
 
@@ -232,9 +232,9 @@ def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises
     @always_inline
     def sophisticated_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size)
+        var y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size)
+        var x = ctx.enqueue_create_buffer[dtype](test_size)
         x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
@@ -242,8 +242,8 @@ def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -257,7 +257,7 @@ def benchmark_sophisticated_parameterized[test_size: Int](mut b: Bencher) raises
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[sophisticated_workflow](bench_ctx)
 
 
@@ -268,9 +268,9 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def balanced_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        y = ctx.enqueue_create_buffer[dtype](test_size)
+        var y = ctx.enqueue_create_buffer[dtype](test_size)
         y.enqueue_fill(0)
-        x = ctx.enqueue_create_buffer[dtype](test_size)
+        var x = ctx.enqueue_create_buffer[dtype](test_size)
         x.enqueue_fill(0)
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
@@ -278,8 +278,8 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -293,7 +293,7 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(y.unsafe_ptr())
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[balanced_workflow](bench_ctx)
 
 
@@ -430,7 +430,7 @@ def test_balanced() raises:
 
 def main() raises:
     """Run the occupancy efficiency mystery tests."""
-    args = argv()
+    var args = argv()
     if len(args) < 2:
         print("Usage: mojo p31.mojo <flags>")
         print("  Flags:")
@@ -442,11 +442,11 @@ def main() raises:
         return
 
     # Parse flags
-    run_minimal = False
-    run_sophisticated = False
-    run_balanced = False
-    run_all = False
-    run_benchmark = False
+    var run_minimal = False
+    var run_sophisticated = False
+    var run_balanced = False
+    var run_all = False
+    var run_benchmark = False
 
     for i in range(1, len(args)):
         var arg = args[i]

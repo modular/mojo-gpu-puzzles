@@ -29,14 +29,14 @@ def cluster_coordination_basics[
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
     var my_block_rank = Int(block_rank_in_cluster())
-    block_id = Int(block_idx.x)
+    var block_id = Int(block_idx.x)
 
-    shared_data = LayoutTensor[
+    var shared_data = LayoutTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,

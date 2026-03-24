@@ -24,15 +24,15 @@ def conv_1d_simple[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = Int(thread_idx.x)
-    shared_a = LayoutTensor[
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = Int(thread_idx.x)
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV),
         MutAnyOrigin,
@@ -63,8 +63,7 @@ def conv_1d_simple[
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
-        @parameter
-        for j in range(CONV):
+        comptime for j in range(CONV):
             # Bonus: do we need this check for this specific example with fixed SIZE, CONV
             if local_i + j < SIZE:
                 local_sum += shared_a[local_i + j] * shared_b[j]
@@ -91,16 +90,16 @@ def conv_1d_block_boundary[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    shared_a = LayoutTensor[
+    var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    shared_b = LayoutTensor[
+    var shared_b = LayoutTensor[
         dtype,
         Layout.row_major(CONV_2),
         MutAnyOrigin,
@@ -130,8 +129,7 @@ def conv_1d_block_boundary[
     if global_i < SIZE_2:
         var local_sum: output.element_type = 0
 
-        @parameter
-        for j in range(CONV_2):
+        comptime for j in range(CONV_2):
             if global_i + j < SIZE_2:
                 local_sum += shared_a[local_i + j] * shared_b[j]
 

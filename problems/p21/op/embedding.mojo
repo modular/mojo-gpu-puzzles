@@ -33,8 +33,8 @@ def embedding_kernel_coalesced[
     """
 
     # Simple 1D indexing - each thread = one output element
-    global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    total_elements = batch_size * seq_len * embed_dim
+    var global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var total_elements = batch_size * seq_len * embed_dim
 
     if global_idx >= total_elements:
         return
@@ -77,9 +77,9 @@ def embedding_kernel_2d[
     """
 
     # 2D grid indexing
-    batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
-    total_positions = batch_size * seq_len
+    var batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
+    var total_positions = batch_size * seq_len
 
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
@@ -124,9 +124,9 @@ struct EmbeddingCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        indices_tensor = indices.to_layout_tensor()
-        weights_tensor = weights.to_layout_tensor()
+        var output_tensor = output.to_layout_tensor()
+        var indices_tensor = indices.to_layout_tensor()
+        var weights_tensor = weights.to_layout_tensor()
 
         comptime indices_layout = indices_tensor.layout
         comptime weights_layout = weights_tensor.layout
@@ -207,9 +207,9 @@ struct Embedding2DCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        output_tensor = output.to_layout_tensor()
-        indices_tensor = indices.to_layout_tensor()
-        weights_tensor = weights.to_layout_tensor()
+        var output_tensor = output.to_layout_tensor()
+        var indices_tensor = indices.to_layout_tensor()
+        var weights_tensor = weights.to_layout_tensor()
 
         comptime indices_layout = indices_tensor.layout
         comptime weights_layout = weights_tensor.layout

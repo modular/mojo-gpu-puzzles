@@ -41,14 +41,14 @@ def traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     if global_i < size:
         shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
@@ -57,7 +57,7 @@ def traditional_dot_product_p12_style[
 
     barrier()
 
-    stride = WARP_SIZE // 2
+    var stride = WARP_SIZE // 2
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]
@@ -105,7 +105,7 @@ def functional_warp_dot_product[
     def compute_dot_product[
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -> None:
-        idx = indices[0]
+        var idx = indices[0]
         print("idx:", idx)
         # FILL IN (10 lines at most)
 
@@ -165,24 +165,24 @@ def benchmark_simple_warp_parameterized[
     comptime n_threads = WARP_SIZE
     comptime n_blocks = (ceildiv(test_size, n_threads), 1)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -215,24 +215,24 @@ def benchmark_functional_warp_parameterized[
     comptime in_layout = Layout.row_major(test_size)
     comptime out_layout = Layout.row_major(n_warps)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -259,24 +259,24 @@ def benchmark_traditional_parameterized[
     comptime out_layout = Layout.row_major(n_warps)
     comptime n_blocks = (ceildiv(test_size, WARP_SIZE), 1)
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
 
-    out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
+    var out = bench_ctx.enqueue_create_buffer[dtype](n_warps)
     out.enqueue_fill(0)
-    a = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var a = bench_ctx.enqueue_create_buffer[dtype](test_size)
     a.enqueue_fill(0)
-    b = bench_ctx.enqueue_create_buffer[dtype](test_size)
+    var b = bench_ctx.enqueue_create_buffer[dtype](test_size)
     b.enqueue_fill(0)
-    expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
+    var expected = bench_ctx.enqueue_create_host_buffer[dtype](n_warps)
     expected.enqueue_fill(0)
 
     rand_int[dtype, test_size](a)
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline

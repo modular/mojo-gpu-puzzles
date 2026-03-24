@@ -23,9 +23,9 @@ def axis_sum[
     size: UInt,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
-    batch = block_idx.y
-    cache = LayoutTensor[
+    var local_i = thread_idx.x
+    var batch = block_idx.y
+    var cache = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -49,7 +49,7 @@ def axis_sum[
     barrier()
 
     # do reduction sum per each block
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride > 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0

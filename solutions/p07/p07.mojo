@@ -15,8 +15,8 @@ def add_10_blocks_2d(
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    row = block_dim.y * block_idx.y + thread_idx.y
-    col = block_dim.x * block_idx.x + thread_idx.x
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
     if row < size and col < size:
         output[row * size + col] = a[row * size + col] + 10.0
 

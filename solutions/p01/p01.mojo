@@ -14,7 +14,7 @@ def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     output[i] = a[i] + 10.0
 
 

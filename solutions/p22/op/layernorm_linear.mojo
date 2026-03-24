@@ -31,22 +31,22 @@ def matmul_idiomatic_tiled[
     b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
-    tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
+    var tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
+    var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         Int(block_idx.y), Int(block_idx.x)
     )
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
@@ -61,8 +61,7 @@ def matmul_idiomatic_tiled[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
     )  # Coalesced loading
 
-    @parameter
-    for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
+    comptime for idx in range((inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
             Int(block_idx.y), idx
@@ -88,8 +87,7 @@ def matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        @parameter
-        for k in range(MATMUL_BLOCK_DIM_XY):
+        comptime for k in range(MATMUL_BLOCK_DIM_XY):
             if (
                 tiled_row < rows and tiled_col < cols
             ):  # Only perform calculation for valid outputs
@@ -123,9 +121,9 @@ def layernorm_kernel[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
-    hidden_idx = Int(thread_idx.x)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
+    var hidden_idx = Int(thread_idx.x)
 
     if (
         batch_idx >= batch_size
@@ -138,19 +136,18 @@ def layernorm_kernel[
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    mean_val = sum_val / hidden_dim
-    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-    inv_std = 1.0 / sqrt(var_val + 1e-5)
+    var mean_val = sum_val / hidden_dim
+    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Apply LayerNorm to this element
-    input_val = input[batch_idx, seq_idx, hidden_idx]
-    normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
+    var input_val = input[batch_idx, seq_idx, hidden_idx]
+    var normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
         ln_weight[hidden_idx]
     ) + rebind[Scalar[dtype]](ln_bias[hidden_idx])
     output[batch_idx, seq_idx, hidden_idx] = normalized
@@ -173,26 +170,26 @@ def transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    shared_tile = LayoutTensor[
+    var shared_tile = LayoutTensor[
         dtype,
         Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    local_row = thread_idx.y
-    local_col = thread_idx.x
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
 
-    global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
-    global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row < rows and global_col < cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
-    out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -218,9 +215,9 @@ def add_bias_kernel[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
-    out_idx = Int(thread_idx.x)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
+    var out_idx = Int(thread_idx.x)
 
     if batch_idx >= batch_size or seq_idx >= seq_len or out_idx >= output_dim:
         return
@@ -257,8 +254,8 @@ def minimal_fused_kernel[
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -267,23 +264,20 @@ def minimal_fused_kernel[
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    mean_val = sum_val / hidden_dim
-    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-    inv_std = 1.0 / sqrt(var_val + 1e-5)
+    var mean_val = sum_val / hidden_dim
+    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Compute all outputs for this sequence position
-    @parameter
-    for out_idx in range(output_dim):
+    comptime for out_idx in range(output_dim):
         var acc: Scalar[dtype] = 0
 
-        @parameter
-        for h in range(hidden_dim):
+        comptime for h in range(hidden_dim):
             var input_val = input[batch_idx, seq_idx, h]
             var normalized = (input_val - mean_val) * inv_std * rebind[
                 Scalar[dtype]
@@ -330,8 +324,8 @@ def minimal_fused_kernel_backward[
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    batch_idx = Int(block_idx.x)
-    seq_idx = Int(block_idx.y)
+    var batch_idx = Int(block_idx.x)
+    var seq_idx = Int(block_idx.y)
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -339,18 +333,15 @@ def minimal_fused_kernel_backward[
     # Initialize gradient tensors to zero (block 0,0 only to avoid UB with atomic ops)
     if batch_idx == 0 and seq_idx == 0:
         # Initialize grad_ln_weight and grad_ln_bias
-        @parameter
-        for h in range(hidden_dim):
+        comptime for h in range(hidden_dim):
             (grad_ln_weight.ptr + h).init_pointee_copy(0)
             (grad_ln_bias.ptr + h).init_pointee_copy(0)
 
         # Initialize grad_weight and grad_bias
-        @parameter
-        for out_idx in range(output_dim):
+        comptime for out_idx in range(output_dim):
             (grad_bias.ptr + out_idx).init_pointee_copy(0)
 
-            @parameter
-            for h in range(hidden_dim):
+            comptime for h in range(hidden_dim):
                 (grad_weight.ptr + out_idx * hidden_dim + h).init_pointee_copy(
                     0
                 )
@@ -362,19 +353,17 @@ def minimal_fused_kernel_backward[
     var sum_val: Scalar[dtype] = 0
     var sq_sum: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         var val = input[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
-    mean_val = sum_val / hidden_dim
-    var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
-    inv_std = 1.0 / sqrt(var_val + 1e-5)
+    var mean_val = sum_val / hidden_dim
+    var var_val = (sq_sum / hidden_dim) - (mean_val * mean_val)
+    var inv_std = 1.0 / sqrt(var_val + 1e-5)
 
     # Step 2: Atomically accumulate gradients w.r.t. linear bias
-    @parameter
-    for out_idx in range(output_dim):
+    comptime for out_idx in range(output_dim):
         var grad_bias_ptr = grad_bias.ptr + out_idx
         _ = Atomic[dtype].fetch_add(
             grad_bias_ptr,
@@ -382,11 +371,9 @@ def minimal_fused_kernel_backward[
         )
 
     # Step 3: Atomically accumulate gradients w.r.t. linear weight
-    @parameter
-    for out_idx in range(output_dim):
+    comptime for out_idx in range(output_dim):
 
-        @parameter
-        for h in range(hidden_dim):
+        comptime for h in range(hidden_dim):
             var input_val = input[batch_idx, seq_idx, h]
             var normalized = (input_val - mean_val) * inv_std
             var ln_output_val = normalized * rebind[Scalar[dtype]](
@@ -401,16 +388,14 @@ def minimal_fused_kernel_backward[
             _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         input_val = input[batch_idx, seq_idx, h]
         normalized = (input_val - mean_val) * inv_std
 
         # Compute gradient w.r.t. LayerNorm output for this h
         var grad_ln_out: Scalar[dtype] = 0
 
-        @parameter
-        for out_idx in range(output_dim):
+        comptime for out_idx in range(output_dim):
             grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
                 grad_output[batch_idx, seq_idx, out_idx]
                 * linear_weight[out_idx, h]
@@ -431,15 +416,13 @@ def minimal_fused_kernel_backward[
     var sum_grad_normalized: Scalar[dtype] = 0
     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         h_input_val = input[batch_idx, seq_idx, h]
         h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
-        @parameter
-        for out_idx in range(output_dim):
+        comptime for out_idx in range(output_dim):
             h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
                 grad_output[batch_idx, seq_idx, out_idx]
                 * linear_weight[out_idx, h]
@@ -455,15 +438,13 @@ def minimal_fused_kernel_backward[
         )
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
-    @parameter
-    for h in range(hidden_dim):
+    comptime for h in range(hidden_dim):
         h_input_val = input[batch_idx, seq_idx, h]
         h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
-        @parameter
-        for out_idx in range(output_dim):
+        comptime for out_idx in range(output_dim):
             h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
                 grad_output[batch_idx, seq_idx, out_idx]
                 * linear_weight[out_idx, h]
@@ -507,22 +488,22 @@ struct LayerNormLinearCustomOp:
         comptime output_layout = output.static_spec.to_layout()
 
         # Note: rebind is necessary now but it shouldn't be!
-        output_tensor = rebind[
+        var output_tensor = rebind[
             LayoutTensor[dtype, output_layout, MutAnyOrigin]
         ](output.to_layout_tensor())
-        input_tensor = rebind[
+        var input_tensor = rebind[
             LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
         ](input.to_layout_tensor())
-        ln_weight_tensor = rebind[
+        var ln_weight_tensor = rebind[
             LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
         ](ln_weight.to_layout_tensor())
-        ln_bias_tensor = rebind[
+        var ln_bias_tensor = rebind[
             LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
         ](ln_bias.to_layout_tensor())
-        linear_weight_tensor = rebind[
+        var linear_weight_tensor = rebind[
             LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
         ](linear_weight.to_layout_tensor())
-        linear_bias_tensor = rebind[
+        var linear_bias_tensor = rebind[
             LayoutTensor[dtype, bias_layout, ImmutAnyOrigin]
         ](linear_bias.to_layout_tensor())
 
@@ -752,34 +733,34 @@ struct LayerNormLinearBackwardCustomOp:
         comptime grad_weight_layout = grad_weight.static_spec.to_layout()
         comptime grad_bias_layout = grad_bias.static_spec.to_layout()
 
-        grad_input_tensor = rebind[
+        var grad_input_tensor = rebind[
             LayoutTensor[dtype, grad_input_layout, MutAnyOrigin]
         ](grad_input.to_layout_tensor())
-        grad_ln_weight_tensor = rebind[
+        var grad_ln_weight_tensor = rebind[
             LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin]
         ](grad_ln_weight.to_layout_tensor())
-        grad_ln_bias_tensor = rebind[
+        var grad_ln_bias_tensor = rebind[
             LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin]
         ](grad_ln_bias.to_layout_tensor())
-        grad_weight_tensor = rebind[
+        var grad_weight_tensor = rebind[
             LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin]
         ](grad_weight.to_layout_tensor())
-        grad_bias_tensor = rebind[
+        var grad_bias_tensor = rebind[
             LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin]
         ](grad_bias.to_layout_tensor())
-        grad_output_tensor = rebind[
+        var grad_output_tensor = rebind[
             LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin]
         ](grad_output.to_layout_tensor())
-        input_tensor = rebind[
+        var input_tensor = rebind[
             LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
         ](input.to_layout_tensor())
-        ln_weight_tensor = rebind[
+        var ln_weight_tensor = rebind[
             LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
         ](ln_weight.to_layout_tensor())
-        ln_bias_tensor = rebind[
+        var ln_bias_tensor = rebind[
             LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
         ](ln_bias.to_layout_tensor())
-        linear_weight_tensor = rebind[
+        var linear_weight_tensor = rebind[
             LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
         ](linear_weight.to_layout_tensor())
 

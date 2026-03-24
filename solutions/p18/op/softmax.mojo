@@ -27,19 +27,19 @@ def softmax_gpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    shared_max = LayoutTensor[
+    var shared_max = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(BLOCK_DIM_X),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = Int(thread_idx.x)
+    var global_i = Int(thread_idx.x)
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
@@ -52,7 +52,7 @@ def softmax_gpu_kernel[
     barrier()
 
     # Parallel reduction to find max similar to reduction we saw before
-    stride = BLOCK_DIM_X // 2
+    var stride = BLOCK_DIM_X // 2
     while stride > 0:
         if global_i < stride:
             shared_max[global_i] = max(
@@ -61,7 +61,7 @@ def softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_max = shared_max[0]
+    var block_max = shared_max[0]
 
     # Initialize out-of-bounds (shared_max[global_i], global_i >= input_size) shared memory addresses to 0.0,
     # ensuring that if these elements are accessed in the parallel sum reduction below they
@@ -80,7 +80,7 @@ def softmax_gpu_kernel[
         barrier()
         stride = stride // 2
 
-    block_sum = shared_sum[0]
+    var block_sum = shared_sum[0]
 
     # Normalize by sum
     if global_i < input_size:

@@ -26,7 +26,7 @@ def butterfly_pair_swap[
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
         var current_val = input[global_i]
@@ -56,7 +56,7 @@ def butterfly_parallel_max[
     Each step reduces the active range by half until all threads have the maximum value.
     This implements an efficient O(log n) parallel reduction algorithm.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
         var max_val = input[global_i]
@@ -93,8 +93,8 @@ def butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = lane_id()
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = lane_id()
 
     if global_i < size:
         var current_val = input[global_i]
@@ -147,7 +147,7 @@ def warp_inclusive_prefix_sum[
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
         var current_val = input[global_i]
@@ -188,7 +188,7 @@ def warp_partition[
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot).
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
 
     if global_i < size:
         var current_val = input[global_i]
@@ -493,7 +493,7 @@ def main() raises:
         )
         return
 
-    test_type = argv()[1]
+    var test_type = argv()[1]
     if test_type == "--pair-swap":
         print("SIZE: ", SIZE)
         test_butterfly_pair_swap()

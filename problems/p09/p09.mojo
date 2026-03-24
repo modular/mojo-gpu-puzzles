@@ -20,7 +20,7 @@ def add_10(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
 ):
-    i = thread_idx.x
+    var i = thread_idx.x
     output[i] = a[i] + 10.0
 
 
@@ -32,10 +32,10 @@ def process_sliding_window(
     output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
-    thread_id = thread_idx.x
+    var thread_id = thread_idx.x
 
     # Each thread processes a sliding window of 3 elements
-    window_sum = Scalar[dtype](0.0)
+    var window_sum = Scalar[dtype](0.0)
 
     # Sum elements in sliding window: [i-1, i, i+1]
     for offset in range(ITER):
@@ -55,10 +55,10 @@ def collaborative_filter(
     output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
-    thread_id = thread_idx.x
+    var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    shared_workspace = LayoutTensor[
+    var shared_workspace = LayoutTensor[
         dtype,
         Layout.row_major(SIZE - 1),
         MutAnyOrigin,

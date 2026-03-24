@@ -102,13 +102,13 @@ def double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    buffer_A = LayoutTensor[
+    var buffer_A = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    buffer_B = LayoutTensor[
+    var buffer_B = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -116,27 +116,27 @@ def double_buffered_stencil_computation[
     ].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
-    init_barrier = LayoutTensor[
+    var init_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    iter_barrier = LayoutTensor[
+    var iter_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    final_barrier = LayoutTensor[
+    var final_barrier = LayoutTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = Int(thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = Int(thread_idx.x)
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -153,8 +153,7 @@ def double_buffered_stencil_computation[
     _ = mbarrier_test_wait(init_barrier.ptr, TPB)
 
     # Iterative stencil processing with double-buffering
-    @parameter
-    for iteration in range(STENCIL_ITERATIONS):
+    comptime for iteration in range(STENCIL_ITERATIONS):
 
         @parameter
         if iteration % 2 == 0:

@@ -71,7 +71,7 @@ def broadcast_shuffle_coordination[
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var lane = Int(lane_id())
     if global_i < size:
         var scale_factor: output.element_type = 0.0
@@ -93,7 +93,7 @@ def basic_broadcast[
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var lane = Int(lane_id())
     if global_i < size:
         var broadcast_value: output.element_type = 0.0
@@ -115,7 +115,7 @@ def conditional_broadcast[
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var lane = Int(lane_id())
     if global_i < size:
         var decision_value: output.element_type = 0.0
@@ -407,7 +407,7 @@ def main() raises:
         )
         return
 
-    test_type = argv()[1]
+    var test_type = argv()[1]
     if test_type == "--neighbor":
         print("SIZE: ", SIZE)
         test_neighbor_difference()

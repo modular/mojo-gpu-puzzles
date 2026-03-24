@@ -25,8 +25,8 @@ def neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i < size:
         # Get current value
@@ -67,8 +67,8 @@ def moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i < size:
         # Get current, next, and next+1 values
@@ -102,8 +102,8 @@ def broadcast_shuffle_coordination[
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 computes block-local scaling factor
@@ -147,8 +147,8 @@ def basic_broadcast[
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
@@ -182,8 +182,8 @@ def conditional_broadcast[
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    lane = Int(lane_id())
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var lane = Int(lane_id())
 
     if global_i < size:
         # Step 1: Lane 0 analyzes block-local data and makes decision (find max of first 8 in block)
@@ -491,7 +491,7 @@ def main() raises:
         )
         return
 
-    test_type = argv()[1]
+    var test_type = argv()[1]
     if test_type == "--neighbor":
         print("SIZE: ", SIZE)
         test_neighbor_difference()

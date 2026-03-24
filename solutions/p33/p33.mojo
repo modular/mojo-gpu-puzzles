@@ -33,22 +33,22 @@ def matmul_idiomatic_tiled[
     var tile_size_x = block_dim.x
     var tile_size_y = block_dim.y
 
-    local_row = thread_idx.y
-    local_col = thread_idx.x
-    tiled_row = Int(block_idx.y * tile_size_y + local_row)
-    tiled_col = Int(block_idx.x * tile_size_x + local_col)
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = Int(block_idx.y * tile_size_y + local_row)
+    var tiled_col = Int(block_idx.x * tile_size_x + local_col)
 
     # Get the tile of the output matrix that this thread block is responsible for
-    out_tile = output.tile[TILE_SIZE, TILE_SIZE](
+    var out_tile = output.tile[TILE_SIZE, TILE_SIZE](
         Int(block_idx.y), Int(block_idx.x)
     )
-    a_shared = LayoutTensor[
+    var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    b_shared = LayoutTensor[
+    var b_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
@@ -143,27 +143,27 @@ def tensor_core_matrix_multiplication[
     comptime N = C.shape[1]()
     comptime K = A.shape[1]()
 
-    warp_id = Int(thread_idx.x) // WARP_SIZE
-    warps_in_n = BN // WN
-    warps_in_m = BM // WM
-    warp_y = warp_id // warps_in_n
-    warp_x = warp_id % warps_in_n
+    var warp_id = Int(thread_idx.x) // WARP_SIZE
+    var warps_in_n = BN // WN
+    var warps_in_m = BM // WM
+    var warp_y = warp_id // warps_in_n
+    var warp_x = warp_id % warps_in_n
 
-    warp_is_active = warp_y < warps_in_m
+    var warp_is_active = warp_y < warps_in_m
 
-    C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
-    C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
+    var C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
+    var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
-    mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
+    var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    A_sram_tile = LayoutTensor[
+    var A_sram_tile = LayoutTensor[
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    B_sram_tile = LayoutTensor[
+    var B_sram_tile = LayoutTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
@@ -171,7 +171,7 @@ def tensor_core_matrix_multiplication[
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    C_warp_accum = LayoutTensor[
+    var C_warp_accum = LayoutTensor[
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
@@ -181,11 +181,9 @@ def tensor_core_matrix_multiplication[
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
 
-        @parameter
-        for i in range(WM):
+        comptime for i in range(WM):
 
-            @parameter
-            for j in range(WN):
+            comptime for j in range(WN):
                 C_warp_accum[i, j] = 0.0
 
     # (Removed shared C accumulator to reduce shared usage)
@@ -215,14 +213,11 @@ def tensor_core_matrix_multiplication[
             var A_warp_tile = A_sram_tile.tile[WM, BK](warp_y, 0)
             var B_warp_tile = B_sram_tile.tile[BK, WN](0, warp_x)
 
-            @parameter
-            for mma_k in range(BK // MMA_K):
+            comptime for mma_k in range(BK // MMA_K):
 
-                @parameter
-                for mma_m in range(WM // MMA_M):
+                comptime for mma_m in range(WM // MMA_M):
 
-                    @parameter
-                    for mma_n in range(WN // MMA_N):
+                    comptime for mma_n in range(WN // MMA_N):
                         var A_mma_tile = A_warp_tile.tile[MMA_M, MMA_K](
                             mma_m, mma_k
                         )
@@ -242,11 +237,9 @@ def tensor_core_matrix_multiplication[
     # Store the final per-warp accumulation to the output warp tile
     if warp_is_active:
 
-        @parameter
-        for mma_m in range(WM // MMA_M):
+        comptime for mma_m in range(WM // MMA_M):
 
-            @parameter
-            for mma_n in range(WN // MMA_N):
+            comptime for mma_n in range(WN // MMA_N):
                 var C_mma_tile = C_warp_tile.tile[MMA_M, MMA_N](mma_m, mma_n)
                 var Acc_mma_tile = C_warp_accum.tile[MMA_M, MMA_N](mma_m, mma_n)
                 var frag = mma_op.load_c(Acc_mma_tile)
@@ -275,7 +268,7 @@ def main() raises:
         print("  - mma_op.store_d() - Store result matrix D")
         return
 
-    mode = argv()[1]
+    var mode = argv()[1]
 
     with DeviceContext() as ctx:
         # Create buffers

@@ -24,7 +24,7 @@ def kernel1[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
     if i < size:
         output[i] = a[i] + b[i]
 
@@ -41,10 +41,10 @@ def kernel2[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    stride = 512
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var stride = 512
 
-    i = tid
+    var i = tid
     while i < size:
         output[i] = a[i] + b[i]
         i += stride
@@ -62,8 +62,8 @@ def kernel3[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    tid = Int(block_idx.x * block_dim.x + thread_idx.x)
-    total_threads = (SIZE // 1024) * 1024
+    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
         var forward_i = step + tid
@@ -82,11 +82,11 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def kernel1_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size)
+        var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size)
+        var a = ctx.enqueue_create_buffer[dtype](test_size)
         a.enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
         b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -94,9 +94,9 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function[kernel1[layout], kernel1[layout]](
             out_tensor,
@@ -109,7 +109,7 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[kernel1_workflow](bench_ctx)
 
 
@@ -120,11 +120,11 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def kernel2_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size)
+        var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size)
+        var a = ctx.enqueue_create_buffer[dtype](test_size)
         a.enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
         b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -132,9 +132,9 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function[kernel2[layout], kernel2[layout]](
             out_tensor,
@@ -147,7 +147,7 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[kernel2_workflow](bench_ctx)
 
 
@@ -158,11 +158,11 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def kernel3_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size)
+        var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
-        a = ctx.enqueue_create_buffer[dtype](test_size)
+        var a = ctx.enqueue_create_buffer[dtype](test_size)
         a.enqueue_fill(0)
-        b_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        var b_buf = ctx.enqueue_create_buffer[dtype](test_size)
         b_buf.enqueue_fill(0)
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
@@ -170,9 +170,9 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
                 a_host[i] = Float32(i + 1)
                 b_host[i] = Float32(i + 2)
 
-        out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
+        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b_buf)
 
         ctx.enqueue_function[kernel3[layout], kernel3[layout]](
             out_tensor,
@@ -185,7 +185,7 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
         keep(out)
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[kernel3_workflow](bench_ctx)
 
 
@@ -323,7 +323,7 @@ def test_kernel3() raises:
 
 def main() raises:
     """Run the memory access pattern tests."""
-    args = argv()
+    var args = argv()
     if len(args) < 2:
         print("Usage: mojo p30.mojo <flags>")
         print("  Flags:")
@@ -335,11 +335,11 @@ def main() raises:
         return
 
     # Parse flags
-    run_kernel1 = False
-    run_kernel2 = False
-    run_kernel3 = False
-    run_all = False
-    run_benchmark = False
+    var run_kernel1 = False
+    var run_kernel2 = False
+    var run_kernel3 = False
+    var run_all = False
+    var run_benchmark = False
 
     for i in range(1, len(args)):
         var arg = args[i]

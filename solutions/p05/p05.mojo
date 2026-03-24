@@ -16,8 +16,8 @@ def broadcast_add(
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row < size and col < size:
         output[row * size + col] = a[col] + b[row]
 

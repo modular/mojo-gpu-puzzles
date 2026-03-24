@@ -22,14 +22,14 @@ def dot_product[
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Compute element-wise multiplication into shared memory
     if global_i < size:
@@ -39,7 +39,7 @@ def dot_product[
     barrier()
 
     # Parallel reduction in shared memory
-    stride = UInt(TPB // 2)
+    var stride = UInt(TPB // 2)
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]

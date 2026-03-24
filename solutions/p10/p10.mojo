@@ -21,10 +21,10 @@ def shared_memory_race(
     size: UInt,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
 
-    shared_sum = LayoutTensor[
+    var shared_sum = LayoutTensor[
         dtype,
         Layout.row_major(1),
         MutAnyOrigin,
@@ -57,8 +57,8 @@ def add_10_2d(
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    row = thread_idx.y
-    col = thread_idx.x
+    var row = thread_idx.y
+    var col = thread_idx.x
     if row < size and col < size:
         output[row, col] = a[row, col] + 10.0
 
@@ -74,7 +74,7 @@ def main() raises:
         )
         return
 
-    flag = argv()[1]
+    var flag = argv()[1]
 
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)

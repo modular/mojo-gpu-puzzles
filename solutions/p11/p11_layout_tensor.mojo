@@ -21,15 +21,15 @@ def pooling[
     size: UInt,
 ):
     # Allocate shared memory using tensor builder
-    shared = LayoutTensor[
+    var shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = block_dim.x * block_idx.x + thread_idx.x
-    local_i = thread_idx.x
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Load data into shared memory
     if global_i < size:

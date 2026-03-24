@@ -29,15 +29,15 @@ def no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    shared_buf = LayoutTensor[
+    var shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # Load from global memory to shared memory - no conflicts
     if global_i < size:
@@ -72,18 +72,18 @@ def two_way_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    shared_buf = LayoutTensor[
+    var shared_buf = LayoutTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
 
-    global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    local_i = thread_idx.x
+    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var local_i = thread_idx.x
 
     # CONFLICT: stride-2 access creates 2-way bank conflicts
-    conflict_index = (local_i * 2) % TPB
+    var conflict_index = (local_i * 2) % TPB
 
     # Load with bank conflicts
     if global_i < size:
@@ -112,17 +112,17 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size)
+        var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
         input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
                 input_host[i] = Float32(i + 1)
 
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = LayoutTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -137,7 +137,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[kernel_workflow](bench_ctx)
 
 
@@ -148,17 +148,17 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
         comptime layout = Layout.row_major(test_size)
-        out = ctx.enqueue_create_buffer[dtype](test_size)
+        var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
-        input_buf = ctx.enqueue_create_buffer[dtype](test_size)
+        var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
         input_buf.enqueue_fill(0)
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
                 input_host[i] = Float32(i + 1)
 
-        out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = LayoutTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -173,7 +173,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
         keep(out.unsafe_ptr())
         ctx.synchronize()
 
-    bench_ctx = DeviceContext()
+    var bench_ctx = DeviceContext()
     b.iter_custom[kernel_workflow](bench_ctx)
 
 
