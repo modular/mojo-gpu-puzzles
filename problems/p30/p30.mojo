@@ -229,7 +229,7 @@ def test_kernel1() raises:
                 var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
-        print("Puzzle 30 complete ✅")
+        print("Kernel 1 test: passed")
 
 
 def test_kernel2() raises:
@@ -275,7 +275,7 @@ def test_kernel2() raises:
                     assert_almost_equal(expected, actual)
                     processed += 1
 
-        print("Puzzle 30 complete ✅")
+        print("Kernel 2 test: passed")
 
 
 def test_kernel3() raises:
@@ -318,7 +318,7 @@ def test_kernel3() raises:
                 var actual = out_host[i]
                 assert_almost_equal(expected, actual)
 
-        print("Puzzle 30 complete ✅")
+        print("Kernel 3 test: passed")
 
 
 def main() raises:
@@ -377,6 +377,7 @@ def main() raises:
         test_kernel1()
         test_kernel2()
         test_kernel3()
+        print("Puzzle 30 complete ✅")
 
     elif run_benchmark:
         print("\nRunning Kernel Performance Benchmarks...")
@@ -409,3 +410,4 @@ def main() raises:
             test_kernel2()
         if run_kernel3:
             test_kernel3()
+        print("Puzzle 30 complete ✅")

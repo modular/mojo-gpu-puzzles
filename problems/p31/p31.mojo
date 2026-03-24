@@ -339,7 +339,7 @@ def test_minimal() raises:
                 var actual = y_host[i]
                 assert_almost_equal(expected, actual)
 
-        print("Puzzle 31 complete ✅")
+        print("Minimal kernel test: passed")
 
 
 def test_sophisticated() raises:
@@ -383,7 +383,7 @@ def test_sophisticated() raises:
                 # Higher tolerance for sophisticated kernel's precision enhancements
                 assert_almost_equal(expected, actual, rtol=1e-3, atol=1e-3)
 
-        print("Puzzle 31 complete ✅")
+        print("Sophisticated kernel test: passed")
 
 
 def test_balanced() raises:
@@ -427,7 +427,7 @@ def test_balanced() raises:
                 # Higher tolerance for balanced kernel's precision enhancements
                 assert_almost_equal(expected, actual, rtol=1e-4, atol=1e-4)
 
-        print("Puzzle 31 complete ✅")
+        print("Balanced kernel test: passed")
 
 
 def main() raises:
@@ -486,6 +486,7 @@ def main() raises:
         test_minimal()
         test_sophisticated()
         test_balanced()
+        print("Puzzle 31 complete ✅")
 
     elif run_benchmark:
         var bench = Bench()
@@ -512,3 +513,4 @@ def main() raises:
             test_sophisticated()
         if run_balanced:
             test_balanced()
+        print("Puzzle 31 complete ✅")
