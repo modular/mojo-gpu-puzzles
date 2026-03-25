@@ -208,7 +208,7 @@ def test_no_conflict() raises:
                 var expected = Float32((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
-        print("✅ No-conflict kernel: PASSED")
+        print("No-conflict kernel test: passed")
 
 
 def test_two_way_conflict() raises:
@@ -242,7 +242,7 @@ def test_two_way_conflict() raises:
                 var expected = Float32((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
-        print("✅ Two-way conflict kernel: PASSED")
+        print("Two-way conflict kernel test: passed")
 
 
 def main() raises:
@@ -259,7 +259,7 @@ def main() raises:
         print("Testing bank conflict kernels...")
         test_no_conflict()
         test_two_way_conflict()
-        print("✅ Both kernels produce identical results")
+        print("Puzzle 32 complete ✅")
         print("Now profile with NSight Compute to see performance differences!")
 
     elif arg == "--benchmark":
@@ -282,8 +282,10 @@ def main() raises:
 
     elif arg == "--no-conflict":
         test_no_conflict()
+        print("Puzzle 32 complete ✅")
     elif arg == "--two-way":
         test_two_way_conflict()
+        print("Puzzle 32 complete ✅")
     else:
         print("Unknown argument:", arg)
         print(

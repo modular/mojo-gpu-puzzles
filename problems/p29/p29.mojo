@@ -249,7 +249,7 @@ def test_multi_stage_pipeline() raises:
                     out_host[i] < 1000.0, "Output values should be reasonable"
                 )
 
-            print("✅ Multi-stage pipeline coordination test PASSED!")
+            print("Puzzle 29 complete ✅")
 
 
 def test_double_buffered_stencil() raises:
@@ -326,7 +326,7 @@ def test_double_buffered_stencil() raises:
                 smooth_transitions, "Stencil should smooth sharp transitions"
             )
 
-            print("✅ Double-buffered stencil test PASSED!")
+            print("Puzzle 29 complete ✅")
 
 
 def main() raises:

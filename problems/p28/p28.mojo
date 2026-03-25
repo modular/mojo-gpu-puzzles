@@ -139,7 +139,7 @@ def test_async_copy_overlap_convolution() raises:
                         break
 
                 if success:
-                    print("Async copy overlap convolution test PASSED!")
+                    print("Puzzle 28 complete ✅")
                 else:
                     print("Async copy overlap convolution test FAILED!")
 

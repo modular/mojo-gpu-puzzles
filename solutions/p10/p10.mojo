@@ -117,10 +117,8 @@ def main() raises:
                 print("expected:", expected)
                 for i in range(SIZE * SIZE):
                     assert_equal(out_buf_host[i], expected[i])
-                print(
-                    "✅ Memory test PASSED! (memcheck may find bounds"
-                    " violations)"
-                )
+                print("Memory bug test: passed")
+                print("Puzzle 10 complete ✅")
 
         elif flag == "--race-condition":
             print("Running race condition example...")
@@ -150,10 +148,8 @@ def main() raises:
                 for i in range(SIZE * SIZE):
                     assert_equal(out_buf_host[i], expected[i])
 
-                print(
-                    "✅ Race condition test PASSED! (racecheck will find"
-                    " hazards)"
-                )
+                print("Race condition test: passed")
+                print("Puzzle 10 complete ✅")
 
         else:
             print("Unknown flag:", flag)

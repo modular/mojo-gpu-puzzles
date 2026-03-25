@@ -305,6 +305,7 @@ def main() raises:
             )
             ctx.synchronize()
             print("SUCCESS: Tensor core matmul completed!")
+            print("Puzzle 33 complete ✅")
 
         elif mode == "--tiled":
             print("\n=== Running Idiomatic Tiled Matrix Multiplication ===")
@@ -327,6 +328,7 @@ def main() raises:
             )
             ctx.synchronize()
             print("SUCCESS: Idiomatic tiled matmul completed!")
+            print("Puzzle 33 complete ✅")
 
         elif mode == "--test":
             print("\n=== Running All Accuracy Tests ===")
@@ -404,7 +406,7 @@ def main() raises:
                         tc_success = False
 
                 if tc_success:
-                    print("✅ TENSOR CORE ACCURACY TEST PASSED!")
+                    print("Tensor core test: passed")
                 else:
                     print(
                         "❌ TENSOR CORE ACCURACY TEST FAILED -",
@@ -450,7 +452,7 @@ def main() raises:
                     # Use assert_almost_equal for each element (exact FP32 precision)
                     for i in range(SIZE * SIZE):
                         assert_almost_equal(tiled_host[i], expected[i])
-                    print("✅ IDIOMATIC TILED ACCURACY TEST PASSED!")
+                    print("Idiomatic tiled test: passed")
                     tiled_success = True
                 except:
                     print(
@@ -462,6 +464,7 @@ def main() raises:
             print("\n=== ACCURACY TEST SUMMARY ===")
             if tc_success and tiled_success:
                 print("ALL TESTS PASSED!")
+                print("Puzzle 33 complete ✅")
             else:
                 print("Some tests failed:")
                 print("   - Tensor Core:", "✅" if tc_success else "❌")

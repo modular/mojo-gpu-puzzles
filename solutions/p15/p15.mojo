@@ -110,3 +110,4 @@ def main() raises:
             print("expected:", expected)
             for i in range(BATCH):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 15 complete ✅")

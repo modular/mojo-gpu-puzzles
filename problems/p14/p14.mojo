@@ -155,3 +155,4 @@ def main() raises:
             size = size if use_simple else SIZE_2
             for i in range(size):
                 assert_equal(out_host[i], expected[i])
+            print("Puzzle 14 complete ✅")

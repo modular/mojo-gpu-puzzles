@@ -58,3 +58,4 @@ def main() raises:
             print("expected:", expected)
             for i in range(SIZE * SIZE):
                 assert_equal(out_buf_host[i], expected[i])
+            print("Puzzle 04 complete ✅")
