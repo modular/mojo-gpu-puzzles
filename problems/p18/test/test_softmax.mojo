@@ -1,5 +1,5 @@
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_almost_equal
 from std.bit import log2_ceil
 
@@ -21,7 +21,7 @@ def test_softmax() raises:
         # for CPU testing
         var expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
         expected.enqueue_fill(0)
-        var expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+        var expected_tensor = TileTensor[dtype, layout, MutAnyOrigin](
             expected
         )
         # Initialize input with more reasonable values
@@ -34,13 +34,13 @@ def test_softmax() raises:
                 print(inp_host[i], end=" ")
             print()
             # Create layout tensors for CPU calculation
-            input_host_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+            input_host_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](
                 inp_host
             )
 
         # for GPU testing
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        var output_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var input_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         # Compute expected results using our CPU kernel
         softmax_cpu_kernel[layout, SIZE, dtype](

@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -18,8 +18,8 @@ comptime ALPHA = Float32(2.5)  # SAXPY coefficient
 def minimal_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    y: TileTensor[dtype, layout, MutAnyOrigin],
+    x: TileTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
@@ -38,15 +38,15 @@ def minimal_kernel[
 def sophisticated_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    y: TileTensor[dtype, layout, MutAnyOrigin],
+    x: TileTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    var shared_cache = LayoutTensor[
+    var shared_cache = TileTensor[
         dtype,
         Layout.row_major(1024 * 12),
         MutAnyOrigin,
@@ -135,15 +135,15 @@ def sophisticated_kernel[
 def balanced_kernel[
     layout: Layout
 ](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    y: TileTensor[dtype, layout, MutAnyOrigin],
+    x: TileTensor[dtype, layout, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    var shared_cache = LayoutTensor[
+    var shared_cache = TileTensor[
         dtype,
         Layout.row_major(1024 * 4),
         MutAnyOrigin,
@@ -206,8 +206,8 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -244,8 +244,8 @@ def benchmark_sophisticated_parameterized[
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -280,8 +280,8 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -314,9 +314,9 @@ def test_minimal() raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        # Create LayoutTensors
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        # Create TileTensors
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = minimal_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -357,9 +357,9 @@ def test_sophisticated() raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        # Create LayoutTensors
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        # Create TileTensors
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = sophisticated_kernel[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -401,9 +401,9 @@ def test_balanced() raises:
                 x_host[i] = Float32(i + 1)
                 y_host[i] = Float32(i + 2)
 
-        # Create LayoutTensors
-        var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
-        var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
+        # Create TileTensors
+        var y_tensor = TileTensor[dtype, layout, MutAnyOrigin](y)
+        var x_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](x)
 
         comptime kernel = balanced_kernel[layout]
         ctx.enqueue_function[kernel, kernel](

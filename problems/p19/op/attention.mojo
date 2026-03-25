@@ -2,7 +2,7 @@ from std.memory import UnsafePointer
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace, async_copy_wait_all
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.math import exp
 from std.bit import log2_ceil
@@ -22,10 +22,10 @@ comptime SOFTMAX_BLOCK_DIM_X = 1 << log2_ceil(SEQ_LEN)
 
 
 # Tiled matrix multiplication (from p16), updated to:
-# 1) Support different layouts for input (a, b) and output LayoutTensors.
+# 1) Support different layouts for input (a, b) and output TileTensors.
 # 2) Handle cases where the inner dimension is not a multiple of MATMUL_BLOCK_DIM_XY.
 # 3) Explicitly check for out-of-bounds elements.
-# The approach still tiles all three LayoutTensors (a, b, and output) into identical square tiles
+# The approach still tiles all three TileTensors (a, b, and output) into identical square tiles
 # of size (MATMUL_BLOCK_DIM_XY x MATMUL_BLOCK_DIM_XY) with each thread loading one element
 # from a and b, and writing one element to output.
 def matmul_idiomatic_tiled[
@@ -37,9 +37,9 @@ def matmul_idiomatic_tiled[
     inner: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, a_layout, MutAnyOrigin],
+    b: TileTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
     var local_row = Int(thread_idx.y)
@@ -51,13 +51,13 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         Int(block_idx.y), Int(block_idx.x)
     )
-    var a_shared = LayoutTensor[
+    var a_shared = TileTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var b_shared = LayoutTensor[
+    var b_shared = TileTensor[
         dtype,
         Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
         MutAnyOrigin,
@@ -124,8 +124,8 @@ def transpose_kernel[
     cols: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout_out, MutAnyOrigin],
+    inp: TileTensor[dtype, layout_in, ImmutAnyOrigin],
 ):
     # FILL ME IN (roughly 18 lines)
     ...
@@ -140,19 +140,19 @@ def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, MutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, MutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    var shared_max = LayoutTensor[
+    var shared_max = TileTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var shared_sum = LayoutTensor[
+    var shared_sum = TileTensor[
         dtype,
         Layout.row_major(SOFTMAX_BLOCK_DIM_X),
         MutAnyOrigin,
@@ -216,10 +216,10 @@ def attention_cpu_kernel[
     d: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
-    q: LayoutTensor[dtype, layout_q, MutAnyOrigin],
-    k: LayoutTensor[dtype, layout_k, ImmutAnyOrigin],
-    v: LayoutTensor[dtype, layout_v, MutAnyOrigin],
+    output: TileTensor[dtype, layout_out, MutAnyOrigin],
+    q: TileTensor[dtype, layout_q, MutAnyOrigin],
+    k: TileTensor[dtype, layout_k, ImmutAnyOrigin],
+    v: TileTensor[dtype, layout_v, MutAnyOrigin],
 ):
     """CPU implementation of vector attention."""
     var scores = List[Float32]()
@@ -281,15 +281,15 @@ struct AttentionCustomOp:
 
         # Convert to layout tensors
         var output_tensor = rebind[
-            LayoutTensor[dtype, layout_out, MutAnyOrigin]
+            TileTensor[dtype, layout_out, MutAnyOrigin]
         ](output.to_layout_tensor())
-        var q_tensor = rebind[LayoutTensor[dtype, layout_q, MutAnyOrigin]](
+        var q_tensor = rebind[TileTensor[dtype, layout_q, MutAnyOrigin]](
             q.to_layout_tensor()
         )
-        var k_tensor = rebind[LayoutTensor[dtype, layout_k, ImmutAnyOrigin]](
+        var k_tensor = rebind[TileTensor[dtype, layout_k, ImmutAnyOrigin]](
             k.to_layout_tensor()
         )
-        var v_tensor = rebind[LayoutTensor[dtype, layout_v, MutAnyOrigin]](
+        var v_tensor = rebind[TileTensor[dtype, layout_v, MutAnyOrigin]](
             v.to_layout_tensor()
         )
 
@@ -344,7 +344,7 @@ struct AttentionCustomOp:
                 seq_len
             )  # Reused for scores and weights
 
-            var k_t = LayoutTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
+            var k_t = TileTensor[dtype, layout_k_t, MutAnyOrigin](k_t_buf)
 
             # Step 1: Reshape Q from (d,) to (1, d) - no buffer needed
             # FILL ME IN 1 line

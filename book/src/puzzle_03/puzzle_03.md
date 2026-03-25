@@ -159,4 +159,4 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-These boundary handling patterns will become more elegant when we [learn about LayoutTensor in Puzzle 4](../puzzle_04/introduction_layout_tensor.md), which provides built-in shape management.
+These boundary handling patterns will become more elegant when we [learn about TileTensor in Puzzle 4](../puzzle_04/introduction_layout_tensor.md), which provides built-in shape management.

@@ -32,8 +32,8 @@
 
 직접 메모리를 다루며 GPU의 기본 원리를 익힙니다.
 
-### [💡 미리보기: LayoutTensor를 활용한 현대적 방식](./layout_tensor_preview.md)
+### [💡 미리보기: TileTensor를 활용한 현대적 방식](./layout_tensor_preview.md)
 
-LayoutTensor가 GPU 프로그래밍을 어떻게 단순화하는지 살펴봅니다. 더 안전하고 깔끔한 코드를 작성할 수 있습니다.
+TileTensor가 GPU 프로그래밍을 어떻게 단순화하는지 살펴봅니다. 더 안전하고 깔끔한 코드를 작성할 수 있습니다.
 
 💡 **팁**: 두 방식을 모두 익히면 현대적인 GPU 프로그래밍 패턴을 더 깊이 이해할 수 있습니다.

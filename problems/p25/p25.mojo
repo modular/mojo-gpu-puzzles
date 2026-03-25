@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, lane_id
 from std.gpu.host import DeviceContext
 from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
@@ -16,8 +16,8 @@ comptime layout = Layout.row_major(SIZE)
 def neighbor_difference[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -42,8 +42,8 @@ comptime layout_2 = Layout.row_major(SIZE_2)
 def moving_average_3[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -63,8 +63,8 @@ def moving_average_3[
 def broadcast_shuffle_coordination[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -86,8 +86,8 @@ def broadcast_shuffle_coordination[
 def basic_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -108,8 +108,8 @@ def basic_broadcast[
 def conditional_broadcast[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -145,10 +145,10 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 input_host[i] = i * i
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout, MutAnyOrigin](
             output_buf
         )
 
@@ -193,10 +193,10 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + i + 1
 
-        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout_2, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout_2, MutAnyOrigin](
             output_buf
         )
 
@@ -263,10 +263,10 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = ((i - 4) % 4) * 2 + 1
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout, MutAnyOrigin](
             output_buf
         )
 
@@ -317,10 +317,10 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = i + 1
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout, MutAnyOrigin](
             output_buf
         )
 
@@ -377,10 +377,10 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout, MutAnyOrigin](
             output_buf
         )
 

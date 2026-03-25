@@ -14,7 +14,7 @@ Implement a kernel that computes the running sum of the last 3 positions of vect
 ### [🔰 Raw memory approach](./raw.md)
 Learn how to implement sliding window operations with manual memory management and synchronization.
 
-### [📐 LayoutTensor Version](./layout_tensor.md)
-Use LayoutTensor's features for efficient window-based operations and shared memory management.
+### [📐 TileTensor Version](./layout_tensor.md)
+Use TileTensor's features for efficient window-based operations and shared memory management.
 
-💡 **Note**: See how LayoutTensor simplifies sliding window operations while maintaining efficient memory access patterns.
+💡 **Note**: See how TileTensor simplifies sliding window operations while maintaining efficient memory access patterns.

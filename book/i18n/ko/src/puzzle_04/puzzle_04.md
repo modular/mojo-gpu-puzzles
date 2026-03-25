@@ -51,12 +51,12 @@
 
 수동으로 메모리를 관리하면서 2D 인덱싱이 어떻게 동작하는지 알아봅니다.
 
-### [📚 LayoutTensor 알아보기](./introduction_layout_tensor.md)
+### [📚 TileTensor 알아보기](./introduction_layout_tensor.md)
 
 GPU에서 다차원 배열 연산과 메모리 관리를 간편하게 해주는 강력한 추상화를 소개합니다.
 
 ### [🚀 현대적 2D 연산](./layout_tensor.md)
 
-자연스러운 2D 인덱싱과 자동 경계 검사를 갖춘 LayoutTensor를 직접 써봅니다.
+자연스러운 2D 인덱싱과 자동 경계 검사를 갖춘 TileTensor를 직접 써봅니다.
 
-💡 **참고**: 이 퍼즐부터는 더 깔끔하고 안전한 GPU 코드를 위해 LayoutTensor를 주로 사용합니다.
+💡 **참고**: 이 퍼즐부터는 더 깔끔하고 안전한 GPU 코드를 위해 TileTensor를 주로 사용합니다.

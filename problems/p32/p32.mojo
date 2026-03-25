@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -18,8 +18,8 @@ comptime layout = Layout.row_major(SIZE)
 def no_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -29,7 +29,7 @@ def no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    var shared_buf = LayoutTensor[
+    var shared_buf = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -61,8 +61,8 @@ def no_conflict_kernel[
 def two_way_conflict_kernel[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
@@ -72,7 +72,7 @@ def two_way_conflict_kernel[
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    var shared_buf = LayoutTensor[
+    var shared_buf = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -121,8 +121,8 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
             for i in range(test_size):
                 input_host[i] = Float32(i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = TileTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = TileTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -157,8 +157,8 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
             for i in range(test_size):
                 input_host[i] = Float32(i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = TileTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = TileTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -189,8 +189,8 @@ def test_no_conflict() raises:
             for i in range(SIZE):
                 input_host[i] = Float32(i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = TileTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = TileTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 
@@ -223,8 +223,8 @@ def test_two_way_conflict() raises:
             for i in range(SIZE):
                 input_host[i] = Float32(i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
+        var out_tensor = TileTensor[mut=True, dtype, layout](out.unsafe_ptr())
+        var input_tensor = TileTensor[mut=False, dtype, layout](
             input_buf.unsafe_ptr()
         )
 

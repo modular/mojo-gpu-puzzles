@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
 comptime TPB = 8
@@ -17,12 +17,12 @@ comptime out_layout = Layout.row_major(1)
 def dot_product[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    var shared = LayoutTensor[
+    var shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -69,9 +69,9 @@ def main() raises:
                 a_host[i] = i
                 b_host[i] = i
 
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
+        var a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](a)
+        var b_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](b)
 
         comptime kernel = dot_product[layout, out_layout]
         ctx.enqueue_function[kernel, kernel](

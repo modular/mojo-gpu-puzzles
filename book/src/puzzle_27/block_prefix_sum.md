@@ -150,7 +150,7 @@ if local_i == tpb - 1:  # Last thread in block
 
 Remember the patterns from previous puzzles:
 
-- `LayoutTensor` indexing returns SIMD: `input_data[i][0]`
+- `TileTensor` indexing returns SIMD: `input_data[i][0]`
 - `block.prefix_sum()` returns SIMD: `offset[0]` to extract
 - Array indexing needs `Int`: `Int(offset[0])` for `bin_output[...]`
 
@@ -259,7 +259,7 @@ Thread indexing (familiar pattern):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
   local_i = thread_idx.x                              // Local thread index
 
-Element loading (like LayoutTensor pattern):
+Element loading (like TileTensor pattern):
   Thread 0:  my_value = input_data[0][0] = 0.00
   Thread 1:  my_value = input_data[1][0] = 0.01
   Thread 13: my_value = input_data[13][0] = 0.13
@@ -332,7 +332,7 @@ Last thread computes total (not thread 0!):
 
 - **Same thread indexing**: `global_i` and `local_i` patterns
 - **Same bounds checking**: `if global_i < size` validation
-- **Same data loading**: LayoutTensor SIMD extraction with `[0]`
+- **Same data loading**: TileTensor SIMD extraction with `[0]`
 
 ### **Connection to [`block.sum()`](./block_sum.md) (earlier in this puzzle):**
 

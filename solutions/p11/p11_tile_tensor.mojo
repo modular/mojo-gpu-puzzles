@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
 comptime TPB = 8
@@ -16,12 +16,12 @@ comptime layout = Layout.row_major(SIZE)
 def pooling[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
     # Allocate shared memory using tensor builder
-    var shared = LayoutTensor[
+    var shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -64,8 +64,8 @@ def main() raises:
             for i in range(SIZE):
                 a_host[i] = i
 
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](a)
 
         ctx.enqueue_function[pooling[layout], pooling[layout]](
             out_tensor,

@@ -71,7 +71,7 @@ Before diving into functional patterns, ensure you're comfortable with:
 
 - **Basic GPU concepts**: Memory hierarchy, thread execution, SIMD operations
 - **Mojo fundamentals**: Parameter functions, compile-time specialization, capturing semantics
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
+- **TileTensor operations**: Loading, storing, and tensor manipulation
 - **GPU memory management**: Buffer allocation, host-device synchronization
 
 ## Learning path
@@ -86,7 +86,7 @@ Start with the foundation: automatic thread management and SIMD vectorization.
 
 - Functional GPU programming with `elementwise`
 - Automatic SIMD vectorization within GPU threads
-- LayoutTensor operations for safe memory access
+- TileTensor operations for safe memory access
 - Capturing semantics in nested functions
 
 **Key pattern:**

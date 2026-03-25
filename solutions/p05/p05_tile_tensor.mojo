@@ -1,9 +1,8 @@
 from std.gpu import thread_idx
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
-# ANCHOR: broadcast_add_layout_tensor
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
@@ -13,32 +12,36 @@ comptime a_layout = Layout.row_major(1, SIZE)
 comptime b_layout = Layout.row_major(SIZE, 1)
 
 
+# ANCHOR: broadcast_add_layout_tensor_solution
 def broadcast_add[
     out_layout: Layout,
     a_layout: Layout,
     b_layout: Layout,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, a_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, b_layout, ImmutAnyOrigin],
     size: UInt,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
-    # FILL ME IN (roughly 2 lines)
+    if row < size and col < size:
+        output[row, col] = a[0, col] + b[row, 0]
 
 
-# ANCHOR_END: broadcast_add_layout_tensor
+# ANCHOR_END: broadcast_add_layout_tensor_solution
+
+
 def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf)
+        var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out_buf)
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected_buf.enqueue_fill(0)
-        var expected_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
+        var expected_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](
             expected_buf
         )
 
@@ -55,8 +58,8 @@ def main() raises:
                 for j in range(SIZE):
                     expected_tensor[i, j] = a_host[j] + b_host[i]
 
-        var a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
-        var b_tensor = LayoutTensor[dtype, b_layout, ImmutAnyOrigin](b)
+        var a_tensor = TileTensor[dtype, a_layout, ImmutAnyOrigin](a)
+        var b_tensor = TileTensor[dtype, b_layout, ImmutAnyOrigin](b)
 
         comptime kernel = broadcast_add[out_layout, a_layout, b_layout]
         ctx.enqueue_function[kernel, kernel](

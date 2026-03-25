@@ -132,4 +132,4 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 - 한 배열을 다른 배열에 브로드캐스트해야 한다면?
 - 여러 배열에서 병합(coalesced) 접근을 어떻게 보장할 수 있을까?
 
-이러한 질문들은 Puzzle 4의 [LayoutTensor 알아보기](../puzzle_04/introduction_layout_tensor.md)에서 다룹니다.
+이러한 질문들은 Puzzle 4의 [TileTensor 알아보기](../puzzle_04/introduction_layout_tensor.md)에서 다룹니다.

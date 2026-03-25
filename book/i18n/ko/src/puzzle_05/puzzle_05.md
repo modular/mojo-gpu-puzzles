@@ -26,8 +26,8 @@
 
 수동 메모리 인덱싱으로 브로드캐스트를 처리하는 방법을 알아봅니다.
 
-### [📐 LayoutTensor 버전](./layout_tensor.md)
+### [📐 TileTensor 버전](./layout_tensor.md)
 
-서로 다른 차원 간 연산을 LayoutTensor로 처리합니다.
+서로 다른 차원 간 연산을 TileTensor로 처리합니다.
 
-💡 **참고**: 수동 인덱싱과 비교했을 때 LayoutTensor가 브로드캐스트를 얼마나 간단하게 만들어주는지 확인해 보세요.
+💡 **참고**: 수동 인덱싱과 비교했을 때 TileTensor가 브로드캐스트를 얼마나 간단하게 만들어주는지 확인해 보세요.

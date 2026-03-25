@@ -257,8 +257,8 @@ def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: TileTensor[mut=True, dtype, layout],
+    input: TileTensor[mut=False, dtype, layout],
 )
 ```
 
@@ -273,8 +273,8 @@ The kernel is parameterized with:
 #### Shared memory allocation
 
 ```mojo
-shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_max = TileTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = TileTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 ```
 
 The kernel allocates two shared memory buffers:

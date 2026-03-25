@@ -329,7 +329,7 @@ comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
-- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a 256-element view of the input array starting at `block_idx.x * 256`. The Mojo [`tile` method](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile) does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.
+- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a 256-element view of the input array starting at `block_idx.x * 256`. The Mojo [`tile` method](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile) does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.
 
 - **Thread Layout**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)` creates a `256 x 1` layout that matches our block organization. This is **critical** - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.
 

@@ -17,8 +17,8 @@
 
 공유 메모리와 동기화를 수동으로 관리하는 방법을 알아봅니다.
 
-### [📐 LayoutTensor 버전](./layout_tensor.md)
+### [📐 TileTensor 버전](./layout_tensor.md)
 
-LayoutTensor에 내장된 공유 메모리 관리 기능을 활용합니다.
+TileTensor에 내장된 공유 메모리 관리 기능을 활용합니다.
 
-💡 **참고**: LayoutTensor가 성능을 유지하면서도 공유 메모리 연산을 얼마나 간소화하는지 경험해 보세요.
+💡 **참고**: TileTensor가 성능을 유지하면서도 공유 메모리 연산을 얼마나 간소화하는지 경험해 보세요.

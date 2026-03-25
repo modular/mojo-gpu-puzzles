@@ -48,7 +48,7 @@ Learn the sophisticated communication primitives from `gpu.primitives.warp`:
 
 ```mojo
 # Complex parallel reduction (traditional approach - from Puzzle 14):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
     Layout.row_major(WARP_SIZE),
     MutAnyOrigin,

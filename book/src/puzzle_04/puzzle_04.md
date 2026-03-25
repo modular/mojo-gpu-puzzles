@@ -44,10 +44,10 @@ For each position \\((i,j)\\):
 ### [🔰 Raw memory approach](./raw.md)
 Learn how 2D indexing works with manual memory management.
 
-### [📚 Learn about LayoutTensor](./introduction_layout_tensor.md)
+### [📚 Learn about TileTensor](./introduction_layout_tensor.md)
 Discover a powerful abstraction that simplifies multi-dimensional array operations and memory management on GPU.
 
 ### [🚀 Modern 2D operations](./layout_tensor.md)
-Put LayoutTensor into practice with natural 2D indexing and automatic bounds checking.
+Put TileTensor into practice with natural 2D indexing and automatic bounds checking.
 
-💡 **Note**: From this puzzle onward, we'll primarily use LayoutTensor for cleaner, safer GPU code.
+💡 **Note**: From this puzzle onward, we'll primarily use TileTensor for cleaner, safer GPU code.

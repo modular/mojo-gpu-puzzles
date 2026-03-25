@@ -4,7 +4,7 @@ from std.gpu.host import DeviceContext
 # ANCHOR: axis_sum
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 
 
 comptime TPB = 8
@@ -20,8 +20,8 @@ comptime out_layout = Layout.row_major(BATCH, 1)
 def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -44,8 +44,8 @@ def main() raises:
                 for col in range(SIZE):
                     inp_host[row * SIZE + col] = row * SIZE + col
 
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
+        var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
+        var inp_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
         comptime kernel = axis_sum[in_layout, out_layout]
         ctx.enqueue_function[kernel, kernel](

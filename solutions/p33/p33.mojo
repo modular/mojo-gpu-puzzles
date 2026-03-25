@@ -1,6 +1,6 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from layout.tensor_core import TensorCore
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.gpu.memory import async_copy_wait_all, AddressSpace
@@ -25,9 +25,9 @@ comptime THREADS_PER_BLOCK_TILED = (TILE_SIZE, TILE_SIZE)
 def matmul_idiomatic_tiled[
     layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     # Use block_dim to get actual tile size dynamically
     var tile_size_x = block_dim.x
@@ -42,13 +42,13 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[TILE_SIZE, TILE_SIZE](
         Int(block_idx.y), Int(block_idx.x)
     )
-    var a_shared = LayoutTensor[
+    var a_shared = TileTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var b_shared = LayoutTensor[
+    var b_shared = TileTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
         MutAnyOrigin,
@@ -135,9 +135,9 @@ def tensor_core_matrix_multiplication[
     MMA_N: Int,
     MMA_K: Int,
 ](
-    A: LayoutTensor[dtype, layout_a, ImmutAnyOrigin],
-    B: LayoutTensor[dtype, layout_b, ImmutAnyOrigin],
-    C: LayoutTensor[dtype, layout_c, MutAnyOrigin],
+    A: TileTensor[dtype, layout_a, ImmutAnyOrigin],
+    B: TileTensor[dtype, layout_b, ImmutAnyOrigin],
+    C: TileTensor[dtype, layout_c, MutAnyOrigin],
 ):
     comptime M = C.shape[0]()
     comptime N = C.shape[1]()
@@ -157,13 +157,13 @@ def tensor_core_matrix_multiplication[
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    var A_sram_tile = LayoutTensor[
+    var A_sram_tile = TileTensor[
         A.dtype,
         Layout.row_major(BM, BK),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var B_sram_tile = LayoutTensor[
+    var B_sram_tile = TileTensor[
         B.dtype,
         Layout.row_major(BK, BN),
         MutAnyOrigin,
@@ -171,7 +171,7 @@ def tensor_core_matrix_multiplication[
     ].stack_allocation()
 
     # One per-warp accumulator tile of shape [WM, WN]
-    var C_warp_accum = LayoutTensor[
+    var C_warp_accum = TileTensor[
         C.dtype,
         Layout.row_major(WM, WN),
         MutAnyOrigin,
@@ -289,11 +289,11 @@ def main() raises:
                             inp1_host[i * SIZE + k] * inp2_host[k * SIZE + j]
                         )
         # Create layout tensors
-        var out_tensor_core_layout = LayoutTensor[dtype, layout](
+        var out_tensor_core_layout = TileTensor[dtype, layout](
             out_tensor_core.unsafe_ptr()
         )
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp1)
-        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
+        var a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](inp1)
+        var b_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")
@@ -328,7 +328,7 @@ def main() raises:
             # Create separate buffer for tiled result
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = LayoutTensor[dtype, layout](
+            out_tiled_layout = TileTensor[dtype, layout](
                 out_tiled.unsafe_ptr()
             )
 
@@ -435,7 +435,7 @@ def main() raises:
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = LayoutTensor[dtype, layout](
+            out_tiled_layout = TileTensor[dtype, layout](
                 out_tiled.unsafe_ptr()
             )
 

@@ -27,7 +27,7 @@ The key insight is understanding how blocks of threads work together to process 
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a>
 
-> Note: The `LayoutTensor` variant of this puzzle is very similar so we leave it to the reader.
+> Note: The `TileTensor` variant of this puzzle is very similar so we leave it to the reader.
 
 <details>
 <summary><strong>Tips</strong></summary>

@@ -14,7 +14,7 @@ Implement a kernel that adds 10 to each position of a vector `a` and stores it i
 ### [🔰 Raw memory approach](./raw.md)
 Learn how to manually manage shared memory and synchronization.
 
-### [📐 LayoutTensor Version](./layout_tensor.md)
-Use LayoutTensor's built-in shared memory management features.
+### [📐 TileTensor Version](./layout_tensor.md)
+Use TileTensor's built-in shared memory management features.
 
-💡 **Note**: Experience how LayoutTensor simplifies shared memory operations while maintaining performance.
+💡 **Note**: Experience how TileTensor simplifies shared memory operations while maintaining performance.

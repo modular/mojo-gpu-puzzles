@@ -171,9 +171,9 @@ Every block reduction follows the same conceptual pattern:
 
 Each thread should handle one element pair from vectors `a` and `b`. What operation combines these into a "partial result" that can be summed across threads?
 
-### 3. **LayoutTensor indexing patterns**
+### 3. **TileTensor indexing patterns**
 
-When accessing `LayoutTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
+When accessing `TileTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
 
 ### 4. **[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) API concepts**
 

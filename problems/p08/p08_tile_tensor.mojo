@@ -1,9 +1,10 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
+# ANCHOR: add_10_shared_layout_tensor
 comptime TPB = 4
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -12,16 +13,15 @@ comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-# ANCHOR: add_10_shared_layout_tensor_solution
 def add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
-    # Allocate shared memory using tensor builder
-    var shared = LayoutTensor[
+    # Allocate shared memory using TileTensor with explicit address_space
+    var shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -34,17 +34,12 @@ def add_10_shared_layout_tensor[
     if global_i < size:
         shared[local_i] = a[global_i]
 
-    # Note: barrier is not strictly needed here since each thread only accesses
-    # its own shared memory location. However, it's included to teach proper
-    # shared memory synchronization patterns for more complex scenarios where
-    # threads need to coordinate access to shared data.
     barrier()
 
-    if global_i < size:
-        output[global_i] = shared[local_i] + 10
+    # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: add_10_shared_layout_tensor_solution
+# ANCHOR_END: add_10_shared_layout_tensor
 
 
 def main() raises:
@@ -54,8 +49,8 @@ def main() raises:
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
         a.enqueue_fill(1)
 
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](a)
 
         comptime kernel = add_10_shared_layout_tensor[layout]
         ctx.enqueue_function[kernel, kernel](

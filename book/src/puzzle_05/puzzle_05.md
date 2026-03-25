@@ -22,7 +22,7 @@ Implement a kernel that broadcast adds vector `a` and vector `b` and stores it i
 ### [🔰 Raw memory approach](./raw.md)
 Learn how to handle broadcasting with manual memory indexing.
 
-### [📐 LayoutTensor Version](./layout_tensor.md)
-Use LayoutTensor to handle mixed-dimension operations.
+### [📐 TileTensor Version](./layout_tensor.md)
+Use TileTensor to handle mixed-dimension operations.
 
-💡 **Note**: Notice how LayoutTensor simplifies broadcasting compared to manual indexing.
+💡 **Note**: Notice how TileTensor simplifies broadcasting compared to manual indexing.

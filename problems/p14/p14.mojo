@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.math import log2
 from std.testing import assert_equal
@@ -18,8 +18,8 @@ comptime layout = Layout.row_major(SIZE)
 def prefix_sum_simple[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -42,8 +42,8 @@ comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
 def prefix_sum_local_phase[
     out_layout: Layout, in_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -54,7 +54,7 @@ def prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
+](output: TileTensor[dtype, layout, MutAnyOrigin], size: UInt):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -91,8 +91,8 @@ def main() raises:
                 a_host[i] = i
 
         if use_simple:
-            a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-            out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
+            a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](a)
+            out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
 
             comptime kernel = prefix_sum_simple[layout]
             ctx.enqueue_function[kernel, kernel](
@@ -103,8 +103,8 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         else:
-            var a_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](a)
-            var out_tensor = LayoutTensor[dtype, extended_layout, MutAnyOrigin](
+            var a_tensor = TileTensor[dtype, layout_2, ImmutAnyOrigin](a)
+            var out_tensor = TileTensor[dtype, extended_layout, MutAnyOrigin](
                 out
             )
 

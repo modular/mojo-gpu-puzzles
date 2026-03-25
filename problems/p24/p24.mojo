@@ -4,7 +4,7 @@ from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace
 from std.gpu.primitives.warp import sum as warp_sum, WARP_SIZE
 from std.algorithm.functional import elementwise
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.utils import IndexList
 from std.sys import argv, simd_width_of, align_of
 from std.testing import assert_equal
@@ -34,14 +34,14 @@ comptime out_layout = Layout.row_major(1)
 def traditional_dot_product_p12_style[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var shared = LayoutTensor[
+    var shared = TileTensor[
         dtype,
         Layout.row_major(WARP_SIZE),
         MutAnyOrigin,
@@ -75,9 +75,9 @@ def traditional_dot_product_p12_style[
 def simple_warp_dot_product[
     in_layout: Layout, out_layout: Layout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     # FILL IN (6 lines at most)
@@ -95,9 +95,9 @@ def functional_warp_dot_product[
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, layout, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, layout, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -180,9 +180,9 @@ def benchmark_simple_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -230,9 +230,9 @@ def benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -274,9 +274,9 @@ def benchmark_traditional_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-    var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
-    var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
+    var a_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](a)
+    var b_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](b)
+    var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
 
     @parameter
     @always_inline
@@ -316,9 +316,9 @@ def main() raises:
             var expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
             expected.enqueue_fill(0)
 
-            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-            var b_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](b)
+            var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
+            var a_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            var b_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](b)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):

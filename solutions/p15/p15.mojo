@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
 comptime TPB = 8
@@ -18,14 +18,14 @@ comptime out_layout = Layout.row_major(BATCH, 1)
 def axis_sum[
     in_layout: Layout, out_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: UInt,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
-    var cache = LayoutTensor[
+    var cache = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -84,8 +84,8 @@ def main() raises:
                 for col in range(SIZE):
                     inp_host[row * SIZE + col] = row * SIZE + col
 
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
+        var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
+        var inp_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](inp)
 
         comptime kernel = axis_sum[in_layout, out_layout]
         ctx.enqueue_function[kernel, kernel](

@@ -1,7 +1,7 @@
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -19,9 +19,9 @@ def embedding_kernel_coalesced[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    indices: TileTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: TileTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -63,9 +63,9 @@ def embedding_kernel_2d[
     embed_dim: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    indices: TileTensor[DType.int32, indices_layout, MutAnyOrigin],
+    weights: TileTensor[dtype, weights_layout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.

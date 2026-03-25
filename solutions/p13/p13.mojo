@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -20,19 +20,19 @@ comptime conv_layout = Layout.row_major(CONV)
 def conv_1d_simple[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = Int(thread_idx.x)
-    var shared_a = LayoutTensor[
+    var shared_a = TileTensor[
         dtype,
         Layout.row_major(SIZE),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var shared_b = LayoutTensor[
+    var shared_b = TileTensor[
         dtype,
         Layout.row_major(CONV),
         MutAnyOrigin,
@@ -58,7 +58,7 @@ def conv_1d_simple[
     # Safe and correct:
     if global_i < SIZE:
         # Note: using `var` allows us to include the type in the type inference
-        # `out.element_type` is available in LayoutTensor
+        # `out.element_type` is available in TileTensor
         var local_sum: output.element_type = 0
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
@@ -86,20 +86,20 @@ comptime conv_2_layout = Layout.row_major(CONV_2)
 def conv_1d_block_boundary[
     in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    a: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    b: TileTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    var shared_a = LayoutTensor[
+    var shared_a = TileTensor[
         dtype,
         Layout.row_major(TPB + CONV_2 - 1),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var shared_b = LayoutTensor[
+    var shared_b = TileTensor[
         dtype,
         Layout.row_major(CONV_2),
         MutAnyOrigin,
@@ -158,9 +158,9 @@ def main() raises:
                 b_host[i] = i
 
         if argv()[1] == "--simple":
-            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-            var b_tensor = LayoutTensor[dtype, conv_layout, ImmutAnyOrigin](b)
+            var out_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](out)
+            var a_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](a)
+            var b_tensor = TileTensor[dtype, conv_layout, ImmutAnyOrigin](b)
             comptime kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
             ctx.enqueue_function[kernel, kernel](
                 out_tensor,
@@ -170,11 +170,11 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--block-boundary":
-            var out_tensor = LayoutTensor[dtype, out_2_layout, MutAnyOrigin](
+            var out_tensor = TileTensor[dtype, out_2_layout, MutAnyOrigin](
                 out
             )
-            var a_tensor = LayoutTensor[dtype, in_2_layout, ImmutAnyOrigin](a)
-            var b_tensor = LayoutTensor[dtype, conv_2_layout, ImmutAnyOrigin](b)
+            var a_tensor = TileTensor[dtype, in_2_layout, ImmutAnyOrigin](a)
+            var b_tensor = TileTensor[dtype, conv_2_layout, ImmutAnyOrigin](b)
             comptime kernel = conv_1d_block_boundary[
                 in_2_layout, out_2_layout, conv_2_layout, dtype
             ]

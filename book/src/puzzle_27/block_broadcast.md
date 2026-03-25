@@ -100,7 +100,7 @@ The algorithm follows the perfect block operations pattern:
 
 ### 2. **Data loading and sum computation (familiar patterns)**
 
-Load your element using the established LayoutTensor pattern:
+Load your element using the established TileTensor pattern:
 
 ```mojo
 var my_value: Scalar[dtype] = 0.0
@@ -255,7 +255,7 @@ Thread indexing (consistent across all puzzles):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Maps to input array position
   local_i = thread_idx.x                              // Position within block (0-127)
 
-Parallel element loading using LayoutTensor pattern:
+Parallel element loading using TileTensor pattern:
   Thread 0:   my_value = input_data[0][0] = 1.0    // First cycle value
   Thread 1:   my_value = input_data[1][0] = 2.0    // Second cycle value
   Thread 7:   my_value = input_data[7][0] = 8.0    // Last cycle value
@@ -376,7 +376,7 @@ Algorithm produces provably correct mathematical result.
 ### **Connection to [Puzzle 12](../puzzle_12/layout_tensor.md) (foundational patterns):**
 
 - **Thread coordination evolution**: Same `global_i`, `local_i` patterns but with block primitives
-- **Memory access patterns**: Same LayoutTensor SIMD extraction `[0]` but optimized workflow
+- **Memory access patterns**: Same TileTensor SIMD extraction `[0]` but optimized workflow
 - **Complexity elimination**: Replaces 20+ lines of manual barriers with 2 block operations
 - **Educational progression**: Manual → automated, complex → simple, error-prone → reliable
 

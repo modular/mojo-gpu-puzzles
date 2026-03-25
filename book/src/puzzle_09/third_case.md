@@ -9,7 +9,7 @@ You've learned debugging [memory crashes](./first_case.md) and [logic bugs](./se
 - **[Second Case](./second_case.md)**: Program produces wrong results → Analyze patterns → Find logic bugs
 - **Third Case**: Program hangs forever → Investigate thread states → Find coordination bugs
 
-This advanced-level debugging challenge teaches you to investigate **thread coordination failures** using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.
+This advanced-level debugging challenge teaches you to investigate **thread coordination failures** using shared memory, TileTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.
 
 **Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md), [Detective Work: First Case](./first_case.md), and [Detective Work: Second Case](./second_case.md) to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you run the setup:
 
@@ -21,7 +21,7 @@ pixi run -e nvidia setup-cuda-gdb
 
 In this debugging challenge, you'll learn about:
 - **Barrier deadlock detection**: Identifying when threads wait forever at synchronization points
-- **Shared memory coordination**: Understanding thread cooperation patterns with LayoutTensor
+- **Shared memory coordination**: Understanding thread cooperation patterns with TileTensor
 - **Conditional execution analysis**: Debugging when some threads take different code paths
 - **Thread coordination debugging**: Using CUDA-GDB to analyze multi-thread synchronization failures
 
@@ -146,7 +146,7 @@ Waiting for GPU computation to complete...
 CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07<<<(1,1,1),(4,1,1)>>> (
     output=..., a=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
-56          a: LayoutTensor[mut=False, dtype, vector_layout],
+56          a: TileTensor[mut=False, dtype, vector_layout],
 ```
 
 **🔍 Key Observations**:
@@ -158,7 +158,7 @@ CUDA thread hit application kernel entry function breakpoint, p09_collaborative_
 #### Step 4: navigate through initialization
 ```bash
 (cuda-gdb) n
-55          output: LayoutTensor[mut=True, dtype, vector_layout],
+55          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 58          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -289,11 +289,11 @@ if thread_id < SIZE - 1:    # Not all threads enter
 **The Fix**: Move the barrier outside the conditional block:
 ```mojo
 def collaborative_filter(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: TileTensor[mut=True, dtype, vector_layout],
+    a: TileTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
-    shared_workspace = LayoutTensor[
+    shared_workspace = TileTensor[
         dtype,
         Layout.row_major(SIZE-1),
         MutAnyOrigin,
@@ -339,7 +339,7 @@ def collaborative_filter(
 - **Barrier rule**: ALL threads in a block must reach the SAME barrier
 - **Conditional execution pitfalls**: Any if-statement can cause thread divergence
 - **Shared memory coordination**: Requires careful barrier placement for correct synchronization
-- **LayoutTensor doesn't prevent deadlocks**: Higher-level abstractions still need correct synchronization
+- **TileTensor doesn't prevent deadlocks**: Higher-level abstractions still need correct synchronization
 
 **💡 Key Insight**: Barrier deadlocks are among the hardest GPU bugs to debug because:
 - **No visible error** - just infinite waiting

@@ -2,7 +2,7 @@ from std.memory import UnsafePointer
 from std.gpu import thread_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 from std.sys import argv
 
@@ -29,8 +29,8 @@ def add_10(
 
 # ANCHOR: second_crash
 def process_sliding_window(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, vector_layout, MutAnyOrigin],
+    a: TileTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
@@ -52,13 +52,13 @@ def process_sliding_window(
 
 # ANCHOR: third_crash
 def collaborative_filter(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, vector_layout, MutAnyOrigin],
+    a: TileTensor[dtype, vector_layout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    var shared_workspace = LayoutTensor[
+    var shared_workspace = TileTensor[
         dtype,
         Layout.row_major(SIZE - 1),
         MutAnyOrigin,
@@ -139,11 +139,11 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = i
 
-            # Create LayoutTensors for structured access
-            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
+            # Create TileTensors for structured access
+            input_tensor = TileTensor[dtype, vector_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+            output_tensor = TileTensor[dtype, vector_layout, MutAnyOrigin](
                 output_buf
             )
 
@@ -216,11 +216,11 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = i + 1
 
-            # Create LayoutTensors
-            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
+            # Create TileTensors
+            input_tensor = TileTensor[dtype, vector_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
+            output_tensor = TileTensor[dtype, vector_layout, MutAnyOrigin](
                 output_buf
             )
 

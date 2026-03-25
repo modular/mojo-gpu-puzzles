@@ -152,7 +152,7 @@ if local_i == tpb - 1:  # 블록의 마지막 스레드
 
 이전 퍼즐의 패턴을 기억하세요:
 
-- `LayoutTensor` 인덱싱은 SIMD를 반환: `input_data[i][0]`
+- `TileTensor` 인덱싱은 SIMD를 반환: `input_data[i][0]`
 - `block.prefix_sum()`은 SIMD를 반환: `offset[0]`으로 추출
 - 배열 인덱싱은 `Int`가 필요: `bin_output[...]`에 `Int(offset[0])`
 
@@ -261,7 +261,7 @@ Bin 7 extracted elements:
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 전역 요소 인덱스
   local_i = thread_idx.x                               // 로컬 스레드 인덱스
 
-요소 로딩 (LayoutTensor 패턴과 동일):
+요소 로딩 (TileTensor 패턴과 동일):
   스레드 0:  my_value = input_data[0][0] = 0.00
   스레드 1:  my_value = input_data[1][0] = 0.01
   스레드 13: my_value = input_data[13][0] = 0.13
@@ -334,7 +334,7 @@ belongs_to_target=1인 스레드만 기록:
 
 - **동일한 스레드 인덱싱**: `global_i`와 `local_i` 패턴
 - **동일한 경계 검사**: `if global_i < size` 검증
-- **동일한 데이터 로딩**: `[0]`을 사용한 LayoutTensor SIMD 추출
+- **동일한 데이터 로딩**: `[0]`을 사용한 TileTensor SIMD 추출
 
 ### **[`block.sum()`](./block_sum.md) (이 퍼즐의 앞부분)과의 연결:**
 

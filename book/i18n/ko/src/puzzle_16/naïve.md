@@ -110,7 +110,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-LayoutTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:
+TileTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:
 
 ### 행렬 레이아웃 (2×2 예시)
 

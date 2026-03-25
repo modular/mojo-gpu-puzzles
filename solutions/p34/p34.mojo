@@ -8,7 +8,7 @@ from std.gpu.primitives.cluster import (
     elect_one_sync,
 )
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal, assert_true
 
@@ -24,8 +24,8 @@ comptime out_layout = Layout.row_major(1)
 def cluster_coordination_basics[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    input: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -36,7 +36,7 @@ def cluster_coordination_basics[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = Int(block_idx.x)
 
-    var shared_data = LayoutTensor[
+    var shared_data = TileTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
@@ -79,9 +79,9 @@ def cluster_coordination_basics[
 def cluster_collective_operations[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    input: TileTensor[dtype, in_layout, ImmutAnyOrigin],
+    temp_storage: TileTensor[
         dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
     ],
     size: Int,
@@ -98,7 +98,7 @@ def cluster_collective_operations[
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    var shared_mem = LayoutTensor[
+    var shared_mem = TileTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
@@ -137,8 +137,8 @@ def cluster_collective_operations[
 def advanced_cluster_patterns[
     in_layout: Layout, out_layout: Layout, tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    input: TileTensor[dtype, in_layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -148,7 +148,7 @@ def advanced_cluster_patterns[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = Int(block_idx.x)
 
-    var shared_data = LayoutTensor[
+    var shared_data = TileTensor[
         dtype,
         Layout.row_major(tpb),
         MutAnyOrigin,
@@ -216,10 +216,10 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Float32(i % 10) * 0.1
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
+            input_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[
+            output_tensor = TileTensor[
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](output_buf)
 
@@ -280,13 +280,13 @@ def main() raises:
 
             print("Expected sum:", expected_sum)
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
+            input_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            var output_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
+            var output_tensor = TileTensor[dtype, out_layout, MutAnyOrigin](
                 output_buf
             )
-            var temp_tensor = LayoutTensor[
+            var temp_tensor = TileTensor[
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](temp_buf)
 
@@ -332,10 +332,10 @@ def main() raises:
                         Float32(i % 50) * 0.02
                     )  # Pattern for testing
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
+            input_tensor = TileTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
             )
-            output_tensor = LayoutTensor[
+            output_tensor = TileTensor[
                 dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
             ](output_buf)
 

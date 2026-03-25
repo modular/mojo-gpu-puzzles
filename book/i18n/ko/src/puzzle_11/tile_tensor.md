@@ -2,7 +2,7 @@
 
 ## 개요
 
-1D LayoutTensor `a`에서 각 위치의 직전 3개 값의 합을 계산하여 1D LayoutTensor `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다._
 
@@ -10,12 +10,12 @@
 
 이 퍼즐에서 배울 내용:
 
-- LayoutTensor로 슬라이딩 윈도우 연산 구현하기
-- [Puzzle 8](../puzzle_08/layout_tensor.md)에서 다룬 LayoutTensor 주소 공간(address_space)으로 공유 메모리 관리하기
+- TileTensor로 슬라이딩 윈도우 연산 구현하기
+- [Puzzle 8](../puzzle_08/layout_tensor.md)에서 다룬 TileTensor 주소 공간(address_space)으로 공유 메모리 관리하기
 - 효율적인 이웃 접근 패턴
 - 경계 조건 처리
 
-핵심은 LayoutTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.
+핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.
 
 ## 구성
 
@@ -26,7 +26,7 @@
 
 참고:
 
-- **LayoutTensor 할당**: `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` 사용
+- **TileTensor 할당**: `TileTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` 사용
 - **윈도우 접근**: 3개짜리 윈도우에 자연스러운 인덱싱
 - **경계 처리**: 처음 두 위치는 특수 케이스
 - **메모리 패턴**: 스레드당 공유 메모리 로드 1회
@@ -44,7 +44,7 @@
 
 <div class="solution-tips">
 
-1. LayoutTensor와 주소 공간(address_space)으로 공유 메모리 생성
+1. TileTensor와 주소 공간(address_space)으로 공유 메모리 생성
 2. 자연스러운 인덱싱으로 데이터 로드: `shared[local_i] = a[global_i]`
 3. 처음 두 위치를 특수 케이스로 처리
 4. 윈도우 연산에 공유 메모리 활용
@@ -112,13 +112,13 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 <div class="solution-explanation">
 
-LayoutTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:
+TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:
 
 1. **공유 메모리 설정**
-   - LayoutTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:
+   - TileTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:
 
      ```txt
-     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+     shared = TileTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - 각 스레드가 하나씩 로드:
@@ -153,7 +153,7 @@ LayoutTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 
      ...
      ```
 
-   - LayoutTensor의 자연스러운 인덱싱:
+   - TileTensor의 자연스러운 인덱싱:
 
      ```txt
      # 3개짜리 슬라이딩 윈도우
@@ -163,13 +163,13 @@ LayoutTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 
 4. **메모리 접근 패턴**
    - 스레드마다 공유 텐서로 전역 읽기 1회
    - 공유 메모리를 통한 효율적인 이웃 접근
-   - LayoutTensor의 장점:
+   - TileTensor의 장점:
      - 자동 경계 검사
      - 자연스러운 윈도우 인덱싱
      - 레이아웃을 인식하는 메모리 접근
      - 전 과정에 걸친 타입 안전성
 
-공유 메모리의 성능과 LayoutTensor의 안전성 및 편의성을 결합한 방식입니다:
+공유 메모리의 성능과 TileTensor의 안전성 및 편의성을 결합한 방식입니다:
 
 - 전역 메모리 접근 최소화
 - 윈도우 연산 간소화

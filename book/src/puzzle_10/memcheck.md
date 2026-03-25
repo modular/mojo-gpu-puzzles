@@ -6,7 +6,7 @@ Learn how to detect memory violations that can silently corrupt GPU programs, ev
 
 **Key insight**: A GPU program can produce "correct" results while simultaneously performing illegal memory accesses.
 
-**Prerequisites**: Understanding of [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md) and basic GPU memory concepts.
+**Prerequisites**: Understanding of [Puzzle 4 TileTensor](../puzzle_04/introduction_layout_tensor.md) and basic GPU memory concepts.
 
 ## The silent memory bug discovery
 

@@ -10,7 +10,7 @@ This puzzle covers:
 
 - **Functional GPU programming** with `elementwise`
 - **Automatic SIMD vectorization** within GPU threads
-- **LayoutTensor operations** for safe memory access
+- **TileTensor operations** for safe memory access
 - **GPU thread hierarchy** vs SIMD operations
 - **Capturing semantics** in nested functions
 

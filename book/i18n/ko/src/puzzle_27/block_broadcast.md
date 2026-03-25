@@ -102,7 +102,7 @@ output[global_i] = my_value / mean
 
 ### 2. **데이터 로딩과 합계 계산 (익숙한 패턴)**
 
-기존 LayoutTensor 패턴으로 요소를 로드합니다:
+기존 TileTensor 패턴으로 요소를 로드합니다:
 
 ```mojo
 var my_value: Scalar[dtype] = 0.0
@@ -257,7 +257,7 @@ Output mean: 1.0
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 입력 배열 위치에 매핑
   local_i = thread_idx.x                              // 블록 내 위치 (0-127)
 
-LayoutTensor 패턴을 사용한 병렬 요소 로딩:
+TileTensor 패턴을 사용한 병렬 요소 로딩:
   스레드 0:   my_value = input_data[0][0] = 1.0    // 첫 번째 순환 값
   스레드 1:   my_value = input_data[1][0] = 2.0    // 두 번째 순환 값
   스레드 7:   my_value = input_data[7][0] = 8.0    // 마지막 순환 값
@@ -378,7 +378,7 @@ block.broadcast() 실행 후:
 ### **[Puzzle 12](../puzzle_12/layout_tensor.md) (기초 패턴)과의 연결:**
 
 - **스레드 조율의 진화**: 동일한 `global_i`, `local_i` 패턴이지만 블록 기본 요소 사용
-- **메모리 접근 패턴**: 동일한 LayoutTensor SIMD 추출 `[0]`이지만 최적화된 워크플로우
+- **메모리 접근 패턴**: 동일한 TileTensor SIMD 추출 `[0]`이지만 최적화된 워크플로우
 - **복잡성 제거**: 20줄 이상의 수동 배리어를 2개의 블록 연산으로 대체
 - **교육적 진행**: 수동 → 자동, 복잡 → 단순, 오류 발생 가능 → 신뢰성
 

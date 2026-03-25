@@ -2,28 +2,28 @@
 
 ## Overview
 
-Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).
+Implement a kernel that multiplies square matrices \\(A\\) and \\(B\\) using tiled matrix multiplication with TileTensor. This approach handles large matrices by processing them in smaller chunks (tiles).
 
 ## Key concepts
 
-- Matrix tiling with LayoutTensor for efficient computation
+- Matrix tiling with TileTensor for efficient computation
 - Multi-block coordination with proper layouts
 - Efficient shared memory usage through TensorBuilder
-- Boundary handling for tiles with LayoutTensor indexing
+- Boundary handling for tiles with TileTensor indexing
 
 ## Configuration
 
 - Matrix size: \\(\\text{SIZE\_TILED} = 9\\)
 - Threads per block: \\(\\text{TPB} \times \\text{TPB} = 3 \times 3\\)
 - Grid dimensions: \\(3 \times 3\\) blocks
-- Shared memory: Two \\(\\text{TPB} \times \\text{TPB}\\) LayoutTensors per block
+- Shared memory: Two \\(\\text{TPB} \times \\text{TPB}\\) TileTensors per block
 
 Layout configuration:
 
 - Input A: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
 - Input B: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
 - Output: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- Shared Memory: Two `TPB × TPB` LayoutTensors using TensorBuilder
+- Shared Memory: Two `TPB × TPB` TileTensors using TensorBuilder
 
 ## Tiling strategy
 
@@ -35,7 +35,7 @@ Grid Layout (3×3):           Thread Layout per Block (3×3):
 [B10][B11][B12]               [T10 T11 T12]
 [B20][B21][B22]               [T20 T21 T22]
 
-Each block processes a tile using LayoutTensor indexing
+Each block processes a tile using TileTensor indexing
 ```
 
 ### Tile processing steps
@@ -316,7 +316,7 @@ Key performance features:
 
 This implementation achieves high performance through:
 
-- Efficient use of LayoutTensor for memory access
+- Efficient use of TileTensor for memory access
 - Optimal tiling strategy
 - Proper thread synchronization
 - Careful boundary handling
@@ -324,7 +324,7 @@ This implementation achieves high performance through:
 </div>
 </details>
 
-## Solution: Idiomatic LayoutTensor tiling
+## Solution: Idiomatic TileTensor tiling
 
 <details class="solution-details">
 <summary></summary>
@@ -335,7 +335,7 @@ This implementation achieves high performance through:
 
 <div class="solution-explanation">
 
-The idiomatic tiled matrix multiplication leverages Mojo's LayoutTensor API and asynchronous memory operations for a beautifully clean implementation.
+The idiomatic tiled matrix multiplication leverages Mojo's TileTensor API and asynchronous memory operations for a beautifully clean implementation.
 
 **🔑 Key Point: This implementation performs standard matrix multiplication A × B using coalesced loading for both matrices.**
 
@@ -354,7 +354,7 @@ The idiomatic tiled matrix multiplication leverages Mojo's LayoutTensor API and 
 
 With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates all boundary checks:
 
-1. **LayoutTensor tile API**
+1. **TileTensor tile API**
 
    ```mojo
    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
@@ -362,7 +362,7 @@ With the \\((9 \times 9)\\) matrix size, we get perfect tiling that eliminates a
    b_tile = b.tile[TPB, TPB](idx, block_idx.x)
    ```
 
-   This directly expresses "get the tile at position (block_idx.y, block_idx.x)" without manual coordinate calculation. See the [documentation](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile) for more details.
+   This directly expresses "get the tile at position (block_idx.y, block_idx.x)" without manual coordinate calculation. See the [documentation](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile) for more details.
 
 2. **Asynchronous memory operations**
 
@@ -465,7 +465,7 @@ This implementation shows how high-level abstractions can express complex GPU al
 
 | Feature | Manual Tiling | Idiomatic Tiling |
 |---------|--------------|------------------|
-| Memory access | Direct indexing with bounds checks | LayoutTensor tile API |
+| Memory access | Direct indexing with bounds checks | TileTensor tile API |
 | Tile loading | Explicit element-by-element copying | Dedicated copy engine bulk transfers |
 | Shared memory | Manual initialization (defensive) | Managed by copy functions |
 | Code complexity | More verbose with explicit indexing | More concise with higher-level APIs |

@@ -1,6 +1,6 @@
 ## Overview
 
-Implement a kernel that compute the running sum of the last 3 positions of 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that compute the running sum of the last 3 positions of 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
 **Note:** _You have 1 thread per position. You only need 1 global read and 1 global write per thread._
 
@@ -8,12 +8,12 @@ Implement a kernel that compute the running sum of the last 3 positions of 1D La
 
 In this puzzle, you'll learn about:
 
-- Using LayoutTensor for sliding window operations
-- Managing shared memory with LayoutTensor address_space that we saw in [puzzle_08](../puzzle_08/layout_tensor.md)
+- Using TileTensor for sliding window operations
+- Managing shared memory with TileTensor address_space that we saw in [puzzle_08](../puzzle_08/layout_tensor.md)
 - Efficient neighbor access patterns
 - Boundary condition handling
 
-The key insight is how LayoutTensor simplifies shared memory management while maintaining efficient window-based operations.
+The key insight is how TileTensor simplifies shared memory management while maintaining efficient window-based operations.
 
 ## Configuration
 
@@ -24,7 +24,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 Notes:
 
-- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- **TileTensor allocation**: Use `TileTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
 - **Window access**: Natural indexing for 3-element windows
 - **Edge handling**: Special cases for first two positions
 - **Memory pattern**: One shared memory load per thread
@@ -42,7 +42,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Create shared memory with LayoutTensor using address_space
+1. Create shared memory with TileTensor using address_space
 2. Load data with natural indexing: `shared[local_i] = a[global_i]`
 3. Handle special cases for first two elements
 4. Use shared memory for window operations
@@ -110,13 +110,13 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 <div class="solution-explanation">
 
-The solution implements a sliding window sum using LayoutTensor with these key steps:
+The solution implements a sliding window sum using TileTensor with these key steps:
 
 1. **Shared memory setup**
-   - LayoutTensor creates block-local storage with address_space:
+   - TileTensor creates block-local storage with address_space:
 
      ```txt
-     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+     shared = TileTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
      ```
 
    - Each thread loads one element:
@@ -151,7 +151,7 @@ The solution implements a sliding window sum using LayoutTensor with these key s
      ...
      ```
 
-   - Natural indexing with LayoutTensor:
+   - Natural indexing with TileTensor:
 
      ```txt
      # Sliding window of 3 elements
@@ -161,13 +161,13 @@ The solution implements a sliding window sum using LayoutTensor with these key s
 4. **Memory access pattern**
    - One global read per thread into shared tensor
    - Efficient neighbor access through shared memory
-   - LayoutTensor benefits:
+   - TileTensor benefits:
      - Automatic bounds checking
      - Natural window indexing
      - Layout-aware memory access
      - Type safety throughout
 
-This approach combines the performance of shared memory with LayoutTensor's safety and ergonomics:
+This approach combines the performance of shared memory with TileTensor's safety and ergonomics:
 
 - Minimizes global memory access
 - Simplifies window operations

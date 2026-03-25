@@ -8,7 +8,7 @@
 
 **핵심 통찰**: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에 "올바른" 결과를 만들어낼 수 있습니다.
 
-**선행 학습**: [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md)와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.
+**선행 학습**: [Puzzle 4 TileTensor](../puzzle_04/introduction_layout_tensor.md)와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.
 
 ## 조용한 메모리 버그의 발견
 

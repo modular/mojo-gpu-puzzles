@@ -1,6 +1,6 @@
 # Simple Case with Single Block
 
-Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output`.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
 
@@ -41,7 +41,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory allocation
+1. Use `TileTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory allocation
 2. Load input to `shared_a[local_i]` and kernel to `shared_b[local_i]`
 3. Call `barrier()` after loading
 4. Sum products within bounds: `if local_i + j < SIZE`
@@ -177,7 +177,7 @@ Kernel b:        [0  1  2]
    - Uses `var` for proper type inference with `output.element_type`
    - Employs `@parameter` decorator to unroll the convolution loop at compile time
    - Maintains strict bounds checking for memory safety
-   - Leverages LayoutTensor's type system for better code safety
+   - Leverages TileTensor's type system for better code safety
 
 3. **Memory Management**:
    - Uses shared memory for both input array and kernel

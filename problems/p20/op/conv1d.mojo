@@ -2,7 +2,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -19,20 +19,20 @@ def conv1d_kernel[
     conv_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
-    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
+    output: TileTensor[dtype, out_layout, MutAnyOrigin],
+    input: TileTensor[dtype, in_layout, MutAnyOrigin],
+    kernel: TileTensor[dtype, conv_layout, MutAnyOrigin],
 ):
     var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
     var local_i = Int(thread_idx.x)
     # first: need to account for padding
-    var shared_a = LayoutTensor[
+    var shared_a = TileTensor[
         dtype,
         Layout.row_major(TPB + conv_size - 1),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var shared_b = LayoutTensor[
+    var shared_b = TileTensor[
         dtype,
         Layout.row_major(conv_size),
         MutAnyOrigin,

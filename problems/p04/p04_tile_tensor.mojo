@@ -1,6 +1,6 @@
 from std.gpu import thread_idx
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
 # ANCHOR: add_10_2d_layout_tensor
@@ -12,8 +12,8 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 def add_10_2d(
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, MutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, MutAnyOrigin],
     size: UInt,
 ):
     var row = thread_idx.y
@@ -28,7 +28,7 @@ def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out_buf)
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out_buf)
         print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
 
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
@@ -41,7 +41,7 @@ def main() raises:
                 a_host[i] = i
                 expected[i] = a_host[i] + 10
 
-        var a_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)
+        var a_tensor = TileTensor[dtype, layout, MutAnyOrigin](a)
 
         ctx.enqueue_function[add_10_2d, add_10_2d](
             out_tensor,

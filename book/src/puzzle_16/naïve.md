@@ -108,7 +108,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-The naive matrix multiplication using LayoutTensor follows this basic approach:
+The naive matrix multiplication using TileTensor follows this basic approach:
 
 ### Matrix layout (2×2 example)
 

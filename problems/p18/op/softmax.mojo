@@ -4,7 +4,7 @@ from std.memory import UnsafePointer
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.math import exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
@@ -22,8 +22,8 @@ def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
@@ -41,8 +41,8 @@ def softmax_cpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
@@ -71,10 +71,10 @@ struct SoftmaxCustomOp:
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
-        var output_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
+        var output_tensor = rebind[TileTensor[dtype, layout, MutAnyOrigin]](
             output.to_layout_tensor()
         )
-        var input_tensor = rebind[LayoutTensor[dtype, layout, ImmutAnyOrigin]](
+        var input_tensor = rebind[TileTensor[dtype, layout, ImmutAnyOrigin]](
             input.to_layout_tensor()
         )
 

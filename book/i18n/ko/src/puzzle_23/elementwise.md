@@ -12,7 +12,7 @@
 
 - `elementwise`를 활용한 **함수형 GPU 프로그래밍**
 - GPU 스레드 내의 **자동 SIMD 벡터화**
-- 안전한 메모리 접근을 위한 **LayoutTensor 연산**
+- 안전한 메모리 접근을 위한 **TileTensor 연산**
 - **GPU 스레드 계층 구조** vs SIMD 연산
 - 중첩 함수에서의 **캡처 의미론**
 

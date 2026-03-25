@@ -173,9 +173,9 @@ Just like warp.sum() but for the entire block
 
 각 스레드는 벡터 `a`와 `b`에서 하나의 요소 쌍을 처리해야 합니다. 이들을 스레드 간에 합산할 수 있는 "부분 결과"로 합치는 연산은 무엇일까요?
 
-### 3. **LayoutTensor 인덱싱 패턴**
+### 3. **TileTensor 인덱싱 패턴**
 
-`LayoutTensor` 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요. 산술 연산을 위해 스칼라 값을 추출해야 합니다.
+`TileTensor` 요소에 접근할 때, 인덱싱이 SIMD 값을 반환한다는 점을 기억하세요. 산술 연산을 위해 스칼라 값을 추출해야 합니다.
 
 ### 4. **[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) API 개념**
 

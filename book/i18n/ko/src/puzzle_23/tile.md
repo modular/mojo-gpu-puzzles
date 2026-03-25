@@ -60,7 +60,7 @@ num_tiles = (size + tile_size - 1) // tile_size  # 올림 나눗셈
 
 ### 2. **타일 추출 패턴**
 
-[LayoutTensor `.tile` 문서](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile)를 참고하세요.
+[TileTensor `.tile` 문서](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)를 참고하세요.
 
 ```mojo
 tile_id = indices[0]  # 각 스레드가 처리할 타일 하나를 받음

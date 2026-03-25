@@ -1,7 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace, async_copy_wait_all
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_equal, assert_almost_equal
@@ -23,9 +23,9 @@ comptime layout_async = Layout.row_major(VECTOR_SIZE)
 def async_copy_overlap_convolution[
     dtype: DType, layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
+    kernel: TileTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -34,13 +34,13 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
+    var input_shared = TileTensor[
         dtype,
         Layout.row_major(CONV_TILE_SIZE),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var kernel_shared = LayoutTensor[
+    var kernel_shared = TileTensor[
         dtype,
         Layout.row_major(KERNEL_SIZE),
         MutAnyOrigin,
@@ -73,13 +73,13 @@ def test_async_copy_overlap_convolution() raises:
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Float32(i + 1)
 
-        var input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
+        var input_tensor = TileTensor[dtype, layout_async, ImmutAnyOrigin](
             input_buf
         )
-        var output_tensor = LayoutTensor[dtype, layout_async, MutAnyOrigin](
+        var output_tensor = TileTensor[dtype, layout_async, MutAnyOrigin](
             output_buf
         )
-        var kernel_tensor = LayoutTensor[
+        var kernel_tensor = TileTensor[
             mut=False, dtype, Layout.row_major(KERNEL_SIZE)
         ](kernel_buf)
 

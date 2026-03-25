@@ -156,7 +156,7 @@ This book takes you on a journey from first principles to advanced GPU programmi
 
 - Learn thread indexing and block organization
 - Understand memory access patterns and guards
-- Work with both raw pointers and LayoutTensor abstractions
+- Work with both raw pointers and TileTensor abstractions
 - Learn shared memory basics for inter-thread communication
 
 **Part II: Debugging GPU programs (Puzzles 9-10) ✅**
@@ -226,7 +226,7 @@ This book takes you on a journey from first principles to advanced GPU programmi
 - Program tensor cores for AI workloads
 - Learn cluster programming in modern GPUs
 
-The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo's LayoutTensor abstractions. This provides both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.
+The book uniquely challenges the status quo approach by first building understanding with low-level memory manipulation, then gradually transitioning to Mojo's TileTensor abstractions. This provides both deep understanding of GPU memory patterns and practical knowledge of modern tensor-based approaches.
 
 ## Ready to get started?
 

@@ -1,27 +1,27 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from std.testing import assert_equal
 
-# ANCHOR: pooling_layout_tensor
-comptime TPB = 8
+comptime TPB = 4
 comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (1, 1)
+comptime BLOCKS_PER_GRID = (2, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
 
 
-def pooling[
+# ANCHOR: add_10_shared_layout_tensor_solution
+def add_10_shared_layout_tensor[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    a: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: UInt,
 ):
     # Allocate shared memory using tensor builder
-    var shared = LayoutTensor[
+    var shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -30,10 +30,21 @@ def pooling[
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    # FIX ME IN (roughly 10 lines)
+
+    if global_i < size:
+        shared[local_i] = a[global_i]
+
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
+    barrier()
+
+    if global_i < size:
+        output[global_i] = shared[local_i] + 10
 
 
-# ANCHOR_END: pooling_layout_tensor
+# ANCHOR_END: add_10_shared_layout_tensor_solution
 
 
 def main() raises:
@@ -41,16 +52,13 @@ def main() raises:
         var out = ctx.enqueue_create_buffer[dtype](SIZE)
         out.enqueue_fill(0)
         var a = ctx.enqueue_create_buffer[dtype](SIZE)
-        a.enqueue_fill(0)
+        a.enqueue_fill(1)
 
-        with a.map_to_host() as a_host:
-            for i in range(SIZE):
-                a_host[i] = i
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var a_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](a)
 
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-
-        ctx.enqueue_function[pooling[layout], pooling[layout]](
+        comptime kernel = add_10_shared_layout_tensor[layout]
+        ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
             UInt(SIZE),
@@ -59,20 +67,12 @@ def main() raises:
         )
 
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE)
-        expected.enqueue_fill(0)
+        expected.enqueue_fill(11)
         ctx.synchronize()
-
-        with a.map_to_host() as a_host:
-            var ptr = a_host
-            for i in range(SIZE):
-                var s = Scalar[dtype](0)
-                for j in range(max(i - 2, 0), i + 1):
-                    s += ptr[j]
-                expected[i] = s
 
         with out.map_to_host() as out_host:
             print("out:", out_host)
             print("expected:", expected)
             for i in range(SIZE):
                 assert_equal(out_host[i], expected[i])
-            print("Puzzle 11 complete ✅")
+            print("Puzzle 08 complete ✅")

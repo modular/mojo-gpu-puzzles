@@ -9,7 +9,7 @@ from std.gpu.sync import (
 )
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace, async_copy_wait_all
-from layout import Layout, LayoutTensor
+from layout import Layout, TileTensor
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_true, assert_almost_equal
@@ -32,8 +32,8 @@ comptime BLUR_RADIUS = 2
 def multi_stage_image_blur_pipeline[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -44,13 +44,13 @@ def multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = LayoutTensor[
+    var input_shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var blur_shared = LayoutTensor[
+    var blur_shared = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -91,8 +91,8 @@ comptime BUFFER_COUNT = 2
 def double_buffered_stencil_computation[
     layout: Layout
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[dtype, layout, MutAnyOrigin],
+    input: TileTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -102,13 +102,13 @@ def double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = LayoutTensor[
+    var buffer_A = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var buffer_B = LayoutTensor[
+    var buffer_B = TileTensor[
         dtype,
         Layout.row_major(TPB),
         MutAnyOrigin,
@@ -116,19 +116,19 @@ def double_buffered_stencil_computation[
     ].stack_allocation()
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = LayoutTensor[
+    var init_barrier = TileTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var iter_barrier = LayoutTensor[
+    var iter_barrier = TileTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var final_barrier = LayoutTensor[
+    var final_barrier = TileTensor[
         DType.uint64,
         Layout.row_major(1),
         MutAnyOrigin,
@@ -205,9 +205,9 @@ def test_multi_stage_pipeline() raises:
                 # Create a simple wave pattern for blurring
                 inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
 
-        # Create LayoutTensors
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        # Create TileTensors
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var inp_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         comptime kernel = multi_stage_image_blur_pipeline[layout]
         ctx.enqueue_function[kernel, kernel](
@@ -267,9 +267,9 @@ def test_double_buffered_stencil() raises:
                 # Create a step pattern that will be smoothed by stencil
                 inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
 
-        # Create LayoutTensors for Puzzle 29B
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        # Create TileTensors for Puzzle 29B
+        var out_tensor = TileTensor[dtype, layout, MutAnyOrigin](out)
+        var inp_tensor = TileTensor[dtype, layout, ImmutAnyOrigin](inp)
 
         comptime kernel = double_buffered_stencil_computation[layout]
         ctx.enqueue_function[kernel, kernel](

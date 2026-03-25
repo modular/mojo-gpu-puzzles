@@ -259,8 +259,8 @@ def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: TileTensor[mut=True, dtype, layout],
+    input: TileTensor[mut=False, dtype, layout],
 )
 ```
 
@@ -275,8 +275,8 @@ def softmax_gpu_kernel[
 #### 공유 메모리 할당
 
 ```mojo
-shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_max = TileTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_sum = TileTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
 ```
 
 커널은 두 개의 공유 메모리 버퍼를 할당합니다:

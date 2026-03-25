@@ -50,7 +50,7 @@ Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 
 ```mojo
 # 복잡한 병렬 리덕션 (기존 방식 - Puzzle 14 참고):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
     Layout.row_major(WARP_SIZE),
     MutAnyOrigin,

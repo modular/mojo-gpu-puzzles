@@ -59,7 +59,7 @@
 | kernel code | 커널 코드 | GPU에서 병렬로 실행되는 코드 |
 | lane | 레인 | 워프 내 각 스레드의 위치 (0-31) |
 | latency | 지연 시간 | 작업이 완료될 때까지 기다리는 시간 |
-| LayoutTensor | LayoutTensor | Mojo의 다차원 배열 추상화 타입 |
+| TileTensor | TileTensor | Mojo의 다차원 배열 추상화 타입 |
 | lockstep | 록스텝 | 워프 내 모든 스레드가 동일 명령을 동시에 실행하는 모드. SIMT의 핵심 동작 방식 |
 | loop unrolling | 루프 전개 | 반복문을 펼쳐서 반복 오버헤드를 줄이는 컴파일러 최적화 기법 |
 | marshalling | 마샬링 | 서로 다른 시스템 간 데이터 형식을 변환하는 과정. PyTorch 텐서와 Mojo GPU 커널 사이의 데이터 변환 등 |
