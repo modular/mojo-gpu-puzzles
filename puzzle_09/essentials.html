@@ -449,7 +449,13 @@ pixi run mojo debug solutions/p01/p01.mojo
 <p>Output:</p>
 <pre><code>Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 </code></pre>
-<p>The debugger found your main function and will pause execution there.</p>
+<p>Or it may look like:</p>
+<pre><code>Breakpoint 1: no locations (pending).
+WARNING: Unable to resolve breakpoint to any actual locations.
+</code></pre>
+<p>If the breakpoint appears as pending, this is expected. Mojo programs are JIT-compiled, which means the debugger may not be able to resolve symbols until the program begins execution. In this case the breakpoint is registered, but LLDB cannot yet bind it to a concrete instruction address.</p>
+<p>Once execution starts and the module is compiled, LLDB resolves the breakpoint automatically.</p>
+<p>In either case the breakpoint has been set successfully and execution will pause there once the program runs.</p>
 <p><strong>Step 2: Start your program</strong></p>
 <pre><code class="language-bash">(lldb) run
 </code></pre>
