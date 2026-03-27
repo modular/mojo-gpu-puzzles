@@ -294,10 +294,10 @@ for i in range(tile_size):
 </code></pre>
 <p>This <code>@parameter</code> loop unrolls at compile-time for optimal performance.</p>
 <h3 id="4-simd-operations-within-tile-elements"><a class="header" href="#4-simd-operations-within-tile-elements">4. <strong>SIMD operations within tile elements</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](i, 0)  # Load from position i in tile
-b_vec = b_tile.load[simd_width](i, 0)  # Load from position i in tile
+<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
+b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
 result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
-out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
+out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 </code></pre>
 <h3 id="5-thread-configuration-difference"><a class="header" href="#5-thread-configuration-difference">5. <strong>Thread configuration difference</strong></a></h3>
 <pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
@@ -435,10 +435,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 <h3 id="3-sequential-processing-deep-dive"><a class="header" href="#3-sequential-processing-deep-dive">3. <strong>Sequential processing deep dive</strong></a></h3>
 <pre><code class="language-mojo">@parameter
 for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](i, 0)
-    b_vec = b_tile.load[simd_width](i, 0)
+    a_vec = a_tile.load[simd_width](Index(i))
+    b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
-    out_tile.store[simd_width](i, 0, ret)
+    out_tile.store[simd_width](Index(i), ret)
 </code></pre>
 <p><strong>Why sequential processing?</strong></p>
 <ul>

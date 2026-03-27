@@ -13627,7 +13627,7 @@ b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GP
 </code></pre>
 <p>This performs element-wise addition across the entire SIMD vector (if supported) in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">output.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
@@ -13754,7 +13754,7 @@ def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; No
 a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
 b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](Index(global_start), ret)     # Store: 4 results simultaneously (GPU-dependent)
+output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
@@ -13951,10 +13951,10 @@ for i in range(tile_size):
 </code></pre>
 <p>This <code>@parameter</code> loop unrolls at compile-time for optimal performance.</p>
 <h3 id="4-simd-operations-within-tile-elements"><a class="header" href="#4-simd-operations-within-tile-elements">4. <strong>SIMD operations within tile elements</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](i, 0)  # Load from position i in tile
-b_vec = b_tile.load[simd_width](i, 0)  # Load from position i in tile
+<pre><code class="language-mojo">a_vec = a_tile.load[simd_width](Index(i))  # Load from position i in tile
+b_vec = b_tile.load[simd_width](Index(i))  # Load from position i in tile
 result = a_vec + b_vec                 # SIMD addition (GPU-dependent width)
-out_tile.store[simd_width](i, 0, result)  # Store to position i in tile
+out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 </code></pre>
 <h3 id="5-thread-configuration-difference"><a class="header" href="#5-thread-configuration-difference">5. <strong>Thread configuration difference</strong></a></h3>
 <pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
@@ -14092,10 +14092,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← Elements 992-1023
 <h3 id="3-sequential-processing-deep-dive"><a class="header" href="#3-sequential-processing-deep-dive">3. <strong>Sequential processing deep dive</strong></a></h3>
 <pre><code class="language-mojo">@parameter
 for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](i, 0)
-    b_vec = b_tile.load[simd_width](i, 0)
+    a_vec = a_tile.load[simd_width](Index(i))
+    b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
-    out_tile.store[simd_width](i, 0, ret)
+    out_tile.store[simd_width](Index(i), ret)
 </code></pre>
 <p><strong>Why sequential processing?</strong></p>
 <ul>
@@ -14285,8 +14285,8 @@ Tiled:       Moderate parallelism, localized memory access
 </code></pre>
 <p>This calculates the exact global position for each SIMD vector within the chunk.</p>
 <h3 id="3-direct-tensor-access"><a class="header" href="#3-direct-tensor-access">3. <strong>Direct tensor access</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
-output.store[simd_width](global_start, 0, ret)  # Store to global tensor
+<pre><code class="language-mojo">a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
+output.store[simd_width](Index(global_start), ret)  # Store to global tensor
 </code></pre>
 <p>Note: Access the original tensors, not the tile views.</p>
 <h3 id="4-key-characteristics"><a class="header" href="#4-key-characteristics">4. <strong>Key characteristics</strong></a></h3>
@@ -14725,10 +14725,10 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <h3 id="simd-within-gpu-threads"><a class="header" href="#simd-within-gpu-threads">SIMD within GPU threads</a></h3>
 <p>Each GPU thread can process multiple data elements simultaneously using <strong>SIMD (Single Instruction, Multiple Data)</strong> operations:</p>
 <pre><code class="language-mojo"># Within one GPU thread:
-a_simd = a.load[simd_width](idx, 0)      # Load 4 floats simultaneously
-b_simd = b.load[simd_width](idx, 0)      # Load 4 floats simultaneously
+a_simd = a.load[simd_width](Index(idx))      # Load 4 floats simultaneously
+b_simd = b.load[simd_width](Index(idx))      # Load 4 floats simultaneously
 result = a_simd + b_simd                 # Add 4 pairs simultaneously
-output.store[simd_width](idx, 0, result) # Store 4 results simultaneously
+output.store[simd_width](Index(idx), result) # Store 4 results simultaneously
 </code></pre>
 <h2 id="pattern-comparison-and-thread-to-work-mapping"><a class="header" href="#pattern-comparison-and-thread-to-work-mapping">Pattern comparison and thread-to-work mapping</a></h2>
 <blockquote>

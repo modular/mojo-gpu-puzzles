@@ -290,8 +290,8 @@
 </code></pre>
 <p>This calculates the exact global position for each SIMD vector within the chunk.</p>
 <h3 id="3-direct-tensor-access"><a class="header" href="#3-direct-tensor-access">3. <strong>Direct tensor access</strong></a></h3>
-<pre><code class="language-mojo">a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
-output.store[simd_width](global_start, 0, ret)  # Store to global tensor
+<pre><code class="language-mojo">a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
+output.store[simd_width](Index(global_start), ret)  # Store to global tensor
 </code></pre>
 <p>Note: Access the original tensors, not the tile views.</p>
 <h3 id="4-key-characteristics"><a class="header" href="#4-key-characteristics">4. <strong>Key characteristics</strong></a></h3>

@@ -297,7 +297,7 @@ b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GP
 </code></pre>
 <p>This performs element-wise addition across the entire SIMD vector (if supported) in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
-<pre><code class="language-mojo">output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
+<pre><code class="language-mojo">output.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
 <p>Writes the entire SIMD vector back to memory in one operation.</p>
 <h3 id="6-calling-the-elementwise-function"><a class="header" href="#6-calling-the-elementwise-function">6. <strong>Calling the elementwise function</strong></a></h3>
@@ -424,7 +424,7 @@ def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; No
 a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
 b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](Index(global_start), ret)     # Store: 4 results simultaneously (GPU-dependent)
+output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
 <pre><code>GPU Architecture:
