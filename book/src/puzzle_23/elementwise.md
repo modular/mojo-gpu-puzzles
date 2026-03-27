@@ -90,7 +90,7 @@ This performs element-wise addition across the entire SIMD vector (if supported)
 ### 5. **SIMD storing**
 
 ```mojo
-output.store[simd_width](idx, 0, result)  # Store 4 results at once (GPU-dependent)
+output.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 ```
 
 Writes the entire SIMD vector back to memory in one operation.
@@ -237,7 +237,7 @@ idx = indices[0]                                  # Linear index: 0, 4, 8, 12...
 a_simd = a.aligned_load[simd_width](Index(idx))       # Load: [a[0:4], a[4:8], a[8:12]...] (4 elements per load)
 b_simd = b.aligned_load[simd_width](Index(idx))       # Load: [b[0:4], b[4:8], b[8:12]...] (4 elements per load)
 ret = a_simd + b_simd                             # SIMD: 4 additions in parallel (GPU-dependent)
-output.store[simd_width](Index(global_start), ret)     # Store: 4 results simultaneously (GPU-dependent)
+output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 ```
 
 **Execution Hierarchy Visualization:**

@@ -68,8 +68,8 @@ This calculates the exact global position for each SIMD vector within the chunk.
 ### 3. **Direct tensor access**
 
 ```mojo
-a_vec = a.load[simd_width](global_start, 0)     # Load from global tensor
-output.store[simd_width](global_start, 0, ret)  # Store to global tensor
+a_vec = a.aligned_load[simd_width](Index(global_start))     # Load from global tensor
+output.store[simd_width](Index(global_start), ret)  # Store to global tensor
 ```
 
 Note: Access the original tensors, not the tile views.
