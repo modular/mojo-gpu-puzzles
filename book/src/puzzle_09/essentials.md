@@ -343,7 +343,18 @@ Output:
 Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 ```
 
-The debugger found your main function and will pause execution there.
+Or it may look like:
+
+```
+Breakpoint 1: no locations (pending).
+WARNING: Unable to resolve breakpoint to any actual locations.
+```
+
+If the breakpoint appears as pending, this is expected. Mojo programs are JIT-compiled, which means the debugger may not be able to resolve symbols until the program begins execution. In this case the breakpoint is registered, but LLDB cannot yet bind it to a concrete instruction address.
+
+Once execution starts and the module is compiled, LLDB resolves the breakpoint automatically.
+
+In either case the breakpoint has been set successfully and execution will pause there once the program runs.
 
 **Step 2: Start your program**
 
