@@ -15,7 +15,7 @@ comptime dtype = DType.float32
 def pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -43,7 +43,7 @@ def main() raises:
         ctx.enqueue_function[pooling, pooling](
             out,
             a,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

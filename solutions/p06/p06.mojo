@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 def add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
@@ -36,7 +36,7 @@ def main() raises:
         ctx.enqueue_function[add_10_blocks, add_10_blocks](
             out,
             a,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

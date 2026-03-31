@@ -149,8 +149,8 @@ def layernorm_kernel[
 def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
-    rows: UInt,
-    cols: UInt,
+    rows: Int,
+    cols: Int,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
@@ -481,8 +481,8 @@ struct LayerNormLinearCustomOp:
                 comptime kernel2 = transpose_kernel[
                     weight_layout,
                     transposed_weight_tensor.layout,
-                    UInt(output_dim),
-                    UInt(hidden_dim),
+                    output_dim,
+                    hidden_dim,
                 ]
                 gpu_ctx.enqueue_function[kernel2, kernel2](
                     transposed_weight_tensor,

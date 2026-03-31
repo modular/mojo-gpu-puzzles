@@ -15,7 +15,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 
 # ANCHOR: naive_matmul_solution
 def naive_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -38,7 +38,7 @@ def naive_matmul[
 
 # ANCHOR: single_block_matmul_solution
 def single_block_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -88,7 +88,7 @@ comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 # ANCHOR: matmul_tiled_solution
 def matmul_tiled[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -153,7 +153,7 @@ comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -259,7 +259,7 @@ def main() raises:
         var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp2)
 
         if argv()[1] == "--naive":
-            comptime kernel = naive_matmul[layout, UInt(SIZE)]
+            comptime kernel = naive_matmul[layout, SIZE]
             ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -268,7 +268,7 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--single-block":
-            comptime kernel = single_block_matmul[layout, UInt(SIZE)]
+            comptime kernel = single_block_matmul[layout, SIZE]
             ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
@@ -288,7 +288,7 @@ def main() raises:
                 inp2
             )
 
-            comptime kernel = matmul_tiled[layout_tiled, UInt(SIZE_TILED)]
+            comptime kernel = matmul_tiled[layout_tiled, SIZE_TILED]
             ctx.enqueue_function[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
@@ -307,9 +307,7 @@ def main() raises:
                 inp2
             )
 
-            comptime kernel = matmul_idiomatic_tiled[
-                layout_tiled, UInt(SIZE_TILED)
-            ]
+            comptime kernel = matmul_idiomatic_tiled[layout_tiled, SIZE_TILED]
             ctx.enqueue_function[kernel, kernel](
                 out_tensor_tiled,
                 a_tensor_tiled,
