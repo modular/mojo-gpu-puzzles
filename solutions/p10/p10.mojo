@@ -18,7 +18,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
     var row = thread_idx.y
@@ -55,7 +55,7 @@ def shared_memory_race(
 def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -90,7 +90,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
-                a_host[i] = i
+                a_host[i] = Scalar[dtype](i)
 
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a).reshape[
             layout
@@ -100,12 +100,12 @@ def main() raises:
             print("Running memory bug example (bounds checking issue)...")
             # Fill expected values directly since it's a HostBuffer
             for i in range(SIZE * SIZE):
-                expected[i] = i + 10
+                expected[i] = Scalar[dtype](i + 10)
 
             ctx.enqueue_function[add_10_2d, add_10_2d](
                 out_tensor,
                 a_tensor,
-                UInt(SIZE),
+                SIZE,
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )
@@ -135,7 +135,7 @@ def main() raises:
             ctx.enqueue_function[shared_memory_race, shared_memory_race](
                 out_tensor,
                 a_tensor,
-                UInt(SIZE),
+                SIZE,
                 grid_dim=BLOCKS_PER_GRID,
                 block_dim=THREADS_PER_BLOCK,
             )

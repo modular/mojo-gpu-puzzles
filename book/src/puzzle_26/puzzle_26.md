@@ -115,7 +115,7 @@ Learn XOR-based butterfly communication patterns for efficient tree algorithms a
 max_val = input[global_i]
 offset = WARP_SIZE // 2
 while offset > 0:
-    max_val = max(max_val, shuffle_xor(max_val, offset))
+    max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
 # All lanes now have global maximum
 ```

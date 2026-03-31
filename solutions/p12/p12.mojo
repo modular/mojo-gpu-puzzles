@@ -16,7 +16,7 @@ def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -40,7 +40,7 @@ def dot_product(
     # and warps can be scheduled independently.
     # However, shared memory does not have such issues as long as we use `barrier()`
     # correctly when we're in the same thread block.
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride > 0:
         if local_i < stride:
             shared[local_i] += shared[local_i + stride]
@@ -66,14 +66,14 @@ def main() raises:
         b.enqueue_fill(0)
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = i
-                b_host[i] = i
+                a_host[i] = Scalar[dtype](i)
+                b_host[i] = Scalar[dtype](i)
 
         ctx.enqueue_function[dot_product, dot_product](
             out,
             a,
             b,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

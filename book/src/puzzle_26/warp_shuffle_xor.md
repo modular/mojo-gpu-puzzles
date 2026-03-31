@@ -406,7 +406,7 @@ if global_i < size:
     # Butterfly reduction tree: dynamic for any WARP_SIZE
     offset = WARP_SIZE // 2
     while offset > 0:
-        max_val = max(max_val, shuffle_xor(max_val, offset))
+        max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
 
     output[global_i] = max_val  # All lanes have global maximum
@@ -599,10 +599,10 @@ if global_i < size:
     # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
     offset = WARP_SIZE // 2
     while offset > 0:
-        neighbor_val = shuffle_xor(current_val, offset)
+        neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max reduction
 
-        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min reduction
 
         offset //= 2
@@ -643,10 +643,10 @@ Final result: All lanes have current_val=7 (global max) and min_val=1 (global mi
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -710,7 +710,7 @@ The `shuffle_xor()` primitive enables powerful butterfly communication patterns 
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 ```

@@ -25,7 +25,7 @@ def butterfly_pair_swap[
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (4 lines)
 
@@ -47,7 +47,7 @@ def butterfly_parallel_max[
     This implements an efficient O(log n) parallel reduction algorithm that works
     for any WARP_SIZE (32, 64, etc.).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 7 lines)
 
@@ -73,7 +73,7 @@ def butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i < size:
@@ -113,7 +113,7 @@ def warp_inclusive_prefix_sum[
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 4 lines)
 
@@ -145,7 +145,7 @@ def warp_partition[
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i < size:
         var current_val = input[global_i]
@@ -165,7 +165,7 @@ def test_butterfly_pair_swap() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i
+                input_host[i] = Scalar[dtype](i)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -191,10 +191,10 @@ def test_butterfly_pair_swap() raises:
         for i in range(SIZE):
             if i % 2 == 0:
                 # Even positions get odd values
-                expected_buf[i] = i + 1
+                expected_buf[i] = Scalar[dtype](i + 1)
             else:
                 # Odd positions get even values
-                expected_buf[i] = i - 1
+                expected_buf[i] = Scalar[dtype](i - 1)
 
         with output_buf.map_to_host() as output_host:
             print("output:", output_host)
@@ -214,7 +214,7 @@ def test_butterfly_parallel_max() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i * 2
+                input_host[i] = Scalar[dtype](i * 2)
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
@@ -260,9 +260,9 @@ def test_butterfly_conditional_max() raises:
             for i in range(SIZE_2):
                 if i < 9:
                     var values = [3, 1, 7, 2, 9, 4, 8, 5, 6]
-                    input_host[i] = values[i]
+                    input_host[i] = Scalar[dtype](values[i])
                 else:
-                    input_host[i] = i % 10
+                    input_host[i] = Scalar[dtype](i % 10)
 
         var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
             input_buf
@@ -322,7 +322,7 @@ def test_warp_inclusive_prefix_sum() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i + 1
+                input_host[i] = Scalar[dtype](i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -366,7 +366,7 @@ def test_warp_partition() raises:
         output_buf.enqueue_fill(0)
 
         # Create test data: mix of values above and below pivot
-        var pivot_value = Float32(5.0)
+        var pivot_value = Scalar[dtype](5.0)
         with input_buf.map_to_host() as input_host:
             # Create: [3, 7, 1, 8, 2, 9, 4, 6, ...]
             var test_values = [
@@ -388,7 +388,7 @@ def test_warp_partition() raises:
                 13,
             ]
             for i in range(SIZE):
-                input_host[i] = test_values[i % len(test_values)]
+                input_host[i] = Scalar[dtype](test_values[i % len(test_values)])
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf

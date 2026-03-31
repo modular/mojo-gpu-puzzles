@@ -21,7 +21,7 @@ def broadcast_add[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -48,8 +48,8 @@ def main() raises:
         b.enqueue_fill(0)
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = i + 1
-                b_host[i] = i * 10
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i * 10)
 
             for i in range(SIZE):
                 for j in range(SIZE):
@@ -63,7 +63,7 @@ def main() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

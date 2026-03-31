@@ -327,7 +327,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 ```
 
 ## **Buffer role alternation**

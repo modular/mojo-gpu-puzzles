@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 def add_10_blocks_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -37,13 +37,13 @@ def main() raises:
             for j in range(SIZE):
                 for i in range(SIZE):
                     var k = j * SIZE + i
-                    a_host[k] = k
-                    expected[k] = k + 10
+                    a_host[k] = Scalar[dtype](k)
+                    expected[k] = Scalar[dtype](k + 10)
 
         ctx.enqueue_function[add_10_blocks_2d, add_10_blocks_2d](
             out,
             a,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

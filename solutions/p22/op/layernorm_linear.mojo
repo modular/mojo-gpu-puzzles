@@ -33,12 +33,12 @@ def matmul_idiomatic_tiled[
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
-    var tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
+    var tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    var tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        Int(block_idx.y), Int(block_idx.x)
+        block_idx.y, block_idx.x
     )
     var a_shared = LayoutTensor[
         dtype,
@@ -66,10 +66,10 @@ def matmul_idiomatic_tiled[
     ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            Int(block_idx.y), idx
+            block_idx.y, idx
         )
         var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, Int(block_idx.x)
+            idx, block_idx.x
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -123,9 +123,9 @@ def layernorm_kernel[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var hidden_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var hidden_idx = thread_idx.x
 
     if (
         batch_idx >= batch_size
@@ -162,8 +162,8 @@ def layernorm_kernel[
 def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
-    rows: UInt,
-    cols: UInt,
+    rows: Int,
+    cols: Int,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
@@ -217,9 +217,9 @@ def add_bias_kernel[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var out_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var out_idx = thread_idx.x
 
     if batch_idx >= batch_size or seq_idx >= seq_len or out_idx >= output_dim:
         return
@@ -256,8 +256,8 @@ def minimal_fused_kernel[
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -326,8 +326,8 @@ def minimal_fused_kernel_backward[
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx >= batch_size or seq_idx >= seq_len:
         return
@@ -601,8 +601,8 @@ struct LayerNormLinearCustomOp:
                 comptime kernel2 = transpose_kernel[
                     weight_layout,
                     transposed_weight_tensor.layout,
-                    UInt(output_dim),
-                    UInt(hidden_dim),
+                    output_dim,
+                    hidden_dim,
                 ]
                 gpu_ctx.enqueue_function[kernel2, kernel2](
                     transposed_weight_tensor,

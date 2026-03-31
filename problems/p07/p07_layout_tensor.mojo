@@ -18,7 +18,7 @@ def add_10_blocks_2d[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -44,8 +44,8 @@ def main() raises:
             for j in range(SIZE):
                 for i in range(SIZE):
                     var k = j * SIZE + i
-                    a_host[k] = k
-                    expected_buf[k] = k + 10
+                    a_host[k] = Scalar[dtype](k)
+                    expected_buf[k] = Scalar[dtype](k + 10)
 
         var a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
 
@@ -53,7 +53,7 @@ def main() raises:
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

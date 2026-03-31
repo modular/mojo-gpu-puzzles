@@ -29,12 +29,12 @@ def cluster_coordination_basics[
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     var shared_data = LayoutTensor[
         dtype,
@@ -45,7 +45,7 @@ def cluster_coordination_basics[
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
-    var data_scale = Float32(
+    var data_scale = Scalar[dtype](
         block_id + 1
     )  # Use block_idx instead of cluster rank
 
@@ -87,8 +87,8 @@ def cluster_collective_operations[
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 24 lines)
 
@@ -106,8 +106,8 @@ def advanced_cluster_patterns[
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 26 lines)
 
@@ -133,7 +133,7 @@ def main() raises:
 
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
-                    input_host[i] = Float32(i % 10) * 0.1
+                    input_host[i] = Scalar[dtype](i % 10) * 0.1
 
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
                 input_buf
@@ -194,7 +194,7 @@ def main() raises:
             var expected_sum: Float32 = 0.0
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
-                    input_host[i] = Float32(i)
+                    input_host[i] = Scalar[dtype](i)
                     expected_sum += input_host[i]
 
             print("Expected sum:", expected_sum)
@@ -248,7 +248,7 @@ def main() raises:
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
                     input_host[i] = (
-                        Float32(i % 50) * 0.02
+                        Scalar[dtype](i % 50) * 0.02
                     )  # Pattern for testing
 
             input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](

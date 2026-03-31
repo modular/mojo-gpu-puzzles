@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 def add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
@@ -31,12 +31,12 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
-                a_host[i] = i
+                a_host[i] = Scalar[dtype](i)
 
         ctx.enqueue_function[add_10_blocks, add_10_blocks](
             out,
             a,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
@@ -47,7 +47,7 @@ def main() raises:
         ctx.synchronize()
 
         for i in range(SIZE):
-            expected[i] = i + 10
+            expected[i] = Scalar[dtype](i + 10)
 
         with out.map_to_host() as out_host:
             print("out:", out_host)

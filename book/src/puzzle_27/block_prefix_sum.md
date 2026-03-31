@@ -92,7 +92,7 @@ To classify a `Float32` value into bins:
 
 ```mojo
 my_value = input_data[global_i][0]  # Extract SIMD like in dot product
-bin_number = Int(floor(my_value * num_bins))
+bin_number = Int(floor(my_value * Float32(num_bins)))
 ```
 
 **Edge case handling**: Values exactly 1.0 would go to bin `NUM_BINS`, but you only have bins 0 to `NUM_BINS-1`. Use an `if` statement to clamp the maximum bin.
@@ -140,7 +140,7 @@ The last thread (not thread 0!) computes the total count:
 
 ```mojo
 if local_i == tpb - 1:  # Last thread in block
-    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+    total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
     count_output[0] = total_count
 ```
 
@@ -322,7 +322,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 ```
 Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
-      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+      total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
 ```
 

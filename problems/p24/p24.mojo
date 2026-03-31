@@ -47,8 +47,8 @@ def traditional_dot_product_p12_style[
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     if global_i < size:
         shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
@@ -79,7 +79,7 @@ def simple_warp_dot_product[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 
 
@@ -139,7 +139,9 @@ def rand_int[
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
         for i in range(size):
-            buff_host[i] = Int(random_float64(min, max))
+            buff_host[i] = Scalar[dtype](
+                Int(random_float64(Float64(min), Float64(max)))
+            )
 
 
 def check_result[
@@ -322,8 +324,8 @@ def main() raises:
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = i
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](i)
 
             if argv()[1] == "--traditional":
                 ctx.enqueue_function[

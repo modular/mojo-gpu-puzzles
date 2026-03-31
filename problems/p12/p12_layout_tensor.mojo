@@ -22,7 +22,7 @@ def dot_product[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
     ...
@@ -42,8 +42,8 @@ def main() raises:
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = i
-                b_host[i] = i
+                a_host[i] = Scalar[dtype](i)
+                b_host[i] = Scalar[dtype](i)
 
         var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
@@ -54,7 +54,7 @@ def main() raises:
             out_tensor,
             a_tensor,
             b_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

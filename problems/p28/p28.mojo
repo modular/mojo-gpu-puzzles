@@ -66,12 +66,12 @@ def test_async_copy_overlap_convolution() raises:
         # Create test data: consecutive integers [1, 2, 3, ..., VECTOR_SIZE]
         with input_buf.map_to_host() as input_host:
             for i in range(VECTOR_SIZE):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         # Create test kernel: [1, 2, 3, 4, 5]
         with kernel_buf.map_to_host() as kernel_host:
             for i in range(KERNEL_SIZE):
-                kernel_host[i] = Float32(i + 1)
+                kernel_host[i] = Scalar[dtype](i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
             input_buf
@@ -116,7 +116,9 @@ def test_async_copy_overlap_convolution() raises:
                         for k in range(KERNEL_SIZE):
                             var input_idx = i + k - HALO_SIZE
                             if input_idx >= 0 and input_idx < VECTOR_SIZE:
-                                expected_val += input_host[input_idx] * (k + 1)
+                                expected_val += input_host[input_idx] * Scalar[
+                                    dtype
+                                ](k + 1)
                     else:
                         # Boundary elements: copy input
                         expected_val = input_host[i]

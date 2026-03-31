@@ -57,8 +57,8 @@ def multi_stage_image_blur_pipeline[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Stage 1: Load and preprocess (threads 0-127)
 
@@ -135,8 +135,8 @@ def double_buffered_stencil_computation[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -203,7 +203,7 @@ def test_multi_stage_pipeline() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a simple wave pattern for blurring
-                inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
+                inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / 100.0
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
@@ -265,7 +265,7 @@ def test_double_buffered_stencil() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a step pattern that will be smoothed by stencil
-                inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
+                inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 29B
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)

@@ -53,8 +53,8 @@ def multi_stage_image_blur_pipeline[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Stage 1: Load and preprocess (threads 0-127)
     if local_i < STAGE1_THREADS:
@@ -87,7 +87,7 @@ def multi_stage_image_blur_pipeline[
                 blur_count += 1
 
         if blur_count > 0:
-            blur_shared[blur_idx] = blur_sum / blur_count
+            blur_shared[blur_idx] = blur_sum / Scalar[dtype](blur_count)
         else:
             blur_shared[blur_idx] = 0.0
 
@@ -103,7 +103,7 @@ def multi_stage_image_blur_pipeline[
                     blur_count += 1
 
             if blur_count > 0:
-                blur_shared[second_idx] = blur_sum / blur_count
+                blur_shared[second_idx] = blur_sum / Scalar[dtype](blur_count)
             else:
                 blur_shared[second_idx] = 0.0
 
@@ -180,8 +180,8 @@ def double_buffered_stencil_computation[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -217,7 +217,9 @@ def double_buffered_stencil_computation[
                         stencil_count += 1
 
                 if stencil_count > 0:
-                    buffer_B[local_i] = stencil_sum / stencil_count
+                    buffer_B[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_B[local_i] = buffer_A[local_i]
 
@@ -237,7 +239,9 @@ def double_buffered_stencil_computation[
                         stencil_count += 1
 
                 if stencil_count > 0:
-                    buffer_A[local_i] = stencil_sum / stencil_count
+                    buffer_A[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
@@ -278,7 +282,7 @@ def test_multi_stage_pipeline() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a simple wave pattern for blurring
-                inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
+                inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / 100.0
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
@@ -340,7 +344,7 @@ def test_double_buffered_stencil() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a step pattern that will be smoothed by stencil
-                inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
+                inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 26B
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)

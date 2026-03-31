@@ -27,7 +27,7 @@ def test_softmax() raises:
         # Initialize input with more reasonable values
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
-                inp_host[i] = Float32(i)
+                inp_host[i] = Scalar[dtype](i)
 
             print("Input values:")
             for i in range(SIZE):

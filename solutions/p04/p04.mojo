@@ -13,7 +13,7 @@ comptime dtype = DType.float32
 def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -37,13 +37,13 @@ def main() raises:
             # row-major
             for y in range(SIZE):
                 for x in range(SIZE):
-                    a_host[y * SIZE + x] = y * SIZE + x
+                    a_host[y * SIZE + x] = Scalar[dtype](y * SIZE + x)
                     expected[y * SIZE + x] = a_host[y * SIZE + x] + 10
 
         ctx.enqueue_function[add_10_2d, add_10_2d](
             out,
             a,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

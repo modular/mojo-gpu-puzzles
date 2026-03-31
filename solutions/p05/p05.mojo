@@ -14,7 +14,7 @@ def broadcast_add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -37,8 +37,8 @@ def main() raises:
         b.enqueue_fill(0)
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = i + 1
-                b_host[i] = i * 10
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i * 10)
 
             for y in range(SIZE):
                 for x in range(SIZE):
@@ -48,7 +48,7 @@ def main() raises:
             out,
             a,
             b,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

@@ -12,7 +12,7 @@ comptime THREADS_PER_BLOCK = (1024, 1)
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
-comptime ALPHA = Float32(2.5)  # SAXPY coefficient
+comptime ALPHA = Scalar[dtype](2.5)  # SAXPY coefficient
 
 
 def minimal_kernel[
@@ -24,7 +24,7 @@ def minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -53,7 +53,7 @@ def sophisticated_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i < size:
@@ -150,7 +150,7 @@ def balanced_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i < size:
@@ -203,8 +203,8 @@ def benchmark_minimal_parameterized[test_size: Int](mut b: Bencher) raises:
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
         var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
@@ -241,8 +241,8 @@ def benchmark_sophisticated_parameterized[
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
         var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
@@ -277,8 +277,8 @@ def benchmark_balanced_parameterized[test_size: Int](mut b: Bencher) raises:
 
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(test_size):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
         var x_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](x)
@@ -311,8 +311,8 @@ def test_minimal() raises:
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(SIZE):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
@@ -333,7 +333,7 @@ def test_minimal() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i]
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                var expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Scalar[dtype](
                     i + 2
                 )  # original y[i] was (i + 2)
                 var actual = y_host[i]
@@ -354,8 +354,8 @@ def test_sophisticated() raises:
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(SIZE):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
@@ -376,7 +376,7 @@ def test_sophisticated() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i] (with precision tolerance)
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                var expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Scalar[dtype](
                     i + 2
                 )  # original y[i] was (i + 2)
                 var actual = y_host[i]
@@ -398,8 +398,8 @@ def test_balanced() raises:
         # Initialize test data
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(SIZE):
-                x_host[i] = Float32(i + 1)
-                y_host[i] = Float32(i + 2)
+                x_host[i] = Scalar[dtype](i + 1)
+                y_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var y_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](y)
@@ -420,7 +420,7 @@ def test_balanced() raises:
         # Verify results: y[i] = alpha * x[i] + original_y[i] (with precision tolerance)
         with y.map_to_host() as y_host, x.map_to_host() as x_host:
             for i in range(10):  # Check first 10
-                var expected = ALPHA * x_host[i] + Float32(
+                var expected = ALPHA * x_host[i] + Scalar[dtype](
                     i + 2
                 )  # original y[i] was (i + 2)
                 var actual = y_host[i]

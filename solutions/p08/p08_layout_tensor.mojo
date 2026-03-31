@@ -18,7 +18,7 @@ def add_10_shared_layout_tensor[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using tensor builder
     var shared = LayoutTensor[
@@ -61,7 +61,7 @@ def main() raises:
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             a_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

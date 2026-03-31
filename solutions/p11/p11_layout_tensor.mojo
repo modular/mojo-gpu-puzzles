@@ -18,7 +18,7 @@ def pooling[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using tensor builder
     var shared = LayoutTensor[
@@ -44,7 +44,7 @@ def pooling[
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
     # Handle general case
-    elif UInt(1) < global_i < size:
+    elif 1 < global_i < size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -62,7 +62,7 @@ def main() raises:
 
         with a.map_to_host() as a_host:
             for i in range(SIZE):
-                a_host[i] = i
+                a_host[i] = Scalar[dtype](i)
 
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
@@ -70,7 +70,7 @@ def main() raises:
         ctx.enqueue_function[pooling[layout], pooling[layout]](
             out_tensor,
             a_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

@@ -25,7 +25,7 @@ def conv_1d_simple[
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
     var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
@@ -90,8 +90,8 @@ def conv_1d_block_boundary[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # first: need to account for padding
     var shared_a = LayoutTensor[
         dtype,
@@ -151,11 +151,11 @@ def main() raises:
         b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
-                a_host[i] = i
+                a_host[i] = Scalar[dtype](i)
 
         with b.map_to_host() as b_host:
             for i in range(conv):
-                b_host[i] = i
+                b_host[i] = Scalar[dtype](i)
 
         if argv()[1] == "--simple":
             var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)

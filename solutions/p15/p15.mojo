@@ -20,7 +20,7 @@ def axis_sum[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -49,7 +49,7 @@ def axis_sum[
     barrier()
 
     # do reduction sum per each block
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride > 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0
@@ -82,7 +82,7 @@ def main() raises:
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
                 for col in range(SIZE):
-                    inp_host[row * SIZE + col] = row * SIZE + col
+                    inp_host[row * SIZE + col] = Scalar[dtype](row * SIZE + col)
 
         var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
         var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
@@ -91,7 +91,7 @@ def main() raises:
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             inp_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )

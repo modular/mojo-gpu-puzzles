@@ -48,11 +48,11 @@ def async_copy_overlap_convolution[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -67,7 +67,7 @@ def async_copy_overlap_convolution[
     barrier()  # Sync all threads
 
     # Phase 4: Compute convolution
-    var global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
+    var global_i = block_idx.x * CONV_TILE_SIZE + local_i
     if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
         var result: output.element_type = 0
 
@@ -101,12 +101,12 @@ def test_async_copy_overlap_convolution() raises:
         # Create test data: consecutive integers [1, 2, 3, ..., VECTOR_SIZE]
         with input_buf.map_to_host() as input_host:
             for i in range(VECTOR_SIZE):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         # Create test kernel: [1, 2, 3, 4, 5]
         with kernel_buf.map_to_host() as kernel_host:
             for i in range(KERNEL_SIZE):
-                kernel_host[i] = Float32(i + 1)
+                kernel_host[i] = Scalar[dtype](i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
             input_buf
@@ -151,7 +151,9 @@ def test_async_copy_overlap_convolution() raises:
                         for k in range(KERNEL_SIZE):
                             var input_idx = i + k - HALO_SIZE
                             if input_idx >= 0 and input_idx < VECTOR_SIZE:
-                                expected_val += input_host[input_idx] * (k + 1)
+                                expected_val += input_host[input_idx] * Scalar[
+                                    dtype
+                                ](k + 1)
                     else:
                         # Boundary elements: copy input
                         expected_val = input_host[i]

@@ -14,7 +14,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -41,7 +41,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
-                a_host[i] = i
+                a_host[i] = Scalar[dtype](i)
                 expected[i] = a_host[i] + 10
 
         var a_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a).reshape[
@@ -51,7 +51,7 @@ def main() raises:
         ctx.enqueue_function[add_10_2d, add_10_2d](
             out_tensor,
             a_tensor,
-            UInt(SIZE),
+            SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
         )
