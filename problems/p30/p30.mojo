@@ -91,8 +91,8 @@ def benchmark_kernel1_parameterized[test_size: Int](mut b: Bencher) raises:
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
@@ -129,8 +129,8 @@ def benchmark_kernel2_parameterized[test_size: Int](mut b: Bencher) raises:
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
@@ -167,8 +167,8 @@ def benchmark_kernel3_parameterized[test_size: Int](mut b: Bencher) raises:
 
         with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
             for i in range(test_size):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
@@ -203,8 +203,8 @@ def test_kernel1() raises:
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
@@ -246,8 +246,8 @@ def test_kernel2() raises:
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
@@ -292,8 +292,8 @@ def test_kernel3() raises:
         # Initialize test data
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
-                a_host[i] = Float32(i + 1)
-                b_host[i] = Float32(i + 2)
+                a_host[i] = Scalar[dtype](i + 1)
+                b_host[i] = Scalar[dtype](i + 2)
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)

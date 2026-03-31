@@ -68,11 +68,11 @@ def main() raises:
         b.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(size):
-                a_host[i] = Float32(i)
+                a_host[i] = Scalar[dtype](i)
 
         with b.map_to_host() as b_host:
             for i in range(conv):
-                b_host[i] = Float32(i)
+                b_host[i] = Scalar[dtype](i)
 
         if len(argv()) != 2 or argv()[1] not in [
             "--simple",

@@ -82,7 +82,7 @@ def main() raises:
         with inp.map_to_host() as inp_host:
             for row in range(BATCH):
                 for col in range(SIZE):
-                    inp_host[row * SIZE + col] = Float32(row * SIZE + col)
+                    inp_host[row * SIZE + col] = Scalar[dtype](row * SIZE + col)
 
         var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
         var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)

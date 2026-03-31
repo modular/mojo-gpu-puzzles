@@ -37,7 +37,7 @@ def main() raises:
             # row-major
             for y in range(SIZE):
                 for x in range(SIZE):
-                    a_host[y * SIZE + x] = Float32(y * SIZE + x)
+                    a_host[y * SIZE + x] = Scalar[dtype](y * SIZE + x)
                     expected[y * SIZE + x] = a_host[y * SIZE + x] + 10
 
         ctx.enqueue_function[add_10_2d, add_10_2d](

@@ -129,7 +129,7 @@ def block_histogram_bin_extract[
         # `[0]` returns the underlying SIMD value
         my_value = input_data[global_i][0]
         # Bin values [0.0, 1.0) into num_bins buckets
-        my_bin = Int(floor(my_value * Float32(num_bins)))
+        my_bin = Int(floor(my_value * Scalar[dtype](num_bins)))
         # Clamp to valid range
         if my_bin >= num_bins:
             my_bin = num_bins - 1
@@ -197,7 +197,7 @@ def block_normalize_vector[
     var mean_value: Scalar[dtype] = 1.0  # Default to avoid division by zero
     if local_i == 0:
         if total_sum[0] > 0.0:
-            mean_value = total_sum[0] / Float32(size)
+            mean_value = total_sum[0] / Scalar[dtype](size)
 
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration
@@ -234,8 +234,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = Float32(i)
-                    b_host[i] = Float32(2 * i)
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -279,8 +279,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = Float32(i)
-                    b_host[i] = Float32(2 * i)
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -331,7 +331,7 @@ def main() raises:
                 for i in range(SIZE):
                     # Create values: 0.1, 0.2, 0.3, ..., cycling through bins
                     input_host[i] = (
-                        Float32(i % 80) / 100.0
+                        Scalar[dtype](i % 80) / 100.0
                     )  # Values [0.0, 0.79]
 
             print("Input sample:", end=" ")
@@ -351,9 +351,9 @@ def main() raises:
                     "=== Processing Bin",
                     target_bin,
                     "(range [",
-                    Float32(target_bin) / NUM_BINS,
+                    Scalar[dtype](target_bin) / NUM_BINS,
                     ",",
-                    Float32(target_bin + 1) / NUM_BINS,
+                    Scalar[dtype](target_bin + 1) / NUM_BINS,
                     ")) ===",
                 )
 
@@ -422,13 +422,13 @@ def main() raises:
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
                     # Create values cycling 1-8, mean will be 4.5
-                    value = Float32(
+                    value = Scalar[dtype](
                         (i % 8) + 1
                     )  # Values 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, ...
                     input_host[i] = value
                     sum_value += value
 
-            var mean_value = sum_value / Float32(SIZE)
+            var mean_value = sum_value / Scalar[dtype](SIZE)
 
             print("Input sample:", end=" ")
             with input_buf.map_to_host() as input_host:
@@ -473,7 +473,7 @@ def main() raises:
                 for i in range(SIZE):
                     output_sum += output_host[i]
 
-                var output_mean = output_sum / Float32(SIZE)
+                var output_mean = output_sum / Scalar[dtype](SIZE)
                 print("Output sum:", output_sum)
                 print("Output mean:", output_mean)
                 print(

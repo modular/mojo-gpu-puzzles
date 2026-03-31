@@ -349,8 +349,8 @@ def main() raises:
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = Float32(i)
-                    b_host[i] = Float32(i)
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](i)
 
             if argv()[1] == "--traditional":
                 ctx.enqueue_function[

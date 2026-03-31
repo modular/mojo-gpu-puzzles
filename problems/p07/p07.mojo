@@ -36,8 +36,8 @@ def main() raises:
             for j in range(SIZE):
                 for i in range(SIZE):
                     var k = j * SIZE + i
-                    a_host[k] = Float32(k)
-                    expected[k] = Float32(k + 10)
+                    a_host[k] = Scalar[dtype](k)
+                    expected[k] = Scalar[dtype](k + 10)
 
         ctx.enqueue_function[add_10_blocks_2d, add_10_blocks_2d](
             out,

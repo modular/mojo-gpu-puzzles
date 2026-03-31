@@ -30,7 +30,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
-                a_host[i] = Float32(i)
+                a_host[i] = Scalar[dtype](i)
 
         ctx.enqueue_function[add_10_blocks, add_10_blocks](
             out,
@@ -46,7 +46,7 @@ def main() raises:
         ctx.synchronize()
 
         for i in range(SIZE):
-            expected[i] = Float32(i + 10)
+            expected[i] = Scalar[dtype](i + 10)
 
         with out.map_to_host() as out_host:
             print("out:", out_host)

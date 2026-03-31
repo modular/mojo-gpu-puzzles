@@ -222,7 +222,7 @@ def test_neighbor_difference() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = Float32(i * i)
+                input_host[i] = Scalar[dtype](i * i)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -246,7 +246,7 @@ def test_neighbor_difference() raises:
 
         # Create expected results: differences of squares should be odd numbers
         for i in range(SIZE - 1):
-            expected_buf[i] = Float32((i + 1) * (i + 1) - i * i)
+            expected_buf[i] = Scalar[dtype]((i + 1) * (i + 1) - i * i)
         expected_buf[
             SIZE - 1
         ] = 0  # Last element should be 0 (no valid neighbor)
@@ -271,7 +271,7 @@ def test_moving_average() raises:
         with input_buf.map_to_host() as input_host:
             input_host[0] = 1
             for i in range(1, SIZE_2):
-                input_host[i] = input_host[i - 1] + Float32(i + 1)
+                input_host[i] = input_host[i - 1] + Scalar[dtype](i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
             input_buf
@@ -340,9 +340,9 @@ def test_broadcast_shuffle_coordination() raises:
             # Create pattern: [2, 4, 6, 8, 1, 3, 5, 7, ...]
             for i in range(SIZE):
                 if i < 4:
-                    input_host[i] = Float32((i + 1) * 2)
+                    input_host[i] = Scalar[dtype]((i + 1) * 2)
                 else:
-                    input_host[i] = Float32(((i - 4) % 4) * 2 + 1)
+                    input_host[i] = Scalar[dtype](((i - 4) % 4) * 2 + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -367,7 +367,7 @@ def test_broadcast_shuffle_coordination() raises:
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 computes scale_factor from first 4 elements in block: (2+4+6+8)/4 = 5.0
-            var expected_scale = Float32(5.0)
+            var expected_scale = Scalar[dtype](5.0)
 
             for i in range(SIZE):
                 if i < SIZE - 1:
@@ -397,7 +397,7 @@ def test_basic_broadcast() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -422,7 +422,7 @@ def test_basic_broadcast() raises:
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 computes broadcast_value from first 4 elements: 1+2+3+4 = 10
-            var expected_broadcast = Float32(10.0)
+            var expected_broadcast = Scalar[dtype](10.0)
             for i in range(SIZE):
                 expected_buf[i] = expected_broadcast + input_host[i]
 
@@ -448,14 +448,14 @@ def test_conditional_broadcast() raises:
         with input_buf.map_to_host() as input_host:
             # Create pattern with known max
             var test_values = [
-                Float32(3.0),
-                Float32(1.0),
-                Float32(7.0),
-                Float32(2.0),
-                Float32(9.0),
-                Float32(4.0),
-                Float32(6.0),
-                Float32(8.0),
+                Scalar[dtype](3.0),
+                Scalar[dtype](1.0),
+                Scalar[dtype](7.0),
+                Scalar[dtype](2.0),
+                Scalar[dtype](9.0),
+                Scalar[dtype](4.0),
+                Scalar[dtype](6.0),
+                Scalar[dtype](8.0),
             ]
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
@@ -483,7 +483,7 @@ def test_conditional_broadcast() raises:
         # Create expected results
         with input_buf.map_to_host() as input_host:
             # Lane 0 finds max of first 8 elements in block: max(3,1,7,2,9,4,6,8) = 9.0, threshold = 4.5
-            var expected_max = Float32(9.0)
+            var expected_max = Scalar[dtype](9.0)
             var threshold = expected_max / 2.0
             for i in range(SIZE):
                 if input_host[i] >= threshold:

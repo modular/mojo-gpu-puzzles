@@ -45,7 +45,7 @@ def main() raises:
 
         with a.map_to_host() as a_host:
             for i in range(SIZE):
-                a_host[i] = Float32(i)
+                a_host[i] = Scalar[dtype](i)
 
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)

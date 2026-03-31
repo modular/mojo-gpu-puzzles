@@ -119,7 +119,7 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
         var input_tensor = LayoutTensor[mut=False, dtype, layout](
@@ -155,7 +155,7 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(test_size):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
         var input_tensor = LayoutTensor[mut=False, dtype, layout](
@@ -187,7 +187,7 @@ def test_no_conflict() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
         var input_tensor = LayoutTensor[mut=False, dtype, layout](
@@ -205,7 +205,7 @@ def test_no_conflict() raises:
 
         with out.map_to_host() as result:
             for i in range(min(SIZE, 10)):
-                var expected = Float32((i + 11) * 2)
+                var expected = Scalar[dtype]((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
         print("No-conflict kernel test: passed")
@@ -221,7 +221,7 @@ def test_two_way_conflict() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = Float32(i + 1)
+                input_host[i] = Scalar[dtype](i + 1)
 
         var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
         var input_tensor = LayoutTensor[mut=False, dtype, layout](
@@ -239,7 +239,7 @@ def test_two_way_conflict() raises:
 
         with out.map_to_host() as result:
             for i in range(min(SIZE, 10)):
-                var expected = Float32((i + 11) * 2)
+                var expected = Scalar[dtype]((i + 11) * 2)
                 assert_almost_equal(result[i], expected, atol=1e-5)
 
         print("Two-way conflict kernel test: passed")

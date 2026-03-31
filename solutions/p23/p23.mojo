@@ -202,8 +202,8 @@ def benchmark_elementwise_parameterized[
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
-            a_host[i] = Float32(2 * i)
-            b_host[i] = Float32(2 * i + 1)
+            a_host[i] = Scalar[dtype](2 * i)
+            b_host[i] = Scalar[dtype](2 * i + 1)
 
     var a_tensor = LayoutTensor[mut=False, dtype, layout, MutAnyOrigin](
         a.unsafe_ptr()
@@ -243,8 +243,8 @@ def benchmark_tiled_parameterized[
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
-            a_host[i] = Float32(2 * i)
-            b_host[i] = Float32(2 * i + 1)
+            a_host[i] = Scalar[dtype](2 * i)
+            b_host[i] = Scalar[dtype](2 * i + 1)
 
     var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
     var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
@@ -278,8 +278,8 @@ def benchmark_manual_vectorized_parameterized[
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
-            a_host[i] = Float32(2 * i)
-            b_host[i] = Float32(2 * i + 1)
+            a_host[i] = Scalar[dtype](2 * i)
+            b_host[i] = Scalar[dtype](2 * i + 1)
 
     var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
     var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
@@ -313,8 +313,8 @@ def benchmark_vectorized_parameterized[
 
     with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
         for i in range(test_size):
-            a_host[i] = Float32(2 * i)
-            b_host[i] = Float32(2 * i + 1)
+            a_host[i] = Scalar[dtype](2 * i)
+            b_host[i] = Scalar[dtype](2 * i + 1)
 
     var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())
     var b_tensor = LayoutTensor[mut=False, dtype, layout](b_buf.unsafe_ptr())
@@ -345,8 +345,8 @@ def main() raises:
 
     with a.map_to_host() as a_host, b.map_to_host() as b_host:
         for i in range(SIZE):
-            a_host[i] = Float32(2 * i)
-            b_host[i] = Float32(2 * i + 1)
+            a_host[i] = Scalar[dtype](2 * i)
+            b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
     var a_tensor = LayoutTensor[mut=False, dtype, layout](a.unsafe_ptr())

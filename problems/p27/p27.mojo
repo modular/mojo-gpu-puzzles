@@ -200,8 +200,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = Float32(i)
-                    b_host[i] = Float32(2 * i)
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -245,8 +245,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = Float32(i)
-                    b_host[i] = Float32(2 * i)
+                    a_host[i] = Scalar[dtype](i)
+                    b_host[i] = Scalar[dtype](2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -297,7 +297,7 @@ def main() raises:
                 for i in range(SIZE):
                     # Create values: 0.1, 0.2, 0.3, ..., cycling through bins
                     input_host[i] = (
-                        Float32(i % 80) / 100.0
+                        Scalar[dtype](i % 80) / 100.0
                     )  # Values [0.0, 0.79]
 
             print("Input sample:", end=" ")
@@ -317,9 +317,9 @@ def main() raises:
                     "=== Processing Bin",
                     target_bin,
                     "(range [",
-                    Float32(target_bin) / NUM_BINS,
+                    Scalar[dtype](target_bin) / NUM_BINS,
                     ",",
-                    Float32(target_bin + 1) / NUM_BINS,
+                    Scalar[dtype](target_bin + 1) / NUM_BINS,
                     ")) ===",
                 )
 
@@ -388,13 +388,13 @@ def main() raises:
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
                     # Create values cycling 1-8, mean will be 4.5
-                    value = Float32(
+                    value = Scalar[dtype](
                         (i % 8) + 1
                     )  # Values 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, ...
                     input_host[i] = value
                     sum_value += value
 
-            var mean_value = sum_value / Float32(SIZE)
+            var mean_value = sum_value / Scalar[dtype](SIZE)
 
             print("Input sample:", end=" ")
             with input_buf.map_to_host() as input_host:
@@ -439,7 +439,7 @@ def main() raises:
                 for i in range(SIZE):
                     output_sum += output_host[i]
 
-                var output_mean = output_sum / Float32(SIZE)
+                var output_mean = output_sum / Scalar[dtype](SIZE)
                 print("Output sum:", output_sum)
                 print("Output mean:", output_mean)
                 print(

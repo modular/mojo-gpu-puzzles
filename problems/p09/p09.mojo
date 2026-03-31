@@ -137,7 +137,7 @@ def main() raises:
             # Initialize input [0, 1, 2, 3]
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
-                    input_host[i] = Float32(i)
+                    input_host[i] = Scalar[dtype](i)
 
             # Create LayoutTensors for structured access
             input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
@@ -214,7 +214,7 @@ def main() raises:
             # Initialize input data [1, 2, 3, 4]
             with input_buf.map_to_host() as input_host:
                 for i in range(SIZE):
-                    input_host[i] = Float32(i + 1)
+                    input_host[i] = Scalar[dtype](i + 1)
 
             # Create LayoutTensors
             input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](

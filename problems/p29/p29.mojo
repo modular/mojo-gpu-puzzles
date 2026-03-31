@@ -203,7 +203,9 @@ def test_multi_stage_pipeline() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a simple wave pattern for blurring
-                inp_host[i] = Float32(i % 10) + Float32(i) / Float32(100)
+                inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / Scalar[
+                    dtype
+                ](100)
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
@@ -265,7 +267,7 @@ def test_double_buffered_stencil() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a step pattern that will be smoothed by stencil
-                inp_host[i] = Float32(1.0 if i % 20 < 10 else 0.0)
+                inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
         # Create LayoutTensors for Puzzle 29B
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
