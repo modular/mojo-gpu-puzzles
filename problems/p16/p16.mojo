@@ -99,9 +99,7 @@ def main() raises:
                     var val = row * size + col
                     # row major: placing elements row by row
                     inp1_host[row * size + col] = Scalar[dtype](val)
-                    inp2_host[row * size + col] = Scalar[dtype](2.0) * Scalar[
-                        dtype
-                    ](val)
+                    inp2_host[row * size + col] = Scalar[dtype](2.0 * val)
 
             # inp1 @ inp2.T
             for i in range(size):

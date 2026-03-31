@@ -203,9 +203,7 @@ def test_multi_stage_pipeline() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a simple wave pattern for blurring
-                inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / Scalar[
-                    dtype
-                ](100)
+                inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / 100.0
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
