@@ -139,7 +139,9 @@ def rand_int[
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
         for i in range(size):
-            buff_host[i] = Scalar[dtype](Int(random_float64(Float64(min), Float64(max))))
+            buff_host[i] = Scalar[dtype](
+                Int(random_float64(Float64(min), Float64(max)))
+            )
 
 
 def check_result[

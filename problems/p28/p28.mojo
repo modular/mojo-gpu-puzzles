@@ -116,7 +116,9 @@ def test_async_copy_overlap_convolution() raises:
                         for k in range(KERNEL_SIZE):
                             var input_idx = i + k - HALO_SIZE
                             if input_idx >= 0 and input_idx < VECTOR_SIZE:
-                                expected_val += input_host[input_idx] * Float32(k + 1)
+                                expected_val += input_host[input_idx] * Float32(
+                                    k + 1
+                                )
                     else:
                         # Boundary elements: copy input
                         expected_val = input_host[i]
