@@ -25,7 +25,7 @@ def conv_1d_simple[
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 14 lines)
 
 
@@ -48,8 +48,8 @@ def conv_1d_block_boundary[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
 
 

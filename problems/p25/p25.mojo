@@ -24,7 +24,7 @@ def neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     # FILL IN (roughly 7 lines)
@@ -50,7 +50,7 @@ def moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     # FILL IN (roughly 10 lines)
@@ -71,7 +71,7 @@ def broadcast_shuffle_coordination[
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
         var scale_factor: output.element_type = 0.0
@@ -93,7 +93,7 @@ def basic_broadcast[
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
         var broadcast_value: output.element_type = 0.0
@@ -115,7 +115,7 @@ def conditional_broadcast[
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
         var decision_value: output.element_type = 0.0

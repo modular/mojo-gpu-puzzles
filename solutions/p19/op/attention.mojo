@@ -42,14 +42,14 @@ def matmul_idiomatic_tiled[
     b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
 ):
     """Updated idiomatic tiled matrix multiplication from p16."""
-    var local_row = Int(thread_idx.y)
-    var local_col = Int(thread_idx.x)
-    var tiled_row = Int(block_idx.y) * MATMUL_BLOCK_DIM_XY + local_row
-    var tiled_col = Int(block_idx.x) * MATMUL_BLOCK_DIM_XY + local_col
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
+    var tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    var tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        Int(block_idx.y), Int(block_idx.x)
+        block_idx.y, block_idx.x
     )
     var a_shared = LayoutTensor[
         dtype,
@@ -77,10 +77,10 @@ def matmul_idiomatic_tiled[
     ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            Int(block_idx.y), idx
+            block_idx.y, idx
         )
         var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, Int(block_idx.x)
+            idx, block_idx.x
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -135,19 +135,19 @@ def transpose_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var local_row = Int(thread_idx.y)
-    var local_col = Int(thread_idx.x)
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
 
-    var global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    var global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row < rows and global_col < cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    var out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    var out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -182,7 +182,7 @@ def softmax_gpu_kernel[
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var global_i = Int(thread_idx.x)
+    var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they

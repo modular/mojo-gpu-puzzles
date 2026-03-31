@@ -53,8 +53,8 @@ def multi_stage_image_blur_pipeline[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Stage 1: Load and preprocess (threads 0-127)
     if local_i < STAGE1_THREADS:
@@ -180,8 +180,8 @@ def double_buffered_stencil_computation[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:

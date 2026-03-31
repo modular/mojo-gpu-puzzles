@@ -25,7 +25,7 @@ def butterfly_pair_swap[
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (4 lines)
 
@@ -47,7 +47,7 @@ def butterfly_parallel_max[
     This implements an efficient O(log n) parallel reduction algorithm that works
     for any WARP_SIZE (32, 64, etc.).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 7 lines)
 
@@ -73,7 +73,7 @@ def butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i < size:
@@ -113,7 +113,7 @@ def warp_inclusive_prefix_sum[
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 4 lines)
 
@@ -145,7 +145,7 @@ def warp_partition[
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (< pivot | >= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i < size:
         var current_val = input[global_i]

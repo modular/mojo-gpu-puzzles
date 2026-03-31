@@ -165,7 +165,7 @@ def matmul_idiomatic_tiled[
     var tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    var out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
+    var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
     var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
@@ -190,8 +190,8 @@ def matmul_idiomatic_tiled[
         size // TPB
     ):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
-        var b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
+        var a_tile = a.tile[TPB, TPB](block_idx.y, Int(idx))
+        var b_tile = b.tile[TPB, TPB](Int(idx), block_idx.x)
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[

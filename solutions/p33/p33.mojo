@@ -35,13 +35,11 @@ def matmul_idiomatic_tiled[
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = Int(block_idx.y * tile_size_y + local_row)
-    var tiled_col = Int(block_idx.x * tile_size_x + local_col)
+    var tiled_row = block_idx.y * tile_size_y + local_row
+    var tiled_col = block_idx.x * tile_size_x + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    var out_tile = output.tile[TILE_SIZE, TILE_SIZE](
-        Int(block_idx.y), Int(block_idx.x)
-    )
+    var out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
     var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
@@ -64,8 +62,8 @@ def matmul_idiomatic_tiled[
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](Int(block_idx.y), idx)
-        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, Int(block_idx.x))
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -143,7 +141,7 @@ def tensor_core_matrix_multiplication[
     comptime N = C.shape[1]()
     comptime K = A.shape[1]()
 
-    var warp_id = Int(thread_idx.x) // WARP_SIZE
+    var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
     var warp_y = warp_id // warps_in_n
@@ -151,7 +149,7 @@ def tensor_core_matrix_multiplication[
 
     var warp_is_active = warp_y < warps_in_m
 
-    var C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
+    var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
@@ -190,8 +188,8 @@ def tensor_core_matrix_multiplication[
     for k_i in range(K // BK):
         barrier()
 
-        var A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
-        var B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
+        var A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
+        var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
             thread_layout=Layout.row_major(4, 8),

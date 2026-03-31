@@ -24,7 +24,7 @@ def minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -53,7 +53,7 @@ def sophisticated_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i < size:
@@ -150,7 +150,7 @@ def balanced_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i < size:

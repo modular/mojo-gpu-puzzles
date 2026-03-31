@@ -24,7 +24,7 @@ def kernel1[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i < size:
         output[i] = a[i] + b[i]
 
@@ -41,7 +41,7 @@ def kernel2[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
     var i = tid
@@ -62,7 +62,7 @@ def kernel3[
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
