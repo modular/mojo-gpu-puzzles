@@ -393,12 +393,12 @@ def matmul_idiomatic_tiled[
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
-    var tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
+    var tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    var tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        Int(block_idx.y), Int(block_idx.x)
+        block_idx.y, block_idx.x
     )
     var a_shared = LayoutTensor[
         dtype,
@@ -426,10 +426,10 @@ def matmul_idiomatic_tiled[
     ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            Int(block_idx.y), idx
+            block_idx.y, idx
         )
         var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, Int(block_idx.x)
+            idx, block_idx.x
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -471,8 +471,8 @@ def matmul_idiomatic_tiled[
 <pre><code class="language-mojo">def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
-    rows: UInt,
-    cols: UInt,
+    rows: Int,
+    cols: Int,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
@@ -524,9 +524,9 @@ def matmul_idiomatic_tiled[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var out_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var out_idx = thread_idx.x
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or out_idx &gt;= output_dim:
         return
@@ -557,9 +557,9 @@ def matmul_idiomatic_tiled[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var hidden_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var hidden_idx = thread_idx.x
 
     if (
         batch_idx &gt;= batch_size
@@ -714,9 +714,9 @@ UNFUSED Algorithm Test Completed!
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var hidden_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var hidden_idx = thread_idx.x
 
     if (
         batch_idx &gt;= batch_size
@@ -912,8 +912,8 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -1069,8 +1069,8 @@ FUSED Algorithm Test Completed!
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return

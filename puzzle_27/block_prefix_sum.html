@@ -274,8 +274,8 @@ def block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Step 1: Each thread determines its bin and element value
 
@@ -320,7 +320,7 @@ local_i = thread_idx.x
 <h3 id="2-bin-calculation-use-mathfloor"><a class="header" href="#2-bin-calculation-use-mathfloor">2. <strong>Bin calculation (use <code>math.floor</code>)</strong></a></h3>
 <p>To classify a <code>Float32</code> value into bins:</p>
 <pre><code class="language-mojo">my_value = input_data[global_i][0]  # Extract SIMD like in dot product
-bin_number = Int(floor(my_value * num_bins))
+bin_number = Int(floor(my_value * Float32(num_bins)))
 </code></pre>
 <p><strong>Edge case handling</strong>: Values exactly 1.0 would go to bin <code>NUM_BINS</code>, but you only have bins 0 to <code>NUM_BINS-1</code>. Use an <code>if</code> statement to clamp the maximum bin.</p>
 <h3 id="3-binary-predicate-creation"><a class="header" href="#3-binary-predicate-creation">3. <strong>Binary predicate creation</strong></a></h3>
@@ -348,7 +348,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <h3 id="6-final-count-computation"><a class="header" href="#6-final-count-computation">6. <strong>Final count computation</strong></a></h3>
 <p>The last thread (not thread 0!) computes the total count:</p>
 <pre><code class="language-mojo">if local_i == tpb - 1:  # Last thread in block
-    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+    total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
     count_output[0] = total_count
 </code></pre>
 <p><strong>Why last thread?</strong> It has the highest <code>offset</code> value, so <code>offset + contribution</code> gives the total.</p>
@@ -446,8 +446,8 @@ Bin 7 extracted elements:
     3. Extract and pack only elements belonging to target_bin
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Step 1: Each thread determines its bin and element value
     var my_value: Scalar[dtype] = 0.0
@@ -457,7 +457,7 @@ Bin 7 extracted elements:
         # `[0]` returns the underlying SIMD value
         my_value = input_data[global_i][0]
         # Bin values [0.0, 1.0) into num_bins buckets
-        my_bin = Int(floor(my_value * num_bins))
+        my_bin = Int(floor(my_value * Scalar[dtype](num_bins)))
         # Clamp to valid range
         if my_bin &gt;= num_bins:
             my_bin = num_bins - 1
@@ -482,7 +482,7 @@ Bin 7 extracted elements:
     # Step 5: Final thread computes total count for this bin
     if local_i == tpb - 1:
         # Inclusive sum = exclusive sum + my contribution
-        var total_count = write_offset[0] + belongs_to_target
+        var total_count = write_offset[0] + Int32(belongs_to_target)
         count_output[0] = total_count
 
 
@@ -543,7 +543,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 <h3 id="phase-6-count-computation-like-blocksum-pattern"><a class="header" href="#phase-6-count-computation-like-blocksum-pattern"><strong>Phase 6: Count computation (like block.sum() pattern)</strong></a></h3>
 <pre><code>Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
-      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+      total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
 </code></pre>
 <h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>

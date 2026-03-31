@@ -236,7 +236,7 @@ comptime THREADS_PER_BLOCK = (1024, 1)
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
-comptime ALPHA = Float32(2.5)  # SAXPY coefficient
+comptime ALPHA = Scalar[dtype](2.5)  # SAXPY coefficient
 
 
 def minimal_kernel[
@@ -248,7 +248,7 @@ def minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -275,7 +275,7 @@ def minimal_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i &lt; size:
@@ -370,7 +370,7 @@ def minimal_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i &lt; size:

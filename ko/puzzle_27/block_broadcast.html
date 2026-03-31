@@ -290,7 +290,7 @@ def block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -442,7 +442,7 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -459,7 +459,7 @@ Output mean: 1.0
     var mean_value: Scalar[dtype] = 1.0  # Default to avoid division by zero
     if local_i == 0:
         if total_sum[0] &gt; 0.0:
-            mean_value = total_sum[0] / Float32(size)
+            mean_value = total_sum[0] / Scalar[dtype](size)
 
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration

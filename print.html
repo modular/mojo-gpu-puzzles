@@ -1154,7 +1154,7 @@ comptime dtype = DType.float32
 def add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -1208,7 +1208,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-mojo">def add_10_guard(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = thread_idx.x
     if i &lt; size:
@@ -1324,7 +1324,7 @@ comptime dtype = DType.float32
 def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1379,7 +1379,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-mojo">def add_10_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1567,7 +1567,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1622,7 +1622,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1688,7 +1688,7 @@ def broadcast_add(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1744,7 +1744,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1823,7 +1823,7 @@ def broadcast_add[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1883,7 +1883,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -1950,7 +1950,7 @@ comptime dtype = DType.float32
 def add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 2 lines)
@@ -2007,7 +2007,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <pre><code class="language-mojo">def add_10_blocks(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
@@ -2148,7 +2148,7 @@ comptime dtype = DType.float32
 def add_10_blocks_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -2203,7 +2203,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <pre><code class="language-mojo">def add_10_blocks_2d(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -2321,7 +2321,7 @@ def add_10_blocks_2d[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -2379,7 +2379,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -2519,7 +2519,7 @@ comptime dtype = DType.float32
 def add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -2588,7 +2588,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <pre><code class="language-mojo">def add_10_shared(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -2750,7 +2750,7 @@ def add_10_shared_layout_tensor[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using LayoutTensor with explicit address_space
     var shared = LayoutTensor[
@@ -2823,7 +2823,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using tensor builder
     var shared = LayoutTensor[
@@ -4844,7 +4844,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -4975,7 +4975,7 @@ Running memory bug example (bounds checking issue)...
 <pre><code class="language-mojo">def add_10_2d(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -5039,7 +5039,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -5197,7 +5197,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
     var row = thread_idx.y
@@ -5367,7 +5367,7 @@ comptime dtype = DType.float32
 def pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -5428,7 +5428,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <pre><code class="language-mojo">def pooling(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -5446,7 +5446,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
         output[0] = shared[0]
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
-    elif UInt(1) &lt; global_i &lt; size:
+    elif 1 &lt; global_i &lt; size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -5569,7 +5569,7 @@ def pooling[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using tensor builder
     var shared = LayoutTensor[
@@ -5636,7 +5636,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # Allocate shared memory using tensor builder
     var shared = LayoutTensor[
@@ -5662,7 +5662,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
     elif global_i == 1:
         output[1] = shared[0] + shared[1]
     # Handle general case
-    elif UInt(1) &lt; global_i &lt; size:
+    elif 1 &lt; global_i &lt; size:
         output[global_i] = (
             shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
         )
@@ -5810,7 +5810,7 @@ def dot_product(
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
     ...
@@ -5866,7 +5866,7 @@ expected: HostBuffer([140.0])
     output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
     b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = stack_allocation[
         TPB,
@@ -5890,7 +5890,7 @@ expected: HostBuffer([140.0])
     # and warps can be scheduled independently.
     # However, shared memory does not have such issues as long as we use `barrier()`
     # correctly when we're in the same thread block.
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]
@@ -6059,7 +6059,7 @@ def dot_product[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
     ...
@@ -6117,7 +6117,7 @@ expected: HostBuffer([140.0])
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = LayoutTensor[
         dtype,
@@ -6136,7 +6136,7 @@ expected: HostBuffer([140.0])
     barrier()
 
     # Parallel reduction in shared memory
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]
@@ -6349,7 +6349,7 @@ def conv_1d_simple[
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 14 lines)
 
 
@@ -6408,7 +6408,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
     var shared_a = LayoutTensor[
         dtype,
         Layout.row_major(SIZE),
@@ -6589,8 +6589,8 @@ def conv_1d_block_boundary[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # FILL ME IN (roughly 18 lines)
 
 
@@ -6648,8 +6648,8 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # first: need to account for padding
     var shared_a = LayoutTensor[
         dtype,
@@ -6919,7 +6919,7 @@ def prefix_sum_simple[
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -6977,7 +6977,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -6992,7 +6992,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 
     barrier()
 
-    var offset = UInt(1)
+    var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; size:
@@ -7151,7 +7151,7 @@ def prefix_sum_local_phase[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -7161,7 +7161,7 @@ def prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -7174,7 +7174,7 @@ def prefix_sum_block_sum_phase[
             ctx.enqueue_function[kernel, kernel](
                 out_tensor,
                 a_tensor,
-                UInt(size),
+                size,
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -7183,7 +7183,7 @@ def prefix_sum_block_sum_phase[
             comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
             ctx.enqueue_function[kernel2, kernel2](
                 out_tensor,
-                UInt(size),
+                size,
                 grid_dim=BLOCKS_PER_GRID_2,
                 block_dim=THREADS_PER_BLOCK_2,
             )
@@ -7271,7 +7271,7 @@ def prefix_sum_local_phase[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -7302,7 +7302,7 @@ def prefix_sum_local_phase[
     # Iteration 3 (offset=4):
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
     #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
-    var offset = UInt(1)
+    var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; TPB:
@@ -7334,7 +7334,7 @@ def prefix_sum_local_phase[
 # Kernel 2: Add block sums to their respective blocks
 def prefix_sum_block_sum_phase[
     layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: UInt):
+](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element
@@ -7597,7 +7597,7 @@ def axis_sum[
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -7656,7 +7656,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 ](
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -7685,7 +7685,7 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
     barrier()
 
     # do reduction sum per each block
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride &gt; 0:
         # Read phase: all threads read the values they need first to avoid race conditions
         var temp_val: output.element_type = 0
@@ -7889,7 +7889,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 
 
 def naive_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -7947,7 +7947,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def naive_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -8186,7 +8186,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete-22"><a class="header" href="#code-to-complete-22">Code to complete</a></h2>
 <pre><code class="language-mojo">def single_block_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -8246,7 +8246,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def single_block_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -8545,7 +8545,7 @@ comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
 
 
 def matmul_tiled[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -8658,7 +8658,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def matmul_tiled[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -8861,7 +8861,7 @@ comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
     a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
@@ -8873,7 +8873,7 @@ def matmul_idiomatic_tiled[
     var tiled_col = block_idx.x * TPB + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    var out_tile = output.tile[TPB, TPB](Int(block_idx.y), Int(block_idx.x))
+    var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
     var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TPB, TPB),
@@ -8898,8 +8898,8 @@ def matmul_idiomatic_tiled[
         size // TPB
     ):  # Perfect division: 9 // 3 = 3 tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TPB, TPB](Int(block_idx.y), Int(idx))
-        var b_tile = b.tile[TPB, TPB](Int(idx), Int(block_idx.x))
+        var a_tile = a.tile[TPB, TPB](block_idx.y, Int(idx))
+        var b_tile = b.tile[TPB, TPB](Int(idx), block_idx.x)
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -9136,8 +9136,8 @@ def conv1d_kernel[
     input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
     kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     # first: need to account for padding
     var shared_a = LayoutTensor[
         dtype,
@@ -9750,7 +9750,7 @@ Sum of all probabilities on GPU: 1.0
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var global_i = Int(thread_idx.x)
+    var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i &gt;= input_size) shared memory addresses to the minimum
     # finite value for dtype, ensuring that if these elements are accessed in the parallel max reduction below they
@@ -10474,19 +10474,19 @@ Output vector norms:
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var local_row = Int(thread_idx.y)
-    var local_col = Int(thread_idx.x)
+    var local_row = thread_idx.y
+    var local_col = thread_idx.x
 
-    var global_row = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    var global_col = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var global_col = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     if global_row &lt; rows and global_col &lt; cols:
         shared_tile[local_row, local_col] = inp[global_row, global_col]
 
     barrier()
 
-    var out_row = Int(block_idx.x) * TRANSPOSE_BLOCK_DIM_XY + local_row
-    var out_col = Int(block_idx.y) * TRANSPOSE_BLOCK_DIM_XY + local_col
+    var out_row = block_idx.x * TRANSPOSE_BLOCK_DIM_XY + local_row
+    var out_col = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_col
 
     # Store data from shared memory to global memory (coalesced write)
     # Note: we transpose the shared memory access pattern
@@ -10996,7 +10996,7 @@ def embedding_kernel_coalesced[
     """
 
     # Simple 1D indexing - each thread = one output element
-    var global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var global_idx = block_idx.x * block_dim.x + thread_idx.x
     var total_elements = batch_size * seq_len * embed_dim
 
     if global_idx &gt;= total_elements:
@@ -11068,8 +11068,8 @@ def embedding_kernel_coalesced[
     """
 
     # 2D grid indexing
-    var batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    var embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
+    var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
+    var embed_idx = block_idx.y * block_dim.y + thread_idx.y
     var total_positions = batch_size * seq_len
 
     if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim:
@@ -11424,7 +11424,7 @@ Key Learning Points:
     """
 
     # Simple 1D indexing - each thread = one output element
-    var global_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var global_idx = block_idx.x * block_dim.x + thread_idx.x
     var total_elements = batch_size * seq_len * embed_dim
 
     if global_idx &gt;= total_elements:
@@ -11474,8 +11474,8 @@ Key Learning Points:
     """
 
     # 2D grid indexing
-    var batch_seq_idx = Int(block_idx.x * block_dim.x + thread_idx.x)
-    var embed_idx = Int(block_idx.y * block_dim.y + thread_idx.y)
+    var batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x
+    var embed_idx = block_idx.y * block_dim.y + thread_idx.y
 
     var total_positions = batch_size * seq_len
 
@@ -11917,12 +11917,12 @@ def matmul_idiomatic_tiled[
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = Int(block_idx.y * MATMUL_BLOCK_DIM_XY + local_row)
-    var tiled_col = Int(block_idx.x * MATMUL_BLOCK_DIM_XY + local_col)
+    var tiled_row = block_idx.y * MATMUL_BLOCK_DIM_XY + local_row
+    var tiled_col = block_idx.x * MATMUL_BLOCK_DIM_XY + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-        Int(block_idx.y), Int(block_idx.x)
+        block_idx.y, block_idx.x
     )
     var a_shared = LayoutTensor[
         dtype,
@@ -11950,10 +11950,10 @@ def matmul_idiomatic_tiled[
     ):
         # Get tiles from A and B matrices
         var a_tile = a.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            Int(block_idx.y), idx
+            block_idx.y, idx
         )
         var b_tile = b.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
-            idx, Int(block_idx.x)
+            idx, block_idx.x
         )
 
         # Asynchronously copy tiles to shared memory with consistent orientation
@@ -11995,8 +11995,8 @@ def matmul_idiomatic_tiled[
 <pre><code class="language-mojo">def transpose_kernel[
     layout_in: Layout,
     layout_out: Layout,
-    rows: UInt,
-    cols: UInt,
+    rows: Int,
+    cols: Int,
     dtype: DType = DType.float32,
 ](
     output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
@@ -12048,9 +12048,9 @@ def matmul_idiomatic_tiled[
     bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var out_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var out_idx = thread_idx.x
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len or out_idx &gt;= output_dim:
         return
@@ -12081,9 +12081,9 @@ def matmul_idiomatic_tiled[
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var hidden_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var hidden_idx = thread_idx.x
 
     if (
         batch_idx &gt;= batch_size
@@ -12238,9 +12238,9 @@ UNFUSED Algorithm Test Completed!
     ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
     ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
 ):
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
-    var hidden_idx = Int(thread_idx.x)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
+    var hidden_idx = thread_idx.x
 
     if (
         batch_idx &gt;= batch_size
@@ -12436,8 +12436,8 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -12593,8 +12593,8 @@ FUSED Algorithm Test Completed!
     """
     # Grid: (batch_size, seq_len) - one thread block per sequence position
     # Block: (1,) - single thread per sequence position to avoid redundant computation
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -12884,8 +12884,8 @@ where:</p>
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -13096,8 +13096,8 @@ BACKWARD PASS Test Completed!
     """
     # Grid: (batch_size, seq_len) - one thread per sequence position
     # Block: (1,) - single thread per sequence position
-    var batch_idx = Int(block_idx.x)
-    var seq_idx = Int(block_idx.y)
+    var batch_idx = block_idx.x
+    var seq_idx = block_idx.y
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
@@ -15624,8 +15624,8 @@ def traditional_dot_product_p12_style[
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     if global_i &lt; size:
         shared[local_i] = (a[global_i] * b[global_i]).reduce_add()
@@ -15689,7 +15689,7 @@ def traditional_dot_product_p12_style[
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
 
 
@@ -15771,7 +15771,7 @@ expected: 10416.0
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -16408,7 +16408,7 @@ def neighbor_difference[
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     # FILL IN (roughly 7 lines)
@@ -16503,7 +16503,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
     Uses shuffle_down(val, 1) to get the next neighbor's value.
     Works across multiple blocks, each processing one warp worth of data.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     if global_i &lt; size:
@@ -16614,7 +16614,7 @@ def moving_average_3[
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     # FILL IN (roughly 10 lines)
@@ -16717,7 +16717,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
     Uses shuffle_down with offsets 1 and 2 to access neighbors.
     Works within warp boundaries across multiple blocks.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     if global_i &lt; size:
@@ -16907,7 +16907,7 @@ result = use_collective_value(collective_value)
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i &lt; size:
         var broadcast_value: output.element_type = 0.0
@@ -16993,14 +16993,14 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
     Each lane then uses this broadcast value in its own computation.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 computes special value (sum of first 4 elements in this block)
         var broadcast_value: output.element_type = 0.0
         if lane == 0:
-            var block_start = Int(block_idx.x * block_dim.x)
+            var block_start = block_idx.x * block_dim.x
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:
@@ -17100,7 +17100,7 @@ Cycle 3: Individual computation with broadcast value
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i &lt; size:
         var decision_value: output.element_type = 0.0
@@ -17199,14 +17199,14 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
     All lanes apply different logic based on the broadcast decision.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     if global_i &lt; size:
         # Step 1: Lane 0 analyzes block-local data and makes decision (find max of first 8 in block)
         var decision_value: output.element_type = 0.0
         if lane == 0:
-            var block_start = Int(block_idx.x * block_dim.x)
+            var block_start = block_idx.x * block_dim.x
             decision_value = input[block_start] if block_start &lt; size else 0.0
             for i in range(1, min(8, min(WARP_SIZE, size - block_start))):
                 if block_start + i &lt; size:
@@ -17337,7 +17337,7 @@ Step 3: Conditional execution per lane
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i &lt; size:
         var scale_factor: output.element_type = 0.0
@@ -17429,7 +17429,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
     Lane 0 computes block-local scaling factor, broadcasts it to all lanes in the warp.
     Each lane uses shuffle_down() for neighbor access and applies broadcast factor.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
 
     if global_i &lt; size:
@@ -17437,7 +17437,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
         var scale_factor: output.element_type = 0.0
         if lane == 0:
             # Compute average of first 4 elements in this block's data
-            var block_start = Int(block_idx.x * block_dim.x)
+            var block_start = block_idx.x * block_dim.x
             var sum: output.element_type = 0.0
             for i in range(4):
                 if block_start + i &lt; size:
@@ -17657,7 +17657,7 @@ output[global_i] = scan_result
 <pre><code class="language-mojo">max_val = input[global_i]
 offset = WARP_SIZE // 2
 while offset &gt; 0:
-    max_val = max(max_val, shuffle_xor(max_val, offset))
+    max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
 # All lanes now have global maximum
 </code></pre>
@@ -17853,7 +17853,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -17956,7 +17956,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
     This implements an efficient O(log n) parallel reduction algorithm that works
     for any WARP_SIZE (32, 64, etc.).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 7 lines)
 
@@ -18062,7 +18062,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     Each step reduces the active range by half until all threads have the maximum value.
     This implements an efficient O(log n) parallel reduction algorithm.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var max_val = input[global_i]
@@ -18071,7 +18071,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
         # Start with half the warp size and reduce by half each step
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            max_val = max(max_val, shuffle_xor(max_val, offset))
+            max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
             offset //= 2
 
         # All threads now have the maximum value across the entire warp
@@ -18088,7 +18088,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     # Butterfly reduction tree: dynamic for any WARP_SIZE
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        max_val = max(max_val, shuffle_xor(max_val, offset))
+        max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
 
     output[global_i] = max_val  # All lanes have global maximum
@@ -18171,7 +18171,7 @@ def butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i &lt; size:
@@ -18260,7 +18260,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i &lt; size:
@@ -18270,10 +18270,10 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
         # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            var neighbor_val = shuffle_xor(current_val, offset)
+            var neighbor_val = shuffle_xor(current_val, UInt32(offset))
             current_val = max(current_val, neighbor_val)
 
-            var min_neighbor_val = shuffle_xor(min_val, offset)
+            var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
             min_val = min(min_val, min_neighbor_val)
 
             offset //= 2
@@ -18296,10 +18296,10 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
     # Butterfly reduction for both max and min log_2(WARP_SIZE}) steps)
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        neighbor_val = shuffle_xor(current_val, offset)
+        neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max reduction
 
-        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min reduction
 
         offset //= 2
@@ -18334,10 +18334,10 @@ Final result: All lanes have current_val=7 (global max) and min_val=1 (global mi
 <p><strong>Dynamic algorithm</strong> (works for any WARP_SIZE):</p>
 <pre><code class="language-mojo">offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -18403,7 +18403,7 @@ while offset &gt; 0:
 <p><strong>Dynamic Algorithm Design:</strong></p>
 <pre><code class="language-mojo">offset = WARP_SIZE // 2
 while offset &gt; 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 </code></pre>
@@ -18456,7 +18456,7 @@ while offset &gt; 0:
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -18471,7 +18471,7 @@ while offset &gt; 0:
 
     barrier()
 
-    var offset = UInt(1)
+    var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; size:
@@ -18540,7 +18540,7 @@ output[global_i] = scan_result
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 4 lines)
 
@@ -18637,7 +18637,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -18759,7 +18759,7 @@ Cycle 3: Store results
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -18855,18 +18855,18 @@ pivot: 5.0
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
 
         # Phase 1: Create warp-level predicates
-        var predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(
-            0.0
-        )
-        var predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(
-            0.0
-        )
+        var predicate_left = Scalar[dtype](
+            1.0
+        ) if current_val &lt; pivot else Scalar[dtype](0.0)
+        var predicate_right = Scalar[dtype](
+            1.0
+        ) if current_val &gt;= pivot else Scalar[dtype](0.0)
 
         # Phase 2: Warp-level prefix sum to get positions within warp
         var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
@@ -18878,7 +18878,7 @@ pivot: 5.0
         # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            warp_left_total += shuffle_xor(warp_left_total, offset)
+            warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
             offset //= 2
 
         # Phase 4: Write to output positions
@@ -18911,7 +18911,7 @@ pivot: 5.0
     # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
     offset = WARP_SIZE // 2
     while offset &gt; 0:
-        warp_left_total += shuffle_xor(warp_left_total, offset)
+        warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
 
     # Phase 4: Write to output positions
@@ -19280,8 +19280,8 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
         MutAnyOrigin,
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Each thread computes partial product
     if global_i &lt; size:
@@ -19323,7 +19323,7 @@ Block operations:      3-5 lines of composable, hardware-optimized primitives
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
 ):
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
@@ -19394,7 +19394,7 @@ def block_sum_dot_product[
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # FILL IN (roughly 6 lines)
@@ -19473,7 +19473,7 @@ Just like warp.sum() but for the entire block
     """Dot product using block.sum() - convenience function like warp.sum()!
     Replaces manual shared memory + barriers + tree reduction with one line."""
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Each thread computes partial product
@@ -19695,8 +19695,8 @@ def block_histogram_bin_extract[
     3. Extract and pack only elements belonging to target_bin
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Step 1: Each thread determines its bin and element value
 
@@ -19741,7 +19741,7 @@ local_i = thread_idx.x
 <h3 id="2-bin-calculation-use-mathfloor"><a class="header" href="#2-bin-calculation-use-mathfloor">2. <strong>Bin calculation (use <code>math.floor</code>)</strong></a></h3>
 <p>To classify a <code>Float32</code> value into bins:</p>
 <pre><code class="language-mojo">my_value = input_data[global_i][0]  # Extract SIMD like in dot product
-bin_number = Int(floor(my_value * num_bins))
+bin_number = Int(floor(my_value * Float32(num_bins)))
 </code></pre>
 <p><strong>Edge case handling</strong>: Values exactly 1.0 would go to bin <code>NUM_BINS</code>, but you only have bins 0 to <code>NUM_BINS-1</code>. Use an <code>if</code> statement to clamp the maximum bin.</p>
 <h3 id="3-binary-predicate-creation"><a class="header" href="#3-binary-predicate-creation">3. <strong>Binary predicate creation</strong></a></h3>
@@ -19769,7 +19769,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <h3 id="6-final-count-computation"><a class="header" href="#6-final-count-computation">6. <strong>Final count computation</strong></a></h3>
 <p>The last thread (not thread 0!) computes the total count:</p>
 <pre><code class="language-mojo">if local_i == tpb - 1:  # Last thread in block
-    total_count = offset[0] + belongs_to_target  # Inclusive = exclusive + own contribution
+    total_count = offset[0] + Int32(belongs_to_target)  # Inclusive = exclusive + own contribution
     count_output[0] = total_count
 </code></pre>
 <p><strong>Why last thread?</strong> It has the highest <code>offset</code> value, so <code>offset + contribution</code> gives the total.</p>
@@ -19867,8 +19867,8 @@ Bin 7 extracted elements:
     3. Extract and pack only elements belonging to target_bin
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Step 1: Each thread determines its bin and element value
     var my_value: Scalar[dtype] = 0.0
@@ -19878,7 +19878,7 @@ Bin 7 extracted elements:
         # `[0]` returns the underlying SIMD value
         my_value = input_data[global_i][0]
         # Bin values [0.0, 1.0) into num_bins buckets
-        my_bin = Int(floor(my_value * num_bins))
+        my_bin = Int(floor(my_value * Scalar[dtype](num_bins)))
         # Clamp to valid range
         if my_bin &gt;= num_bins:
             my_bin = num_bins - 1
@@ -19903,7 +19903,7 @@ Bin 7 extracted elements:
     # Step 5: Final thread computes total count for this bin
     if local_i == tpb - 1:
         # Inclusive sum = exclusive sum + my contribution
-        var total_count = write_offset[0] + belongs_to_target
+        var total_count = write_offset[0] + Int32(belongs_to_target)
         count_output[0] = total_count
 
 
@@ -19964,7 +19964,7 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
 <h3 id="phase-6-count-computation-like-blocksum-pattern"><a class="header" href="#phase-6-count-computation-like-blocksum-pattern"><strong>Phase 6: Count computation (like block.sum() pattern)</strong></a></h3>
 <pre><code>Last thread computes total (not thread 0!):
   if local_i == tpb - 1:  // Thread 127 in our case
-      total = write_offset[0] + belongs_to_target  // Inclusive sum formula
+      total = write_offset[0] + Int32(belongs_to_target)  // Inclusive sum formula
       count_output[0] = total
 </code></pre>
 <h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>
@@ -20114,7 +20114,7 @@ def block_normalize_vector[
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -20266,7 +20266,7 @@ Output mean: 1.0
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Step 1: Each thread loads its element
@@ -20283,7 +20283,7 @@ Output mean: 1.0
     var mean_value: Scalar[dtype] = 1.0  # Default to avoid division by zero
     if local_i == 0:
         if total_sum[0] &gt; 0.0:
-            mean_value = total_sum[0] / Float32(size)
+            mean_value = total_sum[0] / Scalar[dtype](size)
 
     # Step 4: block.broadcast() shares mean to ALL threads!
     # This completes the block operations trilogy demonstration
@@ -20899,11 +20899,11 @@ def async_copy_overlap_convolution[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var local_i = Int(thread_idx.x)
+    var local_i = thread_idx.x
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](Int(block_idx.x))
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -20918,7 +20918,7 @@ def async_copy_overlap_convolution[
     barrier()  # Sync all threads
 
     # Phase 4: Compute convolution
-    var global_i = Int(block_idx.x) * CONV_TILE_SIZE + local_i
+    var global_i = block_idx.x * CONV_TILE_SIZE + local_i
     if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
         var result: output.element_type = 0
 
@@ -21273,8 +21273,8 @@ def multi_stage_image_blur_pipeline[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Stage 1: Load and preprocess (threads 0-127)
 
@@ -21404,8 +21404,8 @@ Output sample: 1.6665002 2.3331003 3.3996604
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Stage 1: Load and preprocess (threads 0-127)
     if local_i &lt; STAGE1_THREADS:
@@ -21438,7 +21438,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
                 blur_count += 1
 
         if blur_count &gt; 0:
-            blur_shared[blur_idx] = blur_sum / blur_count
+            blur_shared[blur_idx] = blur_sum / Scalar[dtype](blur_count)
         else:
             blur_shared[blur_idx] = 0.0
 
@@ -21454,7 +21454,7 @@ Output sample: 1.6665002 2.3331003 3.3996604
                     blur_count += 1
 
             if blur_count &gt; 0:
-                blur_shared[second_idx] = blur_sum / blur_count
+                blur_shared[second_idx] = blur_sum / Scalar[dtype](blur_count)
             else:
                 blur_shared[second_idx] = 0.0
 
@@ -21756,8 +21756,8 @@ def double_buffered_stencil_computation[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -21935,8 +21935,8 @@ GPU output sample: 1.0 1.0 1.0
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -21972,7 +21972,9 @@ GPU output sample: 1.0 1.0 1.0
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
-                    buffer_B[local_i] = stencil_sum / stencil_count
+                    buffer_B[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_B[local_i] = buffer_A[local_i]
 
@@ -21992,7 +21994,9 @@ GPU output sample: 1.0 1.0 1.0
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
-                    buffer_A[local_i] = stencil_sum / stencil_count
+                    buffer_A[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
@@ -22080,7 +22084,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 </code></pre>
 <h2 id="buffer-role-alternation"><a class="header" href="#buffer-role-alternation"><strong>Buffer role alternation</strong></a></h2>
 <p>The ping-pong buffer pattern ensures data integrity:</p>
@@ -23058,7 +23062,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         output[i] = a[i] + b[i]
 
@@ -23074,7 +23078,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
     var i = tid
@@ -23094,7 +23098,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):
@@ -23288,7 +23292,7 @@ comptime THREADS_PER_BLOCK = (1024, 1)
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
 comptime dtype = DType.float32
 comptime layout = Layout.row_major(SIZE)
-comptime ALPHA = Float32(2.5)  # SAXPY coefficient
+comptime ALPHA = Scalar[dtype](2.5)  # SAXPY coefficient
 
 
 def minimal_kernel[
@@ -23300,7 +23304,7 @@ def minimal_kernel[
     size: Int,
 ):
     """Minimal SAXPY kernel - simple and register-light for high occupancy."""
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         # Direct computation: y[i] = alpha * x[i] + y[i]
         # Uses minimal registers (~8), no shared memory
@@ -23327,7 +23331,7 @@ def minimal_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 48KB
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i &lt; size:
@@ -23422,7 +23426,7 @@ def minimal_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()  # 16KB total
 
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if i &lt; size:
@@ -24062,7 +24066,7 @@ def no_conflict_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Load from global memory to shared memory - no conflicts
@@ -24102,7 +24106,7 @@ def no_conflict_kernel[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # CONFLICT: stride-2 access creates 2-way bank conflicts
@@ -24571,13 +24575,11 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
-    var tiled_row = Int(block_idx.y * tile_size_y + local_row)
-    var tiled_col = Int(block_idx.x * tile_size_x + local_col)
+    var tiled_row = block_idx.y * tile_size_y + local_row
+    var tiled_col = block_idx.x * tile_size_x + local_col
 
     # Get the tile of the output matrix that this thread block is responsible for
-    var out_tile = output.tile[TILE_SIZE, TILE_SIZE](
-        Int(block_idx.y), Int(block_idx.x)
-    )
+    var out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
     var a_shared = LayoutTensor[
         dtype,
         Layout.row_major(TILE_SIZE, TILE_SIZE),
@@ -24600,8 +24602,8 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](Int(block_idx.y), idx)
-        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, Int(block_idx.x))
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx)
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x)
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -24719,7 +24721,7 @@ def tensor_core_matrix_multiplication[
     comptime N = C.shape[1]()
     comptime K = A.shape[1]()
 
-    var warp_id = Int(thread_idx.x) // WARP_SIZE
+    var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
     var warp_y = warp_id // warps_in_n
@@ -24727,7 +24729,7 @@ def tensor_core_matrix_multiplication[
 
     var warp_is_active = warp_y &lt; warps_in_m
 
-    var C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
+    var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
@@ -24764,8 +24766,8 @@ def tensor_core_matrix_multiplication[
     for k_i in range(K // BK):
         barrier()
 
-        var A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
-        var B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
+        var A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
+        var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
             thread_layout=Layout.row_major(4, 8),
@@ -24910,7 +24912,7 @@ ALL TESTS PASSED!
     comptime N = C.shape[1]()
     comptime K = A.shape[1]()
 
-    var warp_id = Int(thread_idx.x) // WARP_SIZE
+    var warp_id = thread_idx.x // WARP_SIZE
     var warps_in_n = BN // WN
     var warps_in_m = BM // WM
     var warp_y = warp_id // warps_in_n
@@ -24918,7 +24920,7 @@ ALL TESTS PASSED!
 
     var warp_is_active = warp_y &lt; warps_in_m
 
-    var C_block_tile = C.tile[BM, BN](Int(block_idx.y), Int(block_idx.x))
+    var C_block_tile = C.tile[BM, BN](block_idx.y, block_idx.x)
     var C_warp_tile = C_block_tile.tile[WM, WN](warp_y, warp_x)
 
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
@@ -24957,8 +24959,8 @@ ALL TESTS PASSED!
     for k_i in range(K // BK):
         barrier()
 
-        var A_dram_tile = A.tile[BM, BK](Int(block_idx.y), k_i)
-        var B_dram_tile = B.tile[BK, BN](k_i, Int(block_idx.x))
+        var A_dram_tile = A.tile[BM, BK](block_idx.y, k_i)
+        var B_dram_tile = B.tile[BK, BN](k_i, block_idx.x)
 
         copy_dram_to_sram_async[
             thread_layout=Layout.row_major(4, 8),
@@ -25363,12 +25365,12 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     var shared_data = LayoutTensor[
         dtype,
@@ -25379,7 +25381,7 @@ ncu --set full --metrics sm__cycles_elapsed.avg,smsp__cycles_active.avg.pct_of_p
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
-    var data_scale = Float32(
+    var data_scale = Scalar[dtype](
         block_id + 1
     )  # Use block_idx instead of cluster rank
 
@@ -25480,12 +25482,12 @@ Block coordination results:
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     # Check what's happening with cluster ranks
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     var shared_data = LayoutTensor[
         dtype,
@@ -25496,7 +25498,7 @@ Block coordination results:
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
-    var data_scale = Float32(
+    var data_scale = Scalar[dtype](
         block_id + 1
     )  # Use block_idx instead of cluster rank
 
@@ -25654,8 +25656,8 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 24 lines)
 
@@ -25755,10 +25757,10 @@ Error: 0.0
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     # Each thread accumulates its data
     var my_value: Float32 = 0.0
@@ -25960,8 +25962,8 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 26 lines)
 
@@ -26065,10 +26067,10 @@ Advanced cluster algorithm results:
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     var shared_data = LayoutTensor[
         dtype,
@@ -26081,7 +26083,7 @@ Advanced cluster algorithm results:
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter
 
     # FIX: Process data with block_idx-based scaling for guaranteed uniqueness
-    var data_scale = Float32(block_id + 1)
+    var data_scale = Scalar[dtype](block_id + 1)
     if global_i &lt; size:
         shared_data[local_i] = input[global_i] * data_scale
     else:

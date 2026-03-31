@@ -241,7 +241,7 @@ B[i,j]: Direct access                  b_shared[local_row, local_col]
 </code></pre>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def single_block_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
@@ -301,7 +301,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def single_block_matmul[
-    layout: Layout, size: UInt
+    layout: Layout, size: Int
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],

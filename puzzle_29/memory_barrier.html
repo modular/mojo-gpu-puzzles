@@ -383,8 +383,8 @@ def double_buffered_stencil_computation[
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -562,8 +562,8 @@ GPU output sample: 1.0 1.0 1.0
         address_space=AddressSpace.SHARED,
     ].stack_allocation()
 
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # Initialize barriers (only thread 0)
     if local_i == 0:
@@ -599,7 +599,9 @@ GPU output sample: 1.0 1.0 1.0
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
-                    buffer_B[local_i] = stencil_sum / stencil_count
+                    buffer_B[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_B[local_i] = buffer_A[local_i]
 
@@ -619,7 +621,9 @@ GPU output sample: 1.0 1.0 1.0
                         stencil_count += 1
 
                 if stencil_count &gt; 0:
-                    buffer_A[local_i] = stencil_sum / stencil_count
+                    buffer_A[local_i] = stencil_sum / Scalar[dtype](
+                        stencil_count
+                    )
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
@@ -707,7 +711,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 </code></pre>
 <h2 id="buffer-role-alternation"><a class="header" href="#buffer-role-alternation"><strong>Buffer role alternation</strong></a></h2>
 <p>The ping-pong buffer pattern ensures data integrity:</p>

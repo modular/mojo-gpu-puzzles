@@ -241,7 +241,7 @@
 ](
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -256,7 +256,7 @@
 
     barrier()
 
-    var offset = UInt(1)
+    var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.element_type = 0
         if local_i &gt;= offset and local_i &lt; size:
@@ -325,7 +325,7 @@ output[global_i] = scan_result
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 4 lines)
 
@@ -422,7 +422,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     NOTE: This implementation only works correctly within a single warp (WARP_SIZE threads).
     For multi-warp scenarios, additional coordination would be needed.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -544,7 +544,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -640,18 +640,18 @@ pivot: 5.0
     Input:  [3, 7, 1, 8, 2, 9, 4, 6]
     var Result: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
 
         # Phase 1: Create warp-level predicates
-        var predicate_left = Float32(1.0) if current_val &lt; pivot else Float32(
-            0.0
-        )
-        var predicate_right = Float32(1.0) if current_val &gt;= pivot else Float32(
-            0.0
-        )
+        var predicate_left = Scalar[dtype](
+            1.0
+        ) if current_val &lt; pivot else Scalar[dtype](0.0)
+        var predicate_right = Scalar[dtype](
+            1.0
+        ) if current_val &gt;= pivot else Scalar[dtype](0.0)
 
         # Phase 2: Warp-level prefix sum to get positions within warp
         var warp_left_pos = prefix_sum[exclusive=True](predicate_left)
@@ -663,7 +663,7 @@ pivot: 5.0
         # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            warp_left_total += shuffle_xor(warp_left_total, offset)
+            warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
             offset //= 2
 
         # Phase 4: Write to output positions

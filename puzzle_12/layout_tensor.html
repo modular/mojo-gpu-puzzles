@@ -256,7 +256,7 @@ def dot_product[
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
     ...
@@ -314,7 +314,7 @@ expected: HostBuffer([140.0])
     output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
     a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
     b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var shared = LayoutTensor[
         dtype,
@@ -333,7 +333,7 @@ expected: HostBuffer([140.0])
     barrier()
 
     # Parallel reduction in shared memory
-    var stride = UInt(TPB // 2)
+    var stride = TPB // 2
     while stride &gt; 0:
         if local_i &lt; stride:
             shared[local_i] += shared[local_i + stride]

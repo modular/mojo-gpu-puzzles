@@ -385,7 +385,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var i = block_dim.x * block_idx.x + thread_idx.x
     if i &lt; size:
         output[i] = a[i] + b[i]
 
@@ -401,7 +401,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var stride = 512
 
     var i = tid
@@ -421,7 +421,7 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
     b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
     size: Int,
 ):
-    var tid = Int(block_idx.x * block_dim.x + thread_idx.x)
+    var tid = block_idx.x * block_dim.x + thread_idx.x
     var total_threads = (SIZE // 1024) * 1024
 
     for step in range(0, size, total_threads):

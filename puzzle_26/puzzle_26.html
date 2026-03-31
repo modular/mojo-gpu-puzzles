@@ -303,7 +303,7 @@ output[global_i] = scan_result
 <pre><code class="language-mojo">max_val = input[global_i]
 offset = WARP_SIZE // 2
 while offset &gt; 0:
-    max_val = max(max_val, shuffle_xor(max_val, offset))
+    max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
 # All lanes now have global maximum
 </code></pre>

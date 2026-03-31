@@ -256,8 +256,8 @@
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
 
     # FILL IN (roughly 24 lines)
 
@@ -357,10 +357,10 @@ Error: 0.0
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
-    var local_i = Int(thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
     var my_block_rank = Int(block_rank_in_cluster())
-    var block_id = Int(block_idx.x)
+    var block_id = block_idx.x
 
     # Each thread accumulates its data
     var my_value: Float32 = 0.0

@@ -230,7 +230,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
@@ -388,7 +388,7 @@ comptime layout = Layout.row_major(SIZE, SIZE)
 def shared_memory_race(
     output: LayoutTensor[dtype, layout, MutAnyOrigin],
     a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    size: UInt,
+    size: Int,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
     var row = thread_idx.y

@@ -348,7 +348,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
     Uses shuffle_xor(val, 1) to swap values within each pair.
     This is the foundation of butterfly network communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var current_val = input[global_i]
@@ -451,7 +451,7 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
     This implements an efficient O(log n) parallel reduction algorithm that works
     for any WARP_SIZE (32, 64, etc.).
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # FILL ME IN (roughly 7 lines)
 
@@ -557,7 +557,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     Each step reduces the active range by half until all threads have the maximum value.
     This implements an efficient O(log n) parallel reduction algorithm.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     if global_i &lt; size:
         var max_val = input[global_i]
@@ -566,7 +566,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
         # Start with half the warp size and reduce by half each step
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            max_val = max(max_val, shuffle_xor(max_val, offset))
+            max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
             offset //= 2
 
         # All threads now have the maximum value across the entire warp
@@ -666,7 +666,7 @@ def butterfly_conditional_max[
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i &lt; size:
@@ -755,7 +755,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
     in even-numbered lanes. Odd-numbered lanes store the minimum value seen.
     Demonstrates conditional logic combined with butterfly communication patterns.
     """
-    var global_i = Int(block_dim.x * block_idx.x + thread_idx.x)
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = lane_id()
 
     if global_i &lt; size:
@@ -765,10 +765,10 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
         # Butterfly reduction for both maximum and minimum: dynamic for any WARP_SIZE
         var offset = WARP_SIZE // 2
         while offset &gt; 0:
-            var neighbor_val = shuffle_xor(current_val, offset)
+            var neighbor_val = shuffle_xor(current_val, UInt32(offset))
             current_val = max(current_val, neighbor_val)
 
-            var min_neighbor_val = shuffle_xor(min_val, offset)
+            var min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
             min_val = min(min_val, min_neighbor_val)
 
             offset //= 2
