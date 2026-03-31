@@ -38,7 +38,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
-                a_host[i] = i
+                a_host[i] = Float32(i)
                 expected[i] = a_host[i] + 10
 
         var a_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](a)

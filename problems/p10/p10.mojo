@@ -79,7 +79,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE * SIZE):
-                a_host[i] = i
+                a_host[i] = Float32(i)
 
         var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a).reshape[
             layout
@@ -89,7 +89,7 @@ def main() raises:
             print("Running memory bug example (bounds checking issue)...")
             # Fill expected values directly since it's a HostBuffer
             for i in range(SIZE * SIZE):
-                expected[i] = i + 10
+                expected[i] = Float32(i + 10)
 
             ctx.enqueue_function[add_10_2d, add_10_2d](
                 out_tensor,

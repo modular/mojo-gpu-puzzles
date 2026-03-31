@@ -169,7 +169,7 @@ def main() raises:
 
         with a.map_to_host() as a_host:
             for i in range(size):
-                a_host[i] = i
+                a_host[i] = Float32(i)
 
         if use_simple:
             a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)

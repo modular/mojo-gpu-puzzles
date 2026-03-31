@@ -222,7 +222,7 @@ def test_neighbor_difference() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i * i
+                input_host[i] = Float32(i * i)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -246,7 +246,7 @@ def test_neighbor_difference() raises:
 
         # Create expected results: differences of squares should be odd numbers
         for i in range(SIZE - 1):
-            expected_buf[i] = (i + 1) * (i + 1) - i * i
+            expected_buf[i] = Float32((i + 1) * (i + 1) - i * i)
         expected_buf[
             SIZE - 1
         ] = 0  # Last element should be 0 (no valid neighbor)
@@ -271,7 +271,7 @@ def test_moving_average() raises:
         with input_buf.map_to_host() as input_host:
             input_host[0] = 1
             for i in range(1, SIZE_2):
-                input_host[i] = input_host[i - 1] + i + 1
+                input_host[i] = input_host[i - 1] + Float32(i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
             input_buf
@@ -340,9 +340,9 @@ def test_broadcast_shuffle_coordination() raises:
             # Create pattern: [2, 4, 6, 8, 1, 3, 5, 7, ...]
             for i in range(SIZE):
                 if i < 4:
-                    input_host[i] = (i + 1) * 2
+                    input_host[i] = Float32((i + 1) * 2)
                 else:
-                    input_host[i] = ((i - 4) % 4) * 2 + 1
+                    input_host[i] = Float32(((i - 4) % 4) * 2 + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -397,7 +397,7 @@ def test_basic_broadcast() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i + 1
+                input_host[i] = Float32(i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf

@@ -200,8 +200,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = 2 * i
+                    a_host[i] = Float32(i)
+                    b_host[i] = Float32(2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -245,8 +245,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = 2 * i
+                    a_host[i] = Float32(i)
+                    b_host[i] = Float32(2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)

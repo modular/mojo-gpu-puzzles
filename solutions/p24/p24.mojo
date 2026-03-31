@@ -164,7 +164,7 @@ def rand_int[
 ](buff: DeviceBuffer[dtype], min: Int = 0, max: Int = 100) raises:
     with buff.map_to_host() as buff_host:
         for i in range(size):
-            buff_host[i] = Int(random_float64(min, max))
+            buff_host[i] = Scalar[dtype](Int(random_float64(Float64(min), Float64(max))))
 
 
 def check_result[
@@ -347,8 +347,8 @@ def main() raises:
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = i
+                    a_host[i] = Float32(i)
+                    b_host[i] = Float32(i)
 
             if argv()[1] == "--traditional":
                 ctx.enqueue_function[

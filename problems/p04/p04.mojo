@@ -35,7 +35,7 @@ def main() raises:
             # row-major
             for i in range(SIZE):
                 for j in range(SIZE):
-                    a_host[i * SIZE + j] = i * SIZE + j
+                    a_host[i * SIZE + j] = Float32(i * SIZE + j)
                     expected[i * SIZE + j] = a_host[i * SIZE + j] + 10
 
         ctx.enqueue_function[add_10_2d, add_10_2d](

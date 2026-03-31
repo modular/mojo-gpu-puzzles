@@ -129,7 +129,7 @@ def block_histogram_bin_extract[
         # `[0]` returns the underlying SIMD value
         my_value = input_data[global_i][0]
         # Bin values [0.0, 1.0) into num_bins buckets
-        my_bin = Int(floor(my_value * num_bins))
+        my_bin = Int(floor(my_value * Float32(num_bins)))
         # Clamp to valid range
         if my_bin >= num_bins:
             my_bin = num_bins - 1
@@ -154,7 +154,7 @@ def block_histogram_bin_extract[
     # Step 5: Final thread computes total count for this bin
     if local_i == tpb - 1:
         # Inclusive sum = exclusive sum + my contribution
-        var total_count = write_offset[0] + belongs_to_target
+        var total_count = write_offset[0] + Int32(belongs_to_target)
         count_output[0] = total_count
 
 
@@ -234,8 +234,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = 2 * i
+                    a_host[i] = Float32(i)
+                    b_host[i] = Float32(2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)
@@ -279,8 +279,8 @@ def main() raises:
             var expected: Scalar[dtype] = 0.0
             with a.map_to_host() as a_host, b_buf.map_to_host() as b_host:
                 for i in range(SIZE):
-                    a_host[i] = i
-                    b_host[i] = 2 * i
+                    a_host[i] = Float32(i)
+                    b_host[i] = Float32(2 * i)
                     expected += a_host[i] * b_host[i]
 
             print("SIZE:", SIZE)

@@ -87,7 +87,7 @@ def multi_stage_image_blur_pipeline[
                 blur_count += 1
 
         if blur_count > 0:
-            blur_shared[blur_idx] = blur_sum / blur_count
+            blur_shared[blur_idx] = blur_sum / Float32(blur_count)
         else:
             blur_shared[blur_idx] = 0.0
 
@@ -103,7 +103,7 @@ def multi_stage_image_blur_pipeline[
                     blur_count += 1
 
             if blur_count > 0:
-                blur_shared[second_idx] = blur_sum / blur_count
+                blur_shared[second_idx] = blur_sum / Float32(blur_count)
             else:
                 blur_shared[second_idx] = 0.0
 
@@ -217,7 +217,7 @@ def double_buffered_stencil_computation[
                         stencil_count += 1
 
                 if stencil_count > 0:
-                    buffer_B[local_i] = stencil_sum / stencil_count
+                    buffer_B[local_i] = stencil_sum / Float32(stencil_count)
                 else:
                     buffer_B[local_i] = buffer_A[local_i]
 
@@ -237,7 +237,7 @@ def double_buffered_stencil_computation[
                         stencil_count += 1
 
                 if stencil_count > 0:
-                    buffer_A[local_i] = stencil_sum / stencil_count
+                    buffer_A[local_i] = stencil_sum / Float32(stencil_count)
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
@@ -278,7 +278,7 @@ def test_multi_stage_pipeline() raises:
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
                 # Create a simple wave pattern for blurring
-                inp_host[i] = Float32(i % 10) + Float32(i / 100.0)
+                inp_host[i] = Float32(i % 10) + Float32(i) / 100.0
 
         # Create LayoutTensors
         var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)

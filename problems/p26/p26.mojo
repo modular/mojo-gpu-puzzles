@@ -165,7 +165,7 @@ def test_butterfly_pair_swap() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i
+                input_host[i] = Float32(i)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -191,10 +191,10 @@ def test_butterfly_pair_swap() raises:
         for i in range(SIZE):
             if i % 2 == 0:
                 # Even positions get odd values
-                expected_buf[i] = i + 1
+                expected_buf[i] = Float32(i + 1)
             else:
                 # Odd positions get even values
-                expected_buf[i] = i - 1
+                expected_buf[i] = Float32(i - 1)
 
         with output_buf.map_to_host() as output_host:
             print("output:", output_host)
@@ -214,7 +214,7 @@ def test_butterfly_parallel_max() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i * 2
+                input_host[i] = Float32(i * 2)
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
@@ -260,9 +260,9 @@ def test_butterfly_conditional_max() raises:
             for i in range(SIZE_2):
                 if i < 9:
                     var values = [3, 1, 7, 2, 9, 4, 8, 5, 6]
-                    input_host[i] = values[i]
+                    input_host[i] = Float32(values[i])
                 else:
-                    input_host[i] = i % 10
+                    input_host[i] = Float32(i % 10)
 
         var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
             input_buf
@@ -322,7 +322,7 @@ def test_warp_inclusive_prefix_sum() raises:
 
         with input_buf.map_to_host() as input_host:
             for i in range(SIZE):
-                input_host[i] = i + 1
+                input_host[i] = Float32(i + 1)
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf
@@ -388,7 +388,7 @@ def test_warp_partition() raises:
                 13,
             ]
             for i in range(SIZE):
-                input_host[i] = test_values[i % len(test_values)]
+                input_host[i] = Float32(test_values[i % len(test_values)])
 
         var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
             input_buf

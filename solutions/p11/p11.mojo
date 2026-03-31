@@ -50,7 +50,7 @@ def main() raises:
         a.enqueue_fill(0)
         with a.map_to_host() as a_host:
             for i in range(SIZE):
-                a_host[i] = i
+                a_host[i] = Float32(i)
 
         ctx.enqueue_function[pooling, pooling](
             out,

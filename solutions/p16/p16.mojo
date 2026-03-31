@@ -243,8 +243,8 @@ def main() raises:
                 for col in range(size):
                     var val = row * size + col
                     # row major: placing elements row by row
-                    inp1_host[row * size + col] = val
-                    inp2_host[row * size + col] = Float32(2.0) * val
+                    inp1_host[row * size + col] = Float32(val)
+                    inp2_host[row * size + col] = Float32(2.0) * Float32(val)
 
             # inp1 @ inp2
             for i in range(size):

@@ -391,7 +391,7 @@ if global_i < size:
     # Butterfly reduction to get total across the warp: dynamic for any WARP_SIZE
     offset = WARP_SIZE // 2
     while offset > 0:
-        warp_left_total += shuffle_xor(warp_left_total, offset)
+        warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
 
     # Phase 4: Write to output positions

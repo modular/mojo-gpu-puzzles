@@ -278,8 +278,8 @@ def main() raises:
             for row in range(SIZE):
                 for col in range(SIZE):
                     var val = row * SIZE + col
-                    inp1_host[row * SIZE + col] = val
-                    inp2_host[row * SIZE + col] = Float32(2.0) * val
+                    inp1_host[row * SIZE + col] = Float32(val)
+                    inp2_host[row * SIZE + col] = Float32(2.0) * Float32(val)
 
             # Calculate expected CPU result: inp1 @ inp2
             for i in range(SIZE):
