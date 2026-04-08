@@ -2,7 +2,7 @@ from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.host.compile import get_gpu_target
 from layout import TileTensor
-from layout.tile_layout import row_major
+from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation
 from std.utils import IndexList
 from std.math import log2
@@ -21,11 +21,11 @@ comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
 def elementwise_add[
-    dtype: DType, simd_width: Int, rank: Int, size: Int
+    LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -37,7 +37,7 @@ def elementwise_add[
         print("idx:", idx)
         # FILL IN (2 to 4 lines)
 
-    elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
+    elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
 
 # ANCHOR_END: elementwise_add
@@ -48,15 +48,16 @@ comptime TILE_SIZE = 32
 
 
 def tiled_elementwise_add[
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
     tile_size: Int,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -81,6 +82,7 @@ def tiled_elementwise_add[
 
 # ANCHOR: manual_vectorized_tiled_elementwise_add
 def manual_vectorized_tiled_elementwise_add[
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -88,9 +90,9 @@ def manual_vectorized_tiled_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -121,6 +123,7 @@ def manual_vectorized_tiled_elementwise_add[
 
 # ANCHOR: vectorize_within_tiles_elementwise_add
 def vectorize_within_tiles_elementwise_add[
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -128,9 +131,9 @@ def vectorize_within_tiles_elementwise_add[
     size: Int,
     tile_size: Int,
 ](
-    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
-    a: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
-    b: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -185,18 +188,20 @@ def benchmark_elementwise_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        a, bench_layout
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](a, bench_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](b_buf, bench_layout)
+    var out_tensor = TileTensor[mut=True, dtype, BenchLayoutType, MutAnyOrigin](
+        out, bench_layout
     )
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        b_buf, bench_layout
-    )
-    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
     def elementwise_workflow(ctx: DeviceContext) raises:
-        elementwise_add[dtype, SIMD_WIDTH, rank, test_size](
+        elementwise_add[BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size](
             out_tensor, a_tensor, b_tensor, ctx
         )
 
@@ -225,20 +230,22 @@ def benchmark_tiled_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        a, bench_layout
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](a, bench_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](b_buf, bench_layout)
+    var out_tensor = TileTensor[mut=True, dtype, BenchLayoutType, MutAnyOrigin](
+        out, bench_layout
     )
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        b_buf, bench_layout
-    )
-    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
     def tiled_workflow(ctx: DeviceContext) raises:
-        tiled_elementwise_add[dtype, SIMD_WIDTH, rank, test_size, tile_size](
-            out_tensor, a_tensor, b_tensor, ctx
-        )
+        tiled_elementwise_add[
+            BenchLayoutType, dtype, SIMD_WIDTH, rank, test_size, tile_size
+        ](out_tensor, a_tensor, b_tensor, ctx)
 
     b.iter_custom[tiled_workflow](bench_ctx)
     keep(out.unsafe_ptr())
@@ -265,19 +272,21 @@ def benchmark_manual_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        a, bench_layout
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](a, bench_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](b_buf, bench_layout)
+    var out_tensor = TileTensor[mut=True, dtype, BenchLayoutType, MutAnyOrigin](
+        out, bench_layout
     )
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        b_buf, bench_layout
-    )
-    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
     def manual_vectorized_workflow(ctx: DeviceContext) raises:
         manual_vectorized_tiled_elementwise_add[
-            dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
+            BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
     b.iter_custom[manual_vectorized_workflow](bench_ctx)
@@ -305,19 +314,21 @@ def benchmark_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        a, bench_layout
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](a, bench_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchLayoutType, ImmutAnyOrigin
+    ](b_buf, bench_layout)
+    var out_tensor = TileTensor[mut=True, dtype, BenchLayoutType, MutAnyOrigin](
+        out, bench_layout
     )
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        b_buf, bench_layout
-    )
-    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
     def vectorized_workflow(ctx: DeviceContext) raises:
         vectorize_within_tiles_elementwise_add[
-            dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
+            BenchLayoutType, dtype, SIMD_WIDTH, 1, rank, test_size, tile_size
         ](out_tensor, a_tensor, b_tensor, ctx)
 
     b.iter_custom[vectorized_workflow](bench_ctx)
@@ -342,8 +353,12 @@ def main() raises:
             b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
-    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        a, layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+        b, layout
+    )
 
     ctx.synchronize()
 
@@ -351,8 +366,10 @@ def main() raises:
     print("simd_width:", SIMD_WIDTH)
 
     if argv()[1] == "--elementwise":
-        out_tensor = TileTensor(out, layout)
-        elementwise_add[dtype, SIMD_WIDTH, rank, SIZE](
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
+        elementwise_add[LayoutType, dtype, SIMD_WIDTH, rank, SIZE](
             out_tensor, a_tensor, b_tensor, ctx
         )
 
@@ -364,11 +381,13 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--tiled":
-        out_tensor = TileTensor(out, layout)
-        print("tile size:", TILE_SIZE)
-        tiled_elementwise_add[dtype, SIMD_WIDTH, rank, SIZE, TILE_SIZE](
-            out_tensor, a_tensor, b_tensor, ctx
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
         )
+        print("tile size:", TILE_SIZE)
+        tiled_elementwise_add[
+            LayoutType, dtype, SIMD_WIDTH, rank, SIZE, TILE_SIZE
+        ](out_tensor, a_tensor, b_tensor, ctx)
 
         with out.map_to_host() as out_host:
             print("out:", out_host)
@@ -378,10 +397,12 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--manual-vectorized":
-        out_tensor = TileTensor(out, layout)
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
         print("tile size:", TILE_SIZE)
         manual_vectorized_tiled_elementwise_add[
-            dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE
+            LayoutType, dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE
         ](out_tensor, a_tensor, b_tensor, ctx)
 
         with out.map_to_host() as out_host:
@@ -392,10 +413,12 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--vectorized":
-        out_tensor = TileTensor(out, layout)
+        var out_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](
+            out, layout
+        )
         print("tile size:", TILE_SIZE)
         vectorize_within_tiles_elementwise_add[
-            dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE
+            LayoutType, dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE
         ](out_tensor, a_tensor, b_tensor, ctx)
 
         with out.map_to_host() as out_host:
