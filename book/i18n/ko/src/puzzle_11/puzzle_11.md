@@ -4,21 +4,188 @@
 
 ## 개요
 
-벡터 `a`에서 각 위치의 직전 3개 값의 합을 계산하여 벡터 `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다._
 
 <img src="/puzzle_11/media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
 <img src="/puzzle_11/media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
 
-## 구현 방식
+## 핵심 개념
 
-### [🔰 원시 메모리 방식](./raw.md)
+이 퍼즐에서 배울 내용:
 
-슬라이딩 윈도우 연산을 수동 메모리 관리와 동기화로 직접 구현하는 방법을 알아봅니다.
+- TileTensor로 슬라이딩 윈도우 연산 구현하기
+- [Puzzle 8](../puzzle_08/puzzle_08.md)에서 다룬 TileTensor 주소 공간(address_space)으로 공유 메모리 관리하기
+- 효율적인 이웃 접근 패턴
+- 경계 조건 처리
 
-### [📐 TileTensor 버전](./tile_tensor.md)
+핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.
 
-TileTensor의 기능을 활용해 효율적인 윈도우 기반 연산과 공유 메모리 관리를 구현합니다.
+## 구성
 
-💡 **참고**: TileTensor로 슬라이딩 윈도우 연산이 얼마나 간결해지는지 확인해 보세요. 효율적인 메모리 접근 패턴도 그대로 유지됩니다.
+- 배열 크기: `SIZE = 8`
+- 블록당 스레드 수: `TPB = 8`
+- 윈도우 크기: 3
+- 공유 메모리: `TPB`개
+
+참고:
+
+- **TileTensor 할당**: `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())` 사용
+- **윈도우 접근**: 3개짜리 윈도우에 자연스러운 인덱싱
+- **경계 처리**: 처음 두 위치는 특수 케이스
+- **메모리 패턴**: 스레드당 공유 메모리 로드 1회
+
+## 완성할 코드
+
+```mojo
+{{#include ../../../../../problems/p11/p11_tile_tensor.mojo:pooling_tile_tensor}}
+```
+
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p11/p11_tile_tensor.mojo" class="filename">전체 파일 보기: problems/p11/p11_tile_tensor.mojo</a>
+
+<details>
+<summary><strong>팁</strong></summary>
+
+<div class="solution-tips">
+
+1. TileTensor와 주소 공간(address_space)으로 공유 메모리 생성
+2. 자연스러운 인덱싱으로 데이터 로드: `shared[local_i] = a[global_i]`
+3. 처음 두 위치를 특수 케이스로 처리
+4. 윈도우 연산에 공유 메모리 활용
+5. 경계 초과 접근에 가드 추가
+
+</div>
+</details>
+
+## 코드 실행
+
+솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:
+
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run p11_tile_tensor
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e amd p11_tile_tensor
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+pixi run -e apple p11_tile_tensor
+```
+
+  </div>
+  <div class="tab-content">
+
+```bash
+uv run poe p11_tile_tensor
+```
+
+  </div>
+</div>
+
+퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:
+
+```txt
+out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
+```
+
+## 솔루션
+
+<details class="solution-details">
+<summary></summary>
+
+```mojo
+{{#include ../../../../../solutions/p11/p11_tile_tensor.mojo:pooling_tile_tensor_solution}}
+```
+
+<div class="solution-explanation">
+
+TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:
+
+1. **공유 메모리 설정**
+   - TileTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:
+
+     ```txt
+     shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+     ```
+
+   - 각 스레드가 하나씩 로드:
+
+     ```txt
+     Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+     Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+     ```
+
+   - `barrier()`로 모든 데이터 로드 완료를 보장
+
+2. **경계 케이스**
+   - 위치 0: 하나만
+
+     ```txt
+     output[0] = shared[0] = 0.0
+     ```
+
+   - 위치 1: 처음 두 값의 합
+
+     ```txt
+     output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+     ```
+
+3. **메인 윈도우 연산**
+   - 위치 2 이후:
+
+     ```txt
+     Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
+     Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
+     Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
+     ...
+     ```
+
+   - TileTensor의 자연스러운 인덱싱:
+
+     ```txt
+     # 3개짜리 슬라이딩 윈도우
+     window_sum = shared[i-2] + shared[i-1] + shared[i]
+     ```
+
+4. **메모리 접근 패턴**
+   - 스레드마다 공유 텐서로 전역 읽기 1회
+   - 공유 메모리를 통한 효율적인 이웃 접근
+   - TileTensor의 장점:
+     - 자동 경계 검사
+     - 자연스러운 윈도우 인덱싱
+     - 레이아웃을 인식하는 메모리 접근
+     - 전 과정에 걸친 타입 안전성
+
+공유 메모리의 성능과 TileTensor의 안전성 및 편의성을 결합한 방식입니다:
+
+- 전역 메모리 접근 최소화
+- 윈도우 연산 간소화
+- 깔끔한 경계 처리
+- 병합 접근 패턴 유지
+
+최종 출력은 누적 윈도우 합계입니다:
+
+```txt
+[0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
+```
+
+</div>
+</details>

@@ -18,15 +18,9 @@
   - [📚 Learn about TileTensor](./puzzle_04/introduction_tile_tensor.md)
   - [🚀 Modern 2D Operations](./puzzle_04/tile_tensor.md)
 - [Puzzle 5: Broadcast](./puzzle_05/puzzle_05.md)
-  - [🔰 Raw Memory Approach](./puzzle_05/raw.md)
-  - [📐 TileTensor Version](./puzzle_05/tile_tensor.md)
 - [Puzzle 6: Blocks](./puzzle_06/puzzle_06.md)
 - [Puzzle 7: 2D Blocks](./puzzle_07/puzzle_07.md)
-  - [🔰 Raw Memory Approach](./puzzle_07/raw.md)
-  - [📐 TileTensor Version](./puzzle_07/tile_tensor.md)
 - [Puzzle 8: Shared Memory](./puzzle_08/puzzle_08.md)
-  - [🔰 Raw Memory Approach](./puzzle_08/raw.md)
-  - [📐 TileTensor Version](./puzzle_08/tile_tensor.md)
 
 # Part II: 🐞 Debugging GPU Programs
 
@@ -42,11 +36,7 @@
 # Part III: 🧮 GPU Algorithms
 
 - [Puzzle 11: Pooling](./puzzle_11/puzzle_11.md)
-  - [🔰 Raw Memory Approach](./puzzle_11/raw.md)
-  - [📐 TileTensor Version](./puzzle_11/tile_tensor.md)
 - [Puzzle 12: Dot Product](./puzzle_12/puzzle_12.md)
-  - [🔰 Raw Memory Approach](./puzzle_12/raw.md)
-  - [📐 TileTensor Version](./puzzle_12/tile_tensor.md)
 - [Puzzle 13: 1D Convolution](./puzzle_13/puzzle_13.md)
   - [🔰 Simple Version](./puzzle_13/simple.md)
   - [⭐ Block Boundary Version](./puzzle_13/block_boundary.md)

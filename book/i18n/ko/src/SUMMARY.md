@@ -20,15 +20,9 @@
   - [📚 TileTensor 알아보기](./puzzle_04/introduction_tile_tensor.md)
   - [🚀 현대적 2D 연산](./puzzle_04/tile_tensor.md)
 - [Puzzle 5: 브로드캐스트](./puzzle_05/puzzle_05.md)
-  - [🔰 원시 메모리 방식](./puzzle_05/raw.md)
-  - [📐 TileTensor 버전](./puzzle_05/tile_tensor.md)
 - [Puzzle 6: 블록](./puzzle_06/puzzle_06.md)
 - [Puzzle 7: 2D 블록](./puzzle_07/puzzle_07.md)
-  - [🔰 원시 메모리 방식](./puzzle_07/raw.md)
-  - [📐 TileTensor 버전](./puzzle_07/tile_tensor.md)
 - [Puzzle 8: 공유 메모리](./puzzle_08/puzzle_08.md)
-  - [🔰 원시 메모리 방식](./puzzle_08/raw.md)
-  - [📐 TileTensor 버전](./puzzle_08/tile_tensor.md)
 
 # Part II: 🐞 GPU 프로그램 디버깅
 
@@ -44,11 +38,7 @@
 # Part III: 🧮 GPU 알고리즘
 
 - [Puzzle 11: 풀링](./puzzle_11/puzzle_11.md)
-  - [🔰 원시 메모리 방식](./puzzle_11/raw.md)
-  - [📐 TileTensor 버전](./puzzle_11/tile_tensor.md)
 - [Puzzle 12: 내적](./puzzle_12/puzzle_12.md)
-  - [🔰 원시 메모리 방식](./puzzle_12/raw.md)
-  - [📐 TileTensor 버전](./puzzle_12/tile_tensor.md)
 - [Puzzle 13: 1D 합성곱](./puzzle_13/puzzle_13.md)
   - [🔰 기본 버전](./puzzle_13/simple.md)
   - [⭐ 블록 경계 버전](./puzzle_13/block_boundary.md)
