@@ -37,7 +37,7 @@ Real-world GPU algorithms often require **hierarchical coordination** where diff
 - **Warp Size**: `WARP_SIZE = 32` threads per warp (NVIDIA standard)
 - **Warps per Block**: `TPB / WARP_SIZE = 8` warps
 - **Data Type**: `DType.float32`
-- **Memory Layout**: Input `Layout.row_major(SIZE)`, Output `Layout.row_major(CLUSTER_SIZE)`
+- **Memory Layout**: Input `row_major[SIZE]()`, Output `row_major[CLUSTER_SIZE]()`
 
 **Processing Distribution:**
 

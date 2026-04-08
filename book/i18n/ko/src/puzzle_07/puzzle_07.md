@@ -53,8 +53,8 @@
 
 수동 인덱싱으로 여러 블록에 걸친 연산을 처리하는 방법을 알아봅니다.
 
-### [📐 LayoutTensor 버전](./layout_tensor.md)
+### [📐 TileTensor 버전](./tile_tensor.md)
 
-LayoutTensor 기능을 활용해 블록 기반 처리를 깔끔하게 구현합니다.
+TileTensor 기능을 활용해 블록 기반 처리를 깔끔하게 구현합니다.
 
-💡 **참고**: LayoutTensor가 블록 간 조율과 메모리 접근 패턴을 얼마나 단순화하는지 확인해 보세요.
+💡 **참고**: TileTensor가 블록 간 조율과 메모리 접근 패턴을 얼마나 단순화하는지 확인해 보세요.

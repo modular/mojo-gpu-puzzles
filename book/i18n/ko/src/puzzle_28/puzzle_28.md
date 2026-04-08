@@ -164,7 +164,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 - 그리드 구성: 그리드당 `(VECTOR_SIZE // CONV_TILE_SIZE, 1)` 블록 (64개 블록)
 - 커널 크기: `KERNEL_SIZE = 5` (Puzzle 13과 동일한 간단한 1D 합성곱)
 - 데이터 타입: `DType.float32`
-- 레이아웃: `Layout.row_major(VECTOR_SIZE)` (1D row-major)
+- 레이아웃: `row_major[VECTOR_SIZE]()` (1D row-major)
 
 ### 비동기 복사의 기회
 
@@ -327,13 +327,13 @@ uv run poe p28
 ```mojo
 # Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
-- **타일 생성**: `input.tile[CONV_TILE_SIZE](block_idx.x)`는 `block_idx.x * 256`에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 [`tile` 메서드](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile)는 경계 검사나 제로 패딩을 **수행하지 않습니다**. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.
+- **타일 생성**: `input.tile[CONV_TILE_SIZE](block_idx.x)`는 `block_idx.x * 256`에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 [`tile` 메서드](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)는 경계 검사나 제로 패딩을 **수행하지 않습니다**. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.
 
-- **스레드 레이아웃**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)`는 블록 구성과 일치하는 `256 x 1` 레이아웃을 생성합니다. 이것은 **필수**입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.
+- **스레드 레이아웃**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()`는 블록 구성과 일치하는 `256 x 1` 레이아웃을 생성합니다. 이것은 **필수**입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.
 
 - **비동기 복사 시작**: `copy_dram_to_sram_async`는 DRAM에서 공유 메모리로의 백그라운드 전송을 시작합니다. 하드웨어가 256개의 float(1KB)를 복사하는 동안 블록은 계속 실행됩니다.
 
@@ -412,7 +412,7 @@ Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
 
 #### **핵심 기술적 통찰**
 
-1. **스레드 레이아웃 매칭**: `Layout.row_major(256, 1)` 레이아웃이 블록의 `(256, 1)` 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.
+1. **스레드 레이아웃 매칭**: `row_major[256, 1]()` 레이아웃이 블록의 `(256, 1)` 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.
 
 2. **경쟁 상태 방지**: 적절한 순서 지정(비동기 복사 → 커널 로드 → 대기 → 배리어 → 연산)으로 공유 메모리를 손상시킬 수 있는 모든 경쟁 상태를 제거합니다.
 

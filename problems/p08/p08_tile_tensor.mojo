@@ -6,7 +6,7 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
-# ANCHOR: add_10_shared_layout_tensor
+# ANCHOR: add_10_shared_tile_tensor
 comptime TPB = 4
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -37,7 +37,7 @@ def add_10_shared_tile_tensor(
     # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: add_10_shared_layout_tensor
+# ANCHOR_END: add_10_shared_tile_tensor
 
 
 def main() raises:

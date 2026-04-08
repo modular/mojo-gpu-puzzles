@@ -1,6 +1,6 @@
 ## Overview
 
-Implement a kernel that computes the dot product of 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output` (single number).
+Implement a kernel that computes the dot product of 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output` (single number).
 
 **Note:** _You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block._
 
@@ -8,12 +8,12 @@ Implement a kernel that computes the dot product of 1D LayoutTensor `a` and 1D L
 
 This puzzle covers:
 
-- Similar to the [puzzle 8](../puzzle_08/layout_tensor.md) and [puzzle 11](../puzzle_11/layout_tensor.md), implementing parallel reduction with LayoutTensor
-- Managing shared memory using LayoutTensor with address_space
+- Similar to the [puzzle 8](../puzzle_08/tile_tensor.md) and [puzzle 11](../puzzle_11/tile_tensor.md), implementing parallel reduction with TileTensor
+- Managing shared memory using TileTensor with address_space
 - Coordinating threads for collective operations
 - Using layout-aware tensor operations
 
-The key insight is how LayoutTensor simplifies memory management while maintaining efficient parallel reduction patterns.
+The key insight is how TileTensor simplifies memory management while maintaining efficient parallel reduction patterns.
 
 ## Configuration
 
@@ -25,7 +25,7 @@ The key insight is how LayoutTensor simplifies memory management while maintaini
 
 Notes:
 
-- **LayoutTensor allocation**: Use `LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- **TileTensor allocation**: Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
 - **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
 - **Thread coordination**: Same synchronization patterns with `barrier()`
@@ -33,17 +33,17 @@ Notes:
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p12/p12_layout_tensor.mojo:dot_product_layout_tensor}}
+{{#include ../../../problems/p12/p12_tile_tensor.mojo:dot_product_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_layout_tensor.mojo" class="filename">View full file: problems/p12/p12_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_tile_tensor.mojo" class="filename">View full file: problems/p12/p12_tile_tensor.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
 
 <div class="solution-tips">
 
-1. Create shared memory with LayoutTensor using address_space
+1. Create shared memory with TileTensor using address_space
 2. Store `a[global_i] * b[global_i]` in `shared[local_i]`
 3. Use parallel reduction pattern with `barrier()`
 4. Let thread 0 write final result to `output[0]`
@@ -65,28 +65,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p12_layout_tensor
+pixi run p12_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p12_layout_tensor
+pixi run -e amd p12_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p12_layout_tensor
+pixi run -e apple p12_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p12_layout_tensor
+uv run poe p12_tile_tensor
 ```
 
   </div>
@@ -105,12 +105,12 @@ expected: HostBuffer([140.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p12/p12_layout_tensor.mojo:dot_product_layout_tensor_solution}}
+{{#include ../../../solutions/p12/p12_tile_tensor.mojo:dot_product_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">
 
-The solution implements a parallel reduction for dot product using LayoutTensor. Here's the detailed breakdown:
+The solution implements a parallel reduction for dot product using TileTensor. Here's the detailed breakdown:
 
 ### Phase 1: Element-wise Multiplication
 
@@ -141,8 +141,8 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
 ### Key implementation features
 
 1. **Memory Management**:
-   - Clean shared memory allocation with LayoutTensor address_space parameter
-   - Type-safe operations with LayoutTensor
+   - Clean shared memory allocation with TileTensor address_space parameter
+   - Type-safe operations with TileTensor
    - Automatic bounds checking
    - Layout-aware indexing
 
@@ -168,7 +168,7 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
    - Minimal thread divergence
    - Efficient shared memory usage
 
-The LayoutTensor version maintains the same efficient parallel reduction while providing:
+The TileTensor version maintains the same efficient parallel reduction while providing:
 
 - Better type safety
 - Cleaner memory management

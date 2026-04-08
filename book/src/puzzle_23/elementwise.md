@@ -10,7 +10,7 @@ This puzzle covers:
 
 - **Functional GPU programming** with `elementwise`
 - **Automatic SIMD vectorization** within GPU threads
-- **LayoutTensor operations** for safe memory access
+- **TileTensor operations** for safe memory access
 - **GPU thread hierarchy** vs SIMD operations
 - **Capturing semantics** in nested functions
 
@@ -24,7 +24,7 @@ The implementation covers fundamental patterns applicable to all GPU functional 
 - Vector size: `SIZE = 1024`
 - Data type: `DType.float32`
 - SIMD width: Target-dependent (determined by GPU architecture and data type)
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ## Code to complete
 

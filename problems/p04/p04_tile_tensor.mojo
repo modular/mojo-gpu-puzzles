@@ -4,7 +4,7 @@ from layout import TileTensor
 from layout.tile_layout import row_major
 from std.testing import assert_equal
 
-# ANCHOR: add_10_2d_layout_tensor
+# ANCHOR: add_10_2d_tile_tensor
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
@@ -23,7 +23,7 @@ def add_10_2d(
     # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: add_10_2d_layout_tensor
+# ANCHOR_END: add_10_2d_tile_tensor
 
 
 def main() raises:

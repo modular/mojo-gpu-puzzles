@@ -50,9 +50,9 @@ GPU 워프 (32 스레드, SIMT 록스텝 실행)
 
 ```mojo
 # 복잡한 이웃 접근 패턴 (기존 방식):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -91,7 +91,7 @@ else:
 
 - **Part VII 워프 기초**: SIMT 실행과 기본 워프 연산에 대한 이해 ([Puzzle 24: 워프 기초](../puzzle_24/puzzle_24.md) 참고)
 - **GPU 스레드 계층 구조**: 블록, 워프, 레인 번호 매기기
-- **LayoutTensor 연산**: 로드, 저장, 텐서 조작
+- **TileTensor 연산**: 로드, 저장, 텐서 조작
 - **경계 조건 처리**: 병렬 알고리즘의 가장자리 케이스 관리
 
 ## 학습 경로

@@ -1,10 +1,10 @@
 <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 
-# LayoutTensor 버전
+# TileTensor 버전
 
 ## 개요
 
-1D LayoutTensor `a`와 `b`를 브로드캐스트로 더해 2D LayoutTensor `output`에 저장하는 커널을 구현해 보세요.
+1D TileTensor `a`와 `b`를 브로드캐스트로 더해 2D TileTensor `output`에 저장하는 커널을 구현해 보세요.
 
 **참고**: _스레드 수가 행렬의 위치 수보다 많습니다._
 
@@ -12,11 +12,11 @@
 
 이 퍼즐에서 배울 내용:
 
-- 브로드캐스트 연산에 `LayoutTensor` 사용하기
+- 브로드캐스트 연산에 `TileTensor` 사용하기
 - 서로 다른 텐서 크기 다루기
-- `LayoutTensor`로 2D 인덱싱 처리하기
+- `TileTensor`로 2D 인덱싱 처리하기
 
-핵심은 `LayoutTensor`가 서로 다른 텐서 크기 \\((1, n)\\)와 \\((n, 1)\\)을 \\((n,n)\\)으로 자연스럽게 브로드캐스트할 수 있다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.
+핵심은 `TileTensor`가 서로 다른 텐서 크기 \\((1, n)\\)와 \\((n, 1)\\)을 \\((n,n)\\)으로 자연스럽게 브로드캐스트할 수 있다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.
 
 - **텐서 크기**: 입력 벡터의 크기는 \\((1, n)\\)과 \\((n, 1)\\)
 - **브로드캐스트**: 두 차원을 결합해 \\((n,n)\\) 출력 생성
@@ -26,10 +26,10 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p05/p05_layout_tensor.mojo:broadcast_add_layout_tensor}}
+{{#include ../../../../../problems/p05/p05_tile_tensor.mojo:broadcast_add_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05_layout_tensor.mojo" class="filename">전체 코드 보기: problems/p05/p05_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05_tile_tensor.mojo" class="filename">전체 코드 보기: problems/p05/p05_tile_tensor.mojo</a>
 
 <details>
 <summary><strong>팁</strong></summary>
@@ -38,7 +38,7 @@
 
 1. 2D 인덱스 가져오기: `row = thread_idx.y`, `col = thread_idx.x`
 2. 가드 추가: `if row < size and col < size`
-3. 가드 내부: LayoutTensor로 `a`와 `b` 값을 어떻게 브로드캐스트할지 생각해 보세요
+3. 가드 내부: TileTensor로 `a`와 `b` 값을 어떻게 브로드캐스트할지 생각해 보세요
 
 </div>
 </details>
@@ -57,28 +57,28 @@
   <div class="tab-content">
 
 ```bash
-pixi run p05_layout_tensor
+pixi run p05_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p05_layout_tensor
+pixi run -e amd p05_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p05_layout_tensor
+pixi run -e apple p05_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p05_layout_tensor
+uv run poe p05_tile_tensor
 ```
 
   </div>
@@ -97,12 +97,12 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p05/p05_layout_tensor.mojo:broadcast_add_layout_tensor_solution}}
+{{#include ../../../../../solutions/p05/p05_tile_tensor.mojo:broadcast_add_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">
 
-LayoutTensor 브로드캐스트와 GPU 스레드 매핑의 핵심 개념을 보여주는 솔루션입니다:
+TileTensor 브로드캐스트와 GPU 스레드 매핑의 핵심 개념을 보여주는 솔루션입니다:
 
 1. **스레드에서 행렬로 매핑**
 

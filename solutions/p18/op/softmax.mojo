@@ -2,14 +2,17 @@ from std.memory import UnsafePointer
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.math import exp
 from std.bit import log2_ceil
 from std.utils.numerics import max_finite, min_finite
 
 
 comptime SIZE = 128  # This must be equal to INPUT_SIZE in p18.py
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 comptime GRID_DIM_X = 1
 # Tree-based reduction require the number of threads to be the next power of two >= SIZE for correctness.
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
@@ -17,28 +20,21 @@ comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 
 # ANCHOR: softmax_gpu_kernel_solution
 def softmax_gpu_kernel[
-    layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    var shared_max = LayoutTensor[
-        dtype,
-        Layout.row_major(BLOCK_DIM_X),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_sum = LayoutTensor[
-        dtype,
-        Layout.row_major(BLOCK_DIM_X),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+        row_major[BLOCK_DIM_X]()
+    )
+    var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+        row_major[BLOCK_DIM_X]()
+    )
     var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
@@ -92,12 +88,11 @@ def softmax_gpu_kernel[
 
 # ANCHOR: softmax_cpu_kernel_solution
 def softmax_cpu_kernel[
-    layout: Layout,
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
 ):
     comptime assert (
         dtype.is_floating_point()
@@ -131,32 +126,27 @@ struct SoftmaxCustomOp:
         input_size: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[rank=1, static_spec=_],
-        input: InputTensor[rank=output.rank, static_spec=_],
+        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],
+        input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
-        # Note: rebind is necessary now but it shouldn't be!
-        var output_tensor = rebind[LayoutTensor[dtype, layout, MutAnyOrigin]](
-            output.to_layout_tensor()
-        )
-        var input_tensor = rebind[LayoutTensor[dtype, layout, ImmutAnyOrigin]](
-            input.to_layout_tensor()
-        )
+        var output_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](output.unsafe_ptr(), layout)
+        var input_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](input.unsafe_ptr(), layout)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
             # making sure the output tensor is zeroed out before the kernel is called
             gpu_ctx.enqueue_memset(
-                DeviceBuffer[output_tensor.dtype](
+                DeviceBuffer[dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     input_size,
                     owning=False,
                 ),
                 0,
             )
 
-            comptime kernel = softmax_gpu_kernel[layout, input_size, dtype]
+            comptime kernel = softmax_gpu_kernel[input_size, dtype]
             gpu_ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
@@ -165,7 +155,7 @@ struct SoftmaxCustomOp:
             )
 
         elif target == "cpu":
-            softmax_cpu_kernel[layout, input_size, dtype](
+            softmax_cpu_kernel[input_size, dtype](
                 output_tensor, input_tensor
             )
         else:

@@ -12,7 +12,7 @@ comptime layout = row_major[SIZE, SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-# ANCHOR: add_10_2d_layout_tensor_solution
+# ANCHOR: add_10_2d_tile_tensor_solution
 def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
@@ -24,7 +24,7 @@ def add_10_2d(
         output[row, col] = a[row, col] + 10.0
 
 
-# ANCHOR_END: add_10_2d_layout_tensor_solution
+# ANCHOR_END: add_10_2d_tile_tensor_solution
 
 
 def main() raises:

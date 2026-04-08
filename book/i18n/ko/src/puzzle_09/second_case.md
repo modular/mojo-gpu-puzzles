@@ -11,7 +11,7 @@
 - **[첫 번째 사례](./first_case.md)**: 명확한 크래시 신호(`CUDA_ERROR_ILLEGAL_ADDRESS`)가 조사를 안내함
 - **두 번째 사례**: 크래시도 없고 에러 메시지도 없음 - 탐정처럼 파헤쳐야 하는 미묘하게 잘못된 결과만 있음
 
-이번 중급 디버깅 챌린지에서는 `LayoutTensor` 연산을 사용하는 **알고리즘 오류**를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.
+이번 중급 디버깅 챌린지에서는 `TileTensor` 연산을 사용하는 **알고리즘 오류**를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.
 
 **사전 준비**: [Mojo GPU 디버깅의 핵심](./essentials.md)과 [탐정 수사: 첫 번째 사례](./first_case.md)를 먼저 완료해서 CUDA-GDB 워크플로우와 체계적인 디버깅 기법을 익혀두세요. 아래 명령을 실행했는지 확인하세요:
 
@@ -23,7 +23,7 @@ pixi run -e nvidia setup-cuda-gdb
 
 이번 디버깅 챌린지에서 배울 내용:
 
-- **LayoutTensor 디버깅**: 구조화된 데이터 접근 패턴 조사하기
+- **TileTensor 디버깅**: 구조화된 데이터 접근 패턴 조사하기
 - **로직 버그 탐지**: 크래시하지 않는 알고리즘 오류 찾기
 - **반복문 경계 분석**: 반복 횟수 문제 이해하기
 - **결과 패턴 분석**: 출력 데이터로 근본 원인까지 거슬러 올라가기
@@ -158,14 +158,14 @@ Each position should sum its neighbors: [left + center + right]
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
    <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: LayoutTensor[mut=False, dtype, vector_layout],
+30          input: TileTensor[mut=False, dtype, vector_layout],
 ```
 
 #### Step 4: 메인 로직으로 이동
 
 ```bash
 (cuda-gdb) n
-29          output: LayoutTensor[mut=True, dtype, vector_layout],
+29          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 32          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -193,7 +193,7 @@ Cannot access memory at address 0x0
 Attempt to take address of value not located in memory.
 ```
 
-**❌ 문제**: LayoutTensor 직접 인덱싱이 작동하지 않습니다.
+**❌ 문제**: TileTensor 직접 인덱싱이 작동하지 않습니다.
 
 ```bash
 (cuda-gdb) p a.ptr[0]
@@ -202,7 +202,7 @@ $2 = {0}
 $3 = {{0}, {1}, {2}, {3}}
 ```
 
-**🎯 돌파구**: `a.ptr[0]@4`로 전체 입력 배열을 볼 수 있습니다! 이것이 LayoutTensor 데이터를 검사하는 방법입니다.
+**🎯 돌파구**: `a.ptr[0]@4`로 전체 입력 배열을 볼 수 있습니다! 이것이 TileTensor 데이터를 검사하는 방법입니다.
 
 ### 3단계: 핵심 반복문 조사
 
@@ -356,9 +356,9 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
 - **호스트 출력 패턴**이 중요한 디버깅 단서를 제공합니다
 - **소스 코드 추론**이 제한된 디버거 기능을 보완합니다
 
-**LayoutTensor 디버깅**:
+**TileTensor 디버깅**:
 
-- LayoutTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다
+- TileTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다
 - 텐서 내용을 검사하려 하기보다 알고리즘 로직에 집중하세요
 - 체계적인 추론으로 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 추적하세요
 

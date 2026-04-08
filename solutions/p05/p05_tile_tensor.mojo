@@ -16,7 +16,7 @@ comptime ALayout = type_of(a_layout)
 comptime BLayout = type_of(b_layout)
 
 
-# ANCHOR: broadcast_add_layout_tensor_solution
+# ANCHOR: broadcast_add_tile_tensor_solution
 def broadcast_add(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
@@ -29,7 +29,7 @@ def broadcast_add(
         output[row, col] = a[0, col] + b[row, 0]
 
 
-# ANCHOR_END: broadcast_add_layout_tensor_solution
+# ANCHOR_END: broadcast_add_tile_tensor_solution
 
 
 def main() raises:

@@ -4,7 +4,7 @@ from layout import TileTensor
 from layout.tile_layout import row_major
 from std.testing import assert_equal
 
-# ANCHOR: broadcast_add_layout_tensor
+# ANCHOR: broadcast_add_tile_tensor
 comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
@@ -28,7 +28,7 @@ def broadcast_add(
     # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: broadcast_add_layout_tensor
+# ANCHOR_END: broadcast_add_tile_tensor
 def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)

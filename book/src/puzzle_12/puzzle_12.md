@@ -22,7 +22,7 @@ For example, if you have two vectors:
 ### [🔰 Raw memory approach](./raw.md)
 Learn how to implement the reduction with manual memory management and synchronization.
 
-### [📐 LayoutTensor Version](./layout_tensor.md)
-Use LayoutTensor's features for efficient reduction and shared memory management.
+### [📐 TileTensor Version](./tile_tensor.md)
+Use TileTensor's features for efficient reduction and shared memory management.
 
-💡 **Note**: See how LayoutTensor simplifies efficient memory access patterns.
+💡 **Note**: See how TileTensor simplifies efficient memory access patterns.

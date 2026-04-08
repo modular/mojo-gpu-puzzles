@@ -15,7 +15,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-# ANCHOR: add_10_shared_layout_tensor_solution
+# ANCHOR: add_10_shared_tile_tensor_solution
 def add_10_shared_tile_tensor(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -42,7 +42,7 @@ def add_10_shared_tile_tensor(
         output[global_i] = shared[local_i] + 10
 
 
-# ANCHOR_END: add_10_shared_layout_tensor_solution
+# ANCHOR_END: add_10_shared_tile_tensor_solution
 
 
 def main() raises:

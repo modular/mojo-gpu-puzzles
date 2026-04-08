@@ -98,7 +98,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates fundamental GPU broadcasting concepts without LayoutTensor abstraction:
+This solution demonstrates fundamental GPU broadcasting concepts without TileTensor abstraction:
 
 1. **Thread to matrix mapping**
    - Uses `thread_idx.y` for row access and `thread_idx.x` for column access
@@ -120,6 +120,6 @@ This solution demonstrates fundamental GPU broadcasting concepts without LayoutT
    - Prevents out-of-bounds access for both input vectors and output matrix
    - Required due to 3×3 thread grid being larger than 2×2 data
 
-Compare this with the LayoutTensor version to see how the abstraction simplifies broadcasting operations while maintaining the same underlying concepts.
+Compare this with the TileTensor version to see how the abstraction simplifies broadcasting operations while maintaining the same underlying concepts.
 </div>
 </details>

@@ -143,7 +143,7 @@ Verification passed: Custom kernel results match NumPy calculation
 3. **커스텀 op 등록**:
    - `@compiler.register("conv1d")` 데코레이터가 연산을 MAX 그래프에 노출. [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/) 참고
    - `execute` 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의
-   - 입출력 텐서가 커널에서 사용할 수 있도록 LayoutTensor로 변환
+   - 입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환
    - Device context가 GPU 메모리 할당과 커널 실행 관리
 
 4. **커널 실행**:
@@ -182,7 +182,7 @@ Verification passed: Custom kernel results match NumPy calculation
    kernel_tensor = kernel.to_layout_tensor()
    ```
 
-   - MAX 그래프 텐서를 Mojo LayoutTensor로 변환
+   - MAX 그래프 텐서를 Mojo TileTensor로 변환
    - 커널이 텐서를 직접 다룰 수 있게 해줌
    - 컴파일 타임 최적화를 위해 레이아웃 추출
 

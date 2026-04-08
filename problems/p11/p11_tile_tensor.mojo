@@ -6,7 +6,7 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
-# ANCHOR: pooling_layout_tensor
+# ANCHOR: pooling_tile_tensor
 comptime TPB = 8
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
@@ -31,7 +31,7 @@ def pooling(
     # FIX ME IN (roughly 10 lines)
 
 
-# ANCHOR_END: pooling_layout_tensor
+# ANCHOR_END: pooling_tile_tensor
 
 
 def main() raises:

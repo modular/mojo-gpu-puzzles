@@ -1,12 +1,14 @@
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
 from std.testing import assert_almost_equal
 from std.bit import log2_ceil
 
 from op import softmax_gpu_kernel, softmax_cpu_kernel
 
 comptime SIZE = 128
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 comptime GRID_DIM_X = 1
 comptime BLOCK_DIM_X = 1 << log2_ceil(SIZE)
 comptime dtype = DType.float32
@@ -21,9 +23,7 @@ def test_softmax() raises:
         # for CPU testing
         var expected = ctx.enqueue_create_host_buffer[DType.float32](SIZE)
         expected.enqueue_fill(0)
-        var expected_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            expected
-        )
+        var expected_tensor = TileTensor(expected, layout)
         # Initialize input with more reasonable values
         with inp.map_to_host() as inp_host:
             for i in range(SIZE):
@@ -34,21 +34,21 @@ def test_softmax() raises:
                 print(inp_host[i], end=" ")
             print()
             # Create layout tensors for CPU calculation
-            input_host_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
-                inp_host
+            input_host_tensor = TileTensor[mut=False, dtype, LayoutType](
+                inp_host, layout
             )
 
         # for GPU testing
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        var output_tensor = TileTensor(out, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](inp, layout)
 
         # Compute expected results using our CPU kernel
-        softmax_cpu_kernel[layout, SIZE, dtype](
+        softmax_cpu_kernel[SIZE, dtype](
             expected_tensor, input_host_tensor
         )
 
         # Run GPU kernel
-        comptime kernel = softmax_gpu_kernel[layout, SIZE, dtype]
+        comptime kernel = softmax_gpu_kernel[SIZE, dtype]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,

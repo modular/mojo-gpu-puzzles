@@ -25,7 +25,7 @@ But the implementation teaches fundamental patterns for all warp-level GPU progr
 - Data type: `DType.float32`
 - Block configuration: `(WARP_SIZE, 1)` threads per block
 - Grid configuration: `(1, 1)` blocks per grid
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ## The traditional complexity (from Puzzle 12)
 

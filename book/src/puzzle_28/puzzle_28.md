@@ -162,7 +162,7 @@ This concept becomes particularly important when implementing async copy operati
 - Grid configuration: `(VECTOR_SIZE // CONV_TILE_SIZE, 1)` blocks per grid (64 blocks)
 - Kernel size: `KERNEL_SIZE = 5` (simple 1D convolution, same as Puzzle 13)
 - Data type: `DType.float32`
-- Layout: `Layout.row_major(VECTOR_SIZE)` (1D row-major)
+- Layout: `row_major[VECTOR_SIZE]()` (1D row-major)
 
 ### The async copy opportunity
 
@@ -325,13 +325,13 @@ The async copy overlap solution demonstrates how to hide memory latency by overl
 ```mojo
 # Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
-- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a 256-element view of the input array starting at `block_idx.x * 256`. The Mojo [`tile` method](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile) does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.
+- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a 256-element view of the input array starting at `block_idx.x * 256`. The Mojo [`tile` method](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile) does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.
 
-- **Thread Layout**: `Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)` creates a `256 x 1` layout that matches our block organization. This is **critical** - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.
+- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()` creates a `256 x 1` layout that matches our block organization. This is **critical** - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.
 
 - **Async Copy Launch**: `copy_dram_to_sram_async` initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.
 
@@ -410,7 +410,7 @@ Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
 
 #### **Key technical insights**
 
-1. **Thread Layout Matching**: The `Layout.row_major(256, 1)` layout precisely matches the block's `(256, 1)` thread organization, enabling optimal memory coalescing.
+1. **Thread Layout Matching**: The `row_major[256, 1]()` layout precisely matches the block's `(256, 1)` thread organization, enabling optimal memory coalescing.
 
 2. **Race Condition Avoidance**: Proper sequencing (async copy → kernel load → wait → barrier → compute) eliminates all race conditions that could corrupt shared memory.
 

@@ -176,9 +176,9 @@ Your task is to complete the `tensor_core_matrix_multiplication` function. The s
 
 Layout configuration:
 
-- Input A: `Layout.row_major(SIZE, SIZE)`
-- Input B: `Layout.row_major(SIZE, SIZE)`
-- Output C: `Layout.row_major(SIZE, SIZE)`
+- Input A: `row_major[SIZE, SIZE]()`
+- Input B: `row_major[SIZE, SIZE]()`
+- Output C: `row_major[SIZE, SIZE]()`
 - Shared Memory: Block-sized tiles with async copy operations
 
 ## The challenge

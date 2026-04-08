@@ -1,6 +1,6 @@
 ## Overview
 
-Implement a kernel that adds 10 to each position of a 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that adds 10 to each position of a 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
 **Note:** _You have fewer threads per block than the size of `a`._
 
@@ -8,11 +8,11 @@ Implement a kernel that adds 10 to each position of a 1D LayoutTensor `a` and st
 
 In this puzzle, you'll learn about:
 
-- Using LayoutTensor's shared memory features with address_space
+- Using TileTensor's shared memory features with address_space
 - Thread synchronization with shared memory
-- Block-local data management with LayoutTensor
+- Block-local data management with TileTensor
 
-The key insight is how LayoutTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.
+The key insight is how TileTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.
 
 ## Configuration
 
@@ -23,14 +23,14 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
 
 ## Key differences from raw approach
 
-1. **Memory allocation**: We will use [LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor) with address_space instead of [stack_allocation](https://docs.modular.com/mojo/std/memory/memory/stack_allocation/)
+1. **Memory allocation**: We will use [TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor) with address_space instead of [stack_allocation](https://docs.modular.com/mojo/std/memory/memory/stack_allocation/)
 
    ```mojo
    # Raw approach
    shared = stack_allocation[TPB, Scalar[dtype]]()
 
-   # LayoutTensor approach
-   shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   # TileTensor approach
+   shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
    ```
 
 2. **Memory access**: Same syntax
@@ -39,7 +39,7 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
    # Raw approach
    shared[local_i] = a[global_i]
 
-   # LayoutTensor approach
+   # TileTensor approach
    shared[local_i] = a[global_i]
    ```
 
@@ -49,24 +49,24 @@ The key insight is how LayoutTensor simplifies shared memory management while ma
    - Layout management
    - Memory alignment handling
 
-> **Note**: LayoutTensor handles memory layout, but you still need to manage thread synchronization with `barrier()` when using shared memory.
+> **Note**: TileTensor handles memory layout, but you still need to manage thread synchronization with `barrier()` when using shared memory.
 
 **Educational Note**: In this specific puzzle, the `barrier()` isn't strictly necessary since each thread only accesses its own shared memory location. However, it's included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.
 
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p08/p08_layout_tensor.mojo:add_10_shared_layout_tensor}}
+{{#include ../../../problems/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08_layout_tensor.mojo" class="filename">View full file: problems/p08/p08_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08_tile_tensor.mojo" class="filename">View full file: problems/p08/p08_tile_tensor.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
 
 <div class="solution-tips">
 
-1. Create shared memory with LayoutTensor using address_space parameter
+1. Create shared memory with TileTensor using address_space parameter
 2. Load data with natural indexing: `shared[local_i] = a[global_i]`
 3. Synchronize with `barrier()` (educational - not strictly needed here)
 4. Process data using shared memory indices
@@ -89,28 +89,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p08_layout_tensor
+pixi run p08_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p08_layout_tensor
+pixi run -e amd p08_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p08_layout_tensor
+pixi run -e apple p08_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p08_layout_tensor
+uv run poe p08_tile_tensor
 ```
 
   </div>
@@ -129,14 +129,14 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p08/p08_layout_tensor.mojo:add_10_shared_layout_tensor_solution}}
+{{#include ../../../solutions/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">
 
-This solution demonstrates how LayoutTensor simplifies shared memory usage while maintaining performance:
+This solution demonstrates how TileTensor simplifies shared memory usage while maintaining performance:
 
-1. **Memory hierarchy with LayoutTensor**
+1. **Memory hierarchy with TileTensor**
    - Global tensors: `a` and `output` (slow, visible to all blocks)
    - Shared tensor: `shared` (fast, thread-block local)
    - Example for 8 elements with 4 threads per block:
@@ -163,12 +163,12 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
 
    **Note**: In this specific case, the `barrier()` isn't strictly necessary since each thread only writes to and reads from its own shared memory location (`shared[local_i]`). However, it's included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other's data.
 
-3. **LayoutTensor benefits**
+3. **TileTensor benefits**
    - Shared memory allocation:
 
      ```txt
-     # Clean LayoutTensor API with address_space
-     shared = LayoutTensor[dtype, Layout.row_major(TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+     # Clean TileTensor API with address_space
+     shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
      ```
 
    - Natural indexing for both global and shared:
@@ -186,6 +186,6 @@ This solution demonstrates how LayoutTensor simplifies shared memory usage while
    - Process: Add 10 to shared values
    - Store: Write 11s back to global tensor
 
-This pattern shows how LayoutTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.
+This pattern shows how TileTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.
 </div>
 </details>

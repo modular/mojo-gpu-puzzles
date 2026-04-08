@@ -42,8 +42,8 @@
 - **블록 설정**: `TPB = 256` 블록당 스레드 수 `(256, 1)`
 - **그리드 설정**: `CLUSTER_SIZE = 4` 클러스터당 블록 수 `(4, 1)`
 - **데이터 타입**: `DType.float32`
-- **메모리 레이아웃**: 입력 `Layout.row_major(SIZE)`, 출력 `Layout.row_major(1)`
-- **임시 저장소**: 부분 결과를 위한 `Layout.row_major(CLUSTER_SIZE)`
+- **메모리 레이아웃**: 입력 `row_major[SIZE]()`, 출력 `row_major[1]()`
+- **임시 저장소**: 부분 결과를 위한 `row_major[CLUSTER_SIZE]()`
 
 **예상 결과**: 수열 `0, 0.01, 0.02, ..., 10.23`의 합 = **523,776**
 

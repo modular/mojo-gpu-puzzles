@@ -1,8 +1,8 @@
-# LayoutTensor Version
+# TileTensor Version
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of 2D LayoutTensor `a` and stores it in 2D LayoutTensor `output`.
+Implement a kernel that adds 10 to each position of 2D TileTensor `a` and stores it in 2D TileTensor `output`.
 
 **Note:** _You have fewer threads per block than the size of `a` in both directions._
 
@@ -10,16 +10,16 @@ Implement a kernel that adds 10 to each position of 2D LayoutTensor `a` and stor
 
 In this puzzle, you'll learn about:
 
-- Using `LayoutTensor` with multiple blocks
+- Using `TileTensor` with multiple blocks
 - Handling large matrices with 2D block organization
-- Combining block indexing with `LayoutTensor` access
+- Combining block indexing with `TileTensor` access
 
-The key insight is that `LayoutTensor` simplifies 2D indexing while still requiring proper block coordination for large matrices.
+The key insight is that `TileTensor` simplifies 2D indexing while still requiring proper block coordination for large matrices.
 
 ## Configuration
 
 - **Matrix size**: \\(5 \times 5\\) elements
-- **Layout handling**: `LayoutTensor` manages row-major organization
+- **Layout handling**: `TileTensor` manages row-major organization
 - **Block coordination**: Multiple blocks cover the full matrix
 - **2D indexing**: Natural \\((i,j)\\) access with bounds checking
 - **Total threads**: \\(36\\) for \\(25\\) elements
@@ -28,10 +28,10 @@ The key insight is that `LayoutTensor` simplifies 2D indexing while still requir
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p07/p07_layout_tensor.mojo:add_10_blocks_2d_layout_tensor}}
+{{#include ../../../problems/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07_layout_tensor.mojo" class="filename">View full file: problems/p07/p07_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07_tile_tensor.mojo" class="filename">View full file: problems/p07/p07_tile_tensor.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -40,7 +40,7 @@ The key insight is that `LayoutTensor` simplifies 2D indexing while still requir
 
 1. Calculate global indices: `row = block_dim.y * block_idx.y + thread_idx.y`, `col = block_dim.x * block_idx.x + thread_idx.x`
 2. Add guard: `if row < size and col < size`
-3. Inside guard: think about how to add 10 to 2D LayoutTensor
+3. Inside guard: think about how to add 10 to 2D TileTensor
 
 </div>
 </details>
@@ -59,28 +59,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p07_layout_tensor
+pixi run p07_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p07_layout_tensor
+pixi run -e amd p07_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p07_layout_tensor
+pixi run -e apple p07_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p07_layout_tensor
+uv run poe p07_tile_tensor
 ```
 
   </div>
@@ -99,12 +99,12 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p07/p07_layout_tensor.mojo:add_10_blocks_2d_layout_tensor_solution}}
+{{#include ../../../solutions/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">
 
-This solution demonstrates how LayoutTensor simplifies 2D block-based processing:
+This solution demonstrates how TileTensor simplifies 2D block-based processing:
 
 1. **2D thread indexing**
    - Global row: `block_dim.y * block_idx.y + thread_idx.y`
@@ -127,13 +127,13 @@ This solution demonstrates how LayoutTensor simplifies 2D block-based processing
 
      (* = thread exists but outside tensor bounds)
 
-2. **LayoutTensor benefits**
+2. **TileTensor benefits**
    - Natural 2D indexing: `tensor[row, col]` instead of manual offset calculation
    - Automatic memory layout optimization
    - Example access pattern:
 
      ```txt
-     Raw memory:         LayoutTensor:
+     Raw memory:         TileTensor:
      row * size + col    tensor[row, col]
      (2,1) -> 11        (2,1) -> same element
      ```
@@ -142,17 +142,17 @@ This solution demonstrates how LayoutTensor simplifies 2D block-based processing
    - Guard `row < size and col < size` handles:
      - Excess threads in partial blocks
      - Edge cases at tensor boundaries
-     - Automatic memory layout handling by LayoutTensor
+     - Automatic memory layout handling by TileTensor
      - 36 threads (2×2 blocks of 3×3) for 25 elements
 
 4. **Block coordination**
    - Each 3×3 block processes part of 5×5 tensor
-   - LayoutTensor handles:
+   - TileTensor handles:
      - Memory layout optimization
      - Efficient access patterns
      - Block boundary coordination
      - Cache-friendly data access
 
-This pattern shows how LayoutTensor simplifies 2D block processing while maintaining optimal memory access patterns and thread coordination.
+This pattern shows how TileTensor simplifies 2D block processing while maintaining optimal memory access patterns and thread coordination.
 </div>
 </details>

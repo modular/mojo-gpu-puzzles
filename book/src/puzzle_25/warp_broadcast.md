@@ -80,7 +80,7 @@ Implement a basic broadcast pattern where lane 0 computes a block-level statisti
 - Grid configuration: `(1, 1)` blocks per grid
 - Block configuration: `(WARP_SIZE, 1)` threads per block
 - Data type: `DType.float32`
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ### Code to complete
 

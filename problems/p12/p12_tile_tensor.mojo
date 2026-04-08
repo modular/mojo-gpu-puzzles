@@ -1,7 +1,7 @@
 from std.testing import assert_equal
 from std.gpu.host import DeviceContext
 
-# ANCHOR: dot_product_layout_tensor
+# ANCHOR: dot_product_tile_tensor
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace
 from layout import TileTensor
@@ -30,7 +30,7 @@ def dot_product(
     ...
 
 
-# ANCHOR_END: dot_product_layout_tensor
+# ANCHOR_END: dot_product_tile_tensor
 
 
 def main() raises:

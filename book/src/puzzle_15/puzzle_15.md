@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement a kernel that computes a sum over each row of 2D matrix `a` and stores it in `output` using LayoutTensor.
+Implement a kernel that computes a sum over each row of 2D matrix `a` and stores it in `output` using TileTensor.
 
 <img src="./media/15-w.png" alt="Axis sum visualization" class="light-mode-img">
 <img src="./media/15-b.png" alt="Axis sum visualization" class="dark-mode-img">
@@ -11,12 +11,12 @@ Implement a kernel that computes a sum over each row of 2D matrix `a` and stores
 
 This puzzle covers:
 
-- Parallel reduction along matrix dimensions using LayoutTensor
+- Parallel reduction along matrix dimensions using TileTensor
 - Using block coordinates for data partitioning
 - Efficient shared memory reduction patterns
 - Working with multi-dimensional tensor layouts
 
-The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging LayoutTensor's dimensional indexing.
+The key insight is understanding how to map thread blocks to matrix rows and perform efficient parallel reduction within each block while leveraging TileTensor's dimensional indexing.
 
 ## Configuration
 
@@ -24,8 +24,8 @@ The key insight is understanding how to map thread blocks to matrix rows and per
 - Threads per block: \\(\\text{TPB} = 8\\)
 - Grid dimensions: \\(1 \\times \\text{BATCH}\\)
 - Shared memory: \\(\\text{TPB}\\) elements per block
-- Input layout: `Layout.row_major(BATCH, SIZE)`
-- Output layout: `Layout.row_major(BATCH, 1)`
+- Input layout: `row_major[BATCH, SIZE]()`
+- Output layout: `row_major[BATCH, 1]()`
 
 Matrix visualization:
 
@@ -116,12 +116,12 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 
 <div class="solution-explanation">
 
-The solution implements a parallel row-wise sum reduction for a 2D matrix using LayoutTensor. Here's a comprehensive breakdown:
+The solution implements a parallel row-wise sum reduction for a 2D matrix using TileTensor. Here's a comprehensive breakdown:
 
 ### Matrix layout and block mapping
 
 ```txt
-Input Matrix (4×6) with LayoutTensor:                Block Assignment:
+Input Matrix (4×6) with TileTensor:                Block Assignment:
 [[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
  [ a[1,0]  a[1,1]  a[1,2]  a[1,3]  a[1,4]  a[1,5] ] → Block(0,1)
  [ a[2,0]  a[2,1]  a[2,2]  a[2,3]  a[2,4]  a[2,5] ] → Block(0,2)
@@ -156,9 +156,9 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
    - Each block processes one complete row
 
 2. **Memory Access Pattern**:
-   - LayoutTensor 2D indexing for input: `a[batch, local_i]`
+   - TileTensor 2D indexing for input: `a[batch, local_i]`
    - Shared memory for efficient reduction
-   - LayoutTensor 2D indexing for output: `output[batch, 0]`
+   - TileTensor 2D indexing for output: `output[batch, 0]`
 
 3. **Parallel Reduction Logic**:
 
@@ -196,7 +196,7 @@ Input Matrix (4×6) with LayoutTensor:                Block Assignment:
 ### Performance optimizations
 
 1. **Memory Efficiency**:
-   - Coalesced memory access through LayoutTensor
+   - Coalesced memory access through TileTensor
    - Shared memory for fast reduction
    - Single write per row result
 

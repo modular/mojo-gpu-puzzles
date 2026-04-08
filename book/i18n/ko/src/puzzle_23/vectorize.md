@@ -34,7 +34,7 @@
 - 타일 크기: `TILE_SIZE = 32`
 - 데이터 타입: `DType.float32`
 - SIMD 폭: GPU 의존적
-- 레이아웃: `Layout.row_major(SIZE)` (1D 행 우선)
+- 레이아웃: `row_major[SIZE]()` (1D 행 우선)
 
 ## 1. 수동 벡터화 방식
 

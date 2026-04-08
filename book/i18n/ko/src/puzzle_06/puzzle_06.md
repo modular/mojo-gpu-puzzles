@@ -29,7 +29,7 @@
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p06/p06.mojo" class="filename">전체 코드 보기: problems/p06/p06.mojo</a>
 
-> 참고: 이 퍼즐의 `LayoutTensor` 버전은 거의 동일하므로 독자에게 맡깁니다.
+> 참고: 이 퍼즐의 `TileTensor` 버전은 거의 동일하므로 독자에게 맡깁니다.
 
 <details>
 <summary><strong>팁</strong></summary>

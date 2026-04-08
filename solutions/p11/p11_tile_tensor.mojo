@@ -15,7 +15,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-# ANCHOR: pooling_layout_tensor_solution
+# ANCHOR: pooling_tile_tensor_solution
 def pooling(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -48,7 +48,7 @@ def pooling(
         )
 
 
-# ANCHOR_END: pooling_layout_tensor_solution
+# ANCHOR_END: pooling_tile_tensor_solution
 
 
 def main() raises:
