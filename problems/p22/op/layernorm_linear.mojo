@@ -44,13 +44,15 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    comptime shared_layout = row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-    var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
-    var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    ]()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
     var acc: output.ElementType = 0
 
     comptime load_a_layout = row_major[
@@ -156,10 +158,12 @@ def transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    comptime shared_layout = row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
-    var shared_tile = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
+    ]()
+    var shared_tile = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -271,7 +275,9 @@ def minimal_fused_kernel_backward[
     WeightLayout: TensorLayout,
 ](
     grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
-    grad_ln_weight: TileTensor[mut=True, dtype, GradLnWeightLayout, MutAnyOrigin],
+    grad_ln_weight: TileTensor[
+        mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+    ],
     grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
     grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
     grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
@@ -457,8 +463,12 @@ struct LayerNormLinearCustomOp:
                 var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[
                     dtype
                 ](hidden_dim * output_dim)
-                comptime transposed_weight_layout = row_major[hidden_dim, output_dim]()
-                comptime TransposedWeightLayout = type_of(transposed_weight_layout)
+                comptime transposed_weight_layout = row_major[
+                    hidden_dim, output_dim
+                ]()
+                comptime TransposedWeightLayout = type_of(
+                    transposed_weight_layout
+                )
                 var transposed_weight_tensor = TileTensor[
                     mut=True,
                     dtype,
@@ -485,16 +495,18 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Reshape tensors for matmul: [batch*seq, hidden] @ [hidden, output] -> [batch*seq, output]
-                comptime flat_normalized_layout = row_major[batch_size * seq_len, hidden_dim]()
+                comptime flat_normalized_layout = row_major[
+                    batch_size * seq_len, hidden_dim
+                ]()
                 comptime FlatNormalizedLayout = type_of(flat_normalized_layout)
-                comptime flat_matmul_layout = row_major[batch_size * seq_len, output_dim]()
+                comptime flat_matmul_layout = row_major[
+                    batch_size * seq_len, output_dim
+                ]()
                 comptime FlatMatmulLayout = type_of(flat_matmul_layout)
                 var flat_normalized = normalized_tensor.reshape[
                     flat_normalized_layout
                 ]()
-                var flat_matmul = matmul_tensor.reshape[
-                    flat_matmul_layout
-                ]()
+                var flat_matmul = matmul_tensor.reshape[flat_matmul_layout]()
 
                 comptime kernel3 = matmul_idiomatic_tiled[
                     batch_size * seq_len,
@@ -510,7 +522,9 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Step 3: Add bias - reshape matmul result back to 3D for bias addition
-                comptime reshaped_matmul_layout = row_major[batch_size, seq_len, output_dim]()
+                comptime reshaped_matmul_layout = row_major[
+                    batch_size, seq_len, output_dim
+                ]()
                 comptime ReshapedMatmulLayout = type_of(reshaped_matmul_layout)
                 var reshaped_matmul = matmul_tensor.reshape[
                     reshaped_matmul_layout

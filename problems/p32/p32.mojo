@@ -30,9 +30,9 @@ def no_conflict_kernel(
     """
 
     # Shared memory buffer - each thread loads one element
-    var shared_buf = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -68,9 +68,9 @@ def two_way_conflict_kernel(
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    var shared_buf = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x

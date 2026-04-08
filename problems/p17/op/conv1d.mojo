@@ -25,12 +25,12 @@ def conv1d_kernel[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB + conv_size - 1]()
-    )
-    var shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[conv_size]()
-    )
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + conv_size - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[conv_size]())
     if global_i < input_size:
         shared_a[local_i] = input[global_i]
 

@@ -90,7 +90,9 @@ def main() raises:
         if argv()[1] == "--simple":
             var out_tensor = TileTensor(out, out_layout)
             var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
-            var b_tensor = TileTensor[mut=False, dtype, ConvLayout](b, conv_layout)
+            var b_tensor = TileTensor[mut=False, dtype, ConvLayout](
+                b, conv_layout
+            )
             ctx.enqueue_function[conv_1d_simple, conv_1d_simple](
                 out_tensor,
                 a_tensor,
@@ -100,9 +102,15 @@ def main() raises:
             )
         else:
             var out_tensor = TileTensor(out, out_2_layout)
-            var a_tensor = TileTensor[mut=False, dtype, In2Layout](a, in_2_layout)
-            var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](b, conv_2_layout)
-            ctx.enqueue_function[conv_1d_block_boundary, conv_1d_block_boundary](
+            var a_tensor = TileTensor[mut=False, dtype, In2Layout](
+                a, in_2_layout
+            )
+            var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](
+                b, conv_2_layout
+            )
+            ctx.enqueue_function[
+                conv_1d_block_boundary, conv_1d_block_boundary
+            ](
                 out_tensor,
                 a_tensor,
                 b_tensor,

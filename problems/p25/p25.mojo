@@ -148,9 +148,9 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i * i)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = neighbor_difference[SIZE]
@@ -194,9 +194,9 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin](
-            input_buf, layout_2
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType_2, ImmutAnyOrigin
+        ](input_buf, layout_2)
         var output_tensor = TileTensor(output_buf, layout_2)
 
         comptime kernel = moving_average_3[SIZE_2]
@@ -262,9 +262,9 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = Scalar[dtype](((i - 4) % 4) * 2 + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = broadcast_shuffle_coordination[SIZE]
@@ -314,9 +314,9 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = basic_broadcast[SIZE]
@@ -372,9 +372,9 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = conditional_broadcast[SIZE]

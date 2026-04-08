@@ -359,8 +359,12 @@ def main() raises:
             b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a.unsafe_ptr(), layout)
-    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b.unsafe_ptr(), layout)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](
+        a.unsafe_ptr(), layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](
+        b.unsafe_ptr(), layout
+    )
 
     ctx.synchronize()
 
@@ -383,9 +387,9 @@ def main() raises:
     elif argv()[1] == "--tiled":
         out_tensor = TileTensor(out.unsafe_ptr(), layout)
         print("tile size:", TILE_SIZE)
-        tiled_elementwise_add[LayoutType, dtype, SIMD_WIDTH, rank, SIZE, TILE_SIZE](
-            out_tensor, a_tensor, b_tensor, ctx
-        )
+        tiled_elementwise_add[
+            LayoutType, dtype, SIMD_WIDTH, rank, SIZE, TILE_SIZE
+        ](out_tensor, a_tensor, b_tensor, ctx)
 
         with out.map_to_host() as out_host:
             print("out:", out_host)

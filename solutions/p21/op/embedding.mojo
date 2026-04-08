@@ -157,9 +157,15 @@ struct EmbeddingCustomOp:
         comptime weights_layout_val = row_major[vocab_size, embed_dim]()
         comptime WeightsLayout = type_of(weights_layout_val)
 
-        var output_tensor = TileTensor[mut=True, output.dtype, OutLayout, MutAnyOrigin](output.unsafe_ptr(), out_layout_val)
-        var indices_tensor = TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin](indices.unsafe_ptr(), indices_layout_val)
-        var weights_tensor = TileTensor[mut=True, output.dtype, WeightsLayout, MutAnyOrigin](weights.unsafe_ptr(), weights_layout_val)
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -246,9 +252,15 @@ struct Embedding2DCustomOp:
         comptime weights_layout_val = row_major[vocab_size, embed_dim]()
         comptime WeightsLayout = type_of(weights_layout_val)
 
-        var output_tensor = TileTensor[mut=True, output.dtype, OutLayout, MutAnyOrigin](output.unsafe_ptr(), out_layout_val)
-        var indices_tensor = TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin](indices.unsafe_ptr(), indices_layout_val)
-        var weights_tensor = TileTensor[mut=True, output.dtype, WeightsLayout, MutAnyOrigin](weights.unsafe_ptr(), weights_layout_val)
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()

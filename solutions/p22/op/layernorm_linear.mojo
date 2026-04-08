@@ -41,13 +41,15 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    comptime shared_layout = row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-    var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
-    var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    ]()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
     var acc: output.ElementType = 0
 
     var a_lt = a.to_layout_tensor()
@@ -82,10 +84,14 @@ def matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        comptime k_max = min(MATMUL_BLOCK_DIM_XY, inner - idx * MATMUL_BLOCK_DIM_XY)
+        comptime k_max = min(
+            MATMUL_BLOCK_DIM_XY, inner - idx * MATMUL_BLOCK_DIM_XY
+        )
         comptime for k in range(k_max):
             if tiled_row < rows and tiled_col < cols:
-                acc += rebind[Scalar[dtype]](a_shared_lt[local_row, k]) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
+                acc += rebind[Scalar[dtype]](
+                    a_shared_lt[local_row, k]
+                ) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
 
         barrier()
 
@@ -166,10 +172,12 @@ def transpose_kernel[
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    comptime shared_layout = row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
-    var shared_tile = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
+    ]()
+    var shared_tile = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -291,7 +299,9 @@ def minimal_fused_kernel[
             var normalized = (input_val - mean_val) * inv_std * rebind[
                 Scalar[dtype]
             ](ln_weight_lt[h]) + rebind[Scalar[dtype]](ln_bias_lt[h])
-            acc += rebind[Scalar[dtype]](normalized * linear_weight_lt[out_idx, h])
+            acc += rebind[Scalar[dtype]](
+                normalized * linear_weight_lt[out_idx, h]
+            )
 
         output_lt[batch_idx, seq_idx, out_idx] = acc + rebind[Scalar[dtype]](
             linear_bias_lt[out_idx]
@@ -319,7 +329,9 @@ def minimal_fused_kernel_backward[
     dtype: DType = DType.float32,
 ](
     grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
-    grad_ln_weight: TileTensor[mut=True, dtype, GradLnWeightLayout, MutAnyOrigin],
+    grad_ln_weight: TileTensor[
+        mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+    ],
     grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
     grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
     grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
@@ -504,19 +516,33 @@ struct LayerNormLinearCustomOp:
         comptime ln_params_layout_val = row_major[hidden_dim]()
         comptime weight_layout_val = row_major[output_dim, hidden_dim]()
         comptime bias_layout_val = row_major[output_dim]()
-        comptime output_layout_val = row_major[batch_size, seq_len, output_dim]()
+        comptime output_layout_val = row_major[
+            batch_size, seq_len, output_dim
+        ]()
         comptime InputLayout = type_of(input_layout_val)
         comptime LnParamsLayout = type_of(ln_params_layout_val)
         comptime WeightLayout = type_of(weight_layout_val)
         comptime BiasLayout = type_of(bias_layout_val)
         comptime OutputLayout = type_of(output_layout_val)
 
-        var output_tensor = TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin](output.unsafe_ptr(), output_layout_val)
-        var input_tensor = TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin](input.unsafe_ptr(), input_layout_val)
-        var ln_weight_tensor = TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin](ln_weight.unsafe_ptr(), ln_params_layout_val)
-        var ln_bias_tensor = TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin](ln_bias.unsafe_ptr(), ln_params_layout_val)
-        var linear_weight_tensor = TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin](linear_weight.unsafe_ptr(), weight_layout_val)
-        var linear_bias_tensor = TileTensor[mut=True, dtype, BiasLayout, MutAnyOrigin](linear_bias.unsafe_ptr(), bias_layout_val)
+        var output_tensor = TileTensor[
+            mut=True, dtype, OutputLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), output_layout_val)
+        var input_tensor = TileTensor[
+            mut=True, dtype, InputLayout, MutAnyOrigin
+        ](input.unsafe_ptr(), input_layout_val)
+        var ln_weight_tensor = TileTensor[
+            mut=True, dtype, LnParamsLayout, MutAnyOrigin
+        ](ln_weight.unsafe_ptr(), ln_params_layout_val)
+        var ln_bias_tensor = TileTensor[
+            mut=True, dtype, LnParamsLayout, MutAnyOrigin
+        ](ln_bias.unsafe_ptr(), ln_params_layout_val)
+        var linear_weight_tensor = TileTensor[
+            mut=True, dtype, WeightLayout, MutAnyOrigin
+        ](linear_weight.unsafe_ptr(), weight_layout_val)
+        var linear_bias_tensor = TileTensor[
+            mut=True, dtype, BiasLayout, MutAnyOrigin
+        ](linear_bias.unsafe_ptr(), bias_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -595,8 +621,12 @@ struct LayerNormLinearCustomOp:
                 var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[
                     dtype
                 ](hidden_dim * output_dim)
-                comptime transposed_weight_layout = row_major[hidden_dim, output_dim]()
-                comptime TransposedWeightLayout = type_of(transposed_weight_layout)
+                comptime transposed_weight_layout = row_major[
+                    hidden_dim, output_dim
+                ]()
+                comptime TransposedWeightLayout = type_of(
+                    transposed_weight_layout
+                )
                 var transposed_weight_tensor = TileTensor[
                     mut=True,
                     dtype,
@@ -625,11 +655,17 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Reshape tensors for matmul: [batch*seq, hidden] @ [hidden, output] -> [batch*seq, output]
-                comptime flat_normalized_layout = row_major[batch_size * seq_len, hidden_dim]()
+                comptime flat_normalized_layout = row_major[
+                    batch_size * seq_len, hidden_dim
+                ]()
                 comptime FlatNormalizedLayout = type_of(flat_normalized_layout)
-                comptime flat_matmul_layout = row_major[batch_size * seq_len, output_dim]()
+                comptime flat_matmul_layout = row_major[
+                    batch_size * seq_len, output_dim
+                ]()
                 comptime FlatMatmulLayout = type_of(flat_matmul_layout)
-                var flat_normalized = normalized_tensor.reshape(flat_normalized_layout)
+                var flat_normalized = normalized_tensor.reshape(
+                    flat_normalized_layout
+                )
                 var flat_matmul = matmul_tensor.reshape(flat_matmul_layout)
 
                 comptime kernel3 = matmul_idiomatic_tiled[
@@ -649,9 +685,13 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Step 3: Add bias - reshape matmul result back to 3D for bias addition
-                comptime reshaped_matmul_layout = row_major[batch_size, seq_len, output_dim]()
+                comptime reshaped_matmul_layout = row_major[
+                    batch_size, seq_len, output_dim
+                ]()
                 comptime ReshapedMatmulLayout = type_of(reshaped_matmul_layout)
-                var reshaped_matmul = matmul_tensor.reshape(reshaped_matmul_layout)
+                var reshaped_matmul = matmul_tensor.reshape(
+                    reshaped_matmul_layout
+                )
 
                 comptime kernel4 = add_bias_kernel[
                     batch_size,
@@ -738,12 +778,16 @@ struct LayerNormLinearBackwardCustomOp:
         comptime input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
         comptime ln_params_layout_val = row_major[hidden_dim]()
         comptime weight_layout_val = row_major[output_dim, hidden_dim]()
-        comptime grad_input_layout_val = row_major[batch_size, seq_len, hidden_dim]()
+        comptime grad_input_layout_val = row_major[
+            batch_size, seq_len, hidden_dim
+        ]()
         comptime grad_ln_weight_layout_val = row_major[hidden_dim]()
         comptime grad_ln_bias_layout_val = row_major[hidden_dim]()
         comptime grad_weight_layout_val = row_major[output_dim, hidden_dim]()
         comptime grad_bias_layout_val = row_major[output_dim]()
-        comptime grad_output_layout_val = row_major[batch_size, seq_len, output_dim]()
+        comptime grad_output_layout_val = row_major[
+            batch_size, seq_len, output_dim
+        ]()
         comptime GradOutputLayout = type_of(grad_output_layout_val)
         comptime InputLayout = type_of(input_layout_val)
         comptime LnParamsLayout = type_of(ln_params_layout_val)
@@ -754,16 +798,36 @@ struct LayerNormLinearBackwardCustomOp:
         comptime GradWeightLayout = type_of(grad_weight_layout_val)
         comptime GradBiasLayout = type_of(grad_bias_layout_val)
 
-        var grad_input_tensor = TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin](grad_input.unsafe_ptr(), grad_input_layout_val)
-        var grad_ln_weight_tensor = TileTensor[mut=True, dtype, GradLnWeightLayout, MutAnyOrigin](grad_ln_weight.unsafe_ptr(), grad_ln_weight_layout_val)
-        var grad_ln_bias_tensor = TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin](grad_ln_bias.unsafe_ptr(), grad_ln_bias_layout_val)
-        var grad_weight_tensor = TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin](grad_weight.unsafe_ptr(), grad_weight_layout_val)
-        var grad_bias_tensor = TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin](grad_bias.unsafe_ptr(), grad_bias_layout_val)
-        var grad_output_tensor = TileTensor[mut=True, dtype, GradOutputLayout, MutAnyOrigin](grad_output.unsafe_ptr(), grad_output_layout_val)
-        var input_tensor = TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin](input.unsafe_ptr(), input_layout_val)
-        var ln_weight_tensor = TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin](ln_weight.unsafe_ptr(), ln_params_layout_val)
-        var ln_bias_tensor = TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin](ln_bias.unsafe_ptr(), ln_params_layout_val)
-        var linear_weight_tensor = TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin](linear_weight.unsafe_ptr(), weight_layout_val)
+        var grad_input_tensor = TileTensor[
+            mut=True, dtype, GradInputLayout, MutAnyOrigin
+        ](grad_input.unsafe_ptr(), grad_input_layout_val)
+        var grad_ln_weight_tensor = TileTensor[
+            mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+        ](grad_ln_weight.unsafe_ptr(), grad_ln_weight_layout_val)
+        var grad_ln_bias_tensor = TileTensor[
+            mut=True, dtype, GradLnBiasLayout, MutAnyOrigin
+        ](grad_ln_bias.unsafe_ptr(), grad_ln_bias_layout_val)
+        var grad_weight_tensor = TileTensor[
+            mut=True, dtype, GradWeightLayout, MutAnyOrigin
+        ](grad_weight.unsafe_ptr(), grad_weight_layout_val)
+        var grad_bias_tensor = TileTensor[
+            mut=True, dtype, GradBiasLayout, MutAnyOrigin
+        ](grad_bias.unsafe_ptr(), grad_bias_layout_val)
+        var grad_output_tensor = TileTensor[
+            mut=True, dtype, GradOutputLayout, MutAnyOrigin
+        ](grad_output.unsafe_ptr(), grad_output_layout_val)
+        var input_tensor = TileTensor[
+            mut=True, dtype, InputLayout, MutAnyOrigin
+        ](input.unsafe_ptr(), input_layout_val)
+        var ln_weight_tensor = TileTensor[
+            mut=True, dtype, LnParamsLayout, MutAnyOrigin
+        ](ln_weight.unsafe_ptr(), ln_params_layout_val)
+        var ln_bias_tensor = TileTensor[
+            mut=True, dtype, LnParamsLayout, MutAnyOrigin
+        ](ln_bias.unsafe_ptr(), ln_params_layout_val)
+        var linear_weight_tensor = TileTensor[
+            mut=True, dtype, WeightLayout, MutAnyOrigin
+        ](linear_weight.unsafe_ptr(), weight_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()

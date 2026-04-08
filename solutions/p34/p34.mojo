@@ -42,7 +42,9 @@ def cluster_coordination_basics[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -82,9 +84,7 @@ def cluster_collective_operations[
 ](
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
-    temp_storage: TileTensor[
-        mut=True, dtype, ClusterLayout, MutAnyOrigin
-    ],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -99,7 +99,9 @@ def cluster_collective_operations[
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    var shared_mem = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())
+    var shared_mem = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     shared_mem[local_i] = my_value
     barrier()
 
@@ -144,7 +146,9 @@ def advanced_cluster_patterns[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # Compute cluster mask for advanced coordination
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter

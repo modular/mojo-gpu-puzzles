@@ -64,8 +64,12 @@ def matmul_idiomatic_tiled[
 
     for idx in range(size // TILE_SIZE):  # Iterate over K tiles
         # Get tiles from A and B matrices
-        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](block_idx.y, idx).to_layout_tensor()
-        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](idx, block_idx.x).to_layout_tensor()
+        var a_tile = a.tile[TILE_SIZE, TILE_SIZE](
+            block_idx.y, idx
+        ).to_layout_tensor()
+        var b_tile = b.tile[TILE_SIZE, TILE_SIZE](
+            idx, block_idx.x
+        ).to_layout_tensor()
 
         # Asynchronously copy tiles to shared memory with consistent orientation
         copy_dram_to_sram_async[
@@ -89,7 +93,9 @@ def matmul_idiomatic_tiled[
                 and local_col < TILE_SIZE
                 and k < TILE_SIZE
             ):
-                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[Scalar[dtype]](b_shared[k, local_col])
+                acc += rebind[Scalar[dtype]](a_shared[local_row, k]) * rebind[
+                    Scalar[dtype]
+                ](b_shared[k, local_col])
 
         barrier()
 
@@ -300,8 +306,12 @@ def main() raises:
 
         # Create TileTensors for the tiled kernel
         var out_tile_tensor = TileTensor(out_tensor_core.unsafe_ptr(), layout)
-        var a_tile_tensor = TileTensor[mut=False, dtype, LayoutType](inp1.unsafe_ptr(), layout)
-        var b_tile_tensor = TileTensor[mut=False, dtype, LayoutType](inp2.unsafe_ptr(), layout)
+        var a_tile_tensor = TileTensor[mut=False, dtype, LayoutType](
+            inp1.unsafe_ptr(), layout
+        )
+        var b_tile_tensor = TileTensor[mut=False, dtype, LayoutType](
+            inp2.unsafe_ptr(), layout
+        )
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")

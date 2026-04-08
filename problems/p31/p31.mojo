@@ -45,7 +45,9 @@ def sophisticated_kernel(
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    var shared_cache = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+    var shared_cache = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](
         row_major[1024 * 12]()
     )  # 48KB
 
@@ -137,7 +139,9 @@ def balanced_kernel(
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    var shared_cache = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+    var shared_cache = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](
         row_major[1024 * 4]()
     )  # 16KB total
 

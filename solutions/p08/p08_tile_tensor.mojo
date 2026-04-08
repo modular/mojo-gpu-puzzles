@@ -22,9 +22,9 @@ def add_10_shared_tile_tensor(
     size: Int,
 ):
     # Allocate shared memory using stack_allocation
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -55,7 +55,9 @@ def main() raises:
         var out_tensor = TileTensor(out, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[add_10_shared_tile_tensor, add_10_shared_tile_tensor](
+        ctx.enqueue_function[
+            add_10_shared_tile_tensor, add_10_shared_tile_tensor
+        ](
             out_tensor,
             a_tensor,
             SIZE,

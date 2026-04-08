@@ -48,12 +48,16 @@ def traditional_dot_product_p12_style[
     var a_lt = a.to_layout_tensor()
     var b_lt = b.to_layout_tensor()
     var out_lt = output.to_layout_tensor()
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[WARP_SIZE]())
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[WARP_SIZE]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
     if global_i < size:
-        shared[local_i] = (rebind[Scalar[dtype]](a_lt[global_i]) * rebind[Scalar[dtype]](b_lt[global_i]))
+        shared[local_i] = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
     else:
         shared[local_i] = 0.0
 
@@ -89,7 +93,9 @@ def simple_warp_dot_product[
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i < size:
-        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[Scalar[dtype]](b_lt[global_i])
+        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
@@ -104,7 +110,8 @@ def simple_warp_dot_product[
 
 # ANCHOR: functional_warp_approach_solution
 def functional_warp_dot_product[
-    InLayoutT: TensorLayout, OutLayoutT: TensorLayout,
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
@@ -131,7 +138,9 @@ def functional_warp_dot_product[
         if idx < size:
             var a_val = a_lt.load[1](Index(idx))
             var b_val = b_lt.load[1](Index(idx))
-            partial_product = rebind[Scalar[dtype]](a_val) * rebind[Scalar[dtype]](b_val)
+            partial_product = rebind[Scalar[dtype]](a_val) * rebind[
+                Scalar[dtype]
+            ](b_val)
         else:
             partial_product = 0.0
 
@@ -217,9 +226,15 @@ def benchmark_simple_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchInLayout](a, bench_in_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchInLayout](b, bench_in_layout)
-    var out_tensor = TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout)
+    var a_tensor = TileTensor[mut=False, dtype, BenchInLayout](
+        a, bench_in_layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, BenchInLayout](
+        b, bench_in_layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, BenchOutLayout](
+        out, bench_out_layout
+    )
 
     @parameter
     @always_inline
@@ -269,12 +284,15 @@ def benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = rebind[TileTensor[mut=False, dtype, BenchInLayout, ImmutAnyOrigin]](
-        TileTensor[mut=False, dtype, BenchInLayout](a, bench_in_layout))
-    var b_tensor = rebind[TileTensor[mut=False, dtype, BenchInLayout, ImmutAnyOrigin]](
-        TileTensor[mut=False, dtype, BenchInLayout](b, bench_in_layout))
-    var out_tensor = rebind[TileTensor[mut=True, dtype, BenchOutLayout, MutAnyOrigin]](
-        TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout))
+    var a_tensor = rebind[
+        TileTensor[mut=False, dtype, BenchInLayout, ImmutAnyOrigin]
+    ](TileTensor[mut=False, dtype, BenchInLayout](a, bench_in_layout))
+    var b_tensor = rebind[
+        TileTensor[mut=False, dtype, BenchInLayout, ImmutAnyOrigin]
+    ](TileTensor[mut=False, dtype, BenchInLayout](b, bench_in_layout))
+    var out_tensor = rebind[
+        TileTensor[mut=True, dtype, BenchOutLayout, MutAnyOrigin]
+    ](TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout))
 
     @parameter
     @always_inline
@@ -318,16 +336,26 @@ def benchmark_traditional_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchInLayout](a, bench_in_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchInLayout](b, bench_in_layout)
-    var out_tensor = TileTensor[mut=True, dtype, BenchOutLayout](out, bench_out_layout)
+    var a_tensor = TileTensor[mut=False, dtype, BenchInLayout](
+        a, bench_in_layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, BenchInLayout](
+        b, bench_in_layout
+    )
+    var out_tensor = TileTensor[mut=True, dtype, BenchOutLayout](
+        out, bench_out_layout
+    )
 
     @parameter
     @always_inline
     def traditional_workflow(ctx: DeviceContext) raises:
         ctx.enqueue_function[
-            traditional_dot_product_p12_style[BenchInLayout, BenchOutLayout, test_size],
-            traditional_dot_product_p12_style[BenchInLayout, BenchOutLayout, test_size],
+            traditional_dot_product_p12_style[
+                BenchInLayout, BenchOutLayout, test_size
+            ],
+            traditional_dot_product_p12_style[
+                BenchInLayout, BenchOutLayout, test_size
+            ],
         ](
             out_tensor,
             a_tensor,
@@ -362,12 +390,15 @@ def main() raises:
             var expected = ctx.enqueue_create_host_buffer[dtype](n_warps)
             expected.enqueue_fill(0)
 
-            var out_tensor = rebind[TileTensor[mut=True, dtype, MainOutLayout, MutAnyOrigin]](
-                TileTensor[mut=True, dtype, MainOutLayout](out, main_out_layout))
-            var a_tensor = rebind[TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin]](
-                TileTensor[mut=False, dtype, InLayout](a, in_layout))
-            var b_tensor = rebind[TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin]](
-                TileTensor[mut=False, dtype, InLayout](b, in_layout))
+            var out_tensor = rebind[
+                TileTensor[mut=True, dtype, MainOutLayout, MutAnyOrigin]
+            ](TileTensor[mut=True, dtype, MainOutLayout](out, main_out_layout))
+            var a_tensor = rebind[
+                TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin]
+            ](TileTensor[mut=False, dtype, InLayout](a, in_layout))
+            var b_tensor = rebind[
+                TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin]
+            ](TileTensor[mut=False, dtype, InLayout](b, in_layout))
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):

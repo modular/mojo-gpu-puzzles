@@ -45,8 +45,12 @@ def multi_stage_image_blur_pipeline(
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
-    var blur_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var blur_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -91,13 +95,23 @@ def double_buffered_stencil_computation(
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
-    var buffer_B = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+    var buffer_A = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var buffer_B = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = stack_allocation[dtype=DType.uint64, address_space=AddressSpace.SHARED](row_major[1]())
-    var iter_barrier = stack_allocation[dtype=DType.uint64, address_space=AddressSpace.SHARED](row_major[1]())
-    var final_barrier = stack_allocation[dtype=DType.uint64, address_space=AddressSpace.SHARED](row_major[1]())
+    var init_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var iter_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var final_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -171,7 +185,9 @@ def test_multi_stage_pipeline() raises:
 
         # Create TileTensors
         var out_tensor = TileTensor(out, layout)
-        var inp_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](inp, layout)
+        var inp_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](inp, layout)
 
         comptime kernel = multi_stage_image_blur_pipeline
         ctx.enqueue_function[kernel, kernel](
@@ -233,7 +249,9 @@ def test_double_buffered_stencil() raises:
 
         # Create TileTensors for Puzzle 29B
         var out_tensor = TileTensor(out, layout)
-        var inp_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](inp, layout)
+        var inp_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](inp, layout)
 
         comptime kernel = double_buffered_stencil_computation
         ctx.enqueue_function[kernel, kernel](

@@ -81,7 +81,9 @@ def async_copy_overlap_convolution[
             for k in range(KERNEL_SIZE):
                 var input_idx = local_i + k - HALO_SIZE
                 if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
-                    result += rebind[Scalar[dtype]](input_shared[input_idx]) * rebind[Scalar[dtype]](kernel_shared[k])
+                    result += rebind[Scalar[dtype]](
+                        input_shared[input_idx]
+                    ) * rebind[Scalar[dtype]](kernel_shared[k])
         else:
             # For boundary elements, just copy input (no convolution)
             result = rebind[Scalar[dtype]](input_shared[local_i])

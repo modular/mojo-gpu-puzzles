@@ -24,7 +24,9 @@ def traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -91,7 +93,9 @@ def block_histogram_bin_extract[
 ](
     input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     bin_output: TileTensor[mut=True, dtype, BinLayoutType, MutAnyOrigin],
-    count_output: TileTensor[mut=True, DType.int32, OutLayoutType, MutAnyOrigin],
+    count_output: TileTensor[
+        mut=True, DType.int32, OutLayoutType, MutAnyOrigin
+    ],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -209,8 +213,12 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](a, in_layout)
-            b_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](b_buf, in_layout)
+            a_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](a, in_layout)
+            b_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](b_buf, in_layout)
             out_tensor = TileTensor(out, out_layout)
 
             # Traditional approach: works perfectly when size == TPB
@@ -252,8 +260,12 @@ def main() raises:
             print("TPB:", TPB)
             print("Expected result:", expected)
 
-            a_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](a, in_layout)
-            b_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](b_buf, in_layout)
+            a_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](a, in_layout)
+            b_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](b_buf, in_layout)
             out_tensor = TileTensor(out, out_layout)
 
             # Block.sum(): Same result with dramatically simpler code!
@@ -306,9 +318,9 @@ def main() raises:
             print("...")
             print()
 
-            input_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](
-                input_buf, in_layout
-            )
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
 
             # Demonstrate histogram for each bin using block.prefix_sum()
             for target_bin in range(NUM_BINS):
@@ -398,9 +410,9 @@ def main() raises:
             print("Mean value:", mean_value)
             print()
 
-            input_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](
-                input_buf, in_layout
-            )
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
             var output_tensor = TileTensor(output_buf, vector_layout)
 
             # Execute vector normalization kernel

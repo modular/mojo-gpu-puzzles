@@ -43,8 +43,12 @@ def matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TILE_SIZE, TILE_SIZE](block_idx.y, block_idx.x)
-    var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TILE_SIZE, TILE_SIZE]())
-    var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TILE_SIZE, TILE_SIZE]())
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TILE_SIZE, TILE_SIZE]())
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TILE_SIZE, TILE_SIZE]())
 
     var acc: output.ElementType = 0
 
@@ -145,11 +149,17 @@ def tensor_core_matrix_multiplication[
     var mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 
     # Shared SRAM tiles (no padding to stay under shared memory limit)
-    var A_sram_tile = stack_allocation[dtype=A.dtype, address_space=AddressSpace.SHARED](row_major[BM, BK]())
-    var B_sram_tile = stack_allocation[dtype=B.dtype, address_space=AddressSpace.SHARED](row_major[BK, BN]())
+    var A_sram_tile = stack_allocation[
+        dtype=A.dtype, address_space=AddressSpace.SHARED
+    ](row_major[BM, BK]())
+    var B_sram_tile = stack_allocation[
+        dtype=B.dtype, address_space=AddressSpace.SHARED
+    ](row_major[BK, BN]())
 
     # One per-warp accumulator tile of shape [WM, WN]
-    var C_warp_accum = stack_allocation[dtype=C.dtype, address_space=AddressSpace.GENERIC](row_major[WM, WN]())
+    var C_warp_accum = stack_allocation[
+        dtype=C.dtype, address_space=AddressSpace.GENERIC
+    ](row_major[WM, WN]())
 
     # Zero initialize accumulator (only for active warps)
     if warp_is_active:
@@ -252,8 +262,12 @@ def main() raises:
         var out_tensor_core_layout = TileTensor(
             out_tensor_core.unsafe_ptr(), layout
         )
-        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](inp1, layout)
-        var b_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](inp2, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+            inp1, layout
+        )
+        var b_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
+            inp2, layout
+        )
 
         if mode == "--tensor-core":
             print("\n=== Running ACTUAL Tensor Core Matrix Multiplication ===")
@@ -285,9 +299,7 @@ def main() raises:
             # Create separate buffer for tiled result
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(
-                out_tiled.unsafe_ptr(), layout
-            )
+            out_tiled_layout = TileTensor(out_tiled.unsafe_ptr(), layout)
 
             # Run idiomatic tiled version with proper 2D block configuration
             comptime kernel = matmul_idiomatic_tiled[SIZE]
@@ -389,9 +401,7 @@ def main() raises:
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(
-                out_tiled.unsafe_ptr(), layout
-            )
+            out_tiled_layout = TileTensor(out_tiled.unsafe_ptr(), layout)
 
             comptime kernel2 = matmul_idiomatic_tiled[SIZE]
             ctx.enqueue_function[kernel2, kernel2](

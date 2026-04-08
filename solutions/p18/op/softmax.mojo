@@ -29,12 +29,12 @@ def softmax_gpu_kernel[
     comptime assert (
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
-    var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[BLOCK_DIM_X]()
-    )
-    var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[BLOCK_DIM_X]()
-    )
+    var shared_max = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[BLOCK_DIM_X]())
+    var shared_sum = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[BLOCK_DIM_X]())
     var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
@@ -130,8 +130,12 @@ struct SoftmaxCustomOp:
         input: InputTensor[dtype=dtype, rank=output.rank, static_spec=_],
         ctx: DeviceContextPtr,
     ) raises:
-        var output_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](output.unsafe_ptr(), layout)
-        var input_tensor = TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin](input.unsafe_ptr(), layout)
+        var output_tensor = TileTensor[
+            mut=True, dtype, LayoutType, MutAnyOrigin
+        ](output.unsafe_ptr(), layout)
+        var input_tensor = TileTensor[
+            mut=True, dtype, LayoutType, MutAnyOrigin
+        ](input.unsafe_ptr(), layout)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -155,8 +159,6 @@ struct SoftmaxCustomOp:
             )
 
         elif target == "cpu":
-            softmax_cpu_kernel[input_size, dtype](
-                output_tensor, input_tensor
-            )
+            softmax_cpu_kernel[input_size, dtype](output_tensor, input_tensor)
         else:
             raise Error("Unsupported target: " + target)

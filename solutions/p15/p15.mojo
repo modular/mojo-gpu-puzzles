@@ -27,9 +27,9 @@ def axis_sum(
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
-    var cache = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var cache = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -> Row 0: [0,1,2,3,4,5]

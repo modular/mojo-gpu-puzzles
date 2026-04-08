@@ -31,12 +31,12 @@ def conv1d_kernel[
     var kernel_lt = kernel.to_layout_tensor()
     var output_lt = output.to_layout_tensor()
     # first: need to account for padding
-    var shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB + conv_size - 1]()
-    )
-    var shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[conv_size]()
-    )
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + conv_size - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[conv_size]())
     if global_i < input_size:
         shared_a[local_i] = rebind[Scalar[dtype]](input_lt[global_i])
 
@@ -94,9 +94,15 @@ struct Conv1DCustomOp:
         comptime conv_layout_val = row_major[conv_size]()
         comptime ConvLayout = type_of(conv_layout_val)
 
-        var out_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](output.unsafe_ptr(), out_layout_val)
-        var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](input.unsafe_ptr(), out_layout_val)
-        var kernel_tensor = TileTensor[mut=True, dtype, ConvLayout, MutAnyOrigin](kernel.unsafe_ptr(), conv_layout_val)
+        var out_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+            output.unsafe_ptr(), out_layout_val
+        )
+        var input_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](
+            input.unsafe_ptr(), out_layout_val
+        )
+        var kernel_tensor = TileTensor[
+            mut=True, dtype, ConvLayout, MutAnyOrigin
+        ](kernel.unsafe_ptr(), conv_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()

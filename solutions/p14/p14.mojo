@@ -25,9 +25,9 @@ def prefix_sum_simple(
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
     if global_i < size:
         shared[local_i] = a[global_i]
 
@@ -73,9 +73,9 @@ def prefix_sum_local_phase(
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[TPB]()
-    )
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:

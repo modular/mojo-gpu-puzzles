@@ -42,7 +42,9 @@ def cluster_coordination_basics[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -82,9 +84,7 @@ def cluster_collective_operations[
 ](
     output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
     input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
-    temp_storage: TileTensor[
-        mut=True, dtype, ClusterLayoutType, MutAnyOrigin
-    ],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -136,9 +136,9 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i % 10) * 0.1
 
-            input_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](
-                input_buf, in_layout
-            )
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
             output_tensor = TileTensor(output_buf, cluster_layout)
 
             comptime kernel = cluster_coordination_basics[TPB]
@@ -196,9 +196,9 @@ def main() raises:
 
             print("Expected sum:", expected_sum)
 
-            input_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](
-                input_buf, in_layout
-            )
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
             var output_tensor = TileTensor(output_buf, out_layout)
             var temp_tensor = TileTensor(temp_buf, cluster_layout)
 
@@ -242,9 +242,9 @@ def main() raises:
                         Scalar[dtype](i % 50) * 0.02
                     )  # Pattern for testing
 
-            input_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](
-                input_buf, in_layout
-            )
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
             output_tensor = TileTensor(output_buf, cluster_layout)
 
             comptime kernel = advanced_cluster_patterns[TPB]

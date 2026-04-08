@@ -45,7 +45,9 @@ def traditional_dot_product_p12_style[
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[WARP_SIZE]())
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[WARP_SIZE]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -181,8 +183,12 @@ def benchmark_simple_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](a, bench_in_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](b, bench_in_layout)
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](a, bench_in_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](b, bench_in_layout)
     var out_tensor = TileTensor(out, bench_out_layout)
 
     @parameter
@@ -231,16 +237,20 @@ def benchmark_functional_warp_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](a, bench_in_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](b, bench_in_layout)
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](a, bench_in_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](b, bench_in_layout)
     var out_tensor = TileTensor(out, bench_out_layout)
 
     @parameter
     @always_inline
     def functional_warp_workflow(ctx: DeviceContext) raises:
-        functional_warp_dot_product[
-            dtype, SIMD_WIDTH, 1, test_size
-        ](out_tensor, a_tensor, b_tensor, ctx)
+        functional_warp_dot_product[dtype, SIMD_WIDTH, 1, test_size](
+            out_tensor, a_tensor, b_tensor, ctx
+        )
 
     bencher.iter_custom[functional_warp_workflow](bench_ctx)
     check_result[dtype, n_warps](out, expected)
@@ -277,8 +287,12 @@ def benchmark_traditional_parameterized[
     rand_int[dtype, test_size](b)
     expected_output[dtype, n_warps](expected, a, b)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](a, bench_in_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin](b, bench_in_layout)
+    var a_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](a, bench_in_layout)
+    var b_tensor = TileTensor[
+        mut=False, dtype, BenchInLayoutType, ImmutAnyOrigin
+    ](b, bench_in_layout)
     var out_tensor = TileTensor(out, bench_out_layout)
 
     @parameter
@@ -320,8 +334,12 @@ def main() raises:
             expected.enqueue_fill(0)
 
             var out_tensor = TileTensor(out, out_layout)
-            var a_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](a, in_layout)
-            var b_tensor = TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin](b, in_layout)
+            var a_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](a, in_layout)
+            var b_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](b, in_layout)
 
             with a.map_to_host() as a_host, b.map_to_host() as b_host:
                 for i in range(SIZE):
@@ -351,9 +369,9 @@ def main() raises:
                     block_dim=THREADS_PER_BLOCK,
                 )
             elif argv()[1] == "--functional":
-                functional_warp_dot_product[
-                    dtype, SIMD_WIDTH, 1, SIZE
-                ](out_tensor, a_tensor, b_tensor, ctx)
+                functional_warp_dot_product[dtype, SIMD_WIDTH, 1, SIZE](
+                    out_tensor, a_tensor, b_tensor, ctx
+                )
             expected_output[dtype, n_warps](expected, a, b)
             check_result[dtype, n_warps, True](out, expected)
             print("Puzzle 24 complete ✅")

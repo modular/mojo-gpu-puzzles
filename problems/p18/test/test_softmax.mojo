@@ -43,9 +43,7 @@ def test_softmax() raises:
         var input_tensor = TileTensor[mut=False, dtype, LayoutType](inp, layout)
 
         # Compute expected results using our CPU kernel
-        softmax_cpu_kernel[SIZE, dtype](
-            expected_tensor, input_host_tensor
-        )
+        softmax_cpu_kernel[SIZE, dtype](expected_tensor, input_host_tensor)
 
         # Run GPU kernel
         comptime kernel = softmax_gpu_kernel[SIZE, dtype]

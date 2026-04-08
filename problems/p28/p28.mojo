@@ -39,8 +39,12 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_TILE_SIZE]())
-    var kernel_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[KERNEL_SIZE]())
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV_TILE_SIZE]())
+    var kernel_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[KERNEL_SIZE]())
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -68,11 +72,13 @@ def test_async_copy_overlap_convolution() raises:
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin](
-            input_buf, layout_async
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin
+        ](input_buf, layout_async)
         var output_tensor = TileTensor(output_buf, layout_async)
-        var kernel_tensor = TileTensor[mut=False, dtype, KernelLayoutType](kernel_buf, kernel_layout)
+        var kernel_tensor = TileTensor[mut=False, dtype, KernelLayoutType](
+            kernel_buf, kernel_layout
+        )
 
         comptime kernel = async_copy_overlap_convolution[dtype]
         ctx.enqueue_function[kernel, kernel](

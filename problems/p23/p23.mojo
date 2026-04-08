@@ -225,16 +225,20 @@ def benchmark_tiled_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](b_buf.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        a.unsafe_ptr(), bench_layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        b_buf.unsafe_ptr(), bench_layout
+    )
     var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
 
     @parameter
     @always_inline
     def tiled_workflow(ctx: DeviceContext) raises:
-        tiled_elementwise_add[
-            dtype, SIMD_WIDTH, rank, test_size, tile_size
-        ](out_tensor, a_tensor, b_tensor, ctx)
+        tiled_elementwise_add[dtype, SIMD_WIDTH, rank, test_size, tile_size](
+            out_tensor, a_tensor, b_tensor, ctx
+        )
 
     b.iter_custom[tiled_workflow](bench_ctx)
     keep(out.unsafe_ptr())
@@ -261,8 +265,12 @@ def benchmark_manual_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](b_buf.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        a.unsafe_ptr(), bench_layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        b_buf.unsafe_ptr(), bench_layout
+    )
     var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
 
     @parameter
@@ -297,8 +305,12 @@ def benchmark_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](b_buf.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        a.unsafe_ptr(), bench_layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
+        b_buf.unsafe_ptr(), bench_layout
+    )
     var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
 
     @parameter
@@ -330,8 +342,12 @@ def main() raises:
             b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a.unsafe_ptr(), layout)
-    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b.unsafe_ptr(), layout)
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](
+        a.unsafe_ptr(), layout
+    )
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](
+        b.unsafe_ptr(), layout
+    )
 
     ctx.synchronize()
 

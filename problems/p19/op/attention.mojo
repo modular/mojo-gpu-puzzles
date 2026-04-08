@@ -53,13 +53,15 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    comptime shared_layout = row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-    var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
-    var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    ]()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
     var acc: output.ElementType = 0
 
     comptime load_a_layout = row_major[
@@ -144,12 +146,12 @@ def softmax_gpu_kernel[
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     comptime softmax_layout = row_major[SOFTMAX_BLOCK_DIM_X]()
-    var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        softmax_layout
-    )
-    var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        softmax_layout
-    )
+    var shared_max = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](softmax_layout)
+    var shared_sum = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](softmax_layout)
     var global_i = thread_idx.x
 
     # Initialize out-of-bounds (shared_max[local_i], global_i >= input_size) shared memory addresses to the minimum
@@ -280,15 +282,15 @@ struct AttentionCustomOp:
         var output_tensor = rebind[
             TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin]
         ](output.to_layout_tensor())
-        var q_tensor = rebind[TileTensor[mut=False, dtype, QLayout, MutAnyOrigin]](
-            q.to_layout_tensor()
-        )
-        var k_tensor = rebind[TileTensor[mut=False, dtype, KLayout, ImmutAnyOrigin]](
-            k.to_layout_tensor()
-        )
-        var v_tensor = rebind[TileTensor[mut=False, dtype, VLayout, MutAnyOrigin]](
-            v.to_layout_tensor()
-        )
+        var q_tensor = rebind[
+            TileTensor[mut=False, dtype, QLayout, MutAnyOrigin]
+        ](q.to_layout_tensor())
+        var k_tensor = rebind[
+            TileTensor[mut=False, dtype, KLayout, ImmutAnyOrigin]
+        ](k.to_layout_tensor())
+        var v_tensor = rebind[
+            TileTensor[mut=False, dtype, VLayout, MutAnyOrigin]
+        ](v.to_layout_tensor())
 
         comptime if target == "gpu":
             # ANCHOR: attention_orchestration
@@ -375,9 +377,9 @@ struct AttentionCustomOp:
             # ANCHOR_END: attention_orchestration
 
         elif target == "cpu":
-            attention_cpu_kernel[
-                seq_len, d, dtype
-            ](output_tensor, q_tensor, k_tensor, v_tensor)
+            attention_cpu_kernel[seq_len, d, dtype](
+                output_tensor, q_tensor, k_tensor, v_tensor
+            )
 
         else:
             raise Error("Unsupported target: " + target)

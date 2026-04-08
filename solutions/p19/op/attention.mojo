@@ -52,13 +52,15 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    comptime shared_layout = row_major[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY]()
-    var a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
-    var b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    ]()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
     var acc: output.ElementType = 0
 
     var a_lt = a.to_layout_tensor()
@@ -94,10 +96,14 @@ def matmul_idiomatic_tiled[
         barrier()
 
         # Compute partial matrix multiplication for this tile
-        comptime k_max = min(MATMUL_BLOCK_DIM_XY, inner - idx * MATMUL_BLOCK_DIM_XY)
+        comptime k_max = min(
+            MATMUL_BLOCK_DIM_XY, inner - idx * MATMUL_BLOCK_DIM_XY
+        )
         comptime for k in range(k_max):
             if tiled_row < rows and tiled_col < cols:
-                acc += rebind[Scalar[dtype]](a_shared_lt[local_row, k]) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
+                acc += rebind[Scalar[dtype]](
+                    a_shared_lt[local_row, k]
+                ) * rebind[Scalar[dtype]](b_shared_lt[k, local_col])
 
         barrier()
 
@@ -118,10 +124,12 @@ def transpose_kernel[
     inp: TileTensor[mut=True, dtype, InLayout, MutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access."""
-    comptime shared_layout = row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]()
-    var shared_tile = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        shared_layout
-    )
+    comptime shared_layout = row_major[
+        TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
+    ]()
+    var shared_tile = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -163,12 +171,12 @@ def softmax_gpu_kernel[
         dtype.is_floating_point()
     ), "dtype must be a floating-point type"
     comptime softmax_layout = row_major[SOFTMAX_BLOCK_DIM_X]()
-    var shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        softmax_layout
-    )
-    var shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        softmax_layout
-    )
+    var shared_max = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](softmax_layout)
+    var shared_sum = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](softmax_layout)
     var global_i = thread_idx.x
     var input_lt = input.to_layout_tensor()
     var output_lt = output.to_layout_tensor()
@@ -249,7 +257,9 @@ def attention_cpu_kernel[
     for i in range(seq_len):
         var score: Float32 = 0.0
         for dim in range(d):
-            score = score + rebind[Float32](q_lt[dim]) * rebind[Float32](k_lt[i, dim])
+            score = score + rebind[Float32](q_lt[dim]) * rebind[Float32](
+                k_lt[i, dim]
+            )
         scores[i] = score
 
     var max_score: Float32 = scores[0]
@@ -283,10 +293,16 @@ struct AttentionCustomOp:
         d: Int,
         dtype: DType = DType.float32,
     ](
-        output: OutputTensor[dtype=dtype, rank=1, static_spec=_],  # Output vector (d,)
+        output: OutputTensor[
+            dtype=dtype, rank=1, static_spec=_
+        ],  # Output vector (d,)
         q: InputTensor[dtype=dtype, rank=1, static_spec=_],  # Query vector (d,)
-        k: InputTensor[dtype=dtype, rank=2, static_spec=_],  # Key matrix (seq_len, d)
-        v: InputTensor[dtype=dtype, rank=2, static_spec=_],  # Value matrix (seq_len, d)
+        k: InputTensor[
+            dtype=dtype, rank=2, static_spec=_
+        ],  # Key matrix (seq_len, d)
+        v: InputTensor[
+            dtype=dtype, rank=2, static_spec=_
+        ],  # Value matrix (seq_len, d)
         ctx: DeviceContextPtr,
     ) raises:
         # Define layouts
@@ -302,10 +318,18 @@ struct AttentionCustomOp:
         comptime ScoresLayout = type_of(layout_scores)
 
         # Convert to layout tensors
-        var output_tensor = TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin](output.unsafe_ptr(), layout_out)
-        var q_tensor = TileTensor[mut=True, dtype, QLayout, MutAnyOrigin](q.unsafe_ptr(), layout_q)
-        var k_tensor = TileTensor[mut=True, dtype, KLayout, MutAnyOrigin](k.unsafe_ptr(), layout_k)
-        var v_tensor = TileTensor[mut=True, dtype, VLayout, MutAnyOrigin](v.unsafe_ptr(), layout_v)
+        var output_tensor = TileTensor[
+            mut=True, dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), layout_out)
+        var q_tensor = TileTensor[mut=True, dtype, QLayout, MutAnyOrigin](
+            q.unsafe_ptr(), layout_q
+        )
+        var k_tensor = TileTensor[mut=True, dtype, KLayout, MutAnyOrigin](
+            k.unsafe_ptr(), layout_k
+        )
+        var v_tensor = TileTensor[mut=True, dtype, VLayout, MutAnyOrigin](
+            v.unsafe_ptr(), layout_v
+        )
 
         comptime if target == "gpu":
             var gpu_ctx = rebind[DeviceContext](ctx[])
@@ -370,7 +394,9 @@ struct AttentionCustomOp:
             var q_2d = q_tensor.reshape(layout_q_2d)
 
             # Step 2: Transpose K from (seq_len, d) to K^T (d, seq_len)\
-            comptime kernel = transpose_kernel[seq_len, d, KTLayout, KLayout, dtype]
+            comptime kernel = transpose_kernel[
+                seq_len, d, KTLayout, KLayout, dtype
+            ]
             gpu_ctx.enqueue_function[kernel, kernel](
                 k_t,
                 k_tensor,
@@ -406,8 +432,12 @@ struct AttentionCustomOp:
             comptime ScoresLayout = type_of(layout_scores)
             comptime kernel3 = softmax_gpu_kernel[seq_len, ScoresLayout, dtype]
             # Create two TileTensor views from the underlying buffer to avoid aliasing error
-            var weights_out = TileTensor[mut=True, dtype, ScoresLayout, MutAnyOrigin](scores_weights_buf, layout_scores)
-            var weights_in = TileTensor[mut=True, dtype, ScoresLayout, MutAnyOrigin](scores_weights_buf, layout_scores)
+            var weights_out = TileTensor[
+                mut=True, dtype, ScoresLayout, MutAnyOrigin
+            ](scores_weights_buf, layout_scores)
+            var weights_in = TileTensor[
+                mut=True, dtype, ScoresLayout, MutAnyOrigin
+            ](scores_weights_buf, layout_scores)
             gpu_ctx.enqueue_function[kernel3, kernel3](
                 weights_out,
                 weights_in,

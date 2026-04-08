@@ -72,12 +72,12 @@ struct SoftmaxCustomOp:
         ctx: DeviceContextPtr,
     ) raises:
         # Note: rebind is necessary now but it shouldn't be!
-        var output_tensor = rebind[TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin]](
-            output.to_layout_tensor()
-        )
-        var input_tensor = rebind[TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin]](
-            input.to_layout_tensor()
-        )
+        var output_tensor = rebind[
+            TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin]
+        ](output.to_layout_tensor())
+        var input_tensor = rebind[
+            TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin]
+        ](input.to_layout_tensor())
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -101,8 +101,6 @@ struct SoftmaxCustomOp:
             )
 
         elif target == "cpu":
-            softmax_cpu_kernel[input_size, dtype](
-                output_tensor, input_tensor
-            )
+            softmax_cpu_kernel[input_size, dtype](output_tensor, input_tensor)
         else:
             raise Error("Unsupported target: " + target)

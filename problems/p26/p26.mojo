@@ -170,9 +170,9 @@ def test_butterfly_pair_swap() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_pair_swap[SIZE]
@@ -219,9 +219,9 @@ def test_butterfly_parallel_max() raises:
             # Make sure we have a clear maximum
             input_host[SIZE - 1] = 1000.0
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_parallel_max[SIZE]
@@ -263,9 +263,9 @@ def test_butterfly_conditional_max() raises:
                 else:
                     input_host[i] = Scalar[dtype](i % 10)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin](
-            input_buf, layout_2
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType_2, ImmutAnyOrigin
+        ](input_buf, layout_2)
         var output_tensor = TileTensor(output_buf, layout_2)
 
         comptime kernel = butterfly_conditional_max[SIZE_2]
@@ -321,9 +321,9 @@ def test_warp_inclusive_prefix_sum() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_inclusive_prefix_sum[SIZE]
@@ -385,9 +385,9 @@ def test_warp_partition() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](test_values[i % len(test_values)])
 
-        var input_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
-            input_buf, layout
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_partition[SIZE]

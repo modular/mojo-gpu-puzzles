@@ -68,9 +68,9 @@ def traditional_dot_product[
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
-        row_major[tpb]()
-    )
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
