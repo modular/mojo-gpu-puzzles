@@ -4,7 +4,9 @@ from std.gpu.host import DeviceContext
 # ANCHOR: dot_product_layout_tensor
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 
 
 comptime TPB = 8
@@ -12,16 +14,16 @@ comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(1)
+comptime layout = row_major[SIZE]()
+comptime out_layout = row_major[1]()
+comptime LayoutType = type_of(layout)
+comptime OutLayout = type_of(out_layout)
 
 
-def dot_product[
-    in_layout: Layout, out_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+def dot_product(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     # FILL ME IN (roughly 13 lines)
@@ -45,12 +47,11 @@ def main() raises:
                 a_host[i] = Scalar[dtype](i)
                 b_host[i] = Scalar[dtype](i)
 
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
-        var b_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](b)
+        var out_tensor = TileTensor(out, out_layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
-        comptime kernel = dot_product[layout, out_layout]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[dot_product, dot_product](
             out_tensor,
             a_tensor,
             b_tensor,

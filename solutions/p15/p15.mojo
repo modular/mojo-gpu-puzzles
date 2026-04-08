@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
 comptime TPB = 8
@@ -10,27 +12,24 @@ comptime SIZE = 6
 comptime BLOCKS_PER_GRID = (1, BATCH)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime in_layout = Layout.row_major(BATCH, SIZE)
-comptime out_layout = Layout.row_major(BATCH, 1)
+comptime in_layout = row_major[BATCH, SIZE]()
+comptime out_layout = row_major[BATCH, 1]()
+comptime InLayout = type_of(in_layout)
+comptime OutLayout = type_of(out_layout)
 
 
 # ANCHOR: axis_sum_solution
-def axis_sum[
-    in_layout: Layout, out_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+def axis_sum(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     var batch = block_idx.y
-    var cache = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var cache = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+        row_major[TPB]()
+    )
 
     # Visualize:
     # Block(0,0): [T0,T1,T2,T3,T4,T5,T6,T7] -> Row 0: [0,1,2,3,4,5]
@@ -52,7 +51,7 @@ def axis_sum[
     var stride = TPB // 2
     while stride > 0:
         # Read phase: all threads read the values they need first to avoid race conditions
-        var temp_val: output.element_type = 0
+        var temp_val: output.ElementType = 0
         if local_i < stride:
             temp_val = cache[local_i + stride]
 
@@ -84,11 +83,10 @@ def main() raises:
                 for col in range(SIZE):
                     inp_host[row * SIZE + col] = Scalar[dtype](row * SIZE + col)
 
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](inp)
+        var out_tensor = TileTensor(out, out_layout)
+        var inp_tensor = TileTensor[mut=False, dtype, InLayout](inp, in_layout)
 
-        comptime kernel = axis_sum[in_layout, out_layout]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[axis_sum, axis_sum](
             out_tensor,
             inp_tensor,
             SIZE,

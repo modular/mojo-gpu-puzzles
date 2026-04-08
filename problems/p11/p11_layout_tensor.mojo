@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
 # ANCHOR: pooling_layout_tensor
@@ -10,23 +12,19 @@ comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def pooling[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def pooling(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
-    # Allocate shared memory using tensor builder
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    # Allocate shared memory using stack_allocation
+    var shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](
+        row_major[TPB]()
+    )
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -47,10 +45,10 @@ def main() raises:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i)
 
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a)
+        var out_tensor = TileTensor(out, layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[pooling[layout], pooling[layout]](
+        ctx.enqueue_function[pooling, pooling](
             out_tensor,
             a_tensor,
             SIZE,

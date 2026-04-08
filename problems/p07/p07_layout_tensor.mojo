@@ -1,6 +1,7 @@
 from std.gpu import thread_idx, block_idx, block_dim
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
 from std.testing import assert_equal
 
 # ANCHOR: add_10_blocks_2d_layout_tensor
@@ -8,16 +9,15 @@ comptime SIZE = 5
 comptime BLOCKS_PER_GRID = (2, 2)
 comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
-comptime out_layout = Layout.row_major(SIZE, SIZE)
-comptime a_layout = Layout.row_major(SIZE, SIZE)
+comptime out_layout = row_major[SIZE, SIZE]()
+comptime a_layout = row_major[SIZE, SIZE]()
+comptime OutLayout = type_of(out_layout)
+comptime ALayout = type_of(a_layout)
 
 
-def add_10_blocks_2d[
-    out_layout: Layout,
-    a_layout: Layout,
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
+def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
     size: Int,
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
@@ -32,7 +32,7 @@ def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf)
+        var out_tensor = TileTensor(out_buf, out_layout)
 
         var expected_buf = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected_buf.enqueue_fill(1)
@@ -47,10 +47,9 @@ def main() raises:
                     a_host[k] = Scalar[dtype](k)
                     expected_buf[k] = Scalar[dtype](k + 10)
 
-        var a_tensor = LayoutTensor[dtype, a_layout, ImmutAnyOrigin](a)
+        var a_tensor = TileTensor[mut=False, dtype, ALayout](a, a_layout)
 
-        comptime kernel = add_10_blocks_2d[out_layout, a_layout]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[add_10_blocks_2d, add_10_blocks_2d](
             out_tensor,
             a_tensor,
             SIZE,
@@ -60,14 +59,12 @@ def main() raises:
 
         ctx.synchronize()
 
-        var expected_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
-            expected_buf
-        )
+        var expected_tensor = TileTensor(expected_buf, out_layout)
 
         with out_buf.map_to_host() as out_buf_host:
             print(
                 "out:",
-                LayoutTensor[dtype, out_layout, MutAnyOrigin](out_buf_host),
+                TileTensor(out_buf_host, out_layout),
             )
             print("expected:", expected_tensor)
             for i in range(SIZE):
