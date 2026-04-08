@@ -48,10 +48,10 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p12/p12_tile_tensor.mojo:dot_product_tile_tensor}}
+{{#include ../../../../../problems/p12/p12.mojo:dot_product_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_tile_tensor.mojo" class="filename">전체 파일 보기: problems/p12/p12_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12.mojo" class="filename">전체 파일 보기: problems/p12/p12.mojo</a>
 
 <details>
 <summary><strong>팁</strong></summary>
@@ -80,28 +80,28 @@
   <div class="tab-content">
 
 ```bash
-pixi run p12_tile_tensor
+pixi run p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p12_tile_tensor
+pixi run -e amd p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p12_tile_tensor
+pixi run -e apple p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p12_tile_tensor
+uv run poe p12
 ```
 
   </div>
@@ -120,7 +120,7 @@ expected: HostBuffer([140.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p12/p12_tile_tensor.mojo:dot_product_tile_tensor_solution}}
+{{#include ../../../../../solutions/p12/p12.mojo:dot_product_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

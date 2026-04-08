@@ -259,9 +259,7 @@ def main() raises:
                             inp1_host[i * SIZE + k] * inp2_host[k * SIZE + j]
                         )
         # Create layout tensors
-        var out_tensor_core_layout = TileTensor(
-            out_tensor_core.unsafe_ptr(), layout
-        )
+        var out_tensor_core_layout = TileTensor(out_tensor_core, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin](
             inp1, layout
         )
@@ -299,7 +297,7 @@ def main() raises:
             # Create separate buffer for tiled result
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(out_tiled.unsafe_ptr(), layout)
+            out_tiled_layout = TileTensor(out_tiled, layout)
 
             # Run idiomatic tiled version with proper 2D block configuration
             comptime kernel = matmul_idiomatic_tiled[SIZE]
@@ -401,7 +399,7 @@ def main() raises:
             print("\n--- Test 2: Idiomatic Tiled vs CPU Reference ---")
             out_tiled = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
             out_tiled.enqueue_fill(0)
-            out_tiled_layout = TileTensor(out_tiled.unsafe_ptr(), layout)
+            out_tiled_layout = TileTensor(out_tiled, layout)
 
             comptime kernel2 = matmul_idiomatic_tiled[SIZE]
             ctx.enqueue_function[kernel2, kernel2](

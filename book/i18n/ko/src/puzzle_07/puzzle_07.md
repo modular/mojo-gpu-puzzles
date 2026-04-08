@@ -62,10 +62,10 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor}}
+{{#include ../../../../../problems/p07/p07.mojo:add_10_blocks_2d_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07_tile_tensor.mojo" class="filename">전체 코드 보기: problems/p07/p07_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07.mojo" class="filename">전체 코드 보기: problems/p07/p07.mojo</a>
 
 <details>
 <summary><strong>팁</strong></summary>
@@ -93,28 +93,28 @@
   <div class="tab-content">
 
 ```bash
-pixi run p07_tile_tensor
+pixi run p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p07_tile_tensor
+pixi run -e amd p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p07_tile_tensor
+pixi run -e apple p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p07_tile_tensor
+uv run poe p07
 ```
 
   </div>
@@ -133,7 +133,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor_solution}}
+{{#include ../../../../../solutions/p07/p07.mojo:add_10_blocks_2d_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

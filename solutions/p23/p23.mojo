@@ -213,13 +213,13 @@ def benchmark_elementwise_parameterized[
             b_host[i] = Scalar[dtype](2 * i + 1)
 
     var a_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        a.unsafe_ptr(), bench_layout
+        a, bench_layout
     )
     var b_tensor = TileTensor[mut=False, dtype, BenchLayoutType](
-        b_buf.unsafe_ptr(), bench_layout
+        b_buf, bench_layout
     )
     var out_tensor = TileTensor[mut=True, dtype, BenchLayoutType](
-        out.unsafe_ptr(), bench_layout
+        out, bench_layout
     )
 
     @parameter
@@ -254,9 +254,9 @@ def benchmark_tiled_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor(b_buf.unsafe_ptr(), bench_layout)
-    var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor(a, bench_layout)
+    var b_tensor = TileTensor(b_buf, bench_layout)
+    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
@@ -290,9 +290,9 @@ def benchmark_manual_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor(b_buf.unsafe_ptr(), bench_layout)
-    var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor(a, bench_layout)
+    var b_tensor = TileTensor(b_buf, bench_layout)
+    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
@@ -326,9 +326,9 @@ def benchmark_vectorized_parameterized[
             a_host[i] = Scalar[dtype](2 * i)
             b_host[i] = Scalar[dtype](2 * i + 1)
 
-    var a_tensor = TileTensor(a.unsafe_ptr(), bench_layout)
-    var b_tensor = TileTensor(b_buf.unsafe_ptr(), bench_layout)
-    var out_tensor = TileTensor(out.unsafe_ptr(), bench_layout)
+    var a_tensor = TileTensor(a, bench_layout)
+    var b_tensor = TileTensor(b_buf, bench_layout)
+    var out_tensor = TileTensor(out, bench_layout)
 
     @parameter
     @always_inline
@@ -359,12 +359,8 @@ def main() raises:
             b_host[i] = Scalar[dtype](2 * i + 1)
             expected[i] = a_host[i] + b_host[i]
 
-    var a_tensor = TileTensor[mut=False, dtype, LayoutType](
-        a.unsafe_ptr(), layout
-    )
-    var b_tensor = TileTensor[mut=False, dtype, LayoutType](
-        b.unsafe_ptr(), layout
-    )
+    var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+    var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
 
     ctx.synchronize()
 
@@ -372,7 +368,7 @@ def main() raises:
     print("simd_width:", SIMD_WIDTH)
 
     if argv()[1] == "--elementwise":
-        out_tensor = TileTensor(out.unsafe_ptr(), layout)
+        out_tensor = TileTensor(out, layout)
         elementwise_add[LayoutType, dtype, SIMD_WIDTH, rank, SIZE](
             out_tensor, a_tensor, b_tensor, ctx
         )
@@ -385,7 +381,7 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--tiled":
-        out_tensor = TileTensor(out.unsafe_ptr(), layout)
+        out_tensor = TileTensor(out, layout)
         print("tile size:", TILE_SIZE)
         tiled_elementwise_add[
             LayoutType, dtype, SIMD_WIDTH, rank, SIZE, TILE_SIZE
@@ -399,7 +395,7 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--manual-vectorized":
-        out_tensor = TileTensor(out.unsafe_ptr(), layout)
+        out_tensor = TileTensor(out, layout)
         print("tile size:", TILE_SIZE)
         manual_vectorized_tiled_elementwise_add[
             LayoutType, dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE
@@ -413,7 +409,7 @@ def main() raises:
             print("Puzzle 23 complete ✅")
 
     elif argv()[1] == "--vectorized":
-        out_tensor = TileTensor(out.unsafe_ptr(), layout)
+        out_tensor = TileTensor(out, layout)
         print("tile size:", TILE_SIZE)
         vectorize_within_tiles_elementwise_add[
             LayoutType, dtype, SIMD_WIDTH, 1, rank, SIZE, TILE_SIZE

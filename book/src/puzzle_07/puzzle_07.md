@@ -58,10 +58,10 @@ The key insight is that `TileTensor` simplifies 2D indexing while still requirin
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor}}
+{{#include ../../../problems/p07/p07.mojo:add_10_blocks_2d_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07_tile_tensor.mojo" class="filename">View full file: problems/p07/p07_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07.mojo" class="filename">View full file: problems/p07/p07.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -89,28 +89,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p07_tile_tensor
+pixi run p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p07_tile_tensor
+pixi run -e amd p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p07_tile_tensor
+pixi run -e apple p07
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p07_tile_tensor
+uv run poe p07
 ```
 
   </div>
@@ -129,7 +129,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p07/p07_tile_tensor.mojo:add_10_blocks_2d_tile_tensor_solution}}
+{{#include ../../../solutions/p07/p07.mojo:add_10_blocks_2d_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

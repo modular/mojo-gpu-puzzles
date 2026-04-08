@@ -35,10 +35,10 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor}}
+{{#include ../../../../../problems/p08/p08.mojo:add_10_shared_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08_tile_tensor.mojo" class="filename">전체 코드 보기: problems/p08/p08_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08.mojo" class="filename">전체 코드 보기: problems/p08/p08.mojo</a>
 
 <details>
 <summary><strong>팁</strong></summary>
@@ -68,28 +68,28 @@
   <div class="tab-content">
 
 ```bash
-pixi run p08_tile_tensor
+pixi run p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p08_tile_tensor
+pixi run -e amd p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p08_tile_tensor
+pixi run -e apple p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p08_tile_tensor
+uv run poe p08
 ```
 
   </div>
@@ -108,7 +108,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor_solution}}
+{{#include ../../../../../solutions/p08/p08.mojo:add_10_shared_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

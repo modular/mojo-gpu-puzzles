@@ -46,10 +46,10 @@ Notes:
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p12/p12_tile_tensor.mojo:dot_product_tile_tensor}}
+{{#include ../../../problems/p12/p12.mojo:dot_product_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12_tile_tensor.mojo" class="filename">View full file: problems/p12/p12_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -78,28 +78,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p12_tile_tensor
+pixi run p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p12_tile_tensor
+pixi run -e amd p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p12_tile_tensor
+pixi run -e apple p12
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p12_tile_tensor
+uv run poe p12
 ```
 
   </div>
@@ -118,7 +118,7 @@ expected: HostBuffer([140.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p12/p12_tile_tensor.mojo:dot_product_tile_tensor_solution}}
+{{#include ../../../solutions/p12/p12.mojo:dot_product_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

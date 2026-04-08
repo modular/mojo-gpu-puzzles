@@ -37,10 +37,10 @@ Notes:
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p11/p11_tile_tensor.mojo:pooling_tile_tensor}}
+{{#include ../../../problems/p11/p11.mojo:pooling_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p11/p11_tile_tensor.mojo" class="filename">View full file: problems/p11/p11_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -70,28 +70,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p11_tile_tensor
+pixi run p11
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p11_tile_tensor
+pixi run -e amd p11
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p11_tile_tensor
+pixi run -e apple p11
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p11_tile_tensor
+uv run poe p11
 ```
 
   </div>
@@ -110,7 +110,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p11/p11_tile_tensor.mojo:pooling_tile_tensor_solution}}
+{{#include ../../../solutions/p11/p11.mojo:pooling_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

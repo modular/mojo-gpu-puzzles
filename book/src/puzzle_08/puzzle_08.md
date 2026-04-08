@@ -33,10 +33,10 @@ The key insight is how TileTensor simplifies shared memory management while main
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor}}
+{{#include ../../../problems/p08/p08.mojo:add_10_shared_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08_tile_tensor.mojo" class="filename">View full file: problems/p08/p08_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -66,28 +66,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p08_tile_tensor
+pixi run p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p08_tile_tensor
+pixi run -e amd p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p08_tile_tensor
+pixi run -e apple p08
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p08_tile_tensor
+uv run poe p08
 ```
 
   </div>
@@ -106,7 +106,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p08/p08_tile_tensor.mojo:add_10_shared_tile_tensor_solution}}
+{{#include ../../../solutions/p08/p08.mojo:add_10_shared_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

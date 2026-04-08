@@ -27,10 +27,10 @@ The key insight is that `TileTensor` allows natural broadcasting through differe
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p05/p05_tile_tensor.mojo:broadcast_add_tile_tensor}}
+{{#include ../../../problems/p05/p05.mojo:broadcast_add_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05_tile_tensor.mojo" class="filename">View full file: problems/p05/p05_tile_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -58,28 +58,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p05_tile_tensor
+pixi run p05
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p05_tile_tensor
+pixi run -e amd p05
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p05_tile_tensor
+pixi run -e apple p05
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p05_tile_tensor
+uv run poe p05
 ```
 
   </div>
@@ -98,7 +98,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p05/p05_tile_tensor.mojo:broadcast_add_tile_tensor_solution}}
+{{#include ../../../solutions/p05/p05.mojo:broadcast_add_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">

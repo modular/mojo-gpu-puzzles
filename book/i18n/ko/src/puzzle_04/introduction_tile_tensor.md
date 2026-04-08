@@ -57,7 +57,7 @@ comptime layout = row_major[HEIGHT, WIDTH]()
 comptime LayoutType = type_of(layout)
 
 # 텐서 생성
-tensor = TileTensor(buffer.unsafe_ptr(), layout)
+tensor = TileTensor(buffer, layout)
 
 # 자연스럽게 요소 접근
 tensor[0, 0] = 1.0  # 첫 번째 요소

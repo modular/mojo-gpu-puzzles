@@ -55,7 +55,7 @@ comptime layout = row_major[HEIGHT, WIDTH]()
 comptime LayoutType = type_of(layout)
 
 # Create tensor
-tensor = TileTensor(buffer.unsafe_ptr(), layout)
+tensor = TileTensor(buffer, layout)
 
 # Access elements naturally
 tensor[0, 0] = 1.0  # First element
