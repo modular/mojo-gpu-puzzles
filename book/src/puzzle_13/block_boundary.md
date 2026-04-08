@@ -1,6 +1,6 @@
 # Block Boundary Version
 
-Implement a kernel that computes a 1D convolution between 1D LayoutTensor `a` and 1D LayoutTensor `b` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output`.
 
 **Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
 
@@ -32,7 +32,7 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` for shared memory
+1. Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())` for shared memory
 2. Load main data: `shared_a[local_i] = a[global_i]`
 3. Load boundary: `if local_i < CONV_2 - 1` handle next block data
 4. Load kernel: `shared_b[local_i] = b[local_i]`
@@ -125,8 +125,8 @@ Size calculation:
 
    ```mojo
    # First: account for padding needed for convolution window
-   shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-   shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
+   shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
    ```
 
    This allocation pattern ensures we have enough space for both the block's data and the overlap region.
@@ -239,7 +239,7 @@ This implementation achieves efficient cross-block convolution while maintaining
 
 - Memory safety through proper bounds checking
 - High performance through optimized memory access
-- Clean code structure using LayoutTensor abstractions
+- Clean code structure using TileTensor abstractions
 - Minimal synchronization overhead
 - Mathematically sound boundary handling
 

@@ -26,9 +26,9 @@
 
 레이아웃 구성:
 
-- 입력 A: `Layout.row_major(SIZE, SIZE)`
-- 입력 B: `Layout.row_major(SIZE, SIZE)`
-- 출력: `Layout.row_major(SIZE, SIZE)`
+- 입력 A: `row_major[SIZE, SIZE]()`
+- 입력 B: `row_major[SIZE, SIZE]()`
+- 출력: `row_major[SIZE, SIZE]()`
 
 ## 완성할 코드
 
@@ -110,7 +110,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-LayoutTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:
+TileTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:
 
 ### 행렬 레이아웃 (2×2 예시)
 

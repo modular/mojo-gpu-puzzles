@@ -78,7 +78,7 @@ This puzzle takes you through a carefully designed progression from basic debugg
 
 **Logic bug investigation** - Debug a program with wrong results
 
-- Investigate LayoutTensor-based algorithmic errors
+- Investigate TileTensor-based algorithmic errors
 - Learn execution flow analysis when variables are optimized out
 - Learn loop boundary analysis and iteration counting
 - Practice pattern recognition in incorrect results

@@ -24,9 +24,9 @@ The key insight is understanding how to map 2D thread indices to matrix elements
 
 Layout configuration:
 
-- Input A: `Layout.row_major(SIZE, SIZE)`
-- Input B: `Layout.row_major(SIZE, SIZE)`
-- Output: `Layout.row_major(SIZE, SIZE)`
+- Input A: `row_major[SIZE, SIZE]()`
+- Input B: `row_major[SIZE, SIZE]()`
+- Output: `row_major[SIZE, SIZE]()`
 
 ## Code to complete
 
@@ -108,7 +108,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-The naive matrix multiplication using LayoutTensor follows this basic approach:
+The naive matrix multiplication using TileTensor follows this basic approach:
 
 ### Matrix layout (2×2 example)
 

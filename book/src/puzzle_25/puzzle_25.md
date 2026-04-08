@@ -48,9 +48,9 @@ Learn the core communication primitives from `gpu.primitives.warp`:
 
 ```mojo
 # Complex neighbor access pattern (traditional approach):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -89,7 +89,7 @@ Before diving into warp communication, ensure you're comfortable with:
 
 - **Part VII warp fundamentals**: Understanding SIMT execution and basic warp operations (see [Puzzle 24](../puzzle_24/puzzle_24.md))
 - **GPU thread hierarchy**: Blocks, warps, and lane numbering
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
+- **TileTensor operations**: Loading, storing, and tensor manipulation
 - **Boundary condition handling**: Managing edge cases in parallel algorithms
 
 ## Learning path

@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_almost_equal
 from std.benchmark import Bench, BenchConfig, Bencher, BenchId, keep
@@ -12,14 +14,13 @@ comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def no_conflict_kernel[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def no_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -29,12 +30,9 @@ def no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    var shared_buf = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -58,26 +56,21 @@ def no_conflict_kernel[
 
 
 # ANCHOR: two_way_conflict_kernel
-def two_way_conflict_kernel[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def two_way_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
-    Threads 0,16 → Bank 0, Threads 1,17 → Bank 1, etc.
+    Threads 0,16 -> Bank 0, Threads 1,17 -> Bank 1, etc.
     Each bank serves 2 threads, doubling access time.
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    var shared_buf = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -111,7 +104,8 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
-        comptime layout = Layout.row_major(test_size)
+        comptime layout = row_major[test_size]()
+        comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
@@ -121,12 +115,12 @@ def benchmark_no_conflict[test_size: Int](mut b: Bencher) raises:
             for i in range(test_size):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
+        var out_tensor = TileTensor(out, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
         )
 
-        comptime kernel = no_conflict_kernel[layout]
+        comptime kernel = no_conflict_kernel
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -147,7 +141,8 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
     @parameter
     @always_inline
     def kernel_workflow(ctx: DeviceContext) raises:
-        comptime layout = Layout.row_major(test_size)
+        comptime layout = row_major[test_size]()
+        comptime LayoutType = type_of(layout)
         var out = ctx.enqueue_create_buffer[dtype](test_size)
         out.enqueue_fill(0)
         var input_buf = ctx.enqueue_create_buffer[dtype](test_size)
@@ -157,12 +152,12 @@ def benchmark_two_way_conflict[test_size: Int](mut b: Bencher) raises:
             for i in range(test_size):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
+        var out_tensor = TileTensor(out, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
         )
 
-        comptime kernel = two_way_conflict_kernel[layout]
+        comptime kernel = two_way_conflict_kernel
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -189,12 +184,12 @@ def test_no_conflict() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
+        var out_tensor = TileTensor(out, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
         )
 
-        comptime kernel = no_conflict_kernel[layout]
+        comptime kernel = no_conflict_kernel
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,
@@ -223,12 +218,12 @@ def test_two_way_conflict() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var out_tensor = LayoutTensor[mut=True, dtype, layout](out.unsafe_ptr())
-        var input_tensor = LayoutTensor[mut=False, dtype, layout](
-            input_buf.unsafe_ptr()
+        var out_tensor = TileTensor(out, layout)
+        var input_tensor = TileTensor[mut=False, dtype, LayoutType](
+            input_buf, layout
         )
 
-        comptime kernel = two_way_conflict_kernel[layout]
+        comptime kernel = two_way_conflict_kernel
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             input_tensor,

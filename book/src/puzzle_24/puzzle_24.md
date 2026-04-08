@@ -49,9 +49,9 @@ Learn the core warp primitives from `gpu.primitives.warp`:
 ```mojo
 # 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -93,7 +93,7 @@ Before diving into warp programming, ensure you're comfortable with:
 
 - **Part V functional patterns**: Elementwise, tiled, and vectorized approaches
 - **GPU thread hierarchy**: Understanding blocks, warps, and threads
-- **LayoutTensor operations**: Loading, storing, and tensor manipulation
+- **TileTensor operations**: Loading, storing, and tensor manipulation
 - **Shared memory concepts**: Why barriers and tree reduction are complex
 
 ## Learning path

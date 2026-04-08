@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_dim, block_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 from std.sys import argv
 from std.os.atomic import Atomic
@@ -12,24 +14,22 @@ comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE, SIZE)
+comptime layout = row_major[SIZE, SIZE]()
+comptime LayoutType = type_of(layout)
 
 
 def shared_memory_race(
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Fixed: sequential access with barriers eliminates race conditions."""
     var row = thread_idx.y
     var col = thread_idx.x
 
-    var shared_sum = LayoutTensor[
-        dtype,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_sum = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[1]())
 
     # Only thread 0 does all the accumulation work to prevent races
     if row == 0 and col == 0:
@@ -53,8 +53,8 @@ def shared_memory_race(
 
 # ANCHOR: add_10_2d_solution
 def add_10_2d(
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var row = thread_idx.y
@@ -79,10 +79,8 @@ def main() raises:
     with DeviceContext() as ctx:
         var out_buf = ctx.enqueue_create_buffer[dtype](SIZE * SIZE)
         out_buf.enqueue_fill(0)
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            out_buf
-        ).reshape[layout]()
-        print("out shape:", out_tensor.shape[0](), "x", out_tensor.shape[1]())
+        var out_tensor = TileTensor(out_buf, layout)
+        print("out shape:", out_tensor.dim[0](), "x", out_tensor.dim[1]())
         var expected = ctx.enqueue_create_host_buffer[dtype](SIZE * SIZE)
         expected.enqueue_fill(0)
 
@@ -92,9 +90,7 @@ def main() raises:
             for i in range(SIZE * SIZE):
                 a_host[i] = Scalar[dtype](i)
 
-        var a_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](a).reshape[
-            layout
-        ]()
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
         if flag == "--memory-bug":
             print("Running memory bug example (bounds checking issue)...")

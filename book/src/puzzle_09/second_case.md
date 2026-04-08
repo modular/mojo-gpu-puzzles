@@ -8,7 +8,7 @@ Building on your [crash debugging skills from the First Case](./first_case.md), 
 - **[First Case](./first_case.md)**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
 - **Second Case**: No crashes, no error messages - just subtly wrong results that require detective work
 
-This intermediate-level debugging challenge covers investigating **algorithmic errors** using `LayoutTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
+This intermediate-level debugging challenge covers investigating **algorithmic errors** using `TileTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
 
 **Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:
 
@@ -20,7 +20,7 @@ pixi run -e nvidia setup-cuda-gdb
 
 In this debugging challenge, you'll learn about:
 
-- **LayoutTensor debugging**: Investigating structured data access patterns
+- **TileTensor debugging**: Investigating structured data access patterns
 - **Logic bug detection**: Finding algorithmic errors that don't crash
 - **Loop boundary analysis**: Understanding iteration count problems
 - **Result pattern analysis**: Using output data to trace back to root causes
@@ -155,14 +155,14 @@ Each position should sum its neighbors: [left + center + right]
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
    <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: LayoutTensor[mut=False, dtype, vector_layout],
+30          input: TileTensor[mut=False, dtype, vector_layout],
 ```
 
 #### Step 4: Navigate to the main logic
 
 ```bash
 (cuda-gdb) n
-29          output: LayoutTensor[mut=True, dtype, vector_layout],
+29          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 32          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -190,7 +190,7 @@ Cannot access memory at address 0x0
 Attempt to take address of value not located in memory.
 ```
 
-**❌ Problem**: Direct LayoutTensor indexing doesn't work.
+**❌ Problem**: Direct TileTensor indexing doesn't work.
 
 ```bash
 (cuda-gdb) p a.ptr[0]
@@ -199,7 +199,7 @@ $2 = {0}
 $3 = {{0}, {1}, {2}, {3}}
 ```
 
-**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can inspect LayoutTensor data.
+**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can inspect TileTensor data.
 
 ### Phase 3: The critical loop investigation
 
@@ -353,9 +353,9 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 - **Host output patterns** provide crucial debugging clues
 - **Source code reasoning** complements limited debugger capabilities
 
-**LayoutTensor Debugging**:
+**TileTensor Debugging**:
 
-- Even with LayoutTensor abstractions, underlying algorithmic bugs still manifest
+- Even with TileTensor abstractions, underlying algorithmic bugs still manifest
 - Focus on the algorithm logic rather than trying to inspect tensor contents
 - Use systematic reasoning to trace what each thread should vs actually accesses
 

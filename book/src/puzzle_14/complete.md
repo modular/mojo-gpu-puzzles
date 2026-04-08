@@ -1,6 +1,6 @@
 # Complete Version
 
-Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
 **Note:** _If the size of `a` is greater than the block size, we need to synchronize across multiple blocks to get the correct result._
 

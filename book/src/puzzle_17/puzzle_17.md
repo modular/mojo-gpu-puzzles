@@ -141,7 +141,7 @@ Let's break down how this works in the larger context:
 3. **Custom op registration**:
    - The `@compiler.register("conv1d")` decorator exposes our operation to MAX Graph. See [@compiler.register](https://docs.modular.com/mojo/manual/decorators/compiler-register/)
    - The `execute` method parameters define the interface (inputs, outputs, context)
-   - Input/output tensors are converted to LayoutTensors for use in our kernel
+   - Input/output tensors are converted to TileTensors for use in our kernel
    - Device context manages GPU memory allocation and kernel execution
 
 4. **Kernel execution**:
@@ -180,7 +180,7 @@ Let's break down how this works in the larger context:
    kernel_tensor = kernel.to_layout_tensor()
    ```
 
-   - MAX Graph tensors are converted to Mojo LayoutTensors
+   - MAX Graph tensors are converted to Mojo TileTensors
    - This allows our kernel to work with them directly
    - The layouts are extracted for compile-time optimization
 

@@ -8,13 +8,13 @@
 
 **핵심 통찰**: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에 "올바른" 결과를 만들어낼 수 있습니다.
 
-**선행 학습**: [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md)와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.
+**선행 학습**: [Puzzle 4 TileTensor](../puzzle_04/introduction_tile_tensor.md)와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.
 
 ## 조용한 메모리 버그의 발견
 
 ### 테스트는 통과했지만, 코드가 정말 올바른 걸까?
 
-얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 [Puzzle 04](../puzzle_04/layout_tensor.md)입니다):
+얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 [Puzzle 04](../puzzle_04/tile_tensor.md)입니다):
 
 ```mojo
 {{#include ../../../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
@@ -163,10 +163,10 @@ Running memory bug example (bounds checking issue)...
 
 ### 해결책
 
-[Puzzle 04](../puzzle_04/layout_tensor.md)에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:
+[Puzzle 04](../puzzle_04/tile_tensor.md)에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:
 
 ```mojo
-{{#include ../../../../../solutions/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor_solution}}
+{{#include ../../../../../solutions/p04/p04_tile_tensor.mojo:add_10_2d_tile_tensor_solution}}
 ```
 
 해결책은 간단합니다: **메모리에 접근하기 전에 항상 스레드 인덱스를 데이터 차원에 대해 검증**하세요.

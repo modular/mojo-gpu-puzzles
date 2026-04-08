@@ -2,7 +2,9 @@ from std.math import sqrt
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace, async_copy_wait_all
 from std.os.atomic import Atomic
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major, TensorLayout
+from layout.tile_tensor import stack_allocation
 from layout.layout_tensor import copy_dram_to_sram_async
 import compiler
 from std.runtime.asyncrt import DeviceContextPtr
@@ -20,17 +22,17 @@ comptime dtype = DType.float32
 # ANCHOR: matmul_idiomatic_tiled
 # Idiomatic tiled matmul from p19.mojo
 def matmul_idiomatic_tiled[
-    a_layout: Layout,
-    b_layout: Layout,
-    out_layout: Layout,
     rows: Int,
     cols: Int,
     inner: Int,
+    OutLayout: TensorLayout,
+    ALayout: TensorLayout,
+    BLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, MutAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, BLayout, MutAnyOrigin],
 ):
     """Idiomatic tiled matrix multiplication from p19."""
     var local_row = thread_idx.y
@@ -42,26 +44,23 @@ def matmul_idiomatic_tiled[
     var out_tile = output.tile[MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY](
         block_idx.y, block_idx.x
     )
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var acc: output.element_type = 0
+    comptime shared_layout = row_major[
+        MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
+    ]()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
+    var acc: output.ElementType = 0
 
-    comptime load_a_layout = Layout.row_major(
+    comptime load_a_layout = row_major[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
-    )  # Coalesced loading
-    comptime load_b_layout = Layout.row_major(
+    ]()  # Coalesced loading
+    comptime load_b_layout = row_major[
         MATMUL_BLOCK_DIM_XY, MATMUL_BLOCK_DIM_XY
-    )  # Coalesced loading
+    ]()  # Coalesced loading
 
     comptime for idx in range(
         (inner + MATMUL_BLOCK_DIM_XY - 1) // MATMUL_BLOCK_DIM_XY
@@ -112,17 +111,17 @@ def matmul_idiomatic_tiled[
 
 # ANCHOR: layernorm_kernel
 def layernorm_kernel[
-    input_layout: Layout,
-    ln_params_layout: Layout,
-    output_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
+    OutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    LnParamsLayout: TensorLayout,
 ](
-    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
-    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin],
+    ln_weight: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    ln_bias: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
 ):
     var batch_idx = block_idx.x
     var seq_idx = block_idx.y
@@ -147,24 +146,24 @@ def layernorm_kernel[
 
 # ANCHOR: transpose_kernel
 def transpose_kernel[
-    layout_in: Layout,
-    layout_out: Layout,
     rows: Int,
     cols: Int,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, layout_out, MutAnyOrigin],
-    inp: LayoutTensor[dtype, layout_in, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    inp: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
 ):
     """Transpose matrix using shared memory tiling for coalesced access.
     We will learn more about coalesced access in the next part.
     """
-    var shared_tile = LayoutTensor[
-        dtype,
-        Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    comptime shared_layout = row_major[
+        TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY
+    ]()
+    var shared_tile = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](shared_layout)
 
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -191,16 +190,16 @@ def transpose_kernel[
 
 # ANCHOR: add_bias_kernel
 def add_bias_kernel[
-    input_layout: Layout,
-    bias_layout: Layout,
-    output_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     output_dim: Int,
+    OutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    BiasLayout: TensorLayout,
 ](
-    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, MutAnyOrigin],
-    bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InputLayout, MutAnyOrigin],
+    bias: TileTensor[mut=False, dtype, BiasLayout, ImmutAnyOrigin],
 ):
     """Simple bias addition."""
     var batch_idx = block_idx.x
@@ -220,22 +219,22 @@ def add_bias_kernel[
 
 # ANCHOR: minimal_fused_forward_kernel
 def minimal_fused_kernel[
-    input_layout: Layout,
-    ln_params_layout: Layout,
-    weight_layout: Layout,
-    bias_layout: Layout,
-    output_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
+    OutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    LnParamsLayout: TensorLayout,
+    WeightLayout: TensorLayout,
+    BiasLayout: TensorLayout,
 ](
-    output: LayoutTensor[dtype, output_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
-    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
-    linear_bias: LayoutTensor[dtype, bias_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin],
+    ln_weight: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    ln_bias: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    linear_weight: TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin],
+    linear_bias: TileTensor[mut=False, dtype, BiasLayout, ImmutAnyOrigin],
 ):
     """Minimal fused kernel - one thread per sequence position to avoid redundancy.
     """
@@ -261,30 +260,32 @@ def minimal_fused_kernel[
 
 # ANCHOR: minimal_fused_backward_kernel
 def minimal_fused_kernel_backward[
-    grad_output_layout: Layout,
-    input_layout: Layout,
-    ln_params_layout: Layout,
-    weight_layout: Layout,
-    grad_input_layout: Layout,
-    grad_ln_weight_layout: Layout,
-    grad_ln_bias_layout: Layout,
-    grad_weight_layout: Layout,
-    grad_bias_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
+    GradInputLayout: TensorLayout,
+    GradLnWeightLayout: TensorLayout,
+    GradLnBiasLayout: TensorLayout,
+    GradWeightLayout: TensorLayout,
+    GradBiasLayout: TensorLayout,
+    GradOutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    LnParamsLayout: TensorLayout,
+    WeightLayout: TensorLayout,
 ](
-    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
-    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
-    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
-    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
-    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
-    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
-    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
+    grad_ln_weight: TileTensor[
+        mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+    ],
+    grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
+    grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
+    grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
+    grad_output: TileTensor[mut=False, dtype, GradOutputLayout, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin],
+    ln_weight: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    ln_bias: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    linear_weight: TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -372,25 +373,30 @@ struct LayerNormLinearCustomOp:
         comptime weight_layout = linear_weight.static_spec.to_layout()
         comptime bias_layout = linear_bias.static_spec.to_layout()
         comptime output_layout = output.static_spec.to_layout()
+        comptime InputLayout = type_of(input_layout)
+        comptime LnParamsLayout = type_of(ln_params_layout)
+        comptime WeightLayout = type_of(weight_layout)
+        comptime BiasLayout = type_of(bias_layout)
+        comptime OutputLayout = type_of(output_layout)
 
         # Note: rebind is necessary now but it shouldn't be!
         var output_tensor = rebind[
-            LayoutTensor[dtype, output_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, OutputLayout, MutAnyOrigin]
         ](output.to_layout_tensor())
         var input_tensor = rebind[
-            LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin]
         ](input.to_layout_tensor())
         var ln_weight_tensor = rebind[
-            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin]
         ](ln_weight.to_layout_tensor())
         var ln_bias_tensor = rebind[
-            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin]
         ](ln_bias.to_layout_tensor())
         var linear_weight_tensor = rebind[
-            LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin]
         ](linear_weight.to_layout_tensor())
         var linear_bias_tensor = rebind[
-            LayoutTensor[dtype, bias_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, BiasLayout, ImmutAnyOrigin]
         ](linear_bias.to_layout_tensor())
 
         comptime if target == "gpu":
@@ -400,11 +406,6 @@ struct LayerNormLinearCustomOp:
             comptime if algorithm == "fused":
                 # fused case - one thread per sequence position
                 comptime kernel = minimal_fused_kernel[
-                    input_layout,
-                    ln_params_layout,
-                    weight_layout,
-                    bias_layout,
-                    output_layout,
                     batch_size,
                     seq_len,
                     hidden_dim,
@@ -426,15 +427,12 @@ struct LayerNormLinearCustomOp:
                 var normalized_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * hidden_dim
                 )
-                var normalized_tensor = LayoutTensor[
-                    dtype, input_layout, MutAnyOrigin
-                ](normalized_buffer)
+                var normalized_tensor = TileTensor[
+                    mut=True, dtype, InputLayout, MutAnyOrigin
+                ](normalized_buffer, input_layout)
 
                 # Step 1: LayerNorm kernel
                 comptime kernel = layernorm_kernel[
-                    input_layout,
-                    ln_params_layout,
-                    input_layout,
                     batch_size,
                     seq_len,
                     hidden_dim,
@@ -457,19 +455,26 @@ struct LayerNormLinearCustomOp:
                 var matmul_buffer = gpu_ctx.enqueue_create_buffer[dtype](
                     batch_size * seq_len * output_dim
                 )
-                var matmul_tensor = LayoutTensor[
-                    dtype, output_layout, MutAnyOrigin
-                ](matmul_buffer)
+                var matmul_tensor = TileTensor[
+                    mut=True, dtype, OutputLayout, MutAnyOrigin
+                ](matmul_buffer, output_layout)
 
                 # Create transposed weight matrix: [output_dim, hidden_dim] -> [hidden_dim, output_dim]
                 var transposed_weight_buffer = gpu_ctx.enqueue_create_buffer[
                     dtype
                 ](hidden_dim * output_dim)
-                var transposed_weight_tensor = LayoutTensor[
+                comptime transposed_weight_layout = row_major[
+                    hidden_dim, output_dim
+                ]()
+                comptime TransposedWeightLayout = type_of(
+                    transposed_weight_layout
+                )
+                var transposed_weight_tensor = TileTensor[
+                    mut=True,
                     dtype,
-                    Layout.row_major(hidden_dim, output_dim),
+                    TransposedWeightLayout,
                     MutAnyOrigin,
-                ](transposed_weight_buffer)
+                ](transposed_weight_buffer, transposed_weight_layout)
 
                 # Transpose the weight matrix
                 var transpose_blocks_x = (
@@ -479,8 +484,6 @@ struct LayerNormLinearCustomOp:
                     output_dim + TRANSPOSE_BLOCK_DIM_XY - 1
                 ) // TRANSPOSE_BLOCK_DIM_XY
                 comptime kernel2 = transpose_kernel[
-                    weight_layout,
-                    transposed_weight_tensor.layout,
                     output_dim,
                     hidden_dim,
                 ]
@@ -492,17 +495,20 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Reshape tensors for matmul: [batch*seq, hidden] @ [hidden, output] -> [batch*seq, output]
+                comptime flat_normalized_layout = row_major[
+                    batch_size * seq_len, hidden_dim
+                ]()
+                comptime FlatNormalizedLayout = type_of(flat_normalized_layout)
+                comptime flat_matmul_layout = row_major[
+                    batch_size * seq_len, output_dim
+                ]()
+                comptime FlatMatmulLayout = type_of(flat_matmul_layout)
                 var flat_normalized = normalized_tensor.reshape[
-                    Layout.row_major(batch_size * seq_len, hidden_dim)
+                    flat_normalized_layout
                 ]()
-                var flat_matmul = matmul_tensor.reshape[
-                    Layout.row_major(batch_size * seq_len, output_dim)
-                ]()
+                var flat_matmul = matmul_tensor.reshape[flat_matmul_layout]()
 
                 comptime kernel3 = matmul_idiomatic_tiled[
-                    flat_normalized.layout,
-                    transposed_weight_tensor.layout,
-                    flat_matmul.layout,
                     batch_size * seq_len,
                     output_dim,
                     hidden_dim,
@@ -516,14 +522,15 @@ struct LayerNormLinearCustomOp:
                 )
 
                 # Step 3: Add bias - reshape matmul result back to 3D for bias addition
+                comptime reshaped_matmul_layout = row_major[
+                    batch_size, seq_len, output_dim
+                ]()
+                comptime ReshapedMatmulLayout = type_of(reshaped_matmul_layout)
                 var reshaped_matmul = matmul_tensor.reshape[
-                    Layout.row_major(batch_size, seq_len, output_dim)
+                    reshaped_matmul_layout
                 ]()
 
                 comptime kernel4 = add_bias_kernel[
-                    reshaped_matmul.layout,
-                    bias_layout,
-                    output_layout,
                     batch_size,
                     seq_len,
                     output_dim,
@@ -612,36 +619,45 @@ struct LayerNormLinearBackwardCustomOp:
         comptime grad_ln_bias_layout = grad_ln_bias.static_spec.to_layout()
         comptime grad_weight_layout = grad_weight.static_spec.to_layout()
         comptime grad_bias_layout = grad_bias.static_spec.to_layout()
+        comptime GradOutputLayout = type_of(grad_output_layout)
+        comptime InputLayout = type_of(input_layout)
+        comptime LnParamsLayout = type_of(ln_params_layout)
+        comptime WeightLayout = type_of(weight_layout)
+        comptime GradInputLayout = type_of(grad_input_layout)
+        comptime GradLnWeightLayout = type_of(grad_ln_weight_layout)
+        comptime GradLnBiasLayout = type_of(grad_ln_bias_layout)
+        comptime GradWeightLayout = type_of(grad_weight_layout)
+        comptime GradBiasLayout = type_of(grad_bias_layout)
 
         var grad_input_tensor = rebind[
-            LayoutTensor[dtype, grad_input_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin]
         ](grad_input.to_layout_tensor())
         var grad_ln_weight_tensor = rebind[
-            LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, GradLnWeightLayout, MutAnyOrigin]
         ](grad_ln_weight.to_layout_tensor())
         var grad_ln_bias_tensor = rebind[
-            LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin]
         ](grad_ln_bias.to_layout_tensor())
         var grad_weight_tensor = rebind[
-            LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin]
         ](grad_weight.to_layout_tensor())
         var grad_bias_tensor = rebind[
-            LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin]
+            TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin]
         ](grad_bias.to_layout_tensor())
         var grad_output_tensor = rebind[
-            LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, GradOutputLayout, ImmutAnyOrigin]
         ](grad_output.to_layout_tensor())
         var input_tensor = rebind[
-            LayoutTensor[dtype, input_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin]
         ](input.to_layout_tensor())
         var ln_weight_tensor = rebind[
-            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin]
         ](ln_weight.to_layout_tensor())
         var ln_bias_tensor = rebind[
-            LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin]
         ](ln_bias.to_layout_tensor())
         var linear_weight_tensor = rebind[
-            LayoutTensor[dtype, weight_layout, ImmutAnyOrigin]
+            TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin]
         ](linear_weight.to_layout_tensor())
 
         comptime if target == "gpu":
@@ -649,15 +665,6 @@ struct LayerNormLinearBackwardCustomOp:
 
             # Launch backward kernel
             comptime kernel = minimal_fused_kernel_backward[
-                grad_output_layout,
-                input_layout,
-                ln_params_layout,
-                weight_layout,
-                grad_input_layout,
-                grad_ln_weight_layout,
-                grad_ln_bias_layout,
-                grad_weight_layout,
-                grad_bias_layout,
                 batch_size,
                 seq_len,
                 hidden_dim,

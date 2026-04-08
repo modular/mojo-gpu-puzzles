@@ -1,7 +1,8 @@
 from std.gpu import thread_idx, block_idx, block_dim, lane_id
 from std.gpu.host import DeviceContext
 from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal
 
@@ -10,14 +11,15 @@ comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 
 def neighbor_difference[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Compute finite differences: output[i] = input[i+1] - input[i]
@@ -36,14 +38,15 @@ def neighbor_difference[
 comptime SIZE_2 = 64
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
-comptime layout_2 = Layout.row_major(SIZE_2)
+comptime layout_2 = row_major[SIZE_2]()
+comptime LayoutType_2 = type_of(layout_2)
 
 
 def moving_average_3[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType_2, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType_2, ImmutAnyOrigin],
 ):
     """
     Compute 3-point moving average: output[i] = (input[i] + input[i+1] + input[i+2]) / 3
@@ -61,10 +64,10 @@ def moving_average_3[
 
 # ANCHOR: broadcast_shuffle_coordination
 def broadcast_shuffle_coordination[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Combine broadcast() and shuffle_down() for advanced warp coordination.
@@ -74,7 +77,7 @@ def broadcast_shuffle_coordination[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
-        var scale_factor: output.element_type = 0.0
+        var scale_factor: output.ElementType = 0.0
 
         # FILL IN (roughly 14 lines)
 
@@ -84,10 +87,10 @@ def broadcast_shuffle_coordination[
 
 # ANCHOR: basic_broadcast
 def basic_broadcast[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Basic broadcast: Lane 0 computes a block-local value, broadcasts it to all lanes.
@@ -96,7 +99,7 @@ def basic_broadcast[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
-        var broadcast_value: output.element_type = 0.0
+        var broadcast_value: output.ElementType = 0.0
 
         # FILL IN (roughly 10 lines)
 
@@ -106,10 +109,10 @@ def basic_broadcast[
 
 # ANCHOR: conditional_broadcast
 def conditional_broadcast[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Conditional broadcast: Lane 0 makes a decision based on block-local data, broadcasts it to all lanes.
@@ -118,7 +121,7 @@ def conditional_broadcast[
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var lane = Int(lane_id())
     if global_i < size:
-        var decision_value: output.element_type = 0.0
+        var decision_value: output.ElementType = 0.0
 
         # FILL IN (roughly 10 lines)
 
@@ -145,14 +148,12 @@ def test_neighbor_difference() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i * i)
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
-            input_buf
-        )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            output_buf
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
+        var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = neighbor_difference[layout, SIZE]
+        comptime kernel = neighbor_difference[SIZE]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -193,14 +194,12 @@ def test_moving_average() raises:
             for i in range(1, SIZE_2):
                 input_host[i] = input_host[i - 1] + Scalar[dtype](i + 1)
 
-        var input_tensor = LayoutTensor[dtype, layout_2, ImmutAnyOrigin](
-            input_buf
-        )
-        var output_tensor = LayoutTensor[dtype, layout_2, MutAnyOrigin](
-            output_buf
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType_2, ImmutAnyOrigin
+        ](input_buf, layout_2)
+        var output_tensor = TileTensor(output_buf, layout_2)
 
-        comptime kernel = moving_average_3[layout_2, SIZE_2]
+        comptime kernel = moving_average_3[SIZE_2]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -263,14 +262,12 @@ def test_broadcast_shuffle_coordination() raises:
                 else:
                     input_host[i] = Scalar[dtype](((i - 4) % 4) * 2 + 1)
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
-            input_buf
-        )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            output_buf
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
+        var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = broadcast_shuffle_coordination[layout, SIZE]
+        comptime kernel = broadcast_shuffle_coordination[SIZE]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -317,14 +314,12 @@ def test_basic_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
-            input_buf
-        )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            output_buf
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
+        var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = basic_broadcast[layout, SIZE]
+        comptime kernel = basic_broadcast[SIZE]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,
@@ -377,14 +372,12 @@ def test_conditional_broadcast() raises:
             for i in range(SIZE):
                 input_host[i] = test_values[i % len(test_values)]
 
-        var input_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](
-            input_buf
-        )
-        var output_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](
-            output_buf
-        )
+        var input_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](input_buf, layout)
+        var output_tensor = TileTensor(output_buf, layout)
 
-        comptime kernel = conditional_broadcast[layout, SIZE]
+        comptime kernel = conditional_broadcast[SIZE]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,

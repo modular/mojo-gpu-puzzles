@@ -26,7 +26,7 @@ Each thread determines its element's bin assignment, with `block.prefix_sum()` c
 - Block configuration: `(128, 1)` threads per block (`TPB = 128`)
 - Grid configuration: `(1, 1)` blocks per grid
 - Number of bins: `NUM_BINS = 8` (ranges [0.0, 0.125), [0.125, 0.25), etc.)
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 - Warps per block: `128 / WARP_SIZE` (2 or 4 warps depending on GPU)
 
 ## The challenge: Parallel bin extraction
@@ -132,7 +132,7 @@ if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
 ```
 
-This is just like the bounds checking pattern from [Puzzle 12](../puzzle_12/layout_tensor.md), but now the condition is "belongs to target bin."
+This is just like the bounds checking pattern from [Puzzle 12](../puzzle_12/tile_tensor.md), but now the condition is "belongs to target bin."
 
 ### 6. **Final count computation**
 
@@ -150,7 +150,7 @@ if local_i == tpb - 1:  # Last thread in block
 
 Remember the patterns from previous puzzles:
 
-- `LayoutTensor` indexing returns SIMD: `input_data[i][0]`
+- `TileTensor` indexing returns SIMD: `input_data[i][0]`
 - `block.prefix_sum()` returns SIMD: `offset[0]` to extract
 - Array indexing needs `Int`: `Int(offset[0])` for `bin_output[...]`
 
@@ -252,14 +252,14 @@ The `block.prefix_sum()` kernel demonstrates advanced parallel coordination patt
 
 ## **Step-by-step algorithm walkthrough:**
 
-### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/layout_tensor.md) dot product)**
+### **Phase 1: Element processing (like [Puzzle 12](../puzzle_12/tile_tensor.md) dot product)**
 
 ```
 Thread indexing (familiar pattern):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
   local_i = thread_idx.x                              // Local thread index
 
-Element loading (like LayoutTensor pattern):
+Element loading (like TileTensor pattern):
   Thread 0:  my_value = input_data[0][0] = 0.00
   Thread 1:  my_value = input_data[1][0] = 0.01
   Thread 13: my_value = input_data[13][0] = 0.13
@@ -328,11 +328,11 @@ Last thread computes total (not thread 0!):
 
 ## **Why this advanced algorithm works:**
 
-### **Connection to [Puzzle 12](../puzzle_12/layout_tensor.md) (Traditional dot product):**
+### **Connection to [Puzzle 12](../puzzle_12/tile_tensor.md) (Traditional dot product):**
 
 - **Same thread indexing**: `global_i` and `local_i` patterns
 - **Same bounds checking**: `if global_i < size` validation
-- **Same data loading**: LayoutTensor SIMD extraction with `[0]`
+- **Same data loading**: TileTensor SIMD extraction with `[0]`
 
 ### **Connection to [`block.sum()`](./block_sum.md) (earlier in this puzzle):**
 

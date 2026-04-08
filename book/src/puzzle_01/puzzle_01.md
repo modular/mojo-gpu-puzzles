@@ -30,8 +30,8 @@ For each position \\(i\\):
 
 Start with direct memory manipulation to understand GPU fundamentals.
 
-### [💡 Preview: Modern Approach with LayoutTensor](./layout_tensor_preview.md)
+### [💡 Preview: Modern Approach with TileTensor](./tile_tensor_preview.md)
 
-See how LayoutTensor simplifies GPU programming with safer, cleaner code.
+See how TileTensor simplifies GPU programming with safer, cleaner code.
 
 💡 **Tip**: Understanding both approaches leads to better appreciation of modern GPU programming patterns.

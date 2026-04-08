@@ -39,7 +39,7 @@
 - **워프 크기**: `WARP_SIZE = 32` 워프당 스레드 수 (NVIDIA 표준)
 - **블록당 워프 수**: `TPB / WARP_SIZE = 8` 워프
 - **데이터 타입**: `DType.float32`
-- **메모리 레이아웃**: 입력 `Layout.row_major(SIZE)`, 출력 `Layout.row_major(CLUSTER_SIZE)`
+- **메모리 레이아웃**: 입력 `row_major[SIZE]()`, 출력 `row_major[CLUSTER_SIZE]()`
 
 **처리 분배:**
 

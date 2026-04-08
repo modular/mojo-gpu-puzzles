@@ -32,7 +32,7 @@ But with sophisticated vectorization strategies for maximum performance.
 - Tile size: `TILE_SIZE = 32`
 - Data type: `DType.float32`
 - SIMD width: GPU-dependent
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ## 1. Manual vectorization approach
 

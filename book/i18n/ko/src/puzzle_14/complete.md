@@ -2,7 +2,7 @@
 
 # 완성 버전
 
-1D LayoutTensor `a`에 대해 누적 합을 계산하고 결과를 1D LayoutTensor `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`에 대해 누적 합을 계산하고 결과를 1D TileTensor `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _`a`의 크기가 블록 크기보다 큰 경우, 올바른 결과를 얻으려면 여러 블록 간 동기화가 필요합니다._
 

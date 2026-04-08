@@ -25,7 +25,7 @@ Each thread contributes to the mean calculation, then receives the broadcast mea
 - Data type: `DType.float32`
 - Block configuration: `(128, 1)` threads per block (`TPB = 128`)
 - Grid configuration: `(1, 1)` blocks per grid
-- Layout: `Layout.row_major(SIZE)` (1D row-major for input and output)
+- Layout: `row_major[SIZE]()` (1D row-major for input and output)
 - Test data: Values cycling 1-8, so mean = 4.5
 - Expected output: Normalized vector with mean = 1.0
 
@@ -100,7 +100,7 @@ The algorithm follows the perfect block operations pattern:
 
 ### 2. **Data loading and sum computation (familiar patterns)**
 
-Load your element using the established LayoutTensor pattern:
+Load your element using the established TileTensor pattern:
 
 ```mojo
 var my_value: Scalar[dtype] = 0.0
@@ -255,7 +255,7 @@ Thread indexing (consistent across all puzzles):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Maps to input array position
   local_i = thread_idx.x                              // Position within block (0-127)
 
-Parallel element loading using LayoutTensor pattern:
+Parallel element loading using TileTensor pattern:
   Thread 0:   my_value = input_data[0][0] = 1.0    // First cycle value
   Thread 1:   my_value = input_data[1][0] = 2.0    // Second cycle value
   Thread 7:   my_value = input_data[7][0] = 8.0    // Last cycle value
@@ -373,10 +373,10 @@ Mathematical proof of correctness:
 Algorithm produces provably correct mathematical result.
 ```
 
-### **Connection to [Puzzle 12](../puzzle_12/layout_tensor.md) (foundational patterns):**
+### **Connection to [Puzzle 12](../puzzle_12/tile_tensor.md) (foundational patterns):**
 
 - **Thread coordination evolution**: Same `global_i`, `local_i` patterns but with block primitives
-- **Memory access patterns**: Same LayoutTensor SIMD extraction `[0]` but optimized workflow
+- **Memory access patterns**: Same TileTensor SIMD extraction `[0]` but optimized workflow
 - **Complexity elimination**: Replaces 20+ lines of manual barriers with 2 block operations
 - **Educational progression**: Manual → automated, complex → simple, error-prone → reliable
 
@@ -454,7 +454,7 @@ Mean normalization is the perfect educational example of this fundamental patter
 
 **Complete block operations progression:**
 
-1. **Manual coordination** ([Puzzle 12](../puzzle_12/layout_tensor.md)): Understand parallel fundamentals
+1. **Manual coordination** ([Puzzle 12](../puzzle_12/tile_tensor.md)): Understand parallel fundamentals
 2. **Warp primitives** ([Puzzle 24](../puzzle_24/warp_sum.md)): Learn hardware-accelerated patterns
 3. **Block reduction** ([`block.sum()`](./block_sum.md)): Learn all→one communication
 4. **Block scan** ([`block.prefix_sum()`](./block_prefix_sum.md)): Learn all→each communication

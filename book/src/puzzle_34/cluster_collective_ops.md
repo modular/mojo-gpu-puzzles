@@ -40,8 +40,8 @@ Single blocks (as learned in [Puzzle 27](../puzzle_27/puzzle_27.md)) are limited
 - **Block Configuration**: `TPB = 256` threads per block `(256, 1)`
 - **Grid Configuration**: `CLUSTER_SIZE = 4` blocks per cluster `(4, 1)`
 - **Data Type**: `DType.float32`
-- **Memory Layout**: Input `Layout.row_major(SIZE)`, Output `Layout.row_major(1)`
-- **Temporary Storage**: `Layout.row_major(CLUSTER_SIZE)` for partial results
+- **Memory Layout**: Input `row_major[SIZE]()`, Output `row_major[1]()`
+- **Temporary Storage**: `row_major[CLUSTER_SIZE]()` for partial results
 
 **Expected Result**: Sum of sequence `0, 0.01, 0.02, ..., 10.23` = **523,776**
 

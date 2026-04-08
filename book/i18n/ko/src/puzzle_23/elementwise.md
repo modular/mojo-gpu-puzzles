@@ -12,7 +12,7 @@
 
 - `elementwise`를 활용한 **함수형 GPU 프로그래밍**
 - GPU 스레드 내의 **자동 SIMD 벡터화**
-- 안전한 메모리 접근을 위한 **LayoutTensor 연산**
+- 안전한 메모리 접근을 위한 **TileTensor 연산**
 - **GPU 스레드 계층 구조** vs SIMD 연산
 - 중첩 함수에서의 **캡처 의미론**
 
@@ -26,7 +26,7 @@
 - 벡터 크기: `SIZE = 1024`
 - 데이터 타입: `DType.float32`
 - SIMD 폭: 타겟 의존적 (GPU 아키텍처와 데이터 타입에 따라 결정)
-- 레이아웃: `Layout.row_major(SIZE)` (1D 행 우선)
+- 레이아웃: `row_major[SIZE]()` (1D 행 우선)
 
 ## 완성할 코드
 

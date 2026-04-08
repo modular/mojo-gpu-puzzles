@@ -4,28 +4,28 @@
 
 ## 개요
 
-LayoutTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \\(A\\) 와 \\(B\\) 를 곱하는 커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.
+TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \\(A\\) 와 \\(B\\) 를 곱하는 커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.
 
 ## 핵심 개념
 
-- LayoutTensor를 사용한 행렬 타일링으로 효율적인 연산
+- TileTensor를 사용한 행렬 타일링으로 효율적인 연산
 - 적절한 레이아웃을 사용한 멀티 블록 조율
 - TensorBuilder를 통한 효율적인 공유 메모리 활용
-- LayoutTensor 인덱싱을 사용한 타일 경계 처리
+- TileTensor 인덱싱을 사용한 타일 경계 처리
 
 ## 구성
 
 - 행렬 크기: \\(\\text{SIZE\_TILED} = 9\\)
 - 블록당 스레드 수: \\(\\text{TPB} \times \\text{TPB} = 3 \times 3\\)
 - 그리드 차원: \\(3 \times 3\\) 블록
-- 공유 메모리: 블록당 \\(\\text{TPB} \times \\text{TPB}\\) LayoutTensor 2개
+- 공유 메모리: 블록당 \\(\\text{TPB} \times \\text{TPB}\\) TileTensor 2개
 
 레이아웃 구성:
 
-- 입력 A: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- 입력 B: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- 출력: `Layout.row_major(SIZE_TILED, SIZE_TILED)`
-- 공유 메모리: TensorBuilder를 사용한 `TPB × TPB` LayoutTensor 2개
+- 입력 A: `row_major[SIZE_TILED, SIZE_TILED]()`
+- 입력 B: `row_major[SIZE_TILED, SIZE_TILED]()`
+- 출력: `row_major[SIZE_TILED, SIZE_TILED]()`
+- 공유 메모리: TensorBuilder를 사용한 `TPB × TPB` TileTensor 2개
 
 ## 타일링 전략
 
@@ -37,7 +37,7 @@ Grid Layout (3×3):           Thread Layout per Block (3×3):
 [B10][B11][B12]               [T10 T11 T12]
 [B20][B21][B22]               [T20 T21 T22]
 
-각 블록은 LayoutTensor 인덱싱을 사용하여 하나의 타일을 처리
+각 블록은 TileTensor 인덱싱을 사용하여 하나의 타일을 처리
 ```
 
 ### 타일 처리 단계
@@ -318,7 +318,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 이 구현은 다음을 통해 높은 성능을 달성합니다:
 
-- LayoutTensor를 활용한 효율적인 메모리 접근
+- TileTensor를 활용한 효율적인 메모리 접근
 - 최적의 타일링 전략
 - 적절한 스레드 동기화
 - 세심한 경계 처리
@@ -326,7 +326,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 </div>
 </details>
 
-## 솔루션: 관용적 LayoutTensor 타일링
+## 솔루션: 관용적 TileTensor 타일링
 
 <details class="solution-details">
 <summary></summary>
@@ -337,14 +337,14 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 <div class="solution-explanation">
 
-관용적 타일링 행렬 곱셈은 Mojo의 LayoutTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.
+관용적 타일링 행렬 곱셈은 Mojo의 TileTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.
 
 **핵심 포인트: 이 구현은 두 행렬 모두 병합 로딩을 사용하여 표준 A × B 행렬 곱셈을 수행합니다.**
 
 **이 구현이 하는 것:**
 
 - **행렬 연산**: 표준 \\(A \times B\\) 곱셈 (\\(A \times B^T\\) 가 아님)
-- **로딩 패턴**: 두 행렬 모두 `Layout.row_major(1, TPB)`로 병합 접근
+- **로딩 패턴**: 두 행렬 모두 `row_major[1, TPB]()`로 병합 접근
 - **연산**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 - **데이터 레이아웃**: 로딩 시 전치 없음 - 두 행렬을 같은 방향으로 로드
 
@@ -356,7 +356,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 \\((9 \times 9)\\) 행렬 크기에서는 완벽한 타일링이 이루어져 모든 경계 검사가 불필요합니다:
 
-1. **LayoutTensor 타일 API**
+1. **TileTensor 타일 API**
 
    ```mojo
    out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
@@ -364,7 +364,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
    b_tile = b.tile[TPB, TPB](idx, block_idx.x)
    ```
 
-   수동 좌표 계산 없이 "(block_idx.y, block_idx.x) 위치의 타일을 가져온다"를 직접 표현합니다. 자세한 내용은 [문서](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile)를 참고하세요.
+   수동 좌표 계산 없이 "(block_idx.y, block_idx.x) 위치의 타일을 가져온다"를 직접 표현합니다. 자세한 내용은 [문서](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)를 참고하세요.
 
 2. **비동기 메모리 연산**
 
@@ -395,14 +395,14 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 3. **최적화된 메모리 접근 레이아웃**
 
    ```mojo
-   comptime load_a_layout = Layout.row_major(1, TPB)    # 병합 로딩
-   comptime load_b_layout = Layout.row_major(1, TPB)    # 병합 로딩
+   comptime load_a_layout = row_major[1, TPB]()    # 병합 로딩
+   comptime load_b_layout = row_major[1, TPB]()    # 병합 로딩
    # 참고: 표준 A × B 곱셈에서 두 행렬 모두 같은 레이아웃을 사용
    ```
 
    **현재 구현의 메모리 접근 분석:**
 
-   두 행렬 모두 전역 메모리에서 병합 로딩을 위해 `Layout.row_major(1, TPB)`를 사용합니다:
+   두 행렬 모두 전역 메모리에서 병합 로딩을 위해 `row_major[1, TPB]()`를 사용합니다:
    - `load_a_layout`: 스레드들이 협력하여 행렬 A 행의 연속 원소를 로드
    - `load_b_layout`: 스레드들이 협력하여 행렬 B 행의 연속 원소를 로드
    - **핵심**: 스레드 레이아웃은 복사 시 스레드 간 협력 방식을 결정하며, 최종 데이터 레이아웃과는 별개입니다
@@ -424,11 +424,11 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
    - Matrix A 타일: 스레드들이 A[block_row, k], A[block_row, k+1], A[block_row, k+2]... 로드 (연속)
    - Matrix B 타일: 스레드들이 B[k, block_col], B[k, block_col+1], B[k, block_col+2]... 로드 (연속)
 
-   Layout.row_major(1, TPB)로 두 패턴 모두 병합
+   row_major[1, TPB]()로 두 패턴 모두 병합
    ```
 
    **세 가지 별개의 메모리 고려사항:**
-   1. **전역→공유 병합**: `Layout.row_major(1, TPB)`로 병합 전역 메모리 접근 보장
+   1. **전역→공유 병합**: `row_major[1, TPB]()`로 병합 전역 메모리 접근 보장
    2. **공유 메모리 연산**: `a_shared[local_row, k] * b_shared[k, local_col]`로 뱅크 충돌 회피
    3. **행렬 연산**: 연산 패턴이 A × B를 결정 (A × B^T가 아님)
 
@@ -467,7 +467,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 | 기능 | 수동 Tiling | 관용적 Tiling |
 |---------|--------------|------------------|
-| 메모리 접근 | 경계 검사가 있는 직접 인덱싱 | LayoutTensor 타일 API |
+| 메모리 접근 | 경계 검사가 있는 직접 인덱싱 | TileTensor 타일 API |
 | 타일 로딩 | 원소별 명시적 복사 | 전용 복사 엔진의 벌크 전송 |
 | 공유 메모리 | 수동 초기화 (방어적) | 복사 함수가 관리 |
 | 코드 복잡도 | 명시적 인덱싱으로 다소 장황 | 고수준 API로 더 간결 |
@@ -483,7 +483,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 **현재 구현 요약:**
 
-- 두 행렬 모두 `Layout.row_major(1, TPB)` 사용
+- 두 행렬 모두 `row_major[1, TPB]()` 사용
 - 표준 A × B 곱셈 수행
 - 복사 중 데이터 전치 없음
 
@@ -494,8 +494,8 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 ```mojo
 # 예시: A × B를 계산하기 위해 사전 전치된 행렬 B^T를 로드
 # (현재 구현에서는 이렇게 하지 않음)
-comptime load_b_layout = Layout.row_major(TPB, 1)   # B^T를 병합 접근으로 로드
-comptime store_b_layout = Layout.row_major(1, TPB)  # 공유 메모리에 B로 저장
+comptime load_b_layout = row_major[TPB, 1]()   # B^T를 병합 접근으로 로드
+comptime store_b_layout = row_major[1, TPB]()  # 공유 메모리에 B로 저장
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 ```
 
@@ -508,7 +508,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 
 **핵심 구분:**
 
-- **현재 구현**: 두 행렬 모두 표준 \\(A \times B\\) 곱셈에 `Layout.row_major(1, TPB)` 사용
+- **현재 구현**: 두 행렬 모두 표준 \\(A \times B\\) 곱셈에 `row_major[1, TPB]()` 사용
 - **전치 로딩 예시**: 이미 전치된 데이터나 다른 행렬 연산을 처리할 때 다른 레이아웃 사용
 
 이것은 Mojo의 철학을 보여줍니다: 일반적인 경우에 고수준 추상화를 유지하면서도, 필요할 때 저수준 제어를 제공합니다.
@@ -520,13 +520,13 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 **관용적 타일링 구현이 실제로 하는 것:**
 
 1. **행렬 연산**: 표준 A × B 곱셈
-2. **메모리 로딩**: 두 행렬 모두 `Layout.row_major(1, TPB)`로 병합 접근
+2. **메모리 로딩**: 두 행렬 모두 `row_major[1, TPB]()`로 병합 접근
 3. **연산 패턴**: `acc += a_shared[local_row, k] * b_shared[k, local_col]`
 4. **데이터 레이아웃**: 로딩 시 전치 없음
 
 **이것이 최적인 이유:**
 
-- **병합 전역 메모리 접근**: `Layout.row_major(1, TPB)`로 효율적인 로딩 보장
+- **병합 전역 메모리 접근**: `row_major[1, TPB]()`로 효율적인 로딩 보장
 - **뱅크 충돌 회피**: 공유 메모리 접근 패턴이 충돌을 방지
 - **표준 알고리즘**: 가장 일반적인 행렬 곱셈 패턴을 구현
 

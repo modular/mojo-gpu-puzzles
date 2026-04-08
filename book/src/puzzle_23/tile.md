@@ -31,7 +31,7 @@ But with a completely different execution strategy optimized for memory hierarch
 - Tile size: `TILE_SIZE = 32`
 - Data type: `DType.float32`
 - SIMD width: GPU-dependent (for operations within tiles)
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ## Code to complete
 
@@ -58,7 +58,7 @@ For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
 
 ### 2. **Tile extraction pattern**
 
-Check out the [LayoutTensor `.tile` documentation](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile).
+Check out the [TileTensor `.tile` documentation](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile).
 
 ```mojo
 tile_id = indices[0]  # Each thread gets one tile to process

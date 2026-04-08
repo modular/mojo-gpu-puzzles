@@ -12,7 +12,7 @@
 - **[두 번째 사례](./second_case.md)**: 잘못된 결과 출력 → 패턴 분석 → 로직 버그 발견
 - **세 번째 사례**: 프로그램 무한 정지 → 스레드 상태 조사 → 조율 버그 발견
 
-이 고급 디버깅 챌린지에서는 공유 메모리, LayoutTensor 연산, 배리어 동기화가 얽힌 **스레드 조율 실패**를 조사하는 방법을 배웁니다 - 이전 사례들에서 익힌 체계적인 조사 기술을 총동원합니다.
+이 고급 디버깅 챌린지에서는 공유 메모리, TileTensor 연산, 배리어 동기화가 얽힌 **스레드 조율 실패**를 조사하는 방법을 배웁니다 - 이전 사례들에서 익힌 체계적인 조사 기술을 총동원합니다.
 
 **사전 준비**: [Mojo GPU 디버깅의 핵심](./essentials.md), [탐정 수사: 첫 번째 사례](./first_case.md), [탐정 수사: 두 번째 사례](./second_case.md)를 먼저 완료해서 CUDA-GDB 워크플로우, 변수 검사의 한계, 체계적인 디버깅 접근법을 이해하세요. 아래 설정 명령을 실행했는지 확인하세요:
 
@@ -25,7 +25,7 @@ pixi run -e nvidia setup-cuda-gdb
 이번 디버깅 챌린지에서 배울 내용:
 
 - **배리어 교착 상태 탐지**: 스레드들이 동기화 지점에서 영원히 기다리게 되는 상황 식별하기
-- **공유 메모리 조율**: LayoutTensor를 사용한 스레드 협력 패턴 이해하기
+- **공유 메모리 조율**: TileTensor를 사용한 스레드 협력 패턴 이해하기
 - **조건부 실행 분석**: 일부 스레드가 다른 코드 경로를 탈 때 디버깅하기
 - **스레드 조율 디버깅**: CUDA-GDB로 다중 스레드 동기화 실패 분석하기
 
@@ -155,7 +155,7 @@ Waiting for GPU computation to complete...
 CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07<<<(1,1,1),(4,1,1)>>> (
     output=..., a=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
-56          a: LayoutTensor[mut=False, dtype, vector_layout],
+56          a: TileTensor[mut=False, dtype, vector_layout],
 ```
 
 **🔍 주요 관찰**:
@@ -169,7 +169,7 @@ CUDA thread hit application kernel entry function breakpoint, p09_collaborative_
 
 ```bash
 (cuda-gdb) n
-55          output: LayoutTensor[mut=True, dtype, vector_layout],
+55          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 58          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -311,13 +311,13 @@ if thread_id < SIZE - 1:    # 모든 스레드가 진입하지 않음
 
 ```mojo
 def collaborative_filter(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: TileTensor[mut=True, dtype, vector_layout],
+    a: TileTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
-    shared_workspace = LayoutTensor[
+    shared_workspace = TileTensor[
         dtype,
-        Layout.row_major(SIZE-1),
+        row_major[SIZE-1](),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
@@ -364,7 +364,7 @@ def collaborative_filter(
 - **배리어 규칙**: 블록의 **모든** 스레드가 **같은** 배리어에 도달해야 함
 - **조건부 실행의 함정**: 어떤 if문이든 스레드 분기를 일으킬 수 있음
 - **공유 메모리 조율**: 올바른 동기화를 위해 배리어 배치에 주의 필요
-- **LayoutTensor가 교착 상태를 막아주지 않음**: 고수준 추상화라도 올바른 동기화는 여전히 필요
+- **TileTensor가 교착 상태를 막아주지 않음**: 고수준 추상화라도 올바른 동기화는 여전히 필요
 
 **💡 핵심 통찰**: 배리어 교착 상태는 GPU 버그 중 디버깅하기 가장 어려운 유형에 속합니다:
 

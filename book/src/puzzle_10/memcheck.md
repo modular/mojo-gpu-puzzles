@@ -6,13 +6,13 @@ Learn how to detect memory violations that can silently corrupt GPU programs, ev
 
 **Key insight**: A GPU program can produce "correct" results while simultaneously performing illegal memory accesses.
 
-**Prerequisites**: Understanding of [Puzzle 4 LayoutTensor](../puzzle_04/introduction_layout_tensor.md) and basic GPU memory concepts.
+**Prerequisites**: Understanding of [Puzzle 4 TileTensor](../puzzle_04/introduction_tile_tensor.md) and basic GPU memory concepts.
 
 ## The silent memory bug discovery
 
 ### Test passes, but is my code actually correct?
 
-Let's start with a seemingly innocent program that appears to work perfectly (this is [Puzzle 04](../puzzle_04/layout_tensor.md) without guards):
+Let's start with a seemingly innocent program that appears to work perfectly (this is [Puzzle 04](../puzzle_04/tile_tensor.md) without guards):
 
 ```mojo
 {{#include ../../../problems/p10/p10.mojo:add_10_2d_no_guard}}
@@ -151,10 +151,10 @@ The program has **7 total errors** despite passing all tests:
 
 ### The solution
 
-As we saw in [Puzzle 04](../puzzle_04/layout_tensor.md), we need to bound-check as follows:
+As we saw in [Puzzle 04](../puzzle_04/tile_tensor.md), we need to bound-check as follows:
 
 ```mojo
-{{#include ../../../solutions/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor_solution}}
+{{#include ../../../solutions/p04/p04_tile_tensor.mojo:add_10_2d_tile_tensor_solution}}
 ```
 
 The fix is simple: **always validate thread indices against data dimensions** before accessing memory.

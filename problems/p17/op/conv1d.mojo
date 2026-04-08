@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major, TensorLayout
+from layout.tile_tensor import stack_allocation
 
 # ANCHOR: conv1d_kernel
 comptime TPB = 15
@@ -9,32 +11,26 @@ comptime BLOCKS_PER_GRID = (2, 1)
 
 
 def conv1d_kernel[
-    in_layout: Layout,
-    out_layout: Layout,
-    conv_layout: Layout,
     input_size: Int,
     conv_size: Int,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    ConvLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
-    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    kernel: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB + conv_size - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(conv_size),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + conv_size - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[conv_size]())
     if global_i < input_size:
         shared_a[local_i] = input[global_i]
 
@@ -53,7 +49,7 @@ def conv1d_kernel[
     barrier()
 
     if global_i < input_size:
-        var local_sum: output.element_type = 0
+        var local_sum: output.ElementType = 0
 
         comptime for j in range(conv_size):
             if local_i + j < TPB + conv_size - 1:
@@ -92,9 +88,6 @@ struct Conv1DCustomOp:
         var output_tensor = output.to_layout_tensor()
         var input_tensor = input.to_layout_tensor()
         var kernel_tensor = kernel.to_layout_tensor()
-        comptime in_layout = input_tensor.layout
-        comptime out_layout = output_tensor.layout
-        comptime conv_layout = kernel_tensor.layout
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
