@@ -81,10 +81,10 @@ Our GPU implementation **reuses and combines optimized kernels from previous puz
 
 Layout configuration:
 
-- Query tensor: `Layout.row_major(d)`
-- Key tensor: `Layout.row_major(seq_len, d)`
-- Value tensor: `Layout.row_major(seq_len, d)`
-- Output tensor: `Layout.row_major(d)`
+- Query tensor: `row_major[d]()`
+- Key tensor: `row_major[seq_len, d]()`
+- Value tensor: `row_major[seq_len, d]()`
+- Output tensor: `row_major[d]()`
 - Custom op parameters: `{"seq_len": seq_len, "d": d, "dtype": dtype}`
 
 Key aspects of this puzzle include:
@@ -121,7 +121,7 @@ To complete this puzzle, we'll leverage the tiled matmul kernel from [Puzzle 16]
 
 **Transpose Kernel Implementation Guide:**
 
-1. **Shared Memory Setup**: Use `LayoutTensor[dtype, Layout.row_major(TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()` to create a square `TRANSPOSE_BLOCK_DIM_XY` × `TRANSPOSE_BLOCK_DIM_XY` shared memory tile for efficient data exchange between threads
+1. **Shared Memory Setup**: Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]())` to create a square `TRANSPOSE_BLOCK_DIM_XY` × `TRANSPOSE_BLOCK_DIM_XY` shared memory tile for efficient data exchange between threads
 
 2. **Thread Indexing**: Map threads to matrix elements:
    - `local_row = thread_idx.y`, `local_col = thread_idx.x` (position within the block)

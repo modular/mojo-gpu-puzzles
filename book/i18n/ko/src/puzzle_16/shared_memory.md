@@ -10,13 +10,13 @@
 
 이 퍼즐에서 다루는 내용:
 
-- LayoutTensor를 사용한 블록 로컬 메모리 관리
+- TileTensor를 사용한 블록 로컬 메모리 관리
 - 스레드 동기화 패턴
 - 공유 메모리를 활용한 메모리 접근 최적화
 - 2D 인덱싱을 사용한 협력적 데이터 로딩
-- 행렬 연산에 LayoutTensor를 효율적으로 활용하기
+- 행렬 연산에 TileTensor를 효율적으로 활용하기
 
-핵심은 LayoutTensor를 통해 빠른 공유 메모리를 활용하여 비용이 큰 전역 메모리 접근을 최소화하는 것입니다.
+핵심은 TileTensor를 통해 빠른 공유 메모리를 활용하여 비용이 큰 전역 메모리 접근을 최소화하는 것입니다.
 
 ## 구성
 
@@ -26,15 +26,15 @@
 
 레이아웃 구성:
 
-- 입력 A: `Layout.row_major(SIZE, SIZE)`
-- 입력 B: `Layout.row_major(SIZE, SIZE)`
-- 출력: `Layout.row_major(SIZE, SIZE)`
-- 공유 메모리: `TPB × TPB` 크기의 LayoutTensor 2개
+- 입력 A: `row_major[SIZE, SIZE]()`
+- 입력 B: `row_major[SIZE, SIZE]()`
+- 출력: `row_major[SIZE, SIZE]()`
+- 공유 메모리: `TPB × TPB` 크기의 TileTensor 2개
 
 메모리 구성:
 
 ```txt
-Global Memory (LayoutTensor):          Shared Memory (LayoutTensor):
+Global Memory (TileTensor):          Shared Memory (TileTensor):
 A[i,j]: Direct access                  a_shared[local_row, local_col]
 B[i,j]: Direct access                  b_shared[local_row, local_col]
 ```
@@ -119,7 +119,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-LayoutTensor를 활용한 공유 메모리 구현은 효율적인 메모리 접근 패턴을 통해 성능을 향상시킵니다:
+TileTensor를 활용한 공유 메모리 구현은 효율적인 메모리 접근 패턴을 통해 성능을 향상시킵니다:
 
 ### 메모리 구성
 
@@ -140,9 +140,9 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
 1. **공유 메모리 설정**:
 
    ```mojo
-   # address_space를 지정한 LayoutTensor로 2D 공유 메모리 텐서 생성
-   a_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-   b_shared = LayoutTensor[dtype, Layout.row_major(TPB, TPB), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+   # address_space를 지정한 TileTensor로 2D 공유 메모리 텐서 생성
+   a_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
+   b_shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB, TPB]())
    ```
 
 2. **스레드 인덱싱**:
@@ -160,7 +160,7 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
 3. **데이터 로딩**:
 
    ```mojo
-   # LayoutTensor 인덱싱으로 데이터를 공유 메모리에 로드
+   # TileTensor 인덱싱으로 데이터를 공유 메모리에 로드
    if row < size and col < size:
        a_shared[local_row, local_col] = a[row, col]
        b_shared[local_row, local_col] = b[row, col]
@@ -219,13 +219,13 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
 
 ### 주요 언어 기능
 
-1. **LayoutTensor의 장점**:
+1. **TileTensor의 장점**:
    - 직접 2D 인덱싱으로 코드 단순화
    - `element_type`을 통한 타입 안전성
    - 효율적인 메모리 레이아웃 처리
 
 2. **공유 메모리 할당**:
-   - address_space를 지정한 LayoutTensor로 구조화된 할당
+   - address_space를 지정한 TileTensor로 구조화된 할당
    - 입력 텐서와 동일한 행 우선 레이아웃
    - 효율적 접근을 위한 적절한 메모리 정렬
 
@@ -255,7 +255,7 @@ Matrix B:                           b_shared: (비슷한 레이아웃)
 
 - 전역 메모리 접근 횟수 감소
 - 공유 메모리를 통한 데이터 재사용
-- LayoutTensor의 효율적인 2D 인덱싱 활용
+- TileTensor의 효율적인 2D 인덱싱 활용
 - 적절한 스레드 동기화 유지
 
 </div>

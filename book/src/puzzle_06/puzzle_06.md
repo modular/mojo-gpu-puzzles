@@ -4,6 +4,8 @@
 
 Implement a kernel that adds 10 to each position of vector `a` and stores it in `output`.
 
+A **thread block** (or just **block**) is a group of threads that execute together on a single GPU multiprocessor. All threads in a block share the same shared memory and can synchronize with each other. When data is larger than one block can handle, the GPU schedules multiple blocks — each block independently processes its portion of the data. The global position of a thread is computed from both its position within the block (`thread_idx.x`) and which block it belongs to (`block_idx.x`): `global_i = block_dim.x * block_idx.x + thread_idx.x`.
+
 **Note:** _You have fewer threads per block than the size of a._
 
 <img src="./media/06.png" alt="Blocks visualization" class="light-mode-img">
@@ -27,7 +29,7 @@ The key insight is understanding how blocks of threads work together to process 
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a>
 
-> Note: The `LayoutTensor` variant of this puzzle is very similar so we leave it to the reader.
+> Note: The `TileTensor` variant of this puzzle is very similar so we leave it to the reader.
 
 <details>
 <summary><strong>Tips</strong></summary>

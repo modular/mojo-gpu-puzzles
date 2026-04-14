@@ -160,4 +160,4 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-이런 경계 처리 패턴은 Puzzle 4의 [LayoutTensor 알아보기](../puzzle_04/introduction_layout_tensor.md)에서 배우면 훨씬 깔끔해집니다. LayoutTensor는 형태 관리 기능을 기본으로 제공합니다.
+이런 경계 처리 패턴은 Puzzle 4의 [TileTensor 알아보기](../puzzle_04/introduction_tile_tensor.md)에서 배우면 훨씬 깔끔해집니다. TileTensor는 형태 관리 기능을 기본으로 제공합니다.

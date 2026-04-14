@@ -27,7 +27,7 @@
 - 데이터 타입: `DType.float32`
 - 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
-- 레이아웃: `Layout.row_major(SIZE)` (1D 행 우선)
+- 레이아웃: `row_major[SIZE]()` (1D 행 우선)
 
 ## 기존 방식의 복잡성 (Puzzle 12에서)
 

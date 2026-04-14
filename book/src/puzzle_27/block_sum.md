@@ -25,12 +25,12 @@ But the implementation teaches fundamental patterns for all block-level GPU prog
 - Data type: `DType.float32`
 - Block configuration: `(128, 1)` threads per block (`TPB = 128`)
 - Grid configuration: `(1, 1)` blocks per grid
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 - Warps per block: `128 / WARP_SIZE` (4 warps on NVIDIA, 2 or 4 warps on AMD)
 
 ## The traditional complexity (from Puzzle 12)
 
-Recall the complex approach from [Puzzle 12](../puzzle_12/layout_tensor.md) that required shared memory, barriers, and tree reduction:
+Recall the complex approach from [Puzzle 12](../puzzle_12/tile_tensor.md) that required shared memory, barriers, and tree reduction:
 
 ```mojo
 {{#include ../../../solutions/p27/p27.mojo:traditional_dot_product_solution}}
@@ -171,9 +171,9 @@ Every block reduction follows the same conceptual pattern:
 
 Each thread should handle one element pair from vectors `a` and `b`. What operation combines these into a "partial result" that can be summed across threads?
 
-### 3. **LayoutTensor indexing patterns**
+### 3. **TileTensor indexing patterns**
 
-When accessing `LayoutTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
+When accessing `TileTensor` elements, remember that indexing returns SIMD values. You'll need to extract the scalar value for arithmetic operations.
 
 ### 4. **[block.sum()](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) API concepts**
 

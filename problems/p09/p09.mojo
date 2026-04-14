@@ -2,7 +2,9 @@ from std.memory import UnsafePointer
 from std.gpu import thread_idx, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 from std.sys import argv
 
@@ -11,7 +13,8 @@ comptime MATRIX_SIZE = 3
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = SIZE
 comptime dtype = DType.float32
-comptime vector_layout = Layout.row_major(SIZE)
+comptime vector_layout = row_major[SIZE]()
+comptime VectorLayout = type_of(vector_layout)
 comptime ITER = 2
 
 
@@ -29,8 +32,8 @@ def add_10(
 
 # ANCHOR: second_crash
 def process_sliding_window(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
@@ -52,18 +55,15 @@ def process_sliding_window(
 
 # ANCHOR: third_crash
 def collaborative_filter(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    var shared_workspace = LayoutTensor[
-        dtype,
-        Layout.row_major(SIZE - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_workspace = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE - 1]())
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id < SIZE - 1:
@@ -139,13 +139,11 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i)
 
-            # Create LayoutTensors for structured access
-            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
-                input_buf
+            # Create TileTensors for structured access
+            input_tensor = TileTensor[mut=False, dtype, VectorLayout](
+                input_buf, vector_layout
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
-                output_buf
-            )
+            output_tensor = TileTensor(output_buf, vector_layout)
 
             print("Input array: [0, 1, 2, 3]")
             print("Computing sliding window sums (window size = 3)...")
@@ -216,13 +214,11 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i + 1)
 
-            # Create LayoutTensors
-            input_tensor = LayoutTensor[dtype, vector_layout, ImmutAnyOrigin](
-                input_buf
+            # Create TileTensors
+            input_tensor = TileTensor[mut=False, dtype, VectorLayout](
+                input_buf, vector_layout
             )
-            output_tensor = LayoutTensor[dtype, vector_layout, MutAnyOrigin](
-                output_buf
-            )
+            output_tensor = TileTensor(output_buf, vector_layout)
 
             print("Input array: [1, 2, 3, 4]")
             print("Applying collaborative filter using shared memory...")

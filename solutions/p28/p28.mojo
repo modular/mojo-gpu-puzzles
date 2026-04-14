@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import async_copy_wait_all, AddressSpace
-from layout import Layout, LayoutTensor
+from layout import Layout, LayoutTensor, TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_equal, assert_almost_equal
@@ -17,16 +19,18 @@ comptime BLOCKS_PER_GRID_ASYNC = (
 ) // CONV_TILE_SIZE
 comptime THREADS_PER_BLOCK_ASYNC = 256
 comptime dtype = DType.float32
-comptime layout_async = Layout.row_major(VECTOR_SIZE)
+comptime layout_async = row_major[VECTOR_SIZE]()
+comptime AsyncLayoutType = type_of(layout_async)
+comptime kernel_layout = Layout.row_major(KERNEL_SIZE)
 
 
 # ANCHOR: async_copy_overlap_convolution_solution
 def async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
+    dtype: DType
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -52,7 +56,7 @@ def async_copy_overlap_convolution[
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -68,8 +72,8 @@ def async_copy_overlap_convolution[
 
     # Phase 4: Compute convolution
     var global_i = block_idx.x * CONV_TILE_SIZE + local_i
-    if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
-        var result: output.element_type = 0
+    if local_i < CONV_TILE_SIZE and global_i < Int(output.dim[0]()):
+        var result: output.ElementType = 0
 
         # Simple convolution avoiding boundary issues
         if local_i >= HALO_SIZE and local_i < CONV_TILE_SIZE - HALO_SIZE:
@@ -77,10 +81,12 @@ def async_copy_overlap_convolution[
             for k in range(KERNEL_SIZE):
                 var input_idx = local_i + k - HALO_SIZE
                 if input_idx >= 0 and input_idx < CONV_TILE_SIZE:
-                    result += input_shared[input_idx] * kernel_shared[k]
+                    result += rebind[Scalar[dtype]](
+                        input_shared[input_idx]
+                    ) * rebind[Scalar[dtype]](kernel_shared[k])
         else:
             # For boundary elements, just copy input (no convolution)
-            result = input_shared[local_i]
+            result = rebind[Scalar[dtype]](input_shared[local_i])
 
         output[global_i] = result
 
@@ -108,17 +114,17 @@ def test_async_copy_overlap_convolution() raises:
             for i in range(KERNEL_SIZE):
                 kernel_host[i] = Scalar[dtype](i + 1)
 
-        var input_tensor = LayoutTensor[dtype, layout_async, ImmutAnyOrigin](
-            input_buf
+        var input_tensor = TileTensor[mut=False, dtype, AsyncLayoutType](
+            input_buf, layout_async
         )
-        var output_tensor = LayoutTensor[dtype, layout_async, MutAnyOrigin](
-            output_buf
+        var output_tensor = TileTensor[mut=True, dtype, AsyncLayoutType](
+            output_buf, layout_async
         )
-        var kernel_tensor = LayoutTensor[
-            mut=False, dtype, Layout.row_major(KERNEL_SIZE)
-        ](kernel_buf)
+        var kernel_tensor = LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin](
+            kernel_buf
+        )
 
-        comptime kernel = async_copy_overlap_convolution[dtype, layout_async]
+        comptime kernel = async_copy_overlap_convolution[dtype]
         ctx.enqueue_function[kernel, kernel](
             output_tensor,
             input_tensor,

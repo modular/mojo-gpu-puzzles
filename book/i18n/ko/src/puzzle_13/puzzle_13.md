@@ -2,14 +2,14 @@
 
 # Puzzle 13: 1D 합성곱
 
-> ## LayoutTensor로 전환하기
+> ## TileTensor로 전환하기
 >
 > 지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께 살펴보았습니다:
 >
 > 1. [UnsafePointer](https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/)를 사용한 포인터 직접 조작 방식의 raw 메모리 관리
-> 2. 강력한 `address_space` 파라미터로 메모리를 할당하는, 보다 구조화된 [LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)
+> 2. 강력한 `address_space` 파라미터로 메모리를 할당하는, 보다 구조화된 [TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)
 >
-> 이 퍼즐부터는 `LayoutTensor`로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을 제공합니다:
+> 이 퍼즐부터는 `TileTensor`로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을 제공합니다:
 >
 > - 타입 안전한 메모리 접근 패턴
 > - 데이터 레이아웃의 명확한 표현
@@ -24,7 +24,7 @@
 
 신호 처리와 이미지 분석에서 합성곱(convolution)은 두 시퀀스를 결합해 새로운 시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 커널을 슬라이딩하면서 각 출력 원소를 계산하는 1D 합성곱을 GPU에서 구현해 봅니다.
 
-`LayoutTensor` 추상화를 사용하여 벡터 `a`와 벡터 `b`의 1D 합성곱을 계산하고, 결과를 `output`에 저장하는 커널을 구현하세요.
+`TileTensor` 추상화를 사용하여 벡터 `a`와 벡터 `b`의 1D 합성곱을 계산하고, 결과를 `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다._
 
@@ -47,9 +47,9 @@ for i in range(SIZE):
 이 퍼즐은 단계적으로 이해를 쌓아갈 수 있도록 두 파트로 나뉩니다:
 
 - [🔰 기본 버전](./simple.md)
-  여기서부터 시작하세요. 단일 블록에서 LayoutTensor와 공유 메모리를 활용한 합성곱 구현의 기초를 익힙니다.
+  여기서부터 시작하세요. 단일 블록에서 TileTensor와 공유 메모리를 활용한 합성곱 구현의 기초를 익힙니다.
 
 - [⭐ 블록 경계 버전](./block_boundary.md)
-  이어서 블록 경계를 넘어 데이터를 공유해야 하는 더 까다로운 경우에 도전합니다. LayoutTensor의 기능을 본격적으로 활용합니다.
+  이어서 블록 경계를 넘어 데이터를 공유해야 하는 더 까다로운 경우에 도전합니다. TileTensor의 기능을 본격적으로 활용합니다.
 
 각 버전은 메모리 접근 패턴과 스레드 간 협력 측면에서 서로 다른 도전 과제를 제시합니다. 기본 버전에서 합성곱 연산의 원리를 익힌 다음, 블록 경계 버전에서는 실제 GPU 프로그래밍에서 마주치는 복잡한 상황을 다루는 능력을 시험해 봅니다.

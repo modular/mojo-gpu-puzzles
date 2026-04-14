@@ -2,7 +2,7 @@
 
 # 단일 블록을 사용한 기본 버전
 
-1D LayoutTensor `a`와 1D LayoutTensor `b`의 1D 합성곱을 계산하여 1D LayoutTensor `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`와 1D TileTensor `b`의 1D 합성곱을 계산하여 1D TileTensor `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다._
 
@@ -43,7 +43,7 @@
 
 <div class="solution-tips">
 
-1. `LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`으로 공유 메모리 할당
+1. `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())`으로 공유 메모리 할당
 2. 입력을 `shared_a[local_i]`에, 커널을 `shared_b[local_i]`에 로드
 3. 데이터 로드 후 `barrier()` 호출
 4. 경계 안에서 곱을 합산: `if local_i + j < SIZE`
@@ -179,7 +179,7 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
    - `var`와 `output.element_type`으로 적절한 타입 추론
    - `@parameter` 데코레이터로 합성곱 루프를 컴파일 타임에 전개
    - 엄격한 경계 검사로 메모리 안전성 확보
-   - LayoutTensor의 타입 시스템으로 코드 안전성 향상
+   - TileTensor의 타입 시스템으로 코드 안전성 향상
 
 3. **메모리 관리**:
    - 입력 배열과 커널 모두 공유 메모리 사용

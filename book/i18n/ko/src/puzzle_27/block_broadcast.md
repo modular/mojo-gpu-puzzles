@@ -27,7 +27,7 @@
 - 데이터 타입: `DType.float32`
 - 블록 구성: `(128, 1)` 블록당 스레드 수 (`TPB = 128`)
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
-- 레이아웃: `Layout.row_major(SIZE)` (입력과 출력 모두 1D row-major)
+- 레이아웃: `row_major[SIZE]()` (입력과 출력 모두 1D row-major)
 - 테스트 데이터: 1-8 반복 값, 평균 = 4.5
 - 예상 출력: 평균이 1.0인 정규화된 벡터
 
@@ -102,7 +102,7 @@ output[global_i] = my_value / mean
 
 ### 2. **데이터 로딩과 합계 계산 (익숙한 패턴)**
 
-기존 LayoutTensor 패턴으로 요소를 로드합니다:
+기존 TileTensor 패턴으로 요소를 로드합니다:
 
 ```mojo
 var my_value: Scalar[dtype] = 0.0
@@ -257,7 +257,7 @@ Output mean: 1.0
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 입력 배열 위치에 매핑
   local_i = thread_idx.x                              // 블록 내 위치 (0-127)
 
-LayoutTensor 패턴을 사용한 병렬 요소 로딩:
+TileTensor 패턴을 사용한 병렬 요소 로딩:
   스레드 0:   my_value = input_data[0][0] = 1.0    // 첫 번째 순환 값
   스레드 1:   my_value = input_data[1][0] = 2.0    // 두 번째 순환 값
   스레드 7:   my_value = input_data[7][0] = 8.0    // 마지막 순환 값
@@ -375,10 +375,10 @@ block.broadcast() 실행 후:
 알고리즘이 증명 가능하게 올바른 수학적 결과를 생성합니다.
 ```
 
-### **[Puzzle 12](../puzzle_12/layout_tensor.md) (기초 패턴)과의 연결:**
+### **[Puzzle 12](../puzzle_12/tile_tensor.md) (기초 패턴)과의 연결:**
 
 - **스레드 조율의 진화**: 동일한 `global_i`, `local_i` 패턴이지만 블록 기본 요소 사용
-- **메모리 접근 패턴**: 동일한 LayoutTensor SIMD 추출 `[0]`이지만 최적화된 워크플로우
+- **메모리 접근 패턴**: 동일한 TileTensor SIMD 추출 `[0]`이지만 최적화된 워크플로우
 - **복잡성 제거**: 20줄 이상의 수동 배리어를 2개의 블록 연산으로 대체
 - **교육적 진행**: 수동 → 자동, 복잡 → 단순, 오류 발생 가능 → 신뢰성
 
@@ -457,7 +457,7 @@ block.broadcast() 실행 후:
 
 **완전한 블록 연산 진행:**
 
-1. **수동 조율** ([Puzzle 12](../puzzle_12/layout_tensor.md)): 병렬 기초 이해
+1. **수동 조율** ([Puzzle 12](../puzzle_12/tile_tensor.md)): 병렬 기초 이해
 2. **워프 기본 요소** ([Puzzle 24](../puzzle_24/warp_sum.md)): 하드웨어 가속 패턴 학습
 3. **블록 리덕션** ([`block.sum()`](./block_sum.md)): 전체→하나 통신 학습
 4. **블록 스캔** ([`block.prefix_sum()`](./block_prefix_sum.md)): 전체→각각 통신 학습

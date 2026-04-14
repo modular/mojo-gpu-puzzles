@@ -37,7 +37,7 @@
 - **블록 설정**: `TPB = 256` 블록당 스레드 수 `(256, 1)`
 - **그리드 설정**: `CLUSTER_SIZE = 4` 클러스터당 블록 수 `(4, 1)`
 - **데이터 타입**: `DType.float32`
-- **메모리 레이아웃**: 입력 `Layout.row_major(SIZE)`, 출력 `Layout.row_major(CLUSTER_SIZE)`
+- **메모리 레이아웃**: 입력 `row_major[SIZE]()`, 출력 `row_major[CLUSTER_SIZE]()`
 
 **스레드 블록 분배:**
 
@@ -67,7 +67,7 @@
 
 ### **공유 메모리 조정**
 
-- `LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`으로 공유 메모리를 할당합니다 ([Puzzle 8의 공유 메모리 기초](../puzzle_08/puzzle_08.md) 참고)
+- `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())`으로 공유 메모리를 할당합니다 ([Puzzle 8의 공유 메모리 기초](../puzzle_08/puzzle_08.md) 참고)
 - `block_id + 1`로 스케일링하여 블록마다 고유한 스케일링을 적용합니다
 - 입력 데이터 접근 시 경계 검사를 사용합니다 ([Puzzle 3의 가드 패턴](../puzzle_03/puzzle_03.md))
 
@@ -155,7 +155,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 
 **공유 메모리 할당 및 데이터 처리:**
 
-- 각 블록이 자체 공유 메모리 작업 공간을 할당합니다: `LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()`
+- 각 블록이 자체 공유 메모리 작업 공간을 할당합니다: `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())`
 - **스케일링 전략**: `data_scale = Float32(block_id + 1)`로 각 블록이 다르게 데이터를 처리하도록 합니다
   - Block 0: 1.0배, Block 1: 2.0배, Block 2: 3.0배, Block 3: 4.0배
 - **경계 검사**: `if global_i < size:`로 범위 밖 메모리 접근을 방지합니다

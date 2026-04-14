@@ -1,7 +1,9 @@
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -11,33 +13,28 @@ comptime CONV = 3
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(SIZE)
-comptime conv_layout = Layout.row_major(CONV)
+comptime in_layout = row_major[SIZE]()
+comptime out_layout = row_major[SIZE]()
+comptime conv_layout = row_major[CONV]()
+comptime InLayout = type_of(in_layout)
+comptime OutLayout = type_of(out_layout)
+comptime ConvLayout = type_of(conv_layout)
 
 
 # ANCHOR: conv_1d_simple_solution
-def conv_1d_simple[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV]())
     if global_i < SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -58,8 +55,8 @@ def conv_1d_simple[
     # Safe and correct:
     if global_i < SIZE:
         # Note: using `var` allows us to include the type in the type inference
-        # `out.element_type` is available in LayoutTensor
-        var local_sum: output.element_type = 0
+        # `out.ElementType` is available in TileTensor
+        var local_sum: output.ElementType = 0
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
@@ -77,34 +74,29 @@ comptime SIZE_2 = 15
 comptime CONV_2 = 4
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (TPB, 1)
-comptime in_2_layout = Layout.row_major(SIZE_2)
-comptime out_2_layout = Layout.row_major(SIZE_2)
-comptime conv_2_layout = Layout.row_major(CONV_2)
+comptime in_2_layout = row_major[SIZE_2]()
+comptime out_2_layout = row_major[SIZE_2]()
+comptime conv_2_layout = row_major[CONV_2]()
+comptime In2Layout = type_of(in_2_layout)
+comptime Out2Layout = type_of(out_2_layout)
+comptime Conv2Layout = type_of(conv_2_layout)
 
 
 # ANCHOR: conv_1d_block_boundary_solution
-def conv_1d_block_boundary[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+def conv_1d_block_boundary(
+    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB + CONV_2 - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_2),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + CONV_2 - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV_2]())
     if global_i < SIZE_2:
         shared_a[local_i] = a[global_i]
     else:
@@ -127,7 +119,7 @@ def conv_1d_block_boundary[
     barrier()
 
     if global_i < SIZE_2:
-        var local_sum: output.element_type = 0
+        var local_sum: output.ElementType = 0
 
         comptime for j in range(CONV_2):
             if global_i + j < SIZE_2:
@@ -158,11 +150,12 @@ def main() raises:
                 b_host[i] = Scalar[dtype](i)
 
         if argv()[1] == "--simple":
-            var out_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](out)
-            var a_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](a)
-            var b_tensor = LayoutTensor[dtype, conv_layout, ImmutAnyOrigin](b)
-            comptime kernel = conv_1d_simple[in_layout, out_layout, conv_layout]
-            ctx.enqueue_function[kernel, kernel](
+            var out_tensor = TileTensor(out, out_layout)
+            var a_tensor = TileTensor[mut=False, dtype, InLayout](a, in_layout)
+            var b_tensor = TileTensor[mut=False, dtype, ConvLayout](
+                b, conv_layout
+            )
+            ctx.enqueue_function[conv_1d_simple, conv_1d_simple](
                 out_tensor,
                 a_tensor,
                 b_tensor,
@@ -170,15 +163,16 @@ def main() raises:
                 block_dim=THREADS_PER_BLOCK,
             )
         elif argv()[1] == "--block-boundary":
-            var out_tensor = LayoutTensor[dtype, out_2_layout, MutAnyOrigin](
-                out
+            var out_tensor = TileTensor(out, out_2_layout)
+            var a_tensor = TileTensor[mut=False, dtype, In2Layout](
+                a, in_2_layout
             )
-            var a_tensor = LayoutTensor[dtype, in_2_layout, ImmutAnyOrigin](a)
-            var b_tensor = LayoutTensor[dtype, conv_2_layout, ImmutAnyOrigin](b)
-            comptime kernel = conv_1d_block_boundary[
-                in_2_layout, out_2_layout, conv_2_layout, dtype
-            ]
-            ctx.enqueue_function[kernel, kernel](
+            var b_tensor = TileTensor[mut=False, dtype, Conv2Layout](
+                b, conv_2_layout
+            )
+            ctx.enqueue_function[
+                conv_1d_block_boundary, conv_1d_block_boundary
+            ](
                 out_tensor,
                 a_tensor,
                 b_tensor,

@@ -1,7 +1,9 @@
-from std.memory import UnsafePointer, stack_allocation
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
 comptime TPB = 8
@@ -9,37 +11,33 @@ comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
+comptime layout = row_major[SIZE]()
+comptime out_layout = row_major[1]()
+comptime LayoutType = type_of(layout)
+comptime OutLayout = type_of(out_layout)
 
 
 # ANCHOR: dot_product_solution
 def dot_product(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
+
+    # Compute element-wise multiplication into shared memory
     if global_i < size:
         shared[local_i] = a[global_i] * b[global_i]
 
+    # Synchronize threads within block
     barrier()
 
-    # The following causes race condition: all threads writing to the same location
-    # out[0] += shared[local_i]
-
-    # Instead can do parallel reduction in shared memory as opposed to
-    # global memory which has no guarantee on synchronization.
-    # Loops using global memory can cause thread divergence because
-    # fundamentally GPUs execute threads in warps (groups of 32 threads typically)
-    # and warps can be scheduled independently.
-    # However, shared memory does not have such issues as long as we use `barrier()`
-    # correctly when we're in the same thread block.
+    # Parallel reduction in shared memory
     var stride = TPB // 2
     while stride > 0:
         if local_i < stride:
@@ -48,7 +46,7 @@ def dot_product(
         barrier()
         stride //= 2
 
-    # only thread 0 writes the final result
+    # Only thread 0 writes the final result
     if local_i == 0:
         output[0] = shared[0]
 
@@ -64,15 +62,20 @@ def main() raises:
         a.enqueue_fill(0)
         var b = ctx.enqueue_create_buffer[dtype](SIZE)
         b.enqueue_fill(0)
+
         with a.map_to_host() as a_host, b.map_to_host() as b_host:
             for i in range(SIZE):
                 a_host[i] = Scalar[dtype](i)
                 b_host[i] = Scalar[dtype](i)
 
+        var out_tensor = TileTensor(out, out_layout)
+        var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
+        var b_tensor = TileTensor[mut=False, dtype, LayoutType](b, layout)
+
         ctx.enqueue_function[dot_product, dot_product](
-            out,
-            a,
-            b,
+            out_tensor,
+            a_tensor,
+            b_tensor,
             SIZE,
             grid_dim=BLOCKS_PER_GRID,
             block_dim=THREADS_PER_BLOCK,
@@ -80,7 +83,6 @@ def main() raises:
 
         var expected = ctx.enqueue_create_host_buffer[dtype](1)
         expected.enqueue_fill(0)
-
         ctx.synchronize()
 
         with a.map_to_host() as a_host, b.map_to_host() as b_host:

@@ -42,8 +42,8 @@ Our GPU implementation uses parallel reduction for both finding the maximum valu
 
 Layout configuration:
 
-- Input tensor: `Layout.row_major(SIZE)`
-- Output tensor: `Layout.row_major(SIZE)`
+- Input tensor: `row_major[SIZE]()`
+- Output tensor: `row_major[SIZE]()`
 - Custom op parameters: `{"input_size": input_tensor.shape[0]}`
 
 Key aspects of this puzzle include:
@@ -257,8 +257,8 @@ def softmax_gpu_kernel[
     input_size: Int,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[mut=True, dtype, layout],
-    input: LayoutTensor[mut=False, dtype, layout],
+    output: TileTensor[mut=True, dtype, layout],
+    input: TileTensor[mut=False, dtype, layout],
 )
 ```
 
@@ -273,8 +273,8 @@ The kernel is parameterized with:
 #### Shared memory allocation
 
 ```mojo
-shared_max = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_sum = LayoutTensor[dtype, Layout.row_major(BLOCK_DIM_X), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_max = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
+shared_sum = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[BLOCK_DIM_X]())
 ```
 
 The kernel allocates two shared memory buffers:

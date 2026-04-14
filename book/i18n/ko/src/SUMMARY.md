@@ -12,23 +12,17 @@
 
 - [Puzzle 1: Map](./puzzle_01/puzzle_01.md)
   - [🔰 원시 메모리 방식](./puzzle_01/raw.md)
-  - [💡 미리보기: LayoutTensor를 활용한 현대적 방식](./puzzle_01/layout_tensor_preview.md)
+  - [💡 미리보기: TileTensor를 활용한 현대적 방식](./puzzle_01/tile_tensor_preview.md)
 - [Puzzle 2: Zip](./puzzle_02/puzzle_02.md)
 - [Puzzle 3: 가드](./puzzle_03/puzzle_03.md)
 - [Puzzle 4: 2D Map](./puzzle_04/puzzle_04.md)
   - [🔰 원시 메모리 방식](./puzzle_04/raw.md)
-  - [📚 LayoutTensor 알아보기](./puzzle_04/introduction_layout_tensor.md)
-  - [🚀 현대적 2D 연산](./puzzle_04/layout_tensor.md)
+  - [📚 TileTensor 알아보기](./puzzle_04/introduction_tile_tensor.md)
+  - [🚀 현대적 2D 연산](./puzzle_04/tile_tensor.md)
 - [Puzzle 5: 브로드캐스트](./puzzle_05/puzzle_05.md)
-  - [🔰 원시 메모리 방식](./puzzle_05/raw.md)
-  - [📐 LayoutTensor 버전](./puzzle_05/layout_tensor.md)
 - [Puzzle 6: 블록](./puzzle_06/puzzle_06.md)
 - [Puzzle 7: 2D 블록](./puzzle_07/puzzle_07.md)
-  - [🔰 원시 메모리 방식](./puzzle_07/raw.md)
-  - [📐 LayoutTensor 버전](./puzzle_07/layout_tensor.md)
 - [Puzzle 8: 공유 메모리](./puzzle_08/puzzle_08.md)
-  - [🔰 원시 메모리 방식](./puzzle_08/raw.md)
-  - [📐 LayoutTensor 버전](./puzzle_08/layout_tensor.md)
 
 # Part II: 🐞 GPU 프로그램 디버깅
 
@@ -44,11 +38,7 @@
 # Part III: 🧮 GPU 알고리즘
 
 - [Puzzle 11: 풀링](./puzzle_11/puzzle_11.md)
-  - [🔰 원시 메모리 방식](./puzzle_11/raw.md)
-  - [📐 LayoutTensor 버전](./puzzle_11/layout_tensor.md)
 - [Puzzle 12: 내적](./puzzle_12/puzzle_12.md)
-  - [🔰 원시 메모리 방식](./puzzle_12/raw.md)
-  - [📐 LayoutTensor 버전](./puzzle_12/layout_tensor.md)
 - [Puzzle 13: 1D 합성곱](./puzzle_13/puzzle_13.md)
   - [🔰 기본 버전](./puzzle_13/simple.md)
   - [⭐ 블록 경계 버전](./puzzle_13/block_boundary.md)

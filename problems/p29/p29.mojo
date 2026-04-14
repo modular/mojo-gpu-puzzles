@@ -9,7 +9,9 @@ from std.gpu.sync import (
 )
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace, async_copy_wait_all
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from layout.layout_tensor import copy_dram_to_sram_async
 from std.sys import argv, info
 from std.testing import assert_true, assert_almost_equal
@@ -21,7 +23,8 @@ comptime SIZE = 1024  # Image size (1D for simplicity)
 comptime BLOCKS_PER_GRID = (4, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 # Multi-stage processing configuration
 comptime STAGE1_THREADS = TPB // 2
@@ -29,11 +32,9 @@ comptime STAGE2_THREADS = TPB // 2
 comptime BLUR_RADIUS = 2
 
 
-def multi_stage_image_blur_pipeline[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def multi_stage_image_blur_pipeline(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -44,18 +45,12 @@ def multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var blur_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var blur_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -88,11 +83,9 @@ comptime STENCIL_ITERATIONS = 3
 comptime BUFFER_COUNT = 2
 
 
-def double_buffered_stencil_computation[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def double_buffered_stencil_computation(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -102,38 +95,23 @@ def double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var buffer_B = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var buffer_A = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var buffer_B = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var iter_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var final_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var init_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var iter_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var final_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -205,11 +183,13 @@ def test_multi_stage_pipeline() raises:
                 # Create a simple wave pattern for blurring
                 inp_host[i] = Scalar[dtype](i % 10) + Scalar[dtype](i) / 100.0
 
-        # Create LayoutTensors
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        # Create TileTensors
+        var out_tensor = TileTensor(out, layout)
+        var inp_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](inp, layout)
 
-        comptime kernel = multi_stage_image_blur_pipeline[layout]
+        comptime kernel = multi_stage_image_blur_pipeline
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             inp_tensor,
@@ -267,11 +247,13 @@ def test_double_buffered_stencil() raises:
                 # Create a step pattern that will be smoothed by stencil
                 inp_host[i] = Scalar[dtype](1.0 if i % 20 < 10 else 0.0)
 
-        # Create LayoutTensors for Puzzle 29B
-        var out_tensor = LayoutTensor[dtype, layout, MutAnyOrigin](out)
-        var inp_tensor = LayoutTensor[dtype, layout, ImmutAnyOrigin](inp)
+        # Create TileTensors for Puzzle 29B
+        var out_tensor = TileTensor(out, layout)
+        var inp_tensor = TileTensor[
+            mut=False, dtype, LayoutType, ImmutAnyOrigin
+        ](inp, layout)
 
-        comptime kernel = double_buffered_stencil_computation[layout]
+        comptime kernel = double_buffered_stencil_computation
         ctx.enqueue_function[kernel, kernel](
             out_tensor,
             inp_tensor,

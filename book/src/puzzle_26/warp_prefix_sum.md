@@ -26,7 +26,7 @@ This transforms multi-phase shared memory algorithms into elegant single-functio
 - Grid configuration: `(1, 1)` blocks per grid
 - Block configuration: `(WARP_SIZE, 1)` threads per block
 - Data type: `DType.float32`
-- Layout: `Layout.row_major(SIZE)` (1D row-major)
+- Layout: `row_major[SIZE]()` (1D row-major)
 
 ### The `prefix_sum` advantage
 

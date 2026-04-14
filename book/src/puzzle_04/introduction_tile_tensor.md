@@ -1,9 +1,9 @@
-# Introduction to LayoutTensor
+# Introduction to TileTensor
 
 Let's take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
-🥁 ... the **[LayoutTensor](https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/)**.
+🥁 ... the **[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)**.
 
-> 💡 _This is a motivational overview of LayoutTensor's capabilities. Don't worry about understanding everything now - we'll explore each feature in depth as we progress through the puzzles_.
+> 💡 _This is a motivational overview of TileTensor's capabilities. Don't worry about understanding everything now - we'll explore each feature in depth as we progress through the puzzles_.
 
 ## The challenge: Growing complexity
 
@@ -30,9 +30,9 @@ if row < height and col < width:
     output[idx] = a[idx] + 10.0
 ```
 
-## The solution: A peek at LayoutTensor
+## The solution: A peek at TileTensor
 
-LayoutTensor will help us tackle these challenges with elegant solutions. Here's a glimpse of what's coming:
+TileTensor will help us tackle these challenges with elegant solutions. Here's a glimpse of what's coming:
 
 1. **Natural Indexing**: Use `tensor[i, j]` instead of manual offset calculations
 2. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled organizations
@@ -40,34 +40,36 @@ LayoutTensor will help us tackle these challenges with elegant solutions. Here's
 
 ## A taste of what's ahead
 
-Let's look at a few examples of what LayoutTensor can do. Don't worry about understanding all the details now - we'll cover each feature thoroughly in upcoming puzzles.
+Let's look at a few examples of what TileTensor can do. Don't worry about understanding all the details now - we'll cover each feature thoroughly in upcoming puzzles.
 
 ### Basic usage example
 
 ```mojo
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
 
 # Define layout
 comptime HEIGHT = 2
 comptime WIDTH = 3
-comptime layout = Layout.row_major(HEIGHT, WIDTH)
+comptime layout = row_major[HEIGHT, WIDTH]()
+comptime LayoutType = type_of(layout)
 
 # Create tensor
-tensor = LayoutTensor[dtype, layout](buffer.unsafe_ptr())
+tensor = TileTensor(buffer, layout)
 
 # Access elements naturally
 tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 ```
 
-To learn more about `Layout` and `LayoutTensor`, see these guides from the [Mojo manual](https://docs.modular.com/mojo/manual/)
+To learn more about `Layout` and `TileTensor`, see these guides from the [Mojo manual](https://docs.modular.com/mojo/manual/)
 
 - [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
-- [Using LayoutTensor](https://docs.modular.com/mojo/manual/layout/tensors)
+- [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
 
 ## Quick example
 
-Let's put everything together with a simple example that demonstrates the basics of LayoutTensor:
+Let's put everything together with a simple example that demonstrates the basics of TileTensor:
 
 ```mojo
 {{#include ./intro.mojo}}
@@ -85,28 +87,28 @@ When we run this code with:
   <div class="tab-content">
 
 ```bash
-pixi run layout_tensor_intro
+pixi run tile_tensor_intro
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd layout_tensor_intro
+pixi run -e amd tile_tensor_intro
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple layout_tensor_intro
+pixi run -e apple tile_tensor_intro
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe layout_tensor_intro
+uv run poe tile_tensor_intro
 ```
 
   </div>
@@ -128,7 +130,7 @@ Let's break down what's happening:
 3. Using natural indexing, we modify a single element
 4. The change is reflected in our output
 
-This simple example demonstrates key LayoutTensor benefits:
+This simple example demonstrates key TileTensor benefits:
 
 - Clean syntax for tensor creation and access
 - Automatic memory layout handling
@@ -141,6 +143,6 @@ While this example is straightforward, the same patterns will scale to complex G
 - Complex tiling strategies
 - Hardware-accelerated computations
 
-Ready to start your GPU programming journey with LayoutTensor? Let's dive into the puzzles!
+Ready to start your GPU programming journey with TileTensor? Let's dive into the puzzles!
 
 💡 **Tip**: Keep this example in mind as we progress - we'll build upon these fundamental concepts to create increasingly sophisticated GPU programs.

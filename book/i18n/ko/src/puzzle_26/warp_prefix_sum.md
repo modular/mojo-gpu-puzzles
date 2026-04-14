@@ -28,7 +28,7 @@
 - 그리드 구성: `(1, 1)` 그리드당 블록 수
 - 블록 구성: `(WARP_SIZE, 1)` 블록당 스레드 수
 - 데이터 타입: `DType.float32`
-- 레이아웃: `Layout.row_major(SIZE)` (1D row-major)
+- 레이아웃: `row_major[SIZE]()` (1D row-major)
 
 ### prefix_sum의 이점
 

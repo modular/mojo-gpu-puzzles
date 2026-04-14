@@ -178,9 +178,9 @@ Total: 4×2 = 8 warps, each handling 32×32 output region
 
 레이아웃 설정:
 
-- 입력 A: `Layout.row_major(SIZE, SIZE)`
-- 입력 B: `Layout.row_major(SIZE, SIZE)`
-- 출력 C: `Layout.row_major(SIZE, SIZE)`
+- 입력 A: `row_major[SIZE, SIZE]()`
+- 입력 B: `row_major[SIZE, SIZE]()`
+- 출력 C: `row_major[SIZE, SIZE]()`
 - 공유 메모리: 비동기 복사 연산을 사용하는 블록 크기 타일
 
 ## 도전 과제

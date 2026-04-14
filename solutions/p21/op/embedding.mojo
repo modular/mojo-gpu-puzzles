@@ -1,7 +1,8 @@
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
 from std.gpu.host import DeviceContext
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major, TensorLayout
 from std.sys import argv
 from std.testing import assert_equal
 
@@ -10,18 +11,18 @@ comptime THREADS_PER_BLOCK = 256
 
 # ANCHOR: embedding_kernel_coalesced_solution
 def embedding_kernel_coalesced[
-    indices_layout: Layout,
-    weights_layout: Layout,
-    out_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     vocab_size: Int,
     embed_dim: Int,
+    OutLayout: TensorLayout,
+    IndicesLayout: TensorLayout,
+    WeightsLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     Memory-coalescing focused embedding kernel.
@@ -39,6 +40,10 @@ def embedding_kernel_coalesced[
     if global_idx >= total_elements:
         return
 
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
+
     # Convert to (batch, seq, embed) coordinates
     var batch_idx = global_idx // (seq_len * embed_dim)
     var remaining = global_idx % (seq_len * embed_dim)
@@ -46,15 +51,15 @@ def embedding_kernel_coalesced[
     var embed_idx = remaining % embed_dim
 
     # Get token index
-    var token_idx_val = Int(indices[batch_idx, seq_idx])
+    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
 
     # Simple, correct assignment
     if token_idx_val >= 0 and token_idx_val < vocab_size:
-        output[batch_idx, seq_idx, embed_idx] = weights[
+        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
             token_idx_val, embed_idx
         ]
     else:
-        output[batch_idx, seq_idx, embed_idx] = 0
+        output_lt[batch_idx, seq_idx, embed_idx] = 0
 
 
 # ANCHOR_END: embedding_kernel_coalesced_solution
@@ -62,18 +67,18 @@ def embedding_kernel_coalesced[
 
 # ANCHOR: embedding_kernel_2d_solution
 def embedding_kernel_2d[
-    indices_layout: Layout,
-    weights_layout: Layout,
-    out_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     vocab_size: Int,
     embed_dim: Int,
+    OutLayout: TensorLayout,
+    IndicesLayout: TensorLayout,
+    WeightsLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    indices: LayoutTensor[DType.int32, indices_layout, MutAnyOrigin],
-    weights: LayoutTensor[dtype, weights_layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    indices: TileTensor[mut=True, DType.int32, IndicesLayout, MutAnyOrigin],
+    weights: TileTensor[mut=True, dtype, WeightsLayout, MutAnyOrigin],
 ):
     """
     2D grid non-coalesced embedding kernel.
@@ -94,20 +99,24 @@ def embedding_kernel_2d[
     if batch_seq_idx >= total_positions or embed_idx >= embed_dim:
         return
 
+    var output_lt = output.to_layout_tensor()
+    var indices_lt = indices.to_layout_tensor()
+    var weights_lt = weights.to_layout_tensor()
+
     # Convert to (batch, seq) coordinates
     var batch_idx = batch_seq_idx // seq_len
     var seq_idx = batch_seq_idx % seq_len
 
     # Get token index
-    var token_idx_val = Int(indices[batch_idx, seq_idx])
+    var token_idx_val = Int(indices_lt[batch_idx, seq_idx])
 
     # Assignment with 2D grid pattern
     if token_idx_val >= 0 and token_idx_val < vocab_size:
-        output[batch_idx, seq_idx, embed_idx] = weights[
+        output_lt[batch_idx, seq_idx, embed_idx] = weights_lt[
             token_idx_val, embed_idx
         ]
     else:
-        output[batch_idx, seq_idx, embed_idx] = 0
+        output_lt[batch_idx, seq_idx, embed_idx] = 0
 
 
 # ANCHOR_END: embedding_kernel_2d_solution
@@ -141,13 +150,22 @@ struct EmbeddingCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        var output_tensor = output.to_layout_tensor()
-        var indices_tensor = indices.to_layout_tensor()
-        var weights_tensor = weights.to_layout_tensor()
+        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime indices_layout_val = row_major[batch_size, seq_len]()
+        comptime IndicesLayout = type_of(indices_layout_val)
+        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
+        comptime WeightsLayout = type_of(weights_layout_val)
 
-        comptime indices_layout = indices_tensor.layout
-        comptime weights_layout = weights_tensor.layout
-        comptime out_layout = output_tensor.layout
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -156,7 +174,7 @@ struct EmbeddingCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     batch_size * seq_len * embed_dim,
                     owning=False,
                 ),
@@ -169,13 +187,13 @@ struct EmbeddingCustomOp:
 
             # Compile and launch optimized kernel
             comptime kernel = embedding_kernel_coalesced[
-                indices_layout,
-                weights_layout,
-                out_layout,
                 batch_size,
                 seq_len,
                 vocab_size,
                 embed_dim,
+                OutLayout,
+                IndicesLayout,
+                WeightsLayout,
                 output.dtype,
             ]
             var compiled_kernel = gpu_ctx.compile_function[kernel, kernel]()
@@ -227,13 +245,22 @@ struct Embedding2DCustomOp:
         ],  # [vocab_size, embed_dim]
         ctx: DeviceContextPtr,
     ) raises:
-        var output_tensor = output.to_layout_tensor()
-        var indices_tensor = indices.to_layout_tensor()
-        var weights_tensor = weights.to_layout_tensor()
+        comptime out_layout_val = row_major[batch_size, seq_len, embed_dim]()
+        comptime OutLayout = type_of(out_layout_val)
+        comptime indices_layout_val = row_major[batch_size, seq_len]()
+        comptime IndicesLayout = type_of(indices_layout_val)
+        comptime weights_layout_val = row_major[vocab_size, embed_dim]()
+        comptime WeightsLayout = type_of(weights_layout_val)
 
-        comptime indices_layout = indices_tensor.layout
-        comptime weights_layout = weights_tensor.layout
-        comptime out_layout = output_tensor.layout
+        var output_tensor = TileTensor[
+            mut=True, output.dtype, OutLayout, MutAnyOrigin
+        ](output.unsafe_ptr(), out_layout_val)
+        var indices_tensor = TileTensor[
+            mut=True, DType.int32, IndicesLayout, MutAnyOrigin
+        ](indices.unsafe_ptr(), indices_layout_val)
+        var weights_tensor = TileTensor[
+            mut=True, output.dtype, WeightsLayout, MutAnyOrigin
+        ](weights.unsafe_ptr(), weights_layout_val)
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -242,7 +269,7 @@ struct Embedding2DCustomOp:
             gpu_ctx.enqueue_memset(
                 DeviceBuffer[output.dtype](
                     gpu_ctx,
-                    output_tensor.ptr,
+                    output.unsafe_ptr(),
                     batch_size * seq_len * embed_dim,
                     owning=False,
                 ),
@@ -258,13 +285,13 @@ struct Embedding2DCustomOp:
 
             # Compile and launch 2D kernel
             comptime kernel = embedding_kernel_2d[
-                indices_layout,
-                weights_layout,
-                out_layout,
                 batch_size,
                 seq_len,
                 vocab_size,
                 embed_dim,
+                OutLayout,
+                IndicesLayout,
+                WeightsLayout,
                 output.dtype,
             ]
 

@@ -8,7 +8,9 @@ from std.gpu.primitives.cluster import (
     elect_one_sync,
 )
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 from std.sys import argv
 from std.testing import assert_equal, assert_almost_equal, assert_true
 
@@ -16,16 +18,20 @@ comptime SIZE = 1024
 comptime TPB = 256
 comptime CLUSTER_SIZE = 4
 comptime dtype = DType.float32
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(1)
+comptime in_layout = row_major[SIZE]()
+comptime InLayoutType = type_of(in_layout)
+comptime out_layout = row_major[1]()
+comptime OutLayoutType = type_of(out_layout)
+comptime cluster_layout = row_major[CLUSTER_SIZE]()
+comptime ClusterLayoutType = type_of(cluster_layout)
 
 
 # ANCHOR: cluster_coordination_basics
 def cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -36,12 +42,9 @@ def cluster_coordination_basics[
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -77,13 +80,11 @@ def cluster_coordination_basics[
 
 # ANCHOR: cluster_collective_operations
 def cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
-        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-    ],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -98,10 +99,10 @@ def cluster_collective_operations[
 
 # ANCHOR: advanced_cluster_patterns
 def advanced_cluster_patterns[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -135,16 +136,12 @@ def main() raises:
                 for i in range(SIZE):
                     input_host[i] = Scalar[dtype](i % 10) * 0.1
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
-                input_buf
-            )
-            output_tensor = LayoutTensor[
-                dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-            ](output_buf)
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
+            output_tensor = TileTensor(output_buf, cluster_layout)
 
-            comptime kernel = cluster_coordination_basics[
-                in_layout, Layout.row_major(CLUSTER_SIZE), TPB
-            ]
+            comptime kernel = cluster_coordination_basics[TPB]
             ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
@@ -199,19 +196,13 @@ def main() raises:
 
             print("Expected sum:", expected_sum)
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
-                input_buf
-            )
-            var output_tensor = LayoutTensor[dtype, out_layout, MutAnyOrigin](
-                output_buf
-            )
-            var temp_tensor = LayoutTensor[
-                dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-            ](temp_buf)
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
+            var output_tensor = TileTensor(output_buf, out_layout)
+            var temp_tensor = TileTensor(temp_buf, cluster_layout)
 
-            comptime kernel = cluster_collective_operations[
-                in_layout, out_layout, TPB
-            ]
+            comptime kernel = cluster_collective_operations[TPB]
             ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,
@@ -251,16 +242,12 @@ def main() raises:
                         Scalar[dtype](i % 50) * 0.02
                     )  # Pattern for testing
 
-            input_tensor = LayoutTensor[dtype, in_layout, ImmutAnyOrigin](
-                input_buf
-            )
-            output_tensor = LayoutTensor[
-                dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-            ](output_buf)
+            input_tensor = TileTensor[
+                mut=False, dtype, InLayoutType, ImmutAnyOrigin
+            ](input_buf, in_layout)
+            output_tensor = TileTensor(output_buf, cluster_layout)
 
-            comptime kernel = advanced_cluster_patterns[
-                in_layout, Layout.row_major(CLUSTER_SIZE), TPB
-            ]
+            comptime kernel = advanced_cluster_patterns[TPB]
             ctx.enqueue_function[kernel, kernel](
                 output_tensor,
                 input_tensor,

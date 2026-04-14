@@ -4,7 +4,7 @@
 
 Prefix sum (also known as _scan_) is a fundamental parallel algorithm that computes running totals of a sequence. Found at the heart of many parallel applications - from sorting algorithms to scientific simulations - it transforms a sequence of numbers into their running totals. While simple to compute sequentially, making this efficient on a GPU requires clever parallel thinking!
 
-Implement a kernel that computes a prefix-sum over 1D LayoutTensor `a` and stores it in 1D LayoutTensor `output`.
+Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
 **Note:** _If the size of `a` is greater than the block size, only store the sum of each block._
 

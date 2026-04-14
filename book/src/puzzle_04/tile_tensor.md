@@ -1,8 +1,8 @@
-# LayoutTensor Version
+# TileTensor Version
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of 2D _LayoutTensor_ `a` and stores it in 2D _LayoutTensor_ `output`.
+Implement a kernel that adds 10 to each position of 2D _TileTensor_ `a` and stores it in 2D _TileTensor_ `output`.
 
 **Note:** _You have more threads than positions_.
 
@@ -10,13 +10,13 @@ Implement a kernel that adds 10 to each position of 2D _LayoutTensor_ `a` and st
 
 In this puzzle, you'll learn about:
 
-- Using `LayoutTensor` for 2D array access
+- Using `TileTensor` for 2D array access
 - Direct 2D indexing with `tensor[i, j]`
-- Handling bounds checking with `LayoutTensor`
+- Handling bounds checking with `TileTensor`
 
-The key insight is that `LayoutTensor` provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.
+The key insight is that `TileTensor` provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.
 
-- **2D access**: Natural \\((i,j)\\) indexing with `LayoutTensor`
+- **2D access**: Natural \\((i,j)\\) indexing with `TileTensor`
 - **Memory abstraction**: No manual row-major calculation needed
 - **Guard condition**: Still need bounds checking in both dimensions
 - **Thread bounds**: More threads \\((3 \times 3)\\) than tensor elements \\((2 \times 2)\\)
@@ -24,10 +24,10 @@ The key insight is that `LayoutTensor` provides a natural 2D indexing interface,
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor}}
+{{#include ../../../problems/p04/p04_tile_tensor.mojo:add_10_2d_tile_tensor}}
 ```
 
-<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p04/p04_layout_tensor.mojo" class="filename">View full file: problems/p04/p04_layout_tensor.mojo</a>
+<a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p04/p04_tile_tensor.mojo" class="filename">View full file: problems/p04/p04_tile_tensor.mojo</a>
 
 <details>
 <summary><strong>Tips</strong></summary>
@@ -55,28 +55,28 @@ To test your solution, run the following command in your terminal:
   <div class="tab-content">
 
 ```bash
-pixi run p04_layout_tensor
+pixi run p04_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e amd p04_layout_tensor
+pixi run -e amd p04_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-pixi run -e apple p04_layout_tensor
+pixi run -e apple p04_tile_tensor
 ```
 
   </div>
   <div class="tab-content">
 
 ```bash
-uv run poe p04_layout_tensor
+uv run poe p04_tile_tensor
 ```
 
   </div>
@@ -95,7 +95,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p04/p04_layout_tensor.mojo:add_10_2d_layout_tensor_solution}}
+{{#include ../../../solutions/p04/p04_tile_tensor.mojo:add_10_2d_tile_tensor_solution}}
 ```
 
 <div class="solution-explanation">
@@ -104,7 +104,7 @@ This solution:
 
 - Gets 2D thread indices with `row = thread_idx.y`, `col = thread_idx.x`
 - Guards against out-of-bounds with `if row < size and col < size`
-- Uses `LayoutTensor`'s 2D indexing: `output[row, col] = a[row, col] + 10.0`
+- Uses `TileTensor`'s 2D indexing: `output[row, col] = a[row, col] + 10.0`
 
 </div>
 </details>

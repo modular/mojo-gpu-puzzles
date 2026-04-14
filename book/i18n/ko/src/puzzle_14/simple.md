@@ -2,7 +2,7 @@
 
 # 기본 버전
 
-1D LayoutTensor `a`에 대해 누적 합을 계산하고 결과를 1D LayoutTensor `output`에 저장하는 커널을 구현하세요.
+1D TileTensor `a`에 대해 누적 합을 계산하고 결과를 1D TileTensor `output`에 저장하는 커널을 구현하세요.
 
 **참고:** _`a`의 크기가 블록 크기보다 큰 경우, 각 블록의 합계만 저장합니다._
 
@@ -15,11 +15,11 @@
 
 참고:
 
-- **데이터 로딩**: 각 스레드가 LayoutTensor 접근을 통해 원소 하나를 로드
-- **메모리 패턴**: address_space를 지정한 LayoutTensor로 중간 결과를 공유 메모리에 저장
+- **데이터 로딩**: 각 스레드가 TileTensor 접근을 통해 원소 하나를 로드
+- **메모리 패턴**: address_space를 지정한 TileTensor로 중간 결과를 공유 메모리에 저장
 - **스레드 동기화**: 연산 단계 간 조율
 - **접근 패턴**: 스트라이드 기반 병렬 연산
-- **타입 안전성**: LayoutTensor의 타입 시스템 활용
+- **타입 안전성**: TileTensor의 타입 시스템 활용
 
 ## 완성할 코드
 
