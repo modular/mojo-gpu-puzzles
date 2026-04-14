@@ -4,6 +4,8 @@
 
 Implement a kernel that compute the running sum of the last 3 positions of 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
+**Pooling** is an operation that condenses a region of values into a single summary value — for example, their sum, maximum, or average. A **sliding window** applies this condensation repeatedly by moving a fixed-size window one step at a time across the input, producing one output value per window position. Here the window is 3 elements wide and the summary function is a sum, so each output element equals the sum of the current element and the two preceding it (with special cases at the boundaries where fewer than 3 elements are available).
+
 **Note:** _You have 1 thread per position. You only need 1 global read and 1 global write per thread._
 
 <img src="./media/11-w.png" alt="Pooling visualization" class="light-mode-img">

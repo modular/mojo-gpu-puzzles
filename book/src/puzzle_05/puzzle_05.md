@@ -4,6 +4,8 @@
 
 Implement a kernel that broadcast adds 1D TileTensor `a` and 1D TileTensor `b` and stores it in 2D TileTensor `output`.
 
+**Broadcasting** in parallel programming refers to the operation where lower-dimensional arrays are automatically expanded to match the shape of higher-dimensional arrays during element-wise operations. Instead of physically replicating data in memory, values are logically repeated across the additional dimensions. For example, adding a 1D vector to each row (or column) of a 2D matrix applies the same vector elements repeatedly without creating multiple copies.
+
 **Note:** _You have more threads than positions._
 
 <img src="./media/05.png" alt="Broadcast visualization" class="light-mode-img">
@@ -13,14 +15,16 @@ Implement a kernel that broadcast adds 1D TileTensor `a` and 1D TileTensor `b` a
 
 In this puzzle, you'll learn about:
 
-- Using `TileTensor` for broadcast operations
-- Working with different tensor shapes
-- Handling 2D indexing with `TileTensor`
+- Broadcasting 1D vectors across different dimensions with `TileTensor`
+- Using 2D thread indices to map GPU threads to a 2D output matrix
+- Working with different tensor shapes for mixed-dimension operations
+- Handling boundary conditions in broadcast patterns
 
 The key insight is that `TileTensor` allows natural broadcasting through different tensor shapes: \\((1, n)\\) and \\((n, 1)\\) to \\((n,n)\\), while still requiring bounds checking.
 
 - **Tensor shapes**: Input vectors have shapes \\((1, n)\\) and \\((n, 1)\\)
-- **Broadcasting**: Output combines both dimensions to \\((n,n)\\)
+- **Broadcasting**: Each element of `a` combines with each element of `b`; output expands both dimensions to \\((n,n)\\)
+- **Access patterns**: `a[0, col]` broadcasts horizontally across rows; `b[row, 0]` broadcasts vertically across columns
 - **Guard condition**: Still need bounds checking for output size
 - **Thread bounds**: More threads \\((3 \times 3)\\) than tensor elements \\((2 \times 2)\\)
 

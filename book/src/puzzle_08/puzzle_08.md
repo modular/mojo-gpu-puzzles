@@ -4,6 +4,8 @@
 
 Implement a kernel that adds 10 to each position of a 1D TileTensor `a` and stores it in 1D TileTensor `output`.
 
+**Shared memory** is fast, on-chip storage that is visible to all threads within the same block. Unlike global memory (which all blocks can access but is slow), shared memory has latency similar to a CPU register cache. Each block gets its own private shared memory region — threads in one block cannot see the shared memory of another block. Because threads can read and write to the same shared memory locations, coordination via `barrier()` is required to prevent one thread from reading a value before another thread has finished writing it.
+
 **Note:** _You have fewer threads per block than the size of `a`._
 
 <img src="./media/08.png" alt="Shared memory visualization" class="light-mode-img">

@@ -19,6 +19,8 @@ For example, if you have two vectors:
 
 ## Key concepts
 
+**Parallel reduction** is an algorithm that combines \\(n\\) values into one using a binary operation (here, addition) in \\(O(\log n)\\) steps instead of \\(O(n)\\) sequential steps. In each step, half the active threads each add one value into another, halving the number of remaining partial results. After \\(\log_2 n\\) steps, thread 0 holds the final sum. This tree-shaped computation requires a `barrier()` between steps so no thread reads a partially-updated value.
+
 This puzzle covers:
 
 - Similar to [puzzle 8](../puzzle_08/puzzle_08.md) and [puzzle 11](../puzzle_11/puzzle_11.md), implementing parallel reduction with TileTensor
