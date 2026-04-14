@@ -35,7 +35,7 @@ The key insight is how TileTensor simplifies shared memory management while main
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p08/p08.mojo:add_10_shared_tile_tensor}}
+{{#include ../../../problems/p08/p08.mojo:add_10_shared}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a>
@@ -108,7 +108,7 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p08/p08.mojo:add_10_shared_tile_tensor_solution}}
+{{#include ../../../solutions/p08/p08.mojo:add_10_shared_solution}}
 ```
 
 <div class="solution-explanation">

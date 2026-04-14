@@ -48,7 +48,7 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p12/p12.mojo:dot_product_tile_tensor}}
+{{#include ../../../../../problems/p12/p12.mojo:dot_product}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p12/p12.mojo" class="filename">전체 파일 보기: problems/p12/p12.mojo</a>
@@ -120,7 +120,7 @@ expected: HostBuffer([140.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p12/p12.mojo:dot_product_tile_tensor_solution}}
+{{#include ../../../../../solutions/p12/p12.mojo:dot_product_solution}}
 ```
 
 <div class="solution-explanation">

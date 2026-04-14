@@ -6,7 +6,7 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 
-# ANCHOR: add_10_shared_tile_tensor
+# ANCHOR: add_10_shared
 comptime TPB = 4
 comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -16,7 +16,7 @@ comptime layout = row_major[SIZE]()
 comptime LayoutType = type_of(layout)
 
 
-def add_10_shared_tile_tensor(
+def add_10_shared(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
@@ -37,7 +37,7 @@ def add_10_shared_tile_tensor(
     # FILL ME IN (roughly 2 lines)
 
 
-# ANCHOR_END: add_10_shared_tile_tensor
+# ANCHOR_END: add_10_shared
 
 
 def main() raises:
@@ -50,9 +50,7 @@ def main() raises:
         var out_tensor = TileTensor(out, layout)
         var a_tensor = TileTensor[mut=False, dtype, LayoutType](a, layout)
 
-        ctx.enqueue_function[
-            add_10_shared_tile_tensor, add_10_shared_tile_tensor
-        ](
+        ctx.enqueue_function[add_10_shared, add_10_shared](
             out_tensor,
             a_tensor,
             SIZE,

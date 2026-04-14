@@ -62,7 +62,7 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p07/p07.mojo:add_10_blocks_2d_tile_tensor}}
+{{#include ../../../../../problems/p07/p07.mojo:add_10_blocks_2d}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p07/p07.mojo" class="filename">전체 코드 보기: problems/p07/p07.mojo</a>
@@ -133,7 +133,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p07/p07.mojo:add_10_blocks_2d_tile_tensor_solution}}
+{{#include ../../../../../solutions/p07/p07.mojo:add_10_blocks_2d_solution}}
 ```
 
 <div class="solution-explanation">

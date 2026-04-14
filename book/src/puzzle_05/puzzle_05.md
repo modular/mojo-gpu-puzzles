@@ -31,7 +31,7 @@ The key insight is that `TileTensor` allows natural broadcasting through differe
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p05/p05.mojo:broadcast_add_tile_tensor}}
+{{#include ../../../problems/p05/p05.mojo:broadcast_add}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a>
@@ -102,7 +102,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p05/p05.mojo:broadcast_add_tile_tensor_solution}}
+{{#include ../../../solutions/p05/p05.mojo:broadcast_add_solution}}
 ```
 
 <div class="solution-explanation">

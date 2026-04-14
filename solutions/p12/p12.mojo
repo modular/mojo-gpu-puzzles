@@ -17,7 +17,7 @@ comptime LayoutType = type_of(layout)
 comptime OutLayout = type_of(out_layout)
 
 
-# ANCHOR: dot_product_tile_tensor_solution
+# ANCHOR: dot_product_solution
 def dot_product(
     output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -51,7 +51,7 @@ def dot_product(
         output[0] = shared[0]
 
 
-# ANCHOR_END: dot_product_tile_tensor_solution
+# ANCHOR_END: dot_product_solution
 
 
 def main() raises:

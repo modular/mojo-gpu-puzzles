@@ -29,7 +29,7 @@
 ## 완성할 코드
 
 ```mojo
-{{#include ../../../../../problems/p05/p05.mojo:broadcast_add_tile_tensor}}
+{{#include ../../../../../problems/p05/p05.mojo:broadcast_add}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p05/p05.mojo" class="filename">전체 코드 보기: problems/p05/p05.mojo</a>
@@ -100,7 +100,7 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../../../solutions/p05/p05.mojo:broadcast_add_tile_tensor_solution}}
+{{#include ../../../../../solutions/p05/p05.mojo:broadcast_add_solution}}
 ```
 
 <div class="solution-explanation">

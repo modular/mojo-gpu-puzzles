@@ -39,7 +39,7 @@ Notes:
 ## Code to complete
 
 ```mojo
-{{#include ../../../problems/p11/p11.mojo:pooling_tile_tensor}}
+{{#include ../../../problems/p11/p11.mojo:pooling}}
 ```
 
 <a href="{{#include ../_includes/repo_url.md}}/blob/main/problems/p11/p11.mojo" class="filename">View full file: problems/p11/p11.mojo</a>
@@ -112,7 +112,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 <summary></summary>
 
 ```mojo
-{{#include ../../../solutions/p11/p11.mojo:pooling_tile_tensor_solution}}
+{{#include ../../../solutions/p11/p11.mojo:pooling_solution}}
 ```
 
 <div class="solution-explanation">
