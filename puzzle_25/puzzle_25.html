@@ -246,9 +246,9 @@ Lane 0 ──broadcast──&gt; All lanes (0, 1, 2, ..., 31)
 </blockquote>
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># Complex neighbor access pattern (traditional approach):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -283,7 +283,7 @@ else:
 <ul>
 <li><strong>Part VII warp fundamentals</strong>: Understanding SIMT execution and basic warp operations (see <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>)</li>
 <li><strong>GPU thread hierarchy</strong>: Blocks, warps, and lane numbering</li>
-<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>TileTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>Boundary condition handling</strong>: Managing edge cases in parallel algorithms</li>
 </ul>
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>

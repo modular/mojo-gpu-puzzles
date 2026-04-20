@@ -231,25 +231,20 @@
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
 <li>Block configuration: <code>(WARP_SIZE, 1)</code> threads per block</li>
 <li>Data type: <code>DType.float32</code></li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="the-prefix_sum-advantage"><a class="header" href="#the-prefix_sum-advantage">The <code>prefix_sum</code> advantage</a></h3>
 <p>Traditional prefix sum requires complex multi-phase shared memory algorithms. In <a href="../puzzle_14/puzzle_14.html">Puzzle 14</a>, we implemented this the hard way with explicit shared memory management:</p>
-<pre><code class="language-mojo">def prefix_sum_simple[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def prefix_sum_simple(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -257,7 +252,7 @@
 
     var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.element_type = 0
+        var current_val: output.ElementType = 0
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
 
@@ -299,10 +294,10 @@ output[global_i] = scan_result
 \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
 <p>This transforms input data <code>[1, 2, 3, 4, 5, ...]</code> into cumulative sums <code>[1, 3, 6, 10, 15, ...]</code>, where each position contains the sum of all previous elements plus itself.</p>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive:
@@ -397,10 +392,10 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
@@ -521,10 +516,10 @@ Cycle 3: Store results
 </ol>
 <p>This demonstrates the power of combining multiple warp primitives for complex parallel algorithms within a single warp.</p>
 <pre><code class="language-mojo">def warp_partition[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """
@@ -617,10 +612,10 @@ pivot: 5.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_partition[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """

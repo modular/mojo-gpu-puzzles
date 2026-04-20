@@ -235,12 +235,12 @@
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
 <li>Data type: <code>DType.float32</code></li>
 <li>SIMD width: GPU-dependent</li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
 <h2 id="1-manual-vectorization-approach"><a class="header" href="#1-manual-vectorization-approach">1. Manual vectorization approach</a></h2>
 <h3 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h3>
 <pre><code class="language-mojo">def manual_vectorized_tiled_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -248,9 +248,9 @@
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -346,7 +346,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def manual_vectorized_tiled_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -354,9 +354,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size groups of simd_width elements
@@ -368,20 +368,18 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         num_threads_per_tile: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         var tile_id = indices[0]
-
-        var output_tile = output.tile[chunk_size](tile_id)
-        var a_tile = a.tile[chunk_size](tile_id)
-        var b_tile = b.tile[chunk_size](tile_id)
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         comptime for i in range(tile_size):
             var global_start = tile_id * chunk_size + i * simd_width
 
-            var a_vec = a.aligned_load[simd_width](Index(global_start))
-            var b_vec = b.aligned_load[simd_width](Index(global_start))
+            var a_vec = a_lt.aligned_load[width=simd_width](Index(global_start))
+            var b_vec = b_lt.aligned_load[width=simd_width](Index(global_start))
             var ret = a_vec + b_vec
-            # print("tile:", tile_id, "simd_group:", i, "global_start:", global_start, "a_vec:", a_vec, "b_vec:", b_vec, "result:", ret)
-
-            output.store[simd_width](Index(global_start), ret)
+            out_lt.store[simd_width](Index(global_start), ret)
 
     # Number of tiles needed: each tile processes chunk_size elements
     var num_tiles = (size + chunk_size - 1) // chunk_size
@@ -444,7 +442,7 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
 <h2 id="2-mojo-vectorize-approach"><a class="header" href="#2-mojo-vectorize-approach">2. Mojo vectorize approach</a></h2>
 <h3 id="code-to-complete-1"><a class="header" href="#code-to-complete-1">Code to complete</a></h3>
 <pre><code class="language-mojo">def vectorize_within_tiles_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -452,9 +450,9 @@ for i in range(tile_size):  # i = 0, 1, 2, ..., 31
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -552,7 +550,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def vectorize_within_tiles_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     num_threads_per_tile: Int,
@@ -560,9 +558,9 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     # Each tile contains tile_size elements (not SIMD groups)
@@ -575,16 +573,20 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         var tile_start = tile_id * tile_size
         var tile_end = min(tile_start + tile_size, size)
         var actual_tile_size = tile_end - tile_start
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         def vectorized_add[
             width: Int
-        ](i: Int) unified {read tile_start, read a, read b, mut output}:
+        ](i: Int) unified {read tile_start, read a_lt, read b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width &lt;= size:
-                var a_vec = a.aligned_load[width](Index(global_idx))
-                var b_vec = b.aligned_load[width](Index(global_idx))
+                var a_vec = a_lt.aligned_load[width](Index(global_idx))
+                var b_vec = b_lt.aligned_load[width](Index(global_idx))
                 var result = a_vec + b_vec
-                output.store[width](Index(global_idx), result)
+                out_lt.store[width](Index(global_idx), result)
 
         # Use vectorize within each tile
         vectorize[simd_width](actual_tile_size, vectorized_add)

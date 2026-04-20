@@ -236,7 +236,7 @@
 <li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
 <li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks per cluster <code>(4, 1)</code></li>
 <li><strong>Data Type</strong>: <code>DType.float32</code></li>
-<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+<li><strong>Memory Layout</strong>: Input <code>row_major[SIZE]()</code>, Output <code>row_major[CLUSTER_SIZE]()</code></li>
 </ul>
 <p><strong>Thread Block Distribution:</strong></p>
 <ul>
@@ -247,10 +247,10 @@
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -261,12 +261,9 @@
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -310,7 +307,7 @@
 </ul>
 <h3 id="shared-memory-coordination"><a class="header" href="#shared-memory-coordination"><strong>Shared memory coordination</strong></a></h3>
 <ul>
-<li>Allocate shared memory using <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> (see <a href="../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
+<li>Allocate shared memory using <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())</code> (see <a href="../puzzle_08/puzzle_08.html">shared memory basics from Puzzle 8</a>)</li>
 <li>Process input data scaled by <code>block_id + 1</code> to create distinct scaling per block</li>
 <li>Use bounds checking when accessing input data (pattern from <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
 </ul>
@@ -364,10 +361,10 @@ Block coordination results:
 <details class="solution-details">
 <summary>Click to reveal solution</summary>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -378,12 +375,9 @@ Block coordination results:
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -426,7 +420,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </code></pre>
 <p><strong>Shared memory allocation and data processing:</strong></p>
 <ul>
-<li>Each block allocates its own shared memory workspace: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li>Each block allocates its own shared memory workspace: <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())</code></li>
 <li><strong>Scaling strategy</strong>: <code>data_scale = Float32(block_id + 1)</code> ensures each block processes data differently
 <ul>
 <li>Block 0: multiplies by 1.0, Block 1: by 2.0, Block 2: by 3.0, Block 3: by 4.0</li>

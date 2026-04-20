@@ -211,16 +211,222 @@
                         <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
 <h1 id="puzzle-11-풀링"><a class="header" href="#puzzle-11-풀링">Puzzle 11: 풀링</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>벡터 <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 벡터 <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>1D TileTensor <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다.</em></p>
 <img src="/puzzle_11/media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
 <img src="/puzzle_11/media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
-<h2 id="구현-방식"><a class="header" href="#구현-방식">구현 방식</a></h2>
-<h3 id="-원시-메모리-방식"><a class="header" href="#-원시-메모리-방식"><a href="./raw.html">🔰 원시 메모리 방식</a></a></h3>
-<p>슬라이딩 윈도우 연산을 수동 메모리 관리와 동기화로 직접 구현하는 방법을 알아봅니다.</p>
-<h3 id="-layouttensor-버전"><a class="header" href="#-layouttensor-버전"><a href="./layout_tensor.html">📐 LayoutTensor 버전</a></a></h3>
-<p>LayoutTensor의 기능을 활용해 효율적인 윈도우 기반 연산과 공유 메모리 관리를 구현합니다.</p>
-<p>💡 <strong>참고</strong>: LayoutTensor로 슬라이딩 윈도우 연산이 얼마나 간결해지는지 확인해 보세요. 효율적인 메모리 접근 패턴도 그대로 유지됩니다.</p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li>TileTensor로 슬라이딩 윈도우 연산 구현하기</li>
+<li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>에서 다룬 TileTensor 주소 공간(address_space)으로 공유 메모리 관리하기</li>
+<li>효율적인 이웃 접근 패턴</li>
+<li>경계 조건 처리</li>
+</ul>
+<p>핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>배열 크기: <code>SIZE = 8</code></li>
+<li>블록당 스레드 수: <code>TPB = 8</code></li>
+<li>윈도우 크기: 3</li>
+<li>공유 메모리: <code>TPB</code>개</li>
+</ul>
+<p>참고:</p>
+<ul>
+<li><strong>TileTensor 할당</strong>: <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code> 사용</li>
+<li><strong>윈도우 접근</strong>: 3개짜리 윈도우에 자연스러운 인덱싱</li>
+<li><strong>경계 처리</strong>: 처음 두 위치는 특수 케이스</li>
+<li><strong>메모리 패턴</strong>: 스레드당 공유 메모리 로드 1회</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
+
+
+def pooling(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    # Allocate shared memory using stack_allocation
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+    # FIX ME IN (roughly 10 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">전체 파일 보기: problems/p11/p11.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>TileTensor와 주소 공간(address_space)으로 공유 메모리 생성</li>
+<li>자연스러운 인덱싱으로 데이터 로드: <code>shared[local_i] = a[global_i]</code></li>
+<li>처음 두 위치를 특수 케이스로 처리</li>
+<li>윈도우 연산에 공유 메모리 활용</li>
+<li>경계 초과 접근에 가드 추가</li>
+</ol>
+</div>
+</details>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p11
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p11
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p11
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p11
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def pooling(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    # Allocate shared memory using stack_allocation
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+
+    # Load data into shared memory
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    # Synchronize threads within block
+    barrier()
+
+    # Handle first two special cases
+    if global_i == 0:
+        output[0] = shared[0]
+    elif global_i == 1:
+        output[1] = shared[0] + shared[1]
+    # Handle general case
+    elif 1 &lt; global_i &lt; size:
+        output[global_i] = (
+            shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
+        )
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:</p>
+<ol>
+<li>
+<p><strong>공유 메모리 설정</strong></p>
+<ul>
+<li>
+<p>TileTensor가 주소 공간(address_space)으로 블록 로컬 저장소를 생성:</p>
+<pre><code class="language-txt">shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+</code></pre>
+</li>
+<li>
+<p>각 스레드가 하나씩 로드:</p>
+<pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
+</code></pre>
+</li>
+<li>
+<p><code>barrier()</code>로 모든 데이터 로드 완료를 보장</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>경계 케이스</strong></p>
+<ul>
+<li>
+<p>위치 0: 하나만</p>
+<pre><code class="language-txt">output[0] = shared[0] = 0.0
+</code></pre>
+</li>
+<li>
+<p>위치 1: 처음 두 값의 합</p>
+<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>메인 윈도우 연산</strong></p>
+<ul>
+<li>
+<p>위치 2 이후:</p>
+<pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
+Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
+Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
+...
+</code></pre>
+</li>
+<li>
+<p>TileTensor의 자연스러운 인덱싱:</p>
+<pre><code class="language-txt"># 3개짜리 슬라이딩 윈도우
+window_sum = shared[i-2] + shared[i-1] + shared[i]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>메모리 접근 패턴</strong></p>
+<ul>
+<li>스레드마다 공유 텐서로 전역 읽기 1회</li>
+<li>공유 메모리를 통한 효율적인 이웃 접근</li>
+<li>TileTensor의 장점:
+<ul>
+<li>자동 경계 검사</li>
+<li>자연스러운 윈도우 인덱싱</li>
+<li>레이아웃을 인식하는 메모리 접근</li>
+<li>전 과정에 걸친 타입 안전성</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>공유 메모리의 성능과 TileTensor의 안전성 및 편의성을 결합한 방식입니다:</p>
+<ul>
+<li>전역 메모리 접근 최소화</li>
+<li>윈도우 연산 간소화</li>
+<li>깔끔한 경계 처리</li>
+<li>병합 접근 패턴 유지</li>
+</ul>
+<p>최종 출력은 누적 윈도우 합계입니다:</p>
+<pre><code class="language-txt">[0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
+</code></pre>
+</div>
+</details>
 
                     </main>
 
@@ -230,7 +436,7 @@
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_11/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_12/puzzle_12.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -244,7 +450,7 @@
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_11/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_12/puzzle_12.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

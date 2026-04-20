@@ -211,27 +211,27 @@
                         <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
 <h1 id="타일링-버전"><a class="header" href="#타일링-버전">타일링 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>LayoutTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는 커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.</p>
+<p>TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는 커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <ul>
-<li>LayoutTensor를 사용한 행렬 타일링으로 효율적인 연산</li>
+<li>TileTensor를 사용한 행렬 타일링으로 효율적인 연산</li>
 <li>적절한 레이아웃을 사용한 멀티 블록 조율</li>
 <li>TensorBuilder를 통한 효율적인 공유 메모리 활용</li>
-<li>LayoutTensor 인덱싱을 사용한 타일 경계 처리</li>
+<li>TileTensor 인덱싱을 사용한 타일 경계 처리</li>
 </ul>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>행렬 크기: \(\text{SIZE_TILED} = 9\)</li>
 <li>블록당 스레드 수: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
 <li>그리드 차원: \(3 \times 3\) 블록</li>
-<li>공유 메모리: 블록당 \(\text{TPB} \times \text{TPB}\) LayoutTensor 2개</li>
+<li>공유 메모리: 블록당 \(\text{TPB} \times \text{TPB}\) TileTensor 2개</li>
 </ul>
 <p>레이아웃 구성:</p>
 <ul>
-<li>입력 A: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>입력 B: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>출력: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>공유 메모리: TensorBuilder를 사용한 <code>TPB × TPB</code> LayoutTensor 2개</li>
+<li>입력 A: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>입력 B: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>출력: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>공유 메모리: TensorBuilder를 사용한 <code>TPB × TPB</code> TileTensor 2개</li>
 </ul>
 <h2 id="타일링-전략"><a class="header" href="#타일링-전략">타일링 전략</a></h2>
 <h3 id="블록-구성"><a class="header" href="#블록-구성">블록 구성</a></h3>
@@ -240,7 +240,7 @@
 [B10][B11][B12]               [T10 T11 T12]
 [B20][B21][B22]               [T20 T21 T22]
 
-각 블록은 LayoutTensor 인덱싱을 사용하여 하나의 타일을 처리
+각 블록은 TileTensor 인덱싱을 사용하여 하나의 타일을 처리
 </code></pre>
 <h3 id="타일-처리-단계"><a class="header" href="#타일-처리-단계">타일 처리 단계</a></h3>
 <ol>
@@ -288,15 +288,14 @@
 <pre><code class="language-mojo">comptime SIZE_TILED = 9
 comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
 comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
-comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+comptime layout_tiled = row_major[SIZE_TILED, SIZE_TILED]()
+comptime LayoutTiledType = type_of(layout_tiled)
 
 
-def matmul_tiled[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+def matmul_tiled(
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -405,31 +404,25 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def matmul_tiled[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
     var tiled_col = block_idx.x * TPB + local_col
 
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
 
-    var acc: output.element_type = 0
+    var acc: output.ElementType = 0
 
     # Iterate over tiles to compute matrix product
     comptime for tile in range((size + TPB - 1) // TPB):
@@ -590,29 +583,30 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 </ol>
 <p>이 구현은 다음을 통해 높은 성능을 달성합니다:</p>
 <ul>
-<li>LayoutTensor를 활용한 효율적인 메모리 접근</li>
+<li>TileTensor를 활용한 효율적인 메모리 접근</li>
 <li>최적의 타일링 전략</li>
 <li>적절한 스레드 동기화</li>
 <li>세심한 경계 처리</li>
 </ul>
 </div>
 </details>
-<h2 id="솔루션-관용적-layouttensor-타일링"><a class="header" href="#솔루션-관용적-layouttensor-타일링">솔루션: 관용적 LayoutTensor 타일링</a></h2>
+<h2 id="솔루션-관용적-tiletensor-타일링"><a class="header" href="#솔루션-관용적-tiletensor-타일링">솔루션: 관용적 TileTensor 타일링</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">from std.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
+from layout import Layout as IntTupleLayout
 
 comptime NUM_THREADS = TPB * TPB
 comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -621,23 +615,21 @@ def matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
 
-    var acc: output.element_type = 0
+    var acc: output.ElementType = 0
 
-    comptime load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
-    comptime load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_a_layout = IntTupleLayout.row_major(
+        1, TPB
+    )  # Coalesced loading
+    comptime load_b_layout = IntTupleLayout.row_major(
+        1, TPB
+    )  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -653,12 +645,12 @@ def matmul_idiomatic_tiled[
             thread_layout=load_a_layout,
             num_threads=NUM_THREADS,
             block_dim_count=BLOCK_DIM_COUNT,
-        ](a_shared, a_tile)
+        ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
         copy_dram_to_sram_async[
             thread_layout=load_b_layout,
             num_threads=NUM_THREADS,
             block_dim_count=BLOCK_DIM_COUNT,
-        ](b_shared, b_tile)
+        ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -677,12 +669,12 @@ def matmul_idiomatic_tiled[
 
 </code></pre>
 <div class="solution-explanation">
-<p>관용적 타일링 행렬 곱셈은 Mojo의 LayoutTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.</p>
+<p>관용적 타일링 행렬 곱셈은 Mojo의 TileTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.</p>
 <p><strong>핵심 포인트: 이 구현은 두 행렬 모두 병합 로딩을 사용하여 표준 A × B 행렬 곱셈을 수행합니다.</strong></p>
 <p><strong>이 구현이 하는 것:</strong></p>
 <ul>
 <li><strong>행렬 연산</strong>: 표준 \(A \times B\) 곱셈 (\(A \times B^T\) 가 아님)</li>
-<li><strong>로딩 패턴</strong>: 두 행렬 모두 <code>Layout.row_major(1, TPB)</code>로 병합 접근</li>
+<li><strong>로딩 패턴</strong>: 두 행렬 모두 <code>row_major[1, TPB]()</code>로 병합 접근</li>
 <li><strong>연산</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>데이터 레이아웃</strong>: 로딩 시 전치 없음 - 두 행렬을 같은 방향으로 로드</li>
 </ul>
@@ -695,12 +687,12 @@ def matmul_idiomatic_tiled[
 <p>\((9 \times 9)\) 행렬 크기에서는 완벽한 타일링이 이루어져 모든 경계 검사가 불필요합니다:</p>
 <ol>
 <li>
-<p><strong>LayoutTensor 타일 API</strong></p>
+<p><strong>TileTensor 타일 API</strong></p>
 <pre><code class="language-mojo">out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
-<p>수동 좌표 계산 없이 “(block_idx.y, block_idx.x) 위치의 타일을 가져온다“를 직접 표현합니다. 자세한 내용은 <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">문서</a>를 참고하세요.</p>
+<p>수동 좌표 계산 없이 “(block_idx.y, block_idx.x) 위치의 타일을 가져온다“를 직접 표현합니다. 자세한 내용은 <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">문서</a>를 참고하세요.</p>
 </li>
 <li>
 <p><strong>비동기 메모리 연산</strong></p>
@@ -736,12 +728,12 @@ async_copy_wait_all()
 </li>
 <li>
 <p><strong>최적화된 메모리 접근 레이아웃</strong></p>
-<pre><code class="language-mojo">comptime load_a_layout = Layout.row_major(1, TPB)    # 병합 로딩
-comptime load_b_layout = Layout.row_major(1, TPB)    # 병합 로딩
+<pre><code class="language-mojo">comptime load_a_layout = row_major[1, TPB]()    # 병합 로딩
+comptime load_b_layout = row_major[1, TPB]()    # 병합 로딩
 # 참고: 표준 A × B 곱셈에서 두 행렬 모두 같은 레이아웃을 사용
 </code></pre>
 <p><strong>현재 구현의 메모리 접근 분석:</strong></p>
-<p>두 행렬 모두 전역 메모리에서 병합 로딩을 위해 <code>Layout.row_major(1, TPB)</code>를 사용합니다:</p>
+<p>두 행렬 모두 전역 메모리에서 병합 로딩을 위해 <code>row_major[1, TPB]()</code>를 사용합니다:</p>
 <ul>
 <li><code>load_a_layout</code>: 스레드들이 협력하여 행렬 A 행의 연속 원소를 로드</li>
 <li><code>load_b_layout</code>: 스레드들이 협력하여 행렬 B 행의 연속 원소를 로드</li>
@@ -759,11 +751,11 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 - Matrix A 타일: 스레드들이 A[block_row, k], A[block_row, k+1], A[block_row, k+2]... 로드 (연속)
 - Matrix B 타일: 스레드들이 B[k, block_col], B[k, block_col+1], B[k, block_col+2]... 로드 (연속)
 
-Layout.row_major(1, TPB)로 두 패턴 모두 병합
+row_major[1, TPB]()로 두 패턴 모두 병합
 </code></pre>
 <p><strong>세 가지 별개의 메모리 고려사항:</strong></p>
 <ol>
-<li><strong>전역→공유 병합</strong>: <code>Layout.row_major(1, TPB)</code>로 병합 전역 메모리 접근 보장</li>
+<li><strong>전역→공유 병합</strong>: <code>row_major[1, TPB]()</code>로 병합 전역 메모리 접근 보장</li>
 <li><strong>공유 메모리 연산</strong>: <code>a_shared[local_row, k] * b_shared[k, local_col]</code>로 뱅크 충돌 회피</li>
 <li><strong>행렬 연산</strong>: 연산 패턴이 A × B를 결정 (A × B^T가 아님)</li>
 </ol>
@@ -796,7 +788,7 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>이 구현은 고수준 추상화로도 성능 저하 없이 복잡한 GPU 알고리즘을 표현할 수 있음을 보여줍니다. 고수준의 표현력과 저수준의 성능 제어를 결합하는 Mojo의 철학을 잘 보여주는 예시입니다.</p>
 <h3 id="수동-타일링과의-주요-차이점"><a class="header" href="#수동-타일링과의-주요-차이점">수동 타일링과의 주요 차이점</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>기능</th><th>수동 Tiling</th><th>관용적 Tiling</th></tr></thead><tbody>
-<tr><td>메모리 접근</td><td>경계 검사가 있는 직접 인덱싱</td><td>LayoutTensor 타일 API</td></tr>
+<tr><td>메모리 접근</td><td>경계 검사가 있는 직접 인덱싱</td><td>TileTensor 타일 API</td></tr>
 <tr><td>타일 로딩</td><td>원소별 명시적 복사</td><td>전용 복사 엔진의 벌크 전송</td></tr>
 <tr><td>공유 메모리</td><td>수동 초기화 (방어적)</td><td>복사 함수가 관리</td></tr>
 <tr><td>코드 복잡도</td><td>명시적 인덱싱으로 다소 장황</td><td>고수준 API로 더 간결</td></tr>
@@ -810,7 +802,7 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>현재 구현은 전치 로딩을 사용하지 않습니다. 이 섹션은 레이아웃 시스템으로 할 수 있는 것을 보여주기 위한 교육적 내용입니다.</p>
 <p><strong>현재 구현 요약:</strong></p>
 <ul>
-<li>두 행렬 모두 <code>Layout.row_major(1, TPB)</code> 사용</li>
+<li>두 행렬 모두 <code>row_major[1, TPB]()</code> 사용</li>
 <li>표준 A × B 곱셈 수행</li>
 <li>복사 중 데이터 전치 없음</li>
 </ul>
@@ -818,8 +810,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>이 퍼즐은 두 행렬 모두 표준 병합 로딩을 사용하지만, 레이아웃 시스템의 유연성은 다른 시나리오에서 강력한 최적화를 가능하게 합니다:</p>
 <pre><code class="language-mojo"># 예시: A × B를 계산하기 위해 사전 전치된 행렬 B^T를 로드
 # (현재 구현에서는 이렇게 하지 않음)
-comptime load_b_layout = Layout.row_major(TPB, 1)   # B^T를 병합 접근으로 로드
-comptime store_b_layout = Layout.row_major(1, TPB)  # 공유 메모리에 B로 저장
+comptime load_b_layout = row_major[TPB, 1]()   # B^T를 병합 접근으로 로드
+comptime store_b_layout = row_major[1, TPB]()  # 공유 메모리에 B로 저장
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 </code></pre>
 <p><strong>전치 로딩의 활용 사례 (이 퍼즐에서는 사용하지 않음):</strong></p>
@@ -831,7 +823,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </ol>
 <p><strong>핵심 구분:</strong></p>
 <ul>
-<li><strong>현재 구현</strong>: 두 행렬 모두 표준 \(A \times B\) 곱셈에 <code>Layout.row_major(1, TPB)</code> 사용</li>
+<li><strong>현재 구현</strong>: 두 행렬 모두 표준 \(A \times B\) 곱셈에 <code>row_major[1, TPB]()</code> 사용</li>
 <li><strong>전치 로딩 예시</strong>: 이미 전치된 데이터나 다른 행렬 연산을 처리할 때 다른 레이아웃 사용</li>
 </ul>
 <p>이것은 Mojo의 철학을 보여줍니다: 일반적인 경우에 고수준 추상화를 유지하면서도, 필요할 때 저수준 제어를 제공합니다.</p>
@@ -840,13 +832,13 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 <p><strong>관용적 타일링 구현이 실제로 하는 것:</strong></p>
 <ol>
 <li><strong>행렬 연산</strong>: 표준 A × B 곱셈</li>
-<li><strong>메모리 로딩</strong>: 두 행렬 모두 <code>Layout.row_major(1, TPB)</code>로 병합 접근</li>
+<li><strong>메모리 로딩</strong>: 두 행렬 모두 <code>row_major[1, TPB]()</code>로 병합 접근</li>
 <li><strong>연산 패턴</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>데이터 레이아웃</strong>: 로딩 시 전치 없음</li>
 </ol>
 <p><strong>이것이 최적인 이유:</strong></p>
 <ul>
-<li><strong>병합 전역 메모리 접근</strong>: <code>Layout.row_major(1, TPB)</code>로 효율적인 로딩 보장</li>
+<li><strong>병합 전역 메모리 접근</strong>: <code>row_major[1, TPB]()</code>로 효율적인 로딩 보장</li>
 <li><strong>뱅크 충돌 회피</strong>: 공유 메모리 접근 패턴이 충돌을 방지</li>
 <li><strong>표준 알고리즘</strong>: 가장 일반적인 행렬 곱셈 패턴을 구현</li>
 </ul>

@@ -342,7 +342,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li>그리드 구성: 그리드당 <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> 블록 (64개 블록)</li>
 <li>커널 크기: <code>KERNEL_SIZE = 5</code> (Puzzle 13과 동일한 간단한 1D 합성곱)</li>
 <li>데이터 타입: <code>DType.float32</code></li>
-<li>레이아웃: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
+<li>레이아웃: <code>row_major[VECTOR_SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="비동기-복사의-기회"><a class="header" href="#비동기-복사의-기회">비동기 복사의 기회</a></h3>
 <p><strong>Puzzle 16 기반:</strong> matmul에서 깔끔한 타일 로딩을 위해 <code>copy_dram_to_sram_async</code>를 사용하는 것을 이미 보셨습니다. 이제 고성능 메모리 바운드 알고리즘의 핵심인 <strong>지연 시간 은폐 기능</strong>에 집중합니다.</p>
@@ -390,15 +390,18 @@ comptime BLOCKS_PER_GRID_ASYNC = (
 ) // CONV_TILE_SIZE
 comptime THREADS_PER_BLOCK_ASYNC = 256
 comptime dtype = DType.float32
-comptime layout_async = Layout.row_major(VECTOR_SIZE)
+comptime layout_async = row_major[VECTOR_SIZE]()
+comptime LayoutAsyncType = type_of(layout_async)
+comptime kernel_layout = row_major[KERNEL_SIZE]()
+comptime KernelLayoutType = type_of(kernel_layout)
 
 
 def async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
+    dtype: DType
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutAsyncType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin],
+    kernel: TileTensor[mut=False, dtype, KernelLayoutType, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -407,18 +410,12 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV_TILE_SIZE]())
+    var kernel_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[KERNEL_SIZE]())
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -501,11 +498,11 @@ def async_copy_overlap_convolution[
 <summary><strong>상세 설명이 포함된 전체 솔루션</strong></summary>
 <p>비동기 복사 중첩 솔루션는 비용이 큰 DRAM 전송과 유용한 연산을 중첩하여 메모리 지연 시간을 숨기는 방법을 보여줍니다:</p>
 <pre><code class="language-mojo">def async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
+    dtype: DType
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -531,7 +528,7 @@ def async_copy_overlap_convolution[
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -547,8 +544,8 @@ def async_copy_overlap_convolution[
 
     # Phase 4: Compute convolution
     var global_i = block_idx.x * CONV_TILE_SIZE + local_i
-    if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
-        var result: output.element_type = 0
+    if local_i &lt; CONV_TILE_SIZE and global_i &lt; Int(output.dim[0]()):
+        var result: output.ElementType = 0
 
         # Simple convolution avoiding boundary issues
         if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
@@ -556,10 +553,12 @@ def async_copy_overlap_convolution[
             for k in range(KERNEL_SIZE):
                 var input_idx = local_i + k - HALO_SIZE
                 if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
-                    result += input_shared[input_idx] * kernel_shared[k]
+                    result += rebind[Scalar[dtype]](
+                        input_shared[input_idx]
+                    ) * rebind[Scalar[dtype]](kernel_shared[k])
         else:
             # For boundary elements, just copy input (no convolution)
-            result = input_shared[local_i]
+            result = rebind[Scalar[dtype]](input_shared[local_i])
 
         output[global_i] = result
 
@@ -569,15 +568,15 @@ def async_copy_overlap_convolution[
 <p><strong>Phase 1: 비동기 복사 시작</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
 <li>
-<p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는 <code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile"><code>tile</code> 메서드</a>는 경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.</p>
+<p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는 <code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile"><code>tile</code> 메서드</a>는 경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.</p>
 </li>
 <li>
-<p><strong>스레드 레이아웃</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code>는 블록 구성과 일치하는 <code>256 x 1</code> 레이아웃을 생성합니다. 이것은 <strong>필수</strong>입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.</p>
+<p><strong>스레드 레이아웃</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC, 1]()</code>는 블록 구성과 일치하는 <code>256 x 1</code> 레이아웃을 생성합니다. 이것은 <strong>필수</strong>입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.</p>
 </li>
 <li>
 <p><strong>비동기 복사 시작</strong>: <code>copy_dram_to_sram_async</code>는 DRAM에서 공유 메모리로의 백그라운드 전송을 시작합니다. 하드웨어가 256개의 float(1KB)를 복사하는 동안 블록은 계속 실행됩니다.</p>
@@ -655,7 +654,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <h4 id="핵심-기술적-통찰"><a class="header" href="#핵심-기술적-통찰"><strong>핵심 기술적 통찰</strong></a></h4>
 <ol>
 <li>
-<p><strong>스레드 레이아웃 매칭</strong>: <code>Layout.row_major(256, 1)</code> 레이아웃이 블록의 <code>(256, 1)</code> 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.</p>
+<p><strong>스레드 레이아웃 매칭</strong>: <code>row_major[256, 1]()</code> 레이아웃이 블록의 <code>(256, 1)</code> 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.</p>
 </li>
 <li>
 <p><strong>경쟁 상태 방지</strong>: 적절한 순서 지정(비동기 복사 → 커널 로드 → 대기 → 배리어 → 연산)으로 공유 메모리를 손상시킬 수 있는 모든 경쟁 상태를 제거합니다.</p>

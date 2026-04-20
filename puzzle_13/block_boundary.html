@@ -209,7 +209,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="block-boundary-version"><a class="header" href="#block-boundary-version">Block Boundary Version</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
+<p>Implement a kernel that computes a 1D convolution between 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
@@ -231,17 +231,18 @@
 comptime CONV_2 = 4
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (TPB, 1)
-comptime in_2_layout = Layout.row_major(SIZE_2)
-comptime out_2_layout = Layout.row_major(SIZE_2)
-comptime conv_2_layout = Layout.row_major(CONV_2)
+comptime in_2_layout = row_major[SIZE_2]()
+comptime In2Layout = type_of(in_2_layout)
+comptime out_2_layout = row_major[SIZE_2]()
+comptime Out2Layout = type_of(out_2_layout)
+comptime conv_2_layout = row_major[CONV_2]()
+comptime Conv2Layout = type_of(conv_2_layout)
 
 
-def conv_1d_block_boundary[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+def conv_1d_block_boundary(
+    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -254,7 +255,7 @@ def conv_1d_block_boundary[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory</li>
+<li>Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code> for shared memory</li>
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -295,28 +296,20 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def conv_1d_block_boundary[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout, dtype: DType
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def conv_1d_block_boundary(
+    output: TileTensor[mut=True, dtype, Out2Layout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, In2Layout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, Conv2Layout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB + CONV_2 - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_2),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + CONV_2 - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV_2]())
     if global_i &lt; SIZE_2:
         shared_a[local_i] = a[global_i]
     else:
@@ -339,7 +332,7 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
     barrier()
 
     if global_i &lt; SIZE_2:
-        var local_sum: output.element_type = 0
+        var local_sum: output.ElementType = 0
 
         comptime for j in range(CONV_2):
             if global_i + j &lt; SIZE_2:
@@ -370,8 +363,8 @@ Size calculation:
 <li>
 <p><strong>Shared Memory Allocation</strong>:</p>
 <pre><code class="language-mojo"># First: account for padding needed for convolution window
-shared_a = LayoutTensor[dtype, Layout.row_major(TPB + CONV_2 - 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
-shared_b = LayoutTensor[dtype, Layout.row_major(CONV_2), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()
+shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
+shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
 </code></pre>
 <p>This allocation pattern ensures we have enough space for both the block’s data and the overlap region.</p>
 </li>
@@ -496,7 +489,7 @@ Thread 7: skipped                    // global_i + j &lt; SIZE_2 evaluates to fa
 <ul>
 <li>Memory safety through proper bounds checking</li>
 <li>High performance through optimized memory access</li>
-<li>Clean code structure using LayoutTensor abstractions</li>
+<li>Clean code structure using TileTensor abstractions</li>
 <li>Minimal synchronization overhead</li>
 <li>Mathematically sound boundary handling</li>
 </ul>

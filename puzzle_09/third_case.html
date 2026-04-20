@@ -217,7 +217,7 @@
 <li><strong><a href="./second_case.html">Second Case</a></strong>: Program produces wrong results → Analyze patterns → Find logic bugs</li>
 <li><strong>Third Case</strong>: Program hangs forever → Investigate thread states → Find coordination bugs</li>
 </ul>
-<p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, LayoutTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
+<p>This advanced-level debugging challenge teaches you to investigate <strong>thread coordination failures</strong> using shared memory, TileTensor operations, and barrier synchronization - combining all the systematic investigation skills from the previous cases.</p>
 <p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a>, <a href="./first_case.html">Detective Work: First Case</a>, and <a href="./second_case.html">Detective Work: Second Case</a> to understand CUDA-GDB workflow, variable inspection limitations, and systematic debugging approaches. Make sure you run the setup:</p>
 <pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
@@ -225,25 +225,22 @@
 <p>In this debugging challenge, you’ll learn about:</p>
 <ul>
 <li><strong>Barrier deadlock detection</strong>: Identifying when threads wait forever at synchronization points</li>
-<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns with LayoutTensor</li>
+<li><strong>Shared memory coordination</strong>: Understanding thread cooperation patterns with TileTensor</li>
 <li><strong>Conditional execution analysis</strong>: Debugging when some threads take different code paths</li>
 <li><strong>Thread coordination debugging</strong>: Using CUDA-GDB to analyze multi-thread synchronization failures</li>
 </ul>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <p>First, examine the kernel without looking at the complete code:</p>
 <pre><code class="language-mojo">def collaborative_filter(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
     # Shared memory workspace for collaborative processing
-    var shared_workspace = LayoutTensor[
-        dtype,
-        Layout.row_major(SIZE - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_workspace = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE - 1]())
 
     # Phase 1: Initialize shared workspace (all threads participate)
     if thread_id &lt; SIZE - 1:
@@ -354,7 +351,7 @@ Waiting for GPU computation to complete...
 CUDA thread hit application kernel entry function breakpoint, p09_collaborative_filter_Orig6A6AcB6A6A_1882ca334fc2d34b2b9c4fa338df6c07&lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (
     output=..., a=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:56
-56          a: LayoutTensor[mut=False, dtype, vector_layout],
+56          a: TileTensor[mut=False, dtype, vector_layout],
 </code></pre>
 <p><strong>🔍 Key Observations</strong>:</p>
 <ul>
@@ -365,7 +362,7 @@ CUDA thread hit application kernel entry function breakpoint, p09_collaborative_
 </ul>
 <h4 id="step-4-navigate-through-initialization"><a class="header" href="#step-4-navigate-through-initialization">Step 4: navigate through initialization</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-55          output: LayoutTensor[mut=True, dtype, vector_layout],
+55          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 58          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -468,13 +465,13 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 </code></pre>
 <p><strong>The Fix</strong>: Move the barrier outside the conditional block:</p>
 <pre><code class="language-mojo">def collaborative_filter(
-    output: LayoutTensor[mut=True, dtype, vector_layout],
-    a: LayoutTensor[mut=False, dtype, vector_layout],
+    output: TileTensor[mut=True, dtype, vector_layout],
+    a: TileTensor[mut=False, dtype, vector_layout],
 ):
     thread_id = thread_idx.x
-    shared_workspace = LayoutTensor[
+    shared_workspace = TileTensor[
         dtype,
-        Layout.row_major(SIZE-1),
+        row_major[SIZE-1](),
         MutAnyOrigin,
         address_space = AddressSpace.SHARED,
     ].stack_allocation()
@@ -519,7 +516,7 @@ if thread_id &lt; SIZE - 1:    # Not all threads enter
 <li><strong>Barrier rule</strong>: ALL threads in a block must reach the SAME barrier</li>
 <li><strong>Conditional execution pitfalls</strong>: Any if-statement can cause thread divergence</li>
 <li><strong>Shared memory coordination</strong>: Requires careful barrier placement for correct synchronization</li>
-<li><strong>LayoutTensor doesn’t prevent deadlocks</strong>: Higher-level abstractions still need correct synchronization</li>
+<li><strong>TileTensor doesn’t prevent deadlocks</strong>: Higher-level abstractions still need correct synchronization</li>
 </ul>
 <p><strong>💡 Key Insight</strong>: Barrier deadlocks are among the hardest GPU bugs to debug because:</p>
 <ul>

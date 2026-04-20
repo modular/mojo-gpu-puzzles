@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🔰 원시 메모리 방식 - Mojo 🔥 GPU 퍼즐</title>
+        <title>📚 TileTensor 알아보기 - Mojo 🔥 GPU 퍼즐</title>
 
 
         <!-- Custom HTML head -->
@@ -208,70 +208,99 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
-<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>벡터 <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 벡터 <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다.</em></p>
-<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
-<p>이 퍼즐에서 배울 내용:</p>
-<ul>
-<li>공유 메모리로 슬라이딩 윈도우 연산 구현하기</li>
-<li>풀링의 경계 조건 처리</li>
-<li>이웃 데이터 접근을 위한 스레드 간 협력</li>
-</ul>
-<p>핵심은 공유 메모리를 사용해 윈도우 내 값들에 효율적으로 접근하는 것입니다. 시퀀스 앞부분은 특별히 처리해야 합니다.</p>
-<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
-<ul>
-<li>배열 크기: <code>SIZE = 8</code></li>
-<li>블록당 스레드 수: <code>TPB = 8</code></li>
-<li>윈도우 크기: 3</li>
-<li>공유 메모리: <code>TPB</code>개</li>
-</ul>
-<p>참고:</p>
-<ul>
-<li><strong>윈도우 접근</strong>: 각 출력은 이전 최대 3개 값에 의존합니다</li>
-<li><strong>경계 처리</strong>: 처음 두 위치는 특별한 처리가 필요합니다</li>
-<li><strong>메모리 패턴</strong>: 스레드당 공유 메모리 로드 1회</li>
-<li><strong>스레드 동기화</strong>: 윈도우 연산 전에 조율 필요</li>
-</ul>
-<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">comptime TPB = 8
-comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
+                        <!-- i18n-source-commit: 9ac1b899ca05c1be26f2d9ee77fe97503d00cc0f -->
+<h1 id="tiletensor-알아보기"><a class="header" href="#tiletensor-알아보기">TileTensor 알아보기</a></h1>
+<p>퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를 미리 살펴봅시다:
+🥁 … 바로 <strong><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a></strong> 입니다.</p>
+<blockquote>
+<p>💡 <em>TileTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸 이해할 필요는 없어요 - 퍼즐을 진행하면서 각 기능을 자세히 알아볼 겁니다</em>.</p>
+</blockquote>
+<h2 id="문제-점점-복잡해지는-코드"><a class="header" href="#문제-점점-복잡해지는-코드">문제: 점점 복잡해지는 코드</a></h2>
+<p>지금까지 겪은 어려움을 살펴봅시다:</p>
+<pre><code class="language-mojo"># Puzzle 1: 단순 인덱싱
+output[i] = a[i] + 10.0
 
+# Puzzle 2: 여러 배열 관리
+output[i] = a[i] + b[i]
 
-def pooling(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
-):
-    var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-    # FILL ME IN (roughly 10 lines)
-
-
+# Puzzle 3: 경계 검사
+if i &lt; size:
+    output[i] = a[i] + 10.0
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p11/p11.mojo" class="filename">전체 파일 보기: problems/p11/p11.mojo</a></p>
-<details>
-<summary><strong>팁</strong></summary>
-<div class="solution-tips">
+<p>차원이 늘어나면 코드는 더 복잡해집니다:</p>
+<pre><code class="language-mojo"># 전통적인 2D 인덱싱 (행 우선 2D 행렬)
+idx = row * WIDTH + col
+if row &lt; height and col &lt; width:
+    output[idx] = a[idx] + 10.0
+</code></pre>
+<h2 id="해결책-tiletensor-미리보기"><a class="header" href="#해결책-tiletensor-미리보기">해결책: TileTensor 미리보기</a></h2>
+<p>TileTensor는 이런 문제들을 깔끔하게 해결해줍니다. 앞으로 배울 내용을 살짝 엿보면:</p>
 <ol>
-<li>데이터를 로드하고 <code>barrier()</code> 호출</li>
-<li>특수 케이스: <code>output[0] = shared[0]</code>, <code>output[1] = shared[0] + shared[1]</code></li>
-<li>일반 케이스: <code>if 1 &lt; global_i &lt; size</code></li>
-<li>세 값의 합: <code>shared[local_i - 2] + shared[local_i - 1] + shared[local_i]</code></li>
+<li><strong>자연스러운 인덱싱</strong>: 수동 오프셋 계산 대신 <code>tensor[i, j]</code> 사용</li>
+<li><strong>유연한 메모리 레이아웃</strong>: 행 우선, 열 우선, 타일 구성 지원</li>
+<li><strong>성능 최적화</strong>: GPU에 효율적인 메모리 접근 패턴</li>
 </ol>
-</div>
-</details>
-<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
-<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<h2 id="앞으로-배울-내용-맛보기"><a class="header" href="#앞으로-배울-내용-맛보기">앞으로 배울 내용 맛보기</a></h2>
+<p>TileTensor가 할 수 있는 일을 몇 가지 예시로 살펴봅시다. 지금 모든 세부 사항을 이해할 필요는 없습니다 - 앞으로 나올 퍼즐에서 각 기능을 꼼꼼히 다룰 거예요.</p>
+<h3 id="기본-사용-예시"><a class="header" href="#기본-사용-예시">기본 사용 예시</a></h3>
+<pre><code class="language-mojo">from layout import TileTensor
+from layout.tile_layout import row_major
+
+# 레이아웃 정의
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime layout = row_major[HEIGHT, WIDTH]()
+comptime LayoutType = type_of(layout)
+
+# 텐서 생성
+tensor = TileTensor(buffer, layout)
+
+# 자연스럽게 요소 접근
+tensor[0, 0] = 1.0  # 첫 번째 요소
+tensor[1, 2] = 2.0  # 마지막 요소
+</code></pre>
+<p><code>Layout</code>과 <code>TileTensor</code>에 대해 더 알아보려면 <a href="https://docs.modular.com/mojo/manual/">Mojo 매뉴얼</a>의 가이드를 참고하세요:</p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
+<li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
+</ul>
+<h2 id="간단한-예제"><a class="header" href="#간단한-예제">간단한 예제</a></h2>
+<p>TileTensor의 기본을 보여주는 간단한 예제로 모든 것을 정리해봅시다:</p>
+<pre><code class="language-mojo">from std.gpu.host import DeviceContext
+from layout import TileTensor
+from layout.tile_layout import row_major
+
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime dtype = DType.float32
+comptime layout = row_major[HEIGHT, WIDTH]()
+comptime LayoutType = type_of(layout)
+
+
+def kernel(
+    tensor: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+):
+    print("Before:")
+    print(tensor)
+    tensor[0, 0] += 1
+    print("After:")
+    print(tensor)
+
+
+def main() raises:
+    ctx = DeviceContext()
+
+    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
+    a.enqueue_fill(0)
+    tensor = TileTensor(a, layout)
+    # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
+    ctx.enqueue_function[kernel, kernel](
+        tensor, grid_dim=1, block_dim=1
+    )
+
+    ctx.synchronize()
+</code></pre>
+<p>다음 명령어로 이 코드를 실행하면:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -280,143 +309,61 @@ def pooling(
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p11
+<pre><code class="language-bash">pixi run tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p11
+<pre><code class="language-bash">pixi run -e amd tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e apple p11
+<pre><code class="language-bash">pixi run -e apple tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p11
+<pre><code class="language-bash">uv run poe tile_tensor_intro
 </code></pre>
   </div>
 </div>
-<p>퍼즐을 아직 풀지 않았다면 출력은 다음과 같습니다:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
+<pre><code class="language-txt">Before:
+0.0 0.0 0.0
+0.0 0.0 0.0
+After:
+1.0 0.0 0.0
+0.0 0.0 0.0
 </code></pre>
-<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
-<details class="solution-details">
-<summary></summary>
-<pre><code class="language-mojo">def pooling(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
-):
-    var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-    if global_i &lt; size:
-        shared[local_i] = a[global_i]
-
-    barrier()
-
-    if global_i == 0:
-        output[0] = shared[0]
-    elif global_i == 1:
-        output[1] = shared[0] + shared[1]
-    elif 1 &lt; global_i &lt; size:
-        output[global_i] = (
-            shared[local_i - 2] + shared[local_i - 1] + shared[local_i]
-        )
-
-
-</code></pre>
-<div class="solution-explanation">
-<p>공유 메모리를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:</p>
+<p>무슨 일이 일어나는지 살펴봅시다:</p>
 <ol>
-<li>
-<p><strong>공유 메모리 설정</strong></p>
-<ul>
-<li>
-<p>공유 메모리에 <code>TPB</code>개 할당:</p>
-<pre><code class="language-txt">Input array:  [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
-Block shared: [0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0]
-</code></pre>
-</li>
-<li>
-<p>각 스레드가 전역 메모리에서 하나씩 로드</p>
-</li>
-<li>
-<p><code>barrier()</code>로 모든 데이터 로드 완료를 보장</p>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>경계 케이스</strong></p>
-<ul>
-<li>
-<p>위치 0: 하나만</p>
-<pre><code class="language-txt">output[0] = shared[0] = 0.0
-</code></pre>
-</li>
-<li>
-<p>위치 1: 처음 두 값의 합</p>
-<pre><code class="language-txt">output[1] = shared[0] + shared[1] = 0.0 + 1.0 = 1.0
-</code></pre>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>메인 윈도우 연산</strong></p>
-<ul>
-<li>
-<p>위치 2 이후:</p>
-<pre><code class="language-txt">Position 2: shared[0] + shared[1] + shared[2] = 0.0 + 1.0 + 2.0 = 3.0
-Position 3: shared[1] + shared[2] + shared[3] = 1.0 + 2.0 + 3.0 = 6.0
-Position 4: shared[2] + shared[3] + shared[4] = 2.0 + 3.0 + 4.0 = 9.0
-...
-</code></pre>
-</li>
-<li>
-<p>로컬 인덱스를 사용한 윈도우 계산:</p>
-<pre><code class="language-txt"># 3개짜리 슬라이딩 윈도우
-window_sum = shared[i-2] + shared[i-1] + shared[i]
-</code></pre>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>메모리 접근 패턴</strong></p>
-<ul>
-<li>스레드당 공유 메모리로 전역 읽기 1회</li>
-<li>스레드당 공유 메모리에서 전역 쓰기 1회</li>
-<li>이웃 접근을 위해 공유 메모리 활용</li>
-<li>병합 메모리 접근 패턴 유지</li>
-</ul>
-</li>
+<li>행 우선 레이아웃으로 <code>2 x 3</code> 텐서를 생성합니다</li>
+<li>처음에는 모든 요소가 0입니다</li>
+<li>자연스러운 인덱싱으로 하나의 요소를 수정합니다</li>
+<li>변경 사항이 출력에 반영됩니다</li>
 </ol>
-<p>이 방식의 성능 최적화 포인트:</p>
+<p>이 간단한 예제는 TileTensor의 핵심 장점을 보여줍니다:</p>
 <ul>
-<li>전역 메모리 접근 최소화</li>
-<li>공유 메모리로 빠른 이웃 조회</li>
-<li>깔끔한 경계 처리</li>
-<li>효율적인 메모리 병합</li>
+<li>텐서 생성과 접근을 위한 깔끔한 문법</li>
+<li>자동 메모리 레이아웃 처리</li>
+<li>자연스러운 다차원 인덱싱</li>
 </ul>
-<p>최종 출력은 누적 윈도우 합계를 보여줍니다:</p>
-<pre><code class="language-txt">[0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0]
-</code></pre>
-</div>
-</details>
+<p>이 예제는 간단하지만, 같은 패턴이 앞으로 나올 퍼즐의 복잡한 GPU 연산에도 그대로 적용됩니다. 이런 기본 개념이 다음으로 어떻게 확장되는지 보게 될 거예요:</p>
+<ul>
+<li>멀티 스레드 GPU 연산</li>
+<li>공유 메모리 최적화</li>
+<li>복잡한 타일링 전략</li>
+<li>하드웨어 가속 연산</li>
+</ul>
+<p>TileTensor와 함께 GPU 프로그래밍 여정을 시작할 준비가 됐나요? 퍼즐로 들어가봅시다!</p>
+<p>💡 <strong>팁</strong>: 진행하면서 이 예제를 기억해두세요 - 이 기본 개념을 바탕으로 점점 더 정교한 GPU 프로그램을 만들어갈 겁니다.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_04/raw.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_11/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_04/tile_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -426,11 +373,11 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_11/puzzle_11.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_04/raw.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_11/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_04/tile_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

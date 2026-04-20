@@ -229,32 +229,26 @@ comptime BLOCKS_PER_GRID = (2, 1)
 
 
 def conv1d_kernel[
-    in_layout: Layout,
-    out_layout: Layout,
-    conv_layout: Layout,
     input_size: Int,
     conv_size: Int,
+    OutLayout: TensorLayout,
+    InLayout: TensorLayout,
+    ConvLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, MutAnyOrigin],
-    kernel: LayoutTensor[dtype, conv_layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    kernel: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
     # first: need to account for padding
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB + conv_size - 1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(conv_size),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB + conv_size - 1]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[conv_size]())
     if global_i &lt; input_size:
         shared_a[local_i] = input[global_i]
 
@@ -273,7 +267,7 @@ def conv1d_kernel[
     barrier()
 
     if global_i &lt; input_size:
-        var local_sum: output.element_type = 0
+        var local_sum: output.ElementType = 0
 
         comptime for j in range(conv_size):
             if local_i + j &lt; TPB + conv_size - 1:
@@ -326,9 +320,6 @@ struct Conv1DCustomOp:
         var output_tensor = output.to_layout_tensor()
         var input_tensor = input.to_layout_tensor()
         var kernel_tensor = kernel.to_layout_tensor()
-        comptime in_layout = input_tensor.layout
-        comptime out_layout = output_tensor.layout
-        comptime conv_layout = kernel_tensor.layout
 
         comptime if target == "gpu":
             var gpu_ctx = ctx.get_device_context()
@@ -395,7 +386,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <p>이 퍼즐을 풀려면 1D 합성곱 커널을 MAX 그래프 시스템과 통합해야 합니다. 핵심은 <code>Conv1DCustomOp</code> 구조체의 <code>execute</code> 메서드에서 커널을 올바르게 호출하는 것입니다.</p>
 <p>풀이는 다음과 같습니다:</p>
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
-                in_layout, out_layout, conv_layout, input_size, conv_size
+                input_size, conv_size, OutLayout, OutLayout, ConvLayout
             ]
             gpu_ctx.enqueue_function[kernel, kernel](
                 output_tensor,
@@ -439,7 +430,7 @@ Verification passed: Custom kernel results match NumPy calculation
 <ul>
 <li><code>@compiler.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출. <a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a> 참고</li>
 <li><code>execute</code> 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의</li>
-<li>입출력 텐서가 커널에서 사용할 수 있도록 LayoutTensor로 변환</li>
+<li>입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환</li>
 <li>Device context가 GPU 메모리 할당과 커널 실행 관리</li>
 </ul>
 </li>
@@ -482,7 +473,7 @@ input_tensor = input.to_layout_tensor()
 kernel_tensor = kernel.to_layout_tensor()
 </code></pre>
 <ul>
-<li>MAX 그래프 텐서를 Mojo LayoutTensor로 변환</li>
+<li>MAX 그래프 텐서를 Mojo TileTensor로 변환</li>
 <li>커널이 텐서를 직접 다룰 수 있게 해줌</li>
 <li>컴파일 타임 최적화를 위해 레이아웃 추출</li>
 </ul>

@@ -300,30 +300,32 @@
 <li>연산 간 적절한 동기화</li>
 </ul>
 <pre><code class="language-mojo">def minimal_fused_kernel_backward[
-    grad_output_layout: Layout,
-    input_layout: Layout,
-    ln_params_layout: Layout,
-    weight_layout: Layout,
-    grad_input_layout: Layout,
-    grad_ln_weight_layout: Layout,
-    grad_ln_bias_layout: Layout,
-    grad_weight_layout: Layout,
-    grad_bias_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
+    GradInputLayout: TensorLayout,
+    GradLnWeightLayout: TensorLayout,
+    GradLnBiasLayout: TensorLayout,
+    GradWeightLayout: TensorLayout,
+    GradBiasLayout: TensorLayout,
+    GradOutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    LnParamsLayout: TensorLayout,
+    WeightLayout: TensorLayout,
 ](
-    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
-    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
-    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
-    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
-    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
-    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
-    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
+    grad_ln_weight: TileTensor[
+        mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+    ],
+    grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
+    grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
+    grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
+    grad_output: TileTensor[mut=False, dtype, GradOutputLayout, ImmutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InputLayout, ImmutAnyOrigin],
+    ln_weight: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    ln_bias: TileTensor[mut=False, dtype, LnParamsLayout, ImmutAnyOrigin],
+    linear_weight: TileTensor[mut=False, dtype, WeightLayout, ImmutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -511,31 +513,33 @@ BACKWARD PASS Test Completed!
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def minimal_fused_kernel_backward[
-    grad_output_layout: Layout,
-    input_layout: Layout,
-    ln_params_layout: Layout,
-    weight_layout: Layout,
-    grad_input_layout: Layout,
-    grad_ln_weight_layout: Layout,
-    grad_ln_bias_layout: Layout,
-    grad_weight_layout: Layout,
-    grad_bias_layout: Layout,
     batch_size: Int,
     seq_len: Int,
     hidden_dim: Int,
     output_dim: Int,
+    GradInputLayout: TensorLayout,
+    GradLnWeightLayout: TensorLayout,
+    GradLnBiasLayout: TensorLayout,
+    GradWeightLayout: TensorLayout,
+    GradBiasLayout: TensorLayout,
+    GradOutputLayout: TensorLayout,
+    InputLayout: TensorLayout,
+    LnParamsLayout: TensorLayout,
+    WeightLayout: TensorLayout,
     dtype: DType = DType.float32,
 ](
-    grad_input: LayoutTensor[dtype, grad_input_layout, MutAnyOrigin],
-    grad_ln_weight: LayoutTensor[dtype, grad_ln_weight_layout, MutAnyOrigin],
-    grad_ln_bias: LayoutTensor[dtype, grad_ln_bias_layout, MutAnyOrigin],
-    grad_weight: LayoutTensor[dtype, grad_weight_layout, MutAnyOrigin],
-    grad_bias: LayoutTensor[dtype, grad_bias_layout, MutAnyOrigin],
-    grad_output: LayoutTensor[dtype, grad_output_layout, ImmutAnyOrigin],
-    input: LayoutTensor[dtype, input_layout, ImmutAnyOrigin],
-    ln_weight: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    ln_bias: LayoutTensor[dtype, ln_params_layout, ImmutAnyOrigin],
-    linear_weight: LayoutTensor[dtype, weight_layout, ImmutAnyOrigin],
+    grad_input: TileTensor[mut=True, dtype, GradInputLayout, MutAnyOrigin],
+    grad_ln_weight: TileTensor[
+        mut=True, dtype, GradLnWeightLayout, MutAnyOrigin
+    ],
+    grad_ln_bias: TileTensor[mut=True, dtype, GradLnBiasLayout, MutAnyOrigin],
+    grad_weight: TileTensor[mut=True, dtype, GradWeightLayout, MutAnyOrigin],
+    grad_bias: TileTensor[mut=True, dtype, GradBiasLayout, MutAnyOrigin],
+    grad_output: TileTensor[mut=True, dtype, GradOutputLayout, MutAnyOrigin],
+    input: TileTensor[mut=True, dtype, InputLayout, MutAnyOrigin],
+    ln_weight: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
+    ln_bias: TileTensor[mut=True, dtype, LnParamsLayout, MutAnyOrigin],
+    linear_weight: TileTensor[mut=True, dtype, WeightLayout, MutAnyOrigin],
 ):
     """Fused backward kernel using atomic operations for safe gradient accumulation.
     """
@@ -546,6 +550,17 @@ BACKWARD PASS Test Completed!
 
     if batch_idx &gt;= batch_size or seq_idx &gt;= seq_len:
         return
+
+    var grad_input_lt = grad_input.to_layout_tensor()
+    var grad_ln_weight_lt = grad_ln_weight.to_layout_tensor()
+    var grad_ln_bias_lt = grad_ln_bias.to_layout_tensor()
+    var grad_weight_lt = grad_weight.to_layout_tensor()
+    var grad_bias_lt = grad_bias.to_layout_tensor()
+    var grad_output_lt = grad_output.to_layout_tensor()
+    var input_lt = input.to_layout_tensor()
+    var ln_weight_lt = ln_weight.to_layout_tensor()
+    var ln_bias_lt = ln_bias.to_layout_tensor()
+    var linear_weight_lt = linear_weight.to_layout_tensor()
 
     # Initialize gradient tensors to zero (block 0,0 only to avoid UB with atomic ops)
     if batch_idx == 0 and seq_idx == 0:
@@ -571,7 +586,7 @@ BACKWARD PASS Test Completed!
     var sq_sum: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        var val = input[batch_idx, seq_idx, h]
+        var val = input_lt[batch_idx, seq_idx, h]
         sum_val += rebind[Scalar[dtype]](val)
         sq_sum += rebind[Scalar[dtype]](val * val)
 
@@ -584,28 +599,28 @@ BACKWARD PASS Test Completed!
         var grad_bias_ptr = grad_bias.ptr + out_idx
         _ = Atomic[dtype].fetch_add(
             grad_bias_ptr,
-            rebind[Scalar[dtype]](grad_output[batch_idx, seq_idx, out_idx]),
+            rebind[Scalar[dtype]](grad_output_lt[batch_idx, seq_idx, out_idx]),
         )
 
     # Step 3: Atomically accumulate gradients w.r.t. linear weight
     comptime for out_idx in range(output_dim):
         comptime for h in range(hidden_dim):
-            var input_val = input[batch_idx, seq_idx, h]
+            var input_val = input_lt[batch_idx, seq_idx, h]
             var normalized = (input_val - mean_val) * inv_std
             var ln_output_val = normalized * rebind[Scalar[dtype]](
-                ln_weight[h]
-            ) + rebind[Scalar[dtype]](ln_bias[h])
+                ln_weight_lt[h]
+            ) + rebind[Scalar[dtype]](ln_bias_lt[h])
 
             # Atomic gradient accumulation for linear weight
             var grad_w = (
-                grad_output[batch_idx, seq_idx, out_idx] * ln_output_val
+                grad_output_lt[batch_idx, seq_idx, out_idx] * ln_output_val
             )
             var grad_weight_ptr = grad_weight.ptr + out_idx * hidden_dim + h
             _ = Atomic.fetch_add(grad_weight_ptr, rebind[Scalar[dtype]](grad_w))
 
     # Step 4: Atomically accumulate gradients w.r.t. LayerNorm parameters
     comptime for h in range(hidden_dim):
-        input_val = input[batch_idx, seq_idx, h]
+        input_val = input_lt[batch_idx, seq_idx, h]
         normalized = (input_val - mean_val) * inv_std
 
         # Compute gradient w.r.t. LayerNorm output for this h
@@ -613,8 +628,8 @@ BACKWARD PASS Test Completed!
 
         comptime for out_idx in range(output_dim):
             grad_ln_out = grad_ln_out + rebind[Scalar[dtype]](
-                grad_output[batch_idx, seq_idx, out_idx]
-                * linear_weight[out_idx, h]
+                grad_output_lt[batch_idx, seq_idx, out_idx]
+                * linear_weight_lt[out_idx, h]
             )
 
         # Atomic accumulation of LayerNorm parameter gradients
@@ -633,18 +648,18 @@ BACKWARD PASS Test Completed!
     var sum_grad_normalized_times_normalized: Scalar[dtype] = 0
 
     comptime for h in range(hidden_dim):
-        h_input_val = input[batch_idx, seq_idx, h]
+        h_input_val = input_lt[batch_idx, seq_idx, h]
         h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
         comptime for out_idx in range(output_dim):
             h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
-                grad_output[batch_idx, seq_idx, out_idx]
-                * linear_weight[out_idx, h]
+                grad_output_lt[batch_idx, seq_idx, out_idx]
+                * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight[h])
+        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
         sum_grad_normalized = sum_grad_normalized + rebind[Scalar[dtype]](
             h_grad_norm
         )
@@ -655,19 +670,19 @@ BACKWARD PASS Test Completed!
 
     # Compute actual input gradients (no race conditions here - each thread writes to different positions)
     comptime for h in range(hidden_dim):
-        h_input_val = input[batch_idx, seq_idx, h]
+        h_input_val = input_lt[batch_idx, seq_idx, h]
         h_normalized = (h_input_val - mean_val) * inv_std
 
         var h_grad_ln_out: Scalar[dtype] = 0
 
         comptime for out_idx in range(output_dim):
             h_grad_ln_out = h_grad_ln_out + rebind[Scalar[dtype]](
-                grad_output[batch_idx, seq_idx, out_idx]
-                * linear_weight[out_idx, h]
+                grad_output_lt[batch_idx, seq_idx, out_idx]
+                * linear_weight_lt[out_idx, h]
             )
 
-        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight[h])
-        grad_input[batch_idx, seq_idx, h] = inv_std * (
+        h_grad_norm = h_grad_ln_out * rebind[Scalar[dtype]](ln_weight_lt[h])
+        grad_input_lt[batch_idx, seq_idx, h] = inv_std * (
             h_grad_norm
             - (sum_grad_normalized / hidden_dim)
             - (h_normalized * sum_grad_normalized_times_normalized / hidden_dim)

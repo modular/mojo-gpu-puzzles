@@ -1,9 +1,9 @@
 <!DOCTYPE HTML>
-<html lang="ko" class="light sidebar-visible" dir="ltr">
+<html lang="en" class="light sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>📐 LayoutTensor 버전 - Mojo 🔥 GPU 퍼즐</title>
+        <title>📚 Learn about TileTensor - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -208,64 +208,98 @@
 
                 <div id="content" class="content">
                     <main>
-                        <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
-<h1 id="layouttensor-버전"><a class="header" href="#layouttensor-버전">LayoutTensor 버전</a></h1>
-<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>1D LayoutTensor <code>a</code>와 <code>b</code>를 브로드캐스트로 더해 2D LayoutTensor <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
-<p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다.</em></p>
-<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
-<p>이 퍼즐에서 배울 내용:</p>
-<ul>
-<li>브로드캐스트 연산에 <code>LayoutTensor</code> 사용하기</li>
-<li>서로 다른 텐서 크기 다루기</li>
-<li><code>LayoutTensor</code>로 2D 인덱싱 처리하기</li>
-</ul>
-<p>핵심은 <code>LayoutTensor</code>가 서로 다른 텐서 크기 \((1, n)\)와 \((n, 1)\)을 \((n,n)\)으로 자연스럽게 브로드캐스트할 수 있다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.</p>
-<ul>
-<li><strong>텐서 크기</strong>: 입력 벡터의 크기는 \((1, n)\)과 \((n, 1)\)</li>
-<li><strong>브로드캐스트</strong>: 두 차원을 결합해 \((n,n)\) 출력 생성</li>
-<li><strong>가드 조건</strong>: 출력 크기에 대한 경계 검사는 여전히 필요</li>
-<li><strong>스레드 범위</strong>: 텐서 원소 \((2 \times 2)\)보다 스레드 \((3 \times 3)\)가 많음</li>
-</ul>
-<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<pre><code class="language-mojo">comptime SIZE = 2
-comptime BLOCKS_PER_GRID = 1
-comptime THREADS_PER_BLOCK = (3, 3)
-comptime dtype = DType.float32
-comptime out_layout = Layout.row_major(SIZE, SIZE)
-comptime a_layout = Layout.row_major(1, SIZE)
-comptime b_layout = Layout.row_major(SIZE, 1)
+                        <h1 id="introduction-to-tiletensor"><a class="header" href="#introduction-to-tiletensor">Introduction to TileTensor</a></h1>
+<p>Let’s take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
+🥁 … the <strong><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
+<blockquote>
+<p>💡 <em>This is a motivational overview of TileTensor’s capabilities. Don’t worry about understanding everything now - we’ll explore each feature in depth as we progress through the puzzles</em>.</p>
+</blockquote>
+<h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
+<p>Let’s look at the challenges we’ve faced so far:</p>
+<pre><code class="language-mojo"># Puzzle 1: Simple indexing
+output[i] = a[i] + 10.0
 
+# Puzzle 2: Multiple array management
+output[i] = a[i] + b[i]
 
-def broadcast_add[
-    out_layout: Layout,
-    a_layout: Layout,
-    b_layout: Layout,
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: Int,
-):
-    var row = thread_idx.y
-    var col = thread_idx.x
-    # FILL ME IN (roughly 2 lines)
-
-
+# Puzzle 3: Bounds checking
+if i &lt; size:
+    output[i] = a[i] + 10.0
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p05/p05_layout_tensor.mojo" class="filename">전체 코드 보기: problems/p05/p05_layout_tensor.mojo</a></p>
-<details>
-<summary><strong>팁</strong></summary>
-<div class="solution-tips">
+<p>As dimensions grow, code becomes more complex:</p>
+<pre><code class="language-mojo"># Traditional 2D indexing for row-major 2D matrix
+idx = row * WIDTH + col
+if row &lt; height and col &lt; width:
+    output[idx] = a[idx] + 10.0
+</code></pre>
+<h2 id="the-solution-a-peek-at-tiletensor"><a class="header" href="#the-solution-a-peek-at-tiletensor">The solution: A peek at TileTensor</a></h2>
+<p>TileTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>
 <ol>
-<li>2D 인덱스 가져오기: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
-<li>가드 추가: <code>if row &lt; size and col &lt; size</code></li>
-<li>가드 내부: LayoutTensor로 <code>a</code>와 <code>b</code> 값을 어떻게 브로드캐스트할지 생각해 보세요</li>
+<li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset calculations</li>
+<li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled organizations</li>
+<li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
 </ol>
-</div>
-</details>
-<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
-<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<h2 id="a-taste-of-whats-ahead"><a class="header" href="#a-taste-of-whats-ahead">A taste of what’s ahead</a></h2>
+<p>Let’s look at a few examples of what TileTensor can do. Don’t worry about understanding all the details now - we’ll cover each feature thoroughly in upcoming puzzles.</p>
+<h3 id="basic-usage-example"><a class="header" href="#basic-usage-example">Basic usage example</a></h3>
+<pre><code class="language-mojo">from layout import TileTensor
+from layout.tile_layout import row_major
+
+# Define layout
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime layout = row_major[HEIGHT, WIDTH]()
+comptime LayoutType = type_of(layout)
+
+# Create tensor
+tensor = TileTensor(buffer, layout)
+
+# Access elements naturally
+tensor[0, 0] = 1.0  # First element
+tensor[1, 2] = 2.0  # Last element
+</code></pre>
+<p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides from the <a href="https://docs.modular.com/mojo/manual/">Mojo manual</a></p>
+<ul>
+<li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
+<li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
+</ul>
+<h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
+<p>Let’s put everything together with a simple example that demonstrates the basics of TileTensor:</p>
+<pre><code class="language-mojo">from std.gpu.host import DeviceContext
+from layout import TileTensor
+from layout.tile_layout import row_major
+
+comptime HEIGHT = 2
+comptime WIDTH = 3
+comptime dtype = DType.float32
+comptime layout = row_major[HEIGHT, WIDTH]()
+comptime LayoutType = type_of(layout)
+
+
+def kernel(
+    tensor: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+):
+    print("Before:")
+    print(tensor)
+    tensor[0, 0] += 1
+    print("After:")
+    print(tensor)
+
+
+def main() raises:
+    ctx = DeviceContext()
+
+    a = ctx.enqueue_create_buffer[dtype](HEIGHT * WIDTH)
+    a.enqueue_fill(0)
+    tensor = TileTensor(a, layout)
+    # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
+    ctx.enqueue_function[kernel, kernel](
+        tensor, grid_dim=1, block_dim=1
+    )
+
+    ctx.synchronize()
+</code></pre>
+<p>When we run this code with:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -274,90 +308,61 @@ def broadcast_add[
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05_layout_tensor
+<pre><code class="language-bash">pixi run tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p05_layout_tensor
+<pre><code class="language-bash">pixi run -e amd tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e apple p05_layout_tensor
+<pre><code class="language-bash">pixi run -e apple tile_tensor_intro
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p05_layout_tensor
+<pre><code class="language-bash">uv run poe tile_tensor_intro
 </code></pre>
   </div>
 </div>
-<p>퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
+<pre><code class="language-txt">Before:
+0.0 0.0 0.0
+0.0 0.0 0.0
+After:
+1.0 0.0 0.0
+0.0 0.0 0.0
 </code></pre>
-<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
-<details class="solution-details">
-<summary></summary>
-<pre><code class="language-mojo">def broadcast_add[
-    out_layout: Layout,
-    a_layout: Layout,
-    b_layout: Layout,
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, a_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, b_layout, ImmutAnyOrigin],
-    size: Int,
-):
-    var row = thread_idx.y
-    var col = thread_idx.x
-    if row &lt; size and col &lt; size:
-        output[row, col] = a[0, col] + b[row, 0]
-
-
-</code></pre>
-<div class="solution-explanation">
-<p>LayoutTensor 브로드캐스트와 GPU 스레드 매핑의 핵심 개념을 보여주는 솔루션입니다:</p>
+<p>Let’s break down what’s happening:</p>
 <ol>
-<li>
-<p><strong>스레드에서 행렬로 매핑</strong></p>
-<ul>
-<li><code>thread_idx.y</code>로 행, <code>thread_idx.x</code>로 열에 접근</li>
-<li>자연스러운 2D 인덱싱이 출력 행렬 구조와 일치</li>
-<li>초과 스레드(3×3 그리드)는 경계 검사로 처리</li>
-</ul>
-</li>
-<li>
-<p><strong>브로드캐스트 작동 방식</strong></p>
-<ul>
-<li>입력 <code>a</code>의 크기는 <code>(1,n)</code>: <code>a[0,col]</code>이 행을 가로질러 브로드캐스트</li>
-<li>입력 <code>b</code>의 크기는 <code>(n,1)</code>: <code>b[row,0]</code>이 열을 가로질러 브로드캐스트</li>
-<li>출력의 크기는 <code>(n,n)</code>: 각 원소는 해당 브로드캐스트 값들의 합</li>
-</ul>
-<pre><code class="language-txt">[ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
-              [ b1 ]     [ a0+b1  a1+b1 ]
-</code></pre>
-</li>
-<li>
-<p><strong>경계 검사</strong></p>
-<ul>
-<li>가드 조건 <code>row &lt; size and col &lt; size</code>로 범위 초과 접근 방지</li>
-<li>행렬 범위와 초과 스레드를 효율적으로 처리</li>
-<li>브로드캐스트 덕분에 <code>a</code>와 <code>b</code>에 대한 별도 검사 불필요</li>
-</ul>
-</li>
+<li>We create a <code>2 x 3</code> tensor with row-major layout</li>
+<li>Initially, all elements are zero</li>
+<li>Using natural indexing, we modify a single element</li>
+<li>The change is reflected in our output</li>
 </ol>
-<p>이 패턴은 이후 퍼즐에서 다룰 더 복잡한 텐서 연산의 기초가 됩니다.</p>
-</div>
-</details>
+<p>This simple example demonstrates key TileTensor benefits:</p>
+<ul>
+<li>Clean syntax for tensor creation and access</li>
+<li>Automatic memory layout handling</li>
+<li>Natural multi-dimensional indexing</li>
+</ul>
+<p>While this example is straightforward, the same patterns will scale to complex GPU operations in upcoming puzzles. You’ll see how these basic concepts extend to:</p>
+<ul>
+<li>Multi-threaded GPU operations</li>
+<li>Shared memory optimizations</li>
+<li>Complex tiling strategies</li>
+<li>Hardware-accelerated computations</li>
+</ul>
+<p>Ready to start your GPU programming journey with TileTensor? Let’s dive into the puzzles!</p>
+<p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these fundamental concepts to create increasingly sophisticated GPU programs.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_05/raw.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_04/raw.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_06/puzzle_06.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_04/tile_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -367,11 +372,11 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_05/raw.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_04/raw.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_06/puzzle_06.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_04/tile_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -398,10 +403,9 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
         <script src="../theme/mojolang.js"></script>
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
+        <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
         <script src="../theme/language-switcher.js"></script>
-        <script src="../theme/livereload-poll.js"></script>
-        <script src="../theme/js/cjk-search.js"></script>
 
 
     </div>

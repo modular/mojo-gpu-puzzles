@@ -210,17 +210,18 @@
                     <main>
                         <h1 id="puzzle-7-2d-blocks"><a class="header" href="#puzzle-7-2d-blocks">Puzzle 7: 2D Blocks</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of matrix <code>a</code> and stores it in <code>output</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D TileTensor <code>a</code> and stores it in 2D TileTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code> in both directions.</em></p>
 <img src="./media/07.png" alt="Blocks 2D visualization" class="light-mode-img">
 <img src="./media/07d.png" alt="Blocks 2D visualization" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Block-based processing</li>
-<li>Grid-block coordination</li>
-<li>Multi-block indexing</li>
-<li>Memory access patterns</li>
+<li>Using <code>TileTensor</code> with multiple blocks</li>
+<li>Handling large matrices with 2D block organization</li>
+<li>Combining block indexing with <code>TileTensor</code> access</li>
 </ul>
+<p>The key insight is that <code>TileTensor</code> simplifies 2D indexing while still requiring proper block coordination for large matrices.</p>
 <blockquote>
 <p>🔑 <strong>2D thread indexing convention</strong></p>
 <p>We extend the block-based indexing from <a href="../puzzle_04/puzzle_04.html">puzzle 4</a> to 2D:</p>
@@ -245,12 +246,172 @@ The block dimensions and indices work together to ensure:</p>
 <li>Efficient memory access patterns</li>
 </ul>
 </blockquote>
-<h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
-<h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
-<p>Learn how to handle multi-block operations with manual indexing.</p>
-<h3 id="-layouttensor-version"><a class="header" href="#-layouttensor-version"><a href="./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
-<p>Use LayoutTensor features to elegantly handle block-based processing.</p>
-<p>💡 <strong>Note</strong>: See how LayoutTensor simplifies block coordination and memory access patterns.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li><strong>Matrix size</strong>: \(5 \times 5\) elements</li>
+<li><strong>Layout handling</strong>: <code>TileTensor</code> manages row-major organization</li>
+<li><strong>Block coordination</strong>: Multiple blocks cover the full matrix</li>
+<li><strong>2D indexing</strong>: Natural \((i,j)\) access with bounds checking</li>
+<li><strong>Total threads</strong>: \(36\) for \(25\) elements</li>
+<li><strong>Thread mapping</strong>: Each thread processes one matrix element</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = row_major[SIZE, SIZE]()
+comptime a_layout = row_major[SIZE, SIZE]()
+comptime OutLayout = type_of(out_layout)
+comptime ALayout = type_of(a_layout)
+
+
+def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
+    # FILL ME IN (roughly 2 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p07/p07.mojo" class="filename">View full file: problems/p07/p07.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Calculate global indices: <code>row = block_dim.y * block_idx.y + thread_idx.y</code>, <code>col = block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to add 10 to 2D TileTensor</li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
+expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
+    if row &lt; size and col &lt; size:
+        output[row, col] = a[row, col] + 10.0
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates how TileTensor simplifies 2D block-based processing:</p>
+<ol>
+<li>
+<p><strong>2D thread indexing</strong></p>
+<ul>
+<li>
+<p>Global row: <code>block_dim.y * block_idx.y + thread_idx.y</code></p>
+</li>
+<li>
+<p>Global col: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>Maps thread grid to tensor elements:</p>
+<pre><code class="language-txt">5×5 tensor with 3×3 blocks:
+
+Block (0,0)         Block (1,0)
+[(0,0) (0,1) (0,2)] [(0,3) (0,4)    *  ]
+[(1,0) (1,1) (1,2)] [(1,3) (1,4)    *  ]
+[(2,0) (2,1) (2,2)] [(2,3) (2,4)    *  ]
+
+Block (0,1)         Block (1,1)
+[(3,0) (3,1) (3,2)] [(3,3) (3,4)    *  ]
+[(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
+[  *     *     *  ] [  *     *      *  ]
+</code></pre>
+<p>(* = thread exists but outside tensor bounds)</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>TileTensor benefits</strong></p>
+<ul>
+<li>
+<p>Natural 2D indexing: <code>tensor[row, col]</code> instead of manual offset calculation</p>
+</li>
+<li>
+<p>Automatic memory layout optimization</p>
+</li>
+<li>
+<p>Example access pattern:</p>
+<pre><code class="language-txt">Raw memory:         TileTensor:
+row * size + col    tensor[row, col]
+(2,1) -&gt; 11        (2,1) -&gt; same element
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Bounds checking</strong></p>
+<ul>
+<li>Guard <code>row &lt; size and col &lt; size</code> handles:
+<ul>
+<li>Excess threads in partial blocks</li>
+<li>Edge cases at tensor boundaries</li>
+<li>Automatic memory layout handling by TileTensor</li>
+<li>36 threads (2×2 blocks of 3×3) for 25 elements</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Block coordination</strong></p>
+<ul>
+<li>Each 3×3 block processes part of 5×5 tensor</li>
+<li>TileTensor handles:
+<ul>
+<li>Memory layout optimization</li>
+<li>Efficient access patterns</li>
+<li>Block boundary coordination</li>
+<li>Cache-friendly data access</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>This pattern shows how TileTensor simplifies 2D block processing while maintaining optimal memory access patterns and thread coordination.</p>
+</div>
+</details>
 
                     </main>
 
@@ -260,7 +421,7 @@ The block dimensions and indices work together to ensure:</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_07/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_08/puzzle_08.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -274,7 +435,7 @@ The block dimensions and indices work together to ensure:</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_07/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_08/puzzle_08.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -230,7 +230,7 @@
 <li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
 <li>Number of bins: <code>NUM_BINS = 8</code> (ranges [0.0, 0.125), [0.125, 0.25), etc.)</li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 <li>Warps per block: <code>128 / WARP_SIZE</code> (2 or 4 warps depending on GPU)</li>
 </ul>
 <h2 id="the-challenge-parallel-bin-extraction"><a class="header" href="#the-challenge-parallel-bin-extraction">The challenge: Parallel bin extraction</a></h2>
@@ -253,15 +253,18 @@ for element in data:
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <h3 id="blockprefix_sum-approach"><a class="header" href="#blockprefix_sum-approach"><code>block.prefix_sum()</code> approach</a></h3>
 <p>Implement parallel histogram binning using <code>block.prefix_sum()</code> for extraction:</p>
-<pre><code class="language-mojo">comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+<pre><code class="language-mojo">comptime bin_layout = row_major[SIZE]()  # Max SIZE elements per bin
+comptime BinLayoutType = type_of(bin_layout)
 
 
 def block_histogram_bin_extract[
-    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
-    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    bin_output: TileTensor[mut=True, dtype, BinLayoutType, MutAnyOrigin],
+    count_output: TileTensor[
+        mut=True, DType.int32, OutLayoutType, MutAnyOrigin
+    ],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -344,7 +347,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <pre><code class="language-mojo">if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # Convert SIMD to Int for indexing
 </code></pre>
-<p>This is just like the bounds checking pattern from <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>, but now the condition is “belongs to target bin.”</p>
+<p>This is just like the bounds checking pattern from <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>, but now the condition is “belongs to target bin.”</p>
 <h3 id="6-final-count-computation"><a class="header" href="#6-final-count-computation">6. <strong>Final count computation</strong></a></h3>
 <p>The last thread (not thread 0!) computes the total count:</p>
 <pre><code class="language-mojo">if local_i == tpb - 1:  # Last thread in block
@@ -355,7 +358,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <h3 id="7-data-types-and-conversions"><a class="header" href="#7-data-types-and-conversions">7. <strong>Data types and conversions</strong></a></h3>
 <p>Remember the patterns from previous puzzles:</p>
 <ul>
-<li><code>LayoutTensor</code> indexing returns SIMD: <code>input_data[i][0]</code></li>
+<li><code>TileTensor</code> indexing returns SIMD: <code>input_data[i][0]</code></li>
 <li><code>block.prefix_sum()</code> returns SIMD: <code>offset[0]</code> to extract</li>
 <li>Array indexing needs <code>Int</code>: <code>Int(offset[0])</code> for <code>bin_output[...]</code></li>
 </ul>
@@ -429,11 +432,11 @@ Bin 7 extracted elements:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_histogram_bin_extract[
-    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
-    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
+    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -490,12 +493,12 @@ Bin 7 extracted elements:
 <div class="solution-explanation">
 <p>The <code>block.prefix_sum()</code> kernel demonstrates advanced parallel coordination patterns by building on concepts from previous puzzles:</p>
 <h2 id="step-by-step-algorithm-walkthrough"><a class="header" href="#step-by-step-algorithm-walkthrough"><strong>Step-by-step algorithm walkthrough:</strong></a></h2>
-<h3 id="phase-1-element-processing-like-puzzle-12-dot-product"><a class="header" href="#phase-1-element-processing-like-puzzle-12-dot-product"><strong>Phase 1: Element processing (like <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> dot product)</strong></a></h3>
+<h3 id="phase-1-element-processing-like-puzzle-12-dot-product"><a class="header" href="#phase-1-element-processing-like-puzzle-12-dot-product"><strong>Phase 1: Element processing (like <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> dot product)</strong></a></h3>
 <pre><code>Thread indexing (familiar pattern):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Global element index
   local_i = thread_idx.x                              // Local thread index
 
-Element loading (like LayoutTensor pattern):
+Element loading (like TileTensor pattern):
   Thread 0:  my_value = input_data[0][0] = 0.00
   Thread 1:  my_value = input_data[1][0] = 0.01
   Thread 13: my_value = input_data[13][0] = 0.13
@@ -547,11 +550,11 @@ Result: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // Perfectly packed!
       count_output[0] = total
 </code></pre>
 <h2 id="why-this-advanced-algorithm-works"><a class="header" href="#why-this-advanced-algorithm-works"><strong>Why this advanced algorithm works:</strong></a></h2>
-<h3 id="connection-to-puzzle-12-traditional-dot-product"><a class="header" href="#connection-to-puzzle-12-traditional-dot-product"><strong>Connection to <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (Traditional dot product):</strong></a></h3>
+<h3 id="connection-to-puzzle-12-traditional-dot-product"><a class="header" href="#connection-to-puzzle-12-traditional-dot-product"><strong>Connection to <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (Traditional dot product):</strong></a></h3>
 <ul>
 <li><strong>Same thread indexing</strong>: <code>global_i</code> and <code>local_i</code> patterns</li>
 <li><strong>Same bounds checking</strong>: <code>if global_i &lt; size</code> validation</li>
-<li><strong>Same data loading</strong>: LayoutTensor SIMD extraction with <code>[0]</code></li>
+<li><strong>Same data loading</strong>: TileTensor SIMD extraction with <code>[0]</code></li>
 </ul>
 <h3 id="connection-to-blocksum-earlier-in-this-puzzle"><a class="header" href="#connection-to-blocksum-earlier-in-this-puzzle"><strong>Connection to <a href="./block_sum.html"><code>block.sum()</code></a> (earlier in this puzzle):</strong></a></h3>
 <ul>

@@ -209,7 +209,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="simple-case-with-single-block"><a class="header" href="#simple-case-with-single-block">Simple Case with Single Block</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D LayoutTensor <code>a</code> and 1D LayoutTensor <code>b</code> and stores it in 1D LayoutTensor <code>output</code>.</p>
+<p>Implement a kernel that computes a 1D convolution between 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle covers:</p>
@@ -240,17 +240,18 @@ comptime CONV = 3
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(SIZE)
-comptime conv_layout = Layout.row_major(CONV)
+comptime in_layout = row_major[SIZE]()
+comptime InLayout = type_of(in_layout)
+comptime out_layout = row_major[SIZE]()
+comptime OutLayout = type_of(out_layout)
+comptime conv_layout = row_major[CONV]()
+comptime ConvLayout = type_of(conv_layout)
 
 
-def conv_1d_simple[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -263,7 +264,7 @@ def conv_1d_simple[
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code> for shared memory allocation</li>
+<li>Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code> for shared memory allocation</li>
 <li>Load input to <code>shared_a[local_i]</code> and kernel to <code>shared_b[local_i]</code></li>
 <li>Call <code>barrier()</code> after loading</li>
 <li>Sum products within bounds: <code>if local_i + j &lt; SIZE</code></li>
@@ -304,27 +305,19 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def conv_1d_simple[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV]())
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -345,8 +338,8 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     # Safe and correct:
     if global_i &lt; SIZE:
         # Note: using `var` allows us to include the type in the type inference
-        # `out.element_type` is available in LayoutTensor
-        var local_sum: output.element_type = 0
+        # `out.ElementType` is available in TileTensor
+        var local_sum: output.ElementType = 0
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
@@ -427,7 +420,7 @@ if global_i &lt; SIZE:
 <li>Uses <code>var</code> for proper type inference with <code>output.element_type</code></li>
 <li>Employs <code>@parameter</code> decorator to unroll the convolution loop at compile time</li>
 <li>Maintains strict bounds checking for memory safety</li>
-<li>Leverages LayoutTensor’s type system for better code safety</li>
+<li>Leverages TileTensor’s type system for better code safety</li>
 </ul>
 </li>
 <li>

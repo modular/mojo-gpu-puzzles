@@ -1,9 +1,9 @@
 <!DOCTYPE HTML>
-<html lang="en" class="light sidebar-visible" dir="ltr">
+<html lang="ko" class="light sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🔰 Raw Memory Approach - Mojo 🔥 GPU Puzzles</title>
+        <title>🚀 현대적 2D 연산 - Mojo 🔥 GPU 퍼즐</title>
 
 
         <!-- Custom HTML head -->
@@ -208,34 +208,37 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
-<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>In this puzzle, you’ll learn about:</p>
+                        <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
+<h1 id="tiletensor-버전"><a class="header" href="#tiletensor-버전">TileTensor 버전</a></h1>
+<h2 id="개요"><a class="header" href="#개요">개요</a></h2>
+<p>2D <em>TileTensor</em> <code>a</code>의 각 위치에 10을 더해 2D <em>TileTensor</em> <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다</em>.</p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
 <ul>
-<li>Broadcasting 1D vectors across different dimensions</li>
-<li>Using 2D thread indices for broadcast operations</li>
-<li>Handling boundary conditions in broadcast patterns</li>
+<li>2D 배열 접근에 <code>TileTensor</code> 사용하기</li>
+<li><code>tensor[i, j]</code>로 직접 2D 인덱싱하기</li>
+<li><code>TileTensor</code>에서 경계 검사 처리하기</li>
 </ul>
-<p>The key insight is understanding how to map elements from two 1D vectors to create a 2D output matrix through broadcasting, while handling thread bounds correctly.</p>
+<p>핵심은 <code>TileTensor</code>가 자연스러운 2D 인덱싱 인터페이스를 제공하여 내부 메모리 레이아웃을 추상화한다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.</p>
 <ul>
-<li><strong>Broadcasting</strong>: Each element of <code>a</code> combines with each element of <code>b</code></li>
-<li><strong>Thread mapping</strong>: 2D thread grid \((3 \times 3)\) for \(2 \times 2\) output</li>
-<li><strong>Vector access</strong>: Different access patterns for <code>a</code> and <code>b</code></li>
-<li><strong>Bounds checking</strong>: Guard against threads outside matrix dimensions</li>
+<li><strong>2D 접근</strong>: <code>TileTensor</code>로 자연스러운 \((i,j)\) 인덱싱</li>
+<li><strong>메모리 추상화</strong>: 수동 행 우선 계산 불필요</li>
+<li><strong>가드 조건</strong>: 두 차원 모두 경계 검사 필요</li>
+<li><strong>스레드 범위</strong>: 스레드 \((3 \times 3)\)가 텐서 원소 \((2 \times 2)\)보다 많음</li>
 </ul>
-<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
 comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
+comptime layout = row_major[SIZE, SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def broadcast_add(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+def add_10_2d(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     var row = thread_idx.y
@@ -244,19 +247,19 @@ def broadcast_add(
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p04/p04_tile_tensor.mojo" class="filename">전체 코드 보기: problems/p04/p04_tile_tensor.mojo</a></p>
 <details>
-<summary><strong>Tips</strong></summary>
+<summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
-<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
-<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code></li>
+<li>2D 인덱스 가져오기: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>가드 추가: <code>if row &lt; size and col &lt; size</code></li>
+<li>가드 내부에서 <code>a[row, col]</code>에 10 더하기</li>
 </ol>
 </div>
 </details>
-<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>To test your solution, run the following command in your terminal:</p>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
     <button class="tab-button">pixi NVIDIA (default)</button>
@@ -265,74 +268,48 @@ def broadcast_add(
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p05
+<pre><code class="language-bash">pixi run p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p05
+<pre><code class="language-bash">pixi run -e amd p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e apple p05
+<pre><code class="language-bash">pixi run -e apple p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p05
+<pre><code class="language-bash">uv run poe p04_tile_tensor
 </code></pre>
   </div>
 </div>
-<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<p>퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:</p>
 <pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
+expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </code></pre>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def broadcast_add(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+<pre><code class="language-mojo">def add_10_2d(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     var row = thread_idx.y
     var col = thread_idx.x
-    if row &lt; size and col &lt; size:
-        output[row * size + col] = a[col] + b[row]
+    if col &lt; size and row &lt; size:
+        output[row, col] = a[row, col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates fundamental GPU broadcasting concepts without LayoutTensor abstraction:</p>
-<ol>
-<li>
-<p><strong>Thread to matrix mapping</strong></p>
+<p>이 솔루션은:</p>
 <ul>
-<li>Uses <code>thread_idx.y</code> for row access and <code>thread_idx.x</code> for column access</li>
-<li>Direct mapping from 2D thread grid to output matrix elements</li>
-<li>Handles excess threads (3×3 grid) for 2×2 output matrix</li>
+<li><code>row = thread_idx.y</code>, <code>col = thread_idx.x</code>로 2D 스레드 인덱스를 가져옴</li>
+<li><code>if row &lt; size and col &lt; size</code>로 범위를 벗어난 접근 방지</li>
+<li><code>TileTensor</code>의 2D 인덱싱 사용: <code>output[row, col] = a[row, col] + 10.0</code></li>
 </ul>
-</li>
-<li>
-<p><strong>Broadcasting mechanics</strong></p>
-<ul>
-<li>Vector <code>a</code> broadcasts horizontally: same <code>a[col]</code> used across each row</li>
-<li>Vector <code>b</code> broadcasts vertically: same <code>b[row]</code> used across each column</li>
-<li>Output combines both vectors through addition</li>
-</ul>
-<pre><code class="language-txt">[ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
-              [ b1 ]     [ a0+b1  a1+b1 ]
-</code></pre>
-</li>
-<li>
-<p><strong>Bounds checking</strong></p>
-<ul>
-<li>Single guard condition <code>row &lt; size and col &lt; size</code> handles both dimensions</li>
-<li>Prevents out-of-bounds access for both input vectors and output matrix</li>
-<li>Required due to 3×3 thread grid being larger than 2×2 data</li>
-</ul>
-</li>
-</ol>
-<p>Compare this with the LayoutTensor version to see how the abstraction simplifies broadcasting operations while maintaining the same underlying concepts.</p>
 </div>
 </details>
 
@@ -340,11 +317,11 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_05/puzzle_05.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_04/introduction_tile_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_05/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_05/puzzle_05.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -354,11 +331,11 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_05/puzzle_05.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_04/introduction_tile_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_05/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_05/puzzle_05.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -385,9 +362,10 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
         <script src="../theme/mojolang.js"></script>
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
-        <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
         <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
 
 
     </div>

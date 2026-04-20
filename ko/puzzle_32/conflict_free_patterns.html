@@ -225,14 +225,13 @@ comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def no_conflict_kernel[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def no_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Perfect shared memory access - no bank conflicts.
@@ -242,12 +241,9 @@ def no_conflict_kernel[
     """
 
     # Shared memory buffer - each thread loads one element
-    var shared_buf = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -268,26 +264,21 @@ def no_conflict_kernel[
 
 
 </code></pre>
-<pre><code class="language-mojo">def two_way_conflict_kernel[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def two_way_conflict_kernel(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Stride-2 shared memory access - creates 2-way bank conflicts.
 
-    Threads 0,16 → Bank 0, Threads 1,17 → Bank 1, etc.
+    Threads 0,16 -&gt; Bank 0, Threads 1,17 -&gt; Bank 1, etc.
     Each bank serves 2 threads, doubling access time.
     """
 
     # Shared memory buffer - stride-2 access pattern creates conflicts
-    var shared_buf = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_buf = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -543,7 +534,7 @@ if thread_idx.x &lt; stride:
 <pre><code class="language-mojo">constant = shared[0]  # All threads read same address - hardware optimized
 </code></pre>
 <p><strong>3. 패딩 기법:</strong></p>
-<pre><code class="language-mojo">shared = LayoutTensor[dtype, Layout.row_major(TPB + 1), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()  # Shift access patterns
+<pre><code class="language-mojo">shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + 1]())  # Shift access patterns
 </code></pre>
 <p><strong>4. 접근 패턴 분석:</strong></p>
 <ul>

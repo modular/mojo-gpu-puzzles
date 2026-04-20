@@ -210,7 +210,7 @@
                     <main>
                         <!-- i18n-source-commit: 1cd13cbe87682d50679d452938efab4cc79ddb78 -->
 <h1 id="단일-블록을-사용한-기본-버전"><a class="header" href="#단일-블록을-사용한-기본-버전">단일 블록을 사용한 기본 버전</a></h1>
-<p>1D LayoutTensor <code>a</code>와 1D LayoutTensor <code>b</code>의 1D 합성곱을 계산하여 1D LayoutTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
@@ -241,17 +241,18 @@ comptime CONV = 3
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(SIZE)
-comptime conv_layout = Layout.row_major(CONV)
+comptime in_layout = row_major[SIZE]()
+comptime InLayout = type_of(in_layout)
+comptime out_layout = row_major[SIZE]()
+comptime OutLayout = type_of(out_layout)
+comptime conv_layout = row_major[CONV]()
+comptime ConvLayout = type_of(conv_layout)
 
 
-def conv_1d_simple[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -264,7 +265,7 @@ def conv_1d_simple[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><code>LayoutTensor[dtype, Layout.row_major(SIZE), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code>으로 공유 메모리 할당</li>
+<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>으로 공유 메모리 할당</li>
 <li>입력을 <code>shared_a[local_i]</code>에, 커널을 <code>shared_b[local_i]</code>에 로드</li>
 <li>데이터 로드 후 <code>barrier()</code> 호출</li>
 <li>경계 안에서 곱을 합산: <code>if local_i + j &lt; SIZE</code></li>
@@ -305,27 +306,19 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def conv_1d_simple[
-    in_layout: Layout, out_layout: Layout, conv_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, conv_layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def conv_1d_simple(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, ConvLayout, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared_a = LayoutTensor[
-        dtype,
-        Layout.row_major(SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var shared_b = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_a = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[SIZE]())
+    var shared_b = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV]())
     if global_i &lt; SIZE:
         shared_a[local_i] = a[global_i]
 
@@ -346,8 +339,8 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
     # Safe and correct:
     if global_i &lt; SIZE:
         # Note: using `var` allows us to include the type in the type inference
-        # `out.element_type` is available in LayoutTensor
-        var local_sum: output.element_type = 0
+        # `out.ElementType` is available in TileTensor
+        var local_sum: output.ElementType = 0
 
         # Note: `@parameter` decorator unrolls the loop at compile time given `CONV` is a compile-time constant
         # See: https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement
@@ -428,7 +421,7 @@ if global_i &lt; SIZE:
 <li><code>var</code>와 <code>output.element_type</code>으로 적절한 타입 추론</li>
 <li><code>@parameter</code> 데코레이터로 합성곱 루프를 컴파일 타임에 전개</li>
 <li>엄격한 경계 검사로 메모리 안전성 확보</li>
-<li>LayoutTensor의 타입 시스템으로 코드 안전성 향상</li>
+<li>TileTensor의 타입 시스템으로 코드 안전성 향상</li>
 </ul>
 </li>
 <li>

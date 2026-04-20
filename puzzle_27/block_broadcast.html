@@ -229,7 +229,7 @@
 <li>Data type: <code>DType.float32</code></li>
 <li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major for input and output)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major for input and output)</li>
 <li>Test data: Values cycling 1-8, so mean = 4.5</li>
 <li>Expected output: Normalized vector with mean = 1.0</li>
 </ul>
@@ -270,14 +270,15 @@ output[global_i] = my_value / mean
 <h3 id="complete-block-operations-workflow"><a class="header" href="#complete-block-operations-workflow">Complete block operations workflow</a></h3>
 <p>Implement sophisticated vector mean normalization using the full block operations toolkit:</p>
 <pre><code class="language-mojo">
-comptime vector_layout = Layout.row_major(SIZE)
+comptime vector_layout = row_major[SIZE]()
+comptime VectorLayoutType = type_of(vector_layout)
 
 
 def block_normalize_vector[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -329,7 +330,7 @@ def block_normalize_vector[
 <li>Each thread normalizes using the broadcast mean</li>
 </ol>
 <h3 id="2-data-loading-and-sum-computation-familiar-patterns"><a class="header" href="#2-data-loading-and-sum-computation-familiar-patterns">2. <strong>Data loading and sum computation (familiar patterns)</strong></a></h3>
-<p>Load your element using the established LayoutTensor pattern:</p>
+<p>Load your element using the established TileTensor pattern:</p>
 <pre><code class="language-mojo">var my_value: Scalar[dtype] = 0.0
 if global_i &lt; size:
     my_value = input_data[global_i][0]  # SIMD extraction
@@ -426,18 +427,18 @@ Output mean: 1.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_normalize_vector[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
-    1. Use block.sum() to compute sum of all elements (all → one)
+    1. Use block.sum() to compute sum of all elements (all -&gt; one)
     2. Thread 0 computes mean = sum / size
-    3. Use block.broadcast() to share mean to all threads (one → all)
+    3. Use block.broadcast() to share mean to all threads (one -&gt; all)
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
@@ -481,7 +482,7 @@ Output mean: 1.0
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Maps to input array position
   local_i = thread_idx.x                              // Position within block (0-127)
 
-Parallel element loading using LayoutTensor pattern:
+Parallel element loading using TileTensor pattern:
   Thread 0:   my_value = input_data[0][0] = 1.0    // First cycle value
   Thread 1:   my_value = input_data[1][0] = 2.0    // Second cycle value
   Thread 7:   my_value = input_data[7][0] = 8.0    // Last cycle value
@@ -579,10 +580,10 @@ Proportional relationships preserved:
 
 Algorithm produces provably correct mathematical result.
 </code></pre>
-<h3 id="connection-to-puzzle-12-foundational-patterns"><a class="header" href="#connection-to-puzzle-12-foundational-patterns"><strong>Connection to <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (foundational patterns):</strong></a></h3>
+<h3 id="connection-to-puzzle-12-foundational-patterns"><a class="header" href="#connection-to-puzzle-12-foundational-patterns"><strong>Connection to <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (foundational patterns):</strong></a></h3>
 <ul>
 <li><strong>Thread coordination evolution</strong>: Same <code>global_i</code>, <code>local_i</code> patterns but with block primitives</li>
-<li><strong>Memory access patterns</strong>: Same LayoutTensor SIMD extraction <code>[0]</code> but optimized workflow</li>
+<li><strong>Memory access patterns</strong>: Same TileTensor SIMD extraction <code>[0]</code> but optimized workflow</li>
 <li><strong>Complexity elimination</strong>: Replaces 20+ lines of manual barriers with 2 block operations</li>
 <li><strong>Educational progression</strong>: Manual → automated, complex → simple, error-prone → reliable</li>
 </ul>
@@ -652,7 +653,7 @@ Mean normalization is the perfect educational example of this fundamental patter
 </details>
 <p><strong>Complete block operations progression:</strong></p>
 <ol>
-<li><strong>Manual coordination</strong> (<a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>): Understand parallel fundamentals</li>
+<li><strong>Manual coordination</strong> (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>): Understand parallel fundamentals</li>
 <li><strong>Warp primitives</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): Learn hardware-accelerated patterns</li>
 <li><strong>Block reduction</strong> (<a href="./block_sum.html"><code>block.sum()</code></a>): Learn all→one communication</li>
 <li><strong>Block scan</strong> (<a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): Learn all→each communication</li>

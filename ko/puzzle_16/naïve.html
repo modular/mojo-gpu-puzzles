@@ -230,14 +230,16 @@
 </ul>
 <p>레이아웃 구성:</p>
 <ul>
-<li>입력 A: <code>Layout.row_major(SIZE, SIZE)</code></li>
-<li>입력 B: <code>Layout.row_major(SIZE, SIZE)</code></li>
-<li>출력: <code>Layout.row_major(SIZE, SIZE)</code></li>
+<li>입력 A: <code>row_major[SIZE, SIZE]()</code></li>
+<li>입력 B: <code>row_major[SIZE, SIZE]()</code></li>
+<li>출력: <code>row_major[SIZE, SIZE]()</code></li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace
-from layout import Layout, LayoutTensor
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
 
 
 comptime TPB = 3
@@ -245,15 +247,14 @@ comptime SIZE = 2
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, TPB)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE, SIZE)
+comptime layout = row_major[SIZE, SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def naive_matmul[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def naive_matmul(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
@@ -307,17 +308,17 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def naive_matmul[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     var row = block_dim.y * block_idx.y + thread_idx.y
     var col = block_dim.x * block_idx.x + thread_idx.x
 
     if row &lt; size and col &lt; size:
-        var acc: output.element_type = 0
+        var acc: output.ElementType = 0
 
         comptime for k in range(size):
             acc += a[row, k] * b[k, col]
@@ -327,7 +328,7 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>LayoutTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:</p>
+<p>TileTensor를 활용한 기본 행렬 곱셈은 다음과 같은 접근 방식을 따릅니다:</p>
 <h3 id="행렬-레이아웃-22-예시"><a class="header" href="#행렬-레이아웃-22-예시">행렬 레이아웃 (2×2 예시)</a></h3>
 <pre><code class="language-txt">Matrix A:          Matrix B:                   Output C:
 [a[0,0] a[0,1]]    [b[0,0] b[0,1]]             [c[0,0] c[0,1]]

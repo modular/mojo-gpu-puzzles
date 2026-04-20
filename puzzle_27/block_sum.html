@@ -229,28 +229,25 @@
 <li>Data type: <code>DType.float32</code></li>
 <li>Block configuration: <code>(128, 1)</code> threads per block (<code>TPB = 128</code>)</li>
 <li>Grid configuration: <code>(1, 1)</code> blocks per grid</li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 <li>Warps per block: <code>128 / WARP_SIZE</code> (4 warps on NVIDIA, 2 or 4 warps on AMD)</li>
 </ul>
 <h2 id="the-traditional-complexity-from-puzzle-12"><a class="header" href="#the-traditional-complexity-from-puzzle-12">The traditional complexity (from Puzzle 12)</a></h2>
-<p>Recall the complex approach from <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> that required shared memory, barriers, and tree reduction:</p>
+<p>Recall the complex approach from <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> that required shared memory, barriers, and tree reduction:</p>
 <pre><code class="language-mojo">def traditional_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     """Traditional dot product using shared memory + barriers + tree reduction.
     Educational but complex - shows the manual coordination needed."""
 
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -288,25 +285,30 @@
 <h2 id="the-warp-level-improvement-from-puzzle-24"><a class="header" href="#the-warp-level-improvement-from-puzzle-24">The warp-level improvement (from Puzzle 24)</a></h2>
 <p>Before jumping to block-level operations, recall how <a href="../puzzle_24/warp_sum.html">Puzzle 24</a> simplified reduction within a single warp using <code>warp.sum()</code>:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    in_layout: Layout, out_layout: Layout, size: Int
+    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
+    var a_lt = a.to_layout_tensor()
+    var b_lt = b.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i &lt; size:
-        partial_product = (a[global_i] * b[global_i]).reduce_add()
+        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        output[global_i // WARP_SIZE] = total
+        out_lt.store[1](Index(global_i // WARP_SIZE), total)
 
 
 </code></pre>
@@ -349,17 +351,19 @@
 <pre><code class="language-mojo">comptime SIZE = 128
 comptime TPB = 128
 comptime NUM_BINS = 8
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(1)
+comptime in_layout = row_major[SIZE]()
+comptime InLayoutType = type_of(in_layout)
+comptime out_layout = row_major[1]()
+comptime OutLayoutType = type_of(out_layout)
 comptime dtype = DType.float32
 
 
 def block_sum_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -413,8 +417,8 @@ Just like warp.sum() but for the entire block
 </ol>
 <h3 id="2-remember-the-dot-product-math"><a class="header" href="#2-remember-the-dot-product-math">2. <strong>Remember the dot product math</strong></a></h3>
 <p>Each thread should handle one element pair from vectors <code>a</code> and <code>b</code>. What operation combines these into a “partial result” that can be summed across threads?</p>
-<h3 id="3-layouttensor-indexing-patterns"><a class="header" href="#3-layouttensor-indexing-patterns">3. <strong>LayoutTensor indexing patterns</strong></a></h3>
-<p>When accessing <code>LayoutTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
+<h3 id="3-tiletensor-indexing-patterns"><a class="header" href="#3-tiletensor-indexing-patterns">3. <strong>TileTensor indexing patterns</strong></a></h3>
+<p>When accessing <code>TileTensor</code> elements, remember that indexing returns SIMD values. You’ll need to extract the scalar value for arithmetic operations.</p>
 <h3 id="4-blocksum-api-concepts"><a class="header" href="#4-blocksum-api-concepts">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum()</a> API concepts</strong></a></h3>
 <p>Study the function signature - it needs:</p>
 <ul>
@@ -434,11 +438,11 @@ Just like warp.sum() but for the entire block
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_sum_dot_product[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
     size: Int,
 ):
     """Dot product using block.sum() - convenience function like warp.sum()!
@@ -450,7 +454,7 @@ Just like warp.sum() but for the entire block
     # Each thread computes partial product
     var partial_product: Scalar[dtype] = 0.0
     if global_i &lt; size:
-        # LayoutTensor indexing `[0]` returns the underlying SIMD value
+        # TileTensor indexing `[0]` returns the underlying SIMD value
         partial_product = a[global_i][0] * b[global_i][0]
 
     # The magic: block.sum() replaces 15+ lines of manual reduction!

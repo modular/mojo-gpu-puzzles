@@ -210,27 +210,27 @@
                     <main>
                         <h1 id="tiled-matrix-multiplication"><a class="header" href="#tiled-matrix-multiplication">Tiled Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with LayoutTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with TileTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
-<li>Matrix tiling with LayoutTensor for efficient computation</li>
+<li>Matrix tiling with TileTensor for efficient computation</li>
 <li>Multi-block coordination with proper layouts</li>
 <li>Efficient shared memory usage through TensorBuilder</li>
-<li>Boundary handling for tiles with LayoutTensor indexing</li>
+<li>Boundary handling for tiles with TileTensor indexing</li>
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE_TILED} = 9\)</li>
 <li>Threads per block: \(\text{TPB} \times \text{TPB} = 3 \times 3\)</li>
 <li>Grid dimensions: \(3 \times 3\) blocks</li>
-<li>Shared memory: Two \(\text{TPB} \times \text{TPB}\) LayoutTensors per block</li>
+<li>Shared memory: Two \(\text{TPB} \times \text{TPB}\) TileTensors per block</li>
 </ul>
 <p>Layout configuration:</p>
 <ul>
-<li>Input A: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>Input B: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>Output: <code>Layout.row_major(SIZE_TILED, SIZE_TILED)</code></li>
-<li>Shared Memory: Two <code>TPB × TPB</code> LayoutTensors using TensorBuilder</li>
+<li>Input A: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>Input B: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>Output: <code>row_major[SIZE_TILED, SIZE_TILED]()</code></li>
+<li>Shared Memory: Two <code>TPB × TPB</code> TileTensors using TensorBuilder</li>
 </ul>
 <h2 id="tiling-strategy"><a class="header" href="#tiling-strategy">Tiling strategy</a></h2>
 <h3 id="block-organization"><a class="header" href="#block-organization">Block organization</a></h3>
@@ -239,7 +239,7 @@
 [B10][B11][B12]               [T10 T11 T12]
 [B20][B21][B22]               [T20 T21 T22]
 
-Each block processes a tile using LayoutTensor indexing
+Each block processes a tile using TileTensor indexing
 </code></pre>
 <h3 id="tile-processing-steps"><a class="header" href="#tile-processing-steps">Tile processing steps</a></h3>
 <ol>
@@ -287,15 +287,14 @@ Synchronization required:
 <pre><code class="language-mojo">comptime SIZE_TILED = 9
 comptime BLOCKS_PER_GRID_TILED = (3, 3)  # each block convers 3x3 elements
 comptime THREADS_PER_BLOCK_TILED = (TPB, TPB)
-comptime layout_tiled = Layout.row_major(SIZE_TILED, SIZE_TILED)
+comptime layout_tiled = row_major[SIZE_TILED, SIZE_TILED]()
+comptime LayoutTiledType = type_of(layout_tiled)
 
 
-def matmul_tiled[
-    layout: Layout, size: Int
-](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+def matmul_tiled(
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -404,31 +403,25 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def matmul_tiled[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
     var tiled_row = block_idx.y * TPB + local_row
     var tiled_col = block_idx.x * TPB + local_col
 
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
 
-    var acc: output.element_type = 0
+    var acc: output.ElementType = 0
 
     # Iterate over tiles to compute matrix product
     comptime for tile in range((size + TPB - 1) // TPB):
@@ -589,29 +582,30 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 </ol>
 <p>This implementation achieves high performance through:</p>
 <ul>
-<li>Efficient use of LayoutTensor for memory access</li>
+<li>Efficient use of TileTensor for memory access</li>
 <li>Optimal tiling strategy</li>
 <li>Proper thread synchronization</li>
 <li>Careful boundary handling</li>
 </ul>
 </div>
 </details>
-<h2 id="solution-idiomatic-layouttensor-tiling"><a class="header" href="#solution-idiomatic-layouttensor-tiling">Solution: Idiomatic LayoutTensor tiling</a></h2>
+<h2 id="solution-idiomatic-tiletensor-tiling"><a class="header" href="#solution-idiomatic-tiletensor-tiling">Solution: Idiomatic TileTensor tiling</a></h2>
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">from std.gpu.memory import async_copy_wait_all
 from layout.layout_tensor import copy_dram_to_sram_async
+from layout import Layout as IntTupleLayout
 
 comptime NUM_THREADS = TPB * TPB
 comptime BLOCK_DIM_COUNT = 2
 
 
 def matmul_idiomatic_tiled[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout_tiled, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, layout_tiled, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutTiledType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutTiledType, ImmutAnyOrigin],
 ):
     var local_row = thread_idx.y
     var local_col = thread_idx.x
@@ -620,23 +614,21 @@ def matmul_idiomatic_tiled[
 
     # Get the tile of the output matrix that this thread block is responsible for
     var out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
-    var a_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var b_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB, TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var a_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
+    var b_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB, TPB]())
 
-    var acc: output.element_type = 0
+    var acc: output.ElementType = 0
 
-    comptime load_a_layout = Layout.row_major(1, TPB)  # Coalesced loading
-    comptime load_b_layout = Layout.row_major(1, TPB)  # Coalesced loading
+    comptime load_a_layout = IntTupleLayout.row_major(
+        1, TPB
+    )  # Coalesced loading
+    comptime load_b_layout = IntTupleLayout.row_major(
+        1, TPB
+    )  # Coalesced loading
     # Note: Both matrices stored in same orientation for correct matrix multiplication
     # Transposed loading would be useful if B were pre-transposed in global memory
 
@@ -652,12 +644,12 @@ def matmul_idiomatic_tiled[
             thread_layout=load_a_layout,
             num_threads=NUM_THREADS,
             block_dim_count=BLOCK_DIM_COUNT,
-        ](a_shared, a_tile)
+        ](a_shared.to_layout_tensor(), a_tile.to_layout_tensor())
         copy_dram_to_sram_async[
             thread_layout=load_b_layout,
             num_threads=NUM_THREADS,
             block_dim_count=BLOCK_DIM_COUNT,
-        ](b_shared, b_tile)
+        ](b_shared.to_layout_tensor(), b_tile.to_layout_tensor())
 
         # Wait for all async copies to complete
         async_copy_wait_all()
@@ -676,12 +668,12 @@ def matmul_idiomatic_tiled[
 
 </code></pre>
 <div class="solution-explanation">
-<p>The idiomatic tiled matrix multiplication leverages Mojo’s LayoutTensor API and asynchronous memory operations for a beautifully clean implementation.</p>
+<p>The idiomatic tiled matrix multiplication leverages Mojo’s TileTensor API and asynchronous memory operations for a beautifully clean implementation.</p>
 <p><strong>🔑 Key Point: This implementation performs standard matrix multiplication A × B using coalesced loading for both matrices.</strong></p>
 <p><strong>What this implementation does:</strong></p>
 <ul>
 <li><strong>Matrix operation</strong>: Standard \(A \times B\) multiplication (not \(A \times B^T\))</li>
-<li><strong>Loading pattern</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for coalesced access</li>
+<li><strong>Loading pattern</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced access</li>
 <li><strong>Computation</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>Data layout</strong>: No transposition during loading - both matrices loaded in same orientation</li>
 </ul>
@@ -694,12 +686,12 @@ def matmul_idiomatic_tiled[
 <p>With the \((9 \times 9)\) matrix size, we get perfect tiling that eliminates all boundary checks:</p>
 <ol>
 <li>
-<p><strong>LayoutTensor tile API</strong></p>
+<p><strong>TileTensor tile API</strong></p>
 <pre><code class="language-mojo">out_tile = output.tile[TPB, TPB](block_idx.y, block_idx.x)
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
-<p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)” without manual coordinate calculation. See the <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">documentation</a> for more details.</p>
+<p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)” without manual coordinate calculation. See the <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">documentation</a> for more details.</p>
 </li>
 <li>
 <p><strong>Asynchronous memory operations</strong></p>
@@ -735,12 +727,12 @@ async_copy_wait_all()
 </li>
 <li>
 <p><strong>Optimized memory access layouts</strong></p>
-<pre><code class="language-mojo">comptime load_a_layout = Layout.row_major(1, TPB)    # Coalesced loading
-comptime load_b_layout = Layout.row_major(1, TPB)    # Coalesced loading
+<pre><code class="language-mojo">comptime load_a_layout = row_major[1, TPB]()    # Coalesced loading
+comptime load_b_layout = row_major[1, TPB]()    # Coalesced loading
 # Note: Both matrices use the same layout for standard A × B multiplication
 </code></pre>
 <p><strong>Memory Access Analysis for Current Implementation:</strong></p>
-<p>Both matrices use <code>Layout.row_major(1, TPB)</code> for coalesced loading from global memory:</p>
+<p>Both matrices use <code>row_major[1, TPB]()</code> for coalesced loading from global memory:</p>
 <ul>
 <li><code>load_a_layout</code>: Threads cooperate to load consecutive elements from matrix A rows</li>
 <li><code>load_b_layout</code>: Threads cooperate to load consecutive elements from matrix B rows</li>
@@ -758,11 +750,11 @@ acc += a_shared[local_row, k] * b_shared[k, local_col]
 - Matrix A tile: threads load A[block_row, k], A[block_row, k+1], A[block_row, k+2]... (consecutive)
 - Matrix B tile: threads load B[k, block_col], B[k, block_col+1], B[k, block_col+2]... (consecutive)
 
-Both patterns are coalesced with Layout.row_major(1, TPB)
+Both patterns are coalesced with row_major[1, TPB]()
 </code></pre>
 <p><strong>Three separate memory concerns:</strong></p>
 <ol>
-<li><strong>Global-to-shared coalescing</strong>: <code>Layout.row_major(1, TPB)</code> ensures coalesced global memory access</li>
+<li><strong>Global-to-shared coalescing</strong>: <code>row_major[1, TPB]()</code> ensures coalesced global memory access</li>
 <li><strong>Shared memory computation</strong>: <code>a_shared[local_row, k] * b_shared[k, local_col]</code> avoids bank conflicts</li>
 <li><strong>Matrix operation</strong>: The computation pattern determines this is A × B, not A × B^T</li>
 </ol>
@@ -795,7 +787,7 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>This implementation shows how high-level abstractions can express complex GPU algorithms without sacrificing performance. It’s a prime example of Mojo’s philosophy: combining high-level expressiveness with low-level performance control.</p>
 <h3 id="key-differences-from-manual-tiling"><a class="header" href="#key-differences-from-manual-tiling">Key differences from manual tiling</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Manual Tiling</th><th>Idiomatic Tiling</th></tr></thead><tbody>
-<tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>LayoutTensor tile API</td></tr>
+<tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>TileTensor tile API</td></tr>
 <tr><td>Tile loading</td><td>Explicit element-by-element copying</td><td>Dedicated copy engine bulk transfers</td></tr>
 <tr><td>Shared memory</td><td>Manual initialization (defensive)</td><td>Managed by copy functions</td></tr>
 <tr><td>Code complexity</td><td>More verbose with explicit indexing</td><td>More concise with higher-level APIs</td></tr>
@@ -809,7 +801,7 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>The current implementation does NOT use transposed loading. This section is purely educational to show what’s possible with the layout system.</p>
 <p><strong>Current implementation recap:</strong></p>
 <ul>
-<li>Uses <code>Layout.row_major(1, TPB)</code> for both matrices</li>
+<li>Uses <code>row_major[1, TPB]()</code> for both matrices</li>
 <li>Performs standard A × B multiplication</li>
 <li>No data transposition during copy</li>
 </ul>
@@ -817,8 +809,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <p>While this puzzle uses standard coalesced loading for both matrices, the layout system’s flexibility enables powerful optimizations in other scenarios:</p>
 <pre><code class="language-mojo"># Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
-comptime load_b_layout = Layout.row_major(TPB, 1)   # Load B^T with coalesced access
-comptime store_b_layout = Layout.row_major(1, TPB)  # Store as B in shared memory
+comptime load_b_layout = row_major[TPB, 1]()   # Load B^T with coalesced access
+comptime store_b_layout = row_major[1, TPB]()  # Store as B in shared memory
 copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store_b_layout](b_shared, b_tile)
 </code></pre>
 <p><strong>Use cases for transposed loading (not used in this puzzle):</strong></p>
@@ -830,7 +822,7 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </ol>
 <p><strong>Key distinction:</strong></p>
 <ul>
-<li><strong>Current implementation</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for standard \(A \times B\) multiplication</li>
+<li><strong>Current implementation</strong>: Both matrices use <code>row_major[1, TPB]()</code> for standard \(A \times B\) multiplication</li>
 <li><strong>Transposed loading example</strong>: Would use different layouts to handle pre-transposed data or different matrix operations</li>
 </ul>
 <p>This demonstrates Mojo’s philosophy: providing low-level control when needed while maintaining high-level abstractions for common cases.</p>
@@ -839,13 +831,13 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 <p><strong>What the idiomatic tiled implementation actually does:</strong></p>
 <ol>
 <li><strong>Matrix Operation</strong>: Standard A × B multiplication</li>
-<li><strong>Memory Loading</strong>: Both matrices use <code>Layout.row_major(1, TPB)</code> for coalesced access</li>
+<li><strong>Memory Loading</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced access</li>
 <li><strong>Computation Pattern</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>Data Layout</strong>: No transposition during loading</li>
 </ol>
 <p><strong>Why this is optimal:</strong></p>
 <ul>
-<li><strong>Coalesced global memory access</strong>: <code>Layout.row_major(1, TPB)</code> ensures efficient loading</li>
+<li><strong>Coalesced global memory access</strong>: <code>row_major[1, TPB]()</code> ensures efficient loading</li>
 <li><strong>Bank conflict avoidance</strong>: Shared memory access pattern avoids conflicts</li>
 <li><strong>Standard algorithm</strong>: Implements the most common matrix multiplication pattern</li>
 </ul>

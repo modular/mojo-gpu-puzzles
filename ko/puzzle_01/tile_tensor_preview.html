@@ -1,9 +1,9 @@
 <!DOCTYPE HTML>
-<html lang="en" class="light sidebar-visible" dir="ltr">
+<html lang="ko" class="light sidebar-visible" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🔰 Raw Memory Approach - Mojo 🔥 GPU Puzzles</title>
+        <title>💡 미리보기: TileTensor를 활용한 현대적 방식 - Mojo 🔥 GPU 퍼즐</title>
 
 
         <!-- Custom HTML head -->
@@ -208,257 +208,53 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes the dot product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).</p>
-<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
-<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p>This puzzle covers:</p>
+                        <!-- i18n-source-commit: f614177b516e68590fa807e66e31c9f20488c7e7 -->
+<h2 id="왜-tiletensor를-고려해야-할까요"><a class="header" href="#왜-tiletensor를-고려해야-할까요">왜 TileTensor를 고려해야 할까요?</a></h2>
+<p>아래 기존 구현을 보면 몇 가지 잠재적인 문제를 발견할 수 있습니다:</p>
+<h3 id="현재-방식"><a class="header" href="#현재-방식">현재 방식</a></h3>
+<pre><code class="language-mojo">i = thread_idx.x
+output[i] = a[i] + 10.0
+</code></pre>
+<p>1D 배열에서는 잘 작동하지만, 다음과 같은 상황에서는 어떨까요?</p>
 <ul>
-<li>Implementing parallel reduction operations</li>
-<li>Using shared memory for intermediate results</li>
-<li>Coordinating threads for collective operations</li>
+<li>2D나 3D 데이터를 다뤄야 할 때</li>
+<li>다양한 메모리 레이아웃을 처리해야 할 때</li>
+<li>병합(coalesced) 메모리 접근을 보장해야 할 때</li>
 </ul>
-<p>The key insight is understanding how to efficiently combine multiple values into a single result using parallel computation and shared memory.</p>
-<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<h3 id="앞으로의-도전-미리보기"><a class="header" href="#앞으로의-도전-미리보기">앞으로의 도전 미리보기</a></h3>
+<p>퍼즐을 진행하면서 배열 인덱싱은 점점 복잡해집니다:</p>
+<pre><code class="language-mojo"># 이후 퍼즐에서 다룰 2D 인덱싱
+idx = row * WIDTH + col
+
+# 3D 인덱싱
+idx = (batch * HEIGHT + row) * WIDTH + col
+
+# 패딩이 있는 경우
+idx = (batch * padded_height + row) * padded_width + col
+</code></pre>
+<h3 id="tiletensor-미리보기"><a class="header" href="#tiletensor-미리보기">TileTensor 미리보기</a></h3>
+<p><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a>를 사용하면 이런 경우를 훨씬 깔끔하게 처리할 수 있습니다:</p>
+<pre><code class="language-mojo"># 미리보기 - 지금은 이 문법을 몰라도 괜찮습니다!
+output[i, j] = a[i, j] + 10.0  # 2D 인덱싱
+output[b, i, j] = a[b, i, j] + 10.0  # 3D 인덱싱
+</code></pre>
+<p>Puzzle 4에서 TileTensor를 자세히 배울 예정입니다. 그때 이 개념들이 필수가 됩니다. 지금은 다음 내용을 이해하는 데 집중하세요:</p>
 <ul>
-<li>Vector size: <code>SIZE = 8</code> elements</li>
-<li>Threads per block: <code>TPB = 8</code></li>
-<li>Number of blocks: 1</li>
-<li>Output size: 1 element</li>
-<li>Shared memory: <code>TPB</code> elements</li>
+<li>기본 스레드 인덱싱</li>
+<li>간단한 메모리 접근 패턴</li>
+<li>스레드와 데이터의 일대일 매핑</li>
 </ul>
-<p>Notes:</p>
-<ul>
-<li><strong>Element access</strong>: Each thread reads corresponding elements from <code>a</code> and <code>b</code></li>
-<li><strong>Partial results</strong>: Computing and storing intermediate values</li>
-<li><strong>Thread coordination</strong>: Synchronizing before combining results</li>
-<li><strong>Final reduction</strong>: Converting partial results to scalar output</li>
-</ul>
-<p><em>Note: For this problem, you don’t need to worry about number of shared reads. We will
-handle that challenge later.</em></p>
-<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">comptime TPB = 8
-comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (1, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
-comptime dtype = DType.float32
-
-
-def dot_product(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
-):
-    # FILL ME IN (roughly 13 lines)
-    ...
-
-
-</code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
-<details>
-<summary><strong>Tips</strong></summary>
-<div class="solution-tips">
-<ol>
-<li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
-<li>Call <code>barrier()</code> to synchronize</li>
-<li>Use thread 0 to sum all products in shared memory</li>
-<li>Write final sum to <code>output[0]</code></li>
-</ol>
-</div>
-</details>
-<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>To test your solution, run the following command in your terminal:</p>
-<div class="code-tabs" data-tab-group="package-manager">
-  <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
-    <button class="tab-button">pixi Apple</button>
-    <button class="tab-button">uv</button>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run p12
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p12
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">pixi run -e apple p12
-</code></pre>
-  </div>
-  <div class="tab-content">
-<pre><code class="language-bash">uv run poe p12
-</code></pre>
-  </div>
-</div>
-<p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0])
-expected: HostBuffer([140.0])
-</code></pre>
-<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<details class="solution-details">
-<summary></summary>
-<pre><code class="language-mojo">def dot_product(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    b: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    size: Int,
-):
-    var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-    if global_i &lt; size:
-        shared[local_i] = a[global_i] * b[global_i]
-
-    barrier()
-
-    # The following causes race condition: all threads writing to the same location
-    # out[0] += shared[local_i]
-
-    # Instead can do parallel reduction in shared memory as opposed to
-    # global memory which has no guarantee on synchronization.
-    # Loops using global memory can cause thread divergence because
-    # fundamentally GPUs execute threads in warps (groups of 32 threads typically)
-    # and warps can be scheduled independently.
-    # However, shared memory does not have such issues as long as we use `barrier()`
-    # correctly when we're in the same thread block.
-    var stride = TPB // 2
-    while stride &gt; 0:
-        if local_i &lt; stride:
-            shared[local_i] += shared[local_i + stride]
-
-        barrier()
-        stride //= 2
-
-    # only thread 0 writes the final result
-    if local_i == 0:
-        output[0] = shared[0]
-
-
-</code></pre>
-<div class="solution-explanation">
-<p>The solution implements a parallel reduction algorithm for dot product computation using shared memory. Here’s a detailed breakdown:</p>
-<h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: Element-wise Multiplication</a></h3>
-<p>Each thread performs one multiplication:</p>
-<pre><code class="language-txt">Thread i: shared[i] = a[i] * b[i]
-</code></pre>
-<h3 id="phase-2-parallel-reduction"><a class="header" href="#phase-2-parallel-reduction">Phase 2: Parallel Reduction</a></h3>
-<p>The reduction uses a tree-based approach that halves active threads in each step:</p>
-<pre><code class="language-txt">Initial:  [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
-        = [0    1    4    9    16   25   36   49]
-
-Step 1:   [0+16 1+25 4+36 9+49  16   25   36   49]
-        = [16   26   40   58   16   25   36   49]
-
-Step 2:   [16+40 26+58 40   58   16   25   36   49]
-        = [56   84   40   58   16   25   36   49]
-
-Step 3:   [56+84  84   40   58   16   25   36   49]
-        = [140   84   40   58   16   25   36   49]
-</code></pre>
-<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key implementation features</a></h3>
-<ol>
-<li>
-<p><strong>Memory Access Pattern</strong>:</p>
-<ul>
-<li>Each thread loads exactly two values from global memory (<code>a[i]</code>, <code>b[i]</code>)</li>
-<li>Uses shared memory for intermediate results</li>
-<li>Final result written once to global memory</li>
-</ul>
-</li>
-<li>
-<p><strong>Thread Synchronization</strong>:</p>
-<ul>
-<li><code>barrier()</code> after initial multiplication</li>
-<li><code>barrier()</code> after each reduction step</li>
-<li>Prevents race conditions between reduction steps</li>
-</ul>
-</li>
-<li>
-<p><strong>Reduction Logic</strong>:</p>
-<pre><code class="language-mojo">stride = TPB // 2
-while stride &gt; 0:
-    if local_i &lt; stride:
-        shared[local_i] += shared[local_i + stride]
-    barrier()
-    stride //= 2
-</code></pre>
-<ul>
-<li>Halves stride in each step</li>
-<li>Only active threads perform additions</li>
-<li>Maintains work efficiency</li>
-</ul>
-</li>
-<li>
-<p><strong>Performance Considerations</strong>:</p>
-<ul>
-<li>\(\log_2(n)\) steps for \(n\) elements</li>
-<li>Coalesced memory access pattern</li>
-<li>Minimal thread divergence</li>
-<li>Efficient use of shared memory</li>
-</ul>
-</li>
-</ol>
-<p>This implementation achieves \(O(\log n)\) time complexity compared to \(O(n)\) in sequential execution, demonstrating the power of parallel reduction algorithms.</p>
-<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier synchronization importance</a></h3>
-<p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
-<p>Without <code>barrier()</code>, race conditions occur:</p>
-<pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]
-
-Step 1 (stride = 4):
-Thread 0 reads: shared[0] = 0, shared[4] = 16
-Thread 1 reads: shared[1] = 1, shared[5] = 25
-Thread 2 reads: shared[2] = 4, shared[6] = 36
-Thread 3 reads: shared[3] = 9, shared[7] = 49
-
-Without barrier:
-- Thread 0 writes: shared[0] = 0 + 16 = 16
-- Thread 1 starts next step (stride = 2) before Thread 0 finishes
-  and reads old value shared[0] = 0 instead of 16!
-</code></pre>
-<p>With <code>barrier()</code>:</p>
-<pre><code class="language-text">Step 1 (stride = 4):
-All threads write their sums:
-[16 26 40 58 16 25 36 49]
-barrier() ensures ALL threads see these values
-
-Step 2 (stride = 2):
-Now threads safely read the updated values:
-Thread 0: shared[0] = 16 + 40 = 56
-Thread 1: shared[1] = 26 + 58 = 84
-</code></pre>
-<p>The <code>barrier()</code> ensures:</p>
-<ol>
-<li>All writes from current step complete</li>
-<li>All threads see updated values</li>
-<li>No thread starts next iteration early</li>
-<li>Consistent shared memory state</li>
-</ol>
-<p>Without these synchronization points, we could get:</p>
-<ul>
-<li>Memory race conditions</li>
-<li>Threads reading stale values</li>
-<li>Non-deterministic results</li>
-<li>Incorrect final sum</li>
-</ul>
-</div>
-</details>
+<p>💡 <strong>핵심 포인트</strong>: 직접 인덱싱은 간단한 경우에 잘 작동하지만, 복잡한 GPU 프로그래밍 패턴에서는 곧 더 정교한 도구가 필요해집니다.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_12/puzzle_12.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_01/raw.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_12/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_02/puzzle_02.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -468,11 +264,11 @@ Thread 1: shared[1] = 26 + 58 = 84
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_12/puzzle_12.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_01/raw.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_12/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_02/puzzle_02.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -499,9 +295,10 @@ Thread 1: shared[1] = 26 + 58 = 84
         <script src="../theme/mojolang.js"></script>
         <script src="../theme/sidebar.js"></script>
         <script src="../theme/solution.js"></script>
-        <script src="../theme/init-amplitude.js"></script>
         <script src="../theme/tabs.js"></script>
         <script src="../theme/language-switcher.js"></script>
+        <script src="../theme/livereload-poll.js"></script>
+        <script src="../theme/js/cjk-search.js"></script>
 
 
     </div>

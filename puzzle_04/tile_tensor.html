@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>🔰 Raw Memory Approach - Mojo 🔥 GPU Puzzles</title>
+        <title>🚀 Modern 2D Operations - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -208,76 +208,52 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a vector <code>a</code> and stores it in <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
+                        <h1 id="tiletensor-version"><a class="header" href="#tiletensor-version">TileTensor Version</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Implement a kernel that adds 10 to each position of 2D <em>TileTensor</em> <code>a</code> and stores it in 2D <em>TileTensor</em> <code>output</code>.</p>
+<p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Using shared memory within thread blocks</li>
-<li>Synchronizing threads with barriers</li>
-<li>Managing block-local data storage</li>
+<li>Using <code>TileTensor</code> for 2D array access</li>
+<li>Direct 2D indexing with <code>tensor[i, j]</code></li>
+<li>Handling bounds checking with <code>TileTensor</code></li>
 </ul>
-<p>The key insight is understanding how shared memory provides fast, block-local storage that all threads in a block can access, requiring careful coordination between threads.</p>
-<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>The key insight is that <code>TileTensor</code> provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.</p>
 <ul>
-<li>Array size: <code>SIZE = 8</code> elements</li>
-<li>Threads per block: <code>TPB = 4</code></li>
-<li>Number of blocks: 2</li>
-<li>Shared memory: <code>TPB</code> elements per block</li>
+<li><strong>2D access</strong>: Natural \((i,j)\) indexing with <code>TileTensor</code></li>
+<li><strong>Memory abstraction</strong>: No manual row-major calculation needed</li>
+<li><strong>Guard condition</strong>: Still need bounds checking in both dimensions</li>
+<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
 </ul>
-<p>Notes:</p>
-<ul>
-<li><strong>Shared memory</strong>: Fast storage shared by threads in a block</li>
-<li><strong>Thread sync</strong>: Coordination using <code>barrier()</code></li>
-<li><strong>Memory scope</strong>: Shared memory only visible within block</li>
-<li><strong>Access pattern</strong>: Local vs global indexing</li>
-</ul>
-<blockquote>
-<p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> to ensure that threads do not cross.</p>
-</blockquote>
-<p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<pre><code class="language-mojo">comptime TPB = 4
-comptime SIZE = 8
-comptime BLOCKS_PER_GRID = (2, 1)
-comptime THREADS_PER_BLOCK = (TPB, 1)
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
 comptime dtype = DType.float32
+comptime layout = row_major[SIZE, SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def add_10_shared(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+def add_10_2d(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
-    var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-    # Load local data into shared memory
-    if global_i &lt; size:
-        shared[local_i] = a[global_i]
-
-    # wait for all threads to complete
-    # works within a thread block
-    barrier()
-
+    var row = thread_idx.y
+    var col = thread_idx.x
     # FILL ME IN (roughly 2 lines)
 
 
 </code></pre>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p08/p08.mojo" class="filename">View full file: problems/p08/p08.mojo</a></p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p04/p04_tile_tensor.mojo" class="filename">View full file: problems/p04/p04_tile_tensor.mojo</a></p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Wait for shared memory load with <code>barrier()</code> (educational - not strictly needed here)</li>
-<li>Use <code>local_i</code> to access shared memory: <code>shared[local_i]</code></li>
-<li>Use <code>global_i</code> for output: <code>output[global_i]</code></li>
-<li>Add guard: <code>if global_i &lt; size</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard add 10 to <code>a[row, col]</code></li>
 </ol>
 </div>
 </details>
@@ -291,127 +267,48 @@ def add_10_shared(
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run p08
+<pre><code class="language-bash">pixi run p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e amd p08
+<pre><code class="language-bash">pixi run -e amd p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">pixi run -e apple p08
+<pre><code class="language-bash">pixi run -e apple p04_tile_tensor
 </code></pre>
   </div>
   <div class="tab-content">
-<pre><code class="language-bash">uv run poe p08
+<pre><code class="language-bash">uv run poe p04_tile_tensor
 </code></pre>
   </div>
 </div>
 <p>Your output will look like this if the puzzle isn’t solved yet:</p>
-<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </code></pre>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def add_10_shared(
-    output: UnsafePointer[Scalar[dtype], MutAnyOrigin],
-    a: UnsafePointer[Scalar[dtype], MutAnyOrigin],
+<pre><code class="language-mojo">def add_10_2d(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
-    var shared = stack_allocation[
-        TPB,
-        Scalar[dtype],
-        address_space=AddressSpace.SHARED,
-    ]()
-    var global_i = block_dim.x * block_idx.x + thread_idx.x
-    var local_i = thread_idx.x
-    # Load local data into shared memory
-    if global_i &lt; size:
-        shared[local_i] = a[global_i]
-
-    # Wait for all threads to complete (works within a thread block).
-    # Note: barrier is not strictly needed here since each thread only accesses
-    # its own shared memory location. However, it's included to teach proper
-    # shared memory synchronization patterns for more complex scenarios where
-    # threads need to coordinate access to shared data.
-    barrier()
-
-    # process using shared memory
-    if global_i &lt; size:
-        output[global_i] = shared[local_i] + 10
+    var row = thread_idx.y
+    var col = thread_idx.x
+    if col &lt; size and row &lt; size:
+        output[row, col] = a[row, col] + 10.0
 
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates key concepts of shared memory usage in GPU programming:</p>
-<ol>
-<li>
-<p><strong>Memory hierarchy</strong></p>
+<p>This solution:</p>
 <ul>
-<li>
-<p>Global memory: <code>a</code> and <code>output</code> arrays (slow, visible to all blocks)</p>
-</li>
-<li>
-<p>Shared memory: <code>shared</code> array (fast, thread-block local)</p>
-</li>
-<li>
-<p>Example for 8 elements with 4 threads per block:</p>
-<pre><code class="language-txt">Global array a: [1 1 1 1 | 1 1 1 1]  # Input: all ones
-
-Block (0):      Block (1):
-shared[0..3]    shared[0..3]
-[1 1 1 1]       [1 1 1 1]
-</code></pre>
-</li>
+<li>Gets 2D thread indices with <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Guards against out-of-bounds with <code>if row &lt; size and col &lt; size</code></li>
+<li>Uses <code>TileTensor</code>’s 2D indexing: <code>output[row, col] = a[row, col] + 10.0</code></li>
 </ul>
-</li>
-<li>
-<p><strong>Thread coordination</strong></p>
-<ul>
-<li>
-<p>Load phase:</p>
-<pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
-Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
-barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
-</code></pre>
-</li>
-<li>
-<p>Process phase: Each thread adds 10 to its shared memory value</p>
-</li>
-<li>
-<p>Result: <code>output[i] = shared[local_i] + 10 = 11</code></p>
-</li>
-</ul>
-<p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
-</li>
-<li>
-<p><strong>Index mapping</strong></p>
-<ul>
-<li>
-<p>Global index: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
-<pre><code class="language-txt">Block 0 output: [11 11 11 11]
-Block 1 output: [11 11 11 11]
-</code></pre>
-</li>
-<li>
-<p>Local index: <code>thread_idx.x</code> for shared memory access</p>
-<pre><code class="language-txt">Both blocks process: 1 + 10 = 11
-</code></pre>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>Memory access pattern</strong></p>
-<ul>
-<li>Load: Global → Shared (coalesced reads of 1s)</li>
-<li>Sync: <code>barrier()</code> ensures all loads complete</li>
-<li>Process: Add 10 to shared values</li>
-<li>Store: Write 11s back to global memory</li>
-</ul>
-</li>
-</ol>
-<p>This pattern shows how to use shared memory to optimize data access while maintaining thread coordination within blocks.</p>
 </div>
 </details>
 
@@ -419,11 +316,11 @@ Block 1 output: [11 11 11 11]
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_08/puzzle_08.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_04/introduction_tile_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_08/layout_tensor.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_05/puzzle_05.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -433,11 +330,11 @@ Block 1 output: [11 11 11 11]
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_08/puzzle_08.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_04/introduction_tile_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_08/layout_tensor.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_05/puzzle_05.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

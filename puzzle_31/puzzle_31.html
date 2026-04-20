@@ -234,15 +234,14 @@ The principles you learn here apply to any parallel computing system where resou
 comptime THREADS_PER_BLOCK = (1024, 1)
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 comptime ALPHA = Scalar[dtype](2.5)  # SAXPY coefficient
 
 
-def minimal_kernel[
-    layout: Layout
-](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def minimal_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
@@ -256,23 +255,20 @@ def minimal_kernel[
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
-<pre><code class="language-mojo">def sophisticated_kernel[
-    layout: Layout
-](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def sophisticated_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
     """Sophisticated SAXPY kernel - over-engineered with excessive resource usage.
     """
     # Maximum shared memory allocation (close to 48KB limit)
-    var shared_cache = LayoutTensor[
-        dtype,
-        Layout.row_major(1024 * 12),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()  # 48KB
+    var shared_cache = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](
+        row_major[1024 * 12]()
+    )  # 48KB
 
     var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -351,23 +347,20 @@ def minimal_kernel[
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">View full file: problems/p31/p31.mojo</a></p>
-<pre><code class="language-mojo">def balanced_kernel[
-    layout: Layout
-](
-    y: LayoutTensor[dtype, layout, MutAnyOrigin],
-    x: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def balanced_kernel(
+    y: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    x: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     alpha: Float32,
     size: Int,
 ):
     """Balanced SAXPY kernel - efficient optimization with moderate resources.
     """
     # Reasonable shared memory usage for effective caching (16KB)
-    var shared_cache = LayoutTensor[
-        dtype,
-        Layout.row_major(1024 * 4),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()  # 16KB total
+    var shared_cache = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](
+        row_major[1024 * 4]()
+    )  # 16KB total
 
     var i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x

@@ -217,7 +217,7 @@
 <ul>
 <li><code>elementwise</code>를 활용한 <strong>함수형 GPU 프로그래밍</strong></li>
 <li>GPU 스레드 내의 <strong>자동 SIMD 벡터화</strong></li>
-<li>안전한 메모리 접근을 위한 <strong>LayoutTensor 연산</strong></li>
+<li>안전한 메모리 접근을 위한 <strong>TileTensor 연산</strong></li>
 <li><strong>GPU 스레드 계층 구조</strong> vs SIMD 연산</li>
 <li>중첩 함수에서의 <strong>캡처 의미론</strong></li>
 </ul>
@@ -229,22 +229,23 @@
 <li>벡터 크기: <code>SIZE = 1024</code></li>
 <li>데이터 타입: <code>DType.float32</code></li>
 <li>SIMD 폭: 타겟 의존적 (GPU 아키텍처와 데이터 타입에 따라 결정)</li>
-<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D 행 우선)</li>
+<li>레이아웃: <code>row_major[SIZE]()</code> (1D 행 우선)</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 1024
 comptime rank = 1
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 comptime dtype = DType.float32
 comptime SIMD_WIDTH = simd_width_of[dtype, target=get_gpu_target()]()
 
 
 def elementwise_add[
-    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -256,7 +257,7 @@ def elementwise_add[
         print("idx:", idx)
         # FILL IN (2 to 4 lines)
 
-    elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
+    elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
 
 </code></pre>
@@ -358,11 +359,11 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def elementwise_add[
-    layout: Layout, dtype: DType, simd_width: Int, rank: Int, size: Int
+    LayoutT: TensorLayout, dtype: DType, simd_width: Int, rank: Int, size: Int
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -371,18 +372,19 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         var idx = indices[0]
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
         # Note: This is thread-local SIMD - each thread processes its own vector of data
         # we'll later better see this hierarchy in Mojo:
         # SIMD within threads, warp across threads, block across warps
-        var a_simd = a.aligned_load[width=simd_width](Index(idx))
-        var b_simd = b.aligned_load[width=simd_width](Index(idx))
+        var a_simd = a_lt.aligned_load[width=simd_width](Index(idx))
+        var b_simd = b_lt.aligned_load[width=simd_width](Index(idx))
         var ret = a_simd + b_simd
-        # print(
-        #     "idx:", idx, ", a_simd:", a_simd, ", b_simd:", b_simd, " sum:", ret
-        # )
-        output.store[simd_width](Index(idx), ret)
+        out_lt.store[simd_width](Index(idx), ret)
 
-    elementwise[add, SIMD_WIDTH, target="gpu"](a.size(), ctx)
+    elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 
 
 </code></pre>

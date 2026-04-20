@@ -300,7 +300,8 @@ comptime SIZE = 1024  # Image size (1D for simplicity)
 comptime BLOCKS_PER_GRID = (4, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 # Multi-stage processing configuration
 comptime STAGE1_THREADS = TPB // 2
@@ -308,11 +309,9 @@ comptime STAGE2_THREADS = TPB // 2
 comptime BLUR_RADIUS = 2
 
 
-def multi_stage_image_blur_pipeline[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def multi_stage_image_blur_pipeline(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -323,18 +322,12 @@ def multi_stage_image_blur_pipeline[
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var blur_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var blur_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -439,11 +432,9 @@ Output sample: 1.6665002 2.3331003 3.3996604
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def multi_stage_image_blur_pipeline[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def multi_stage_image_blur_pipeline(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Multi-stage image blur pipeline with barrier coordination.
@@ -454,18 +445,12 @@ Output sample: 1.6665002 2.3331003 3.3996604
     """
 
     # Shared memory buffers for pipeline stages
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var blur_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var blur_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x

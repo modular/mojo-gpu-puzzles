@@ -240,19 +240,17 @@
 <li><strong>블록 설정</strong>: <code>TPB = 256</code> 블록당 스레드 수 <code>(256, 1)</code></li>
 <li><strong>그리드 설정</strong>: <code>CLUSTER_SIZE = 4</code> 클러스터당 블록 수 <code>(4, 1)</code></li>
 <li><strong>데이터 타입</strong>: <code>DType.float32</code></li>
-<li><strong>메모리 레이아웃</strong>: 입력 <code>Layout.row_major(SIZE)</code>, 출력 <code>Layout.row_major(1)</code></li>
-<li><strong>임시 저장소</strong>: 부분 결과를 위한 <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+<li><strong>메모리 레이아웃</strong>: 입력 <code>row_major[SIZE]()</code>, 출력 <code>row_major[1]()</code></li>
+<li><strong>임시 저장소</strong>: 부분 결과를 위한 <code>row_major[CLUSTER_SIZE]()</code></li>
 </ul>
 <p><strong>예상 결과</strong>: 수열 <code>0, 0.01, 0.02, ..., 10.23</code>의 합 = <strong>523,776</strong></p>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
-        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-    ],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -347,13 +345,11 @@ Error: 0.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
-        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-    ],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -368,12 +364,9 @@ Error: 0.0
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    var shared_mem = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_mem = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     shared_mem[local_i] = my_value
     barrier()
 

@@ -217,14 +217,14 @@
 <li><strong><a href="./first_case.html">첫 번째 사례</a></strong>: 명확한 크래시 신호(<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>)가 조사를 안내함</li>
 <li><strong>두 번째 사례</strong>: 크래시도 없고 에러 메시지도 없음 - 탐정처럼 파헤쳐야 하는 미묘하게 잘못된 결과만 있음</li>
 </ul>
-<p>이번 중급 디버깅 챌린지에서는 <code>LayoutTensor</code> 연산을 사용하는 <strong>알고리즘 오류</strong>를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.</p>
+<p>이번 중급 디버깅 챌린지에서는 <code>TileTensor</code> 연산을 사용하는 <strong>알고리즘 오류</strong>를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.</p>
 <p><strong>사전 준비</strong>: <a href="./essentials.html">Mojo GPU 디버깅의 핵심</a>과 <a href="./first_case.html">탐정 수사: 첫 번째 사례</a>를 먼저 완료해서 CUDA-GDB 워크플로우와 체계적인 디버깅 기법을 익혀두세요. 아래 명령을 실행했는지 확인하세요:</p>
 <pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이번 디버깅 챌린지에서 배울 내용:</p>
 <ul>
-<li><strong>LayoutTensor 디버깅</strong>: 구조화된 데이터 접근 패턴 조사하기</li>
+<li><strong>TileTensor 디버깅</strong>: 구조화된 데이터 접근 패턴 조사하기</li>
 <li><strong>로직 버그 탐지</strong>: 크래시하지 않는 알고리즘 오류 찾기</li>
 <li><strong>반복문 경계 분석</strong>: 반복 횟수 문제 이해하기</li>
 <li><strong>결과 패턴 분석</strong>: 출력 데이터로 근본 원인까지 거슬러 올라가기</li>
@@ -232,8 +232,8 @@
 <h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
 <p>먼저 전체 코드를 보지 않고 커널만 살펴봅시다:</p>
 <pre><code class="language-mojo">def process_sliding_window(
-    output: LayoutTensor[dtype, vector_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, vector_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ):
     var thread_id = thread_idx.x
 
@@ -341,11 +341,11 @@ Each position should sum its neighbors: [left + center + right]
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: LayoutTensor[mut=False, dtype, vector_layout],
+30          input: TileTensor[mut=False, dtype, vector_layout],
 </code></pre>
 <h4 id="step-4-메인-로직으로-이동"><a class="header" href="#step-4-메인-로직으로-이동">Step 4: 메인 로직으로 이동</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-29          output: LayoutTensor[mut=True, dtype, vector_layout],
+29          output: TileTensor[mut=True, dtype, vector_layout],
 (cuda-gdb) n
 32          thread_id = thread_idx.x
 (cuda-gdb) n
@@ -363,13 +363,13 @@ Cannot access memory at address 0x0
 <pre><code class="language-bash">(cuda-gdb) p a[0]
 Attempt to take address of value not located in memory.
 </code></pre>
-<p><strong>❌ 문제</strong>: LayoutTensor 직접 인덱싱이 작동하지 않습니다.</p>
+<p><strong>❌ 문제</strong>: TileTensor 직접 인덱싱이 작동하지 않습니다.</p>
 <pre><code class="language-bash">(cuda-gdb) p a.ptr[0]
 $2 = {0}
 (cuda-gdb) p a.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 </code></pre>
-<p><strong>🎯 돌파구</strong>: <code>a.ptr[0]@4</code>로 전체 입력 배열을 볼 수 있습니다! 이것이 LayoutTensor 데이터를 검사하는 방법입니다.</p>
+<p><strong>🎯 돌파구</strong>: <code>a.ptr[0]@4</code>로 전체 입력 배열을 볼 수 있습니다! 이것이 TileTensor 데이터를 검사하는 방법입니다.</p>
 <h3 id="3단계-핵심-반복문-조사"><a class="header" href="#3단계-핵심-반복문-조사">3단계: 핵심 반복문 조사</a></h3>
 <h4 id="step-6-반복문-모니터링-설정"><a class="header" href="#step-6-반복문-모니터링-설정">Step 6: 반복문 모니터링 설정</a></h4>
 <pre><code class="language-bash">(cuda-gdb) b 42
@@ -488,9 +488,9 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
 <li><strong>호스트 출력 패턴</strong>이 중요한 디버깅 단서를 제공합니다</li>
 <li><strong>소스 코드 추론</strong>이 제한된 디버거 기능을 보완합니다</li>
 </ul>
-<p><strong>LayoutTensor 디버깅</strong>:</p>
+<p><strong>TileTensor 디버깅</strong>:</p>
 <ul>
-<li>LayoutTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다</li>
+<li>TileTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다</li>
 <li>텐서 내용을 검사하려 하기보다 알고리즘 로직에 집중하세요</li>
 <li>체계적인 추론으로 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 추적하세요</li>
 </ul>

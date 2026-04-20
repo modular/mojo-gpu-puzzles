@@ -210,7 +210,7 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="완성-버전"><a class="header" href="#완성-버전">완성 버전</a></h1>
-<p>1D LayoutTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D LayoutTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>1D TileTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em><code>a</code>의 크기가 블록 크기보다 큰 경우, 올바른 결과를 얻으려면 여러 블록 간 동기화가 필요합니다.</em></p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
@@ -237,16 +237,16 @@
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (TPB, 1)
 comptime EXTENDED_SIZE = SIZE_2 + 2  # up to 2 blocks
-comptime layout_2 = Layout.row_major(SIZE_2)
-comptime extended_layout = Layout.row_major(EXTENDED_SIZE)
+comptime layout_2 = row_major[SIZE_2]()
+comptime Layout2Type = type_of(layout_2)
+comptime extended_layout = row_major[EXTENDED_SIZE]()
+comptime ExtendedLayoutType = type_of(extended_layout)
 
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-def prefix_sum_local_phase[
-    out_layout: Layout, in_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+def prefix_sum_local_phase(
+    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -255,9 +255,10 @@ def prefix_sum_local_phase[
 
 
 # Kernel 2: Add block sums to their respective blocks
-def prefix_sum_block_sum_phase[
-    layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
+def prefix_sum_block_sum_phase(
+    output: TileTensor[mut=True, dtype, ExtendedLayoutType, MutAnyOrigin],
+    size: Int,
+):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL ME IN (roughly 3 lines)
 
@@ -266,8 +267,9 @@ def prefix_sum_block_sum_phase[
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">전체 파일 보기: problems/p14/p14.mojo</a></p>
 <p>이 퍼즐의 핵심은 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>가 블록 내부의 스레드만 동기화하며, 블록 간 동기화는 하지 않는다는 점을 이해하는 것입니다. 블록 간 동기화를 위해서는 디바이스에서 순차적으로 실행되는 여러 커널을 큐에 넣어야 합니다:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
-            comptime kernel = prefix_sum_local_phase[extended_layout, layout_2]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[
+                prefix_sum_local_phase, prefix_sum_local_phase
+            ](
                 out_tensor,
                 a_tensor,
                 size,
@@ -276,8 +278,9 @@ def prefix_sum_block_sum_phase[
             )
 
             # Phase 2: Add block sums
-            comptime kernel2 = prefix_sum_block_sum_phase[extended_layout]
-            ctx.enqueue_function[kernel2, kernel2](
+            ctx.enqueue_function[
+                prefix_sum_block_sum_phase, prefix_sum_block_sum_phase
+            ](
                 out_tensor,
                 size,
                 grid_dim=BLOCKS_PER_GRID_2,
@@ -362,21 +365,16 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55
 <pre><code class="language-mojo">
 
 # Kernel 1: Compute local prefix sums and store block sums in out
-def prefix_sum_local_phase[
-    out_layout: Layout, in_layout: Layout
-](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+def prefix_sum_local_phase(
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, Layout2Type, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Load data into shared memory
     # Example with SIZE_2=15, TPB=8, BLOCKS=2:
@@ -400,7 +398,7 @@ def prefix_sum_local_phase[
     #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
     var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.element_type = 0
+        var current_val: output.ElementType = 0
         if local_i &gt;= offset and local_i &lt; TPB:
             current_val = shared[local_i - offset]  # read
 
@@ -428,9 +426,10 @@ def prefix_sum_local_phase[
 
 
 # Kernel 2: Add block sums to their respective blocks
-def prefix_sum_block_sum_phase[
-    layout: Layout
-](output: LayoutTensor[dtype, layout, MutAnyOrigin], size: Int):
+def prefix_sum_block_sum_phase(
+    output: TileTensor[mut=True, dtype, ExtendedLayout, MutAnyOrigin],
+    size: Int,
+):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Second pass: add previous block's sum to each element

@@ -210,34 +210,153 @@
                     <main>
                         <h1 id="puzzle-5-broadcast"><a class="header" href="#puzzle-5-broadcast">Puzzle 5: Broadcast</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that broadcast adds vector <code>a</code> and vector <code>b</code> and stores it in 2D matrix <code>output</code>.</p>
+<p>Implement a kernel that broadcast adds 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 2D TileTensor <code>output</code>.</p>
 <p><strong>Broadcasting</strong> in parallel programming refers to the operation where lower-dimensional arrays are automatically expanded to match the shape of higher-dimensional arrays during element-wise operations. Instead of physically replicating data in memory, values are logically repeated across the additional dimensions. For example, adding a 1D vector to each row (or column) of a 2D matrix applies the same vector elements repeatedly without creating multiple copies.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <img src="./media/05.png" alt="Broadcast visualization" class="light-mode-img">
 <img src="./media/05d.png" alt="Broadcast visualization" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p>In this puzzle, you’ll learn about:</p>
 <ul>
-<li>Broadcasting vectors to matrix</li>
-<li>2D thread management</li>
-<li>Mixed dimension operations</li>
-<li>Memory layout patterns</li>
+<li>Broadcasting 1D vectors across different dimensions with <code>TileTensor</code></li>
+<li>Using 2D thread indices to map GPU threads to a 2D output matrix</li>
+<li>Working with different tensor shapes for mixed-dimension operations</li>
+<li>Handling boundary conditions in broadcast patterns</li>
 </ul>
-<h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
-<h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
-<p>Learn how to handle broadcasting with manual memory indexing.</p>
-<h3 id="-layouttensor-version"><a class="header" href="#-layouttensor-version"><a href="./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
-<p>Use LayoutTensor to handle mixed-dimension operations.</p>
-<p>💡 <strong>Note</strong>: Notice how LayoutTensor simplifies broadcasting compared to manual indexing.</p>
+<p>The key insight is that <code>TileTensor</code> allows natural broadcasting through different tensor shapes: \((1, n)\) and \((n, 1)\) to \((n,n)\), while still requiring bounds checking.</p>
+<ul>
+<li><strong>Tensor shapes</strong>: Input vectors have shapes \((1, n)\) and \((n, 1)\)</li>
+<li><strong>Broadcasting</strong>: Each element of <code>a</code> combines with each element of <code>b</code>; output expands both dimensions to \((n,n)\)</li>
+<li><strong>Access patterns</strong>: <code>a[0, col]</code> broadcasts horizontally across rows; <code>b[row, 0]</code> broadcasts vertically across columns</li>
+<li><strong>Guard condition</strong>: Still need bounds checking for output size</li>
+<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">comptime SIZE = 2
+comptime BLOCKS_PER_GRID = 1
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = row_major[SIZE, SIZE]()
+comptime a_layout = row_major[1, SIZE]()
+comptime b_layout = row_major[SIZE, 1]()
+comptime OutLayout = type_of(out_layout)
+comptime ALayout = type_of(a_layout)
+comptime BLayout = type_of(b_layout)
+
+
+def broadcast_add(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = thread_idx.y
+    var col = thread_idx.x
+    # FILL ME IN (roughly 2 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p05/p05.mojo" class="filename">View full file: problems/p05/p05.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
+<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code> as TileTensors</li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p05
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p05
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p05
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p05
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def broadcast_add(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, BLayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = thread_idx.y
+    var col = thread_idx.x
+    if row &lt; size and col &lt; size:
+        output[row, col] = a[0, col] + b[row, 0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>This solution demonstrates key concepts of TileTensor broadcasting and GPU thread mapping:</p>
+<ol>
+<li>
+<p><strong>Thread to matrix mapping</strong></p>
+<ul>
+<li>Uses <code>thread_idx.y</code> for row access and <code>thread_idx.x</code> for column access</li>
+<li>Natural 2D indexing matches the output matrix structure</li>
+<li>Excess threads (3×3 grid) are handled by bounds checking</li>
+</ul>
+</li>
+<li>
+<p><strong>Broadcasting mechanics</strong></p>
+<ul>
+<li>Input <code>a</code> has shape <code>(1,n)</code>: <code>a[0,col]</code> broadcasts across rows</li>
+<li>Input <code>b</code> has shape <code>(n,1)</code>: <code>b[row,0]</code> broadcasts across columns</li>
+<li>Output has shape <code>(n,n)</code>: Each element is sum of corresponding broadcasts</li>
+</ul>
+<pre><code class="language-txt">[ a0 a1 ]  +  [ b0 ]  =  [ a0+b0  a1+b0 ]
+              [ b1 ]     [ a0+b1  a1+b1 ]
+</code></pre>
+</li>
+<li>
+<p><strong>Bounds Checking</strong></p>
+<ul>
+<li>Guard condition <code>row &lt; size and col &lt; size</code> prevents out-of-bounds access</li>
+<li>Handles both matrix bounds and excess threads efficiently</li>
+<li>No need for separate checks for <code>a</code> and <code>b</code> due to broadcasting</li>
+</ul>
+</li>
+</ol>
+<p>This pattern forms the foundation for more complex tensor operations we’ll explore in later puzzles.</p>
+</div>
+</details>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_04/layout_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_04/tile_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_05/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_06/puzzle_06.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -247,11 +366,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_04/layout_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_04/tile_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_05/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_06/puzzle_06.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

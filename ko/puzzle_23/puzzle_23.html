@@ -263,7 +263,7 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 <ul>
 <li><strong>기본 GPU 개념</strong>: 메모리 계층 구조, 스레드 실행, SIMD 연산</li>
 <li><strong>Mojo 기초</strong>: 파라미터 함수, 컴파일 타임 특수화, 캡처 의미론</li>
-<li><strong>LayoutTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
+<li><strong>TileTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
 <li><strong>GPU 메모리 관리</strong>: 버퍼 할당, 호스트-디바이스 동기화</li>
 </ul>
 <h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
@@ -274,7 +274,7 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 <ul>
 <li><code>elementwise</code>를 활용한 함수형 GPU 프로그래밍</li>
 <li>GPU 스레드 내의 자동 SIMD 벡터화</li>
-<li>안전한 메모리 접근을 위한 LayoutTensor 연산</li>
+<li>안전한 메모리 접근을 위한 TileTensor 연산</li>
 <li>중첩 함수에서의 캡처 의미론</li>
 </ul>
 <p><strong>핵심 패턴:</strong></p>

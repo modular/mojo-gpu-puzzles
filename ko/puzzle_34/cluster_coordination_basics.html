@@ -237,7 +237,7 @@
 <li><strong>블록 설정</strong>: <code>TPB = 256</code> 블록당 스레드 수 <code>(256, 1)</code></li>
 <li><strong>그리드 설정</strong>: <code>CLUSTER_SIZE = 4</code> 클러스터당 블록 수 <code>(4, 1)</code></li>
 <li><strong>데이터 타입</strong>: <code>DType.float32</code></li>
-<li><strong>메모리 레이아웃</strong>: 입력 <code>Layout.row_major(SIZE)</code>, 출력 <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+<li><strong>메모리 레이아웃</strong>: 입력 <code>row_major[SIZE]()</code>, 출력 <code>row_major[CLUSTER_SIZE]()</code></li>
 </ul>
 <p><strong>스레드 블록 분배:</strong></p>
 <ul>
@@ -248,10 +248,10 @@
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -262,12 +262,9 @@
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -311,7 +308,7 @@
 </ul>
 <h3 id="공유-메모리-조정"><a class="header" href="#공유-메모리-조정"><strong>공유 메모리 조정</strong></a></h3>
 <ul>
-<li><code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code>으로 공유 메모리를 할당합니다 (<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 기초</a> 참고)</li>
+<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())</code>으로 공유 메모리를 할당합니다 (<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 기초</a> 참고)</li>
 <li><code>block_id + 1</code>로 스케일링하여 블록마다 고유한 스케일링을 적용합니다</li>
 <li>입력 데이터 접근 시 경계 검사를 사용합니다 (<a href="../puzzle_03/puzzle_03.html">Puzzle 3의 가드 패턴</a>)</li>
 </ul>
@@ -365,10 +362,10 @@ Block coordination results:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def cluster_coordination_basics[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
     """Real cluster coordination using SM90+ cluster APIs."""
@@ -379,12 +376,9 @@ Block coordination results:
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # FIX: Use block_idx.x for data distribution instead of cluster rank
     # Each block should process different portions of the data
@@ -427,7 +421,7 @@ block_id = Int(block_idx.x)                          # Block index for reliable 
 </code></pre>
 <p><strong>공유 메모리 할당 및 데이터 처리:</strong></p>
 <ul>
-<li>각 블록이 자체 공유 메모리 작업 공간을 할당합니다: <code>LayoutTensor[dtype, Layout.row_major(tpb), MutAnyOrigin, address_space = AddressSpace.SHARED].stack_allocation()</code></li>
+<li>각 블록이 자체 공유 메모리 작업 공간을 할당합니다: <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[tpb]())</code></li>
 <li><strong>스케일링 전략</strong>: <code>data_scale = Float32(block_id + 1)</code>로 각 블록이 다르게 데이터를 처리하도록 합니다
 <ul>
 <li>Block 0: 1.0배, Block 1: 2.0배, Block 2: 3.0배, Block 3: 4.0배</li>

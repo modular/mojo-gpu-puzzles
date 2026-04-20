@@ -210,7 +210,7 @@
                     <main>
                         <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 <h1 id="기본-버전"><a class="header" href="#기본-버전">기본 버전</a></h1>
-<p>1D LayoutTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D LayoutTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>1D TileTensor <code>a</code>에 대해 누적 합을 계산하고 결과를 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
 <p><strong>참고:</strong> <em><code>a</code>의 크기가 블록 크기보다 큰 경우, 각 블록의 합계만 저장합니다.</em></p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
@@ -221,11 +221,11 @@
 </ul>
 <p>참고:</p>
 <ul>
-<li><strong>데이터 로딩</strong>: 각 스레드가 LayoutTensor 접근을 통해 원소 하나를 로드</li>
-<li><strong>메모리 패턴</strong>: address_space를 지정한 LayoutTensor로 중간 결과를 공유 메모리에 저장</li>
+<li><strong>데이터 로딩</strong>: 각 스레드가 TileTensor 접근을 통해 원소 하나를 로드</li>
+<li><strong>메모리 패턴</strong>: address_space를 지정한 TileTensor로 중간 결과를 공유 메모리에 저장</li>
 <li><strong>스레드 동기화</strong>: 연산 단계 간 조율</li>
 <li><strong>접근 패턴</strong>: 스트라이드 기반 병렬 연산</li>
-<li><strong>타입 안전성</strong>: LayoutTensor의 타입 시스템 활용</li>
+<li><strong>타입 안전성</strong>: TileTensor의 타입 시스템 활용</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime TPB = 8
@@ -233,14 +233,13 @@ comptime SIZE = 8
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (TPB, 1)
 comptime dtype = DType.float32
-comptime layout = Layout.row_major(SIZE)
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
 
 
-def prefix_sum_simple[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def prefix_sum_simple(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
@@ -294,21 +293,16 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def prefix_sum_simple[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def prefix_sum_simple(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -316,7 +310,7 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0])
 
     var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.element_type = 0
+        var current_val: output.ElementType = 0
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
 

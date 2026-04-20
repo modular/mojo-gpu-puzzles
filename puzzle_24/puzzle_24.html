@@ -246,9 +246,9 @@
 <h3 id="performance-transformation-example"><a class="header" href="#performance-transformation-example"><strong>Performance transformation example</strong></a></h3>
 <pre><code class="language-mojo"># 1. Reduction through shared memory
 # Complex pattern we have seen earlier (from p12.mojo):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -284,7 +284,7 @@ Massive (16K+)        Bottlenecked  Memory-bandwidth limited
 <ul>
 <li><strong>Part V functional patterns</strong>: Elementwise, tiled, and vectorized approaches</li>
 <li><strong>GPU thread hierarchy</strong>: Understanding blocks, warps, and threads</li>
-<li><strong>LayoutTensor operations</strong>: Loading, storing, and tensor manipulation</li>
+<li><strong>TileTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>Shared memory concepts</strong>: Why barriers and tree reduction are complex</li>
 </ul>
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>

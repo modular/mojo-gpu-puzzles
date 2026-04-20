@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>💡 Preview: Modern Approach with LayoutTensor - Mojo 🔥 GPU Puzzles</title>
+        <title>💡 Preview: Modern Approach with TileTensor - Mojo 🔥 GPU Puzzles</title>
 
 
         <!-- Custom HTML head -->
@@ -208,7 +208,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="why-consider-layouttensor"><a class="header" href="#why-consider-layouttensor">Why consider LayoutTensor?</a></h2>
+                        <h2 id="why-consider-tiletensor"><a class="header" href="#why-consider-tiletensor">Why consider TileTensor?</a></h2>
 <p>Looking at our traditional implementation below, you might notice some potential issues:</p>
 <h3 id="current-approach"><a class="header" href="#current-approach">Current approach</a></h3>
 <pre><code class="language-mojo">i = thread_idx.x
@@ -231,13 +231,13 @@ idx = (batch * HEIGHT + row) * WIDTH + col
 # With padding
 idx = (batch * padded_height + row) * padded_width + col
 </code></pre>
-<h3 id="layouttensor-preview"><a class="header" href="#layouttensor-preview">LayoutTensor preview</a></h3>
-<p><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/">LayoutTensor</a> will help us handle these cases more elegantly:</p>
+<h3 id="tiletensor-preview"><a class="header" href="#tiletensor-preview">TileTensor preview</a></h3>
+<p><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a> will help us handle these cases more elegantly:</p>
 <pre><code class="language-mojo"># Future preview - don't worry about this syntax yet!
 output[i, j] = a[i, j] + 10.0  # 2D indexing
 output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 </code></pre>
-<p>We’ll learn about LayoutTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:</p>
+<p>We’ll learn about TileTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:</p>
 <ul>
 <li>Basic thread indexing</li>
 <li>Simple memory access patterns</li>

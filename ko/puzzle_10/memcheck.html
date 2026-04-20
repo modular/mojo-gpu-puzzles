@@ -213,13 +213,13 @@
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>테스트가 통과하는 것처럼 보여도 GPU 프로그램을 조용히 손상시킬 수 있는 메모리 위반을 탐지하는 방법을 배웁니다. NVIDIA의 <code>compute-sanitizer</code>(<code>pixi</code>를 통해 사용 가능)와 <code>memcheck</code> 도구를 사용하여, GPU 코드에서 예측 불가능한 동작을 일으킬 수 있는 숨은 메모리 버그를 발견하게 됩니다.</p>
 <p><strong>핵심 통찰</strong>: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에 “올바른” 결과를 만들어낼 수 있습니다.</p>
-<p><strong>선행 학습</strong>: <a href="../puzzle_04/introduction_layout_tensor.html">Puzzle 4 LayoutTensor</a>와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.</p>
+<p><strong>선행 학습</strong>: <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4 TileTensor</a>와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.</p>
 <h2 id="조용한-메모리-버그의-발견"><a class="header" href="#조용한-메모리-버그의-발견">조용한 메모리 버그의 발견</a></h2>
 <h3 id="테스트는-통과했지만-코드가-정말-올바른-걸까"><a class="header" href="#테스트는-통과했지만-코드가-정말-올바른-걸까">테스트는 통과했지만, 코드가 정말 올바른 걸까?</a></h3>
-<p>얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 <a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>입니다):</p>
+<p>얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>입니다):</p>
 <pre><code class="language-mojo">def add_10_2d(
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var row = thread_idx.y
@@ -347,10 +347,10 @@ Running memory bug example (bounds checking issue)...
 </ul>
 <h2 id="메모리-위반-수정하기"><a class="header" href="#메모리-위반-수정하기">메모리 위반 수정하기</a></h2>
 <h3 id="해결책"><a class="header" href="#해결책">해결책</a></h3>
-<p><a href="../puzzle_04/layout_tensor.html">Puzzle 04</a>에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:</p>
+<p><a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:</p>
 <pre><code class="language-mojo">def add_10_2d(
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     var row = thread_idx.y

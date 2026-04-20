@@ -337,11 +337,9 @@ comptime STENCIL_ITERATIONS = 3
 comptime BUFFER_COUNT = 2
 
 
-def double_buffered_stencil_computation[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+def double_buffered_stencil_computation(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -351,38 +349,23 @@ def double_buffered_stencil_computation[
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var buffer_B = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var buffer_A = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var buffer_B = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var iter_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var final_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var init_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var iter_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var final_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
@@ -516,11 +499,9 @@ GPU output sample: 1.0 1.0 1.0
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<pre><code class="language-mojo">def double_buffered_stencil_computation[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def double_buffered_stencil_computation(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Double-buffered stencil computation with memory barrier coordination.
@@ -530,38 +511,23 @@ GPU output sample: 1.0 1.0 1.0
     """
 
     # Double-buffering: Two shared memory buffers
-    var buffer_A = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var buffer_B = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var buffer_A = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var buffer_B = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
 
     # Memory barriers for coordinating buffer swaps
-    var init_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var iter_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var final_barrier = LayoutTensor[
-        DType.uint64,
-        Layout.row_major(1),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var init_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var iter_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
+    var final_barrier = stack_allocation[
+        dtype=DType.uint64, address_space=AddressSpace.SHARED
+    ](row_major[1]())
 
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x

@@ -232,23 +232,23 @@
 <li>Tile size: <code>TILE_SIZE = 32</code></li>
 <li>Data type: <code>DType.float32</code></li>
 <li>SIMD width: GPU-dependent (for operations within tiles)</li>
-<li>Layout: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime TILE_SIZE = 32
 
 
 def tiled_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -279,7 +279,7 @@ def tiled_elementwise_add[
 </code></pre>
 <p>For a 1024-element vector with <code>TILE_SIZE=32</code>: <code>1024 ÷ 32 = 32</code> tiles exactly.</p>
 <h3 id="2-tile-extraction-pattern"><a class="header" href="#2-tile-extraction-pattern">2. <strong>Tile extraction pattern</strong></a></h3>
-<p>Check out the <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile">LayoutTensor <code>.tile</code> documentation</a>.</p>
+<p>Check out the <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> documentation</a>.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # Each thread gets one tile to process
 out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
@@ -361,16 +361,16 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 
 def tiled_elementwise_add[
-    layout: Layout,
+    LayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
     tile_size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -380,13 +380,13 @@ def tiled_elementwise_add[
     ](indices: IndexList[rank]) capturing -&gt; None:
         var tile_id = indices[0]
 
-        var output_tile = output.tile[tile_size](tile_id)
-        var a_tile = a.tile[tile_size](tile_id)
-        var b_tile = b.tile[tile_size](tile_id)
+        var output_tile = output.tile[tile_size](tile_id).to_layout_tensor()
+        var a_tile = a.tile[tile_size](tile_id).to_layout_tensor()
+        var b_tile = b.tile[tile_size](tile_id).to_layout_tensor()
 
         comptime for i in range(tile_size):
-            var a_vec = a_tile.load[simd_width](Index(i))
-            var b_vec = b_tile.load[simd_width](Index(i))
+            var a_vec = a_tile.aligned_load[width=simd_width](Index(i))
+            var b_vec = b_tile.aligned_load[width=simd_width](Index(i))
             var ret = a_vec + b_vec
             output_tile.store[simd_width](Index(i), ret)
 

@@ -231,7 +231,7 @@
 <li>블록 구성: <code>(128, 1)</code> 블록당 스레드 수 (<code>TPB = 128</code>)</li>
 <li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
 <li>구간 수: <code>NUM_BINS = 8</code> (범위 [0.0, 0.125), [0.125, 0.25) 등)</li>
-<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>레이아웃: <code>row_major[SIZE]()</code> (1D row-major)</li>
 <li>블록당 워프 수: <code>128 / WARP_SIZE</code> (GPU에 따라 2개 또는 4개)</li>
 </ul>
 <h2 id="도전-과제-병렬-구간-추출"><a class="header" href="#도전-과제-병렬-구간-추출">도전 과제: 병렬 구간 추출</a></h2>
@@ -254,15 +254,18 @@ for element in data:
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <h3 id="blockprefix_sum-방식"><a class="header" href="#blockprefix_sum-방식"><code>block.prefix_sum()</code> 방식</a></h3>
 <p><code>block.prefix_sum()</code>을 사용하여 병렬 히스토그램 구간 분류를 구현합니다:</p>
-<pre><code class="language-mojo">comptime bin_layout = Layout.row_major(SIZE)  # Max SIZE elements per bin
+<pre><code class="language-mojo">comptime bin_layout = row_major[SIZE]()  # Max SIZE elements per bin
+comptime BinLayoutType = type_of(bin_layout)
 
 
 def block_histogram_bin_extract[
-    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
-    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    bin_output: TileTensor[mut=True, dtype, BinLayoutType, MutAnyOrigin],
+    count_output: TileTensor[
+        mut=True, DType.int32, OutLayoutType, MutAnyOrigin
+    ],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -345,7 +348,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <pre><code class="language-mojo">if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # 인덱싱을 위해 SIMD를 Int로 변환
 </code></pre>
-<p>이것은 <a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>의 경계 검사 패턴과 동일하지만, 조건이 “대상 구간에 속하는지“로 바뀌었습니다.</p>
+<p>이것은 <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>의 경계 검사 패턴과 동일하지만, 조건이 “대상 구간에 속하는지“로 바뀌었습니다.</p>
 <h3 id="6-최종-개수-계산"><a class="header" href="#6-최종-개수-계산">6. <strong>최종 개수 계산</strong></a></h3>
 <p>마지막 스레드(스레드 0이 아님!)가 총 개수를 계산합니다:</p>
 <pre><code class="language-mojo">if local_i == tpb - 1:  # 블록의 마지막 스레드
@@ -356,7 +359,7 @@ if (thread_has_valid_element) and (my_bin == target_bin):
 <h3 id="7-데이터-타입과-변환"><a class="header" href="#7-데이터-타입과-변환">7. <strong>데이터 타입과 변환</strong></a></h3>
 <p>이전 퍼즐의 패턴을 기억하세요:</p>
 <ul>
-<li><code>LayoutTensor</code> 인덱싱은 SIMD를 반환: <code>input_data[i][0]</code></li>
+<li><code>TileTensor</code> 인덱싱은 SIMD를 반환: <code>input_data[i][0]</code></li>
 <li><code>block.prefix_sum()</code>은 SIMD를 반환: <code>offset[0]</code>으로 추출</li>
 <li>배열 인덱싱은 <code>Int</code>가 필요: <code>bin_output[...]</code>에 <code>Int(offset[0])</code></li>
 </ul>
@@ -430,11 +433,11 @@ Bin 7 extracted elements:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_histogram_bin_extract[
-    in_layout: Layout, bin_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    bin_output: LayoutTensor[dtype, bin_layout, MutAnyOrigin],
-    count_output: LayoutTensor[DType.int32, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    bin_output: TileTensor[mut=True, dtype, BinLayout, MutAnyOrigin],
+    count_output: TileTensor[mut=True, DType.int32, OutLayout, MutAnyOrigin],
     size: Int,
     target_bin: Int,
     num_bins: Int,
@@ -491,12 +494,12 @@ Bin 7 extracted elements:
 <div class="solution-explanation">
 <p><code>block.prefix_sum()</code> 커널은 이전 퍼즐의 개념을 기반으로 고급 병렬 조율 패턴을 보여줍니다:</p>
 <h2 id="단계별-알고리즘-분석"><a class="header" href="#단계별-알고리즘-분석"><strong>단계별 알고리즘 분석:</strong></a></h2>
-<h3 id="1단계-요소-처리-puzzle-12-내적과-유사"><a class="header" href="#1단계-요소-처리-puzzle-12-내적과-유사"><strong>1단계: 요소 처리 (<a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> 내적과 유사)</strong></a></h3>
+<h3 id="1단계-요소-처리-puzzle-12-내적과-유사"><a class="header" href="#1단계-요소-처리-puzzle-12-내적과-유사"><strong>1단계: 요소 처리 (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> 내적과 유사)</strong></a></h3>
 <pre><code>스레드 인덱싱 (익숙한 패턴):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 전역 요소 인덱스
   local_i = thread_idx.x                               // 로컬 스레드 인덱스
 
-요소 로딩 (LayoutTensor 패턴과 동일):
+요소 로딩 (TileTensor 패턴과 동일):
   스레드 0:  my_value = input_data[0][0] = 0.00
   스레드 1:  my_value = input_data[1][0] = 0.01
   스레드 13: my_value = input_data[13][0] = 0.13
@@ -548,11 +551,11 @@ Bin 7 extracted elements:
       count_output[0] = total
 </code></pre>
 <h2 id="이-고급-알고리즘이-동작하는-이유"><a class="header" href="#이-고급-알고리즘이-동작하는-이유"><strong>이 고급 알고리즘이 동작하는 이유:</strong></a></h2>
-<h3 id="puzzle-12-기존-내적과의-연결"><a class="header" href="#puzzle-12-기존-내적과의-연결"><strong><a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (기존 내적)과의 연결:</strong></a></h3>
+<h3 id="puzzle-12-기존-내적과의-연결"><a class="header" href="#puzzle-12-기존-내적과의-연결"><strong><a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (기존 내적)과의 연결:</strong></a></h3>
 <ul>
 <li><strong>동일한 스레드 인덱싱</strong>: <code>global_i</code>와 <code>local_i</code> 패턴</li>
 <li><strong>동일한 경계 검사</strong>: <code>if global_i &lt; size</code> 검증</li>
-<li><strong>동일한 데이터 로딩</strong>: <code>[0]</code>을 사용한 LayoutTensor SIMD 추출</li>
+<li><strong>동일한 데이터 로딩</strong>: <code>[0]</code>을 사용한 TileTensor SIMD 추출</li>
 </ul>
 <h3 id="blocksum-이-퍼즐의-앞부분과의-연결"><a class="header" href="#blocksum-이-퍼즐의-앞부분과의-연결"><strong><a href="./block_sum.html"><code>block.sum()</code></a> (이 퍼즐의 앞부분)과의 연결:</strong></a></h3>
 <ul>

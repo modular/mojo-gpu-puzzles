@@ -341,7 +341,7 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 <li>Grid configuration: <code>(VECTOR_SIZE // CONV_TILE_SIZE, 1)</code> blocks per grid (64 blocks)</li>
 <li>Kernel size: <code>KERNEL_SIZE = 5</code> (simple 1D convolution, same as Puzzle 13)</li>
 <li>Data type: <code>DType.float32</code></li>
-<li>Layout: <code>Layout.row_major(VECTOR_SIZE)</code> (1D row-major)</li>
+<li>Layout: <code>row_major[VECTOR_SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="the-async-copy-opportunity"><a class="header" href="#the-async-copy-opportunity">The async copy opportunity</a></h3>
 <p><strong>Building on Puzzle 16:</strong> You’ve already seen <code>copy_dram_to_sram_async</code> used for clean tile loading in matmul. Now we’ll focus on its <strong>latency hiding capabilities</strong> - the key to high-performance memory-bound algorithms.</p>
@@ -389,15 +389,18 @@ comptime BLOCKS_PER_GRID_ASYNC = (
 ) // CONV_TILE_SIZE
 comptime THREADS_PER_BLOCK_ASYNC = 256
 comptime dtype = DType.float32
-comptime layout_async = Layout.row_major(VECTOR_SIZE)
+comptime layout_async = row_major[VECTOR_SIZE]()
+comptime LayoutAsyncType = type_of(layout_async)
+comptime kernel_layout = row_major[KERNEL_SIZE]()
+comptime KernelLayoutType = type_of(kernel_layout)
 
 
 def async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
+    dtype: DType
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutAsyncType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutAsyncType, ImmutAnyOrigin],
+    kernel: TileTensor[mut=False, dtype, KernelLayoutType, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -406,18 +409,12 @@ def async_copy_overlap_convolution[
     """
 
     # Shared memory buffers (like p14, but without .fill(0) to avoid race)
-    var input_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(CONV_TILE_SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
-    var kernel_shared = LayoutTensor[
-        dtype,
-        Layout.row_major(KERNEL_SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var input_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[CONV_TILE_SIZE]())
+    var kernel_shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[KERNEL_SIZE]())
 
     # FILL IN HERE (roughly 19 lines)
 
@@ -500,11 +497,11 @@ def async_copy_overlap_convolution[
 <summary><strong>Complete Solution with Detailed Explanation</strong></summary>
 <p>The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:</p>
 <pre><code class="language-mojo">def async_copy_overlap_convolution[
-    dtype: DType, layout: Layout
+    dtype: DType
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
-    kernel: LayoutTensor[dtype, Layout.row_major(KERNEL_SIZE), ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, AsyncLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, AsyncLayoutType, MutAnyOrigin],
+    kernel: LayoutTensor[dtype, kernel_layout, ImmutAnyOrigin],
 ):
     """Demonstrates async copy operations building on p14 patterns.
 
@@ -530,7 +527,7 @@ def async_copy_overlap_convolution[
 
     # Phase 1: Launch async copy for input tile
     # Note: tile() does NOT perform bounds checking - ensure valid tile bounds
-    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
+    var input_tile = input.tile[CONV_TILE_SIZE](block_idx.x).to_layout_tensor()
 
     # Use async copy with thread layout matching p14 pattern
     comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
@@ -546,8 +543,8 @@ def async_copy_overlap_convolution[
 
     # Phase 4: Compute convolution
     var global_i = block_idx.x * CONV_TILE_SIZE + local_i
-    if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
-        var result: output.element_type = 0
+    if local_i &lt; CONV_TILE_SIZE and global_i &lt; Int(output.dim[0]()):
+        var result: output.ElementType = 0
 
         # Simple convolution avoiding boundary issues
         if local_i &gt;= HALO_SIZE and local_i &lt; CONV_TILE_SIZE - HALO_SIZE:
@@ -555,10 +552,12 @@ def async_copy_overlap_convolution[
             for k in range(KERNEL_SIZE):
                 var input_idx = local_i + k - HALO_SIZE
                 if input_idx &gt;= 0 and input_idx &lt; CONV_TILE_SIZE:
-                    result += input_shared[input_idx] * kernel_shared[k]
+                    result += rebind[Scalar[dtype]](
+                        input_shared[input_idx]
+                    ) * rebind[Scalar[dtype]](kernel_shared[k])
         else:
             # For boundary elements, just copy input (no convolution)
-            result = input_shared[local_i]
+            result = rebind[Scalar[dtype]](input_shared[local_i])
 
         output[global_i] = result
 
@@ -568,15 +567,15 @@ def async_copy_overlap_convolution[
 <p><strong>Phase 1: Async Copy Launch</strong></p>
 <pre><code class="language-mojo"># Phase 1: Launch async copy for input tile
 input_tile = input.tile[CONV_TILE_SIZE](block_idx.x)
-comptime load_layout = Layout.row_major(THREADS_PER_BLOCK_ASYNC)
+comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
 <li>
-<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/LayoutTensor/#tile"><code>tile</code> method</a> does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.</p>
+<p><strong>Tile Creation</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code> creates a 256-element view of the input array starting at <code>block_idx.x * 256</code>. The Mojo <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile"><code>tile</code> method</a> does <strong>NOT</strong> perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.</p>
 </li>
 <li>
-<p><strong>Thread Layout</strong>: <code>Layout.row_major(THREADS_PER_BLOCK_ASYNC, 1)</code> creates a <code>256 x 1</code> layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
+<p><strong>Thread Layout</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC, 1]()</code> creates a <code>256 x 1</code> layout that matches our block organization. This is <strong>critical</strong> - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.</p>
 </li>
 <li>
 <p><strong>Async Copy Launch</strong>: <code>copy_dram_to_sram_async</code> initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.</p>
@@ -654,7 +653,7 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 <h4 id="key-technical-insights"><a class="header" href="#key-technical-insights"><strong>Key technical insights</strong></a></h4>
 <ol>
 <li>
-<p><strong>Thread Layout Matching</strong>: The <code>Layout.row_major(256, 1)</code> layout precisely matches the block’s <code>(256, 1)</code> thread organization, enabling optimal memory coalescing.</p>
+<p><strong>Thread Layout Matching</strong>: The <code>row_major[256, 1]()</code> layout precisely matches the block’s <code>(256, 1)</code> thread organization, enabling optimal memory coalescing.</p>
 </li>
 <li>
 <p><strong>Race Condition Avoidance</strong>: Proper sequencing (async copy → kernel load → wait → barrier → compute) eliminates all race conditions that could corrupt shared memory.</p>

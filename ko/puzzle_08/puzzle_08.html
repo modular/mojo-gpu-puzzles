@@ -211,26 +211,219 @@
                         <!-- i18n-source-commit: 8726393ce8f2ba4d52d2ceec6352706da1f1806a -->
 <h1 id="puzzle-8-공유-메모리"><a class="header" href="#puzzle-8-공유-메모리">Puzzle 8: 공유 메모리</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>벡터 <code>a</code>의 각 위치에 10을 더해 벡터 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>1D TileTensor <code>a</code>의 각 위치에 10을 더해 1D TileTensor <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
 <p><strong>참고:</strong> <em>블록당 스레드 수가 <code>a</code>의 크기보다 작습니다.</em></p>
 <img src="/puzzle_08/media/08.png" alt="공유 메모리 시각화" class="light-mode-img">
 <img src="/puzzle_08/media/08d.png" alt="공유 메모리 시각화" class="dark-mode-img">
-<h2 id="구현-방식"><a class="header" href="#구현-방식">구현 방식</a></h2>
-<h3 id="-원시-메모리-방식"><a class="header" href="#-원시-메모리-방식"><a href="./raw.html">🔰 원시 메모리 방식</a></a></h3>
-<p>공유 메모리와 동기화를 수동으로 관리하는 방법을 알아봅니다.</p>
-<h3 id="-layouttensor-버전"><a class="header" href="#-layouttensor-버전"><a href="./layout_tensor.html">📐 LayoutTensor 버전</a></a></h3>
-<p>LayoutTensor에 내장된 공유 메모리 관리 기능을 활용합니다.</p>
-<p>💡 <strong>참고</strong>: LayoutTensor가 성능을 유지하면서도 공유 메모리 연산을 얼마나 간소화하는지 경험해 보세요.</p>
+<h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
+<ul>
+<li>address_space를 활용한 TileTensor의 공유 메모리 기능</li>
+<li>공유 메모리를 사용할 때의 스레드 동기화</li>
+<li>TileTensor로 블록 로컬 데이터 관리하기</li>
+</ul>
+<p>핵심은 TileTensor가 블록 로컬 저장소의 성능은 그대로 유지하면서 공유 메모리 관리를 얼마나 간소화하는지 이해하는 것입니다.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li>배열 크기: <code>SIZE = 8</code> 원소</li>
+<li>블록당 스레드 수: <code>TPB = 4</code></li>
+<li>블록 수: 2</li>
+<li>공유 메모리: 블록당 <code>TPB</code>개 원소</li>
+</ul>
+<blockquote>
+<p><strong>경고</strong>: 각 블록에는 해당 블록의 스레드들이 읽고 쓸 수 있는 공유 메모리의 양이 _상수_로 고정되어 있습니다. 이 값은 파이썬 리터럴 상수여야 하며 변수를 사용할 수 없습니다. 공유 메모리에 쓴 후에는 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>를 호출해 스레드들이 교차하지 않도록 해야 합니다.</p>
+</blockquote>
+<p><strong>학습 참고</strong>: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로 <code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 더 복잡한 상황에서 필요한 올바른 동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">comptime TPB = 4
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (2, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = row_major[SIZE]()
+comptime LayoutType = type_of(layout)
+
+
+def add_10_shared(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    # Allocate shared memory using stack_allocation
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    barrier()
+
+    # FILL ME IN (roughly 2 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p08/p08.mojo" class="filename">전체 코드 보기: problems/p08/p08.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>address_space 파라미터로 TileTensor 공유 메모리 생성</li>
+<li>자연스러운 인덱싱으로 데이터 로드: <code>shared[local_i] = a[global_i]</code></li>
+<li><code>barrier()</code>로 동기화 (학습용 - 여기서는 엄밀히 필요하지 않음)</li>
+<li>공유 메모리 인덱스로 데이터 처리</li>
+<li>범위를 벗어난 접근을 방지하는 가드</li>
+</ol>
+</div>
+</details>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p08
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p08
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p08
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p08
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def add_10_shared_tile_tensor(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    # Allocate shared memory using stack_allocation
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+
+    if global_i &lt; size:
+        shared[local_i] = a[global_i]
+
+    # Note: barrier is not strictly needed here since each thread only accesses
+    # its own shared memory location. However, it's included to teach proper
+    # shared memory synchronization patterns for more complex scenarios where
+    # threads need to coordinate access to shared data.
+    barrier()
+
+    if global_i &lt; size:
+        output[global_i] = shared[local_i] + 10
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>TileTensor가 성능을 유지하면서 공유 메모리 사용을 얼마나 간소화하는지 보여주는 솔루션입니다:</p>
+<ol>
+<li>
+<p><strong>TileTensor를 사용한 메모리 계층 구조</strong></p>
+<ul>
+<li>
+<p>전역 텐서: <code>a</code>와 <code>output</code> (느림, 모든 블록에서 보임)</p>
+</li>
+<li>
+<p>공유 텐서: <code>shared</code> (빠름, 스레드 블록 로컬)</p>
+</li>
+<li>
+<p>블록당 4개 스레드로 8개 원소를 처리하는 예시:</p>
+<pre><code class="language-txt">전역 텐서 a: [1 1 1 1 | 1 1 1 1]  # 입력: 모두 1
+
+Block (0):         Block (1):
+shared[0..3]       shared[0..3]
+[1 1 1 1]          [1 1 1 1]
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>스레드 조율</strong></p>
+<ul>
+<li>
+<p>로드 단계 (자연스러운 인덱싱 사용):</p>
+<pre><code class="language-txt">Thread 0: shared[0] = a[0]=1    Thread 2: shared[2] = a[2]=1
+Thread 1: shared[1] = a[1]=1    Thread 3: shared[3] = a[3]=1
+barrier()    ↓         ↓        ↓         ↓   # 모든 로드 완료 대기
+</code></pre>
+</li>
+<li>
+<p>처리 단계: 각 스레드가 자신의 공유 텐서 값에 10을 더함</p>
+</li>
+<li>
+<p>결과: <code>output[global_i] = shared[local_i] + 10 = 11</code></p>
+</li>
+</ul>
+<p><strong>참고</strong>: 이 경우에는 각 스레드가 자신의 공유 메모리 위치(<code>shared[local_i]</code>)에만 쓰고 읽으므로 <code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 스레드들이 서로의 데이터에 접근하는 상황에서 필수적인 동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
+</li>
+<li>
+<p><strong>TileTensor의 장점</strong></p>
+<ul>
+<li>
+<p>공유 메모리 할당:</p>
+<pre><code class="language-txt"># address_space를 사용한 깔끔한 TileTensor API
+shared = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())
+</code></pre>
+</li>
+<li>
+<p>전역과 공유 메모리 모두 자연스러운 인덱싱:</p>
+<pre><code class="language-txt">Block 0 출력: [11 11 11 11]
+Block 1 출력: [11 11 11 11]
+</code></pre>
+</li>
+<li>
+<p>내장된 레이아웃 관리와 타입 안전성</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>메모리 접근 패턴</strong></p>
+<ul>
+<li>로드: 전역 텐서 → 공유 텐서 (최적화됨)</li>
+<li>동기화: 원시 메모리 버전과 동일한 <code>barrier()</code> 필요</li>
+<li>처리: 공유 메모리 값에 10 더하기</li>
+<li>저장: 결과(11)를 전역 텐서에 쓰기</li>
+</ul>
+</li>
+</ol>
+<p>이 패턴은 TileTensor가 공유 메모리의 성능 이점을 유지하면서 더 편리한 API와 내장 기능을 제공하는 방법을 보여줍니다.</p>
+</div>
+</details>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_07/layout_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_07/puzzle_07.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_08/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_09/puzzle_09.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -240,11 +433,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_07/layout_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_07/puzzle_07.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_08/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_09/puzzle_09.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

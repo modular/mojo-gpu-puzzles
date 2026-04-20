@@ -230,7 +230,7 @@
 <li>데이터 타입: <code>DType.float32</code></li>
 <li>블록 구성: <code>(128, 1)</code> 블록당 스레드 수 (<code>TPB = 128</code>)</li>
 <li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
-<li>레이아웃: <code>Layout.row_major(SIZE)</code> (입력과 출력 모두 1D row-major)</li>
+<li>레이아웃: <code>row_major[SIZE]()</code> (입력과 출력 모두 1D row-major)</li>
 <li>테스트 데이터: 1-8 반복 값, 평균 = 4.5</li>
 <li>예상 출력: 평균이 1.0인 정규화된 벡터</li>
 </ul>
@@ -271,14 +271,15 @@ output[global_i] = my_value / mean
 <h3 id="완전한-블록-연산-워크플로우"><a class="header" href="#완전한-블록-연산-워크플로우">완전한 블록 연산 워크플로우</a></h3>
 <p>블록 연산 도구 모음 전체를 사용하여 고급 벡터 평균 정규화를 구현합니다:</p>
 <pre><code class="language-mojo">
-comptime vector_layout = Layout.row_major(SIZE)
+comptime vector_layout = row_major[SIZE]()
+comptime VectorLayoutType = type_of(vector_layout)
 
 
 def block_normalize_vector[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
@@ -330,7 +331,7 @@ def block_normalize_vector[
 <li>각 스레드가 브로드캐스트된 평균으로 정규화</li>
 </ol>
 <h3 id="2-데이터-로딩과-합계-계산-익숙한-패턴"><a class="header" href="#2-데이터-로딩과-합계-계산-익숙한-패턴">2. <strong>데이터 로딩과 합계 계산 (익숙한 패턴)</strong></a></h3>
-<p>기존 LayoutTensor 패턴으로 요소를 로드합니다:</p>
+<p>기존 TileTensor 패턴으로 요소를 로드합니다:</p>
 <pre><code class="language-mojo">var my_value: Scalar[dtype] = 0.0
 if global_i &lt; size:
     my_value = input_data[global_i][0]  # SIMD 추출
@@ -427,18 +428,18 @@ Output mean: 1.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def block_normalize_vector[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    input_data: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    output_data: LayoutTensor[dtype, out_layout, MutAnyOrigin],
+    input_data: TileTensor[mut=False, dtype, InLayout, ImmutAnyOrigin],
+    output_data: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
     size: Int,
 ):
     """Vector mean normalization using block.sum() + block.broadcast() combination.
 
     This demonstrates the complete block operations workflow:
-    1. Use block.sum() to compute sum of all elements (all → one)
+    1. Use block.sum() to compute sum of all elements (all -&gt; one)
     2. Thread 0 computes mean = sum / size
-    3. Use block.broadcast() to share mean to all threads (one → all)
+    3. Use block.broadcast() to share mean to all threads (one -&gt; all)
     4. Each thread normalizes: output[i] = input[i] / mean
     """
 
@@ -482,7 +483,7 @@ Output mean: 1.0
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 입력 배열 위치에 매핑
   local_i = thread_idx.x                              // 블록 내 위치 (0-127)
 
-LayoutTensor 패턴을 사용한 병렬 요소 로딩:
+TileTensor 패턴을 사용한 병렬 요소 로딩:
   스레드 0:   my_value = input_data[0][0] = 1.0    // 첫 번째 순환 값
   스레드 1:   my_value = input_data[1][0] = 2.0    // 두 번째 순환 값
   스레드 7:   my_value = input_data[7][0] = 8.0    // 마지막 순환 값
@@ -580,10 +581,10 @@ block.broadcast() 실행 후:
 
 알고리즘이 증명 가능하게 올바른 수학적 결과를 생성합니다.
 </code></pre>
-<h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/layout_tensor.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
+<h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
 <ul>
 <li><strong>스레드 조율의 진화</strong>: 동일한 <code>global_i</code>, <code>local_i</code> 패턴이지만 블록 기본 요소 사용</li>
-<li><strong>메모리 접근 패턴</strong>: 동일한 LayoutTensor SIMD 추출 <code>[0]</code>이지만 최적화된 워크플로우</li>
+<li><strong>메모리 접근 패턴</strong>: 동일한 TileTensor SIMD 추출 <code>[0]</code>이지만 최적화된 워크플로우</li>
 <li><strong>복잡성 제거</strong>: 20줄 이상의 수동 배리어를 2개의 블록 연산으로 대체</li>
 <li><strong>교육적 진행</strong>: 수동 → 자동, 복잡 → 단순, 오류 발생 가능 → 신뢰성</li>
 </ul>
@@ -661,7 +662,7 @@ block.broadcast() 실행 후:
 </details>
 <p><strong>완전한 블록 연산 진행:</strong></p>
 <ol>
-<li><strong>수동 조율</strong> (<a href="../puzzle_12/layout_tensor.html">Puzzle 12</a>): 병렬 기초 이해</li>
+<li><strong>수동 조율</strong> (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>): 병렬 기초 이해</li>
 <li><strong>워프 기본 요소</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): 하드웨어 가속 패턴 학습</li>
 <li><strong>블록 리덕션</strong> (<a href="./block_sum.html"><code>block.sum()</code></a>): 전체→하나 통신 학습</li>
 <li><strong>블록 스캔</strong> (<a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): 전체→각각 통신 학습</li>

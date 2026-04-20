@@ -211,17 +211,18 @@
                         <!-- i18n-source-commit: 8726393ce8f2ba4d52d2ceec6352706da1f1806a -->
 <h1 id="puzzle-7-2d-블록"><a class="header" href="#puzzle-7-2d-블록">Puzzle 7: 2D 블록</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>행렬 <code>a</code>의 각 위치에 10을 더해 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>2D TileTensor <code>a</code>의 각 위치에 10을 더해 2D TileTensor <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
 <p><strong>참고:</strong> <em>블록당 스레드 수가 <code>a</code>의 행과 열 크기보다 모두 작습니다.</em></p>
 <img src="/puzzle_07/media/07.png" alt="2D Blocks 시각화" class="light-mode-img">
 <img src="/puzzle_07/media/07d.png" alt="2D Blocks 시각화" class="dark-mode-img">
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
+<p>이 퍼즐에서 배울 내용:</p>
 <ul>
-<li>블록 기반 처리</li>
-<li>그리드와 블록의 조율</li>
-<li>여러 블록에 걸친 인덱싱</li>
-<li>메모리 접근 패턴</li>
+<li>여러 블록과 함께 <code>TileTensor</code> 사용하기</li>
+<li>2D 블록 구성으로 큰 행렬 처리하기</li>
+<li>블록 인덱싱과 <code>TileTensor</code> 접근 결합하기</li>
 </ul>
+<p>핵심은 <code>TileTensor</code>가 2D 인덱싱을 단순화해 주지만, 큰 행렬에서는 여전히 블록 간 조율이 필요하다는 점입니다.</p>
 <blockquote>
 <p>🔑 <strong>2D 스레드 인덱싱 방식</strong></p>
 <p><a href="../puzzle_04/puzzle_04.html">Puzzle 4: 2D Map</a>의 블록 기반 인덱싱을 2D로 확장합니다:</p>
@@ -246,12 +247,172 @@ Block (0,1):   Block (1,1):
 <li>효율적인 메모리 접근 패턴</li>
 </ul>
 </blockquote>
-<h2 id="구현-방식"><a class="header" href="#구현-방식">구현 방식</a></h2>
-<h3 id="-원시-메모리-방식"><a class="header" href="#-원시-메모리-방식"><a href="./raw.html">🔰 원시 메모리 방식</a></a></h3>
-<p>수동 인덱싱으로 여러 블록에 걸친 연산을 처리하는 방법을 알아봅니다.</p>
-<h3 id="-layouttensor-버전"><a class="header" href="#-layouttensor-버전"><a href="./layout_tensor.html">📐 LayoutTensor 버전</a></a></h3>
-<p>LayoutTensor 기능을 활용해 블록 기반 처리를 깔끔하게 구현합니다.</p>
-<p>💡 <strong>참고</strong>: LayoutTensor가 블록 간 조율과 메모리 접근 패턴을 얼마나 단순화하는지 확인해 보세요.</p>
+<h2 id="구성"><a class="header" href="#구성">구성</a></h2>
+<ul>
+<li><strong>행렬 크기</strong>: \(5 \times 5\) 원소</li>
+<li><strong>레이아웃 처리</strong>: <code>TileTensor</code>가 행 우선 구성 관리</li>
+<li><strong>블록 조율</strong>: 여러 블록으로 전체 행렬 커버</li>
+<li><strong>2D 인덱싱</strong>: 경계 검사와 함께 자연스러운 \((i,j)\) 접근</li>
+<li><strong>총 스레드 수</strong>: \(25\)개 원소에 대해 \(36\)개</li>
+<li><strong>스레드 매핑</strong>: 각 스레드가 행렬 원소 하나씩 처리</li>
+</ul>
+<h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
+<pre><code class="language-mojo">comptime SIZE = 5
+comptime BLOCKS_PER_GRID = (2, 2)
+comptime THREADS_PER_BLOCK = (3, 3)
+comptime dtype = DType.float32
+comptime out_layout = row_major[SIZE, SIZE]()
+comptime a_layout = row_major[SIZE, SIZE]()
+comptime OutLayout = type_of(out_layout)
+comptime ALayout = type_of(a_layout)
+
+
+def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
+    # FILL ME IN (roughly 2 lines)
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p07/p07.mojo" class="filename">전체 코드 보기: problems/p07/p07.mojo</a></p>
+<details>
+<summary><strong>팁</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>전역 인덱스 계산: <code>row = block_dim.y * block_idx.y + thread_idx.y</code>, <code>col = block_dim.x * block_idx.x + thread_idx.x</code></li>
+<li>가드 추가: <code>if row &lt; size and col &lt; size</code></li>
+<li>가드 내부: 2D TileTensor에 10을 더하는 방법을 생각해 보세요</li>
+</ol>
+</div>
+</details>
+<h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
+<p>솔루션을 테스트하려면 터미널에서 다음 명령어를 실행하세요:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p07
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p07
+</code></pre>
+  </div>
+</div>
+<p>퍼즐을 아직 풀지 않았다면 출력이 다음과 같이 나타납니다:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0, 0.0, 0.0, ... , 0.0])
+expected: HostBuffer([10.0, 11.0, 12.0, ... , 34.0])
+</code></pre>
+<h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def add_10_blocks_2d(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, ALayout, ImmutAnyOrigin],
+    size: Int,
+):
+    var row = block_dim.y * block_idx.y + thread_idx.y
+    var col = block_dim.x * block_idx.x + thread_idx.x
+    if row &lt; size and col &lt; size:
+        output[row, col] = a[row, col] + 10.0
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>TileTensor가 2D 블록 기반 처리를 얼마나 간소화하는지 보여주는 솔루션입니다:</p>
+<ol>
+<li>
+<p><strong>2D 스레드 인덱싱</strong></p>
+<ul>
+<li>
+<p>전역 행(row): <code>block_dim.y * block_idx.y + thread_idx.y</code></p>
+</li>
+<li>
+<p>전역 열(col): <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+</li>
+<li>
+<p>스레드 그리드를 텐서 원소에 매핑:</p>
+<pre><code class="language-txt">3×3 블록으로 구성된 5×5 텐서:
+
+Block (0,0)         Block (1,0)
+[(0,0) (0,1) (0,2)] [(0,3) (0,4)    *  ]
+[(1,0) (1,1) (1,2)] [(1,3) (1,4)    *  ]
+[(2,0) (2,1) (2,2)] [(2,3) (2,4)    *  ]
+
+Block (0,1)         Block (1,1)
+[(3,0) (3,1) (3,2)] [(3,3) (3,4)    *  ]
+[(4,0) (4,1) (4,2)] [(4,3) (4,4)    *  ]
+[  *     *     *  ] [  *     *      *  ]
+</code></pre>
+<p>(* = 스레드는 존재하지만 텐서 경계 밖)</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>TileTensor의 장점</strong></p>
+<ul>
+<li>
+<p>자연스러운 2D 인덱싱: 수동 오프셋 계산 대신 <code>tensor[row, col]</code> 사용</p>
+</li>
+<li>
+<p>자동 메모리 레이아웃 최적화</p>
+</li>
+<li>
+<p>접근 패턴 예시:</p>
+<pre><code class="language-txt">원시 메모리:          TileTensor:
+row * size + col    tensor[row, col]
+(2,1) -&gt; 11        (2,1) -&gt; 같은 원소
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>경계 검사</strong></p>
+<ul>
+<li>가드 <code>row &lt; size and col &lt; size</code>가 처리하는 상황:
+<ul>
+<li>부분 블록에서 범위를 벗어나는 스레드</li>
+<li>텐서 경계의 엣지 케이스</li>
+<li>메모리 레이아웃은 TileTensor가 자동으로 처리</li>
+<li>25개 원소를 36개 스레드로 처리 (3×3 블록의 2×2 그리드)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>블록 조율</strong></p>
+<ul>
+<li>각 3×3 블록이 5×5 텐서의 일부분을 담당</li>
+<li>TileTensor가 처리하는 부분:
+<ul>
+<li>메모리 레이아웃 최적화</li>
+<li>효율적인 접근 패턴</li>
+<li>블록 경계 간 조율</li>
+<li>캐시 친화적 데이터 접근</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>이 패턴은 TileTensor가 최적의 메모리 접근 패턴과 스레드 조율을 유지하면서도 2D 블록 처리를 얼마나 간소화하는지 보여줍니다.</p>
+</div>
+</details>
 
                     </main>
 
@@ -261,7 +422,7 @@ Block (0,1):   Block (1,1):
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_07/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_08/puzzle_08.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -275,7 +436,7 @@ Block (0,1):   Block (1,1):
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_07/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_08/puzzle_08.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

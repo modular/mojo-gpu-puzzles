@@ -230,7 +230,7 @@
 <li>데이터 타입: <code>DType.float32</code></li>
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 <li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
-<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D 행 우선)</li>
+<li>레이아웃: <code>row_major[SIZE]()</code> (1D 행 우선)</li>
 </ul>
 <h2 id="기존-방식의-복잡성-puzzle-12에서"><a class="header" href="#기존-방식의-복잡성-puzzle-12에서">기존 방식의 복잡성 (Puzzle 12에서)</a></h2>
 <p><a href="../../../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a>의 복잡한 방식을 떠올려 봅시다. 공유 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
@@ -239,26 +239,25 @@ comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
 comptime dtype = DType.float32
 comptime SIMD_WIDTH = simd_width_of[dtype]()
-comptime in_layout = Layout.row_major(SIZE)
-comptime out_layout = Layout.row_major(1)
+comptime in_layout = row_major[SIZE]()
+comptime InLayoutType = type_of(in_layout)
+comptime out_layout = row_major[1]()
+comptime OutLayoutType = type_of(out_layout)
 
 
 def traditional_dot_product_p12_style[
-    in_layout: Layout, out_layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
 ):
     """
     This is the complex approach from p12_layout_tensor.mojo - kept for comparison.
     """
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(WARP_SIZE),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[WARP_SIZE]())
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
 
@@ -318,11 +317,11 @@ def traditional_dot_product_p12_style[
 <h3 id="1-간단한-워프-커널-방식"><a class="header" href="#1-간단한-워프-커널-방식">1. 간단한 워프 커널 방식</a></h3>
 <p>복잡한 기존 방식을 <code>warp_sum()</code>을 사용하는 간단한 워프 커널로 변환합니다:</p>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    in_layout: Layout, out_layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     # FILL IN (6 lines at most)
@@ -400,25 +399,30 @@ expected: 10416.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def simple_warp_dot_product[
-    in_layout: Layout, out_layout: Layout, size: Int
+    InLayoutT: TensorLayout, OutLayoutT: TensorLayout, size: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    b: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
 ):
+    var a_lt = a.to_layout_tensor()
+    var b_lt = b.to_layout_tensor()
+    var out_lt = output.to_layout_tensor()
     var global_i = block_dim.x * block_idx.x + thread_idx.x
 
     # Each thread computes one partial product using vectorized approach as values in Mojo are SIMD based
     var partial_product: Scalar[dtype] = 0
     if global_i &lt; size:
-        partial_product = (a[global_i] * b[global_i]).reduce_add()
+        partial_product = rebind[Scalar[dtype]](a_lt[global_i]) * rebind[
+            Scalar[dtype]
+        ](b_lt[global_i])
 
     # warp_sum() replaces all the shared memory + barriers + tree reduction
     var total = warp_sum(partial_product)
 
     # Only lane 0 writes the result (all lanes have the same total)
     if lane_id() == 0:
-        output[global_i // WARP_SIZE] = total
+        out_lt.store[1](Index(global_i // WARP_SIZE), total)
 
 
 </code></pre>
@@ -456,16 +460,14 @@ warp_sum() 하드웨어 연산:
 <h3 id="2-함수형-방식"><a class="header" href="#2-함수형-방식">2. 함수형 방식</a></h3>
 <p>이번에는 Mojo의 함수형 프로그래밍 패턴을 사용하여 같은 워프 내적을 구현합니다:</p>
 <pre><code class="language-mojo">def functional_warp_dot_product[
-    layout: Layout,
-    out_layout: Layout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutType, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -558,16 +560,16 @@ expected: 10416.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def functional_warp_dot_product[
-    layout: Layout,
-    out_layout: Layout,
+    InLayoutT: TensorLayout,
+    OutLayoutT: TensorLayout,
     dtype: DType,
     simd_width: Int,
     rank: Int,
     size: Int,
 ](
-    output: LayoutTensor[mut=True, dtype, out_layout, MutAnyOrigin],
-    a: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
-    b: LayoutTensor[mut=False, dtype, layout, MutAnyOrigin],
+    output: TileTensor[mut=True, dtype, OutLayoutT, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
+    b: TileTensor[mut=False, dtype, InLayoutT, MutAnyOrigin],
     ctx: DeviceContext,
 ) raises:
     @parameter
@@ -576,13 +578,19 @@ expected: 10416.0
         simd_width: Int, rank: Int, alignment: Int = align_of[dtype]()
     ](indices: IndexList[rank]) capturing -&gt; None:
         var idx = indices[0]
+        # Convert inside GPU kernel to avoid host-captured LayoutTensor issues
+        var a_lt = a.to_layout_tensor()
+        var b_lt = b.to_layout_tensor()
+        var out_lt = output.to_layout_tensor()
 
         # Each thread computes one partial product
         var partial_product: Scalar[dtype] = 0.0
         if idx &lt; size:
-            var a_val = a.load[1](Index(idx))
-            var b_val = b.load[1](Index(idx))
-            partial_product = a_val * b_val
+            var a_val = a_lt.load[1](Index(idx))
+            var b_val = b_lt.load[1](Index(idx))
+            partial_product = rebind[Scalar[dtype]](a_val) * rebind[
+                Scalar[dtype]
+            ](b_val)
         else:
             partial_product = 0.0
 
@@ -591,7 +599,7 @@ expected: 10416.0
 
         # Only lane 0 writes the result (all lanes have the same total)
         if lane_id() == 0:
-            output.store[1](Index(idx // WARP_SIZE), total)
+            out_lt.store[1](Index(idx // WARP_SIZE), total)
 
     # Launch exactly size == WARP_SIZE threads (one warp) to process all elements
     elementwise[compute_dot_product, 1, target="gpu"](size, ctx)

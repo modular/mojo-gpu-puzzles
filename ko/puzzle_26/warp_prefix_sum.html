@@ -232,25 +232,20 @@
 <li>그리드 구성: <code>(1, 1)</code> 그리드당 블록 수</li>
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 <li>데이터 타입: <code>DType.float32</code></li>
-<li>레이아웃: <code>Layout.row_major(SIZE)</code> (1D row-major)</li>
+<li>레이아웃: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="prefix_sum의-이점"><a class="header" href="#prefix_sum의-이점">prefix_sum의 이점</a></h3>
 <p>기존 누적 합은 복잡한 다단계 공유 메모리 알고리즘이 필요합니다. <a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a>에서는 명시적 공유 메모리 관리로 이를 힘들게 구현했습니다:</p>
-<pre><code class="language-mojo">def prefix_sum_simple[
-    layout: Layout
-](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    a: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+<pre><code class="language-mojo">def prefix_sum_simple(
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     var global_i = block_dim.x * block_idx.x + thread_idx.x
     var local_i = thread_idx.x
-    var shared = LayoutTensor[
-        dtype,
-        Layout.row_major(TPB),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
     if global_i &lt; size:
         shared[local_i] = a[global_i]
 
@@ -258,7 +253,7 @@
 
     var offset = 1
     for i in range(Int(log2(Scalar[dtype](TPB)))):
-        var current_val: output.element_type = 0
+        var current_val: output.ElementType = 0
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
 
@@ -300,10 +295,10 @@ output[global_i] = scan_result
 \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
 <p>입력 데이터 <code>[1, 2, 3, 4, 5, ...]</code>를 누적 합 <code>[1, 3, 6, 10, 15, ...]</code>으로 변환하며, 각 위치에 이전 모든 요소와 자기 자신의 합이 담깁니다.</p>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive:
@@ -398,10 +393,10 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
 ):
     """
     Inclusive prefix sum using warp primitive: Each thread gets sum of all elements up to and including its position.
@@ -522,10 +517,10 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 </ol>
 <p>이는 단일 워프 내에서 여러 워프 기본 요소를 결합하여 복잡한 병렬 알고리즘을 구현하는 강력함을 보여줍니다.</p>
 <pre><code class="language-mojo">def warp_partition[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """
@@ -618,10 +613,10 @@ pivot: 5.0
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def warp_partition[
-    layout: Layout, size: Int
+    size: Int
 ](
-    output: LayoutTensor[dtype, layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
     pivot: Float32,
 ):
     """

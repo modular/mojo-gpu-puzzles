@@ -247,9 +247,9 @@
 </blockquote>
 <h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
 <pre><code class="language-mojo"># 복잡한 이웃 접근 패턴 (기존 방식):
-shared = LayoutTensor[
+shared = TileTensor[
     dtype,
-    Layout.row_major(WARP_SIZE),
+    row_major[WARP_SIZE](),
     MutAnyOrigin,
     address_space = AddressSpace.SHARED,
 ].stack_allocation()
@@ -284,7 +284,7 @@ else:
 <ul>
 <li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해 (<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a> 참고)</li>
 <li><strong>GPU 스레드 계층 구조</strong>: 블록, 워프, 레인 번호 매기기</li>
-<li><strong>LayoutTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
+<li><strong>TileTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
 <li><strong>경계 조건 처리</strong>: 병렬 알고리즘의 가장자리 케이스 관리</li>
 </ul>
 <h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>

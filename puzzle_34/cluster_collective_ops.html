@@ -239,19 +239,17 @@
 <li><strong>Block Configuration</strong>: <code>TPB = 256</code> threads per block <code>(256, 1)</code></li>
 <li><strong>Grid Configuration</strong>: <code>CLUSTER_SIZE = 4</code> blocks per cluster <code>(4, 1)</code></li>
 <li><strong>Data Type</strong>: <code>DType.float32</code></li>
-<li><strong>Memory Layout</strong>: Input <code>Layout.row_major(SIZE)</code>, Output <code>Layout.row_major(1)</code></li>
-<li><strong>Temporary Storage</strong>: <code>Layout.row_major(CLUSTER_SIZE)</code> for partial results</li>
+<li><strong>Memory Layout</strong>: Input <code>row_major[SIZE]()</code>, Output <code>row_major[1]()</code></li>
+<li><strong>Temporary Storage</strong>: <code>row_major[CLUSTER_SIZE]()</code> for partial results</li>
 </ul>
 <p><strong>Expected Result</strong>: Sum of sequence <code>0, 0.01, 0.02, ..., 10.23</code> = <strong>523,776</strong></p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
-        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-    ],
+    output: TileTensor[mut=True, dtype, OutLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -346,13 +344,11 @@ Error: 0.0
 <details class="solution-details">
 <summary>Click to reveal solution</summary>
 <pre><code class="language-mojo">def cluster_collective_operations[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
-    temp_storage: LayoutTensor[
-        dtype, Layout.row_major(CLUSTER_SIZE), MutAnyOrigin
-    ],
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
+    temp_storage: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
     size: Int,
 ):
     """Cluster-wide collective operations using real cluster APIs."""
@@ -367,12 +363,9 @@ Error: 0.0
         my_value = input[global_i][0]
 
     # Block-level reduction using shared memory
-    var shared_mem = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_mem = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
     shared_mem[local_i] = my_value
     barrier()
 

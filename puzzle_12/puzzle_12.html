@@ -210,7 +210,7 @@
                     <main>
                         <h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes the dot product of vector <code>a</code> and vector <code>b</code> and stores it in <code>output</code> (single number).  The dot product is an operation that takes two vectors of the same size and returns a single number (a scalar). It is calculated by multiplying corresponding elements from each vector and then summing those products.</p>
+<p>Implement a kernel that computes the dot product of 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code> (single number).  The dot product is an operation that takes two vectors of the same size and returns a single number (a scalar). It is calculated by multiplying corresponding elements from each vector and then summing those products.</p>
 <p>For example, if you have two vectors:</p>
 <p>\[a = [a_{1}, a_{2}, …, a_{n}] \]
 \[b = [b_{1}, b_{2}, …, b_{n}] \]</p>
@@ -219,22 +219,259 @@
 <p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
 <img src="./media/12-w.png" alt="Dot product visualization" class="light-mode-img">
 <img src="./media/12-b.png" alt="Dot product visualization" class="dark-mode-img">
-<h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
-<h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
-<p>Learn how to implement the reduction with manual memory management and synchronization.</p>
-<h3 id="-layouttensor-version"><a class="header" href="#-layouttensor-version"><a href="./layout_tensor.html">📐 LayoutTensor Version</a></a></h3>
-<p>Use LayoutTensor’s features for efficient reduction and shared memory management.</p>
-<p>💡 <strong>Note</strong>: See how LayoutTensor simplifies efficient memory access patterns.</p>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
+<p><strong>Parallel reduction</strong> is an algorithm that combines \(n\) values into one using a binary operation (here, addition) in \(O(\log n)\) steps instead of \(O(n)\) sequential steps. In each step, half the active threads each add one value into another, halving the number of remaining partial results. After \(\log_2 n\) steps, thread 0 holds the final sum. This tree-shaped computation requires a <code>barrier()</code> between steps so no thread reads a partially-updated value.</p>
+<p>This puzzle covers:</p>
+<ul>
+<li>Similar to <a href="../puzzle_08/puzzle_08.html">puzzle 8</a> and <a href="../puzzle_11/puzzle_11.html">puzzle 11</a>, implementing parallel reduction with TileTensor</li>
+<li>Managing shared memory using TileTensor with address_space</li>
+<li>Coordinating threads for collective operations</li>
+<li>Using layout-aware tensor operations</li>
+</ul>
+<p>The key insight is how TileTensor simplifies memory management while maintaining efficient parallel reduction patterns.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<ul>
+<li>Vector size: <code>SIZE = 8</code> elements</li>
+<li>Threads per block: <code>TPB = 8</code></li>
+<li>Number of blocks: 1</li>
+<li>Output size: 1 element</li>
+<li>Shared memory: <code>TPB</code> elements</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li><strong>TileTensor allocation</strong>: Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
+<li><strong>Element access</strong>: Natural indexing with bounds checking</li>
+<li><strong>Layout handling</strong>: Separate layouts for input and output</li>
+<li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
+</ul>
+<h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
+<pre><code class="language-mojo">from std.gpu import thread_idx, block_idx, block_dim, barrier
+from std.gpu.memory import AddressSpace
+from layout import TileTensor
+from layout.tile_layout import row_major
+from layout.tile_tensor import stack_allocation
+
+
+comptime TPB = 8
+comptime SIZE = 8
+comptime BLOCKS_PER_GRID = (1, 1)
+comptime THREADS_PER_BLOCK = (TPB, 1)
+comptime dtype = DType.float32
+comptime layout = row_major[SIZE]()
+comptime out_layout = row_major[1]()
+comptime LayoutType = type_of(layout)
+comptime OutLayout = type_of(out_layout)
+
+
+def dot_product(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    # FILL ME IN (roughly 13 lines)
+    ...
+
+
+</code></pre>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p12/p12.mojo" class="filename">View full file: problems/p12/p12.mojo</a></p>
+<details>
+<summary><strong>Tips</strong></summary>
+<div class="solution-tips">
+<ol>
+<li>Create shared memory with TileTensor using address_space</li>
+<li>Store <code>a[global_i] * b[global_i]</code> in <code>shared[local_i]</code></li>
+<li>Use parallel reduction pattern with <code>barrier()</code></li>
+<li>Let thread 0 write final result to <code>output[0]</code></li>
+</ol>
+</div>
+</details>
+<h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
+<p>To test your solution, run the following command in your terminal:</p>
+<div class="code-tabs" data-tab-group="package-manager">
+  <div class="tab-buttons">
+    <button class="tab-button">pixi NVIDIA (default)</button>
+    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi Apple</button>
+    <button class="tab-button">uv</button>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run p12
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e amd p12
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">pixi run -e apple p12
+</code></pre>
+  </div>
+  <div class="tab-content">
+<pre><code class="language-bash">uv run poe p12
+</code></pre>
+  </div>
+</div>
+<p>Your output will look like this if the puzzle isn’t solved yet:</p>
+<pre><code class="language-txt">out: HostBuffer([0.0])
+expected: HostBuffer([140.0])
+</code></pre>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<details class="solution-details">
+<summary></summary>
+<pre><code class="language-mojo">def dot_product(
+    output: TileTensor[mut=True, dtype, OutLayout, MutAnyOrigin],
+    a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    b: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
+    size: Int,
+):
+    var shared = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[TPB]())
+    var global_i = block_dim.x * block_idx.x + thread_idx.x
+    var local_i = thread_idx.x
+
+    # Compute element-wise multiplication into shared memory
+    if global_i &lt; size:
+        shared[local_i] = a[global_i] * b[global_i]
+
+    # Synchronize threads within block
+    barrier()
+
+    # Parallel reduction in shared memory
+    var stride = TPB // 2
+    while stride &gt; 0:
+        if local_i &lt; stride:
+            shared[local_i] += shared[local_i + stride]
+
+        barrier()
+        stride //= 2
+
+    # Only thread 0 writes the final result
+    if local_i == 0:
+        output[0] = shared[0]
+
+
+</code></pre>
+<div class="solution-explanation">
+<p>The solution implements a parallel reduction for dot product using TileTensor. Here’s the detailed breakdown:</p>
+<h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: Element-wise Multiplication</a></h3>
+<p>Each thread performs one multiplication with natural indexing:</p>
+<pre><code class="language-mojo">shared[local_i] = a[global_i] * b[global_i]
+</code></pre>
+<h3 id="phase-2-parallel-reduction"><a class="header" href="#phase-2-parallel-reduction">Phase 2: Parallel Reduction</a></h3>
+<p>Tree-based reduction with layout-aware operations:</p>
+<pre><code class="language-txt">Initial:  [0*0  1*1  2*2  3*3  4*4  5*5  6*6  7*7]
+        = [0    1    4    9    16   25   36   49]
+
+Step 1:   [0+16 1+25 4+36 9+49  16   25   36   49]
+        = [16   26   40   58   16   25   36   49]
+
+Step 2:   [16+40 26+58 40   58   16   25   36   49]
+        = [56   84   40   58   16   25   36   49]
+
+Step 3:   [56+84  84   40   58   16   25   36   49]
+        = [140   84   40   58   16   25   36   49]
+</code></pre>
+<h3 id="key-implementation-features"><a class="header" href="#key-implementation-features">Key implementation features</a></h3>
+<ol>
+<li>
+<p><strong>Memory Management</strong>:</p>
+<ul>
+<li>Clean shared memory allocation with TileTensor address_space parameter</li>
+<li>Type-safe operations with TileTensor</li>
+<li>Automatic bounds checking</li>
+<li>Layout-aware indexing</li>
+</ul>
+</li>
+<li>
+<p><strong>Thread Synchronization</strong>:</p>
+<ul>
+<li><code>barrier()</code> after initial multiplication</li>
+<li><code>barrier()</code> between reduction steps</li>
+<li>Safe thread coordination</li>
+</ul>
+</li>
+<li>
+<p><strong>Reduction Logic</strong>:</p>
+<pre><code class="language-mojo">stride = TPB // 2
+while stride &gt; 0:
+    if local_i &lt; stride:
+        shared[local_i] += shared[local_i + stride]
+    barrier()
+    stride //= 2
+</code></pre>
+</li>
+<li>
+<p><strong>Performance Benefits</strong>:</p>
+<ul>
+<li>\(O(\log n)\) time complexity</li>
+<li>Coalesced memory access</li>
+<li>Minimal thread divergence</li>
+<li>Efficient shared memory usage</li>
+</ul>
+</li>
+</ol>
+<p>The TileTensor version maintains the same efficient parallel reduction while providing:</p>
+<ul>
+<li>Better type safety</li>
+<li>Cleaner memory management</li>
+<li>Layout awareness</li>
+<li>Natural indexing syntax</li>
+</ul>
+<h3 id="barrier-synchronization-importance"><a class="header" href="#barrier-synchronization-importance">Barrier synchronization importance</a></h3>
+<p>The <code>barrier()</code> between reduction steps is critical for correctness. Here’s why:</p>
+<p>Without <code>barrier()</code>, race conditions occur:</p>
+<pre><code class="language-text">Initial shared memory: [0 1 4 9 16 25 36 49]
+
+Step 1 (stride = 4):
+Thread 0 reads: shared[0] = 0, shared[4] = 16
+Thread 1 reads: shared[1] = 1, shared[5] = 25
+Thread 2 reads: shared[2] = 4, shared[6] = 36
+Thread 3 reads: shared[3] = 9, shared[7] = 49
+
+Without barrier:
+- Thread 0 writes: shared[0] = 0 + 16 = 16
+- Thread 1 starts next step (stride = 2) before Thread 0 finishes
+  and reads old value shared[0] = 0 instead of 16!
+</code></pre>
+<p>With <code>barrier()</code>:</p>
+<pre><code class="language-text">Step 1 (stride = 4):
+All threads write their sums:
+[16 26 40 58 16 25 36 49]
+barrier() ensures ALL threads see these values
+
+Step 2 (stride = 2):
+Now threads safely read the updated values:
+Thread 0: shared[0] = 16 + 40 = 56
+Thread 1: shared[1] = 26 + 58 = 84
+</code></pre>
+<p>The <code>barrier()</code> ensures:</p>
+<ol>
+<li>All writes from current step complete</li>
+<li>All threads see updated values</li>
+<li>No thread starts next iteration early</li>
+<li>Consistent shared memory state</li>
+</ol>
+<p>Without these synchronization points, we could get:</p>
+<ul>
+<li>Memory race conditions</li>
+<li>Threads reading stale values</li>
+<li>Non-deterministic results</li>
+<li>Incorrect final sum</li>
+</ul>
+</div>
+</details>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../puzzle_11/layout_tensor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../puzzle_11/puzzle_11.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../puzzle_12/raw.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../puzzle_13/puzzle_13.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -244,11 +481,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../puzzle_11/layout_tensor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../puzzle_11/puzzle_11.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../puzzle_12/raw.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../puzzle_13/puzzle_13.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -239,7 +239,7 @@
 <li><strong>워프 크기</strong>: <code>WARP_SIZE = 32</code> 워프당 스레드 수 (NVIDIA 표준)</li>
 <li><strong>블록당 워프 수</strong>: <code>TPB / WARP_SIZE = 8</code> 워프</li>
 <li><strong>데이터 타입</strong>: <code>DType.float32</code></li>
-<li><strong>메모리 레이아웃</strong>: 입력 <code>Layout.row_major(SIZE)</code>, 출력 <code>Layout.row_major(CLUSTER_SIZE)</code></li>
+<li><strong>메모리 레이아웃</strong>: 입력 <code>row_major[SIZE]()</code>, 출력 <code>row_major[CLUSTER_SIZE]()</code></li>
 </ul>
 <p><strong>처리 분배:</strong></p>
 <ul>
@@ -250,10 +250,10 @@
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">def advanced_cluster_patterns[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayoutType, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayoutType, ImmutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -355,10 +355,10 @@ Advanced cluster algorithm results:
 <details class="solution-details">
 <summary></summary>
 <pre><code class="language-mojo">def advanced_cluster_patterns[
-    in_layout: Layout, out_layout: Layout, tpb: Int
+    tpb: Int
 ](
-    output: LayoutTensor[dtype, out_layout, MutAnyOrigin],
-    input: LayoutTensor[dtype, in_layout, ImmutAnyOrigin],
+    output: TileTensor[mut=True, dtype, ClusterLayout, MutAnyOrigin],
+    input: TileTensor[mut=False, dtype, InLayout, MutAnyOrigin],
     size: Int,
 ):
     """Advanced cluster programming using cluster masks and relaxed synchronization.
@@ -368,12 +368,9 @@ Advanced cluster algorithm results:
     var my_block_rank = Int(block_rank_in_cluster())
     var block_id = block_idx.x
 
-    var shared_data = LayoutTensor[
-        dtype,
-        Layout.row_major(tpb),
-        MutAnyOrigin,
-        address_space=AddressSpace.SHARED,
-    ].stack_allocation()
+    var shared_data = stack_allocation[
+        dtype=dtype, address_space=AddressSpace.SHARED
+    ](row_major[tpb]())
 
     # Compute cluster mask for advanced coordination
     # base_mask = cluster_mask_base()  # Requires cluster_shape parameter
