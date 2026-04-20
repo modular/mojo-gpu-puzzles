@@ -1,7 +1,7 @@
 from std.math import sqrt
 from std.gpu import thread_idx, block_idx, block_dim, barrier
 from std.gpu.memory import AddressSpace, async_copy_wait_all
-from std.os.atomic import Atomic
+from std.atomic import Atomic
 from layout import TileTensor
 from layout.tile_layout import row_major, TensorLayout
 from layout.tile_tensor import stack_allocation

@@ -6,7 +6,6 @@ from layout.tile_layout import row_major
 from layout.tile_tensor import stack_allocation
 from std.testing import assert_equal
 from std.sys import argv
-from std.os.atomic import Atomic
 
 # ANCHOR: shared_memory_race_solution
 

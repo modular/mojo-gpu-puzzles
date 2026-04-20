@@ -1,5 +1,5 @@
 from std.gpu import thread_idx, block_idx, block_dim, grid_dim, barrier
-from std.os.atomic import Atomic
+from std.atomic import Atomic
 from std.gpu.primitives.warp import WARP_SIZE
 from std.gpu.primitives import block
 from std.gpu.host import DeviceContext
