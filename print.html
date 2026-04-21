@@ -4933,8 +4933,26 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </li>
 </ul>
 </li>
-<li>
-<p><strong>Memory access pattern</strong></p>
+</ol>
+<blockquote>
+<p><strong>Single-block assumption:</strong> This solution is correct because the puzzle is configured with
+<code>BLOCKS_PER_GRID = (1, 1)</code> and <code>SIZE == TPB = 8</code>, guaranteeing every thread belongs to the
+same block so <code>global_i == local_i</code>. Under this constraint, <code>local_i &gt;= 2</code> whenever
+<code>global_i &gt; 1</code>, so <code>shared[local_i - 2]</code> and <code>shared[local_i - 1]</code> are always valid.</p>
+<p>In a <strong>multi-block</strong> kernel the first two threads of each block beyond block 0 would have
+<code>local_i = 0</code> or <code>local_i = 1</code> while <code>global_i &gt; 1</code>, causing out-of-bounds shared memory
+reads. The robust pattern for multi-block pooling guards with <code>local_i</code> and falls back to
+global reads for the halo elements:</p>
+<pre><code class="language-mojo">if local_i &gt;= 2:
+    output[global_i] = shared[local_i-2] + shared[local_i-1] + shared[local_i]
+elif local_i == 1 and global_i &gt;= 2:
+    output[global_i] = a[global_i-2] + shared[0] + shared[1]
+elif local_i == 0 and global_i &gt;= 2:
+    output[global_i] = a[global_i-2] + a[global_i-1] + shared[0]
+</code></pre>
+</blockquote>
+<ol start="4">
+<li><strong>Memory access pattern</strong>
 <ul>
 <li>One global read per thread into shared tensor</li>
 <li>Efficient neighbor access through shared memory</li>
