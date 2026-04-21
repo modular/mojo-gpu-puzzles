@@ -248,10 +248,12 @@ Cross-warp coordination:
 <pre><code class="language-mojo"># Complex block-wide reduction (traditional approach - from Puzzle 12):
 shared_memory[local_i] = my_value
 barrier()
-for stride in range(64, 0, -1):
+stride = 64
+while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
@@ -277,10 +279,12 @@ if local_i == 0:
 shared_memory[local_i] = my_value
 barrier()
 # Tree reduction with stride-based indexing...
-for stride in range(64, 0, -1):
+stride = 64
+while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 </code></pre>
 <h3 id="the-intermediate-step-warp-programming-puzzle-24"><a class="header" href="#the-intermediate-step-warp-programming-puzzle-24"><strong>The intermediate step: Warp programming (Puzzle 24)</strong></a></h3>
 <p>Hardware-accelerated but limited scope - <code>warp.sum()</code> within 32-thread warps:</p>

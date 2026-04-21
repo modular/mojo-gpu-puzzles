@@ -18108,10 +18108,12 @@ final_pos = local_pos + partition_offset
 <pre><code class="language-mojo"># 복잡한 블록 전체 리덕션 (기존 방식 - Puzzle 12에서):
 shared_memory[local_i] = my_value
 barrier()
-for stride in range(64, 0, -1):
+stride = 64
+while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
@@ -18137,10 +18139,12 @@ if local_i == 0:
 shared_memory[local_i] = my_value
 barrier()
 # 스트라이드 기반 인덱싱을 사용한 트리 리덕션...
-for stride in range(64, 0, -1):
+stride = 64
+while stride &gt; 0:
     if local_i &lt; stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 </code></pre>
 <h3 id="중간-단계-워프-프로그래밍-puzzle-24"><a class="header" href="#중간-단계-워프-프로그래밍-puzzle-24"><strong>중간 단계: 워프 프로그래밍 (Puzzle 24)</strong></a></h3>
 <p>하드웨어 가속이지만 범위가 제한적 - 32 스레드 워프 내의 <code>warp.sum()</code>:</p>
