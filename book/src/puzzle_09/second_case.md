@@ -153,20 +153,20 @@ Each position should sum its neighbors: [left + center + right]
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: TileTensor[mut=False, dtype, vector_layout],
+   <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:36
+36          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ```
 
 #### Step 4: Navigate to the main logic
 
 ```bash
 (cuda-gdb) n
-29          output: TileTensor[mut=True, dtype, vector_layout],
+35          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
 (cuda-gdb) n
-32          thread_id = thread_idx.x
+38          var thread_id = thread_idx.x
 (cuda-gdb) n
-38          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
 #### Step 5: Test variable accessibility - crucial discovery
@@ -206,15 +206,15 @@ $3 = {{0}, {1}, {2}, {3}}
 #### Step 6: Set up loop monitoring
 
 ```bash
-(cuda-gdb) b 42
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
+(cuda-gdb) b 45
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 45.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
-42              idx = thread_id + offset - 1
+   <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:45
+45              var idx = Int(thread_id) + offset - 1
 ```
 
 **🔍 We're now inside the loop body. Let's count iterations manually.**
@@ -223,12 +223,12 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
-**First iteration complete**: Loop went from line 42 → 43 → back to 41. The loop continues.
+**First iteration complete**: Loop went from line 45 → 46 → back to 44. The loop continues.
 
 #### Step 8: Second loop iteration (offset = 1)
 
@@ -236,29 +236,29 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-42              idx = thread_id + offset - 1
+45              var idx = Int(thread_id) + offset - 1
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-44                  value = rebind[Scalar[dtype]](input[idx])
+47                  var value = rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-45                  window_sum += value
+48                  window_sum += value
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
-**Second iteration complete**: This time it went through the if-block (lines 44-45).
+**Second iteration complete**: This time it went through the if-block (lines 47-48).
 
 #### Step 9: testing for third iteration
 
 ```bash
 (cuda-gdb) n
-47          output[thread_id] = window_sum
+50          output[thread_id] = window_sum
 ```
 
-**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.
+**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 50 instead of hitting our breakpoint at line 45 again.
 
 **Conclusion**: The loop ran exactly **2 iterations** and then exited.
 
@@ -266,7 +266,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-31      fn process_sliding_window(
+34      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -290,10 +290,10 @@ From our debugging session, we observed:
 
 Looking at what each thread should compute:
 
-- **Thread 0**: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0
-- **Thread 1**: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0
-- **Thread 2**: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0
-- **Thread 3**: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0
+- **Thread 0**: window_sum = a[-1] + a[0] + a[1] = (boundary) + 0 + 1 = 1.0
+- **Thread 1**: window_sum = a[0] + a[1] + a[2] = 0 + 1 + 2 = 3.0
+- **Thread 2**: window_sum = a[1] + a[2] + a[3] = 1 + 2 + 3 = 6.0
+- **Thread 3**: window_sum = a[2] + a[3] + a[4] = 2 + 3 + (boundary) = 5.0
 
 #### Step 12: Trace the actual execution for thread 0
 
@@ -309,13 +309,13 @@ With only 2 iterations (offset = 0, 1):
 
 - `idx = thread_id + offset - 1 = 0 + 1 - 1 = 0`
 - `if 0 <= idx < SIZE:` → `if 0 <= 0 < 4:` → **True**
-- `window_sum += input[0]` → `window_sum += 0`
+- `window_sum += a[0]` → `window_sum += 0`
 
 **Missing Iteration 3 (offset = 2)**:
 
 - `idx = thread_id + offset - 1 = 0 + 2 - 1 = 1`
 - `if 0 <= idx < SIZE:` → `if 0 <= 1 < 4:` → **True**
-- `window_sum += input[1]` → `window_sum += 1` ← **THIS NEVER HAPPENS**
+- `window_sum += a[1]` → `window_sum += 1` ← **THIS NEVER HAPPENS**
 
 **Result**: Thread 0 gets `window_sum = 0` instead of `window_sum = 0 + 1 = 1`
 
