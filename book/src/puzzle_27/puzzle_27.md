@@ -46,10 +46,12 @@ Learn the complete parallel programming toolkit from `gpu.primitives.block`:
 # Complex block-wide reduction (traditional approach - from Puzzle 12):
 shared_memory[local_i] = my_value
 barrier()
-for stride in range(64, 0, -1):
+stride = 64
+while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 if local_i == 0:
     output[block_idx.x] = shared_memory[0]
 
@@ -79,10 +81,12 @@ Complex but educational - explicit shared memory, barriers, and tree reduction:
 shared_memory[local_i] = my_value
 barrier()
 # Tree reduction with stride-based indexing...
-for stride in range(64, 0, -1):
+stride = 64
+while stride > 0:
     if local_i < stride:
         shared_memory[local_i] += shared_memory[local_i + stride]
     barrier()
+    stride //= 2
 ```
 
 ### **The intermediate step: Warp programming (Puzzle 24)**
