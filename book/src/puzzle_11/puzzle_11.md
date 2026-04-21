@@ -165,6 +165,25 @@ The solution implements a sliding window sum using TileTensor with these key ste
      window_sum = shared[i-2] + shared[i-1] + shared[i]
      ```
 
+> **Single-block assumption:** This solution is correct because the puzzle is configured with
+> `BLOCKS_PER_GRID = (1, 1)` and `SIZE == TPB = 8`, guaranteeing every thread belongs to the
+> same block so `global_i == local_i`. Under this constraint, `local_i >= 2` whenever
+> `global_i > 1`, so `shared[local_i - 2]` and `shared[local_i - 1]` are always valid.
+>
+> In a **multi-block** kernel the first two threads of each block beyond block 0 would have
+> `local_i = 0` or `local_i = 1` while `global_i > 1`, causing out-of-bounds shared memory
+> reads. The robust pattern for multi-block pooling guards with `local_i` and falls back to
+> global reads for the halo elements:
+>
+> ```mojo
+> if local_i >= 2:
+>     output[global_i] = shared[local_i-2] + shared[local_i-1] + shared[local_i]
+> elif local_i == 1 and global_i >= 2:
+>     output[global_i] = a[global_i-2] + shared[0] + shared[1]
+> elif local_i == 0 and global_i >= 2:
+>     output[global_i] = a[global_i-2] + a[global_i-1] + shared[0]
+> ```
+
 4. **Memory access pattern**
    - One global read per thread into shared tensor
    - Efficient neighbor access through shared memory
