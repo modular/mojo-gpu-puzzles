@@ -168,6 +168,14 @@ MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer 
 
 ```txt
 ========= COMPUTE-SANITIZER
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
+Stack dump:
+0.      Program arguments: .../.pixi/envs/default/bin/mojo problems/p10/p10.mojo --memory-bug
+ #0 0x... (/.../.pixi/envs/default/bin/mojo+0x...)
+ ...
+[...] intermediate process terminated by signal 11 (Segmentation fault) (core dumped)
 out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -177,6 +185,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ```
 
 **✅ SUCCESS:** No memory violations detected!
+
+> **Note on the segfault**: The crash lines above ("intermediate process terminated by signal 11") are a known compatibility issue between Mojo's process initialization and compute-sanitizer's injection libraries. They appear *before* the GPU kernel runs and do not affect the sanitizer's analysis. See the note at the end of this page for details.
 
 ## Key learning points
 
@@ -200,4 +210,4 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 ```
 
-**Note**: You may see Mojo runtime warnings in the sanitizer output. Focus on the `========= Invalid` and `========= ERROR SUMMARY` lines for actual memory violations.
+**Note on Mojo + compute-sanitizer compatibility**: You may see a crash at the start of the sanitizer output — lines like `close: Bad file descriptor`, a stack dump, and `intermediate process terminated by signal 11 (Segmentation fault)`. This is a known issue where compute-sanitizer's injection libraries conflict with Mojo's process initialization. Despite the crash, the sanitizer completes its GPU kernel analysis correctly. Always use the `========= ERROR SUMMARY` line at the end as the authoritative result, and look for `========= Invalid` lines for specific memory violations.
