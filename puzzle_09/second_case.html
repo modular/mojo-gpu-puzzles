@@ -338,17 +338,17 @@ Each position should sum its neighbors: [left + center + right]
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: TileTensor[mut=False, dtype, vector_layout],
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:36
+36          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 </code></pre>
 <h4 id="step-4-navigate-to-the-main-logic"><a class="header" href="#step-4-navigate-to-the-main-logic">Step 4: Navigate to the main logic</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-29          output: TileTensor[mut=True, dtype, vector_layout],
+35          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
 (cuda-gdb) n
-32          thread_id = thread_idx.x
+38          var thread_id = thread_idx.x
 (cuda-gdb) n
-38          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
 <h4 id="step-5-test-variable-accessibility---crucial-discovery"><a class="header" href="#step-5-test-variable-accessibility---crucial-discovery">Step 5: Test variable accessibility - crucial discovery</a></h4>
 <pre><code class="language-bash">(cuda-gdb) p thread_id
@@ -371,50 +371,50 @@ $3 = {{0}, {1}, {2}, {3}}
 <p><strong>🎯 BREAKTHROUGH</strong>: <code>a.ptr[0]@4</code> shows the full input array! This is how we can inspect TileTensor data.</p>
 <h3 id="phase-3-the-critical-loop-investigation"><a class="header" href="#phase-3-the-critical-loop-investigation">Phase 3: The critical loop investigation</a></h3>
 <h4 id="step-6-set-up-loop-monitoring"><a class="header" href="#step-6-set-up-loop-monitoring">Step 6: Set up loop monitoring</a></h4>
-<pre><code class="language-bash">(cuda-gdb) b 42
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
+<pre><code class="language-bash">(cuda-gdb) b 45
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 45.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
-42              idx = thread_id + offset - 1
+   &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:45
+45              var idx = Int(thread_id) + offset - 1
 </code></pre>
 <p><strong>🔍 We’re now inside the loop body. Let’s count iterations manually.</strong></p>
 <h4 id="step-7-first-loop-iteration-offset--0"><a class="header" href="#step-7-first-loop-iteration-offset--0">Step 7: First loop iteration (offset = 0)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
-<p><strong>First iteration complete</strong>: Loop went from line 42 → 43 → back to 41. The loop continues.</p>
+<p><strong>First iteration complete</strong>: Loop went from line 45 → 46 → back to 44. The loop continues.</p>
 <h4 id="step-8-second-loop-iteration-offset--1"><a class="header" href="#step-8-second-loop-iteration-offset--1">Step 8: Second loop iteration (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-42              idx = thread_id + offset - 1
+45              var idx = Int(thread_id) + offset - 1
 (cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-44                  value = rebind[Scalar[dtype]](input[idx])
+47                  var value = rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-45                  window_sum += value
+48                  window_sum += value
 (cuda-gdb) n
-43              if 0 &lt;= idx &lt; SIZE:
+46              if 0 &lt;= idx &lt; SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 </code></pre>
-<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 44-45).</p>
+<p><strong>Second iteration complete</strong>: This time it went through the if-block (lines 47-48).</p>
 <h4 id="step-9-testing-for-third-iteration"><a class="header" href="#step-9-testing-for-third-iteration">Step 9: testing for third iteration</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-47          output[thread_id] = window_sum
+50          output[thread_id] = window_sum
 </code></pre>
-<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 47 instead of hitting our breakpoint at line 42 again.</p>
+<p><strong>CRITICAL DISCOVERY</strong>: The loop exited after only 2 iterations! It went directly to line 50 instead of hitting our breakpoint at line 45 again.</p>
 <p><strong>Conclusion</strong>: The loop ran exactly <strong>2 iterations</strong> and then exited.</p>
 <h4 id="step-10-complete-kernel-execution-and-context-loss"><a class="header" href="#step-10-complete-kernel-execution-and-context-loss">Step 10: Complete kernel execution and context loss</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
-31      fn process_sliding_window(
+34      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -434,10 +434,10 @@ No symbol "offset" in current context.
 </ol>
 <p>Looking at what each thread should compute:</p>
 <ul>
-<li><strong>Thread 0</strong>: window_sum = input[-1] + input[0] + input[1] = (boundary) + 0 + 1 = 1.0</li>
-<li><strong>Thread 1</strong>: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0</li>
-<li><strong>Thread 2</strong>: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0</li>
-<li><strong>Thread 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (boundary) = 5.0</li>
+<li><strong>Thread 0</strong>: window_sum = a[-1] + a[0] + a[1] = (boundary) + 0 + 1 = 1.0</li>
+<li><strong>Thread 1</strong>: window_sum = a[0] + a[1] + a[2] = 0 + 1 + 2 = 3.0</li>
+<li><strong>Thread 2</strong>: window_sum = a[1] + a[2] + a[3] = 1 + 2 + 3 = 6.0</li>
+<li><strong>Thread 3</strong>: window_sum = a[2] + a[3] + a[4] = 2 + 3 + (boundary) = 5.0</li>
 </ul>
 <h4 id="step-12-trace-the-actual-execution-for-thread-0"><a class="header" href="#step-12-trace-the-actual-execution-for-thread-0">Step 12: Trace the actual execution for thread 0</a></h4>
 <p>With only 2 iterations (offset = 0, 1):</p>
@@ -451,13 +451,13 @@ No symbol "offset" in current context.
 <ul>
 <li><code>idx = thread_id + offset - 1 = 0 + 1 - 1 = 0</code></li>
 <li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 0 &lt; 4:</code> → <strong>True</strong></li>
-<li><code>window_sum += input[0]</code> → <code>window_sum += 0</code></li>
+<li><code>window_sum += a[0]</code> → <code>window_sum += 0</code></li>
 </ul>
 <p><strong>Missing Iteration 3 (offset = 2)</strong>:</p>
 <ul>
 <li><code>idx = thread_id + offset - 1 = 0 + 2 - 1 = 1</code></li>
 <li><code>if 0 &lt;= idx &lt; SIZE:</code> → <code>if 0 &lt;= 1 &lt; 4:</code> → <strong>True</strong></li>
-<li><code>window_sum += input[1]</code> → <code>window_sum += 1</code> ← <strong>THIS NEVER HAPPENS</strong></li>
+<li><code>window_sum += a[1]</code> → <code>window_sum += 1</code> ← <strong>THIS NEVER HAPPENS</strong></li>
 </ul>
 <p><strong>Result</strong>: Thread 0 gets <code>window_sum = 0</code> instead of <code>window_sum = 0 + 1 = 1</code></p>
 <h3 id="phase-5-bug-confirmation"><a class="header" href="#phase-5-bug-confirmation">Phase 5: Bug confirmation</a></h3>
