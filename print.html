@@ -4406,6 +4406,14 @@ Running memory bug example (bounds checking issue)...
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+[...]:WARNING close_multiple.cc:66] close: Bad file descriptor (9)
+Please submit a bug report to https://github.com/modular/modular/issues and include the crash backtrace along with all the relevant source codes.
+Stack dump:
+0.      Program arguments: .../.pixi/envs/default/bin/mojo problems/p10/p10.mojo --memory-bug
+ #0 0x... (/.../.pixi/envs/default/bin/mojo+0x...)
+ ...
+[...] intermediate process terminated by signal 11 (Segmentation fault) (core dumped)
 out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
@@ -4414,6 +4422,9 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ========= ERROR SUMMARY: 0 errors
 </code></pre>
 <p><strong>✅ SUCCESS:</strong> No memory violations detected!</p>
+<blockquote>
+<p><strong>Note on the segfault</strong>: The crash lines above (“intermediate process terminated by signal 11”) are a known compatibility issue between Mojo’s process initialization and compute-sanitizer’s injection libraries. They appear <em>before</em> the GPU kernel runs and do not affect the sanitizer’s analysis. See the note at the end of this page for details.</p>
+</blockquote>
 <h2 id="key-learning-points"><a class="header" href="#key-learning-points">Key learning points</a></h2>
 <h3 id="why-manual-bounds-checking-matters"><a class="header" href="#why-manual-bounds-checking-matters">Why manual bounds checking matters</a></h3>
 <ol>
@@ -4432,7 +4443,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h3 id="compute-sanitizer-best-practices"><a class="header" href="#compute-sanitizer-best-practices">Compute-sanitizer best practices</a></h3>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
-<p><strong>Note</strong>: You may see Mojo runtime warnings in the sanitizer output. Focus on the <code>========= Invalid</code> and <code>========= ERROR SUMMARY</code> lines for actual memory violations.</p>
+<p><strong>Note on Mojo + compute-sanitizer compatibility</strong>: You may see a crash at the start of the sanitizer output — lines like <code>close: Bad file descriptor</code>, a stack dump, and <code>intermediate process terminated by signal 11 (Segmentation fault)</code>. This is a known issue where compute-sanitizer’s injection libraries conflict with Mojo’s process initialization. Despite the crash, the sanitizer completes its GPU kernel analysis correctly. Always use the <code>========= ERROR SUMMARY</code> line at the end as the authoritative result, and look for <code>========= Invalid</code> lines for specific memory violations.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-debugging-race-conditions"><a class="header" href="#-debugging-race-conditions">🏁 Debugging Race Conditions</a></h1>
 <h2 id="overview-14"><a class="header" href="#overview-14">Overview</a></h2>
 <p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
