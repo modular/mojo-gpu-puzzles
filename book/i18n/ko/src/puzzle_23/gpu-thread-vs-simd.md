@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
+<!-- i18n-source-commit: f410b786fbaddb3b268f70d4c684ec0f24f8f618 -->
 
 # 🧠 GPU 스레딩 vs SIMD - 실행 계층 구조 이해하기
 
@@ -41,10 +41,10 @@ GPU Device
 
 ```mojo
 # 하나의 GPU 스레드 내부:
-a_simd = a.load[simd_width](idx, 0)      # float 4개를 동시에 로드
-b_simd = b.load[simd_width](idx, 0)      # float 4개를 동시에 로드
+a_simd = a.load[simd_width](Index(idx))      # float 4개를 동시에 로드
+b_simd = b.load[simd_width](Index(idx))      # float 4개를 동시에 로드
 result = a_simd + b_simd                 # 4쌍을 동시에 덧셈
-output.store[simd_width](idx, 0, result) # 결과 4개를 동시에 저장
+output.store[simd_width](Index(idx), result) # 결과 4개를 동시에 저장
 ```
 
 ## 패턴 비교와 스레드-작업 매핑
