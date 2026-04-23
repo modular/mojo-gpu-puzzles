@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 45b4d82c1f65818e5f47f7c2925ef0f3083e9875 -->
+<!-- i18n-source-commit: 3e0e9809f1f74dd2394fb4df9dc405ce7bf2bf4a -->
 
 ## 퍼즐 사용 가이드
 

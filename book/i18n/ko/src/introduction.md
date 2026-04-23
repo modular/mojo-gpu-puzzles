@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: c9af1879392132dd9daba5704b3500ab642a5ae3 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Mojo 🔥 GPU Puzzles, Edition 1
 
