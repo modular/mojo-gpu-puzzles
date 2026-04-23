@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # tile - 메모리 효율적인 타일링 처리
 
@@ -86,10 +86,10 @@ for i in range(tile_size):
 ### 4. **타일 요소 내 SIMD 연산**
 
 ```mojo
-a_vec = a_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
-b_vec = b_tile.load[simd_width](i, 0)  # 타일 내 위치 i에서 로드
+a_vec = a_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
+b_vec = b_tile.load[simd_width](Index(i))  # 타일 내 위치 i에서 로드
 result = a_vec + b_vec                 # SIMD 덧셈 (GPU 의존적 폭)
-out_tile.store[simd_width](i, 0, result)  # 타일 내 위치 i에 저장
+out_tile.store[simd_width](Index(i), result)  # 타일 내 위치 i에 저장
 ```
 
 ### 5. **스레드 구성의 차이점**
@@ -234,10 +234,10 @@ Tile 31 (thread 31): [992, 993, ..., 1023] ← 요소 992-1023
 ```mojo
 @parameter
 for i in range(tile_size):
-    a_vec = a_tile.load[simd_width](i, 0)
-    b_vec = b_tile.load[simd_width](i, 0)
+    a_vec = a_tile.load[simd_width](Index(i))
+    b_vec = b_tile.load[simd_width](Index(i))
     ret = a_vec + b_vec
-    out_tile.store[simd_width](i, 0, ret)
+    out_tile.store[simd_width](Index(i), ret)
 ```
 
 **왜 순차 처리인가?**

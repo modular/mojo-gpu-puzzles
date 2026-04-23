@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 0b65eaf4dea76e1eb968b4fc2ca14e563df205a2 -->
+<!-- i18n-source-commit: d4708811cf72aa9c63e34ecf289f4a5bcc2f37f5 -->
 
 # 🔍 탐정 수사: 두 번째 사례
 
@@ -156,20 +156,20 @@ Each position should sum its neighbors: [left + center + right]
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 0, warp 0, lane 0]
 
 CUDA thread hit application kernel entry function breakpoint, p09_process_sliding_window_...
-   <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:30
-30          input: TileTensor[mut=False, dtype, vector_layout],
+   <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:36
+36          a: TileTensor[mut=False, dtype, VectorLayout, ImmutAnyOrigin],
 ```
 
 #### Step 4: 메인 로직으로 이동
 
 ```bash
 (cuda-gdb) n
-29          output: TileTensor[mut=True, dtype, vector_layout],
+35          output: TileTensor[mut=True, dtype, VectorLayout, MutAnyOrigin],
 (cuda-gdb) n
-32          thread_id = thread_idx.x
+38          var thread_id = thread_idx.x
 (cuda-gdb) n
-38          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
 #### Step 5: 변수 접근성 테스트 - 중요한 발견
@@ -209,15 +209,15 @@ $3 = {{0}, {1}, {2}, {3}}
 #### Step 6: 반복문 모니터링 설정
 
 ```bash
-(cuda-gdb) b 42
-Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 42.
+(cuda-gdb) b 45
+Breakpoint 1 at 0x7fffd326ffd0: file problems/p09/p09.mojo, line 45.
 (cuda-gdb) c
 Continuing.
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-   <<<(1,1,1),(4,1,1)>>> (output=..., input=...)
-    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:42
-42              idx = thread_id + offset - 1
+   <<<(1,1,1),(4,1,1)>>> (output=..., a=...)
+    at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:45
+45              var idx = Int(thread_id) + offset - 1
 ```
 
 **🔍 이제 반복문 본문 안에 있습니다. 직접 반복 횟수를 세어봅시다.**
@@ -226,12 +226,12 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
-**첫 번째 반복 완료**: 반복문이 42번 줄 → 43번 줄 → 41번 줄로 돌아왔습니다. 반복문이 계속됩니다.
+**첫 번째 반복 완료**: 반복문이 45번 줄 → 46번 줄 → 44번 줄로 돌아왔습니다. 반복문이 계속됩니다.
 
 #### Step 8: 두 번째 반복 (offset = 1)
 
@@ -239,29 +239,29 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 
 CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
-42              idx = thread_id + offset - 1
+45              var idx = Int(thread_id) + offset - 1
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-44                  value = rebind[Scalar[dtype]](input[idx])
+47                  var value = rebind[Scalar[dtype]](a[idx])
 (cuda-gdb) n
-45                  window_sum += value
+48                  window_sum += value
 (cuda-gdb) n
-43              if 0 <= idx < SIZE:
+46              if 0 <= idx < SIZE:
 (cuda-gdb) n
-41          for offset in range(ITER):
+44          for offset in range(ITER):
 ```
 
-**두 번째 반복 완료**: 이번에는 if 블록(44-45번 줄)을 통과했습니다.
+**두 번째 반복 완료**: 이번에는 if 블록(47-48번 줄)을 통과했습니다.
 
 #### Step 9: 세 번째 반복 테스트
 
 ```bash
 (cuda-gdb) n
-47          output[thread_id] = window_sum
+50          output[thread_id] = window_sum
 ```
 
-**결정적 발견**: 반복문이 2번만 돌고 종료되었습니다! 42번 줄의 브레이크포인트에 다시 걸리지 않고 47번 줄로 바로 넘어갔습니다.
+**결정적 발견**: 반복문이 2번만 돌고 종료되었습니다! 45번 줄의 브레이크포인트에 다시 걸리지 않고 50번 줄로 바로 넘어갔습니다.
 
 **결론**: 반복문이 정확히 **2번** 돌고 종료되었습니다.
 
@@ -269,7 +269,7 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 
 ```bash
 (cuda-gdb) n
-31      fn process_sliding_window(
+34      def process_sliding_window(
 (cuda-gdb) n
 [Switching to Thread 0x7ffff7cc0e00 (LWP 110927)]
 0x00007ffff064f84a in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
@@ -293,10 +293,10 @@ No symbol "offset" in current context.
 
 각 스레드가 계산해야 할 것:
 
-- **스레드 0**: window_sum = input[-1] + input[0] + input[1] = (경계) + 0 + 1 = 1.0
-- **스레드 1**: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0
-- **스레드 2**: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0
-- **스레드 3**: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (경계) = 5.0
+- **스레드 0**: window_sum = a[-1] + a[0] + a[1] = (경계) + 0 + 1 = 1.0
+- **스레드 1**: window_sum = a[0] + a[1] + a[2] = 0 + 1 + 2 = 3.0
+- **스레드 2**: window_sum = a[1] + a[2] + a[3] = 1 + 2 + 3 = 6.0
+- **스레드 3**: window_sum = a[2] + a[3] + a[4] = 2 + 3 + (경계) = 5.0
 
 #### Step 12: 스레드 0의 실제 실행 추적
 
@@ -312,13 +312,13 @@ No symbol "offset" in current context.
 
 - `idx = thread_id + offset - 1 = 0 + 1 - 1 = 0`
 - `if 0 <= idx < SIZE:` → `if 0 <= 0 < 4:` → **True**
-- `window_sum += input[0]` → `window_sum += 0`
+- `window_sum += a[0]` → `window_sum += 0`
 
 **누락된 반복 3 (offset = 2)**:
 
 - `idx = thread_id + offset - 1 = 0 + 2 - 1 = 1`
 - `if 0 <= idx < SIZE:` → `if 0 <= 1 < 4:` → **True**
-- `window_sum += input[1]` → `window_sum += 1` ← **이 연산이 실행되지 않음**
+- `window_sum += a[1]` → `window_sum += 1` ← **이 연산이 실행되지 않음**
 
 **결과**: 스레드 0은 `window_sum = 0 + 1 = 1` 대신 `window_sum = 0`을 얻습니다
 

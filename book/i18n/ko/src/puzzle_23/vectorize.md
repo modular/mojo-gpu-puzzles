@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # vectorize - SIMD 제어
 
@@ -70,8 +70,8 @@ global_start = tile_id * chunk_size + i * simd_width
 ### 3. **텐서 직접 접근**
 
 ```mojo
-a_vec = a.load[simd_width](global_start, 0)     # 전역 텐서에서 로드
-output.store[simd_width](global_start, 0, ret)  # 전역 텐서에 저장
+a_vec = a.aligned_load[simd_width](Index(global_start))     # 전역 텐서에서 로드
+output.store[simd_width](Index(global_start), ret)  # 전역 텐서에 저장
 ```
 
 참고: 타일 뷰가 아닌 원본 텐서에 접근합니다.

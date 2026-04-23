@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # block.prefix_sum()과 병렬 히스토그램 구간 분류
 
@@ -94,7 +94,7 @@ local_i = thread_idx.x
 
 ```mojo
 my_value = input_data[global_i][0]  # 내적에서처럼 SIMD 추출
-bin_number = Int(floor(my_value * num_bins))
+bin_number = Int(floor(my_value * Float32(num_bins)))
 ```
 
 **경계 사례 처리**: 정확히 1.0인 값은 구간 `NUM_BINS`에 들어가지만, 실제 구간은 0부터 `NUM_BINS-1`까지입니다. `if` 문을 사용하여 최대 구간을 제한하세요.
@@ -142,7 +142,7 @@ if belongs_to_target == 1:
 
 ```mojo
 if local_i == tpb - 1:  # 블록의 마지막 스레드
-    total_count = offset[0] + belongs_to_target  # 포함 = 비포함 + 자신의 기여분
+    total_count = offset[0] + Int32(belongs_to_target)  # 포함 = 비포함 + 자신의 기여분
     count_output[0] = total_count
 ```
 
@@ -324,7 +324,7 @@ belongs_to_target=1인 스레드만 기록:
 ```
 마지막 스레드가 총 개수를 계산 (스레드 0이 아님!):
   if local_i == tpb - 1:  // 이 경우 스레드 127
-      total = write_offset[0] + belongs_to_target  // 포함 합 공식
+      total = write_offset[0] + Int32(belongs_to_target)  // 포함 합 공식
       count_output[0] = total
 ```
 
