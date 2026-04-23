@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 23: GPU 함수형 프로그래밍 패턴
 

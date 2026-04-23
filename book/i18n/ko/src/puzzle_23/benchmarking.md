@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 11c7cd4d3a6dbdd0f7cf9e84c0e4d9c148984c78 -->
 
 # 📊 Mojo 벤치마킹 - 성능 분석과 최적화
 

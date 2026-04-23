@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 26: 고급 워프 패턴
 
@@ -117,7 +117,7 @@ output[global_i] = scan_result
 max_val = input[global_i]
 offset = WARP_SIZE // 2
 while offset > 0:
-    max_val = max(max_val, shuffle_xor(max_val, offset))
+    max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
     offset //= 2
 # 모든 레인이 전역 최댓값을 가지게 됩니다
 ```

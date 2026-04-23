@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # 타일링 버전
 

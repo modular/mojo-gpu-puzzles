@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: e51a8b900f4ce5e221023331dd5ad6559c0ccc96 -->
 
 # Puzzle 27: 블록 전체 패턴
 
