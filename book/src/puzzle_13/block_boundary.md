@@ -1,8 +1,10 @@
 # Block Boundary Version
 
-Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output`.
+Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and
+1D TileTensor `b` and stores it in 1D TileTensor `output`.
 
-**Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
+**Note:** _You need to handle the general case. You only need 2 global reads and
+1 global write per thread._
 
 ## Configuration
 
@@ -32,7 +34,9 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())` for shared memory
+1. Use
+   `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())`
+   for shared memory
 2. Load main data: `shared_a[local_i] = a[global_i]`
 3. Load boundary: `if local_i < CONV_2 - 1` handle next block data
 4. Load kernel: `shared_b[local_i] = b[local_i]`
@@ -100,7 +104,8 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 
 <div class="solution-explanation">
 
-The solution handles block boundary cases in 1D convolution using extended shared memory. Here's a detailed analysis:
+The solution handles block boundary cases in 1D convolution using extended
+shared memory. Here's a detailed analysis:
 
 ### Memory layout and sizing
 
@@ -129,7 +134,8 @@ Size calculation:
    shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
    ```
 
-   This allocation pattern ensures we have enough space for both the block's data and the overlap region.
+   This allocation pattern ensures we have enough space for both the block's
+   data and the overlap region.
 
 2. **Data Loading Strategy**:
 
@@ -179,7 +185,8 @@ Size calculation:
 
    - Uses `@parameter` for compile-time loop unrolling
    - Proper type inference with `output.element_type`
-   - Semantically correct bounds check: only compute convolution for valid input positions
+   - Semantically correct bounds check: only compute convolution for valid input
+     positions
 
 ### Memory access pattern analysis
 
@@ -194,7 +201,9 @@ Size calculation:
    ```
 
 2. **Block 1 Access Pattern**:
-Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False` and hence iterations are skipped.
+Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False`
+and hence iterations are skipped.
+
    ```txt
    Thread 0: [8  9 10 11] × [0 1 2 3]
    Thread 1: [9 10 11 12] × [0 1 2 3]
@@ -223,19 +232,25 @@ Note how starting from thread 4, `global_i + j < SIZE_2` evaluates to `False` an
    - Efficient reuse of loaded data
 
 4. **Boundary Handling**:
-   - Explicit zero initialization for out-of-bounds elements which prevents reading from uninitialized shared memory
-   - Semantically correct boundary checking using `global_i + j < SIZE_2` instead of shared memory bounds
+   - Explicit zero initialization for out-of-bounds elements which prevents
+     reading from uninitialized shared memory
+   - Semantically correct boundary checking using `global_i + j < SIZE_2`
+     instead of shared memory bounds
    - Proper handling of edge cases without over-computation
 
 ### Boundary condition improvement
 
-The solution uses `if global_i + j < SIZE_2:` rather than checking shared memory bounds. This pattern is:
+The solution uses `if global_i + j < SIZE_2:` rather than checking shared memory
+bounds. This pattern is:
 
-- **Mathematically correct**: Only computes convolution where input data actually exists
-- **More efficient**: Avoids unnecessary computations for positions beyond the input array
+- **Mathematically correct**: Only computes convolution where input data
+  actually exists
+- **More efficient**: Avoids unnecessary computations for positions beyond the
+  input array
 - **Safer**: Prevents reliance on zero-padding behavior in shared memory
 
-This implementation achieves efficient cross-block convolution while maintaining:
+This implementation achieves efficient cross-block convolution while
+maintaining:
 
 - Memory safety through proper bounds checking
 - High performance through optimized memory access

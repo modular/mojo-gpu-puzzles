@@ -1,6 +1,8 @@
 # Puzzle 28: Async Memory Operations & Copy Overlap
 
-**The GPU Memory Bottleneck:** Most real-world GPU algorithms hit a frustrating wall - they're not limited by compute power, but by **memory bandwidth**. Your expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.
+**The GPU Memory Bottleneck:** Most real-world GPU algorithms hit a frustrating
+wall - they're not limited by compute power, but by **memory bandwidth**. Your
+expensive GPU cores sit idle, waiting for data to arrive from slow DRAM.
 
 Consider this common scenario in GPU programming:
 
@@ -23,11 +25,15 @@ wait_and_compute()    # ← Only wait for remaining ~400 cycles, then compute
 # Total: ~550 cycles, 45% better utilization!
 ```
 
-**This is the power of async memory operations** - the difference between a sluggish algorithm and one that maximizes your GPU's potential.
+**This is the power of async memory operations** - the difference between a
+sluggish algorithm and one that maximizes your GPU's potential.
 
 ## Why this matters
 
-In this puzzle, you'll transform a memory-bound 1D convolution from [Puzzle 13](../puzzle_13/puzzle_13.md) into a high-performance implementation that **hides memory latency behind computation**. This isn't just an academic exercise - these patterns are fundamental to:
+In this puzzle, you'll transform a memory-bound 1D convolution from
+[Puzzle 13](../puzzle_13/puzzle_13.md) into a high-performance implementation
+that **hides memory latency behind computation**. This isn't just an academic
+exercise - these patterns are fundamental to:
 
 - **Deep learning**: Efficiently loading weights and activations
 - **Scientific computing**: Overlapping data transfers in stencil operations
@@ -40,9 +46,12 @@ Before diving in, ensure you have solid foundation in:
 
 **Essential GPU programming concepts:**
 
-- **Shared memory programming** ([Puzzle 8](../puzzle_08/puzzle_08.md), [Puzzle 16](../puzzle_16/puzzle_16.md)) - You'll extend matmul patterns
-- **Memory coalescing** ([Puzzle 21](../puzzle_21/puzzle_21.md)) - Critical for optimal async transfers
-- **Tiled processing** ([Puzzle 23](../puzzle_23/puzzle_23.md)) - The foundation for this optimization
+- **Shared memory programming** ([Puzzle 8](../puzzle_08/puzzle_08.md),
+  [Puzzle 16](../puzzle_16/puzzle_16.md)) - You'll extend matmul patterns
+- **Memory coalescing** ([Puzzle 21](../puzzle_21/puzzle_21.md)) - Critical for
+  optimal async transfers
+- **Tiled processing** ([Puzzle 23](../puzzle_23/puzzle_23.md)) - The foundation
+  for this optimization
 
 **Hardware understanding:**
 
@@ -50,9 +59,14 @@ Before diving in, ensure you have solid foundation in:
 - Thread block organization and synchronization
 - Basic understanding of memory latency vs. bandwidth
 
-**API familiarity:** [Mojo GPU Memory Operations](https://docs.modular.com/mojo/std/gpu/memory/)
+**API familiarity:**
+[Mojo GPU Memory Operations](https://docs.modular.com/mojo/std/gpu/memory/)
 
-> **⚠️ Hardware compatibility note:** This puzzle uses async copy operations (`copy_dram_to_sram_async`, `async_copy_wait_all`) that may require modern GPU architectures. If you encounter compilation errors related to `.async` modifiers or unsupported operations, your GPU may not support these features. The concepts remain valuable for understanding memory optimization patterns.
+> **⚠️ Hardware compatibility note:** This puzzle uses async copy operations
+> (`copy_dram_to_sram_async`, `async_copy_wait_all`) that may require modern GPU
+> architectures. If you encounter compilation errors related to `.async`
+> modifiers or unsupported operations, your GPU may not support these features.
+> The concepts remain valuable for understanding memory optimization patterns.
 >
 > **Check your GPU compute capability:**
 >
@@ -71,44 +85,66 @@ By the end of this puzzle, you'll have hands-on experience with:
 ### **Core techniques**
 
 - **Async copy primitives**: Launch background DRAM→SRAM transfers
-- **Latency hiding**: Overlap expensive memory operations with useful computation
+- **Latency hiding**: Overlap expensive memory operations with useful
+  computation
 - **Thread layout optimization**: Match memory access patterns to hardware
 - **Pipeline programming**: Structure algorithms for maximum memory utilization
 
 ### **Key APIs you'll focus**
 
-Building on the async copy operations introduced in [Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling), you'll now focus specifically on their memory optimization potential:
+Building on the async copy operations introduced in
+[Puzzle 16's idiomatic matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling),
+you'll now focus specifically on their memory optimization potential:
 
-- **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**: Launch background DRAM→SRAM transfers using dedicated copy engines
-- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**: Synchronize transfer completion before accessing shared memory
+- **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**:
+  Launch background DRAM→SRAM transfers using dedicated copy engines
+- **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**:
+  Synchronize transfer completion before accessing shared memory
 
-**What's different from Puzzle 16?** While Puzzle 16 used async copy for clean tile loading in matmul, this puzzle focuses specifically on **latency hiding** - structuring algorithms to overlap expensive memory operations with useful computation work.
+**What's different from Puzzle 16?** While Puzzle 16 used async copy for clean
+tile loading in matmul, this puzzle focuses specifically on **latency hiding** -
+structuring algorithms to overlap expensive memory operations with useful
+computation work.
 
 ### **Performance impact**
 
-These techniques can provide **significant speedups** for memory-bound algorithms by:
+These techniques can provide **significant speedups** for memory-bound
+algorithms by:
 
 - **Hiding DRAM latency**: Convert idle waiting into productive computation time
 - **Maximizing bandwidth**: Optimal memory access patterns prevent cache misses
-- **Pipeline efficiency**: Keep compute units busy while memory transfers happen in parallel
+- **Pipeline efficiency**: Keep compute units busy while memory transfers happen
+  in parallel
 
-> **What are async copy operations?** [Asynchronous copy operations](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution) allow GPU blocks to initiate memory transfers that execute in the background while the block continues with other work. This enables overlapping computation with memory movement, a fundamental optimization technique for memory-bound algorithms.
+> **What are async copy operations?**
+> [Asynchronous copy operations](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution)
+> allow GPU blocks to initiate memory transfers that execute in the background
+> while the block continues with other work. This enables overlapping
+> computation with memory movement, a fundamental optimization technique for
+> memory-bound algorithms.
 
-💡 **Success tip**: Think of this as **pipeline programming for GPU memory** - overlap stages, hide latencies, and maximize throughput. The goal is to keep your expensive compute units busy while data moves in the background.
+💡 **Success tip**: Think of this as **pipeline programming for GPU memory** -
+overlap stages, hide latencies, and maximize throughput. The goal is to keep
+your expensive compute units busy while data moves in the background.
 
 ## Understanding halo regions
 
-Before diving into async copy operations, it's essential to understand **halo regions** (also called ghost cells or guard cells), which are fundamental to tile-based processing with stencil operations like convolution.
+Before diving into async copy operations, it's essential to understand
+**halo regions** (also called ghost cells or guard cells), which are fundamental
+to tile-based processing with stencil operations like convolution.
 
 ### What is a halo region?
 
-A **halo region** consists of **extra elements** that extend beyond the boundaries of a processing tile to provide necessary neighboring data for stencil computations. When processing elements near tile edges, the stencil operation requires access to data from adjacent tiles.
+A **halo region** consists of **extra elements** that extend beyond the
+boundaries of a processing tile to provide necessary neighboring data for
+stencil computations. When processing elements near tile edges, the stencil
+operation requires access to data from adjacent tiles.
 
 ### Why halo regions are necessary
 
 Consider a 1D convolution with a 5-point kernel on a tile:
 
-```
+```text
 Original data:   [... | a b c d e f g h i j k l m n o | ...]
 Processing tile:       [c d e f g h i j k l m n o]
                             ^                 ^
@@ -125,7 +161,8 @@ With halo:       [a b | c d e f g h i j k l m n o | p q]
 - **Halo size**: Typically `KERNEL_SIZE // 2` elements on each side
 - **Purpose**: Enable correct stencil computation at tile boundaries
 - **Content**: Copies of data from neighboring tiles or boundary conditions
-- **Memory overhead**: Small additional storage for significant computational benefit
+- **Memory overhead**: Small additional storage for significant computational
+  benefit
 
 ### Halo region in convolution
 
@@ -148,27 +185,38 @@ For a 5-point convolution kernel \\([k_0, k_1, k_2, k_3, k_4]\\):
 - Simplified, efficient computation with predictable memory access
 - Better cache utilization and memory coalescing
 
-This concept becomes particularly important when implementing async copy operations, as halo regions must be properly loaded and synchronized to ensure correct parallel computation across multiple tiles.
+This concept becomes particularly important when implementing async copy
+operations, as halo regions must be properly loaded and synchronized to ensure
+correct parallel computation across multiple tiles.
 
 ## Async copy overlap with 1D convolution
 
-**Building on [Puzzle 13](../puzzle_13/puzzle_13.md):** This puzzle revisits the 1D convolution from Puzzle 13, but now optimizes it using async copy operations to hide memory latency behind computation. Instead of simple synchronous memory access, we'll use hardware acceleration to overlap expensive DRAM transfers with useful work.
+**Building on [Puzzle 13](../puzzle_13/puzzle_13.md):** This puzzle revisits the
+1D convolution from Puzzle 13, but now optimizes it using async copy operations
+to hide memory latency behind computation. Instead of simple synchronous memory
+access, we'll use hardware acceleration to overlap expensive DRAM transfers with
+useful work.
 
 ### Configuration
 
 - Vector size: `VECTOR_SIZE = 16384` (16K elements across multiple blocks)
 - Tile size: `CONV_TILE_SIZE = 256` (processing tile size)
 - Block configuration: `(256, 1)` threads per block
-- Grid configuration: `(VECTOR_SIZE // CONV_TILE_SIZE, 1)` blocks per grid (64 blocks)
+- Grid configuration: `(VECTOR_SIZE // CONV_TILE_SIZE, 1)` blocks per grid (64
+  blocks)
 - Kernel size: `KERNEL_SIZE = 5` (simple 1D convolution, same as Puzzle 13)
 - Data type: `DType.float32`
 - Layout: `row_major[VECTOR_SIZE]()` (1D row-major)
 
 ### The async copy opportunity
 
-**Building on Puzzle 16:** You've already seen `copy_dram_to_sram_async` used for clean tile loading in matmul. Now we'll focus on its **latency hiding capabilities** - the key to high-performance memory-bound algorithms.
+**Building on Puzzle 16:** You've already seen `copy_dram_to_sram_async` used
+for clean tile loading in matmul. Now we'll focus on its
+**latency hiding capabilities** - the key to high-performance memory-bound
+algorithms.
 
-Traditional synchronous memory loading forces compute units to wait idle during transfers. Async copy operations enable overlapping transfers with useful work:
+Traditional synchronous memory loading forces compute units to wait idle during
+transfers. Async copy operations enable overlapping transfers with useful work:
 
 ```mojo
 # Synchronous approach - INEFFICIENT:
@@ -190,17 +238,24 @@ async_copy_wait_all()  # Wait only when both operations complete
 
 **Why async copy works so well:**
 
-- **Dedicated copy engines**: Modern GPUs have specialized hardware that bypasses registers and enables true compute-memory overlap (as explained in [Puzzle 16](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling))
-- **Latency hiding**: Memory transfers happen while GPU threads execute other operations
+- **Dedicated copy engines**: Modern GPUs have specialized hardware that
+  bypasses registers and enables true compute-memory overlap (as explained in
+  [Puzzle 16](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling))
+- **Latency hiding**: Memory transfers happen while GPU threads execute other
+  operations
 - **Optimal coalescing**: Thread layouts ensure efficient DRAM access patterns
 - **Resource utilization**: Compute units stay busy instead of waiting idle
 
 ### Code to complete
 
-Implement 1D convolution that uses async copy operations to overlap memory transfers with computation, following patterns from Puzzle 16's matmul implementation.
+Implement 1D convolution that uses async copy operations to overlap memory
+transfers with computation, following patterns from Puzzle 16's matmul
+implementation.
 
-**Mathematical operation:** Compute 1D convolution across large vector using async copy for efficiency:
-\\[\\text{output}[i] = \\sum_{k=0}^{\\text{KERNEL_SIZE}-1} \\text{input}[i+k-\\text{HALO_SIZE}] \\times \\text{kernel}[k]\\]
+**Mathematical operation:** Compute 1D convolution across large vector using
+async copy for efficiency: \\[\\text{output}[i] =
+\\sum_{k=0}^{\\text{KERNEL_SIZE}-1} \\text{input}[i+k-\\text{HALO_SIZE}] \\times
+\\text{kernel}[k]\\]
 
 **Async copy algorithm:**
 
@@ -221,7 +276,8 @@ Implement 1D convolution that uses async copy operations to overlap memory trans
 
 ### 1. **Understanding async copy mechanics**
 
-Async copy operations initiate background transfers while your block continues executing other code.
+Async copy operations initiate background transfers while your block continues
+executing other code.
 
 **Key questions to explore:**
 
@@ -312,7 +368,8 @@ uv run poe p28
 <details class="solution-details">
 <summary><strong>Complete Solution with Detailed Explanation</strong></summary>
 
-The async copy overlap solution demonstrates how to hide memory latency by overlapping expensive DRAM transfers with useful computation:
+The async copy overlap solution demonstrates how to hide memory latency by
+overlapping expensive DRAM transfers with useful computation:
 
 ```mojo
 {{#include ../../../solutions/p28/p28.mojo:async_copy_overlap_convolution_solution}}
@@ -329,11 +386,22 @@ comptime load_layout = row_major[THREADS_PER_BLOCK_ASYNC]()
 copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 ```
 
-- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a 256-element view of the input array starting at `block_idx.x * 256`. The Mojo [`tile` method](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile) does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds indices results in undefined behavior. The implementation must ensure the tile size and offset remain within valid array bounds.
+- **Tile Creation**: `input.tile[CONV_TILE_SIZE](block_idx.x)` creates a
+  256-element view of the input array starting at `block_idx.x * 256`. The Mojo
+  [`tile` method](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)
+  does **NOT** perform bounds checking or zero-padding. Accessing out-of-bounds
+  indices results in undefined behavior. The implementation must ensure the tile
+  size and offset remain within valid array bounds.
 
-- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()` creates a `256 x 1` layout that matches our block organization. This is **critical** - the layout must match the physical thread arrangement for optimal coalesced memory access. When layouts mismatch, threads may access non-contiguous memory addresses, breaking coalescing and severely degrading performance.
+- **Thread Layout**: `row_major[THREADS_PER_BLOCK_ASYNC, 1]()` creates a
+  `256 x 1` layout that matches our block organization. This is **critical** -
+  the layout must match the physical thread arrangement for optimal coalesced
+  memory access. When layouts mismatch, threads may access non-contiguous memory
+  addresses, breaking coalescing and severely degrading performance.
 
-- **Async Copy Launch**: `copy_dram_to_sram_async` initiates a background transfer from DRAM to shared memory. The hardware copies 256 floats (1KB) while the block continues executing.
+- **Async Copy Launch**: `copy_dram_to_sram_async` initiates a background
+  transfer from DRAM to shared memory. The hardware copies 256 floats (1KB)
+  while the block continues executing.
 
 **Phase 2: Overlapped Operation**
 
@@ -343,9 +411,13 @@ if local_i < KERNEL_SIZE:
     kernel_shared[local_i] = kernel[local_i]
 ```
 
-- **Simultaneous Execution**: While the 1KB input tile transfers in the background, threads load the small 20-byte kernel synchronously. This overlap is the key optimization.
+- **Simultaneous Execution**: While the 1KB input tile transfers in the
+  background, threads load the small 20-byte kernel synchronously. This overlap
+  is the key optimization.
 
-- **Size-Based Strategy**: Large transfers (input tile) use async copy; small transfers (kernel) use synchronous loading. This balances complexity with performance benefit.
+- **Size-Based Strategy**: Large transfers (input tile) use async copy; small
+  transfers (kernel) use synchronous loading. This balances complexity with
+  performance benefit.
 
 **Phase 3: Synchronization**
 
@@ -355,9 +427,11 @@ async_copy_wait_all()  # Always wait since we always do async copy
 barrier()  # Sync all threads
 ```
 
-- **Transfer Completion**: `async_copy_wait_all()` blocks until all async transfers complete. This is essential before accessing `input_shared`.
+- **Transfer Completion**: `async_copy_wait_all()` blocks until all async
+  transfers complete. This is essential before accessing `input_shared`.
 
-- **Thread Synchronization**: `barrier()` ensures all threads see the completed transfer before proceeding to computation.
+- **Thread Synchronization**: `barrier()` ensures all threads see the completed
+  transfer before proceeding to computation.
 
 **Phase 4: Computation**
 
@@ -380,19 +454,28 @@ if local_i < CONV_TILE_SIZE and global_i < output.shape[0]():
     output[global_i] = result
 ```
 
-- **Fast Shared Memory Access**: All computation uses pre-loaded shared memory data, avoiding slow DRAM access during the compute-intensive convolution loop.
+- **Fast Shared Memory Access**: All computation uses pre-loaded shared memory
+  data, avoiding slow DRAM access during the compute-intensive convolution loop.
 
-- **Simplified Boundary Handling**: The implementation uses a pragmatic approach to handle elements near tile boundaries:
-  - **Center elements** (`local_i >= HALO_SIZE` and `local_i < CONV_TILE_SIZE - HALO_SIZE`): Apply full 5-point convolution using shared memory data
-  - **Boundary elements** (first 2 and last 2 elements in each tile): Copy input directly without convolution to avoid complex boundary logic
+- **Simplified Boundary Handling**: The implementation uses a pragmatic approach
+  to handle elements near tile boundaries:
+  - **Center elements** (`local_i >= HALO_SIZE` and
+    `local_i < CONV_TILE_SIZE - HALO_SIZE`): Apply full 5-point convolution
+    using shared memory data
+  - **Boundary elements** (first 2 and last 2 elements in each tile): Copy input
+    directly without convolution to avoid complex boundary logic
 
-  **Educational rationale**: This approach prioritizes demonstrating async copy patterns over complex boundary handling. For a 256-element tile with `HALO_SIZE = 2`, elements 0-1 and 254-255 use input copying, while elements 2-253 use full convolution. This keeps the focus on memory optimization while providing a working implementation.
+**Educational rationale**: This approach prioritizes demonstrating async copy
+patterns over complex boundary handling. For a 256-element tile with
+`HALO_SIZE = 2`, elements 0-1 and 254-255 use input copying, while elements
+2-253 use full convolution. This keeps the focus on memory optimization while
+providing a working implementation.
 
 #### **Performance analysis**
 
 **Without Async Copy (Synchronous):**
 
-```
+```text
 Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
            = Large_DRAM_transfer + Small_DRAM_transfer + convolution
            = Major_latency + Minor_latency + computation_work
@@ -400,26 +483,41 @@ Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
 
 **With Async Copy (Overlapped):**
 
-```
+```text
 Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
            = MAX(Major_latency, Minor_latency) + computation_work
            = Major_latency + computation_work
 ```
 
-**Speedup**: Performance improvement from hiding the smaller kernel transfer latency behind the larger input transfer. The actual speedup depends on the relative sizes of transfers and available memory bandwidth. In memory-bound scenarios with larger overlaps, speedups can be much more significant.
+**Speedup**: Performance improvement from hiding the smaller kernel transfer
+latency behind the larger input transfer. The actual speedup depends on the
+relative sizes of transfers and available memory bandwidth. In memory-bound
+scenarios with larger overlaps, speedups can be much more significant.
 
 #### **Key technical insights**
 
-1. **Thread Layout Matching**: The `row_major[256, 1]()` layout precisely matches the block's `(256, 1)` thread organization, enabling optimal memory coalescing.
+1. **Thread Layout Matching**: The `row_major[256, 1]()` layout precisely
+   matches the block's `(256, 1)` thread organization, enabling optimal memory
+   coalescing.
 
-2. **Race Condition Avoidance**: Proper sequencing (async copy → kernel load → wait → barrier → compute) eliminates all race conditions that could corrupt shared memory.
+2. **Race Condition Avoidance**: Proper sequencing (async copy → kernel load →
+   wait → barrier → compute) eliminates all race conditions that could corrupt
+   shared memory.
 
-3. **Hardware Optimization**: Modern GPUs have dedicated hardware for async copy operations, allowing true parallelism between memory and compute units.
+3. **Hardware Optimization**: Modern GPUs have dedicated hardware for async copy
+   operations, allowing true parallelism between memory and compute units.
 
-4. **Memory Hierarchy Exploitation**: The pattern moves data through the hierarchy efficiently: DRAM → Shared Memory → Registers → Computation.
+4. **Memory Hierarchy Exploitation**: The pattern moves data through the
+   hierarchy efficiently: DRAM → Shared Memory → Registers → Computation.
 
-5. **Test-Implementation Consistency**: The test verification logic matches the boundary handling strategy by checking `local_i_in_tile = i % CONV_TILE_SIZE` to determine whether each element should expect convolution results (center elements) or input copying (boundary elements). This ensures accurate validation of the simplified boundary approach.
+5. **Test-Implementation Consistency**: The test verification logic matches the
+   boundary handling strategy by checking `local_i_in_tile = i % CONV_TILE_SIZE`
+   to determine whether each element should expect convolution results (center
+   elements) or input copying (boundary elements). This ensures accurate
+   validation of the simplified boundary approach.
 
-This solution transforms a naive memory-bound convolution into an optimized implementation that hides memory latency behind useful work, demonstrating fundamental principles of high-performance GPU programming.
+This solution transforms a naive memory-bound convolution into an optimized
+implementation that hides memory latency behind useful work, demonstrating
+fundamental principles of high-performance GPU programming.
 
 </details>

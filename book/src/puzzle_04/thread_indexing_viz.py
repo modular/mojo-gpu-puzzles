@@ -1,4 +1,10 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
+
 
 class ThreadIndexingConvention(Scene):
     def construct(self):
@@ -6,14 +12,18 @@ class ThreadIndexingConvention(Scene):
         array_scale = 1.0
 
         # Create matrix grid first
-        matrix_bg = Rectangle(
-            width=array_scale * 3 + 1.0,
-            height=array_scale * 3 + 1.0,
-            stroke_color=BLUE_D,
-            stroke_width=5,
-            fill_color=BLUE_E,
-            fill_opacity=0.2
-        ).move_to(ORIGIN).shift(LEFT * 2)  # Shifted more left to make room
+        matrix_bg = (
+            Rectangle(
+                width=array_scale * 3 + 1.0,
+                height=array_scale * 3 + 1.0,
+                stroke_color=BLUE_D,
+                stroke_width=5,
+                fill_color=BLUE_E,
+                fill_opacity=0.2,
+            )
+            .move_to(ORIGIN)
+            .shift(LEFT * 2)
+        )  # Shifted more left to make room
 
         # Create axes first (so they go behind the matrix)
         # Y-axis along left edge and extending down
@@ -22,7 +32,7 @@ class ThreadIndexingConvention(Scene):
             matrix_bg.get_corner(UL),
             matrix_bg.get_corner(DL) + DOWN,
             color=GREEN_D,
-            stroke_width=3
+            stroke_width=3,
         )
         y_arrow = Arrow(
             y_line.get_end() - DOWN * 0.5,
@@ -31,7 +41,7 @@ class ThreadIndexingConvention(Scene):
             stroke_width=5,
             max_tip_length_to_length_ratio=0.5,
             tip_length=0.4,
-            buff=0
+            buff=0,
         )
 
         # Y-axis label (vertical)
@@ -45,21 +55,15 @@ class ThreadIndexingConvention(Scene):
         for y in range(3):
             for x in range(3):
                 cell = Square(
-                    side_length=array_scale,
-                    stroke_width=2,
-                    stroke_color=WHITE
+                    side_length=array_scale, stroke_width=2, stroke_color=WHITE
                 )
-                pos_label = Text(
-                    f"({y},{x})",
-                    font_size=24,
-                    color=YELLOW
-                )
+                pos_label = Text(f"({y},{x})", font_size=24, color=YELLOW)
                 cell.add(pos_label)
                 matrix_squares.add(cell)
 
         matrix_squares.arrange_in_grid(rows=3, cols=3, buff=0)
         matrix_squares.move_to(matrix_bg)
-        matrix_group = VGroup(matrix_bg, matrix_squares)
+        _matrix_group = VGroup(matrix_bg, matrix_squares)
 
         # X-axis along top edge and extending right
         x_axis = VGroup()
@@ -67,7 +71,7 @@ class ThreadIndexingConvention(Scene):
             matrix_bg.get_corner(UL),
             matrix_bg.get_corner(UR) + RIGHT,
             color=BLUE_D,
-            stroke_width=5
+            stroke_width=5,
         )
         x_arrow = Arrow(
             x_line.get_end() - RIGHT * 0.5,
@@ -76,7 +80,7 @@ class ThreadIndexingConvention(Scene):
             stroke_width=5,
             max_tip_length_to_length_ratio=0.5,
             tip_length=0.4,
-            buff=0
+            buff=0,
         )
 
         # X-axis label (horizontal)
@@ -86,14 +90,21 @@ class ThreadIndexingConvention(Scene):
 
         # Title and explanation
         title = Text(
-            "2D Matrix Coordinates with Thread Indices",
-            font_size=34
+            "2D Matrix Coordinates with Thread Indices", font_size=34
         ).to_edge(UP, buff=0.5)
 
         explanation = VGroup(
             Text("• (0,0) starts at top-left", font_size=24, color=YELLOW),
-            Text("• thread_idx.x increases rightward →", font_size=24, color=BLUE_D),
-            Text("• thread_idx.y increases downward ↓", font_size=24, color=GREEN_D)
+            Text(
+                "• thread_idx.x increases rightward →",
+                font_size=24,
+                color=BLUE_D,
+            ),
+            Text(
+                "• thread_idx.y increases downward ↓",
+                font_size=24,
+                color=GREEN_D,
+            ),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
         explanation.to_edge(RIGHT, buff=0.8)
 
@@ -101,29 +112,13 @@ class ThreadIndexingConvention(Scene):
         self.play(Write(title))
 
         # Add y-axis first so it goes behind matrix
-        self.play(
-            Create(y_line),
-            Create(y_arrow),
-            run_time=1
-        )
+        self.play(Create(y_line), Create(y_arrow), run_time=1)
 
-        self.play(
-            Create(matrix_bg),
-            Create(matrix_squares),
-            run_time=1.5
-        )
+        self.play(Create(matrix_bg), Create(matrix_squares), run_time=1.5)
 
-        self.play(
-            Create(x_line),
-            Create(x_arrow),
-            run_time=1
-        )
+        self.play(Create(x_line), Create(x_arrow), run_time=1)
 
-        self.play(
-            Write(x_text),
-            Write(y_text),
-            run_time=1
-        )
+        self.play(Write(x_text), Write(y_text), run_time=1)
 
         self.play(Write(explanation), run_time=1)
 
@@ -133,13 +128,16 @@ class ThreadIndexingConvention(Scene):
 
         self.wait(60)
 
+
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "thread_indexing_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "thread_indexing_viz",
+        }
+    ):
         scene = ThreadIndexingConvention()
         scene.render()

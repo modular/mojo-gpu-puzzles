@@ -4,7 +4,10 @@
 
 > **🔬 세밀한 동기화: mbarrier vs barrier()**
 >
-> 이 퍼즐은 이전 퍼즐에서 사용한 기본 [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) 함수보다 훨씬 강력한 제어를 제공하는 **명시적 메모리 배리어 API**를 소개합니다.
+> 이 퍼즐은 이전 퍼즐에서 사용한 기본
+> [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/)
+> 함수보다 훨씬 강력한 제어를 제공하는 **명시적 메모리 배리어 API**를
+> 소개합니다.
 >
 > **기본 `barrier()`의 한계:**
 >
@@ -14,7 +17,8 @@
 > - **세밀도 부족**: 메모리 순서와 타이밍에 대한 제한적 제어
 > - **정적 조정**: 스레드 참여 패턴의 변화에 적응 불가
 >
-> **고급 [`mbarrier API`](https://docs.modular.com/mojo/std/gpu/sync/sync/)의 기능:**
+> **고급 [`mbarrier API`](https://docs.modular.com/mojo/std/gpu/sync/sync/)의
+> 기능:**
 >
 > - **정밀한 제어**: [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)로 특정 스레드 수를 지정하여 재사용 가능한 배리어 객체를 설정
 > - **상태 추적**: [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)로 개별 스레드 완료를 알리고 도착 횟수를 유지
@@ -24,50 +28,67 @@
 > - **하드웨어 최적화**: GPU 하드웨어 동기화 기본 요소에 직접 매핑하여 더 나은 성능
 > - **메모리 의미론**: 메모리 가시성과 순서 보장에 대한 명시적 제어
 >
-> **반복 알고리즘에서 왜 중요한가:**
-> 더블 버퍼링 패턴에서는 버퍼 교체 단계 간의 **정밀한 조정**이 필요합니다. 기본 `barrier()`로는 다음에 필요한 세밀한 제어를 제공할 수 없습니다:
+> **반복 알고리즘에서 왜 중요한가:** 더블 버퍼링 패턴에서는 버퍼 교체 단계 간의
+> **정밀한 조정**이 필요합니다. 기본 `barrier()`로는 다음에 필요한 세밀한 제어를
+> 제공할 수 없습니다:
 >
 > - **버퍼 역할 교대**: buffer_A에 대한 모든 쓰기가 완료된 후에야 buffer_A에서 읽기 시작되도록 보장
 > - **반복 경계**: 단일 커널 내에서 여러 동기화 지점 조율
 > - **상태 관리**: 어떤 스레드가 어떤 처리 단계를 완료했는지 추적
 > - **성능 최적화**: 재사용 가능한 배리어 객체를 통해 동기화 오버헤드 최소화
 >
-> 이 퍼즐은 반복법, 시뮬레이션 프레임워크, 고성능 이미지 처리 파이프라인 등 실제 GPU 컴퓨팅 애플리케이션에서 사용되는 **동기화 패턴**을 보여줍니다.
+> 이 퍼즐은 반복법, 시뮬레이션 프레임워크, 고성능 이미지 처리 파이프라인 등 실제
+> GPU 컴퓨팅 애플리케이션에서 사용되는 **동기화 패턴**을 보여줍니다.
 
 ## 개요
 
-더블 버퍼링 공유 메모리를 사용하여 반복 스텐실 연산을 수행하는 커널을 구현합니다. 반복 간 안전한 버퍼 교체를 보장하기 위해 명시적 메모리 배리어로 조정합니다. 스텐실 연산은 배열의 각 요소 값을 이웃 요소들의 고정된 패턴을 기반으로 계산하는 연산 패턴입니다.
+더블 버퍼링 공유 메모리를 사용하여 반복 스텐실 연산을 수행하는 커널을
+구현합니다. 반복 간 안전한 버퍼 교체를 보장하기 위해 명시적 메모리 배리어로
+조정합니다. 스텐실 연산은 배열의 각 요소 값을 이웃 요소들의 고정된 패턴을
+기반으로 계산하는 연산 패턴입니다.
 
-**참고:** _버퍼 역할이 교대합니다: `buffer_A`와 `buffer_B`가 매 반복마다 읽기와 쓰기 연산을 교대하며, mbarrier 동기화가 버퍼 교체 전에 모든 스레드의 쓰기 완료를 보장합니다._
+**참고:** _버퍼 역할이 교대합니다: `buffer_A`와 `buffer_B`가 매 반복마다 읽기와
+쓰기 연산을 교대하며, mbarrier 동기화가 버퍼 교체 전에 모든 스레드의 쓰기 완료를
+보장합니다._
 
-**알고리즘 아키텍처:** 이 퍼즐은 두 개의 공유 메모리 버퍼가 여러 반복에 걸쳐 읽기와 쓰기 대상의 역할을 교대하는 **더블 버퍼링 패턴**을 구현합니다. 데이터를 한 번만 처리하는 단순한 스텐실 연산과 달리, 이 접근 방식은 버퍼 전환 중 경쟁 상태를 방지하기 위한 세심한 메모리 배리어 조정과 함께 반복적 개선을 수행합니다.
+**알고리즘 아키텍처:** 이 퍼즐은 두 개의 공유 메모리 버퍼가 여러 반복에 걸쳐
+읽기와 쓰기 대상의 역할을 교대하는 **더블 버퍼링 패턴**을 구현합니다. 데이터를
+한 번만 처리하는 단순한 스텐실 연산과 달리, 이 접근 방식은 버퍼 전환 중 경쟁
+상태를 방지하기 위한 세심한 메모리 배리어 조정과 함께 반복적 개선을 수행합니다.
 
-**파이프라인 개념:** 알고리즘은 반복적 스텐실 개선을 통해 데이터를 처리합니다. 각 반복은 하나의 버퍼에서 읽고 다른 버퍼에 쓰며, 버퍼들은 매 반복마다 역할을 교대하여 데이터 손상 없이 연속 처리를 가능하게 하는 핑퐁 패턴을 만듭니다.
+**파이프라인 개념:** 알고리즘은 반복적 스텐실 개선을 통해 데이터를 처리합니다.
+각 반복은 하나의 버퍼에서 읽고 다른 버퍼에 쓰며, 버퍼들은 매 반복마다 역할을
+교대하여 데이터 손상 없이 연속 처리를 가능하게 하는 핑퐁 패턴을 만듭니다.
 
 **데이터 의존성과 동기화:** 각 반복은 이전 반복의 완성된 결과에 의존합니다:
 
 - **반복 N → 반복 N+1**: 현재 반복이 다음 반복이 소비하는 개선된 데이터를 생성
 - **버퍼 조정**: 읽기와 쓰기 버퍼가 매 반복마다 역할을 교환
-- **메모리 배리어가 경쟁 상태를 방지**: 새로 기록된 버퍼에서 읽기를 시작하기 전에 모든 쓰기가 완료되도록 보장
+- **메모리 배리어가 경쟁 상태를 방지**: 새로 기록된 버퍼에서 읽기를 시작하기
+  전에 모든 쓰기가 완료되도록 보장
 
-구체적으로, 더블 버퍼링 스텐실은 세 가지 수학 연산으로 구성된 반복적 스무딩 알고리즘을 구현합니다:
+구체적으로, 더블 버퍼링 스텐실은 세 가지 수학 연산으로 구성된 반복적 스무딩
+알고리즘을 구현합니다:
 
 **반복 패턴 - 버퍼 교대:**
 
-\\[\\text{Iteration } i: \\begin{cases}
-\\text{Read from buffer\_A, Write to buffer\_B} & \\text{if } i \\bmod 2 = 0 \\\\
+\\[\\text{Iteration} i: \\begin{cases} \\text{Read from buffer\_A, Write to
+buffer\_B} & \\text{if} i \\bmod 2 = 0 \\\\
 \\text{Read from buffer\_B, Write to buffer\_A} & \\text{if } i \\bmod 2 = 1
 \\end{cases}\\]
 
 **스텐실 연산 - 3점 평균:**
 
-\\[S^{(i+1)}[j] = \\frac{1}{N_j} \\sum_{k=-1}^{1} S^{(i)}[j+k] \\quad \\text{where } j+k \\in [0, 255]\\]
+\\[S^{(i+1)}[j] = \\frac{1}{N_j} \\sum_{k=-1}^{1} S^{(i)}[j+k] \\quad
+\\text{where} j+k \\in [0, 255]\\]
 
-여기서 \\(S^{(i)}[j]\\)는 반복 \\(i\\) 이후 위치 \\(j\\)에서의 스텐실 값이고, \\(N_j\\)는 유효한 이웃 수입니다.
+여기서 \\(S^{(i)}[j]\\)는 반복 \\(i\\) 이후 위치 \\(j\\)에서의 스텐실 값이고,
+\\(N_j\\)는 유효한 이웃 수입니다.
 
 **메모리 배리어 조정:**
 
-\\[\\text{mbarrier\_arrive}() \\Rightarrow \\text{mbarrier\_test\_wait}() \\Rightarrow \\text{buffer swap} \\Rightarrow \\text{next iteration}\\]
+\\[\\text{mbarrier\_arrive}() \\Rightarrow \\text{mbarrier\_test\_wait}()
+\\Rightarrow \\text{buffer swap} \\Rightarrow \\text{next iteration}\\]
 
 **최종 출력 선택:**
 
@@ -81,19 +102,32 @@
 이 퍼즐에서는 다음을 배웁니다:
 
 - 반복 알고리즘을 위한 더블 버퍼링 패턴 구현
-- [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)를 사용한 명시적 메모리 배리어 조정
+- [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)를 사용한
+  명시적 메모리 배리어 조정
 - 반복에 걸쳐 교대하는 읽기/쓰기 버퍼 역할 관리
 
-핵심 통찰은 읽기와 쓰기 연산 사이의 경쟁 상태가 적절히 동기화되지 않으면 데이터를 손상시킬 수 있는 반복 알고리즘에서 버퍼 교체를 안전하게 조율하는 방법을 이해하는 것입니다.
+핵심 통찰은 읽기와 쓰기 연산 사이의 경쟁 상태가 적절히 동기화되지 않으면
+데이터를 손상시킬 수 있는 반복 알고리즘에서 버퍼 교체를 안전하게 조율하는 방법을
+이해하는 것입니다.
 
-**왜 중요한가:** 대부분의 GPU 튜토리얼은 단순한 단일 패스 알고리즘을 보여주지만, 실제 애플리케이션에서는 데이터에 대한 다중 패스를 수행하는 **반복적 개선**이 필요한 경우가 많습니다. 더블 버퍼링은 각 반복이 이전 반복의 완성된 결과에 의존하는 반복법, 이미지 처리 필터, 시뮬레이션 업데이트 같은 알고리즘에 필수적입니다.
+**왜 중요한가:** 대부분의 GPU 튜토리얼은 단순한 단일 패스 알고리즘을 보여주지만,
+실제 애플리케이션에서는 데이터에 대한 다중 패스를 수행하는 **반복적 개선**이
+필요한 경우가 많습니다. 더블 버퍼링은 각 반복이 이전 반복의 완성된 결과에
+의존하는 반복법, 이미지 처리 필터, 시뮬레이션 업데이트 같은 알고리즘에
+필수적입니다.
 
 **이전 퍼즐과 현재의 동기화 비교:**
 
-- **이전 퍼즐 ([P8](../puzzle_08/puzzle_08.md), [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** 단일 패스 알고리즘을 위한 단순 [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) 호출
-- **이 퍼즐:** 버퍼 교체 타이밍에 대한 정밀한 제어를 위한 명시적 [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)
+- **이전 퍼즐 ([P8](../puzzle_08/puzzle_08.md),
+  [P12](../puzzle_12/puzzle_12.md), [P15](../puzzle_15/puzzle_15.md)):** 단일
+  패스 알고리즘을 위한 단순
+  [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) 호출
+- **이 퍼즐:** 버퍼 교체 타이밍에 대한 정밀한 제어를 위한 명시적
+  [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)
 
-**메모리 배리어 특화:** 기본적인 스레드 동기화와 달리, 이 퍼즐은 메모리 연산이 언제 완료되는지에 대한 세밀한 제어를 제공하는 **명시적 메모리 배리어**를 사용하며, 이는 복잡한 메모리 접근 패턴에 필수적입니다.
+**메모리 배리어 특화:** 기본적인 스레드 동기화와 달리, 이 퍼즐은 메모리 연산이
+언제 완료되는지에 대한 세밀한 제어를 제공하는 **명시적 메모리 배리어**를
+사용하며, 이는 복잡한 메모리 접근 패턴에 필수적입니다.
 
 ## 구성
 
@@ -101,7 +135,8 @@
 
 - **이미지 크기**: `SIZE = 1024` 요소 (간소화를 위해 1D)
 - **블록당 스레드 수**: `TPB = 256` 스레드, `(256, 1)` 블록 차원으로 구성
-- **그리드 구성**: 전체 이미지를 타일 단위로 처리하기 위한 `(4, 1)` 블록 (총 4개 블록)
+- **그리드 구성**: 전체 이미지를 타일 단위로 처리하기 위한 `(4, 1)` 블록 (총 4개
+  블록)
 - **데이터 타입**: 모든 연산에 `DType.float32`
 
 **반복 매개변수:**
@@ -121,21 +156,27 @@
 **초기화 단계:**
 
 - **버퍼 설정**: buffer_A를 입력 데이터로, buffer_B를 0으로 초기화
-- **배리어 초기화**: 동기화 지점을 위한 [mbarrier 객체](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init) 설정
+- **배리어 초기화**: 동기화 지점을 위한
+  [mbarrier 객체](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
+  설정
 - **스레드 조정**: 모든 스레드가 초기화에 참여
 
 **반복 처리:**
 
 - **짝수 반복** (0, 2, 4...): buffer_A에서 읽고 buffer_B에 쓰기
 - **홀수 반복** (1, 3, 5...): buffer_B에서 읽고 buffer_A에 쓰기
-- **스텐실 연산**: 3점 평균 \\((\\text{left} + \\text{center} + \\text{right}) / 3\\)
+- **스텐실 연산**: 3점 평균 \\((\\text{left} + \\text{center} + \\text{right}) /
+  3\\)
 - **경계 처리**: 버퍼 가장자리의 요소에 대해 적응적 평균 사용
 
 **메모리 배리어 조정:**
 
-- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**: 각 스레드가 쓰기 단계 완료를 알림
-- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**: 모든 스레드가 쓰기를 완료할 때까지 대기
-- **버퍼 교체 안전성**: 다른 스레드가 아직 쓰고 있는 동안 버퍼에서 읽는 것을 방지
+- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**:
+  각 스레드가 쓰기 단계 완료를 알림
+- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**:
+  모든 스레드가 쓰기를 완료할 때까지 대기
+- **버퍼 교체 안전성**: 다른 스레드가 아직 쓰고 있는 동안 버퍼에서 읽는 것을
+  방지
 - **배리어 재초기화**: 반복 간에 배리어 상태를 재설정
 
 **출력 단계:**
@@ -166,7 +207,8 @@
 
 ### **반복 제어**
 
-- 컴파일 타임 루프 전개를 위해 `@parameter for iteration in range(STENCIL_ITERATIONS)` 사용
+- 컴파일 타임 루프 전개를 위해
+  `@parameter for iteration in range(STENCIL_ITERATIONS)` 사용
 - `iteration % 2`를 사용하여 읽기/쓰기 할당을 교대하면서 버퍼 역할 결정
 - 이웃 검사를 통해 유효한 범위 내에서만 스텐실 연산 적용
 
@@ -178,9 +220,14 @@
 
 ### **메모리 배리어 조정**
 
-- 각 스레드가 쓰기 연산을 완료한 후 [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive) 호출
-- 버퍼 교체 전 모든 스레드가 완료하도록 [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait) 사용
-- 재사용을 위해 반복 간에 배리어 재초기화: [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
+- 각 스레드가 쓰기 연산을 완료한 후
+  [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
+  호출
+- 버퍼 교체 전 모든 스레드가 완료하도록
+  [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
+  사용
+- 재사용을 위해 반복 간에 배리어 재초기화:
+  [`mbarrier_init()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)
 - 경쟁 상태를 피하기 위해 스레드 0만 배리어를 재초기화
 
 ### **출력 선택**
@@ -228,7 +275,7 @@ uv run poe p29 --double-buffer
 
 퍼즐을 성공적으로 완료하면 다음과 유사한 출력이 표시됩니다:
 
-```
+```text
 Puzzle 29: GPU Synchronization Primitives
 ==================================================
 TPB: 256
@@ -255,7 +302,8 @@ GPU output sample: 1.0 1.0 1.0
 
 <div class="solution-explanation">
 
-핵심 통찰은 이것이 명시적 메모리 배리어 조정을 사용하는 **더블 버퍼링 아키텍처 문제**임을 인식하는 것입니다:
+핵심 통찰은 이것이 명시적 메모리 배리어 조정을 사용하는
+**더블 버퍼링 아키텍처 문제**임을 인식하는 것입니다:
 
 1. **교대하는 버퍼 역할 설계**: 매 반복마다 읽기/쓰기 책임을 교환
 2. **명시적 메모리 배리어 구현**: 정밀한 동기화 제어를 위해 mbarrier API 사용
@@ -264,13 +312,17 @@ GPU output sample: 1.0 1.0 1.0
 
 <strong>상세 설명이 포함된 전체 솔루션</strong>
 
-더블 버퍼링 스텐실 솔루션은 정교한 메모리 배리어 조정과 반복 처리 패턴을 보여줍니다. 이 접근 방식은 메모리 접근 타이밍에 대한 정밀한 제어가 필요한 안전한 반복적 개선 알고리즘을 가능하게 합니다.
+더블 버퍼링 스텐실 솔루션은 정교한 메모리 배리어 조정과 반복 처리 패턴을
+보여줍니다. 이 접근 방식은 메모리 접근 타이밍에 대한 정밀한 제어가 필요한 안전한
+반복적 개선 알고리즘을 가능하게 합니다.
 
 ## **더블 버퍼링 아키텍처 설계**
 
-이 퍼즐의 근본적인 돌파구는 단순한 스레드 동기화가 아닌 **명시적 메모리 배리어 제어**입니다:
+이 퍼즐의 근본적인 돌파구는 단순한 스레드 동기화가 아닌
+**명시적 메모리 배리어 제어**입니다:
 
-**전통적인 접근 방식:** 단순한 스레드 조정을 위해 기본 [`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) 사용
+**전통적인 접근 방식:** 단순한 스레드 조정을 위해 기본
+[`barrier()`](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) 사용
 
 - 모든 스레드가 서로 다른 데이터에 동일한 연산을 실행
 - 단일 배리어 호출로 스레드 완료를 동기화
@@ -279,12 +331,14 @@ GPU output sample: 1.0 1.0 1.0
 **이 퍼즐의 혁신:** 명시적 메모리 배리어로 조정되는 서로 다른 버퍼 역할
 
 - buffer_A와 buffer_B가 읽기 소스와 쓰기 대상 사이를 교대
-- [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)가 메모리 연산 완료에 대한 정밀한 제어를 제공
+- [mbarrier API](https://docs.modular.com/mojo/std/gpu/sync/sync/)가 메모리 연산
+  완료에 대한 정밀한 제어를 제공
 - 명시적 조정으로 버퍼 전환 중 경쟁 상태를 방지
 
 ## **반복 처리 조율**
 
-단일 패스 알고리즘과 달리, 이 퍼즐은 신중한 버퍼 관리를 통한 반복적 개선을 설정합니다:
+단일 패스 알고리즘과 달리, 이 퍼즐은 신중한 버퍼 관리를 통한 반복적 개선을
+설정합니다:
 
 - **반복 0**: buffer_A에서 읽기 (입력으로 초기화됨), buffer_B에 쓰기
 - **반복 1**: buffer_B에서 읽기 (이전 결과), buffer_A에 쓰기
@@ -295,16 +349,23 @@ GPU output sample: 1.0 1.0 1.0
 
 mbarrier 조정 패턴의 이해:
 
-- **[mbarrier_init()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)**: 특정 스레드 수(TPB)를 지정하여 배리어 초기화
-- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**: 개별 스레드의 쓰기 단계 완료를 알림
-- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**: 모든 스레드가 완료를 알릴 때까지 대기
+- **[mbarrier_init()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_init)**:
+  특정 스레드 수(TPB)를 지정하여 배리어 초기화
+- **[mbarrier_arrive()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)**:
+  개별 스레드의 쓰기 단계 완료를 알림
+- **[mbarrier_test_wait()](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)**:
+  모든 스레드가 완료를 알릴 때까지 대기
 - **재초기화**: 재사용을 위해 반복 간에 배리어 상태를 재설정
 
 **핵심 타이밍 순서:**
 
 1. **모든 스레드 쓰기**: 각 스레드가 할당된 버퍼 요소를 업데이트
-2. **완료 알림**: 각 스레드가 [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive) 호출
-3. **전체 대기**: 모든 스레드가 [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait) 호출
+2. **완료 알림**: 각 스레드가
+   [`mbarrier_arrive()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_arrive)
+   호출
+3. **전체 대기**: 모든 스레드가
+   [`mbarrier_test_wait()`](https://docs.modular.com/mojo/std/gpu/sync/sync/mbarrier_test_wait)
+   호출
 4. **진행 안전**: 이제 다음 반복을 위해 버퍼 역할을 안전하게 교체 가능
 
 ## **스텐실 연산 메커니즘**
@@ -455,6 +516,8 @@ else:
 - **상태 추적**: 버퍼 역할 교대가 결정적이어야 함
 - **경계 처리**: 적응적 스텐실 연산이 엣지 케이스를 매끄럽게 처리
 
-이 솔루션은 정밀한 메모리 접근 제어가 필요한 반복 GPU 알고리즘을 설계하는 방법을 보여주며, 단순한 병렬 루프를 넘어 실제 수치 소프트웨어에서 사용되는 정교한 메모리 관리 패턴으로 나아갑니다.
+이 솔루션은 정밀한 메모리 접근 제어가 필요한 반복 GPU 알고리즘을 설계하는 방법을
+보여주며, 단순한 병렬 루프를 넘어 실제 수치 소프트웨어에서 사용되는 정교한
+메모리 관리 패턴으로 나아갑니다.
 
 </details>

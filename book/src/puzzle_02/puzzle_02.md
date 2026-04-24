@@ -4,7 +4,8 @@
 
 ## Overview
 
-Implement a kernel that adds together each position of vector `a` and vector `b` and stores it in `output`.
+Implement a kernel that adds together each position of vector `a` and vector `b`
+and stores it in `output`.
 
 **Note:** _You have 1 thread per position._
 
@@ -33,7 +34,9 @@ Thread 2:  a[2] + b[2] → output[2]
 ...
 ```
 
-💡 **Note**: Notice how we're now managing three arrays (`a`, `b`, `output`) in our kernel. As we progress to more complex operations, managing multiple array accesses will become increasingly challenging.
+💡 **Note**: Notice how we're now managing three arrays (`a`, `b`, `output`) in
+our kernel. As we progress to more complex operations, managing multiple array
+accesses will become increasingly challenging.
 
 ## Code to complete
 
@@ -130,4 +133,5 @@ While this direct indexing works for simple element-wise operations, consider:
 - What if we need to broadcast one array to another?
 - How to ensure coalesced access across multiple arrays?
 
-These questions will be addressed when we [introduce TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md).
+These questions will be addressed when we
+[introduce TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md).

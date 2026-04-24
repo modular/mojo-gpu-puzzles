@@ -2,7 +2,10 @@
 
 ## Overview
 
-This puzzle implements matrix multiplication for square matrices \\(A\\) and \\(B\\), storing results in \\(\text{output}\\) while leveraging shared memory to optimize memory access patterns. The implementation preloads matrix blocks into shared memory before performing computations.
+This puzzle implements matrix multiplication for square matrices \\(A\\) and
+\\(B\\), storing results in \\(\text{output}\\) while leveraging shared memory
+to optimize memory access patterns. The implementation preloads matrix blocks
+into shared memory before performing computations.
 
 ## Key concepts
 
@@ -14,7 +17,8 @@ This puzzle covers:
 - Collaborative data loading with 2D indexing
 - Efficient use of TileTensor for matrix operations
 
-The central concept involves utilizing fast shared memory through TileTensor to minimize costly global memory accesses.
+The central concept involves utilizing fast shared memory through TileTensor to
+minimize costly global memory accesses.
 
 ## Configuration
 
@@ -117,7 +121,8 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 <div class="solution-explanation">
 
-The shared memory implementation with TileTensor improves performance through efficient memory access patterns:
+The shared memory implementation with TileTensor improves performance through
+efficient memory access patterns:
 
 ### Memory organization
 
@@ -249,7 +254,8 @@ Matrix B:                           b_shared: (similar layout)
    - Better cache utilization
    - Improved instruction throughput
 
-This implementation significantly improves performance over the naive version by:
+This implementation significantly improves performance over the naive version
+by:
 
 - Reducing global memory accesses
 - Enabling data reuse through shared memory

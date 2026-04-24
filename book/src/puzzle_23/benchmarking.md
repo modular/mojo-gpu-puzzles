@@ -2,9 +2,14 @@
 
 ## Overview
 
-After learning **elementwise**, **tiled**, **manual vectorization**, and **Mojo vectorize** patterns, it's time to measure their actual performance. Here's how to use the built-in benchmarking system in `p21.mojo` to scientifically compare these approaches and understand their performance characteristics.
+After learning **elementwise**, **tiled**, **manual vectorization**, and
+**Mojo vectorize** patterns, it's time to measure their actual performance.
+Here's how to use the built-in benchmarking system in `p21.mojo` to
+scientifically compare these approaches and understand their performance
+characteristics.
 
-> **Key insight:** _Theoretical analysis is valuable, but empirical benchmarking reveals the true performance story on your specific hardware._
+> **Key insight:** _Theoretical analysis is valuable, but empirical benchmarking
+> reveals the true performance story on your specific hardware._
 
 ## Running benchmarks
 
@@ -103,7 +108,8 @@ bench_config = BenchConfig(max_iters=10, num_warmup_iters=1)
 
 - **`max_iters=10`**: Up to 10 iterations for statistical reliability
 - **`num_warmup_iters=1`**: GPU warmup before measurement
-- Check out the [benchmark documentation](https://docs.modular.com/mojo/std/benchmark/)
+- Check out the
+  [benchmark documentation](https://docs.modular.com/mojo/std/benchmark/)
 
 ## Benchmarking implementation essentials
 
@@ -132,12 +138,15 @@ def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bench
 3. **Prevent optimization**: Critical for accurate measurement
 4. **Synchronization**: Ensure GPU work completes
 
-> **Critical: The `keep()` function**
-> `keep(out.unsafe_ptr())` prevents the compiler from optimizing away your computation as "unused code." Without this, you might measure nothing instead of your algorithm! This is essential for accurate GPU benchmarking because kernels are launched asynchronously.
+> **Critical: The `keep()` function** `keep(out.unsafe_ptr())` prevents the
+> compiler from optimizing away your computation as "unused code." Without this,
+> you might measure nothing instead of your algorithm! This is essential for
+> accurate GPU benchmarking because kernels are launched asynchronously.
 
 ### Why custom iteration works for GPU
 
-Standard benchmarking assumes CPU-style synchronous execution. GPU kernels launch asynchronously, so we need:
+Standard benchmarking assumes CPU-style synchronous execution. GPU kernels
+launch asynchronously, so we need:
 
 - **GPU context management**: Proper DeviceContext lifecycle
 - **Memory management**: Buffer cleanup between iterations
@@ -150,20 +159,20 @@ The benchmark suite tests three scenarios to reveal performance characteristics:
 
 ### Thread utilization summary
 
-| Problem Size | Pattern | Threads | SIMD ops/thread | Total SIMD ops |
-|-------------|---------|---------|-----------------|----------------|
-| **SIZE=16** | Elementwise | 4 | 1 | 4 |
-|             | Tiled | 4 | 1 | 4 |
-|             | Manual | 1 | 4 | 4 |
-|             | Vectorize | 4 | 1 | 4 |
-| **SIZE=128** | Elementwise | 32 | 1 | 32 |
-|              | Tiled | 8 | 4 | 32 |
-|              | Manual | 2 | 16 | 32 |
-|              | Vectorize | 8 | 4 | 32 |
-| **SIZE=1M** | Elementwise | 262,144 | 1 | 262,144 |
-|             | Tiled | 1,024 | 256 | 262,144 |
-|             | Manual | 256 | 1,024 | 262,144 |
-|             | Vectorize | 1,024 | 256 | 262,144 |
+| Problem Size | Pattern     | Threads | SIMD ops/thread | Total SIMD ops |
+|--------------|-------------|---------|-----------------|----------------|
+| **SIZE=16**  | Elementwise | 4       | 1               | 4              |
+|              | Tiled       | 4       | 1               | 4              |
+|              | Manual      | 1       | 4               | 4              |
+|              | Vectorize   | 4       | 1               | 4              |
+| **SIZE=128** | Elementwise | 32      | 1               | 32             |
+|              | Tiled       | 8       | 4               | 32             |
+|              | Manual      | 2       | 16              | 32             |
+|              | Vectorize   | 8       | 4               | 32             |
+| **SIZE=1M**  | Elementwise | 262,144 | 1               | 262,144        |
+|              | Tiled       | 1,024   | 256             | 262,144        |
+|              | Manual      | 256     | 1,024           | 262,144        |
+|              | Vectorize   | 1,024   | 256             | 262,144        |
 
 ### Performance characteristics by problem size
 
@@ -191,16 +200,17 @@ Based on empirical benchmark results across different hardware:
 
 ### Performance rankings (large problems)
 
-| Rank | Pattern | Typical time | Key insight |
-|------|---------|-------------|-------------|
-| 🥇 | **Elementwise** | ~0.03ms | Coalesced memory access wins for memory-bound ops |
-| 🥈 | **Mojo vectorize** | ~0.19ms | Uncoalesced memory access hurts performance |
-| 🥉 | **Manual vectorized** | ~0.59ms | Uncoalesced memory access and manual optimization reduces performance |
-| 4th | **Tiled** | ~0.69ms | Uncoalesced memory access, manual optimization without SIMD loads reduces performance further |
+| Rank | Pattern               | Typical time | Key insight                                                                                   |
+|------|-----------------------|--------------|-----------------------------------------------------------------------------------------------|
+| 🥇   | **Elementwise**       | ~0.03ms      | Coalesced memory access wins for memory-bound ops                                             |
+| 🥈   | **Mojo vectorize**    | ~0.19ms      | Uncoalesced memory access hurts performance                                                   |
+| 🥉   | **Manual vectorized** | ~0.59ms      | Uncoalesced memory access and manual optimization reduces performance                         |
+| 4th  | **Tiled**             | ~0.69ms      | Uncoalesced memory access, manual optimization without SIMD loads reduces performance further |
 
 ### Key performance insights
 
-> **For simple memory-bound operations:** Maximum parallelism (elementwise) outperforms complex memory optimizations at scale.
+> **For simple memory-bound operations:** Maximum parallelism (elementwise)
+> outperforms complex memory optimizations at scale.
 
 **Why elementwise wins:**
 
@@ -212,7 +222,8 @@ Based on empirical benchmark results across different hardware:
 **Why tiled and vectorize are competitive:**
 
 - **Balanced approach** between parallelism and memory locality
-- **Automatic optimization** (vectorize) performs nearly as well as manual tiling
+- **Automatic optimization** (vectorize) performs nearly as well as manual
+  tiling
 - **Good thread utilization** without excessive complexity
 
 **Why manual vectorization struggles:**
@@ -248,9 +259,11 @@ Based on empirical benchmark results across different hardware:
 **For production workloads:**
 
 - **Large datasets (>100K elements)**: Elementwise typically optimal
-- **Small/startup datasets (<1K elements)**: Tiled or vectorize for lower overhead
+- **Small/startup datasets (<1K elements)**: Tiled or vectorize for lower
+  overhead
 - **Development speed priority**: Mojo vectorize for automatic optimization
-- **Avoid manual vectorization**: Complexity rarely pays off for simple operations
+- **Avoid manual vectorization**: Complexity rarely pays off for simple
+  operations
 
 **Performance optimization workflow:**
 
@@ -298,7 +311,8 @@ Your results will vary based on:
 
 - **Start simple**: Begin with elementwise for memory-bound operations
 - **Measure don't guess**: Theoretical analysis guides, empirical data decides
-- **Scale matters**: Small problem performance doesn't predict large problem behaviour
+- **Scale matters**: Small problem performance doesn't predict large problem
+  behaviour
 - **Total cost optimization**: Balance development time vs runtime performance
 
 ## Next steps
@@ -306,15 +320,20 @@ Your results will vary based on:
 With benchmarking skills:
 
 - **Profile real applications**: Apply these patterns to actual workloads
-- **Advanced GPU patterns**: Explore reductions, convolutions, and matrix operations
+- **Advanced GPU patterns**: Explore reductions, convolutions, and matrix
+  operations
 - **Multi-GPU scaling**: Understand distributed GPU computing patterns
 - **Memory optimization**: Dive deeper into shared memory and advanced caching
 
-💡 **Key takeaway**: Benchmarking transforms theoretical understanding into practical performance optimization. Use empirical data to make informed decisions about which patterns work best for your specific hardware and workload characteristics.
+💡 **Key takeaway**: Benchmarking transforms theoretical understanding into
+practical performance optimization. Use empirical data to make informed
+decisions about which patterns work best for your specific hardware and workload
+characteristics.
 
 ## Looking ahead: when you need more control
 
-The functional patterns in Part V provide excellent performance for most workloads, but some algorithms require **direct thread communication**:
+The functional patterns in Part V provide excellent performance for most
+workloads, but some algorithms require **direct thread communication**:
 
 ### **Algorithms that benefit from warp programming:**
 
@@ -325,10 +344,15 @@ The functional patterns in Part V provide excellent performance for most workloa
 
 ### **Performance preview:**
 
-In Part VI, we'll revisit several algorithms from Part II and show how warp operations can:
+In Part VI, we'll revisit several algorithms from Part II and show how warp
+operations can:
 
-- **Simplify code**: Replace complex shared memory patterns with single function calls
+- **Simplify code**: Replace complex shared memory patterns with single function
+  calls
 - **Improve performance**: Eliminate barriers and reduce memory traffic
-- **Enable new algorithms**: Unlock patterns impossible with pure functional approaches
+- **Enable new algorithms**: Unlock patterns impossible with pure functional
+  approaches
 
-**Coming up next**: [Part VII: Warp-Level Programming](../puzzle_24/puzzle_24.md) - starting with a dramatic reimplementation of Puzzle 14's prefix sum.
+**Coming up next**:
+[Part VII: Warp-Level Programming](../puzzle_24/puzzle_24.md) - starting with a
+dramatic reimplementation of Puzzle 14's prefix sum.

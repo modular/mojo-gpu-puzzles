@@ -1,8 +1,10 @@
 # Simple Version
 
-Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores it in 1D TileTensor `output`.
+Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores
+it in 1D TileTensor `output`.
 
-**Note:** _If the size of `a` is greater than the block size, only store the sum of each block._
+**Note:** _If the size of `a` is greater than the block size, only store the sum
+of each block._
 
 ## Configuration
 
@@ -14,7 +16,8 @@ Implement a kernel that computes a prefix-sum over 1D TileTensor `a` and stores 
 Notes:
 
 - **Data loading**: Each thread loads one element using TileTensor access
-- **Memory pattern**: Shared memory for intermediate results using TileTensor with address_space
+- **Memory pattern**: Shared memory for intermediate results using TileTensor
+  with address_space
 - **Thread sync**: Coordination between computation phases
 - **Access pattern**: Stride-based parallel computation
 - **Type safety**: Leveraging TileTensor's type system
@@ -110,19 +113,29 @@ The parallel (inclusive) prefix-sum algorithm works as follows:
 
 The algorithm uses explicit synchronization to prevent read-write hazards:
 
-- **Read Phase**: All threads first read the values they need into a local variable `current_val`
-- **Synchronization**: `barrier()` ensures all reads complete before any writes begin
-- **Write Phase**: All threads then safely write their computed values back to shared memory
+- **Read Phase**: All threads first read the values they need into a local
+  variable `current_val`
+- **Synchronization**: `barrier()` ensures all reads complete before any writes
+  begin
+- **Write Phase**: All threads then safely write their computed values back to
+  shared memory
 
-This prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations.
+This prevents the race condition that would occur if threads simultaneously read
+from and write to the same shared memory locations.
 
-**Alternative approach**: Another solution to prevent race conditions is through _double buffering_, where you allocate twice the shared memory and alternate between reading from one buffer and writing to another. While this approach eliminates race conditions completely, it requires more shared memory and adds complexity. For educational purposes, we use the explicit synchronization approach as it's more straightforward to understand.
+**Alternative approach**: Another solution to prevent race conditions is through
+_double buffering_, where you allocate twice the shared memory and alternate
+between reading from one buffer and writing to another. While this approach
+eliminates race conditions completely, it requires more shared memory and adds
+complexity. For educational purposes, we use the explicit synchronization
+approach as it's more straightforward to understand.
 
 ### Thread mapping
 
 - `thread_idx.x`: \\([0, 1, 2, 3, 4, 5, 6, 7]\\) (`local_i`)
 - `block_idx.x`: \\([0, 0, 0, 0, 0, 0, 0, 0]\\)
-- `global_i`: \\([0, 1, 2, 3, 4, 5, 6, 7]\\) (`block_idx.x * TPB + thread_idx.x`)
+- `global_i`: \\([0, 1, 2, 3, 4, 5, 6, 7]\\)
+  (`block_idx.x * TPB + thread_idx.x`)
 
 ### Initial load to shared memory
 
@@ -221,7 +234,8 @@ output:       [0    1    3    6    10   15   21   28]
 
 ### Key implementation details
 
-**Synchronization Pattern**: Each iteration follows a strict read → sync → write pattern:
+**Synchronization Pattern**: Each iteration follows a strict read → sync → write
+pattern:
 
 1. `var current_val: out.element_type = 0` - Initialize local variable
 2. `current_val = shared[local_i - offset]` - Read phase (if conditions met)
@@ -229,7 +243,10 @@ output:       [0    1    3    6    10   15   21   28]
 4. `shared[local_i] += current_val` - Write phase (if conditions met)
 5. `barrier()` - Standard synchronization before next iteration
 
-**Race Condition Prevention**: Without the explicit read-write separation, multiple threads could simultaneously access the same shared memory location, leading to undefined behavior. The two-phase approach with explicit synchronization ensures correctness.
+**Race Condition Prevention**: Without the explicit read-write separation,
+multiple threads could simultaneously access the same shared memory location,
+leading to undefined behavior. The two-phase approach with explicit
+synchronization ensures correctness.
 
 **Memory Safety**: The algorithm maintains memory safety through:
 
@@ -237,6 +254,9 @@ output:       [0    1    3    6    10   15   21   28]
 - Proper initialization of the temporary variable
 - Coordinated access patterns that prevent data races
 
-The solution ensures correct synchronization between phases using `barrier()` and handles array bounds checking with `if global_i < size`. The final result produces the inclusive prefix sum where each element \\(i\\) contains \\(\sum_{j=0}^{i} a[j]\\).
+The solution ensures correct synchronization between phases using `barrier()`
+and handles array bounds checking with `if global_i < size`. The final result
+produces the inclusive prefix sum where each element \\(i\\) contains
+\\(\sum_{j=0}^{i} a[j]\\).
 </div>
 </details>

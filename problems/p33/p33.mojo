@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier, WARP_SIZE
 from std.gpu.host import DeviceContext
 from std.gpu.memory import AddressSpace, async_copy_wait_all

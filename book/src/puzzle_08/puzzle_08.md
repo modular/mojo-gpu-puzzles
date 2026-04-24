@@ -2,9 +2,16 @@
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of a 1D TileTensor `a` and stores it in 1D TileTensor `output`.
+Implement a kernel that adds 10 to each position of a 1D TileTensor `a` and
+stores it in 1D TileTensor `output`.
 
-**Shared memory** is fast, on-chip storage that is visible to all threads within the same block. Unlike global memory (which all blocks can access but is slow), shared memory has latency similar to a CPU register cache. Each block gets its own private shared memory region — threads in one block cannot see the shared memory of another block. Because threads can read and write to the same shared memory locations, coordination via `barrier()` is required to prevent one thread from reading a value before another thread has finished writing it.
+**Shared memory** is fast, on-chip storage that is visible to all threads within
+the same block. Unlike global memory (which all blocks can access but is slow),
+shared memory has latency similar to a CPU register cache. Each block gets its
+own private shared memory region — threads in one block cannot see the shared
+memory of another block. Because threads can read and write to the same shared
+memory locations, coordination via `barrier()` is required to prevent one thread
+from reading a value before another thread has finished writing it.
 
 **Note:** _You have fewer threads per block than the size of `a`._
 
@@ -19,7 +26,8 @@ In this puzzle, you'll learn about:
 - Thread synchronization with shared memory
 - Block-local data management with TileTensor
 
-The key insight is how TileTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.
+The key insight is how TileTensor simplifies shared memory management while
+maintaining the performance benefits of block-local storage.
 
 ## Configuration
 
@@ -28,9 +36,17 @@ The key insight is how TileTensor simplifies shared memory management while main
 - Number of blocks: 2
 - Shared memory: `TPB` elements per block
 
-> **Warning**: Each block can only have a _constant_ amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call [barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) to ensure that threads do not cross.
+> **Warning**: Each block can only have a _constant_ amount of shared memory
+> that threads in that block can read and write to. This needs to be a literal
+> python constant, not a variable. After writing to shared memory you need to
+> call [barrier](https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/) to
+> ensure that threads do not cross.
 
-**Educational Note**: In this specific puzzle, the `barrier()` isn't strictly necessary since each thread only accesses its own shared memory location. However, it's included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.
+**Educational Note**: In this specific puzzle, the `barrier()` isn't strictly
+necessary since each thread only accesses its own shared memory location.
+However, it's included to teach proper shared memory synchronization patterns
+for more complex scenarios where threads need to coordinate access to shared
+data.
 
 ## Code to complete
 
@@ -113,7 +129,8 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 <div class="solution-explanation">
 
-This solution demonstrates how TileTensor simplifies shared memory usage while maintaining performance:
+This solution demonstrates how TileTensor simplifies shared memory usage while
+maintaining performance:
 
 1. **Memory hierarchy with TileTensor**
    - Global tensors: `a` and `output` (slow, visible to all blocks)
@@ -140,7 +157,11 @@ This solution demonstrates how TileTensor simplifies shared memory usage while m
    - Process phase: Each thread adds 10 to its shared tensor value
    - Result: `output[global_i] = shared[local_i] + 10 = 11`
 
-   **Note**: In this specific case, the `barrier()` isn't strictly necessary since each thread only writes to and reads from its own shared memory location (`shared[local_i]`). However, it's included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other's data.
+**Note**: In this specific case, the `barrier()` isn't strictly necessary since
+each thread only writes to and reads from its own shared memory location
+(`shared[local_i]`). However, it's included for educational purposes to
+demonstrate proper shared memory synchronization patterns that are essential
+when threads need to access each other's data.
 
 3. **TileTensor benefits**
    - Shared memory allocation:
@@ -165,6 +186,7 @@ This solution demonstrates how TileTensor simplifies shared memory usage while m
    - Process: Add 10 to shared values
    - Store: Write 11s back to global tensor
 
-This pattern shows how TileTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.
+This pattern shows how TileTensor maintains the performance benefits of shared
+memory while providing a more ergonomic API and built-in features.
 </div>
 </details>

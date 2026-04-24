@@ -2,11 +2,20 @@
 
 ## Overview
 
-Implement a kernel that compute the running sum of the last 3 positions of 1D TileTensor `a` and stores it in 1D TileTensor `output`.
+Implement a kernel that compute the running sum of the last 3 positions of 1D
+TileTensor `a` and stores it in 1D TileTensor `output`.
 
-**Pooling** is an operation that condenses a region of values into a single summary value — for example, their sum, maximum, or average. A **sliding window** applies this condensation repeatedly by moving a fixed-size window one step at a time across the input, producing one output value per window position. Here the window is 3 elements wide and the summary function is a sum, so each output element equals the sum of the current element and the two preceding it (with special cases at the boundaries where fewer than 3 elements are available).
+**Pooling** is an operation that condenses a region of values into a single
+summary value — for example, their sum, maximum, or average. A
+**sliding window** applies this condensation repeatedly by moving a fixed-size
+window one step at a time across the input, producing one output value per
+window position. Here the window is 3 elements wide and the summary function is
+a sum, so each output element equals the sum of the current element and the two
+preceding it (with special cases at the boundaries where fewer than 3 elements
+are available).
 
-**Note:** _You have 1 thread per position. You only need 1 global read and 1 global write per thread._
+**Note:** _You have 1 thread per position. You only need 1 global read and 1
+global write per thread._
 
 <img src="./media/11-w.png" alt="Pooling visualization" class="light-mode-img">
 <img src="./media/11-b.png" alt="Pooling visualization" class="dark-mode-img">
@@ -16,11 +25,13 @@ Implement a kernel that compute the running sum of the last 3 positions of 1D Ti
 In this puzzle, you'll learn about:
 
 - Using TileTensor for sliding window operations
-- Managing shared memory with TileTensor address_space that we saw in [puzzle 8](../puzzle_08/puzzle_08.md)
+- Managing shared memory with TileTensor address_space that we saw in
+  [puzzle 8](../puzzle_08/puzzle_08.md)
 - Efficient neighbor access patterns
 - Boundary condition handling
 
-The key insight is how TileTensor simplifies shared memory management while maintaining efficient window-based operations.
+The key insight is how TileTensor simplifies shared memory management while
+maintaining efficient window-based operations.
 
 ## Configuration
 
@@ -31,7 +42,8 @@ The key insight is how TileTensor simplifies shared memory management while main
 
 Notes:
 
-- **TileTensor allocation**: Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
+- **TileTensor allocation**: Use
+  `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
 - **Window access**: Natural indexing for 3-element windows
 - **Edge handling**: Special cases for first two positions
 - **Memory pattern**: One shared memory load per thread
@@ -117,7 +129,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 <div class="solution-explanation">
 
-The solution implements a sliding window sum using TileTensor with these key steps:
+The solution implements a sliding window sum using TileTensor with these key
+steps:
 
 1. **Shared memory setup**
    - TileTensor creates block-local storage with address_space:
@@ -165,15 +178,16 @@ The solution implements a sliding window sum using TileTensor with these key ste
      window_sum = shared[i-2] + shared[i-1] + shared[i]
      ```
 
-> **Single-block assumption:** This solution is correct because the puzzle is configured with
-> `BLOCKS_PER_GRID = (1, 1)` and `SIZE == TPB = 8`, guaranteeing every thread belongs to the
-> same block so `global_i == local_i`. Under this constraint, `local_i >= 2` whenever
-> `global_i > 1`, so `shared[local_i - 2]` and `shared[local_i - 1]` are always valid.
+> **Single-block assumption:** This solution is correct because the puzzle is
+> configured with `BLOCKS_PER_GRID = (1, 1)` and `SIZE == TPB = 8`, guaranteeing
+> every thread belongs to the same block so `global_i == local_i`. Under this
+> constraint, `local_i >= 2` whenever `global_i > 1`, so `shared[local_i - 2]`
+> and `shared[local_i - 1]` are always valid.
 >
-> In a **multi-block** kernel the first two threads of each block beyond block 0 would have
-> `local_i = 0` or `local_i = 1` while `global_i > 1`, causing out-of-bounds shared memory
-> reads. The robust pattern for multi-block pooling guards with `local_i` and falls back to
-> global reads for the halo elements:
+> In a **multi-block** kernel the first two threads of each block beyond block 0
+> would have `local_i = 0` or `local_i = 1` while `global_i > 1`, causing
+> out-of-bounds shared memory reads. The robust pattern for multi-block pooling
+> guards with `local_i` and falls back to global reads for the halo elements:
 >
 > ```mojo
 > if local_i >= 2:
@@ -193,7 +207,8 @@ The solution implements a sliding window sum using TileTensor with these key ste
      - Layout-aware memory access
      - Type safety throughout
 
-This approach combines the performance of shared memory with TileTensor's safety and ergonomics:
+This approach combines the performance of shared memory with TileTensor's safety
+and ergonomics:
 
 - Minimizes global memory access
 - Simplifies window operations

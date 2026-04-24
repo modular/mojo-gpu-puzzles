@@ -1,0 +1,13 @@
+# Suppress shellcheck warnings for tutorial solution runner scripts.
+# These scripts follow conventions from the public mojo-gpu-puzzles repo
+# and are not internal infrastructure code.
+disable=SC1091  # Not following sourced files (config.sh not available at lint time)
+disable=SC2001  # Use ${var//search/replace} instead of sed
+disable=SC2012  # Use find instead of ls
+disable=SC2034  # Unused variables (color constants exported for use by sourcing scripts)
+disable=SC2059  # Variables in printf format string
+disable=SC2086  # Double quote to prevent word splitting
+disable=SC2155  # Declare and assign separately
+disable=SC2207  # Prefer mapfile or read -a
+disable=SC2235  # Use { ..; } instead of (..)
+disable=SC2329  # Function never invoked

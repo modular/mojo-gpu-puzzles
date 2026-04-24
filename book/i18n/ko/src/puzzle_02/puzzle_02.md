@@ -35,7 +35,8 @@ Thread 2:  a[2] + b[2] → output[2]
 ...
 ```
 
-💡 **참고**: 이제 커널에서 세 개의 배열(`a`, `b`, `output`)을 다루고 있습니다. 연산이 복잡해질수록 여러 배열에 대한 접근을 관리하기가 점점 어려워집니다.
+💡 **참고**: 이제 커널에서 세 개의 배열(`a`, `b`, `output`)을 다루고 있습니다.
+연산이 복잡해질수록 여러 배열에 대한 접근을 관리하기가 점점 어려워집니다.
 
 ## 완성할 코드
 
@@ -132,4 +133,5 @@ expected: HostBuffer([0.0, 2.0, 4.0, 6.0])
 - 한 배열을 다른 배열에 브로드캐스트해야 한다면?
 - 여러 배열에서 병합(coalesced) 접근을 어떻게 보장할 수 있을까?
 
-이러한 질문들은 Puzzle 4의 [TileTensor 알아보기](../puzzle_04/introduction_tile_tensor.md)에서 다룹니다.
+이러한 질문들은 Puzzle 4의
+[TileTensor 알아보기](../puzzle_04/introduction_tile_tensor.md)에서 다룹니다.

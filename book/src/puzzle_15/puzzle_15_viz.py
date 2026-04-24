@@ -1,22 +1,27 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
 
 BATCH = 4
 SIZE = 6
 TPB = 8
 
+
 class Puzzle15Visualization(Scene):
     def construct(self):
         array_scale = 0.5
-        thread_scale = 0.4
 
         # Input matrix - show corners with ellipsis
-        input_matrix = VGroup()
+        _input_matrix = VGroup()
         matrix_bg = Rectangle(
             width=array_scale * 3 + 1.0,  # Reduced width to show only corners
             height=array_scale * BATCH + 1.0,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         # Create corner cells and ellipsis
@@ -29,7 +34,9 @@ class Puzzle15Visualization(Scene):
             cell1.add(index_text1)
             # Last element
             cell2 = Square(side_length=array_scale, stroke_width=1)
-            index_text2 = Text(f"a[{batch}][{SIZE-1}]", font_size=10, color=YELLOW)
+            index_text2 = Text(
+                f"a[{batch}][{SIZE - 1}]", font_size=10, color=YELLOW
+            )
             cell2.add(index_text2)
             # Add horizontal dots
             row.add(cell1, Text("...", color=YELLOW), cell2)
@@ -51,7 +58,7 @@ class Puzzle15Visualization(Scene):
             height=3.7,
             stroke_color=GOLD_D,
             fill_color=DARK_GRAY,
-            fill_opacity=0.1
+            fill_opacity=0.1,
         )
 
         # Threads
@@ -63,7 +70,7 @@ class Puzzle15Visualization(Scene):
                 corner_radius=0.1,
                 stroke_color=WHITE,
                 fill_color=DARK_GRAY,
-                fill_opacity=0.8
+                fill_opacity=0.8,
             )
             thread_text = Text(f"T{i}", font_size=12, color=YELLOW)
             thread_cell.add(thread_text)
@@ -72,9 +79,15 @@ class Puzzle15Visualization(Scene):
         threads.next_to(block_bg.get_top(), DOWN, buff=0.3)
 
         # Shared memory section
-        shared_label = Text("Shared Memory Cache (TPB=8)", font_size=14, color=WHITE)
-        parallel_text = Text("Parallel row reduction", font_size=14, color=YELLOW)
-        shared_label_group = VGroup(shared_label, Text(" • ", font_size=14, color=WHITE), parallel_text)
+        shared_label = Text(
+            "Shared Memory Cache (TPB=8)", font_size=14, color=WHITE
+        )
+        parallel_text = Text(
+            "Parallel row reduction", font_size=14, color=YELLOW
+        )
+        shared_label_group = VGroup(
+            shared_label, Text(" • ", font_size=14, color=WHITE), parallel_text
+        )
         shared_label_group.arrange(RIGHT, buff=0.3)
         shared_label_group.next_to(threads, DOWN, buff=0.5)
 
@@ -83,14 +96,16 @@ class Puzzle15Visualization(Scene):
             height=1,
             stroke_color=PURPLE_D,
             fill_color=PURPLE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).next_to(shared_label_group, DOWN, buff=0.2)
 
         # Shared memory cells
         shared_cells = VGroup()
         cell_size = 0.7
         for i in range(TPB):
-            cell = Square(side_length=cell_size, stroke_width=1, stroke_color=PURPLE_D)
+            cell = Square(
+                side_length=cell_size, stroke_width=1, stroke_color=PURPLE_D
+            )
             index_text = Text(f"shared[{i}]", font_size=10, color=YELLOW)
             cell.add(index_text)
             shared_cells.add(cell)
@@ -122,7 +137,7 @@ class Puzzle15Visualization(Scene):
             height=array_scale * 3 + 1.0,  # Reduced height to show only corners
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         )
 
         output_array = VGroup()
@@ -133,7 +148,7 @@ class Puzzle15Visualization(Scene):
         dots = Text("⋮", color=YELLOW, font_size=24)
         # Last element
         cell2 = Square(side_length=array_scale, stroke_width=1)
-        cell2.add(Text(f"out[{BATCH-1}]", font_size=10, color=YELLOW))
+        cell2.add(Text(f"out[{BATCH - 1}]", font_size=10, color=YELLOW))
 
         output_array.add(cell1, dots, cell2)
         output_array.arrange(DOWN, buff=0.2)
@@ -153,16 +168,27 @@ class Puzzle15Visualization(Scene):
         # Show multiple row processing
         for batch in range(2):  # Show first two rows to demonstrate pattern
             # Create new labels for the current batch
-            new_block_label = Text(f"Block(0,{batch})", font_size=14, color=WHITE)
+            new_block_label = Text(
+                f"Block(0,{batch})", font_size=14, color=WHITE
+            )
             new_block_label.next_to(block_bg, UP, buff=0.2)
-            new_grid_label = Text("Grid(1×4) • Block(8×1)", font_size=14, color=WHITE)
+            new_grid_label = Text(
+                "Grid(1×4) • Block(8×1)", font_size=14, color=WHITE
+            )
             new_grid_label.next_to(new_block_label, UP, buff=0.2)
             new_labels = VGroup(new_block_label, new_grid_label)
 
             # Move block and transform labels together
             self.play(
-                block.animate.move_to(block.get_center() + DOWN * batch * array_scale * 2),
-                Transform(labels, new_labels.move_to(new_labels.get_center() + DOWN * batch * array_scale * 2))
+                block.animate.move_to(
+                    block.get_center() + DOWN * batch * array_scale * 2
+                ),
+                Transform(
+                    labels,
+                    new_labels.move_to(
+                        new_labels.get_center() + DOWN * batch * array_scale * 2
+                    ),
+                ),
             )
 
             # Show data loading from current row to shared memory
@@ -171,26 +197,30 @@ class Puzzle15Visualization(Scene):
             start = matrix_cells[batch][0].get_center()
             end = shared_cells[0].get_top()
             arrow1 = Arrow(
-                start, end,
+                start,
+                end,
                 buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             # Arrow from last element
             start = matrix_cells[batch][2].get_center()
-            end = shared_cells[SIZE-1].get_top()
+            end = shared_cells[SIZE - 1].get_top()
             arrow2 = Arrow(
-                start, end,
+                start,
+                end,
                 buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             # Add loading text showing the exact indexing
-            load_text = Text(f"Loading: a[{batch}][0:{SIZE}]", font_size=14, color=YELLOW)
+            load_text = Text(
+                f"Loading: a[{batch}][0:{SIZE}]", font_size=14, color=YELLOW
+            )
             load_text.next_to(shared_cells, UP, buff=0.2)
 
             load_arrows.add(arrow1, arrow2, load_text)
@@ -210,12 +240,12 @@ class Puzzle15Visualization(Scene):
                     h1 = Square(
                         side_length=cell_size,
                         stroke_color=YELLOW,
-                        fill_opacity=0.2
+                        fill_opacity=0.2,
                     ).move_to(shared_cells[i])
                     h2 = Square(
                         side_length=cell_size,
                         stroke_color=YELLOW,
-                        fill_opacity=0.2
+                        fill_opacity=0.2,
                     ).move_to(shared_cells[i + stride])
                     highlights.add(h1, h2)
 
@@ -223,34 +253,38 @@ class Puzzle15Visualization(Scene):
                     curved_arrow = CurvedArrow(
                         start_point=shared_cells[i + stride].get_center(),
                         end_point=shared_cells[i].get_center(),
-                        angle=-TAU/4,
+                        angle=-TAU / 4,
                         color=GREEN_C,
                         stroke_width=2,
-                        tip_length=0.2
+                        tip_length=0.2,
                     )
 
                     # Operation text
-                    midpoint = (shared_cells[i].get_center() + shared_cells[i + stride].get_center()) / 2
-                    op_text = Text("+", font_size=32, color=GREEN_C, weight=BOLD)
+                    midpoint = (
+                        shared_cells[i].get_center()
+                        + shared_cells[i + stride].get_center()
+                    ) / 2
+                    op_text = Text(
+                        "+", font_size=32, color=GREEN_C, weight=BOLD
+                    )
                     op_text.move_to(midpoint)
                     op_text.shift(DOWN * 0.5)
 
                     arrows.add(VGroup(curved_arrow, op_text))
 
                 # Show reduction step info
-                active_text = Text(f"Parallel reduction: stride={stride}", font_size=14, color=YELLOW)
+                active_text = Text(
+                    f"Parallel reduction: stride={stride}",
+                    font_size=14,
+                    color=YELLOW,
+                )
                 active_text.next_to(shared_cells, DOWN, buff=0.5)
 
-                self.play(
-                    FadeIn(highlights),
-                    FadeIn(active_text)
-                )
+                self.play(FadeIn(highlights), FadeIn(active_text))
                 self.play(FadeIn(arrows))
                 self.wait(0.5)
                 self.play(
-                    FadeOut(highlights),
-                    FadeOut(arrows),
-                    FadeOut(active_text)
+                    FadeOut(highlights), FadeOut(arrows), FadeOut(active_text)
                 )
 
                 stride //= 2
@@ -262,35 +296,40 @@ class Puzzle15Visualization(Scene):
                 buff=0.2,
                 color=GREEN_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
-            output_text = Text(f"out[{batch}] = sum(a[{batch}][:])", font_size=14, color=GREEN_C)
+            output_text = Text(
+                f"out[{batch}] = sum(a[{batch}][:])",
+                font_size=14,
+                color=GREEN_C,
+            )
             output_text.next_to(output_arrow, UP, buff=0.1)
 
-            self.play(
-                FadeIn(output_arrow),
-                FadeIn(output_text)
-            )
+            self.play(FadeIn(output_arrow), FadeIn(output_text))
             self.wait(0.5)
-            self.play(
-                FadeOut(output_arrow),
-                FadeOut(output_text)
-            )
+            self.play(FadeOut(output_arrow), FadeOut(output_text))
 
         # Show "..." to indicate remaining rows processed similarly
-        continue_text = Text("Remaining rows are processed similarly ...", font_size=18, color=YELLOW)
+        continue_text = Text(
+            "Remaining rows are processed similarly ...",
+            font_size=18,
+            color=YELLOW,
+        )
         continue_text.next_to(block, DOWN, buff=0.3)
         self.play(Write(continue_text))
         self.wait(60)
 
+
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "puzzle_15_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "puzzle_15_viz",
+        }
+    ):
         scene = Puzzle15Visualization()
         scene.render()

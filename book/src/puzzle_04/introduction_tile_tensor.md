@@ -1,9 +1,12 @@
 # Introduction to TileTensor
 
-Let's take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
-🥁 ... the **[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)**.
+Let's take a quick break from solving puzzles to preview a powerful abstraction
+that will make our GPU programming journey more enjoyable: 🥁... the
+**[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)**.
 
-> 💡 _This is a motivational overview of TileTensor's capabilities. Don't worry about understanding everything now - we'll explore each feature in depth as we progress through the puzzles_.
+> 💡 _This is a motivational overview of TileTensor's capabilities. Don't worry
+> about understanding everything now - we'll explore each feature in depth as we
+> progress through the puzzles_.
 
 ## The challenge: Growing complexity
 
@@ -32,15 +35,20 @@ if row < height and col < width:
 
 ## The solution: A peek at TileTensor
 
-TileTensor will help us tackle these challenges with elegant solutions. Here's a glimpse of what's coming:
+TileTensor will help us tackle these challenges with elegant solutions. Here's a
+glimpse of what's coming:
 
-1. **Natural Indexing**: Use `tensor[i, j]` instead of manual offset calculations
-2. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled organizations
+1. **Natural Indexing**: Use `tensor[i, j]` instead of manual offset
+   calculations
+2. **Flexible Memory Layouts**: Support for row-major, column-major, and tiled
+   organizations
 3. **Performance Optimization**: Efficient memory access patterns for GPU
 
 ## A taste of what's ahead
 
-Let's look at a few examples of what TileTensor can do. Don't worry about understanding all the details now - we'll cover each feature thoroughly in upcoming puzzles.
+Let's look at a few examples of what TileTensor can do. Don't worry about
+understanding all the details now - we'll cover each feature thoroughly in
+upcoming puzzles.
 
 ### Basic usage example
 
@@ -62,14 +70,16 @@ tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 ```
 
-To learn more about `Layout` and `TileTensor`, see these guides from the [Mojo manual](https://docs.modular.com/mojo/manual/)
+To learn more about `Layout` and `TileTensor`, see these guides from the
+[Mojo manual](https://docs.modular.com/mojo/manual/)
 
 - [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
 - [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
 
 ## Quick example
 
-Let's put everything together with a simple example that demonstrates the basics of TileTensor:
+Let's put everything together with a simple example that demonstrates the basics
+of TileTensor:
 
 ```mojo
 {{#include ./intro.mojo}}
@@ -136,13 +146,17 @@ This simple example demonstrates key TileTensor benefits:
 - Automatic memory layout handling
 - Natural multi-dimensional indexing
 
-While this example is straightforward, the same patterns will scale to complex GPU operations in upcoming puzzles. You'll see how these basic concepts extend to:
+While this example is straightforward, the same patterns will scale to complex
+GPU operations in upcoming puzzles. You'll see how these basic concepts extend
+to:
 
 - Multi-threaded GPU operations
 - Shared memory optimizations
 - Complex tiling strategies
 - Hardware-accelerated computations
 
-Ready to start your GPU programming journey with TileTensor? Let's dive into the puzzles!
+Ready to start your GPU programming journey with TileTensor? Let's dive into the
+puzzles!
 
-💡 **Tip**: Keep this example in mind as we progress - we'll build upon these fundamental concepts to create increasingly sophisticated GPU programs.
+💡 **Tip**: Keep this example in mind as we progress - we'll build upon these
+fundamental concepts to create increasingly sophisticated GPU programs.

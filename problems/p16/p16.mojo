@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.sys import argv
 from std.testing import assert_equal
 from std.gpu.host import DeviceContext

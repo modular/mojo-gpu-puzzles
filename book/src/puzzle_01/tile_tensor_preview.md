@@ -1,6 +1,7 @@
 ## Why consider TileTensor?
 
-Looking at our traditional implementation below, you might notice some potential issues:
+Looking at our traditional implementation below, you might notice some potential
+issues:
 
 ### Current approach
 
@@ -32,7 +33,8 @@ idx = (batch * padded_height + row) * padded_width + col
 
 ### TileTensor preview
 
-[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/) will help us handle these cases more elegantly:
+[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)
+will help us handle these cases more elegantly:
 
 ```mojo
 # Future preview - don't worry about this syntax yet!
@@ -40,10 +42,12 @@ output[i, j] = a[i, j] + 10.0  # 2D indexing
 output[b, i, j] = a[b, i, j] + 10.0  # 3D indexing
 ```
 
-We'll learn about TileTensor in detail in Puzzle 4, where these concepts become essential. For now, focus on understanding:
+We'll learn about TileTensor in detail in Puzzle 4, where these concepts become
+essential. For now, focus on understanding:
 
 - Basic thread indexing
 - Simple memory access patterns
 - One-to-one mapping of threads to data
 
-💡 **Key Takeaway**: While direct indexing works for simple cases, we'll soon need more sophisticated tools for complex GPU programming patterns.
+💡 **Key Takeaway**: While direct indexing works for simple cases, we'll soon
+need more sophisticated tools for complex GPU programming patterns.

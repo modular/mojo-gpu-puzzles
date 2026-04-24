@@ -1,8 +1,10 @@
 # Simple Case with Single Block
 
-Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output`.
+Implement a kernel that computes a 1D convolution between 1D TileTensor `a` and
+1D TileTensor `b` and stores it in 1D TileTensor `output`.
 
-**Note:** _You need to handle the general case. You only need 2 global reads and 1 global write per thread._
+**Note:** _You need to handle the general case. You only need 2 global reads and
+1 global write per thread._
 
 ## Key concepts
 
@@ -12,7 +14,8 @@ This puzzle covers:
 - Managing data dependencies across threads
 - Using shared memory for overlapping regions
 
-The key insight is understanding how to efficiently access overlapping elements while maintaining correct boundary conditions.
+The key insight is understanding how to efficiently access overlapping elements
+while maintaining correct boundary conditions.
 
 ## Configuration
 
@@ -41,7 +44,9 @@ Notes:
 
 <div class="solution-tips">
 
-1. Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())` for shared memory allocation
+1. Use
+   `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())`
+   for shared memory allocation
 2. Load input to `shared_a[local_i]` and kernel to `shared_b[local_i]`
 3. Call `barrier()` after loading
 4. Sum products within bounds: `if local_i + j < SIZE`
@@ -109,7 +114,8 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 <div class="solution-explanation">
 
-The solution implements a 1D convolution using shared memory for efficient access to overlapping elements. Here's a detailed breakdown:
+The solution implements a 1D convolution using shared memory for efficient
+access to overlapping elements. Here's a detailed breakdown:
 
 ### Memory layout
 
@@ -166,16 +172,23 @@ Kernel b:        [0  1  2]
          output[global_i] = local_sum
      ```
 
-   The key difference is that the inefficient version has **all threads perform the convolution computation** (including those where `global_i >= SIZE`), and only the final write is guarded. This leads to:
-   - **Wasteful computation**: Threads beyond the valid range still perform unnecessary work
-   - **Reduced efficiency**: Extra computations that won't be used
-   - **Poor resource utilization**: GPU cores working on meaningless calculations
+The key difference is that the inefficient version has
+**all threads perform the convolution computation** (including those where
+`global_i >= SIZE`), and only the final write is guarded. This leads to:
 
-   The efficient version ensures that only threads with valid `global_i` values perform any computation, making better use of GPU resources.
+   - **Wasteful computation**: Threads beyond the valid range still perform
+     unnecessary work
+   - **Reduced efficiency**: Extra computations that won't be used
+   - **Poor resource utilization**: GPU cores working on meaningless
+     calculations
+
+The efficient version ensures that only threads with valid `global_i` values
+perform any computation, making better use of GPU resources.
 
 2. **Key Implementation Features**:
    - Uses `var` for proper type inference with `output.element_type`
-   - Employs `@parameter` decorator to unroll the convolution loop at compile time
+   - Employs `@parameter` decorator to unroll the convolution loop at compile
+     time
    - Maintains strict bounds checking for memory safety
    - Leverages TileTensor's type system for better code safety
 

@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.memory import UnsafePointer
 from std.gpu import thread_idx, barrier
 from std.gpu.host import DeviceContext

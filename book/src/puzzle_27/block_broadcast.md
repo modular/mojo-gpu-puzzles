@@ -1,8 +1,18 @@
 # block.broadcast() Vector Normalization
 
-Implement vector mean normalization by combining [block.sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) and [block.broadcast](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) operations to demonstrate the complete block-level communication workflow. Each thread will contribute to computing the mean, then receive the broadcast mean to normalize its element, showcasing how block operations work together to solve real parallel algorithms.
+Implement vector mean normalization by combining
+[block.sum](https://docs.modular.com/mojo/std/gpu/primitives/block/sum) and
+[block.broadcast](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast)
+operations to demonstrate the complete block-level communication workflow. Each
+thread will contribute to computing the mean, then receive the broadcast mean to
+normalize its element, showcasing how block operations work together to solve
+real parallel algorithms.
 
-**Key insight:** _The [block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) operation enables one-to-all communication, completing the fundamental block communication patterns: reduction (all→one), scan (all→each), and broadcast (one→all)._
+**Key insight:** _The
+[block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast)
+operation enables one-to-all communication, completing the fundamental block
+communication patterns: reduction (all→one), scan (all→each), and broadcast
+(one→all)._
 
 ## Key concepts
 
@@ -14,10 +24,11 @@ In this puzzle, you'll learn:
 - **Complete block operations workflow** combining multiple operations
 - **Real-world algorithm implementation** using coordinated block primitives
 
-The algorithm demonstrates vector mean normalization:
-\\[\Large \text{output}[i] = \frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\\]
+The algorithm demonstrates vector mean normalization: \\[\Large \text{output}[i]
+= \frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\\]
 
-Each thread contributes to the mean calculation, then receives the broadcast mean to normalize its element.
+Each thread contributes to the mean calculation, then receives the broadcast
+mean to normalize its element.
 
 ## Configuration
 
@@ -75,7 +86,8 @@ Transform the multi-phase coordination into elegant block operations workflow:
 
 ### Complete block operations workflow
 
-Implement sophisticated vector mean normalization using the full block operations toolkit:
+Implement sophisticated vector mean normalization using the full block
+operations toolkit:
 
 ```mojo
 {{#include ../../../problems/p27/p27.mojo:block_normalize}}
@@ -124,7 +136,8 @@ if local_i == 0:
     # Compute mean from total_sum and size
 ```
 
-**Why thread 0?** Consistent with `block.sum()` pattern where thread 0 receives the result.
+**Why thread 0?** Consistent with `block.sum()` pattern where thread 0 receives
+the result.
 
 ### 4. **[block.broadcast()](https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast) API concepts**
 
@@ -145,13 +158,15 @@ result = block.broadcast[
 
 ### 5. **Understanding the broadcast pattern**
 
-**Key insight**: `block.broadcast()` takes a value from ONE thread and gives it to ALL threads:
+**Key insight**: `block.broadcast()` takes a value from ONE thread and gives it
+to ALL threads:
 
 - **Thread 0** has the computed mean value
 - **All threads** need that same mean value
 - **`block.broadcast()`** copies thread 0's value to everyone
 
-This is the opposite of `block.sum()` (all→one) and different from `block.prefix_sum()` (all→each position).
+This is the opposite of `block.sum()` (all→one) and different from
+`block.prefix_sum()` (all→each position).
 
 ### 6. **Final normalization step**
 
@@ -163,7 +178,8 @@ if global_i < size:
     output_data[global_i] = normalized_value
 ```
 
-**SIMD extraction**: Remember that `block.broadcast()` returns SIMD, so use `[0]` to extract the scalar.
+**SIMD extraction**: Remember that `block.broadcast()` returns SIMD, so use
+`[0]` to extract the scalar.
 
 ### 7. **Pattern recognition from previous puzzles**
 
@@ -244,13 +260,15 @@ Output mean: 1.0
 
 <div class="solution-explanation">
 
-The `block.broadcast()` kernel demonstrates the complete block operations workflow by combining all three fundamental communication patterns in a real algorithm that produces mathematically verifiable results:
+The `block.broadcast()` kernel demonstrates the complete block operations
+workflow by combining all three fundamental communication patterns in a real
+algorithm that produces mathematically verifiable results:
 
 ## **Complete algorithm walkthrough with concrete execution:**
 
 ### **Phase 1: Parallel data loading (established patterns from all previous puzzles)**
 
-```
+```text
 Thread indexing (consistent across all puzzles):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // Maps to input array position
   local_i = thread_idx.x                              // Position within block (0-127)
@@ -268,7 +286,7 @@ All 128 threads load simultaneously - perfect parallel efficiency!
 
 ### **Phase 2: Block-wide sum reduction (leveraging earlier block.sum() knowledge)**
 
-```
+```text
 block.sum() coordination across all 128 threads:
   Contribution analysis:
     - Values 1,2,3,4,5,6,7,8 repeat 16 times each (128/8 = 16)
@@ -284,7 +302,7 @@ Threads 1-127: Have no access to total_sum (broadcast=False in block.sum)
 
 ### **Phase 3: Exclusive mean computation (single-thread processing)**
 
-```
+```text
 Thread 0 performs critical computation:
   Input: total_sum[0] = 576.0, size = 128
   Computation: mean_value = 576.0 / 128.0 = 4.5
@@ -300,7 +318,7 @@ Critical insight: Only thread 0 has the correct mean value at this point!
 
 ### **Phase 4: Block-wide broadcast distribution (one → all communication)**
 
-```
+```text
 block.broadcast() API execution:
   Source: src_thread = UInt(0) → Thread 0's mean_value = 4.5
   Target: All 128 threads in block
@@ -324,7 +342,7 @@ Result: Perfect synchronization - all threads have identical mean value!
 
 ### **Phase 5: Parallel mean normalization (coordinated processing)**
 
-```
+```text
 Each thread independently normalizes using broadcast mean:
   Thread 0:   normalized = 1.0 / 4.5 = 0.22222222...
   Thread 1:   normalized = 2.0 / 4.5 = 0.44444444...
@@ -342,7 +360,7 @@ Each value divided by original mean gives output with mean = 1.0
 
 ### **Phase 6: Verification of correctness**
 
-```
+```text
 Input analysis:
   - Sum: 576.0, Mean: 4.5
   - Max: 8.0, Min: 1.0
@@ -362,7 +380,7 @@ Proportional relationships preserved:
 
 ### **Technical accuracy and verification:**
 
-```
+```text
 Mathematical proof of correctness:
   Input: x₁, x₂, ..., xₙ where n = 128
   Mean: μ = (∑xᵢ)/n = 576/128 = 4.5
@@ -375,28 +393,39 @@ Algorithm produces provably correct mathematical result.
 
 ### **Connection to [Puzzle 12](../puzzle_12/tile_tensor.md) (foundational patterns):**
 
-- **Thread coordination evolution**: Same `global_i`, `local_i` patterns but with block primitives
-- **Memory access patterns**: Same TileTensor SIMD extraction `[0]` but optimized workflow
-- **Complexity elimination**: Replaces 20+ lines of manual barriers with 2 block operations
-- **Educational progression**: Manual → automated, complex → simple, error-prone → reliable
+- **Thread coordination evolution**: Same `global_i`, `local_i` patterns but
+  with block primitives
+- **Memory access patterns**: Same TileTensor SIMD extraction `[0]` but
+  optimized workflow
+- **Complexity elimination**: Replaces 20+ lines of manual barriers with 2 block
+  operations
+- **Educational progression**: Manual → automated, complex → simple, error-prone
+  → reliable
 
 ### **Connection to [`block.sum()`](./block_sum.md) (perfect integration):**
 
-- **API consistency**: Identical template structure `[block_size=tpb, broadcast=False]`
-- **Result flow design**: Thread 0 receives sum, naturally computes derived parameter
-- **Seamless composition**: Output of `block.sum()` becomes input for computation + broadcast
+- **API consistency**: Identical template structure
+  `[block_size=tpb, broadcast=False]`
+- **Result flow design**: Thread 0 receives sum, naturally computes derived
+  parameter
+- **Seamless composition**: Output of `block.sum()` becomes input for
+  computation + broadcast
 - **Performance optimization**: Single-kernel workflow vs multi-pass approaches
 
 ### **Connection to [`block.prefix_sum()`](./block_prefix_sum.md) (complementary communication):**
 
-- **Distribution patterns**: `prefix_sum` gives unique positions, `broadcast` gives shared values
-- **Usage scenarios**: `prefix_sum` for parallel partitioning, `broadcast` for parameter sharing
-- **Template consistency**: Same `dtype`, `block_size` parameter patterns across all operations
-- **SIMD handling uniformity**: All block operations return SIMD requiring `[0]` extraction
+- **Distribution patterns**: `prefix_sum` gives unique positions, `broadcast`
+  gives shared values
+- **Usage scenarios**: `prefix_sum` for parallel partitioning, `broadcast` for
+  parameter sharing
+- **Template consistency**: Same `dtype`, `block_size` parameter patterns across
+  all operations
+- **SIMD handling uniformity**: All block operations return SIMD requiring `[0]`
+  extraction
 
 ### **Advanced algorithmic insights:**
 
-```
+```text
 Communication pattern comparison:
   Traditional approach:
     1. Manual reduction:     O(log n) with explicit barriers
@@ -413,7 +442,7 @@ Communication pattern comparison:
 
 ### **Real-world algorithm patterns demonstrated:**
 
-```
+```text
 Common parallel algorithm structure:
   Phase 1: Parallel data processing      → All threads contribute
   Phase 2: Global parameter computation  → One thread computes
@@ -454,23 +483,30 @@ Mean normalization is the perfect educational example of this fundamental patter
 
 **Complete block operations progression:**
 
-1. **Manual coordination** ([Puzzle 12](../puzzle_12/tile_tensor.md)): Understand parallel fundamentals
-2. **Warp primitives** ([Puzzle 24](../puzzle_24/warp_sum.md)): Learn hardware-accelerated patterns
-3. **Block reduction** ([`block.sum()`](./block_sum.md)): Learn all→one communication
-4. **Block scan** ([`block.prefix_sum()`](./block_prefix_sum.md)): Learn all→each communication
+1. **Manual coordination** ([Puzzle 12](../puzzle_12/tile_tensor.md)):
+   Understand parallel fundamentals
+2. **Warp primitives** ([Puzzle 24](../puzzle_24/warp_sum.md)): Learn
+   hardware-accelerated patterns
+3. **Block reduction** ([`block.sum()`](./block_sum.md)): Learn all→one
+   communication
+4. **Block scan** ([`block.prefix_sum()`](./block_prefix_sum.md)): Learn
+   all→each communication
 5. **Block broadcast** (`block.broadcast()`): Learn one→all communication
 
-**The complete picture:** Block operations provide the fundamental communication building blocks for sophisticated parallel algorithms, replacing complex manual coordination with clean, composable primitives.
+**The complete picture:** Block operations provide the fundamental communication
+building blocks for sophisticated parallel algorithms, replacing complex manual
+coordination with clean, composable primitives.
 
 ## Performance insights and technical analysis
 
 ### **Quantitative performance comparison:**
 
-**`block.broadcast()` vs Traditional shared memory approach (for demonstration):**
+**`block.broadcast()` vs Traditional shared memory approach (for
+demonstration):**
 
 **Traditional Manual Approach:**
 
-```
+```text
 Phase 1: Manual reduction
   • Shared memory allocation: ~5 cycles
   • Barrier synchronization: ~10 cycles
@@ -492,7 +528,7 @@ Total: ~47 cycles
 
 **Block Operations Approach:**
 
-```
+```text
 Phase 1: block.sum()
   • Hardware-optimized: ~3 cycles
   • Automatic barriers: 0 explicit cost
@@ -522,7 +558,7 @@ Total: ~17 cycles
 
 **Memory bandwidth utilization:**
 
-```
+```text
 Traditional multi-kernel approach:
   Kernel 1: Input → Reduction → Global memory write
   Kernel 2: Global memory read → Broadcast → Output
@@ -555,7 +591,7 @@ Block operations single-kernel:
 
 ### **Composition benefits:**
 
-```
+```text
 Individual operations: Good performance, limited scope
 Combined operations:   Excellent performance, comprehensive algorithms
 
@@ -568,12 +604,22 @@ Example combinations seen in real applications:
 
 ## Next steps
 
-Once you've learned about the complete block operations trilogy, you're ready for:
+Once you've learned about the complete block operations trilogy, you're ready
+for:
 
-- **Multi-block algorithms**: Coordinating operations across multiple thread blocks
-- **Advanced parallel patterns**: Combining block operations for complex algorithms
+- **Multi-block algorithms**: Coordinating operations across multiple thread
+  blocks
+- **Advanced parallel patterns**: Combining block operations for complex
+  algorithms
 - **Memory hierarchy optimization**: Efficient data movement patterns
-- **Algorithm design**: Structuring parallel algorithms using block operation building blocks
-- **Performance optimization**: Choosing optimal block sizes and operation combinations
+- **Algorithm design**: Structuring parallel algorithms using block operation
+  building blocks
+- **Performance optimization**: Choosing optimal block sizes and operation
+  combinations
 
-💡 **Key Takeaway**: The block operations trilogy (`sum`, `prefix_sum`, `broadcast`) provides complete communication primitives for block-level parallel programming. By composing these operations, you can implement sophisticated parallel algorithms with clean, maintainable code that leverages GPU hardware optimizations. Mean normalization demonstrates how these operations work together to solve real computational problems efficiently.
+💡 **Key Takeaway**: The block operations trilogy (`sum`, `prefix_sum`,
+`broadcast`) provides complete communication primitives for block-level parallel
+programming. By composing these operations, you can implement sophisticated
+parallel algorithms with clean, maintainable code that leverages GPU hardware
+optimizations. Mean normalization demonstrates how these operations work
+together to solve real computational problems efficiently.

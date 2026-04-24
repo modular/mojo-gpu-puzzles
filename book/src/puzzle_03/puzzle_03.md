@@ -4,9 +4,11 @@
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of vector `a` and stores it in vector `output`.
+Implement a kernel that adds 10 to each position of vector `a` and stores it in
+vector `output`.
 
-**Note**: _You have more threads than positions. This means you need to protect against out-of-bounds memory access._
+**Note**: _You have more threads than positions. This means you need to protect
+against out-of-bounds memory access._
 
 {{ youtube YFKutZbRYSM breakpoint-sm }}
 
@@ -129,10 +131,10 @@ This solution:
 - Guards against out-of-bounds access with `if i < size`
 - Inside guard: adds 10 to input value
 
-> You might wonder why it passes the test even without the bound-check!
-> Always remember that passing the tests doesn't necessarily mean the code
-> is sound and free of Undefined Behaviors. In [puzzle 10](../puzzle_10/puzzle_10.md) we'll examine such cases and use some tools to catch such
-> soundness bugs.
+> You might wonder why it passes the test even without the bound-check! Always
+> remember that passing the tests doesn't necessarily mean the code is sound and
+> free of Undefined Behaviors. In [puzzle 10](../puzzle_10/puzzle_10.md) we'll
+> examine such cases and use some tools to catch such soundness bugs.
 
 </div>
 </details>
@@ -159,4 +161,6 @@ if i < height and j < width and k < depth and
    i >= padding and j >= padding: ...
 ```
 
-These boundary handling patterns will become more elegant when we [learn about TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md), which provides built-in shape management.
+These boundary handling patterns will become more elegant when we
+[learn about TileTensor in Puzzle 4](../puzzle_04/introduction_tile_tensor.md),
+which provides built-in shape management.

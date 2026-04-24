@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 """
 Unit tests for check_macos_env.py
 
 Tests the macOS environment validation script with mocking support.
 """
 
+import os
 import subprocess
 import sys
-import os
 
 
 def run_command(cmd, env=None):
@@ -16,12 +21,7 @@ def run_command(cmd, env=None):
     if env:
         full_env.update(env)
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        env=full_env
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, env=full_env)
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
@@ -29,7 +29,7 @@ def test_default_run():
     """Test default run without mocks (should detect real environment)"""
     print("Testing default run...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"]
     )
 
@@ -47,7 +47,7 @@ def test_json_output():
     """Test JSON output mode"""
     print("Testing JSON output...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py", "--json"]
     )
 
@@ -56,14 +56,14 @@ def test_json_output():
     assert '"checks":' in stdout, "Expected JSON with checks array"
     assert '"name":' in stdout, "Expected check names in JSON"
 
-    print(f"  ✓ JSON output works")
+    print("  ✓ JSON output works")
 
 
 def test_quiet_mode():
     """Test quiet mode (no output, only exit code)"""
     print("Testing quiet mode...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py", "--quiet"]
     )
 
@@ -77,101 +77,115 @@ def test_mock_all_passing():
     """Test with all checks mocked to pass"""
     print("Testing all checks passing (mocked)...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"],
         env={
             "MOCK_MACOS_VERSION": "15.0",
             "MOCK_XCODE_VERSION": "16.0",
-            "MOCK_METAL_AVAILABLE": "true"
-        }
+            "MOCK_METAL_AVAILABLE": "true",
+        },
     )
 
-    assert returncode == 0, f"Expected exit code 0 for passing checks, got {returncode}"
+    assert returncode == 0, (
+        f"Expected exit code 0 for passing checks, got {returncode}"
+    )
     assert "✓ PASS" in stdout, "Expected PASS status"
     assert "All checks passed" in stdout, "Expected success message"
 
-    print(f"  ✓ All mocked checks pass correctly")
+    print("  ✓ All mocked checks pass correctly")
 
 
 def test_mock_macos_fail():
     """Test with macOS version check failing"""
     print("Testing macOS version check failure...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"],
         env={
             "MOCK_MACOS_VERSION": "14.0",
             "MOCK_XCODE_VERSION": "16.0",
-            "MOCK_METAL_AVAILABLE": "true"
-        }
+            "MOCK_METAL_AVAILABLE": "true",
+        },
     )
 
-    assert returncode == 1, f"Expected exit code 1 for failing check, got {returncode}"
+    assert returncode == 1, (
+        f"Expected exit code 1 for failing check, got {returncode}"
+    )
     assert "✗ FAIL" in stdout, "Expected FAIL status"
     assert "macOS Version" in stdout, "Expected macOS version check"
     assert "does not meet" in stdout, "Expected failure message"
     assert "Upgrade to macOS" in stdout, "Expected fix instruction"
 
-    print(f"  ✓ macOS version failure detected correctly")
+    print("  ✓ macOS version failure detected correctly")
 
 
 def test_mock_xcode_fail():
     """Test with Xcode version check failing"""
     print("Testing Xcode version check failure...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"],
         env={
             "MOCK_MACOS_VERSION": "15.0",
             "MOCK_XCODE_VERSION": "15.0",
-            "MOCK_METAL_AVAILABLE": "true"
-        }
+            "MOCK_METAL_AVAILABLE": "true",
+        },
     )
 
-    assert returncode == 1, f"Expected exit code 1 for failing check, got {returncode}"
+    assert returncode == 1, (
+        f"Expected exit code 1 for failing check, got {returncode}"
+    )
     assert "✗ FAIL" in stdout, "Expected FAIL status"
     assert "Xcode Version" in stdout, "Expected Xcode version check"
     assert "does not meet" in stdout, "Expected failure message"
-    assert "Upgrade to Xcode" in stdout or "App Store" in stdout, "Expected fix instruction"
+    assert "Upgrade to Xcode" in stdout or "App Store" in stdout, (
+        "Expected fix instruction"
+    )
 
-    print(f"  ✓ Xcode version failure detected correctly")
+    print("  ✓ Xcode version failure detected correctly")
 
 
 def test_mock_metal_fail():
     """Test with Metal toolchain check failing"""
     print("Testing Metal toolchain check failure...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"],
         env={
             "MOCK_MACOS_VERSION": "15.0",
             "MOCK_XCODE_VERSION": "16.0",
-            "MOCK_METAL_AVAILABLE": "false"
-        }
+            "MOCK_METAL_AVAILABLE": "false",
+        },
     )
 
-    assert returncode == 1, f"Expected exit code 1 for failing check, got {returncode}"
+    assert returncode == 1, (
+        f"Expected exit code 1 for failing check, got {returncode}"
+    )
     assert "✗ FAIL" in stdout, "Expected FAIL status"
     assert "Metal Toolchain" in stdout, "Expected Metal toolchain check"
-    assert "xcodebuild -downloadComponent MetalToolchain" in stdout, "Expected fix command"
+    assert "xcodebuild -downloadComponent MetalToolchain" in stdout, (
+        "Expected fix command"
+    )
 
-    print(f"  ✓ Metal toolchain failure detected correctly")
+    print("  ✓ Metal toolchain failure detected correctly")
 
 
 def test_mock_multiple_failures():
     """Test with multiple checks failing"""
     print("Testing multiple check failures...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py"],
         env={
             "MOCK_MACOS_VERSION": "14.0",
             "MOCK_XCODE_VERSION": "15.0",
-            "MOCK_METAL_AVAILABLE": "false"
-        }
+            "MOCK_METAL_AVAILABLE": "false",
+        },
     )
 
-    assert returncode == 1, f"Expected exit code 1 for failing checks, got {returncode}"
+    assert returncode == 1, (
+        f"Expected exit code 1 for failing checks, got {returncode}"
+    )
 
     # Count FAIL occurrences (should be 3)
     fail_count = stdout.count("✗ FAIL")
@@ -179,40 +193,40 @@ def test_mock_multiple_failures():
 
     assert "Some checks failed" in stdout, "Expected failure summary"
 
-    print(f"  ✓ Multiple failures detected correctly")
+    print("  ✓ Multiple failures detected correctly")
 
 
 def test_json_all_passing():
     """Test JSON output with all checks passing"""
     print("Testing JSON output with all passing...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py", "--json"],
         env={
             "MOCK_MACOS_VERSION": "15.0",
             "MOCK_XCODE_VERSION": "16.0",
-            "MOCK_METAL_AVAILABLE": "true"
-        }
+            "MOCK_METAL_AVAILABLE": "true",
+        },
     )
 
     assert returncode == 0, f"Expected exit code 0, got {returncode}"
     assert '"all_passed": true' in stdout, "Expected all_passed to be true"
     assert '"passed": true' in stdout, "Expected passed: true in checks"
 
-    print(f"  ✓ JSON all passing works")
+    print("  ✓ JSON all passing works")
 
 
 def test_json_with_failures():
     """Test JSON output with failures"""
     print("Testing JSON output with failures...")
 
-    returncode, stdout, stderr = run_command(
+    returncode, stdout, _ = run_command(
         ["python3", "scripts/check_macos_env.py", "--json"],
         env={
             "MOCK_MACOS_VERSION": "14.0",
             "MOCK_XCODE_VERSION": "16.0",
-            "MOCK_METAL_AVAILABLE": "true"
-        }
+            "MOCK_METAL_AVAILABLE": "true",
+        },
     )
 
     assert returncode == 1, f"Expected exit code 1, got {returncode}"
@@ -220,7 +234,7 @@ def test_json_with_failures():
     assert '"passed": false' in stdout, "Expected some passed: false in checks"
     assert '"fix_command"' in stdout, "Expected fix_command in output"
 
-    print(f"  ✓ JSON with failures works")
+    print("  ✓ JSON with failures works")
 
 
 def main():

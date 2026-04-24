@@ -1,12 +1,12 @@
 # Summary
 
-# Getting Started
+## Getting Started
 
 - [🔥 Introduction](./introduction.md)
 - [🧭 Puzzles Usage Guide](./howto.md)
 - [🏆 Claim Your Rewards](./reward.md)
 
-# Part I: GPU Fundamentals
+## Part I: GPU Fundamentals
 
 - [Puzzle 1: Map](./puzzle_01/puzzle_01.md)
   - [🔰 Raw Memory Approach](./puzzle_01/raw.md)
@@ -22,7 +22,7 @@
 - [Puzzle 7: 2D Blocks](./puzzle_07/puzzle_07.md)
 - [Puzzle 8: Shared Memory](./puzzle_08/puzzle_08.md)
 
-# Part II: 🐞 Debugging GPU Programs
+## Part II: 🐞 Debugging GPU Programs
 
 - [Puzzle 9: GPU Debugging Workflow](./puzzle_09/puzzle_09.md)
   - [📚 Mojo GPU Debugging Essentials](./puzzle_09/essentials.md)
@@ -33,7 +33,7 @@
   - [👮🏼‍♂️ Detect Memory Violation](./puzzle_10/memcheck.md)
   - [🏁 Debug Race Condition](./puzzle_10/racecheck.md)
 
-# Part III: 🧮 GPU Algorithms
+## Part III: 🧮 GPU Algorithms
 
 - [Puzzle 11: Pooling](./puzzle_11/puzzle_11.md)
 - [Puzzle 12: Dot Product](./puzzle_12/puzzle_12.md)
@@ -50,14 +50,14 @@
   - [🤝 Shared Memory Version](./puzzle_16/shared_memory.md)
   - [📐 Tiled Version](./puzzle_16/tiled.md)
 
-# Part IV: 🐍 Interfacing with Python via MAX Graph Custom Ops
+## Part IV: 🐍 Interfacing with Python via MAX Graph Custom Ops
 
 - [Puzzle 17: 1D Convolution Op](./puzzle_17/puzzle_17.md)
 - [Puzzle 18: Softmax Op](./puzzle_18/puzzle_18.md)
 - [Puzzle 19: Attention Op](./puzzle_19/puzzle_19.md)
 - [🎯 Bonus Challenges](./bonuses/part4.md)
 
-# Part V: 🔥 PyTorch Custom Ops Integration
+## Part V: 🔥 PyTorch Custom Ops Integration
 
 - [Puzzle 20: 1D Convolution Op](./puzzle_20/puzzle_20.md)
 - [Puzzle 21: Embedding Op](./puzzle_21/puzzle_21.md)
@@ -67,7 +67,7 @@
   - [⚛️ Fused vs Unfused Kernels](./puzzle_22/forward_pass.md)
   - [⛓️ Autograd Integration & Backward Pass](./puzzle_22/backward_pass.md)
 
-# Part VI: 🌊 Mojo Functional Patterns and Benchmarking
+## Part VI: 🌊 Mojo Functional Patterns and Benchmarking
 
 - [Puzzle 23: GPU Functional Programming Patterns](./puzzle_23/puzzle_23.md)
   - [elementwise - Basic GPU Functional Operations](./puzzle_23/elementwise.md)
@@ -76,7 +76,7 @@
   - [🧠 GPU Threading vs SIMD Concepts](./puzzle_23/gpu-thread-vs-simd.md)
   - [📊 Benchmarking in Mojo](./puzzle_23/benchmarking.md)
 
-# Part VII: ⚡ Warp-Level Programming
+## Part VII: ⚡ Warp-Level Programming
 
 - [Puzzle 24: Warp Fundamentals](./puzzle_24/puzzle_24.md)
   - [🧠 Warp lanes & SIMT execution](./puzzle_24/warp_simt.md)
@@ -89,21 +89,21 @@
   - [🦋 warp.shuffle_xor() Butterfly Networks](./puzzle_26/warp_shuffle_xor.md)
   - [🔢 warp.prefix_sum() Scan Operations](./puzzle_26/warp_prefix_sum.md)
 
-# Part VIII: 🧱 Block-Level Programming
+## Part VIII: 🧱 Block-Level Programming
 
 - [Puzzle 27: Block-Wide Patterns](./puzzle_27/puzzle_27.md)
   - [🔰 block.sum() Essentials](./puzzle_27/block_sum.md)
   - [📈 block.prefix_sum() Parallel Histogram Binning](./puzzle_27/block_prefix_sum.md)
   - [📡 block.broadcast() Vector Normalization](./puzzle_27/block_broadcast.md)
 
-# Part IX: 🧠 Advanced Memory Systems
+## Part IX: 🧠 Advanced Memory Systems
 
 - [Puzzle 28: Async Memory Operations & Copy Overlap](./puzzle_28/puzzle_28.md)
 - [Puzzle 29: GPU Synchronization Primitives](./puzzle_29/puzzle_29.md)
   - [📶 Multi-Stage Pipeline Coordination](./puzzle_29/barrier.md)
   - [Double-Buffered Stencil Computation](./puzzle_29/memory_barrier.md)
 
-# Part X: 📊 Performance Analysis & Optimization
+## Part X: 📊 Performance Analysis & Optimization
 
 - [Puzzle 30: GPU Profiling](./puzzle_30/puzzle_30.md)
   - [📚 NVIDIA Profiling Basics](./puzzle_30/nvidia_profiling_basics.md)
@@ -113,7 +113,7 @@
   - [📚 Understanding Shared Memory Banks](./puzzle_32/shared_memory_bank.md)
   - [Conflict-Free Patterns](./puzzle_32/conflict_free_patterns.md)
 
-# Part XI: 🚀 Advanced GPU Features
+## Part XI: 🚀 Advanced GPU Features
 
 - [Puzzle 33: Tensor Core Operations](./puzzle_33/puzzle_33.md)
   - [🎯 Performance Bonus Challenge](./bonuses/part5.md)

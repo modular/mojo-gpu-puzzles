@@ -4,19 +4,27 @@
 
 ## 개요
 
-지금까지 GPU 프로그래밍의 기초와 고급 패턴을 배웠습니다. Part II에서는 `compute-sanitizer`와 `cuda-gdb`를 사용한 **정확성** 디버깅 기법을, 다른 파트에서는 워프 프로그래밍, 메모리 시스템, 블록 레벨 연산 등 다양한 GPU 기능을 다뤘습니다. 커널이 올바르게 동작하긴 합니다 - 하지만 **빠르기도** 할까요?
+지금까지 GPU 프로그래밍의 기초와 고급 패턴을 배웠습니다. Part II에서는
+`compute-sanitizer`와 `cuda-gdb`를 사용한 **정확성** 디버깅 기법을, 다른
+파트에서는 워프 프로그래밍, 메모리 시스템, 블록 레벨 연산 등 다양한 GPU 기능을
+다뤘습니다. 커널이 올바르게 동작하긴 합니다 - 하지만 **빠르기도** 할까요?
 
-> 이 튜토리얼은 [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)에서 권장하는 NVIDIA 프로파일링 방법론을 따릅니다.
+> 이 튜토리얼은
+> [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling)에서
+> 권장하는 NVIDIA 프로파일링 방법론을 따릅니다.
 
-**핵심 통찰**: 올바른 커널이라도 최적의 성능보다 수십 배나 느릴 수 있습니다. 프로파일링은 동작하는 코드와 고성능 코드 사이의 격차를 좁힙니다.
+**핵심 통찰**: 올바른 커널이라도 최적의 성능보다 수십 배나 느릴 수 있습니다.
+프로파일링은 동작하는 코드와 고성능 코드 사이의 격차를 좁힙니다.
 
 ## 프로파일링 도구 모음
 
-pixi를 통해 `cuda-toolkit`이 설치되어 있으므로, NVIDIA의 전문 프로파일링 도구를 바로 사용할 수 있습니다:
+pixi를 통해 `cuda-toolkit`이 설치되어 있으므로, NVIDIA의 전문 프로파일링 도구를
+바로 사용할 수 있습니다:
 
 ### NSight Systems (`nsys`) - "전체 그림" 도구
 
-**용도**: 시스템 전체 성능 분석 ([NSight Systems 문서](https://docs.nvidia.com/nsight-systems/))
+**용도**: 시스템 전체 성능 분석
+([NSight Systems 문서](https://docs.nvidia.com/nsight-systems/))
 
 - CPU-GPU 상호작용의 타임라인 뷰
 - 메모리 전송 병목
@@ -46,7 +54,8 @@ pixi run nsys stats --force-export=true timeline.nsys-rep
 
 ### NSight Compute (`ncu`) - "커널 심층 분석" 도구
 
-**용도**: 상세한 단일 커널 성능 분석 ([NSight Compute 문서](https://docs.nvidia.com/nsight-compute/))
+**용도**: 상세한 단일 커널 성능 분석
+([NSight Compute 문서](https://docs.nvidia.com/nsight-compute/))
 
 - 루프라인 모델 분석
 - 메모리 계층 구조 활용도
@@ -76,7 +85,7 @@ pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
 
 ## 도구 선택 의사결정 트리
 
-```
+```text
 성능 문제 발생
       |
       v
@@ -104,13 +113,19 @@ Systems       |         |
 
 ## 실습: NSight Systems로 시스템 전체 프로파일링
 
-[Puzzle 16](../puzzle_16/puzzle_16.md)의 행렬 곱셈 구현들을 프로파일링하여 성능 차이를 파악해 봅시다.
+[Puzzle 16](../puzzle_16/puzzle_16.md)의 행렬 곱셈 구현들을 프로파일링하여 성능
+차이를 파악해 봅시다.
 
-> **GUI 참고**: NSight Systems와 Compute GUI (`nsys-ui`, `ncu-ui`)는 디스플레이와 OpenGL 지원이 필요합니다. X11 포워딩이 없는 헤드리스 서버나 원격 시스템에서는 커맨드라인 버전 (`nsys`, `ncu`)을 사용하여 `nsys stats`와 `ncu --import --page details`로 텍스트 기반 분석을 수행하세요. `.nsys-rep`와 `.ncu-rep` 파일을 로컬 머신으로 전송하여 GUI로 분석할 수도 있습니다.
+> **GUI 참고**: NSight Systems와 Compute GUI (`nsys-ui`, `ncu-ui`)는
+> 디스플레이와 OpenGL 지원이 필요합니다. X11 포워딩이 없는 헤드리스 서버나 원격
+> 시스템에서는 커맨드라인 버전 (`nsys`, `ncu`)을 사용하여 `nsys stats`와
+> `ncu --import --page details`로 텍스트 기반 분석을 수행하세요. `.nsys-rep`와
+> `.ncu-rep` 파일을 로컬 머신으로 전송하여 GUI로 분석할 수도 있습니다.
 
 ### Step 1: 프로파일링을 위한 코드 준비
 
-**중요**: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를 포함하여 빌드합니다:
+**중요**: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를
+포함하여 빌드합니다:
 
 ```bash
 pixi shell -e nvidia
@@ -123,7 +138,8 @@ mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimi
 
 **이것이 중요한 이유**:
 
-- **전체 디버그 정보**: 프로파일러를 위한 완전한 심볼 테이블, 변수명, 소스 라인 매핑 제공
+- **전체 디버그 정보**: 프로파일러를 위한 완전한 심볼 테이블, 변수명, 소스 라인
+  매핑 제공
 - **포괄적 분석**: NSight 도구가 성능 데이터를 특정 코드 위치와 연결 가능
 - **최적화 유지**: 프로덕션 빌드와 일치하는 현실적인 성능 측정 보장
 
@@ -187,7 +203,8 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 - **메모리 할당이 지배적**: 전체 시간의 81.9%가 `cuMemAllocAsync`에 소비
 - **커널은 번개처럼 빠름**: 실행 시간 1,920 ns (0.000001920초)에 불과
 - **메모리 전송 내역**: 49.4% Device→Host, 36.0% memset, 14.6% Host→Device
-- **아주 작은 데이터**: 모든 메모리 연산이 0.001 MB 미만 (float32 4개 = 16바이트)
+- **아주 작은 데이터**: 모든 메모리 연산이 0.001 MB 미만 (float32 4개 =
+  16바이트)
 
 ### Step 4: 구현 비교
 
@@ -231,16 +248,16 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 
 ### 비교 1: 2 x 2 행렬
 
-| 구현 | 메모리 할당 | 커널 실행 | 성능 |
-|------|-----------|----------|------|
-| **Naive** | 81.9% cuMemAllocAsync | ✅ 1,920 ns | 기준선 |
+| 구현                          | 메모리 할당           | 커널 실행   | 성능           |
+|-------------------------------|-----------------------|-------------|----------------|
+| **Naive**                     | 81.9% cuMemAllocAsync | ✅ 1,920 ns | 기준선         |
 | **Shared** (`--single-block`) | 81.8% cuMemAllocAsync | ✅ 1,984 ns | **+3.3% 느림** |
 
 ### 비교 2: 9 x 9 행렬
 
-| 구현 | 메모리 할당 | 커널 실행 | 성능 |
-|------|-----------|----------|------|
-| **Tiled** (수동) | 81.1% cuMemAllocAsync | ✅ 2,048 ns | 기준선 |
+| 구현                | 메모리 할당           | 커널 실행   | 성능            |
+|---------------------|-----------------------|-------------|-----------------|
+| **Tiled** (수동)    | 81.1% cuMemAllocAsync | ✅ 2,048 ns | 기준선          |
 | **Idiomatic Tiled** | 81.6% cuMemAllocAsync | ✅ 2,368 ns | **+15.6% 느림** |
 
 **공정 비교에서 얻은 핵심 통찰**:
@@ -255,8 +272,10 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 
 - **모든 변형이 메모리 할당에 지배됨** (시간의 81% 이상)
 - **커널 실행은 의미 없음** - 설정 비용에 비하면 미미
-- **"최적화"가 오히려 해로울 수 있음**: 공유 메모리가 3.3%, async_copy가 15.6% 오버헤드 추가
-- **진짜 교훈**: 작은 워크로드에서는 알고리즘 선택이 무의미 - 오버헤드가 모든 것을 압도
+- **"최적화"가 오히려 해로울 수 있음**: 공유 메모리가 3.3%, async_copy가 15.6%
+  오버헤드 추가
+- **진짜 교훈**: 작은 워크로드에서는 알고리즘 선택이 무의미 - 오버헤드가 모든
+  것을 압도
 
 **이런 결과가 나오는 이유**:
 
@@ -268,7 +287,8 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep > idiomatic_tiled
 
 - **문제 크기 맥락이 중요**: 2×2와 9×9 모두 GPU에게는 작음
 - **고정 비용이 작은 문제를 지배**: 메모리 할당, 커널 실행 오버헤드
-- **"최적화"가 작은 워크로드에 해로울 수 있음**: 공유 메모리, 비동기 연산이 오버헤드 추가
+- **"최적화"가 작은 워크로드에 해로울 수 있음**: 공유 메모리, 비동기 연산이
+  오버헤드 추가
 - **작은 문제를 최적화하지 말 것**: 실제 워크로드로 확장 가능한 알고리즘에 집중
 - **항상 벤치마킹할 것**: "더 좋은" 코드에 대한 가정은 흔히 틀림
 
@@ -302,7 +322,8 @@ ncu \
 
 > **흔한 문제: 권한 오류**
 >
-> `ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters` 오류가 발생하면 다음 해결 방법을 시도하세요:
+> `ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters`
+> 오류가 발생하면 다음 해결 방법을 시도하세요:
 >
 > ```bash
 > # NVIDIA 드라이버 옵션 추가 (rmmod보다 안전)
@@ -388,7 +409,8 @@ Achieved Occupancy                    %         2.09
 
 1. **작은 문제는 GPU에게 독**: 2×2 행렬은 GPU 리소스를 완전히 낭비
 2. **실행 구성이 중요**: 잘못된 스레드/블록 크기가 성능을 죽임
-3. **규모가 알고리즘보다 중요**: 근본적으로 작은 문제는 어떤 최적화로도 해결 불가
+3. **규모가 알고리즘보다 중요**: 근본적으로 작은 문제는 어떤 최적화로도 해결
+   불가
 4. **NSight Compute는 정직함**: 커널 성능이 낮을 때 그대로 알려줌
 
 **진짜 교훈**:
@@ -397,7 +419,8 @@ Achieved Occupancy                    %         2.09
 - **현실적인 워크로드에 집중** - 최적화가 실제로 의미 있는 1000×1000+ 행렬
 - **프로파일링으로 최적화를 안내** - 단, 최적화할 가치가 있는 문제에만
 
-**2×2 예제의 경우**: 정교한 알고리즘(공유 메모리, tiling)이 이미 오버헤드가 지배적인 워크로드에 오버헤드만 추가합니다.
+**2×2 예제의 경우**: 정교한 알고리즘(공유 메모리, tiling)이 이미 오버헤드가
+지배적인 워크로드에 오버헤드만 추가합니다.
 
 ## 프로파일러 출력을 성능 탐정처럼 읽기
 
@@ -450,19 +473,23 @@ CPU-GPU    NSight Compute: 커널 상세
 
 ## 프로파일링 모범 사례
 
-포괄적인 프로파일링 지침은 [Best Practices Guide - Performance Metrics](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics)를 참고하세요.
+포괄적인 프로파일링 지침은
+[Best Practices Guide - Performance Metrics](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics)를
+참고하세요.
 
 ### 이렇게 하세요
 
 1. **대표적인 워크로드를 프로파일링**: 현실적인 데이터 크기와 패턴 사용
-2. **전체 디버그 정보로 빌드**: 최적화와 함께 포괄적인 프로파일링 데이터 및 소스 매핑을 위해 `--debug-level=full` 사용
+2. **전체 디버그 정보로 빌드**: 최적화와 함께 포괄적인 프로파일링 데이터 및 소스
+   매핑을 위해 `--debug-level=full` 사용
 3. **GPU 워밍업**: 커널을 여러 번 실행한 후 후반 반복을 프로파일링
 4. **대안 비교**: 항상 여러 구현을 프로파일링
 5. **핫스팟에 집중**: 가장 시간이 오래 걸리는 커널을 최적화
 
 ### 이렇게 하지 마세요
 
-1. **디버그 정보 없이 프로파일링하지 말 것**: 성능을 소스 코드에 매핑할 수 없음 (`mojo build --help`)
+1. **디버그 정보 없이 프로파일링하지 말 것**: 성능을 소스 코드에 매핑할 수 없음
+   (`mojo build --help`)
 2. **단일 실행만 프로파일링하지 말 것**: GPU 성능은 실행마다 달라질 수 있음
 3. **메모리 전송을 무시하지 말 것**: CPU-GPU 전송이 흔히 지배적
 4. **섣불리 최적화하지 말 것**: 먼저 프로파일링, 그다음 최적화
@@ -597,7 +624,8 @@ ncu \
 - `--clock-control=base`: 기본 주파수로 클럭 고정
 - `--section=SpeedOfLight`: Speed of Light 분석 포함
 - `--metrics=...`: 특정 지표만 수집
-- `--kernel-name regex:pattern`: 정규식 패턴으로 커널 지정 (`--kernel-regex`가 아님)
+- `--kernel-name regex:pattern`: 정규식 패턴으로 커널 지정 (`--kernel-regex`가
+  아님)
 
 ### 프로파일링 워크플로우 모범 사례
 
@@ -719,7 +747,8 @@ fi
 2. **최적화 준비**: Puzzle 31에서 이 통찰을 점유율 최적화에 활용합니다
 3. **도구 익히기**: 다양한 NSight Systems와 NSight Compute 옵션을 실험해 보세요
 
-**기억하세요**: 프로파일링은 단순히 느린 코드를 찾는 것이 아닙니다 - 프로그램의 동작을 이해하고 근거 있는 최적화 결정을 내리는 것입니다.
+**기억하세요**: 프로파일링은 단순히 느린 코드를 찾는 것이 아닙니다 - 프로그램의
+동작을 이해하고 근거 있는 최적화 결정을 내리는 것입니다.
 
 추가 프로파일링 자료:
 
