@@ -8,7 +8,9 @@ Here are some advanced challenges to extend your softmax implementation:
 
 ### 1. Large-scale softmax: Handling `TPB < SIZE`
 
-When the input size exceeds the number of threads per block (`TPB < SIZE`), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:
+When the input size exceeds the number of threads per block (`TPB < SIZE`), our
+current implementation fails because a single block cannot process the entire
+array. Two approaches to solve this:
 
 #### 1.1 Buffer reduction
 
@@ -36,15 +38,18 @@ Implement softmax for a batch of vectors (2D input tensor) with these variants:
 
 *This challenge extends [Puzzle 19: Attention Op](../puzzle_19/puzzle_19.md)*
 
-Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:
+Building on the vector attention implementation, here are advanced challenges
+that push the boundaries of attention mechanisms:
 
 ### 1. Larger sequence lengths
 
-Extend the attention mechanism to handle longer sequences using the existing kernels:
+Extend the attention mechanism to handle longer sequences using the existing
+kernels:
 
 #### 1.1 Sequence length scaling
 
-- Modify the attention implementation to handle `SEQ_LEN = 32` and `SEQ_LEN = 64`
+- Modify the attention implementation to handle `SEQ_LEN = 32` and
+  `SEQ_LEN = 64`
 - Update the `TPB` (threads per block) parameter accordingly
 - Ensure the transpose kernel handles the larger matrix sizes correctly
 

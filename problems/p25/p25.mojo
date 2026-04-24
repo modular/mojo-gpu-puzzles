@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, lane_id
 from std.gpu.host import DeviceContext
 from std.gpu.primitives.warp import shuffle_down, broadcast, WARP_SIZE

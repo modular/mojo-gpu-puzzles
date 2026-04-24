@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.math import ceildiv
 from std.gpu import thread_idx, block_idx, block_dim, barrier, lane_id
 from std.gpu.host import DeviceContext, HostBuffer, DeviceBuffer

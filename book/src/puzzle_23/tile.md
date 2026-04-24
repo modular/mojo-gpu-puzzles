@@ -2,13 +2,24 @@
 
 ## Overview
 
-Building on the **elementwise** pattern, this puzzle introduces **tiled processing** - a fundamental technique for optimizing memory access patterns and cache utilization on GPUs. Instead of each thread processing individual SIMD vectors across the entire array, tiling organizes data into smaller, manageable chunks that fit better in cache memory.
+Building on the **elementwise** pattern, this puzzle introduces
+**tiled processing** - a fundamental technique for optimizing memory access
+patterns and cache utilization on GPUs. Instead of each thread processing
+individual SIMD vectors across the entire array, tiling organizes data into
+smaller, manageable chunks that fit better in cache memory.
 
-You've already seen tiling in action with **[Puzzle 16's tiled matrix multiplication](../puzzle_16/tiled.md)**, where we used tiles to process large matrices efficiently. Here, we apply the same tiling principles to vector operations, demonstrating how this technique scales from 2D matrices to 1D arrays.
+You've already seen tiling in action with
+**[Puzzle 16's tiled matrix multiplication](../puzzle_16/tiled.md)**, where we
+used tiles to process large matrices efficiently. Here, we apply the same tiling
+principles to vector operations, demonstrating how this technique scales from 2D
+matrices to 1D arrays.
 
-Implement the same vector addition operation using Mojo's tiled approach. Each GPU thread will process an entire tile of data sequentially, demonstrating how memory locality can improve performance for certain workloads.
+Implement the same vector addition operation using Mojo's tiled approach. Each
+GPU thread will process an entire tile of data sequentially, demonstrating how
+memory locality can improve performance for certain workloads.
 
-**Key insight:** _Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization._
+**Key insight:** _Tiling trades parallel breadth for memory locality - fewer
+threads each doing more work with better cache utilization._
 
 ## Key concepts
 
@@ -23,7 +34,8 @@ In this puzzle, you'll learn:
 The same mathematical operation as elementwise:
 \\[\Large \text{output}[i] = a[i] + b[i]\\]
 
-But with a completely different execution strategy optimized for memory hierarchy.
+But with a completely different execution strategy optimized for memory
+hierarchy.
 
 ## Configuration
 
@@ -58,7 +70,8 @@ For a 1024-element vector with `TILE_SIZE=32`: `1024 ÷ 32 = 32` tiles exactly.
 
 ### 2. **Tile extraction pattern**
 
-Check out the [TileTensor `.tile` documentation](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile).
+Check out the
+[TileTensor `.tile` documentation](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile).
 
 ```mojo
 tile_id = indices[0]  # Each thread gets one tile to process
@@ -67,7 +80,8 @@ a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 ```
 
-The `tile[size](id)` method creates a view of `size` consecutive elements starting at `id × size`.
+The `tile[size](id)` method creates a view of `size` consecutive elements
+starting at `id × size`.
 
 ### 3. **Sequential processing within tiles**
 
@@ -96,11 +110,14 @@ out_tile.store[simd_width](Index(i), result)  # Store to position i in tile
 elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 ```
 
-Note the `1` instead of `SIMD_WIDTH` - each thread processes one entire tile sequentially.
+Note the `1` instead of `SIMD_WIDTH` - each thread processes one entire tile
+sequentially.
 
 ### 6. **Memory access pattern insight**
 
-Each thread accesses a contiguous block of memory (the tile), then moves to the next tile. This creates excellent **spatial locality** within each thread's execution.
+Each thread accesses a contiguous block of memory (the tile), then moves to the
+next tile. This creates excellent **spatial locality** within each thread's
+execution.
 
 ### 7. **Key debugging insight**
 
@@ -182,7 +199,8 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 <div class="solution-explanation">
 
-The tiled processing pattern demonstrates advanced memory optimization techniques for GPU programming:
+The tiled processing pattern demonstrates advanced memory optimization
+techniques for GPU programming:
 
 ### 1. **Tiling philosophy and memory hierarchy**
 
@@ -211,7 +229,7 @@ b_tile = b.tile[tile_size](tile_id)
 
 **Tile mapping visualization (TILE_SIZE=32):**
 
-```
+```text
 Original array: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
 
 Tile 0 (thread 0): [0, 1, 2, ..., 31]      ← Elements 0-31
@@ -241,13 +259,14 @@ for i in range(tile_size):
 **Why sequential processing?**
 
 - **Cache optimization**: Consecutive memory accesses maximize cache hit rates
-- **Compiler optimization**: `@parameter` loops unroll completely at compile-time
+- **Compiler optimization**: `@parameter` loops unroll completely at
+  compile-time
 - **Memory bandwidth**: Sequential access aligns with memory controller design
 - **Reduced coordination**: No need to synchronize between SIMD groups
 
 **Execution pattern within one tile (TILE_SIZE=32, SIMD_WIDTH=4):**
 
-```
+```text
 Thread processes tile sequentially:
 Step 0: Process elements [0:4] with SIMD
 Step 1: Process elements [4:8] with SIMD
@@ -263,7 +282,7 @@ Total: 8 SIMD operations per thread (32 ÷ 4 = 8)
 
 **Elementwise pattern:**
 
-```
+```text
 Thread 0: accesses global positions [0, 4, 8, 12, ...]    ← Stride = SIMD_WIDTH
 Thread 1: accesses global positions [4, 8, 12, 16, ...]   ← Stride = SIMD_WIDTH
 ...
@@ -272,7 +291,7 @@ Result: Memory accesses spread across entire array
 
 **Tiled pattern:**
 
-```
+```text
 Thread 0: accesses positions [0:32] sequentially         ← Contiguous 32-element block
 Thread 1: accesses positions [32:64] sequentially       ← Next contiguous 32-element block
 ...
@@ -294,19 +313,24 @@ elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 
 **Why `1` instead of `SIMD_WIDTH`?**
 
-- **Thread count**: Launch exactly `num_tiles` threads, not `num_tiles × SIMD_WIDTH`
+- **Thread count**: Launch exactly `num_tiles` threads, not
+  `num_tiles × SIMD_WIDTH`
 - **Work distribution**: Each thread handles one complete tile
 - **Load balancing**: More work per thread, fewer threads total
 - **Memory locality**: Each thread's work is spatially localized
 
 **Performance trade-offs:**
 
-- **Fewer logical threads**: May not fully utilize all GPU cores at low occupancy
-- **More work per thread**: Better cache utilization and reduced coordination overhead
+- **Fewer logical threads**: May not fully utilize all GPU cores at low
+  occupancy
+- **More work per thread**: Better cache utilization and reduced coordination
+  overhead
 - **Sequential access**: Optimal memory bandwidth utilization within each thread
 - **Reduced overhead**: Less thread launch and coordination overhead
 
-**Important note**: "Fewer threads" refers to the logical programming model. The GPU scheduler can still achieve high hardware utilization by running multiple warps and efficiently switching between them during memory stalls.
+**Important note**: "Fewer threads" refers to the logical programming model. The
+GPU scheduler can still achieve high hardware utilization by running multiple
+warps and efficiently switching between them during memory stalls.
 
 ### 6. **Performance characteristics**
 
@@ -348,12 +372,14 @@ elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 
 **Comparison summary:**
 
-```
+```text
 Elementwise: High parallelism, scattered memory access
 Tiled:       Moderate parallelism, localized memory access
 ```
 
-The choice between elementwise and tiled patterns depends on your specific workload characteristics, data access patterns, and target hardware capabilities.
+The choice between elementwise and tiled patterns depends on your specific
+workload characteristics, data access patterns, and target hardware
+capabilities.
 
 </div>
 </details>
@@ -363,7 +389,11 @@ The choice between elementwise and tiled patterns depends on your specific workl
 Now that you understand both elementwise and tiled patterns:
 
 - **[Vectorization](./vectorize.md)**: Fine-grained control over SIMD operations
-- **[🧠 GPU Threading vs SIMD](./gpu-thread-vs-simd.md)**: Understanding the execution hierarchy
-- **[📊 Benchmarking](./benchmarking.md)**: Performance analysis and optimization
+- **[🧠 GPU Threading vs SIMD](./gpu-thread-vs-simd.md)**: Understanding the
+  execution hierarchy
+- **[📊 Benchmarking](./benchmarking.md)**: Performance analysis and
+  optimization
 
-💡 **Key takeaway**: Tiling demonstrates how memory access patterns often matter more than raw computational throughput. The best GPU code balances parallelism with memory hierarchy optimization.
+💡 **Key takeaway**: Tiling demonstrates how memory access patterns often matter
+more than raw computational throughput. The best GPU code balances parallelism
+with memory hierarchy optimization.

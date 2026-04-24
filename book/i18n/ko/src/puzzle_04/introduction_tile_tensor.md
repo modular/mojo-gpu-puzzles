@@ -2,10 +2,13 @@
 
 # TileTensor 알아보기
 
-퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를 미리 살펴봅시다:
-🥁 ... 바로 **[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)** 입니다.
+퍼즐 풀이를 잠시 멈추고, GPU 프로그래밍을 더 즐겁게 만들어줄 강력한 추상화를
+미리 살펴봅시다: 🥁... 바로
+**[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)**
+입니다.
 
-> 💡 _TileTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸 이해할 필요는 없어요 - 퍼즐을 진행하면서 각 기능을 자세히 알아볼 겁니다_.
+> 💡 _TileTensor가 어떤 일을 할 수 있는지 맛보기로 살펴봅니다. 지금 모든 걸
+> 이해할 필요는 없어요 - 퍼즐을 진행하면서 각 기능을 자세히 알아볼 겁니다_.
 
 ## 문제: 점점 복잡해지는 코드
 
@@ -34,7 +37,8 @@ if row < height and col < width:
 
 ## 해결책: TileTensor 미리보기
 
-TileTensor는 이런 문제들을 깔끔하게 해결해줍니다. 앞으로 배울 내용을 살짝 엿보면:
+TileTensor는 이런 문제들을 깔끔하게 해결해줍니다. 앞으로 배울 내용을 살짝
+엿보면:
 
 1. **자연스러운 인덱싱**: 수동 오프셋 계산 대신 `tensor[i, j]` 사용
 2. **유연한 메모리 레이아웃**: 행 우선, 열 우선, 타일 구성 지원
@@ -42,7 +46,8 @@ TileTensor는 이런 문제들을 깔끔하게 해결해줍니다. 앞으로 배
 
 ## 앞으로 배울 내용 맛보기
 
-TileTensor가 할 수 있는 일을 몇 가지 예시로 살펴봅시다. 지금 모든 세부 사항을 이해할 필요는 없습니다 - 앞으로 나올 퍼즐에서 각 기능을 꼼꼼히 다룰 거예요.
+TileTensor가 할 수 있는 일을 몇 가지 예시로 살펴봅시다. 지금 모든 세부 사항을
+이해할 필요는 없습니다 - 앞으로 나올 퍼즐에서 각 기능을 꼼꼼히 다룰 거예요.
 
 ### 기본 사용 예시
 
@@ -64,7 +69,8 @@ tensor[0, 0] = 1.0  # 첫 번째 요소
 tensor[1, 2] = 2.0  # 마지막 요소
 ```
 
-`Layout`과 `TileTensor`에 대해 더 알아보려면 [Mojo 매뉴얼](https://docs.modular.com/mojo/manual/)의 가이드를 참고하세요:
+`Layout`과 `TileTensor`에 대해 더 알아보려면
+[Mojo 매뉴얼](https://docs.modular.com/mojo/manual/)의 가이드를 참고하세요:
 
 - [Introduction to layouts](https://docs.modular.com/mojo/manual/layout/layouts)
 - [Using TileTensor](https://docs.modular.com/mojo/manual/layout/tensors)
@@ -138,13 +144,16 @@ After:
 - 자동 메모리 레이아웃 처리
 - 자연스러운 다차원 인덱싱
 
-이 예제는 간단하지만, 같은 패턴이 앞으로 나올 퍼즐의 복잡한 GPU 연산에도 그대로 적용됩니다. 이런 기본 개념이 다음으로 어떻게 확장되는지 보게 될 거예요:
+이 예제는 간단하지만, 같은 패턴이 앞으로 나올 퍼즐의 복잡한 GPU 연산에도 그대로
+적용됩니다. 이런 기본 개념이 다음으로 어떻게 확장되는지 보게 될 거예요:
 
 - 멀티 스레드 GPU 연산
 - 공유 메모리 최적화
 - 복잡한 타일링 전략
 - 하드웨어 가속 연산
 
-TileTensor와 함께 GPU 프로그래밍 여정을 시작할 준비가 됐나요? 퍼즐로 들어가봅시다!
+TileTensor와 함께 GPU 프로그래밍 여정을 시작할 준비가 됐나요? 퍼즐로
+들어가봅시다!
 
-💡 **팁**: 진행하면서 이 예제를 기억해두세요 - 이 기본 개념을 바탕으로 점점 더 정교한 GPU 프로그램을 만들어갈 겁니다.
+💡 **팁**: 진행하면서 이 예제를 기억해두세요 - 이 기본 개념을 바탕으로 점점 더
+정교한 GPU 프로그램을 만들어갈 겁니다.

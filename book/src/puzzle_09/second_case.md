@@ -2,15 +2,25 @@
 
 ## Overview
 
-Building on your [crash debugging skills from the First Case](./first_case.md), you'll now face a completely different challenge: a **logic bug** that produces incorrect results without crashing.
+Building on your [crash debugging skills from the First Case](./first_case.md),
+you'll now face a completely different challenge: a **logic bug** that produces
+incorrect results without crashing.
 
 **The debugging shift:**
-- **[First Case](./first_case.md)**: Clear crash signals (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
-- **Second Case**: No crashes, no error messages - just subtly wrong results that require detective work
 
-This intermediate-level debugging challenge covers investigating **algorithmic errors** using `TileTensor` operations, where the program runs successfully but produces wrong output - a much more common (and trickier) real-world debugging scenario.
+- **[First Case](./first_case.md)**: Clear crash signals
+  (`CUDA_ERROR_ILLEGAL_ADDRESS`) guided your investigation
+- **Second Case**: No crashes, no error messages - just subtly wrong results
+  that require detective work
 
-**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and [Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow and systematic debugging techniques. Make sure you run the setup:
+This intermediate-level debugging challenge covers investigating
+**algorithmic errors** using `TileTensor` operations, where the program runs
+successfully but produces wrong output - a much more common (and trickier)
+real-world debugging scenario.
+
+**Prerequisites**: Complete [Mojo GPU Debugging Essentials](./essentials.md) and
+[Detective Work: First Case](./first_case.md) to understand CUDA-GDB workflow
+and systematic debugging techniques. Make sure you run the setup:
 
 ```bash
 pixi run -e nvidia setup-cuda-gdb
@@ -33,7 +43,8 @@ First, examine the kernel without looking at the complete code:
 {{#include ../../../problems/p09/p09.mojo:second_crash}}
 ```
 
-To experience the bug firsthand, run the following command in your terminal (`pixi` only):
+To experience the bug firsthand, run the following command in your terminal
+(`pixi` only):
 
 ```bash
 pixi run -e nvidia p09 --second-case
@@ -55,14 +66,17 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 
 ## Your task: detective work
 
-**Challenge**: The program runs without crashing but produces consistently wrong results. Without looking at the code, what would be your systematic approach to investigate this logic bug?
+**Challenge**: The program runs without crashing but produces consistently wrong
+results. Without looking at the code, what would be your systematic approach to
+investigate this logic bug?
 
 **Think about:**
 
 - What pattern do you see in the wrong results?
 - How would you investigate a loop that might not be running correctly?
 - What debugging strategy works when you can't inspect variables directly?
-- How can you apply the systematic investigation approach from [First Case](./first_case.md) when there are no crash signals to guide you?
+- How can you apply the systematic investigation approach from
+  [First Case](./first_case.md) when there are no crash signals to guide you?
 
 Start with:
 
@@ -74,14 +88,14 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 
 **Use these abbreviations** to speed up your debugging session:
 
-| Short | Full | Usage Example |
-|-------|------|---------------|
-| `r` | `run` | `(cuda-gdb) r` |
-| `n` | `next` | `(cuda-gdb) n` |
-| `c` | `continue` | `(cuda-gdb) c` |
-| `b` | `break` | `(cuda-gdb) b 39` |
-| `p` | `print` | `(cuda-gdb) p thread_id` |
-| `q` | `quit` | `(cuda-gdb) q` |
+| Short | Full       | Usage Example            |
+|-------|------------|--------------------------|
+| `r`   | `run`      | `(cuda-gdb) r`           |
+| `n`   | `next`     | `(cuda-gdb) n`           |
+| `c`   | `continue` | `(cuda-gdb) c`           |
+| `b`   | `break`    | `(cuda-gdb) b 39`        |
+| `p`   | `print`    | `(cuda-gdb) p thread_id` |
+| `q`   | `quit`     | `(cuda-gdb) q`           |
 
 **All debugging commands below use these shortcuts for efficiency!**
 
@@ -90,14 +104,22 @@ pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo
 
 <div class="solution-tips">
 
-1. **Pattern analysis first** - Look at the relationship between expected and actual results (what's the mathematical pattern in the differences?)
-2. **Focus on execution flow** - Count loop iterations when variables aren't accessible
-3. **Use simple breakpoints** - Complex debugging commands often fail with optimized code
-4. **Mathematical reasoning** - Work out what each thread should access vs what it actually accesses
-5. **Missing data investigation** - If results are consistently smaller than expected, what might be missing?
-6. **Host output verification** - The final results often reveal the pattern of the bug
-7. **Algorithm boundary analysis** - Check if loops are processing the right number of elements
-8. **Cross-validate with working cases** - Why does thread 3 work correctly but others don't?
+1. **Pattern analysis first** - Look at the relationship between expected and
+   actual results (what's the mathematical pattern in the differences?)
+2. **Focus on execution flow** - Count loop iterations when variables aren't
+   accessible
+3. **Use simple breakpoints** - Complex debugging commands often fail with
+   optimized code
+4. **Mathematical reasoning** - Work out what each thread should access vs what
+   it actually accesses
+5. **Missing data investigation** - If results are consistently smaller than
+   expected, what might be missing?
+6. **Host output verification** - The final results often reveal the pattern of
+   the bug
+7. **Algorithm boundary analysis** - Check if loops are processing the right
+   number of elements
+8. **Cross-validate with working cases** - Why does thread 3 work correctly but
+   others don't?
 
 </div>
 </details>
@@ -133,7 +155,8 @@ Expected: [1.0, 3.0, 6.0, 5.0]
 - Thread 2: Got 3.0, Expected 6.0 → Missing 3.0
 - Thread 3: Got 5.0, Expected 5.0 → ✅ Correct
 
-**Initial Hypothesis**: Each thread is missing some data, but thread 3 works correctly.
+**Initial Hypothesis**: Each thread is missing some data, but thread 3 works
+correctly.
 
 ### Phase 2: Entering the kernel
 
@@ -199,7 +222,8 @@ $2 = {0}
 $3 = {{0}, {1}, {2}, {3}}
 ```
 
-**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can inspect TileTensor data.
+**🎯 BREAKTHROUGH**: `a.ptr[0]@4` shows the full input array! This is how we can
+inspect TileTensor data.
 
 ### Phase 3: The critical loop investigation
 
@@ -228,7 +252,8 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 44          for offset in range(ITER):
 ```
 
-**First iteration complete**: Loop went from line 45 → 46 → back to 44. The loop continues.
+**First iteration complete**: Loop went from line 45 → 46 → back to 44. The loop
+continues.
 
 #### Step 8: Second loop iteration (offset = 1)
 
@@ -249,7 +274,8 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 44          for offset in range(ITER):
 ```
 
-**Second iteration complete**: This time it went through the if-block (lines 47-48).
+**Second iteration complete**: This time it went through the if-block (lines
+47-48).
 
 #### Step 9: testing for third iteration
 
@@ -258,7 +284,8 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 50          output[thread_id] = window_sum
 ```
 
-**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went directly to line 50 instead of hitting our breakpoint at line 45 again.
+**CRITICAL DISCOVERY**: The loop exited after only 2 iterations! It went
+directly to line 50 instead of hitting our breakpoint at line 45 again.
 
 **Conclusion**: The loop ran exactly **2 iterations** and then exited.
 
@@ -276,7 +303,8 @@ No symbol "output" in current context.
 No symbol "offset" in current context.
 ```
 
-**🔍 Context Lost**: After kernel completion, we lose access to kernel variables. This is normal behavior.
+**🔍 Context Lost**: After kernel completion, we lose access to kernel
+variables. This is normal behavior.
 
 ### Phase 4: Root cause analysis
 
@@ -285,7 +313,8 @@ No symbol "offset" in current context.
 From our debugging session, we observed:
 
 1. **Loop Iterations**: Only 2 iterations (offset = 0, offset = 1)
-2. **Expected**: A sliding window of size 3 should require 3 iterations (offset = 0, 1, 2)
+2. **Expected**: A sliding window of size 3 should require 3 iterations (offset
+   = 0, 1, 2)
 3. **Missing**: The third iteration (offset = 2)
 
 Looking at what each thread should compute:
@@ -333,16 +362,19 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
         window_sum += value
 ```
 
-**🎯 ROOT CAUSE IDENTIFIED**: `ITER = 2` should be `ITER = 3` for a sliding window of size 3.
+**🎯 ROOT CAUSE IDENTIFIED**: `ITER = 2` should be `ITER = 3` for a sliding
+window of size 3.
 
-**The Fix**: Change `comptime ITER = 2` to `comptime ITER = 3` in the source code.
+**The Fix**: Change `comptime ITER = 2` to `comptime ITER = 3` in the source
+code.
 
 ## Key debugging lessons
 
 **When Variables Are Inaccessible**:
 
 1. **Focus on execution flow** - Count breakpoint hits and loop iterations
-2. **Use mathematical reasoning** - Work out what should happen vs what does happen
+2. **Use mathematical reasoning** - Work out what should happen vs what does
+   happen
 3. **Pattern analysis** - Let the wrong results guide your investigation
 4. **Cross-validation** - Test your hypothesis against multiple data points
 
@@ -359,7 +391,10 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 - Focus on the algorithm logic rather than trying to inspect tensor contents
 - Use systematic reasoning to trace what each thread should vs actually accesses
 
-**Key Insight**: This type of off-by-one loop bug is extremely common in GPU programming. The systematic approach you learned here - combining limited debugger info with mathematical analysis and pattern recognition - is exactly how professional GPU developers debug when tools have limitations.
+**Key Insight**: This type of off-by-one loop bug is extremely common in GPU
+programming. The systematic approach you learned here - combining limited
+debugger info with mathematical analysis and pattern recognition - is exactly
+how professional GPU developers debug when tools have limitations.
 
 </div>
 </details>
@@ -375,7 +410,8 @@ for offset in range(ITER):           # ← Only 2 iterations: [0, 1]
 
 ### Your final challenge: [Detective Work: Third Case](./third_case.md)
 
-**But what if your program doesn't crash AND doesn't finish?** What if it just **hangs forever**?
+**But what if your program doesn't crash AND doesn't finish?** What if it just
+**hangs forever**?
 
 The [Third Case](./third_case.md) presents the ultimate debugging challenge:
 
@@ -386,7 +422,8 @@ The [Third Case](./third_case.md) presents the ultimate debugging challenge:
 
 **New skills you'll develop:**
 
-- **Barrier deadlock detection** - Finding coordination failures in parallel threads
+- **Barrier deadlock detection** - Finding coordination failures in parallel
+  threads
 - **Multi-thread state analysis** - Examining all threads simultaneously
 - **Synchronization debugging** - Understanding thread cooperation breakdowns
 
@@ -396,4 +433,7 @@ The [Third Case](./third_case.md) presents the ultimate debugging challenge:
 2. **Second Case**: Analyze result patterns → Find logic bugs
 3. **Third Case**: Investigate thread states → Find coordination bugs
 
-The systematic investigation skills from both previous cases - hypothesis formation, evidence gathering, pattern analysis - become crucial when debugging the most challenging GPU issue: threads that coordinate incorrectly and wait forever.
+The systematic investigation skills from both previous cases - hypothesis
+formation, evidence gathering, pattern analysis - become crucial when debugging
+the most challenging GPU issue: threads that coordinate incorrectly and wait
+forever.

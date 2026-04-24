@@ -1,9 +1,14 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from manim import *
+
 
 class Puzzle01Visualization(Scene):
     def construct(self):
         array_scale = 0.5  # Reduced scale
-        thread_scale = 0.4
 
         # Input array - positioned at the top, centered
         input_array = VGroup()
@@ -12,7 +17,7 @@ class Puzzle01Visualization(Scene):
             height=array_scale + 0.6,
             stroke_color=BLUE_D,
             fill_color=BLUE_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).shift(UP * 2.5)
 
         for i in range(4):
@@ -23,7 +28,9 @@ class Puzzle01Visualization(Scene):
         input_array.arrange(RIGHT, buff=0)
         input_array.move_to(input_bg)
         input_group = VGroup(input_bg, input_array)
-        input_label = Text("Input Array (size=4)", font_size=18).next_to(input_group, UP, buff=0.2)
+        input_label = Text("Input Array (size=4)", font_size=18).next_to(
+            input_group, UP, buff=0.2
+        )
         input_group = VGroup(input_label, input_group)
 
         # GPU Thread Block (single background rectangle)
@@ -32,9 +39,11 @@ class Puzzle01Visualization(Scene):
             height=2,
             stroke_color=GOLD_D,
             fill_color=DARK_GRAY,
-            fill_opacity=0.1
+            fill_opacity=0.1,
         )
-        block_label = Text("GPU Parallel Threads in a Block", font_size=18).next_to(block_bg, UP, buff=0.2)
+        block_label = Text(
+            "GPU Parallel Threads in a Block", font_size=18
+        ).next_to(block_bg, UP, buff=0.2)
 
         threads = VGroup()
         for i in range(4):
@@ -44,7 +53,7 @@ class Puzzle01Visualization(Scene):
                 corner_radius=0.1,
                 stroke_color=WHITE,
                 fill_color=DARK_GRAY,
-                fill_opacity=0.8
+                fill_opacity=0.8,
             )
             thread_text = Text(f"thread_idx.x={i}", font_size=16, color=YELLOW)
             thread_cell.add(thread_text)
@@ -65,7 +74,7 @@ class Puzzle01Visualization(Scene):
             height=array_scale + 1,
             stroke_color=GREEN_D,
             fill_color=GREEN_E,
-            fill_opacity=0.2
+            fill_opacity=0.2,
         ).shift(DOWN * 2.5)
 
         for i in range(4):
@@ -76,7 +85,9 @@ class Puzzle01Visualization(Scene):
         output_array.arrange(RIGHT, buff=0)
         output_array.move_to(output_bg)
         output_group = VGroup(output_bg, output_array)
-        output_label = Text("Output Array (size=4)", font_size=18).next_to(output_group, UP, buff=0.2)
+        output_label = Text("Output Array (size=4)", font_size=18).next_to(
+            output_group, UP, buff=0.2
+        )
         output_group = VGroup(output_label, output_group)
 
         # Animations
@@ -96,22 +107,24 @@ class Puzzle01Visualization(Scene):
             start = input_array[i].get_bottom()
             end = threads[i].get_top()
             arrow1 = Arrow(
-                start, end,
+                start,
+                end,
                 buff=0.2,
                 color=BLUE_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             # Arrow from thread to output
             start = threads[i].get_bottom()
             end = output_array[i].get_top()
             arrow2 = Arrow(
-                start, end,
+                start,
+                end,
                 buff=0.2,
                 color=GREEN_C,
                 stroke_width=2,
-                max_tip_length_to_length_ratio=0.2
+                max_tip_length_to_length_ratio=0.2,
             ).set_opacity(0.6)
 
             arrows.add(arrow1, arrow2)
@@ -119,13 +132,16 @@ class Puzzle01Visualization(Scene):
         self.play(FadeIn(arrows), run_time=0.3)
         self.wait(60)
 
+
 if __name__ == "__main__":
-    with tempconfig({
-        "preview": True,
-        "format": "gif",
-        "media_dir": "./media",
-        "quality": "medium_quality",
-        "output_file": "puzzle_01_viz"
-    }):
+    with tempconfig(
+        {
+            "preview": True,
+            "format": "gif",
+            "media_dir": "./media",
+            "quality": "medium_quality",
+            "output_file": "puzzle_01_viz",
+        }
+    ):
         scene = Puzzle01Visualization()
         scene.render()

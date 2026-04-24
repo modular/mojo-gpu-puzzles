@@ -2,7 +2,8 @@
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of 2D _TileTensor_ `a` and stores it in 2D _TileTensor_ `output`.
+Implement a kernel that adds 10 to each position of 2D _TileTensor_ `a` and
+stores it in 2D _TileTensor_ `output`.
 
 **Note:** _You have more threads than positions_.
 
@@ -14,12 +15,15 @@ In this puzzle, you'll learn about:
 - Direct 2D indexing with `tensor[i, j]`
 - Handling bounds checking with `TileTensor`
 
-The key insight is that `TileTensor` provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.
+The key insight is that `TileTensor` provides a natural 2D indexing interface,
+abstracting away the underlying memory layout while still requiring bounds
+checking.
 
 - **2D access**: Natural \\((i,j)\\) indexing with `TileTensor`
 - **Memory abstraction**: No manual row-major calculation needed
 - **Guard condition**: Still need bounds checking in both dimensions
-- **Thread bounds**: More threads \\((3 \times 3)\\) than tensor elements \\((2 \times 2)\\)
+- **Thread bounds**: More threads \\((3 \times 3)\\) than tensor elements \\((2
+  \times 2)\\)
 
 ## Code to complete
 

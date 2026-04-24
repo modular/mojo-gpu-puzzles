@@ -38,18 +38,24 @@
 
 ## Overview
 
-> _"For the things we have to learn before we can do them, we learn by doing them."_
-> — Aristotle, (Nicomachean Ethics)
+> _"For the things we have to learn before we can do them, we learn by doing
+> them."_ — Aristotle, (Nicomachean Ethics)
 
-Welcome to **Mojo🔥 GPU Puzzles, Edition 1** — an interactive approach to learning GPU programming through hands-on puzzle solving. Instead of traditional textbook learning, you'll immediately dive into writing real GPU code and seeing the results.
+Welcome to **Mojo🔥 GPU Puzzles, Edition 1** — an interactive approach to
+learning GPU programming through hands-on puzzle solving. Instead of traditional
+textbook learning, you'll immediately dive into writing real GPU code and seeing
+the results.
 
 Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
-> 📬 [Subscribe to updates](https://www.modular.com/company/talk-to-us) to get notified when new puzzles are released!
+> 📬 [Subscribe to updates](https://www.modular.com/company/talk-to-us) to get
+> notified when new puzzles are released!
 
 ## Why Mojo🔥
 
-[Mojo](https://docs.modular.com/mojo/manual/) represents a revolutionary approach to GPU programming, making massive parallelism accessible while maintaining systems-level performance:
+[Mojo](https://docs.modular.com/mojo/manual/) represents a revolutionary
+approach to GPU programming, making massive parallelism accessible while
+maintaining systems-level performance:
 
 - 🐍 **Python-like Syntax** with systems programming capabilities
 - ⚡ **Zero-cost Abstractions** that compile to efficient machine code
@@ -63,7 +69,9 @@ Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
 ### Prerequisites
 
-You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the examples.
+You'll need a
+[compatible GPU](https://docs.modular.com/max/faq#gpu-requirements) to run the
+examples.
 
 1. Visit [puzzles.modular.com](https://puzzles.modular.com)
 2. Clone this repository
@@ -75,28 +83,30 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 3. Install a package manager to run the Mojo🔥 programs:
 
-   ### **Option 1 (Highly recommended)**: [pixi](https://pixi.sh/latest/#installation)
+### **Option 1 (Highly recommended)**
 
-    `pixi` is the **recommended option** for this project because:
-    - Easy access to Modular's MAX/Mojo packages
-    - Handles GPU dependencies
-    - Full conda + PyPI ecosystem support
+   [pixi](https://pixi.sh/latest/#installation)
+
+   `pixi` is the **recommended option** for this project because:
+   - Easy access to Modular's MAX/Mojo packages
+   - Handles GPU dependencies
+   - Full conda + PyPI ecosystem support
 
     **Note: A few puzzles only work with `pixi`.**
 
     **Install:**
 
-    ```bash
+     ```bash
     curl -fsSL https://pixi.sh/install.sh | sh
-    ```
+     ```
 
     **Update:**
 
-    ```bash
+     ```bash
     pixi self-update
-    ```
+     ```
 
-   ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
+### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
     **Install:**
 
@@ -120,9 +130,13 @@ You'll need a [compatible GPU](https://docs.modular.com/max/faq#gpu-requirements
 
 ## Development
 
-We use `pixi` for development as it includes `uv` and also supports conda packages (like `mdbook` from the `conda-forge` channel) needed for development workflows.
+We use `pixi` for development as it includes `uv` and also supports conda
+packages (like `mdbook` from the `conda-forge` channel) needed for development
+workflows.
 
-> **WSL Users**: Before running `pixi run book`, install the required browser integration package:
+> **WSL Users**: Before running `pixi run book`, install the required browser
+> integration package:
+>
 > ```bash
 > sudo apt update && sudo apt install wslu
 > ```
@@ -158,8 +172,10 @@ pixi run format
 We welcome contributions! Whether it's:
 
 - 📝 Improving explanations
-- 🐛 Fixing bugs ([report bug](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=bug_report.yml))
-- 💡 Suggesting improvements ([request feature](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=feature_request.yml))
+- 🐛 Fixing bugs
+  ([report bug](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=bug_report.yml))
+- 💡 Suggesting improvements
+  ([request feature](https://github.com/modular/mojo-gpu-puzzles/issues/new?template=feature_request.yml))
 
 Please feel free to:
 
@@ -181,17 +197,21 @@ Please feel free to:
   </a>
 </p>
 
-Join our vibrant community to discuss GPU programming, share solutions, and get help!
+Join our vibrant community to discuss GPU programming, share solutions, and get
+help!
 
 ## Acknowledgments
 
-- Thanks to all our [contributors](https://github.com/modular/mojo-gpu-puzzles/graphs/contributors)
-- Initial puzzles are heavily inspired by [GPU Puzzles](https://github.com/srush/GPU-Puzzles)
+- Thanks to all our
+  [contributors](https://github.com/modular/mojo-gpu-puzzles/graphs/contributors)
+- Initial puzzles are heavily inspired by
+  [GPU Puzzles](https://github.com/srush/GPU-Puzzles)
 - Built with [mdBook](https://rust-lang.github.io/mdBook/)
 
 ## License
 
-This project is licensed under the LLVM License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the LLVM License - see the [LICENSE](LICENSE)
+file for details.
 
 <p align="center">
   <sub>Built with ❤️ by the Modular team</sub>

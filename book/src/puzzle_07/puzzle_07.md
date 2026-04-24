@@ -2,9 +2,11 @@
 
 ## Overview
 
-Implement a kernel that adds 10 to each position of 2D TileTensor `a` and stores it in 2D TileTensor `output`.
+Implement a kernel that adds 10 to each position of 2D TileTensor `a` and stores
+it in 2D TileTensor `output`.
 
-**Note:** _You have fewer threads per block than the size of `a` in both directions._
+**Note:**
+_You have fewer threads per block than the size of `a` in both directions._
 
 <img src="./media/07.png" alt="Blocks 2D visualization" class="light-mode-img">
 <img src="./media/07d.png" alt="Blocks 2D visualization" class="dark-mode-img">
@@ -17,11 +19,13 @@ In this puzzle, you'll learn about:
 - Handling large matrices with 2D block organization
 - Combining block indexing with `TileTensor` access
 
-The key insight is that `TileTensor` simplifies 2D indexing while still requiring proper block coordination for large matrices.
+The key insight is that `TileTensor` simplifies 2D indexing while still
+requiring proper block coordination for large matrices.
 
 > 🔑 **2D thread indexing convention**
 >
-> We extend the block-based indexing from [puzzle 4](../puzzle_04/puzzle_04.md) to 2D:
+> We extend the block-based indexing from [puzzle 4](../puzzle_04/puzzle_04.md)
+> to 2D:
 >
 > ```txt
 > Global position calculation:
@@ -30,6 +34,7 @@ The key insight is that `TileTensor` simplifies 2D indexing while still requirin
 > ```
 >
 > For example, with 2×2 blocks in a 4×4 grid:
+>
 > ```txt
 > Block (0,0):   Block (1,0):
 > [0,0  0,1]     [0,2  0,3]
@@ -42,6 +47,7 @@ The key insight is that `TileTensor` simplifies 2D indexing while still requirin
 >
 > Each position shows (row, col) for that thread's global index.
 > The block dimensions and indices work together to ensure:
+>
 > - Continuous coverage of the 2D space
 > - No overlap between blocks
 > - Efficient memory access patterns
@@ -68,7 +74,8 @@ The key insight is that `TileTensor` simplifies 2D indexing while still requirin
 
 <div class="solution-tips">
 
-1. Calculate global indices: `row = block_dim.y * block_idx.y + thread_idx.y`, `col = block_dim.x * block_idx.x + thread_idx.x`
+1. Calculate global indices: `row = block_dim.y * block_idx.y + thread_idx.y`,
+   `col = block_dim.x * block_idx.x + thread_idx.x`
 2. Add guard: `if row < size and col < size`
 3. Inside guard: think about how to add 10 to 2D TileTensor
 
@@ -158,7 +165,8 @@ This solution demonstrates how TileTensor simplifies 2D block-based processing:
      (* = thread exists but outside tensor bounds)
 
 2. **TileTensor benefits**
-   - Natural 2D indexing: `tensor[row, col]` instead of manual offset calculation
+   - Natural 2D indexing: `tensor[row, col]` instead of manual offset
+     calculation
    - Automatic memory layout optimization
    - Example access pattern:
 
@@ -183,6 +191,7 @@ This solution demonstrates how TileTensor simplifies 2D block-based processing:
      - Block boundary coordination
      - Cache-friendly data access
 
-This pattern shows how TileTensor simplifies 2D block processing while maintaining optimal memory access patterns and thread coordination.
+This pattern shows how TileTensor simplifies 2D block processing while
+maintaining optimal memory access patterns and thread coordination.
 </div>
 </details>

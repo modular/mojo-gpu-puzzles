@@ -2,7 +2,11 @@
 
 ## Overview
 
-Implement a kernel that computes the dot product of 1D TileTensor `a` and 1D TileTensor `b` and stores it in 1D TileTensor `output` (single number).  The dot product is an operation that takes two vectors of the same size and returns a single number (a scalar). It is calculated by multiplying corresponding elements from each vector and then summing those products.
+Implement a kernel that computes the dot product of 1D TileTensor `a` and 1D
+TileTensor `b` and stores it in 1D TileTensor `output` (single number). The dot
+product is an operation that takes two vectors of the same size and returns a
+single number (a scalar). It is calculated by multiplying corresponding elements
+from each vector and then summing those products.
 
 For example, if you have two vectors:
 
@@ -10,25 +14,35 @@ For example, if you have two vectors:
 \\[b = [b_{1}, b_{2}, ..., b_{n}] \\]
 
 ​Their dot product is:
-\\[a \\cdot b = a_{1}b_{1} +  a_{2}b_{2} + ... + a_{n}b_{n}\\]
+\\[a \\cdot b = a_{1}b_{1} + a_{2}b_{2} + ... + a_{n}b_{n}\\]
 
-**Note:** _You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block._
+**Note:** _You have 1 thread per position. You only need 2 global reads per
+thread and 1 global write per thread block._
 
 <img src="./media/12-w.png" alt="Dot product visualization" class="light-mode-img">
 <img src="./media/12-b.png" alt="Dot product visualization" class="dark-mode-img">
 
 ## Key concepts
 
-**Parallel reduction** is an algorithm that combines \\(n\\) values into one using a binary operation (here, addition) in \\(O(\log n)\\) steps instead of \\(O(n)\\) sequential steps. In each step, half the active threads each add one value into another, halving the number of remaining partial results. After \\(\log_2 n\\) steps, thread 0 holds the final sum. This tree-shaped computation requires a `barrier()` between steps so no thread reads a partially-updated value.
+**Parallel reduction** is an algorithm that combines \\(n\\) values into one
+using a binary operation (here, addition) in \\(O(\log n)\\) steps instead of
+\\(O(n)\\) sequential steps. In each step, half the active threads each add one
+value into another, halving the number of remaining partial results. After
+\\(\log_2 n\\) steps, thread 0 holds the final sum. This tree-shaped computation
+requires a `barrier()` between steps so no thread reads a partially-updated
+value.
 
 This puzzle covers:
 
-- Similar to [puzzle 8](../puzzle_08/puzzle_08.md) and [puzzle 11](../puzzle_11/puzzle_11.md), implementing parallel reduction with TileTensor
+- Similar to [puzzle 8](../puzzle_08/puzzle_08.md) and
+  [puzzle 11](../puzzle_11/puzzle_11.md), implementing parallel reduction with
+  TileTensor
 - Managing shared memory using TileTensor with address_space
 - Coordinating threads for collective operations
 - Using layout-aware tensor operations
 
-The key insight is how TileTensor simplifies memory management while maintaining efficient parallel reduction patterns.
+The key insight is how TileTensor simplifies memory management while maintaining
+efficient parallel reduction patterns.
 
 ## Configuration
 
@@ -40,7 +54,8 @@ The key insight is how TileTensor simplifies memory management while maintaining
 
 Notes:
 
-- **TileTensor allocation**: Use `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
+- **TileTensor allocation**: Use
+  `stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())`
 - **Element access**: Natural indexing with bounds checking
 - **Layout handling**: Separate layouts for input and output
 - **Thread coordination**: Same synchronization patterns with `barrier()`
@@ -125,7 +140,8 @@ expected: HostBuffer([140.0])
 
 <div class="solution-explanation">
 
-The solution implements a parallel reduction for dot product using TileTensor. Here's the detailed breakdown:
+The solution implements a parallel reduction for dot product using TileTensor.
+Here's the detailed breakdown:
 
 ### Phase 1: Element-wise Multiplication
 
@@ -183,7 +199,8 @@ Step 3:   [56+84  84   40   58   16   25   36   49]
    - Minimal thread divergence
    - Efficient shared memory usage
 
-The TileTensor version maintains the same efficient parallel reduction while providing:
+The TileTensor version maintains the same efficient parallel reduction while
+providing:
 
 - Better type safety
 - Cleaner memory management

@@ -4,8 +4,9 @@
 
 ## 개요
 
-정방 행렬 \\(A\\)와 \\(B\\)를 곱하여 결과를 \\(\text{output}\\)에 저장하는 커널을 구현하세요.
-각 스레드가 출력 행렬의 원소 하나를 계산하는 가장 기본적인 구현입니다.
+정방 행렬 \\(A\\)와 \\(B\\)를 곱하여 결과를 \\(\text{output}\\)에 저장하는
+커널을 구현하세요. 각 스레드가 출력 행렬의 원소 하나를 계산하는 가장 기본적인
+구현입니다.
 
 ## 핵심 개념
 
@@ -16,7 +17,8 @@
 - 행 우선(row-major) 레이아웃에서의 행렬 인덱싱
 - 스레드와 출력 원소 간 매핑
 
-핵심은 2D 스레드 인덱스를 행렬 원소에 매핑하고, 내적을 병렬로 계산하는 방법을 이해하는 것입니다.
+핵심은 2D 스레드 인덱스를 행렬 원소에 매핑하고, 내적을 병렬로 계산하는 방법을
+이해하는 것입니다.
 
 ## 구성
 
@@ -149,11 +151,13 @@ Matrix A:          Matrix B:                   Output C:
 ### 주요 언어 기능
 
 1. **변수 선언**:
-   - `var acc: output.element_type = 0`에서 `var`로 가변 변수를 선언하고, `output.element_type`으로 출력 텐서와 동일한 타입을 지정합니다
+   - `var acc: output.element_type = 0`에서 `var`로 가변 변수를 선언하고,
+     `output.element_type`으로 출력 텐서와 동일한 타입을 지정합니다
    - 누적 연산 전에 0으로 초기화
 
 2. **루프 최적화**:
-   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement) 데코레이터로 컴파일 타임에 루프 전개
+   - [`@parameter`](https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement)
+     데코레이터로 컴파일 타임에 루프 전개
    - 크기가 작고 미리 알려진 행렬에서 성능 향상
    - 더 나은 명령어 스케줄링 가능
 
@@ -174,6 +178,7 @@ Matrix A:          Matrix B:                   Output C:
    - 낮은 데이터 지역성
    - 큰 행렬로 갈수록 확장성 부족
 
-이 기본 구현은 GPU 행렬 곱셈을 이해하기 위한 기준점으로, 메모리 접근 패턴을 최적화해야 하는 이유를 보여줍니다.
+이 기본 구현은 GPU 행렬 곱셈을 이해하기 위한 기준점으로, 메모리 접근 패턴을
+최적화해야 하는 이유를 보여줍니다.
 </div>
 </details>

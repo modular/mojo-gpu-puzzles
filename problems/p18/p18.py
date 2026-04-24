@@ -1,10 +1,16 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 # ANCHOR: softmax_custom_op_graph
 from pathlib import Path
+
 import numpy as np
-from max.driver import CPU, Accelerator, Device, Buffer
+from max.driver import CPU, Accelerator, Buffer, Device
 from max.dtype import DType
 from max.engine import InferenceSession
-from max.graph import DeviceRef, Graph, TensorType, ops
+from max.graph import DeviceRef, Graph, TensorType
 from numpy.typing import NDArray
 from scipy.special import softmax as scipy_softmax
 

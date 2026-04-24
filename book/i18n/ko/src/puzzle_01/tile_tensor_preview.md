@@ -34,7 +34,8 @@ idx = (batch * padded_height + row) * padded_width + col
 
 ### TileTensor 미리보기
 
-[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)를 사용하면 이런 경우를 훨씬 깔끔하게 처리할 수 있습니다:
+[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)를
+사용하면 이런 경우를 훨씬 깔끔하게 처리할 수 있습니다:
 
 ```mojo
 # 미리보기 - 지금은 이 문법을 몰라도 괜찮습니다!
@@ -42,10 +43,12 @@ output[i, j] = a[i, j] + 10.0  # 2D 인덱싱
 output[b, i, j] = a[b, i, j] + 10.0  # 3D 인덱싱
 ```
 
-Puzzle 4에서 TileTensor를 자세히 배울 예정입니다. 그때 이 개념들이 필수가 됩니다. 지금은 다음 내용을 이해하는 데 집중하세요:
+Puzzle 4에서 TileTensor를 자세히 배울 예정입니다. 그때 이 개념들이 필수가
+됩니다. 지금은 다음 내용을 이해하는 데 집중하세요:
 
 - 기본 스레드 인덱싱
 - 간단한 메모리 접근 패턴
 - 스레드와 데이터의 일대일 매핑
 
-💡 **핵심 포인트**: 직접 인덱싱은 간단한 경우에 잘 작동하지만, 복잡한 GPU 프로그래밍 패턴에서는 곧 더 정교한 도구가 필요해집니다.
+💡 **핵심 포인트**: 직접 인덱싱은 간단한 경우에 잘 작동하지만, 복잡한 GPU
+프로그래밍 패턴에서는 곧 더 정교한 도구가 필요해집니다.

@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 import json
 import re
 import sys
@@ -30,7 +35,7 @@ def main():
         renderer = sys.argv[2] if len(sys.argv) > 2 else ""
         sys.exit(0 if renderer == "html" else 1)
 
-    context, book = json.load(sys.stdin)
+    _, book = json.load(sys.stdin)
     for section in book["sections"]:
         if "Chapter" in section:
             chapter = section["Chapter"]

@@ -1,9 +1,14 @@
-import time
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 import argparse
-from pathlib import Path
-import os
-import warnings
 import logging
+import os
+import time
+import warnings
+from pathlib import Path
 
 import torch
 from max.experimental.torch import CustomOpLibrary
@@ -88,7 +93,13 @@ class LayerNormLinearFunction(torch.autograd.Function):
         )
 
         # Use our custom backward operation (detached)
-        grad_input, grad_ln_weight, grad_ln_bias, grad_linear_weight, grad_linear_bias = mojo_layernorm_linear_backward(
+        (
+            grad_input,
+            grad_ln_weight,
+            grad_ln_bias,
+            grad_linear_weight,
+            grad_linear_bias,
+        ) = mojo_layernorm_linear_backward(
             input.detach(),
             ln_weight.detach(),
             ln_bias.detach(),
@@ -128,7 +139,7 @@ def mojo_layernorm_linear_backward(
     input, ln_weight, ln_bias, linear_weight, linear_bias, grad_output
 ):
     """Backward pass using Mojo implementation."""
-    forward_output, gradients, error = run_mojo_backward_implementation(
+    _, gradients, error = run_mojo_backward_implementation(
         input, ln_weight, ln_bias, linear_weight, linear_bias, target="gpu"
     )
     if gradients is None:
@@ -152,8 +163,7 @@ def mojo_layernorm_linear_autograd(
 
 
 class SimpleTransformerBlock(torch.nn.Module):
-    """A simple transformer block using our custom LayerNorm + Linear operations.
-    """
+    """A simple transformer block using our custom LayerNorm + Linear operations."""
 
     def __init__(self, hidden_dim, ff_dim, use_mojo=True, device="cuda"):
         super().__init__()
@@ -350,14 +360,18 @@ def reference_layernorm_linear_with_grad(
     # Return forward output and all gradients
     return output, {
         "grad_input": input.grad.clone() if input.grad is not None else None,
-        "grad_ln_weight": ln_weight.grad.clone() if ln_weight.grad
-        is not None else None,
-        "grad_ln_bias": ln_bias.grad.clone() if ln_bias.grad
-        is not None else None,
-        "grad_linear_weight": linear_weight.grad.clone() if linear_weight.grad
-        is not None else None,
-        "grad_linear_bias": linear_bias.grad.clone() if linear_bias.grad
-        is not None else None,
+        "grad_ln_weight": ln_weight.grad.clone()
+        if ln_weight.grad is not None
+        else None,
+        "grad_ln_bias": ln_bias.grad.clone()
+        if ln_bias.grad is not None
+        else None,
+        "grad_linear_weight": linear_weight.grad.clone()
+        if linear_weight.grad is not None
+        else None,
+        "grad_linear_bias": linear_bias.grad.clone()
+        if linear_bias.grad is not None
+        else None,
     }
 
 
@@ -559,12 +573,20 @@ def test_backward_pass(name, target="auto", test_data=None):
     test_data_ref = create_test_data_with_grad(device=device)
     test_data_mojo = create_test_data_with_grad(device=device)
 
-    input_tensor_ref, ln_weight_ref, ln_bias_ref, linear_weight_ref, linear_bias_ref = (
-        test_data_ref
-    )
-    input_tensor_mojo, ln_weight_mojo, ln_bias_mojo, linear_weight_mojo, linear_bias_mojo = (
-        test_data_mojo
-    )
+    (
+        input_tensor_ref,
+        ln_weight_ref,
+        ln_bias_ref,
+        linear_weight_ref,
+        linear_bias_ref,
+    ) = test_data_ref
+    (
+        input_tensor_mojo,
+        ln_weight_mojo,
+        ln_bias_mojo,
+        linear_weight_mojo,
+        linear_bias_mojo,
+    ) = test_data_mojo
 
     print(f"\nTesting {name} - Backward Pass")
     print("-" * (15 + len(name) + 15))
@@ -695,7 +717,7 @@ def run_comprehensive_test():
         results["gpu_unfused"] = False
         results["gpu_fused"] = False
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(
         f"   - CPU:         {'✅ CORRECT' if results['cpu'] else '❌ INCORRECT'}"
     )
@@ -767,7 +789,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
     print(f"\n⚡ Benchmarking CPU vs GPU {algorithm.upper()}")
     print("-" * (35 + len(algorithm)))
 
-    input_tensor, ln_weight, ln_bias, linear_weight, linear_bias = test_data
+    input_tensor, *_ = test_data
 
     if input_tensor.device.type != "cuda":
         print("   CUDA not available - skipping GPU benchmark")
@@ -792,7 +814,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
                 *test_data, algorithm="fused", target="cpu"
             )
         times["cpu"] = time.perf_counter() - start
-        print(f"   CPU: {times['cpu']*1000:.2f}ms ({iterations} iterations)")
+        print(f"   CPU: {times['cpu'] * 1000:.2f}ms ({iterations} iterations)")
     else:
         print(f"   CPU failed: {cpu_error}")
         times["cpu"] = None
@@ -818,7 +840,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
         torch.cuda.synchronize()
         times["gpu"] = time.perf_counter() - start
         print(
-            f"   GPU {algorithm}: {times['gpu']*1000:.2f}ms"
+            f"   GPU {algorithm}: {times['gpu'] * 1000:.2f}ms"
             f" ({iterations} iterations)"
         )
     else:
@@ -836,7 +858,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
         if speedup > 1:
             print(f"   GPU {algorithm} wins!")
         else:
-            print(f"   CPU wins (GPU overhead > computation benefit)")
+            print("   CPU wins (GPU overhead > computation benefit)")
     else:
         print("\n   Benchmark incomplete due to failures")
 
@@ -883,7 +905,7 @@ def run_algorithm_specific_test(algorithm):
         print(f"\n CUDA not available - skipping GPU {algorithm} test")
         results[f"gpu_{algorithm}"] = False
 
-    print(f"\nCorrectness Summary:")
+    print("\nCorrectness Summary:")
     print(
         "   - Reference:  "
         f" {'✅ CORRECT' if results['reference'] else '❌ INCORRECT'}"
@@ -906,13 +928,13 @@ def run_algorithm_specific_test(algorithm):
         benchmark_implementations(algorithm, test_data)
 
         print(f"\n{algorithm.upper()} Algorithm Test Completed!")
-        print(f"\nWhat we verified:")
+        print("\nWhat we verified:")
         print("✅ Numerical correctness against PyTorch reference")
         print("✅ CPU implementation accuracy")
         print(f"✅ GPU {algorithm} implementation accuracy")
         print("✅ Performance comparison CPU vs GPU")
 
-        print(f"\nLearning outcomes:")
+        print("\nLearning outcomes:")
         print(f"- {algorithm.title()} kernel implementation and optimization")
         print("- Cross-platform correctness verification")
         print("- Performance characterization and bottleneck analysis")
@@ -924,9 +946,9 @@ def run_algorithm_specific_test(algorithm):
             print("- Computation density optimization")
     else:
         if not all_correct:
-            print(f"\nCorrectness issues found - skipping benchmark")
+            print("\nCorrectness issues found - skipping benchmark")
         else:
-            print(f"\n CUDA not available - only correctness tested")
+            print("\n CUDA not available - only correctness tested")
 
     return all_correct
 
@@ -944,7 +966,7 @@ def run_comprehensive_backward_test():
     )
 
     # Test backward pass on CPU
-    print(f"\nTesting CPU Backward Pass:")
+    print("\nTesting CPU Backward Pass:")
     cpu_success = test_backward_pass(
         "CPU Backward Implementation", target="cpu"
     )
@@ -953,15 +975,15 @@ def run_comprehensive_backward_test():
     gpu_success = False
     test_data = create_test_data()
     if test_data[0].device.type == "cuda":
-        print(f"\nTesting GPU Backward Pass:")
+        print("\nTesting GPU Backward Pass:")
         gpu_success = test_backward_pass(
             "GPU Backward Implementation", target="gpu"
         )
     else:
-        print(f"\nCUDA not available - skipping GPU backward test")
+        print("\nCUDA not available - skipping GPU backward test")
 
     # Summary
-    print(f"\nBackward Pass Test Summary:")
+    print("\nBackward Pass Test Summary:")
     print(
         f"   - CPU Backward:  {'✅ CORRECT' if cpu_success else '❌ INCORRECT'}"
     )
@@ -972,7 +994,7 @@ def run_comprehensive_backward_test():
         )
         overall_success = cpu_success and gpu_success
     else:
-        print(f"   - GPU Backward:  ⏭️  SKIPPED (CUDA not available)")
+        print("   - GPU Backward:  ⏭️  SKIPPED (CUDA not available)")
         overall_success = cpu_success
 
     print(
@@ -981,8 +1003,8 @@ def run_comprehensive_backward_test():
     )
 
     if overall_success:
-        print(f"\nBACKWARD PASS Test Completed!")
-        print(f"\nWhat we verified:")
+        print("\nBACKWARD PASS Test Completed!")
+        print("\nWhat we verified:")
         print("✅ Backward pass numerical correctness against PyTorch autograd")
         print(
             "✅ All gradient components (input, LayerNorm weights/bias, Linear"
@@ -994,7 +1016,7 @@ def run_comprehensive_backward_test():
         print("✅ Race-condition-free gradient accumulation")
         print("✅ Cross-platform gradient computation")
 
-        print(f"\nTechnical achievements:")
+        print("\nTechnical achievements:")
         print("- Custom backward kernels with atomic operations")
         print(
             "- Proper chain rule implementation for LayerNorm + Linear"
@@ -1004,7 +1026,7 @@ def run_comprehensive_backward_test():
         print("- Memory-efficient gradient computation")
         print("- Educational focus on backward pass mathematics")
     else:
-        print(f"\nSome backward pass tests failed!")
+        print("\nSome backward pass tests failed!")
         print("   Check the error messages above for details.")
 
     return overall_success
@@ -1053,7 +1075,7 @@ def demonstrate_neural_network_fast():
         optimizer.step()
 
         accuracy = (output.argmax(dim=1) == target_labels).float().mean().item()
-        print(f"Step {step+1}: Loss={loss.item():.3f}, Acc={accuracy:.0%}")
+        print(f"Step {step + 1}: Loss={loss.item():.3f}, Acc={accuracy:.0%}")
 
     total_time = time.time() - start_time
     print(f"\nCompleted in {total_time:.1f}s")
@@ -1070,13 +1092,13 @@ def demonstrate_single_operation():
     print("=" * 60)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"\n⚡ Simple Demo Configuration:")
+    print("\n⚡ Simple Demo Configuration:")
     print(f"   Device: {device}")
-    print(f"   Operations: 1 forward + 1 backward")
-    print(f"   Focus: Correctness verification + speed")
+    print("   Operations: 1 forward + 1 backward")
+    print("   Focus: Correctness verification + speed")
 
     # Create test data
-    print(f"\nCreating test data...")
+    print("\nCreating test data...")
     torch.manual_seed(42)
     batch_size, seq_len, hidden_dim = BATCH_SIZE, SEQ_LEN, HIDDEN_DIM
     output_dim = OUTPUT_DIM
@@ -1095,7 +1117,7 @@ def demonstrate_single_operation():
     print(f"   Input shape: {list(input_tensor.shape)} ({device})")
 
     # Test forward pass
-    print(f"\nTesting forward pass...")
+    print("\nTesting forward pass...")
     start_time = time.time()
     mojo_output = mojo_layernorm_linear(
         input_tensor, ln_weight, ln_bias, linear_weight, linear_bias
@@ -1116,7 +1138,7 @@ def demonstrate_single_operation():
     )
 
     # Test backward pass
-    print(f"\nTesting backward pass...")
+    print("\nTesting backward pass...")
     start_time = time.time()
 
     # Our custom autograd function
@@ -1129,54 +1151,54 @@ def demonstrate_single_operation():
     backward_time = time.time() - start_time
 
     print(f"   Backward time: {backward_time:.3f}s")
-    print(f"   Gradients computed: ✅")
-    print(f"   Gradient shapes:")
+    print("   Gradients computed: ✅")
+    print("   Gradient shapes:")
 
     # Check each gradient and print shape if it exists
     if input_tensor.grad is not None:
         print(f"     input.grad: {list(input_tensor.grad.shape)}")
     else:
-        print(f"     input.grad: None (expected for leaf tensors)")
+        print("     input.grad: None (expected for leaf tensors)")
 
     if ln_weight.grad is not None:
         print(f"     ln_weight.grad: {list(ln_weight.grad.shape)}")
     else:
-        print(f"     ln_weight.grad: None")
+        print("     ln_weight.grad: None")
 
     if ln_bias.grad is not None:
         print(f"     ln_bias.grad: {list(ln_bias.grad.shape)}")
     else:
-        print(f"     ln_bias.grad: None")
+        print("     ln_bias.grad: None")
 
     if linear_weight.grad is not None:
         print(f"     linear_weight.grad: {list(linear_weight.grad.shape)}")
     else:
-        print(f"     linear_weight.grad: None")
+        print("     linear_weight.grad: None")
 
     if linear_bias.grad is not None:
         print(f"     linear_bias.grad: {list(linear_bias.grad.shape)}")
     else:
-        print(f"     linear_bias.grad: None")
+        print("     linear_bias.grad: None")
 
     total_time = forward_time + backward_time
-    print(f"\n⚡ Performance Summary:")
+    print("\n⚡ Performance Summary:")
     print(f"   Total time: {total_time:.3f}s")
     print(f"   Forward pass: {forward_time:.3f}s")
     print(f"   Backward pass: {backward_time:.3f}s")
 
-    print(f"\nSimple Demo Complete!")
-    print(f"\nWhat we demonstrated:")
-    print(f"✅ Single LayerNorm + Linear forward operation")
-    print(f"✅ Single backward pass with all gradients")
-    print(f"✅ Correctness verification against PyTorch")
-    print(f"✅ Performance timing")
-    print(f"✅ Minimal overhead demonstration")
+    print("\nSimple Demo Complete!")
+    print("\nWhat we demonstrated:")
+    print("✅ Single LayerNorm + Linear forward operation")
+    print("✅ Single backward pass with all gradients")
+    print("✅ Correctness verification against PyTorch")
+    print("✅ Performance timing")
+    print("✅ Minimal overhead demonstration")
 
-    print(f"\nThis is the fastest demo mode:")
-    print(f"- No neural network overhead")
-    print(f"- Single operation forward + backward")
-    print(f"- Direct correctness comparison")
-    print(f"- Minimal torch.compile overhead")
+    print("\nThis is the fastest demo mode:")
+    print("- No neural network overhead")
+    print("- Single operation forward + backward")
+    print("- Direct correctness comparison")
+    print("- Minimal torch.compile overhead")
 
     return forward_diff < 1e-4
 

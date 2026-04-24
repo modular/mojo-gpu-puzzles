@@ -1,3 +1,8 @@
+# ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
 from std.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
@@ -26,8 +31,6 @@ def main() raises:
     a.enqueue_fill(0)
     tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function[kernel, kernel](
-        tensor, grid_dim=1, block_dim=1
-    )
+    ctx.enqueue_function[kernel, kernel](tensor, grid_dim=1, block_dim=1)
 
     ctx.synchronize()
