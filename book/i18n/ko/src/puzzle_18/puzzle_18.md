@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 51143596e241ae5954474ecb3133b1d7b147f6fc -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 18: 소프트맥스 Op
 

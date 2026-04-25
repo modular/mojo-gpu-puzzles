@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # `warp.prefix_sum()` 하드웨어 최적화 병렬 스캔
 
@@ -393,7 +393,7 @@ if global_i < size:
     # 워프 전체의 합산을 위한 버터플라이 리덕션: 모든 WARP_SIZE에 동적 대응
     offset = WARP_SIZE // 2
     while offset > 0:
-        warp_left_total += shuffle_xor(warp_left_total, offset)
+        warp_left_total += shuffle_xor(warp_left_total, UInt32(offset))
         offset //= 2
 
     # 4단계: 출력 위치에 기록

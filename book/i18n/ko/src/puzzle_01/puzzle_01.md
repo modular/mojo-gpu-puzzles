@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: b82637b949a6bf5378c37ebf6a8e6a543af65e72 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 1: Map
 

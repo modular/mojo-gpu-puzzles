@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # `warp.shuffle_xor()` 버터플라이 통신
 
@@ -408,7 +408,7 @@ if global_i < size:
     # 버터플라이 리덕션 트리: 모든 WARP_SIZE에 동적으로 대응
     offset = WARP_SIZE // 2
     while offset > 0:
-        max_val = max(max_val, shuffle_xor(max_val, offset))
+        max_val = max(max_val, shuffle_xor(max_val, UInt32(offset)))
         offset //= 2
 
     output[global_i] = max_val  # 모든 레인이 전역 최댓값을 가짐
@@ -601,10 +601,10 @@ if global_i < size:
     # max와 min 동시 버터플라이 리덕션 (log_2(WARP_SIZE) 단계)
     offset = WARP_SIZE // 2
     while offset > 0:
-        neighbor_val = shuffle_xor(current_val, offset)
+        neighbor_val = shuffle_xor(current_val, UInt32(offset))
         current_val = max(current_val, neighbor_val)    # Max 리덕션
 
-        min_neighbor_val = shuffle_xor(min_val, offset)
+        min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
         min_val = min(min_val, min_neighbor_val)        # Min 리덕션
 
         offset //= 2
@@ -645,10 +645,10 @@ if global_i < size:
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = max(current_val, neighbor_val)
 
-    min_neighbor_val = shuffle_xor(min_val, offset)
+    min_neighbor_val = shuffle_xor(min_val, UInt32(offset))
     min_val = min(min_val, min_neighbor_val)
 
     offset //= 2
@@ -712,7 +712,7 @@ while offset > 0:
 ```mojo
 offset = WARP_SIZE // 2
 while offset > 0:
-    neighbor_val = shuffle_xor(current_val, offset)
+    neighbor_val = shuffle_xor(current_val, UInt32(offset))
     current_val = operation(current_val, neighbor_val)
     offset //= 2
 ```

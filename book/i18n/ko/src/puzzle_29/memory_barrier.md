@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: d09bc3fbdd4bf6b2a44793f0208b6ba7800ed4c0 -->
 
 # 더블 버퍼링 스텐실 연산
 
@@ -327,7 +327,7 @@ stencil_count = 0
 for neighbor in valid_neighbors:
     stencil_sum += buffer[neighbor]
     stencil_count += 1
-result[i] = stencil_sum / stencil_count
+result[i] = stencil_sum / Float32(stencil_count)
 ```
 
 ## **버퍼 역할 교대**

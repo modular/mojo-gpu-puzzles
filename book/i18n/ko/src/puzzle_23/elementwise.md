@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # elementwise - 기본 GPU 함수형 연산
 
@@ -92,7 +92,7 @@ result = a_simd + b_simd  # 4개 요소의 SIMD 덧셈을 동시에 수행 (GPU 
 ### 5. **SIMD 저장**
 
 ```mojo
-output.store[simd_width](idx, 0, result)  # 4개 결과를 한 번에 저장 (GPU 의존적)
+output.store[simd_width](Index(idx), result)  # 4개 결과를 한 번에 저장 (GPU 의존적)
 ```
 
 전체 SIMD 벡터를 한 번의 연산으로 메모리에 다시 기록합니다.
@@ -239,7 +239,7 @@ idx = indices[0]                                    # 선형 인덱스: 0, 4, 8,
 a_simd = a.aligned_load[simd_width](Index(idx))     # 로드: [a[0:4], a[4:8], a[8:12]...] (로드당 4개 요소)
 b_simd = b.aligned_load[simd_width](Index(idx))     # 로드: [b[0:4], b[4:8], b[8:12]...] (로드당 4개 요소)
 ret = a_simd + b_simd                               # SIMD: 4개 덧셈을 병렬 수행 (GPU 의존적)
-output.store[simd_width](Index(global_start), ret)  # 저장: 4개 결과를 동시 저장 (GPU 의존적)
+output.store[simd_width](Index(idx), ret)  # 저장: 4개 결과를 동시 저장 (GPU 의존적)
 ```
 
 **실행 계층 구조 시각화:**

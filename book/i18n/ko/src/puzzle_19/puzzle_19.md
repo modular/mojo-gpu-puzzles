@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: 2bb7071f5afbc671e252b0dc6902b520793c11d5 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 19: 어텐션 Op
 

@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: b45a36a83148aa53ca8b3cf4b96304e3cc742518 -->
+<!-- i18n-source-commit: 19dfa37b22cd58ed566fcd5cb2f52ec00e453202 -->
 
 # Puzzle 3: 가드
 

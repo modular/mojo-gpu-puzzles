@@ -1,4 +1,4 @@
-<!-- i18n-source-commit: a6f8350359da1569bc39e376bc26580246e61653 -->
+<!-- i18n-source-commit: d2cab328c74d2179083defee75c4c57e4cf4892d -->
 
 # 📚 Mojo GPU 디버깅의 핵심
 
@@ -345,7 +345,18 @@ Puzzle 01이 실행될 때 무슨 일이 일어나는지 추적해 봅시다. **
 Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 ```
 
-디버거가 main 함수를 찾았고 거기서 실행을 일시 정지합니다.
+또는 다음과 같이 보일 수도 있습니다:
+
+```
+Breakpoint 1: no locations (pending).
+WARNING: Unable to resolve breakpoint to any actual locations.
+```
+
+브레이크포인트가 보류(pending) 상태로 표시돼도 예상된 동작입니다. Mojo 프로그램은 JIT으로 컴파일되므로 프로그램 실행이 시작되기 전까지 디버거가 심볼을 해석하지 못할 수 있습니다. 이 경우 브레이크포인트는 등록되어 있지만 LLDB가 아직 구체적인 명령어 주소에 바인딩하지 못한 상태입니다.
+
+실행이 시작되고 모듈이 컴파일되면 LLDB가 브레이크포인트를 자동으로 해석합니다.
+
+어느 쪽이든 브레이크포인트는 정상적으로 설정된 상태이며, 프로그램이 실행되면 그 지점에서 실행이 일시 정지됩니다.
 
 **Step 2: 프로그램 시작**
 
