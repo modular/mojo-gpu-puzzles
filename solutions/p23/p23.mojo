@@ -177,7 +177,7 @@ def vectorize_within_tiles_elementwise_add[
 
         def vectorized_add[
             width: Int
-        ](i: Int) unified {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width <= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))
