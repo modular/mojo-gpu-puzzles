@@ -381,6 +381,7 @@ def run_mojo_implementation(
     ln_bias,
     linear_weight,
     linear_bias,
+    *,
     algorithm="fused",
     target="auto",
 ):
@@ -795,7 +796,7 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
         print("   CUDA not available - skipping GPU benchmark")
         return
 
-    times = {}
+    times: dict[str, float | int | None] = {}
 
     print("   Testing CPU performance...")
     cpu_output, cpu_error = run_mojo_implementation(
@@ -813,8 +814,9 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
             _ = run_mojo_implementation(
                 *test_data, algorithm="fused", target="cpu"
             )
-        times["cpu"] = time.perf_counter() - start
-        print(f"   CPU: {times['cpu'] * 1000:.2f}ms ({iterations} iterations)")
+        cpu_time = time.perf_counter() - start
+        times["cpu"] = cpu_time
+        print(f"   CPU: {cpu_time * 1000:.2f}ms ({iterations} iterations)")
     else:
         print(f"   CPU failed: {cpu_error}")
         times["cpu"] = None
@@ -838,9 +840,10 @@ def benchmark_implementations(algorithm, test_data, iterations=50):
                 *test_data, algorithm=algorithm, target="gpu"
             )
         torch.cuda.synchronize()
-        times["gpu"] = time.perf_counter() - start
+        gpu_time = time.perf_counter() - start
+        times["gpu"] = gpu_time
         print(
-            f"   GPU {algorithm}: {times['gpu'] * 1000:.2f}ms"
+            f"   GPU {algorithm}: {gpu_time * 1000:.2f}ms"
             f" ({iterations} iterations)"
         )
     else:
