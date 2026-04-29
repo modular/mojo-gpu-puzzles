@@ -159,7 +159,7 @@ arithmetic intensity).
 **Note on asynchronous operations**: Standard GPU memory loads (`ld.global`) are
 already asynchronous - warps continue executing until they need the loaded data.
 Specialized async copy instructions like `cp.async` (CUDA) or
-[copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
+[copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
 (Mojo) provide additional benefits by using dedicated copy engines, bypassing
 registers, and enabling better resource utilization rather than simply making
 synchronous operations asynchronous.

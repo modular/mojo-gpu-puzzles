@@ -152,7 +152,7 @@ FLOPs}}{32 \text{ bytes}} = 0.375 \text{ FLOP/B}\\]
 **비동기 연산에 대한 참고**: 표준 GPU 메모리 로드(`ld.global`)는 이미
 비동기입니다 — 워프는 로드한 데이터가 실제로 필요해질 때까지 계속 실행됩니다.
 `cp.async`(CUDA)나
-[copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)(Mojo)
+[copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)(Mojo)
 같은 전용 비동기 복사 명령은 여기서 한 걸음 더 나아가, 전용 복사 엔진을 사용하고
 레지스터를 우회하여 자원 활용을 높입니다. 단순히 동기 연산을 비동기로 바꾸는
 것과는 다릅니다.

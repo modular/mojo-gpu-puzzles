@@ -379,7 +379,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
    수동 좌표 계산 없이 "(block_idx.y, block_idx.x) 위치의 타일을 가져온다"를
    직접 표현합니다. 자세한 내용은
-   [문서](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)를
+   [문서](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)를
    참고하세요.
 
 2. **비동기 메모리 연산**
@@ -401,7 +401,7 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
    이 연산들은:
    - 레지스터를 우회하는 전용 복사 엔진을 사용하여 연산과 메모리 전송의 중첩을
      가능하게 합니다
-     ([copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
+     ([copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
      참고)
    - 최적의 메모리 접근 패턴을 위한 특화된 스레드 레이아웃을 사용합니다
    - 수동 메모리 초기화가 불필요합니다

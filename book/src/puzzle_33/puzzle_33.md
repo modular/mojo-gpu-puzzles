@@ -72,7 +72,7 @@ mma_op.store_d(C_mma_tile, d_reg)           # Store result
 ## Tensor core API in Mojo
 
 Mojo provides a clean interface to Tensor Cores through the
-[`TensorCore`](https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/)
+[`TensorCore`](https://docs.modular.com/mojo/layout/tensor_core/TensorCore/)
 type:
 
 ```mojo
@@ -93,7 +93,7 @@ mma_op = TensorCore[A.dtype, C.dtype, Index(MMA_M, MMA_N, MMA_K)]()
 different swizzle patterns for memory access optimization, and mixed-precision
 arithmetic. For complete documentation of all supported shapes, data types, and
 methods, see the
-[official TensorCore API reference](https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/).
+[official TensorCore API reference](https://docs.modular.com/mojo/layout/tensor_core/TensorCore/).
 
 ### Matrix fragment sizes
 

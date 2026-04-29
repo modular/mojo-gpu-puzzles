@@ -386,7 +386,7 @@ all boundary checks:
 
    This directly expresses "get the tile at position (block_idx.y, block_idx.x)"
    without manual coordinate calculation. See the
-   [documentation](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)
+   [documentation](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)
    for more details.
 
 2. **Asynchronous memory operations**
@@ -408,7 +408,7 @@ all boundary checks:
    These operations:
    - Use dedicated copy engines that bypass registers and enable compute-memory
      overlap via
-     [copy_dram_to_sram_async](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)
+     [copy_dram_to_sram_async](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)
    - Use specialized thread layouts for optimal memory access patterns
    - Eliminate the need for manual memory initialization
    - **Important**:
