@@ -2,7 +2,7 @@
 
 Let's take a quick break from solving puzzles to preview a powerful abstraction
 that will make our GPU programming journey more enjoyable: 🥁... the
-**[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)**.
+**[TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)**.
 
 > 💡 _This is a motivational overview of TileTensor's capabilities. Don't worry
 > about understanding everything now - we'll explore each feature in depth as we

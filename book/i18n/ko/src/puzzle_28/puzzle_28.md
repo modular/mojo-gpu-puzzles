@@ -95,7 +95,7 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 [Puzzle 16의 관용적 matmul](../puzzle_16/tiled.md#solution-idiomatic-layouttensor-tiling)에서
 소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:
 
-- **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/)**:
+- **[`copy_dram_to_sram_async()`](https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/)**:
   전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작
 - **[`async_copy_wait_all()`](https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/)**:
   공유 메모리 접근 전 전송 완료 동기화
@@ -380,7 +380,7 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 - **타일 생성**: `input.tile[CONV_TILE_SIZE](block_idx.x)`는
   `block_idx.x * 256`에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다.
   Mojo의
-  [`tile` 메서드](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)는
+  [`tile` 메서드](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)는
   경계 검사나 제로 패딩을 **수행하지 않습니다**. 범위를 벗어난 인덱스 접근은
   미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에
   있는지 확인해야 합니다.

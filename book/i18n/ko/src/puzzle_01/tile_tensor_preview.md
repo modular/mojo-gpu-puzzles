@@ -34,7 +34,7 @@ idx = (batch * padded_height + row) * padded_width + col
 
 ### TileTensor 미리보기
 
-[TileTensor](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/)를
+[TileTensor](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/)를
 사용하면 이런 경우를 훨씬 깔끔하게 처리할 수 있습니다:
 
 ```mojo

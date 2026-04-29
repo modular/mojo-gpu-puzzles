@@ -70,7 +70,7 @@ num_tiles = (size + tile_size - 1) // tile_size  # 올림 나눗셈
 
 ### 2. **타일 추출 패턴**
 
-[TileTensor `.tile` 문서](https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile)를
+[TileTensor `.tile` 문서](https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile)를
 참고하세요.
 
 ```mojo

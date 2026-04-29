@@ -519,7 +519,7 @@ def main() raises:
     print("  - Asynchronous memory operations with barriers")
     print(
         "  - Reference:"
-        " https://docs.modular.com/mojo/kernels/layout/tensor_core/TensorCore/"
+        " https://docs.modular.com/mojo/layout/tensor_core/TensorCore/"
     )
 
     print("\nPerformance Analysis:")
