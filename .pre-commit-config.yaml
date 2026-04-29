@@ -15,6 +15,6 @@ repos:
     hooks:
     -   id: mojo-format
         name: Mojo Format
-        entry: pixi run format
+        entry: bash -c 'cd oss/mojo-gpu-puzzles && pixi run format'
         language: system
         pass_filenames: false
