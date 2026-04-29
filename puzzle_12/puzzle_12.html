@@ -210,25 +210,39 @@
                     <main>
                         <h1 id="puzzle-12-dot-product"><a class="header" href="#puzzle-12-dot-product">Puzzle 12: Dot Product</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that computes the dot product of 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code> (single number).  The dot product is an operation that takes two vectors of the same size and returns a single number (a scalar). It is calculated by multiplying corresponding elements from each vector and then summing those products.</p>
+<p>Implement a kernel that computes the dot product of 1D TileTensor <code>a</code> and 1D
+TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code> (single number). The dot
+product is an operation that takes two vectors of the same size and returns a
+single number (a scalar). It is calculated by multiplying corresponding elements
+from each vector and then summing those products.</p>
 <p>For example, if you have two vectors:</p>
 <p>\[a = [a_{1}, a_{2}, …, a_{n}] \]
 \[b = [b_{1}, b_{2}, …, b_{n}] \]</p>
 <p>​Their dot product is:
-\[a \cdot b = a_{1}b_{1} +  a_{2}b_{2} + … + a_{n}b_{n}\]</p>
-<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per thread and 1 global write per thread block.</em></p>
+\[a \cdot b = a_{1}b_{1} + a_{2}b_{2} + … + a_{n}b_{n}\]</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 2 global reads per
+thread and 1 global write per thread block.</em></p>
 <img src="./media/12-w.png" alt="Dot product visualization" class="light-mode-img">
 <img src="./media/12-b.png" alt="Dot product visualization" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
-<p><strong>Parallel reduction</strong> is an algorithm that combines \(n\) values into one using a binary operation (here, addition) in \(O(\log n)\) steps instead of \(O(n)\) sequential steps. In each step, half the active threads each add one value into another, halving the number of remaining partial results. After \(\log_2 n\) steps, thread 0 holds the final sum. This tree-shaped computation requires a <code>barrier()</code> between steps so no thread reads a partially-updated value.</p>
+<p><strong>Parallel reduction</strong> is an algorithm that combines \(n\) values into one
+using a binary operation (here, addition) in \(O(\log n)\) steps instead of
+\(O(n)\) sequential steps. In each step, half the active threads each add one
+value into another, halving the number of remaining partial results. After
+\(\log_2 n\) steps, thread 0 holds the final sum. This tree-shaped computation
+requires a <code>barrier()</code> between steps so no thread reads a partially-updated
+value.</p>
 <p>This puzzle covers:</p>
 <ul>
-<li>Similar to <a href="../puzzle_08/puzzle_08.html">puzzle 8</a> and <a href="../puzzle_11/puzzle_11.html">puzzle 11</a>, implementing parallel reduction with TileTensor</li>
+<li>Similar to <a href="../puzzle_08/puzzle_08.html">puzzle 8</a> and
+<a href="../puzzle_11/puzzle_11.html">puzzle 11</a>, implementing parallel reduction with
+TileTensor</li>
 <li>Managing shared memory using TileTensor with address_space</li>
 <li>Coordinating threads for collective operations</li>
 <li>Using layout-aware tensor operations</li>
 </ul>
-<p>The key insight is how TileTensor simplifies memory management while maintaining efficient parallel reduction patterns.</p>
+<p>The key insight is how TileTensor simplifies memory management while maintaining
+efficient parallel reduction patterns.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 8</code> elements</li>
@@ -239,7 +253,8 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>TileTensor allocation</strong>: Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
+<li><strong>TileTensor allocation</strong>: Use
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
 <li><strong>Element access</strong>: Natural indexing with bounds checking</li>
 <li><strong>Layout handling</strong>: Separate layouts for input and output</li>
 <li><strong>Thread coordination</strong>: Same synchronization patterns with <code>barrier()</code></li>
@@ -354,7 +369,8 @@ expected: HostBuffer([140.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The solution implements a parallel reduction for dot product using TileTensor. Here’s the detailed breakdown:</p>
+<p>The solution implements a parallel reduction for dot product using TileTensor.
+Here’s the detailed breakdown:</p>
 <h3 id="phase-1-element-wise-multiplication"><a class="header" href="#phase-1-element-wise-multiplication">Phase 1: Element-wise Multiplication</a></h3>
 <p>Each thread performs one multiplication with natural indexing:</p>
 <pre><code class="language-mojo">shared[local_i] = a[global_i] * b[global_i]
@@ -412,7 +428,8 @@ while stride &gt; 0:
 </ul>
 </li>
 </ol>
-<p>The TileTensor version maintains the same efficient parallel reduction while providing:</p>
+<p>The TileTensor version maintains the same efficient parallel reduction while
+providing:</p>
 <ul>
 <li>Better type safety</li>
 <li>Cleaner memory management</li>

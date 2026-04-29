@@ -211,14 +211,27 @@
                         <h1 id="conflict-free-patterns"><a class="header" href="#conflict-free-patterns">Conflict-Free Patterns</a></h1>
 <blockquote>
 <p><strong>Note: This section is specific to NVIDIA GPUs</strong></p>
-<p>Bank conflict analysis and profiling techniques covered here apply specifically to NVIDIA GPUs. The profiling commands use NSight Compute tools that are part of the NVIDIA CUDA toolkit.</p>
+<p>Bank conflict analysis and profiling techniques covered here apply
+specifically to NVIDIA GPUs. The profiling commands use NSight Compute tools
+that are part of the NVIDIA CUDA toolkit.</p>
 </blockquote>
 <h2 id="building-on-your-profiling-skills"><a class="header" href="#building-on-your-profiling-skills">Building on your profiling skills</a></h2>
-<p>You’ve learned GPU profiling fundamentals in <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a> and understood resource optimization in <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>. Now you’re ready to apply those detective skills to a new performance mystery: <strong>shared memory bank conflicts</strong>.</p>
-<p><strong>The detective challenge:</strong> You have two GPU kernels that perform identical mathematical operations (<code>(input + 10) * 2</code>). Both produce exactly the same results. Both use the same amount of shared memory. Both have identical occupancy. Yet one experiences systematic performance degradation due to <strong>how</strong> it accesses shared memory.</p>
-<p><strong>Your mission:</strong> Use the profiling methodology you’ve learned to uncover this hidden performance trap and understand when bank conflicts matter in real-world GPU programming.</p>
+<p>You’ve learned GPU profiling fundamentals in
+<a href="../puzzle_30/puzzle_30.html">Puzzle 30</a> and understood resource optimization in
+<a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>. Now you’re ready to apply those
+detective skills to a new performance mystery: <strong>shared memory bank conflicts</strong>.</p>
+<p><strong>The detective challenge:</strong> You have two GPU kernels that perform identical
+mathematical operations (<code>(input + 10) * 2</code>). Both produce exactly the same
+results. Both use the same amount of shared memory. Both have identical
+occupancy. Yet one experiences systematic performance degradation due to <strong>how</strong>
+it accesses shared memory.</p>
+<p><strong>Your mission:</strong> Use the profiling methodology you’ve learned to uncover this
+hidden performance trap and understand when bank conflicts matter in real-world
+GPU programming.</p>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Shared memory bank conflicts occur when multiple threads in a warp simultaneously access different addresses within the same memory bank. This detective case explores two kernels with contrasting access patterns:</p>
+<p>Shared memory bank conflicts occur when multiple threads in a warp
+simultaneously access different addresses within the same memory bank. This
+detective case explores two kernels with contrasting access patterns:</p>
 <pre><code class="language-mojo">comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
 comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
 comptime THREADS_PER_BLOCK = (TPB, 1)
@@ -304,29 +317,38 @@ def no_conflict_kernel(
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p32/p32.mojo" class="filename">View full file: problems/p32/p32.mojo</a></p>
-<p><strong>The mystery:</strong> These kernels compute identical results but have dramatically different shared memory access efficiency. Your job is to discover why using systematic profiling analysis.</p>
+<p><strong>The mystery:</strong> These kernels compute identical results but have dramatically
+different shared memory access efficiency. Your job is to discover why using
+systematic profiling analysis.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p><strong>Requirements:</strong></p>
 <ul>
-<li>NVIDIA GPU with CUDA toolkit and NSight Compute from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
-<li>Understanding of shared memory banking concepts from the <a href="./shared_memory_bank.html">previous section</a></li>
+<li>NVIDIA GPU with CUDA toolkit and NSight Compute from
+<a href="../puzzle_30/puzzle_30.html">Puzzle 30</a></li>
+<li>Understanding of shared memory banking concepts from the
+<a href="./shared_memory_bank.html">previous section</a></li>
 </ul>
 <p><strong>Kernel specifications:</strong></p>
 <pre><code class="language-mojo">comptime SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
 comptime TPB = 256            # 256 threads per block (8 warps)
 comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 </code></pre>
-<p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles to highlight shared memory effects rather than global memory bandwidth limitations.</p>
+<p><strong>Key insight:</strong> The problem size is deliberately smaller than previous puzzles
+to highlight shared memory effects rather than global memory bandwidth
+limitations.</p>
 <h2 id="the-investigation"><a class="header" href="#the-investigation">The investigation</a></h2>
 <h3 id="step-1-verify-correctness"><a class="header" href="#step-1-verify-correctness">Step 1: Verify correctness</a></h3>
 <pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p32/p32.mojo --test
 </code></pre>
-<p>Both kernels should produce identical results. This confirms that bank conflicts affect <strong>performance</strong> but not <strong>correctness</strong>.</p>
+<p>Both kernels should produce identical results. This confirms that bank conflicts
+affect <strong>performance</strong> but not <strong>correctness</strong>.</p>
 <h3 id="step-2-benchmark-performance-baseline"><a class="header" href="#step-2-benchmark-performance-baseline">Step 2: Benchmark performance baseline</a></h3>
 <pre><code class="language-bash">mojo problems/p32/p32.mojo --benchmark
 </code></pre>
-<p>Record the execution times. You may notice similar performance due to the workload being dominated by global memory access, but bank conflicts will be revealed through profiling metrics.</p>
+<p>Record the execution times. You may notice similar performance due to the
+workload being dominated by global memory access, but bank conflicts will be
+revealed through profiling metrics.</p>
 <h3 id="step-3-build-for-profiling"><a class="header" href="#step-3-build-for-profiling">Step 3: Build for profiling</a></h3>
 <pre><code class="language-bash">mojo build --debug-level=full problems/p32/p32.mojo -o problems/p32/p32_profiler
 </code></pre>
@@ -364,7 +386,8 @@ shared_buf[(thread_idx.x * 2) % TPB]
 # Thread 17 → Index 34  → Bank 2  (conflict!)
 </code></pre>
 <h2 id="your-task-solve-the-bank-conflict-mystery"><a class="header" href="#your-task-solve-the-bank-conflict-mystery">Your task: solve the bank conflict mystery</a></h2>
-<p><strong>After completing the investigation steps above, answer these analysis questions:</strong></p>
+<p><strong>After completing the investigation steps above, answer these analysis
+questions:</strong></p>
 <h3 id="performance-analysis-steps-1-2"><a class="header" href="#performance-analysis-steps-1-2">Performance analysis (Steps 1-2)</a></h3>
 <ol>
 <li>Do both kernels produce identical mathematical results?</li>
@@ -373,27 +396,36 @@ shared_buf[(thread_idx.x * 2) % TPB]
 </ol>
 <h3 id="bank-conflict-profiling-step-4"><a class="header" href="#bank-conflict-profiling-step-4">Bank conflict profiling (Step 4)</a></h3>
 <ol start="4">
-<li>How many bank conflicts does the no-conflict kernel generate for loads and stores?</li>
-<li>How many bank conflicts does the two-way conflict kernel generate for loads and stores?</li>
+<li>How many bank conflicts does the no-conflict kernel generate for loads and
+stores?</li>
+<li>How many bank conflicts does the two-way conflict kernel generate for loads
+and stores?</li>
 <li>What is the total conflict count difference between the kernels?</li>
 </ol>
 <h3 id="access-pattern-analysis-step-5"><a class="header" href="#access-pattern-analysis-step-5">Access pattern analysis (Step 5)</a></h3>
 <ol start="7">
 <li>In the no-conflict kernel, which bank does Thread 0 access? Thread 31?</li>
-<li>In the two-way conflict kernel, which threads access Bank 0? Which access Bank 2?</li>
+<li>In the two-way conflict kernel, which threads access Bank 0? Which access
+Bank 2?</li>
 <li>How many threads compete for the same bank in the conflict kernel?</li>
 </ol>
 <h3 id="the-bank-conflict-detective-work"><a class="header" href="#the-bank-conflict-detective-work">The bank conflict detective work</a></h3>
 <ol start="10">
-<li>Why does the two-way conflict kernel show measurable conflicts while the no-conflict kernel shows zero?</li>
-<li>How does the stride-2 access pattern <code>(thread_idx.x * 2) % TPB</code> create systematic conflicts?</li>
-<li>Why do bank conflicts matter more in compute-intensive kernels than memory-bound kernels?</li>
+<li>Why does the two-way conflict kernel show measurable conflicts while the
+no-conflict kernel shows zero?</li>
+<li>How does the stride-2 access pattern <code>(thread_idx.x * 2) % TPB</code> create
+systematic conflicts?</li>
+<li>Why do bank conflicts matter more in compute-intensive kernels than
+memory-bound kernels?</li>
 </ol>
 <h3 id="real-world-implications"><a class="header" href="#real-world-implications">Real-world implications</a></h3>
 <ol start="13">
-<li>When would you expect bank conflicts to significantly impact application performance?</li>
-<li>How can you predict bank conflict patterns before implementing shared memory algorithms?</li>
-<li>What design principles help avoid bank conflicts in matrix operations and stencil computations?</li>
+<li>When would you expect bank conflicts to significantly impact application
+performance?</li>
+<li>How can you predict bank conflict patterns before implementing shared memory
+algorithms?</li>
+<li>What design principles help avoid bank conflicts in matrix operations and
+stencil computations?</li>
 </ol>
 <details>
 <summary><strong>Tips</strong></summary>
@@ -403,21 +435,28 @@ shared_buf[(thread_idx.x * 2) % TPB]
 <li><strong>NSight Compute metrics</strong> - Quantify conflicts with precise measurements</li>
 <li><strong>Access pattern visualization</strong> - Map thread indices to banks systematically</li>
 <li><strong>Mathematical analysis</strong> - Use modulo arithmetic to predict conflicts</li>
-<li><strong>Workload characteristics</strong> - Understand when conflicts matter vs when they don’t</li>
+<li><strong>Workload characteristics</strong> - Understand when conflicts matter vs when they
+don’t</li>
 </ul>
 <p><strong>Key investigation principles:</strong></p>
 <ul>
-<li><strong>Measure systematically:</strong> Use profiling tools rather than guessing about conflicts</li>
-<li><strong>Visualize access patterns:</strong> Draw thread-to-bank mappings for complex algorithms</li>
-<li><strong>Consider workload context:</strong> Bank conflicts matter most in compute-intensive shared memory algorithms</li>
-<li><strong>Think prevention:</strong> Design algorithms with conflict-free access patterns from the start</li>
+<li><strong>Measure systematically:</strong> Use profiling tools rather than guessing about
+conflicts</li>
+<li><strong>Visualize access patterns:</strong> Draw thread-to-bank mappings for complex
+algorithms</li>
+<li><strong>Consider workload context:</strong> Bank conflicts matter most in compute-intensive
+shared memory algorithms</li>
+<li><strong>Think prevention:</strong> Design algorithms with conflict-free access patterns
+from the start</li>
 </ul>
 <p><strong>Access pattern analysis approach:</strong></p>
 <ol>
 <li><strong>Map threads to indices:</strong> Understand the mathematical address calculation</li>
-<li><strong>Calculate bank assignments:</strong> Use the formula <code>bank_id = (address / 4) % 32</code></li>
+<li><strong>Calculate bank assignments:</strong> Use the formula
+<code>bank_id = (address / 4) % 32</code></li>
 <li><strong>Identify conflicts:</strong> Look for multiple threads accessing the same bank</li>
-<li><strong>Validate with profiling:</strong> Confirm theoretical analysis with NSight Compute measurements</li>
+<li><strong>Validate with profiling:</strong> Confirm theoretical analysis with NSight Compute
+measurements</li>
 </ol>
 <p><strong>Common conflict-free patterns:</strong></p>
 <ul>
@@ -431,53 +470,61 @@ shared_buf[(thread_idx.x * 2) % TPB]
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary><strong>Complete Solution with Bank Conflict Analysis</strong></summary>
-<p>This bank conflict detective case demonstrates how shared memory access patterns affect GPU performance and reveals the importance of systematic profiling for optimization.</p>
+<p>This bank conflict detective case demonstrates how shared memory access patterns
+affect GPU performance and reveals the importance of systematic profiling for
+optimization.</p>
 <h2 id="investigation-results-from-profiling"><a class="header" href="#investigation-results-from-profiling"><strong>Investigation results from profiling</strong></a></h2>
 <p><strong>Step 1: Correctness Verification</strong>
 Both kernels produce identical mathematical results:</p>
-<pre><code>✅ No-conflict kernel: PASSED
+<pre><code class="language-text">✅ No-conflict kernel: PASSED
 ✅ Two-way conflict kernel: PASSED
 ✅ Both kernels produce identical results
 </code></pre>
 <p><strong>Step 2: Performance Baseline</strong>
 Benchmark results show similar execution times:</p>
-<pre><code>| name             | met (ms)           | iters |
+<pre><code class="language-text">| name             | met (ms)           | iters |
 | ---------------- | ------------------ | ----- |
 | no_conflict      | 2.1930616745886655 | 547   |
 | two_way_conflict | 2.1978922967032966 | 546   |
 </code></pre>
-<p><strong>Key insight:</strong> Performance is nearly identical (~2.19ms vs ~2.20ms) because this workload is <strong>global memory bound</strong> rather than shared memory bound. Bank conflicts become visible through profiling metrics rather than execution time.</p>
+<p><strong>Key insight:</strong> Performance is nearly identical (~2.19ms vs ~2.20ms) because
+this workload is <strong>global memory bound</strong> rather than shared memory bound. Bank
+conflicts become visible through profiling metrics rather than execution time.</p>
 <h2 id="bank-conflict-profiling-evidence"><a class="header" href="#bank-conflict-profiling-evidence"><strong>Bank conflict profiling evidence</strong></a></h2>
 <p><strong>No-Conflict Kernel (Optimal Access Pattern):</strong></p>
-<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
+<pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
 l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    0
 </code></pre>
-<p><strong>Result:</strong> Zero conflicts for both loads and stores - perfect shared memory efficiency.</p>
+<p><strong>Result:</strong> Zero conflicts for both loads and stores - perfect shared memory
+efficiency.</p>
 <p><strong>Two-Way Conflict Kernel (Problematic Access Pattern):</strong></p>
-<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    256
+<pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    256
 l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    256
 </code></pre>
-<p><strong>Result:</strong> 256 conflicts each for loads and stores - clear evidence of systematic banking problems.</p>
-<p><strong>Total conflict difference:</strong> 512 conflicts (256 + 256) demonstrate measurable shared memory inefficiency.</p>
+<p><strong>Result:</strong> 256 conflicts each for loads and stores - clear evidence of
+systematic banking problems.</p>
+<p><strong>Total conflict difference:</strong> 512 conflicts (256 + 256) demonstrate measurable
+shared memory inefficiency.</p>
 <h2 id="access-pattern-mathematical-analysis"><a class="header" href="#access-pattern-mathematical-analysis"><strong>Access pattern mathematical analysis</strong></a></h2>
 <h3 id="no-conflict-kernel-access-pattern"><a class="header" href="#no-conflict-kernel-access-pattern">No-conflict kernel access pattern</a></h3>
 <p><strong>Thread-to-index mapping:</strong></p>
 <pre><code class="language-mojo">shared_buf[thread_idx.x]
 </code></pre>
 <p><strong>Bank assignment analysis:</strong></p>
-<pre><code>Thread 0  → Index 0   → Bank 0 % 32 = 0
+<pre><code class="language-text">Thread 0  → Index 0   → Bank 0 % 32 = 0
 Thread 1  → Index 1   → Bank 1 % 32 = 1
 Thread 2  → Index 2   → Bank 2 % 32 = 2
 ...
 Thread 31 → Index 31  → Bank 31 % 32 = 31
 </code></pre>
-<p><strong>Result:</strong> Perfect bank distribution - each thread accesses a different bank within each warp, enabling parallel access.</p>
+<p><strong>Result:</strong> Perfect bank distribution - each thread accesses a different bank
+within each warp, enabling parallel access.</p>
 <h3 id="two-way-conflict-kernel-access-pattern"><a class="header" href="#two-way-conflict-kernel-access-pattern">Two-way conflict kernel access pattern</a></h3>
 <p><strong>Thread-to-index mapping:</strong></p>
 <pre><code class="language-mojo">shared_buf[(thread_idx.x * 2) % TPB]  # TPB = 256
 </code></pre>
 <p><strong>Bank assignment analysis for first warp (threads 0-31):</strong></p>
-<pre><code>Thread 0  → Index (0*2)%256 = 0   → Bank 0
+<pre><code class="language-text">Thread 0  → Index (0*2)%256 = 0   → Bank 0
 Thread 1  → Index (1*2)%256 = 2   → Bank 2
 Thread 2  → Index (2*2)%256 = 4   → Bank 4
 ...
@@ -486,8 +533,10 @@ Thread 17 → Index (17*2)%256 = 34 → Bank 2  ← CONFLICT with Thread 1
 Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← CONFLICT with Thread 2
 ...
 </code></pre>
-<p><strong>Conflict pattern:</strong> Each bank serves exactly 2 threads, creating systematic 2-way conflicts across all 32 banks.</p>
-<p><strong>Mathematical explanation:</strong> The stride-2 pattern with modulo 256 creates a repeating access pattern where:</p>
+<p><strong>Conflict pattern:</strong> Each bank serves exactly 2 threads, creating systematic
+2-way conflicts across all 32 banks.</p>
+<p><strong>Mathematical explanation:</strong> The stride-2 pattern with modulo 256 creates a
+repeating access pattern where:</p>
 <ul>
 <li>Threads 0-15 access banks 0,2,4,…,30</li>
 <li>Threads 16-31 access the <strong>same banks</strong> 0,2,4,…,30</li>
@@ -497,16 +546,22 @@ Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← CONFLICT with Thread 2
 <h3 id="memory-bound-vs-compute-bound-implications"><a class="header" href="#memory-bound-vs-compute-bound-implications">Memory-bound vs compute-bound implications</a></h3>
 <p><strong>This workload characteristics:</strong></p>
 <ul>
-<li><strong>Global memory dominant:</strong> Each thread performs minimal computation relative to memory transfer</li>
-<li><strong>Shared memory secondary:</strong> Bank conflicts add overhead but don’t dominate total execution time</li>
-<li><strong>Identical performance:</strong> Global memory bandwidth saturation masks shared memory inefficiency</li>
+<li><strong>Global memory dominant:</strong> Each thread performs minimal computation relative
+to memory transfer</li>
+<li><strong>Shared memory secondary:</strong> Bank conflicts add overhead but don’t dominate
+total execution time</li>
+<li><strong>Identical performance:</strong> Global memory bandwidth saturation masks shared
+memory inefficiency</li>
 </ul>
 <p><strong>When bank conflicts matter most:</strong></p>
 <ol>
-<li><strong>Compute-intensive shared memory algorithms</strong> - Matrix multiplication, stencil computations, FFT</li>
-<li><strong>Tight computational loops</strong> - Repeated shared memory access within inner loops</li>
+<li><strong>Compute-intensive shared memory algorithms</strong> - Matrix multiplication,
+stencil computations, FFT</li>
+<li><strong>Tight computational loops</strong> - Repeated shared memory access within inner
+loops</li>
 <li><strong>High arithmetic intensity</strong> - Significant computation per memory access</li>
-<li><strong>Large shared memory working sets</strong> - Algorithms that heavily utilize shared memory caching</li>
+<li><strong>Large shared memory working sets</strong> - Algorithms that heavily utilize shared
+memory caching</li>
 </ol>
 <h3 id="real-world-performance-implications"><a class="header" href="#real-world-performance-implications">Real-world performance implications</a></h3>
 <p><strong>Applications where bank conflicts significantly impact performance:</strong></p>
@@ -553,16 +608,21 @@ if thread_idx.x &lt; stride:
 <ol>
 <li><strong>Profile systematically</strong> - Use NSight Compute conflict metrics</li>
 <li><strong>Measure impact</strong> - Compare conflict counts across implementations</li>
-<li><strong>Validate performance</strong> - Ensure optimizations improve end-to-end performance</li>
+<li><strong>Validate performance</strong> - Ensure optimizations improve end-to-end
+performance</li>
 <li><strong>Document patterns</strong> - Record successful conflict-free algorithms for reuse</li>
 </ol>
 <h2 id="key-takeaways-from-detective-work-to-optimization-expertise"><a class="header" href="#key-takeaways-from-detective-work-to-optimization-expertise"><strong>Key takeaways: from detective work to optimization expertise</strong></a></h2>
 <p><strong>The Bank Conflict Investigation revealed:</strong></p>
 <ol>
-<li><strong>Measurement trumps intuition</strong> - Profiling tools reveal conflicts invisible to performance timing</li>
-<li><strong>Pattern analysis works</strong> - Mathematical prediction accurately matched NSight Compute results</li>
-<li><strong>Context matters</strong> - Bank conflicts matter most in compute-intensive shared memory workloads</li>
-<li><strong>Prevention beats fixing</strong> - Designing conflict-free patterns easier than retrofitting optimizations</li>
+<li><strong>Measurement trumps intuition</strong> - Profiling tools reveal conflicts invisible
+to performance timing</li>
+<li><strong>Pattern analysis works</strong> - Mathematical prediction accurately matched
+NSight Compute results</li>
+<li><strong>Context matters</strong> - Bank conflicts matter most in compute-intensive shared
+memory workloads</li>
+<li><strong>Prevention beats fixing</strong> - Designing conflict-free patterns easier than
+retrofitting optimizations</li>
 </ol>
 <p><strong>Universal shared memory optimization principles:</strong></p>
 <p><strong>When to worry about bank conflicts:</strong></p>
@@ -570,7 +630,8 @@ if thread_idx.x &lt; stride:
 <li><strong>High-computation kernels</strong> using shared memory for data reuse</li>
 <li><strong>Iterative algorithms</strong> with repeated shared memory access in tight loops</li>
 <li><strong>Performance-critical code</strong> where every cycle matters</li>
-<li><strong>Memory-intensive operations</strong> that are compute-bound rather than bandwidth-bound</li>
+<li><strong>Memory-intensive operations</strong> that are compute-bound rather than
+bandwidth-bound</li>
 </ul>
 <p><strong>When bank conflicts are less critical:</strong></p>
 <ul>
@@ -580,12 +641,19 @@ if thread_idx.x &lt; stride:
 </ul>
 <p><strong>Professional development methodology:</strong></p>
 <ol>
-<li><strong>Profile before optimizing</strong> - Measure conflicts quantitatively with NSight Compute</li>
-<li><strong>Understand access mathematics</strong> - Use bank assignment formulas to predict problems</li>
-<li><strong>Design systematically</strong> - Consider banking in algorithm design, not as afterthought</li>
-<li><strong>Validate optimizations</strong> - Confirm that conflict reduction improves actual performance</li>
+<li><strong>Profile before optimizing</strong> - Measure conflicts quantitatively with NSight
+Compute</li>
+<li><strong>Understand access mathematics</strong> - Use bank assignment formulas to predict
+problems</li>
+<li><strong>Design systematically</strong> - Consider banking in algorithm design, not as
+afterthought</li>
+<li><strong>Validate optimizations</strong> - Confirm that conflict reduction improves actual
+performance</li>
 </ol>
-<p>This detective case demonstrates that <strong>systematic profiling reveals optimization opportunities invisible to performance timing alone</strong> - bank conflicts are a perfect example of where measurement-driven optimization beats guesswork.</p>
+<p>This detective case demonstrates that <strong>systematic profiling reveals
+optimization opportunities invisible to performance timing alone</strong> - bank
+conflicts are a perfect example of where measurement-driven optimization beats
+guesswork.</p>
 </details>
 
                     </main>

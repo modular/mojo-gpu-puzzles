@@ -222,7 +222,8 @@
 <li>여러 블록의 스레드 조율</li>
 <li>전역 스레드 위치 계산</li>
 </ul>
-<p>여기서 핵심은 여러 스레드 블록이 협력하여 단일 블록 용량보다 큰 데이터를 처리하면서도, 요소와 스레드 간 올바른 매핑을 유지하는 원리를 이해하는 것입니다.</p>
+<p>여기서 핵심은 여러 스레드 블록이 협력하여 단일 블록 용량보다 큰 데이터를
+처리하면서도, 요소와 스레드 간 올바른 매핑을 유지하는 원리를 이해하는 것입니다.</p>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 9
 comptime BLOCKS_PER_GRID = (3, 1)
@@ -305,7 +306,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <p><strong>전역 스레드 인덱싱</strong></p>
 <ul>
 <li>
-<p>블록 인덱스와 스레드 인덱스를 결합: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+<p>블록 인덱스와 스레드 인덱스를 결합:
+<code>block_dim.x * block_idx.x + thread_idx.x</code></p>
 </li>
 <li>
 <p>각 스레드를 고유한 전역 위치에 매핑</p>

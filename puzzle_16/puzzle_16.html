@@ -210,27 +210,38 @@
                     <main>
                         <h1 id="puzzle-16-matrix-multiplication-matmul"><a class="header" href="#puzzle-16-matrix-multiplication-matmul">Puzzle 16: Matrix Multiplication (MatMul)</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Matrix multiplication is a fundamental operation in scientific computing, machine learning, and graphics. Given two matrices \(A\) and \(B\), we want to compute their product \(C = A \times B.\)</p>
-<p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the result \(C_{m\times n}\) is computed as:</p>
+<p>Matrix multiplication is a fundamental operation in scientific computing,
+machine learning, and graphics. Given two matrices \(A\) and \(B\), we want
+to compute their product \(C = A \times B.\)</p>
+<p>For matrices \(A_{m\times k}\) and \(B_{k\times n}\), each element of the
+result \(C_{m\times n}\) is computed as:</p>
 <p>\[\Large C_{ij} = \sum_{l=0}^{k-1} A_{il} \cdot B_{lj} \]</p>
 <img src="./media/16-w.png" alt="Matmul visualization" class="light-mode-img">
 <img src="./media/16-b.png" alt="Matmul visualization" class="dark-mode-img">
-<p>This puzzle explores different approaches to implementing matrix multiplication on GPUs, each with its own performance characteristics:</p>
+<p>This puzzle explores different approaches to implementing matrix multiplication
+on GPUs, each with its own performance characteristics:</p>
 <ul>
 <li>
-<p><a href="./na%C3%AFve.html">Naive Version</a>
-The straightforward implementation where each thread computes one element of the output matrix. While simple to understand, this approach makes many redundant memory accesses.</p>
+<p><a href="./na%C3%AFve.html">Naive Version</a> The straightforward implementation where each
+thread computes one element of the output matrix. While simple to understand,
+this approach makes many redundant memory accesses.</p>
 </li>
 <li>
-<p><a href="./shared_memory.html">Shared Memory Version</a>
-Improves performance by loading blocks of input matrices into fast shared memory, reducing global memory accesses. Each thread still computes one output element but reads from shared memory.</p>
+<p><a href="./shared_memory.html">Shared Memory Version</a> Improves performance by loading
+blocks of input matrices into fast shared memory, reducing global memory
+accesses. Each thread still computes one output element but reads from shared
+memory.</p>
 </li>
 <li>
-<p><a href="./tiled.html">Tiled Version</a>
-Further optimizes by dividing the computation into tiles, allowing threads to cooperate on loading and computing blocks of the output matrix. This approach better utilizes memory hierarchy and thread cooperation.</p>
+<p><a href="./tiled.html">Tiled Version</a> Further optimizes by dividing the computation into
+tiles, allowing threads to cooperate on loading and computing blocks of the
+output matrix. This approach better utilizes memory hierarchy and thread
+cooperation.</p>
 </li>
 </ul>
-<p>Each version builds upon the previous one, introducing new optimization techniques common in GPU programming. You’ll learn how different memory access patterns and thread cooperation strategies affect performance.</p>
+<p>Each version builds upon the previous one, introducing new optimization
+techniques common in GPU programming. You’ll learn how different memory access
+patterns and thread cooperation strategies affect performance.</p>
 <p>The progression illustrates a common pattern in GPU optimization:</p>
 <ol>
 <li>Start with a correct but naive implementation</li>

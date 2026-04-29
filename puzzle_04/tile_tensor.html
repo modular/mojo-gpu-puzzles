@@ -210,7 +210,8 @@
                     <main>
                         <h1 id="tiletensor-version"><a class="header" href="#tiletensor-version">TileTensor Version</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D <em>TileTensor</em> <code>a</code> and stores it in 2D <em>TileTensor</em> <code>output</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D <em>TileTensor</em> <code>a</code> and
+stores it in 2D <em>TileTensor</em> <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -219,12 +220,15 @@
 <li>Direct 2D indexing with <code>tensor[i, j]</code></li>
 <li>Handling bounds checking with <code>TileTensor</code></li>
 </ul>
-<p>The key insight is that <code>TileTensor</code> provides a natural 2D indexing interface, abstracting away the underlying memory layout while still requiring bounds checking.</p>
+<p>The key insight is that <code>TileTensor</code> provides a natural 2D indexing interface,
+abstracting away the underlying memory layout while still requiring bounds
+checking.</p>
 <ul>
 <li><strong>2D access</strong>: Natural \((i,j)\) indexing with <code>TileTensor</code></li>
 <li><strong>Memory abstraction</strong>: No manual row-major calculation needed</li>
 <li><strong>Guard condition</strong>: Still need bounds checking in both dimensions</li>
-<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
+<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2
+\times 2)\)</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2

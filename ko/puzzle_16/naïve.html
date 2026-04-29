@@ -211,8 +211,9 @@
                         <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
 <h1 id="전역-메모리를-사용한-기본-버전"><a class="header" href="#전역-메모리를-사용한-기본-버전">전역 메모리를 사용한 기본 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>정방 행렬 \(A\)와 \(B\)를 곱하여 결과를 \(\text{output}\)에 저장하는 커널을 구현하세요.
-각 스레드가 출력 행렬의 원소 하나를 계산하는 가장 기본적인 구현입니다.</p>
+<p>정방 행렬 \(A\)와 \(B\)를 곱하여 결과를 \(\text{output}\)에 저장하는
+커널을 구현하세요. 각 스레드가 출력 행렬의 원소 하나를 계산하는 가장 기본적인
+구현입니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
 <ul>
@@ -221,7 +222,8 @@
 <li>행 우선(row-major) 레이아웃에서의 행렬 인덱싱</li>
 <li>스레드와 출력 원소 간 매핑</li>
 </ul>
-<p>핵심은 2D 스레드 인덱스를 행렬 원소에 매핑하고, 내적을 병렬로 계산하는 방법을 이해하는 것입니다.</p>
+<p>핵심은 2D 스레드 인덱스를 행렬 원소에 매핑하고, 내적을 병렬로 계산하는 방법을
+이해하는 것입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>행렬 크기: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -367,14 +369,16 @@ for k in range(size):
 <li>
 <p><strong>변수 선언</strong>:</p>
 <ul>
-<li><code>var acc: output.element_type = 0</code>에서 <code>var</code>로 가변 변수를 선언하고, <code>output.element_type</code>으로 출력 텐서와 동일한 타입을 지정합니다</li>
+<li><code>var acc: output.element_type = 0</code>에서 <code>var</code>로 가변 변수를 선언하고,
+<code>output.element_type</code>으로 출력 텐서와 동일한 타입을 지정합니다</li>
 <li>누적 연산 전에 0으로 초기화</li>
 </ul>
 </li>
 <li>
 <p><strong>루프 최적화</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a> 데코레이터로 컴파일 타임에 루프 전개</li>
+<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a>
+데코레이터로 컴파일 타임에 루프 전개</li>
 <li>크기가 작고 미리 알려진 행렬에서 성능 향상</li>
 <li>더 나은 명령어 스케줄링 가능</li>
 </ul>
@@ -407,7 +411,8 @@ for k in range(size):
 </ul>
 </li>
 </ol>
-<p>이 기본 구현은 GPU 행렬 곱셈을 이해하기 위한 기준점으로, 메모리 접근 패턴을 최적화해야 하는 이유를 보여줍니다.</p>
+<p>이 기본 구현은 GPU 행렬 곱셈을 이해하기 위한 기준점으로, 메모리 접근 패턴을
+최적화해야 하는 이유를 보여줍니다.</p>
 </div>
 </details>
 

@@ -209,15 +209,28 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="-mojo-gpu-debugging-essentials"><a class="header" href="#-mojo-gpu-debugging-essentials">📚 Mojo GPU Debugging Essentials</a></h1>
-<p>Welcome to the world of GPU debugging! After learning GPU programming concepts through puzzles 1-8, you’re now ready to learn the most critical skill for any GPU programmer: <strong>how to debug when things go wrong</strong>.</p>
-<p>GPU debugging can seem intimidating at first - you’re dealing with thousands of threads running in parallel, different memory spaces, and hardware-specific behaviors. But with the right tools and workflow, debugging GPU code becomes systematic and manageable.</p>
-<p>In this guide, you’ll learn to debug both the <strong>CPU host code</strong> (where you set up your GPU operations) and the <strong>GPU kernel code</strong> (where the parallel computation happens). We’ll use real examples, actual debugger output, and step-by-step workflows that you can immediately apply to your own projects.</p>
-<p><strong>Note</strong>: The following content focuses on command-line debugging for universal IDE compatibility. If you prefer VS Code debugging, refer to the <a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a> for VS Code-specific setup and workflows.</p>
+<p>Welcome to the world of GPU debugging! After learning GPU programming concepts
+through puzzles 1-8, you’re now ready to learn the most critical skill for any
+GPU programmer: <strong>how to debug when things go wrong</strong>.</p>
+<p>GPU debugging can seem intimidating at first - you’re dealing with thousands of
+threads running in parallel, different memory spaces, and hardware-specific
+behaviors. But with the right tools and workflow, debugging GPU code becomes
+systematic and manageable.</p>
+<p>In this guide, you’ll learn to debug both the <strong>CPU host code</strong> (where you set
+up your GPU operations) and the <strong>GPU kernel code</strong> (where the parallel
+computation happens). We’ll use real examples, actual debugger output, and
+step-by-step workflows that you can immediately apply to your own projects.</p>
+<p><strong>Note</strong>: The following content focuses on command-line debugging for universal
+IDE compatibility. If you prefer VS Code debugging, refer to the
+<a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a>
+for VS Code-specific setup and workflows.</p>
 <h2 id="why-gpu-debugging-is-different"><a class="header" href="#why-gpu-debugging-is-different">Why GPU debugging is different</a></h2>
 <p>Before diving into tools, consider what makes GPU debugging unique:</p>
 <ul>
-<li><strong>Traditional CPU debugging</strong>: One thread, sequential execution, straightforward memory model</li>
-<li><strong>GPU debugging</strong>: Thousands of threads, parallel execution, multiple memory spaces, race conditions</li>
+<li><strong>Traditional CPU debugging</strong>: One thread, sequential execution,
+straightforward memory model</li>
+<li><strong>GPU debugging</strong>: Thousands of threads, parallel execution, multiple memory
+spaces, race conditions</li>
 </ul>
 <p>This means you need specialized tools that can:</p>
 <ul>
@@ -227,26 +240,36 @@
 <li>Debug both CPU setup code and GPU kernel code</li>
 </ul>
 <h2 id="your-debugging-toolkit"><a class="header" href="#your-debugging-toolkit">Your debugging toolkit</a></h2>
-<p>Mojo’s GPU debugging capabilities currently is limited to NVIDIA GPUs. The <a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a> explains that the Mojo package includes:</p>
+<p>Mojo’s GPU debugging capabilities currently is limited to NVIDIA GPUs. The
+<a href="https://docs.modular.com/mojo/tools/debugging">Mojo debugging documentation</a>
+explains that the Mojo package includes:</p>
 <ul>
 <li><strong>LLDB debugger</strong> with Mojo plugin for CPU-side debugging</li>
 <li><strong>CUDA-GDB integration</strong> for GPU kernel debugging</li>
 <li><strong>Command-line interface</strong> via <code>mojo debug</code> for universal IDE compatibility</li>
 </ul>
-<p>For GPU-specific debugging, the <a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU debugging guide</a> provides additional technical details.</p>
-<p>This architecture provides the best of both worlds: familiar debugging commands with GPU-specific capabilities.</p>
+<p>For GPU-specific debugging, the
+<a href="https://docs.modular.com/mojo/tools/gpu-debugging">Mojo GPU debugging guide</a>
+provides additional technical details.</p>
+<p>This architecture provides the best of both worlds: familiar debugging commands
+with GPU-specific capabilities.</p>
 <h2 id="the-debugging-workflow-from-problem-to-solution"><a class="header" href="#the-debugging-workflow-from-problem-to-solution">The debugging workflow: From problem to solution</a></h2>
-<p>When your GPU program crashes, produces wrong results, or behaves unexpectedly, follow this systematic approach:</p>
+<p>When your GPU program crashes, produces wrong results, or behaves unexpectedly,
+follow this systematic approach:</p>
 <ol>
-<li><strong>Prepare your code for debugging</strong> (disable optimizations, add debug symbols)</li>
+<li><strong>Prepare your code for debugging</strong> (disable optimizations, add debug
+symbols)</li>
 <li><strong>Choose the right debugger</strong> (CPU host code vs GPU kernel debugging)</li>
 <li><strong>Set strategic breakpoints</strong> (where you suspect the problem lies)</li>
 <li><strong>Execute and inspect</strong> (step through code, examine variables)</li>
 <li><strong>Analyze patterns</strong> (memory access, thread behavior, race conditions)</li>
 </ol>
-<p>This workflow works whether you’re debugging a simple array operation from Puzzle 01 or complex shared memory code from Puzzle 08.</p>
+<p>This workflow works whether you’re debugging a simple array operation from
+Puzzle 01 or complex shared memory code from Puzzle 08.</p>
 <h2 id="step-1-preparing-your-code-for-debugging"><a class="header" href="#step-1-preparing-your-code-for-debugging">Step 1: Preparing your code for debugging</a></h2>
-<p><strong>🥇 The golden rule</strong>: Never debug <em>optimized</em> code. Optimizations can reorder instructions, eliminate variables, and inline functions, making debugging nearly impossible.</p>
+<p><strong>🥇 The golden rule</strong>: Never debug <em>optimized</em> code. Optimizations can reorder
+instructions, eliminate variables, and inline functions, making debugging nearly
+impossible.</p>
 <h3 id="building-with-debug-information"><a class="header" href="#building-with-debug-information">Building with debug information</a></h3>
 <p>When building Mojo programs for debugging, always include debug symbols:</p>
 <pre><code class="language-bash"># Build with full debug information
@@ -255,20 +278,23 @@ mojo build -O0 -g your_program.mojo -o your_program_debug
 <p><strong>What these flags do:</strong></p>
 <ul>
 <li><code>-O0</code>: Disables all optimizations, preserving your original code structure</li>
-<li><code>-g</code>: Includes debug symbols so the debugger can map machine code back to your Mojo source</li>
+<li><code>-g</code>: Includes debug symbols so the debugger can map machine code back to your
+Mojo source</li>
 <li><code>-o</code>: Creates a named output file for easier identification</li>
 </ul>
 <h3 id="why-this-matters"><a class="header" href="#why-this-matters">Why this matters</a></h3>
 <p>Without debug symbols, your debugging session looks like this:</p>
-<pre><code>(lldb) print my_variable
+<pre><code class="language-text">(lldb) print my_variable
 error: use of undeclared identifier 'my_variable'
 </code></pre>
 <p>With debug symbols, you get:</p>
-<pre><code>(lldb) print my_variable
+<pre><code class="language-text">(lldb) print my_variable
 (int) $0 = 42
 </code></pre>
 <h2 id="step-2-choosing-your-debugging-approach"><a class="header" href="#step-2-choosing-your-debugging-approach">Step 2: Choosing your debugging approach</a></h2>
-<p>Here’s where GPU debugging gets interesting. You have <strong>four different combinations</strong> to choose from, and picking the right one saves you time:</p>
+<p>Here’s where GPU debugging gets interesting. You have
+<strong>four different combinations</strong> to choose from, and picking the right one saves
+you time:</p>
 <h3 id="the-four-debugging-combinations"><a class="header" href="#the-four-debugging-combinations">The four debugging combinations</a></h3>
 <p><strong>Quick reference:</strong></p>
 <pre><code class="language-bash"># 1. JIT + LLDB: Debug CPU host code directly from source
@@ -295,30 +321,44 @@ pixi run mojo debug --cuda-gdb --break-on-launch your_program_debug
 </ul>
 <p><strong>For CPU-side issues</strong> (buffer allocation, host memory, program logic):</p>
 <ul>
-<li>Use <strong>LLDB mode</strong> - perfect for debugging your <code>main()</code> function and setup code</li>
+<li>Use <strong>LLDB mode</strong> - perfect for debugging your <code>main()</code> function and setup
+code</li>
 </ul>
 <p><strong>For GPU kernel issues</strong> (thread behavior, GPU memory, kernel crashes):</p>
 <ul>
 <li>Use <strong>CUDA-GDB mode</strong> - the only way to inspect individual GPU threads</li>
 </ul>
-<p>The beauty is that you can mix and match. Start with JIT + LLDB to debug your setup code, then switch to JIT + CUDA-GDB to debug the actual kernel.</p>
+<p>The beauty is that you can mix and match. Start with JIT + LLDB to debug your
+setup code, then switch to JIT + CUDA-GDB to debug the actual kernel.</p>
 <hr />
 <h2 id="understanding-gpu-kernel-debugging-with-cuda-gdb"><a class="header" href="#understanding-gpu-kernel-debugging-with-cuda-gdb">Understanding GPU kernel debugging with CUDA-GDB</a></h2>
-<p>Next comes GPU kernel debugging - the most powerful (and complex) part of your debugging toolkit.</p>
-<p>When you use <code>--cuda-gdb</code>, Mojo integrates with NVIDIA’s <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">CUDA-GDB debugger</a>. This isn’t just another debugger - it’s specifically designed for the parallel, multi-threaded world of GPU computing.</p>
+<p>Next comes GPU kernel debugging - the most powerful (and complex) part of your
+debugging toolkit.</p>
+<p>When you use <code>--cuda-gdb</code>, Mojo integrates with NVIDIA’s
+<a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">CUDA-GDB debugger</a>. This
+isn’t just another debugger - it’s specifically designed for the parallel,
+multi-threaded world of GPU computing.</p>
 <h3 id="what-makes-cuda-gdb-special"><a class="header" href="#what-makes-cuda-gdb-special">What makes CUDA-GDB special</a></h3>
 <p><strong>Regular GDB</strong> debugs one thread at a time, stepping through sequential code.
-<strong>CUDA-GDB</strong> debugs thousands of GPU threads simultaneously, each potentially executing different instructions.</p>
+<strong>CUDA-GDB</strong> debugs thousands of GPU threads simultaneously, each potentially
+executing different instructions.</p>
 <p>This means you can:</p>
 <ul>
-<li><strong>Set breakpoints inside GPU kernels</strong> - pause execution when any thread hits your breakpoint</li>
-<li><strong>Switch between GPU threads</strong> - examine what different threads are doing at the same moment</li>
-<li><strong>Inspect thread-specific data</strong> - see how the same variable has different values across threads</li>
-<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race conditions, and memory corruption (more on detecting such issues in the Puzzle 10)</li>
-<li><strong>Analyze parallel execution</strong> - understand how your threads interact and synchronize</li>
+<li><strong>Set breakpoints inside GPU kernels</strong> - pause execution when any thread hits
+your breakpoint</li>
+<li><strong>Switch between GPU threads</strong> - examine what different threads are doing at
+the same moment</li>
+<li><strong>Inspect thread-specific data</strong> - see how the same variable has different
+values across threads</li>
+<li><strong>Debug memory access patterns</strong> - catch out-of-bounds access, race
+conditions, and memory corruption (more on detecting such issues in the Puzzle
+10)</li>
+<li><strong>Analyze parallel execution</strong> - understand how your threads interact and
+synchronize</li>
 </ul>
 <h3 id="connecting-to-concepts-from-previous-puzzles"><a class="header" href="#connecting-to-concepts-from-previous-puzzles">Connecting to concepts from previous puzzles</a></h3>
-<p>Remember the GPU programming concepts you learned in puzzles 1-8? CUDA-GDB lets you inspect all of them at runtime:</p>
+<p>Remember the GPU programming concepts you learned in puzzles 1-8? CUDA-GDB lets
+you inspect all of them at runtime:</p>
 <h4 id="thread-hierarchy-debugging"><a class="header" href="#thread-hierarchy-debugging">Thread hierarchy debugging</a></h4>
 <p>Back in puzzles 1-8, you wrote code like this:</p>
 <pre><code class="language-mojo"># From puzzle 1: Basic thread indexing
@@ -332,7 +372,7 @@ col = thread_idx.x
 <pre><code class="language-gdb">(cuda-gdb) info cuda threads
 </code></pre>
 <p>outputs</p>
-<pre><code>  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+<pre><code class="language-text">  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffcf26fed0 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    13
 </code></pre>
@@ -340,11 +380,13 @@ Kernel 0
 <pre><code class="language-gdb">(cuda-gdb) cuda thread (1,0,0)
 </code></pre>
 <p>shows</p>
-<pre><code>[Switching to CUDA thread (1,0,0)]
+<pre><code class="language-text">[Switching to CUDA thread (1,0,0)]
 </code></pre>
-<p>This is incredibly powerful - you can literally <strong>watch your parallel algorithm execute across different threads</strong>.</p>
+<p>This is incredibly powerful - you can literally
+<strong>watch your parallel algorithm execute across different threads</strong>.</p>
 <h4 id="memory-space-debugging"><a class="header" href="#memory-space-debugging">Memory space debugging</a></h4>
-<p>Remember puzzle 8 where you learned about different types of GPU memory? CUDA-GDB lets you inspect all of them:</p>
+<p>Remember puzzle 8 where you learned about different types of GPU memory?
+CUDA-GDB lets you inspect all of them:</p>
 <pre><code class="language-gdb"># Examine global memory (the arrays from puzzles 1-5)
 (cuda-gdb) print input_array[0]@4
 $1 = {{1}, {2}, {3}, {4}}   # Mojo scalar format
@@ -353,9 +395,11 @@ $1 = {{1}, {2}, {3}, {4}}   # Mojo scalar format
 (cuda-gdb) print shared_data[i]   # Use local variable 'i' instead
 $2 = {42}
 </code></pre>
-<p>The debugger shows you exactly what each thread sees in memory - perfect for catching race conditions or memory access bugs.</p>
+<p>The debugger shows you exactly what each thread sees in memory - perfect for
+catching race conditions or memory access bugs.</p>
 <h4 id="strategic-breakpoint-placement"><a class="header" href="#strategic-breakpoint-placement">Strategic breakpoint placement</a></h4>
-<p>CUDA-GDB breakpoints are much more powerful than regular breakpoints because they work with parallel execution:</p>
+<p>CUDA-GDB breakpoints are much more powerful than regular breakpoints because
+they work with parallel execution:</p>
 <pre><code class="language-gdb"># Break when ANY thread enters your kernel
 (cuda-gdb) break add_kernel
 
@@ -368,14 +412,24 @@ $2 = {42}
 # Break on specific data conditions
 (cuda-gdb) break add_kernel if input_array[thread_idx.x] &gt; 100.0
 </code></pre>
-<p>This lets you focus on exactly the threads and conditions you care about, instead of drowning in output from thousands of threads.</p>
+<p>This lets you focus on exactly the threads and conditions you care about,
+instead of drowning in output from thousands of threads.</p>
 <hr />
 <h2 id="getting-your-environment-ready"><a class="header" href="#getting-your-environment-ready">Getting your environment ready</a></h2>
-<p>Before you can start debugging, ensure your development environment is properly configured. If you’ve been working through the earlier puzzles, most of this is already set up!</p>
-<p><strong>Note</strong>: Without <code>pixi</code>, you would need to manually install CUDA Toolkit from <a href="https://developer.nvidia.com/cuda-toolkit">NVIDIA’s official resources</a>, manage driver compatibility, configure environment variables, and handle version conflicts between components. <code>pixi</code> eliminates this complexity by automatically managing all CUDA dependencies, versions, and environment configuration for you.</p>
+<p>Before you can start debugging, ensure your development environment is properly
+configured. If you’ve been working through the earlier puzzles, most of this is
+already set up!</p>
+<p><strong>Note</strong>: Without <code>pixi</code>, you would need to manually install CUDA Toolkit from
+<a href="https://developer.nvidia.com/cuda-toolkit">NVIDIA’s official resources</a>, manage
+driver compatibility, configure environment variables, and handle version
+conflicts between components. <code>pixi</code> eliminates this complexity by automatically
+managing all CUDA dependencies, versions, and environment configuration for you.</p>
 <h3 id="why-pixi-matters-for-debugging"><a class="header" href="#why-pixi-matters-for-debugging">Why <code>pixi</code> matters for debugging</a></h3>
-<p><strong>The challenge</strong>: GPU debugging requires precise coordination between CUDA toolkit, GPU drivers, Mojo compiler, and debugger components. Version mismatches can lead to frustrating “debugger not found” errors.</p>
-<p><strong>The solution</strong>: Using <code>pixi</code> ensures all these components work together harmoniously. When you run <code>pixi run mojo debug --cuda-gdb</code>, pixi automatically:</p>
+<p><strong>The challenge</strong>: GPU debugging requires precise coordination between CUDA
+toolkit, GPU drivers, Mojo compiler, and debugger components. Version mismatches
+can lead to frustrating “debugger not found” errors.</p>
+<p><strong>The solution</strong>: Using <code>pixi</code> ensures all these components work together
+harmoniously. When you run <code>pixi run mojo debug --cuda-gdb</code>, pixi automatically:</p>
 <ul>
 <li>Sets up CUDA toolkit paths</li>
 <li>Loads the correct GPU drivers</li>
@@ -400,8 +454,12 @@ pixi run mojo debug --help
 pixi run cuda-gdb --version
 # Should show NVIDIA CUDA-GDB version information
 </code></pre>
-<p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and ensure the CUDA toolkit feature is enabled.</p>
-<p><strong>Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s <code>cuda-gdb</code> package only provides a wrapper script. This command auto-detects and links the actual CUDA-GDB binaries from your system CUDA installation to the conda environment, enabling full GPU debugging capabilities.</p>
+<p>If any of these commands fail, double-check your <code>pixi.toml</code> configuration and
+ensure the CUDA toolkit feature is enabled.</p>
+<p><strong>Important</strong>: The <code>pixi run setup-cuda-gdb</code> command is required because conda’s
+<code>cuda-gdb</code> package only provides a wrapper script. This command auto-detects and
+links the actual CUDA-GDB binaries from your system CUDA installation to the
+conda environment, enabling full GPU debugging capabilities.</p>
 <p><strong>What this command does:</strong></p>
 <p>The script automatically detects CUDA from multiple common locations:</p>
 <ul>
@@ -410,11 +468,23 @@ pixi run cuda-gdb --version
 <li><code>/opt/cuda</code> (ArchLinux and other distributions)</li>
 <li>System PATH (via <code>which cuda-gdb</code>)</li>
 </ul>
-<p>See <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh"><code>scripts/setup-cuda-gdb.sh</code></a> for implementation details.</p>
-<p><strong>Special note for WSL users</strong>: Both debug tools we will use in Part II (namely cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL, but require you to add the registry key <code>HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface</code> and set it to <code>(DWORD) 1</code>. More details on supported platforms and their OS specific behavior can be found here: <a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms">cuda-gdb</a> and <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior">compute-sanatizer</a></p>
+<p>See
+<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/scripts/setup-cuda-gdb.sh"><code>scripts/setup-cuda-gdb.sh</code></a>
+for implementation details.</p>
+<p><strong>Special note for WSL users</strong>: Both debug tools we will use in Part II (namely
+cuda-gdb and compute-sanatizer) do support debugging CUDA applications on WSL,
+but require you to add the registry key
+<code>HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\GPUDebugger\EnableInterface</code> and
+set it to <code>(DWORD) 1</code>. More details on supported platforms and their OS specific
+behavior can be found here:
+<a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#supported-platforms">cuda-gdb</a>
+and
+<a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html#operating-system-specific-behavior">compute-sanatizer</a></p>
 <hr />
 <h2 id="hands-on-tutorial-your-first-gpu-debugging-session"><a class="header" href="#hands-on-tutorial-your-first-gpu-debugging-session">Hands-on tutorial: Your first GPU debugging session</a></h2>
-<p>Theory is great, but nothing beats hands-on experience. Let’s debug a real program using Puzzle 01 - the simple “add 10 to each array element” kernel you know well.</p>
+<p>Theory is great, but nothing beats hands-on experience. Let’s debug a real
+program using Puzzle 01 - the simple “add 10 to each array element” kernel you
+know well.</p>
 <p><strong>Why Puzzle 01?</strong> It’s the perfect debugging tutorial because:</p>
 <ul>
 <li><strong>Simple enough</strong> to understand what <em>should</em> happen</li>
@@ -422,45 +492,61 @@ pixi run cuda-gdb --version
 <li><strong>Contains both</strong> CPU setup code and GPU kernel code</li>
 <li><strong>Short execution time</strong> so you can iterate quickly</li>
 </ul>
-<p>By the end of this tutorial, you’ll have debugged the same program using all four debugging approaches, seen real debugger output, and learned the essential debugging commands you’ll use daily.</p>
+<p>By the end of this tutorial, you’ll have debugged the same program using all
+four debugging approaches, seen real debugger output, and learned the essential
+debugging commands you’ll use daily.</p>
 <h3 id="learning-path-through-the-debugging-approaches"><a class="header" href="#learning-path-through-the-debugging-approaches">Learning path through the debugging approaches</a></h3>
-<p>We’ll explore the <a href="#the-four-debugging-combinations">four debugging combinations</a> using Puzzle 01 as our example. <strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then progress to CUDA-GDB (most powerful).</p>
+<p>We’ll explore the
+<a href="#the-four-debugging-combinations">four debugging combinations</a> using Puzzle 01
+as our example. <strong>Learning path</strong>: We’ll start with JIT + LLDB (easiest), then
+progress to CUDA-GDB (most powerful).</p>
 <p><strong>⚠️ Important for GPU debugging</strong>:</p>
 <ul>
 <li>The <code>--break-on-launch</code> flag is <strong>required</strong> for CUDA-GDB approaches</li>
-<li><strong>Pre-compiled binaries</strong> (Approaches 3 &amp; 4) preserve local variables like <code>i</code> for debugging</li>
+<li><strong>Pre-compiled binaries</strong> (Approaches 3 &amp; 4) preserve local variables like <code>i</code>
+for debugging</li>
 <li><strong>JIT compilation</strong> (Approaches 1 &amp; 2) optimizes away most local variables</li>
 <li>For serious GPU debugging, use <strong>Approach 4</strong> (Binary + CUDA-GDB)</li>
 </ul>
 <h2 id="tutorial-step-1-cpu-debugging-with-lldb"><a class="header" href="#tutorial-step-1-cpu-debugging-with-lldb">Tutorial step 1: CPU debugging with LLDB</a></h2>
-<p>Let’s begin with the most common debugging scenario: <strong>your program crashes or behaves unexpectedly, and you need to see what’s happening in your <code>main()</code> function</strong>.</p>
-<p><strong>The mission</strong>: Debug the CPU-side setup code in Puzzle 01 to understand how Mojo initializes GPU memory and launches kernels.</p>
+<p>Let’s begin with the most common debugging scenario: <strong>your program crashes or
+behaves unexpectedly, and you need to see what’s happening in your <code>main()</code>
+function</strong>.</p>
+<p><strong>The mission</strong>: Debug the CPU-side setup code in Puzzle 01 to understand how
+Mojo initializes GPU memory and launches kernels.</p>
 <h3 id="launch-the-debugger"><a class="header" href="#launch-the-debugger">Launch the debugger</a></h3>
 <p>Fire up the LLDB debugger with JIT compilation:</p>
 <pre><code class="language-bash"># This compiles and debugs p01.mojo in one step
 pixi run mojo debug solutions/p01/p01.mojo
 </code></pre>
-<p>You’ll see the LLDB prompt: <code>(lldb)</code>. You’re now inside the debugger, ready to inspect your program’s execution!</p>
+<p>You’ll see the LLDB prompt: <code>(lldb)</code>. You’re now inside the debugger, ready to
+inspect your program’s execution!</p>
 <h3 id="your-first-debugging-commands"><a class="header" href="#your-first-debugging-commands">Your first debugging commands</a></h3>
-<p>Let’s trace through what happens when Puzzle 01 runs. <strong>Type these commands exactly as shown</strong> and observe the output:</p>
+<p>Let’s trace through what happens when Puzzle 01 runs.
+<strong>Type these commands exactly as shown</strong> and observe the output:</p>
 <p><strong>Step 1: Set a breakpoint at the main function</strong></p>
 <pre><code class="language-bash">(lldb) br set -n main
 </code></pre>
 <p>Output:</p>
-<pre><code>Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
+<pre><code class="language-text">Breakpoint 1: where = mojo`main, address = 0x00000000027d7530
 </code></pre>
 <p>Or it may look like:</p>
-<pre><code>Breakpoint 1: no locations (pending).
+<pre><code class="language-text">Breakpoint 1: no locations (pending).
 WARNING: Unable to resolve breakpoint to any actual locations.
 </code></pre>
-<p>If the breakpoint appears as pending, this is expected. Mojo programs are JIT-compiled, which means the debugger may not be able to resolve symbols until the program begins execution. In this case the breakpoint is registered, but LLDB cannot yet bind it to a concrete instruction address.</p>
-<p>Once execution starts and the module is compiled, LLDB resolves the breakpoint automatically.</p>
-<p>In either case the breakpoint has been set successfully and execution will pause there once the program runs.</p>
+<p>If the breakpoint appears as pending, this is expected. Mojo programs are
+JIT-compiled, which means the debugger may not be able to resolve symbols until
+the program begins execution. In this case the breakpoint is registered, but
+LLDB cannot yet bind it to a concrete instruction address.</p>
+<p>Once execution starts and the module is compiled, LLDB resolves the breakpoint
+automatically.</p>
+<p>In either case the breakpoint has been set successfully and execution will pause
+there once the program runs.</p>
 <p><strong>Step 2: Start your program</strong></p>
 <pre><code class="language-bash">(lldb) run
 </code></pre>
 <p>Output:</p>
-<pre><code>Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
+<pre><code class="language-text">Process 186951 launched: '/home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo' (x86_64)
 Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = breakpoint 1.1
     frame #0: 0x0000555557d2b530 mojo`main
@@ -469,13 +555,15 @@ mojo`main:
     0x555557d2b531 &lt;+1&gt;: movq   %rsp, %rbp
     ...
 </code></pre>
-<p>The program has stopped at your breakpoint. You’re currently viewing <strong>assembly code</strong>, which is normal - the debugger starts at the low-level machine code before reaching your high-level Mojo source.</p>
+<p>The program has stopped at your breakpoint. You’re currently viewing
+<strong>assembly code</strong>, which is normal - the debugger starts at the low-level
+machine code before reaching your high-level Mojo source.</p>
 <p><strong>Step 3: Navigate through the startup process</strong></p>
 <pre><code class="language-bash"># Try stepping through one instruction
 (lldb) next
 </code></pre>
 <p>Output:</p>
-<pre><code>Process 186951 stopped
+<pre><code class="language-text">Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = instruction step over
     frame #0: 0x0000555557d2b531 mojo`main + 1
 mojo`main:
@@ -483,26 +571,29 @@ mojo`main:
     0x555557d2b534 &lt;+4&gt;: pushq  %r15
     ...
 </code></pre>
-<p>Stepping through assembly can be tedious. Let’s proceed to the more relevant parts.</p>
+<p>Stepping through assembly can be tedious. Let’s proceed to the more relevant
+parts.</p>
 <p><strong>Step 4: Continue to reach your Mojo source code</strong></p>
 <pre><code class="language-bash"># Skip through the startup assembly to get to your actual code
 (lldb) continue
 </code></pre>
 <p>Output:</p>
-<pre><code>Process 186951 resuming
+<pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped and restarted: thread 1 received signal: SIGCHLD
 2 locations added to breakpoint 1
 Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = breakpoint 1.3
     frame #0: 0x00007fff5c01e841 JIT(0x7fff5c075000)`stdlib::builtin::_startup::__mojo_main_prototype(argc=([0] = 1), argv=0x00007fffffffa858) at _startup.mojo:95:4
 </code></pre>
-<p>Mojo’s runtime is initializing. The <code>_startup.mojo</code> indicates Mojo’s internal startup code. The <code>SIGCHLD</code> signal is normal - it’s how Mojo manages its internal processes.</p>
+<p>Mojo’s runtime is initializing. The <code>_startup.mojo</code> indicates Mojo’s internal
+startup code. The <code>SIGCHLD</code> signal is normal - it’s how Mojo manages its
+internal processes.</p>
 <p><strong>Step 5: Continue to your actual code</strong></p>
 <pre><code class="language-bash"># One more continue to reach your p01.mojo code!
 (lldb) continue
 </code></pre>
 <p>Output:</p>
-<pre><code>Process 186951 resuming
+<pre><code class="language-text">Process 186951 resuming
 Process 186951 stopped
 * thread #1, name = 'mojo', stop reason = breakpoint 1.2
     frame #0: 0x00007fff5c014040 JIT(0x7fff5c075000)`p01::main(__error__=&lt;unavailable&gt;) at p01.mojo:24:23
@@ -518,42 +609,51 @@ Process 186951 stopped
 <ul>
 <li><strong>Line numbers 21-27</strong> from your p01.mojo file</li>
 <li><strong>Current line 24</strong>: <code>with DeviceContext() as ctx:</code></li>
-<li><strong>JIT compilation</strong>: The <code>JIT(0x7fff5c075000)</code> indicates Mojo compiled your code just-in-time</li>
+<li><strong>JIT compilation</strong>: The <code>JIT(0x7fff5c075000)</code> indicates Mojo compiled your
+code just-in-time</li>
 </ul>
 <p><strong>Step 6: Let the program complete</strong></p>
 <pre><code class="language-bash"># Let the program run to completion
 (lldb) continue
 </code></pre>
 <p>Output:</p>
-<pre><code>Process 186951 resuming
+<pre><code class="language-text">Process 186951 resuming
 out: HostBuffer([10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 Process 186951 exited with status = 0 (0x00000000)
 </code></pre>
 <h3 id="what-you-just-learned"><a class="header" href="#what-you-just-learned">What you just learned</a></h3>
-<p>🎓 <strong>Congratulations!</strong> You’ve just completed your first GPU program debugging session. Here’s what happened:</p>
+<p>🎓 <strong>Congratulations!</strong> You’ve just completed your first GPU program debugging
+session. Here’s what happened:</p>
 <p><strong>The debugging journey you took:</strong></p>
 <ol>
-<li><strong>Started with assembly</strong> - Normal for low-level debugging, shows how the debugger works at machine level</li>
-<li><strong>Navigated through Mojo startup</strong> - Learned that Mojo has internal initialization code</li>
-<li><strong>Reached your source code</strong> - Saw your actual p01.mojo lines 21-27 with syntax highlighting</li>
+<li><strong>Started with assembly</strong> - Normal for low-level debugging, shows how the
+debugger works at machine level</li>
+<li><strong>Navigated through Mojo startup</strong> - Learned that Mojo has internal
+initialization code</li>
+<li><strong>Reached your source code</strong> - Saw your actual p01.mojo lines 21-27 with
+syntax highlighting</li>
 <li><strong>Watched JIT compilation</strong> - Observed Mojo compiling your code on-the-fly</li>
-<li><strong>Verified successful execution</strong> - Confirmed your program produces the expected output</li>
+<li><strong>Verified successful execution</strong> - Confirmed your program produces the
+expected output</li>
 </ol>
 <p><strong>LLDB debugging provides:</strong></p>
 <ul>
-<li>✅ <strong>CPU-side visibility</strong>: See your <code>main()</code> function, buffer allocation, memory setup</li>
+<li>✅ <strong>CPU-side visibility</strong>: See your <code>main()</code> function, buffer allocation,
+memory setup</li>
 <li>✅ <strong>Source code inspection</strong>: View your actual Mojo code with line numbers</li>
 <li>✅ <strong>Variable examination</strong>: Check values of host-side variables (CPU memory)</li>
 <li>✅ <strong>Program flow control</strong>: Step through your setup logic line by line</li>
-<li>✅ <strong>Error investigation</strong>: Debug crashes in device setup, memory allocation, etc.</li>
+<li>✅ <strong>Error investigation</strong>: Debug crashes in device setup, memory allocation,
+etc.</li>
 </ul>
 <p><strong>What LLDB cannot do:</strong></p>
 <ul>
 <li>❌ <strong>GPU kernel inspection</strong>: Cannot step into <code>add_10</code> function execution</li>
 <li>❌ <strong>Thread-level debugging</strong>: Cannot see individual GPU thread behavior</li>
 <li>❌ <strong>GPU memory access</strong>: Cannot examine data as GPU threads see it</li>
-<li>❌ <strong>Parallel execution analysis</strong>: Cannot debug race conditions or synchronization</li>
+<li>❌ <strong>Parallel execution analysis</strong>: Cannot debug race conditions or
+synchronization</li>
 </ul>
 <p><strong>When to use LLDB debugging:</strong></p>
 <ul>
@@ -563,10 +663,15 @@ Process 186951 exited with status = 0 (0x00000000)
 <li>Learning how Mojo applications start up</li>
 <li>Quick prototyping and experimenting with code changes</li>
 </ul>
-<p><strong>Key insight</strong>: LLDB is perfect for <strong>host-side debugging</strong> - everything that happens on your CPU before and after GPU execution. For the actual GPU kernel debugging, you need our next approach…</p>
+<p><strong>Key insight</strong>: LLDB is perfect for <strong>host-side debugging</strong> - everything that
+happens on your CPU before and after GPU execution. For the actual GPU kernel
+debugging, you need our next approach…</p>
 <h2 id="tutorial-step-2-binary-debugging"><a class="header" href="#tutorial-step-2-binary-debugging">Tutorial step 2: Binary debugging</a></h2>
-<p>You’ve learned JIT debugging - now let’s explore the <strong>professional approach</strong> used in production environments.</p>
-<p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or you need to debug the same program repeatedly. Building a binary first provides more control and faster debugging iterations.</p>
+<p>You’ve learned JIT debugging - now let’s explore the <strong>professional approach</strong>
+used in production environments.</p>
+<p><strong>The scenario</strong>: You’re debugging a complex application with multiple files, or
+you need to debug the same program repeatedly. Building a binary first provides
+more control and faster debugging iterations.</p>
 <h3 id="build-your-debug-binary"><a class="header" href="#build-your-debug-binary">Build your debug binary</a></h3>
 <p><strong>Step 1: Compile with debug information</strong></p>
 <pre><code class="language-bash"># Create a debug build (notice the clear naming)
@@ -591,7 +696,8 @@ pixi run mojo debug solutions/p01/p01_debug
 <tr><td>Debug symbols generated during debugging</td><td>Fixed debug symbols</td></tr>
 </tbody></table>
 </div>
-<p><strong>When you run the same LLDB commands</strong> (<code>br set -n main</code>, <code>run</code>, <code>continue</code>), you’ll notice:</p>
+<p><strong>When you run the same LLDB commands</strong> (<code>br set -n main</code>, <code>run</code>, <code>continue</code>),
+you’ll notice:</p>
 <ul>
 <li><strong>Faster startup</strong> - no compilation delay</li>
 <li><strong>Cleaner output</strong> - no JIT compilation messages</li>
@@ -600,9 +706,14 @@ pixi run mojo debug solutions/p01/p01_debug
 </ul>
 <hr />
 <h2 id="tutorial-step-3-debugging-the-gpu-kernel"><a class="header" href="#tutorial-step-3-debugging-the-gpu-kernel">Tutorial step 3: Debugging the GPU kernel</a></h2>
-<p>So far, you’ve debugged the <strong>CPU host code</strong> - the setup, memory allocation, and initialization. But what about the actual <strong>GPU kernel</strong> where the parallel computation happens?</p>
-<p><strong>The challenge</strong>: Your <code>add_10</code> kernel runs on the GPU with potentially thousands of threads executing simultaneously. LLDB can’t reach into the GPU’s parallel execution environment.</p>
-<p><strong>The solution</strong>: CUDA-GDB - a specialized debugger that understands GPU threads, GPU memory, and parallel execution.</p>
+<p>So far, you’ve debugged the <strong>CPU host code</strong> - the setup, memory allocation,
+and initialization. But what about the actual <strong>GPU kernel</strong> where the parallel
+computation happens?</p>
+<p><strong>The challenge</strong>: Your <code>add_10</code> kernel runs on the GPU with potentially
+thousands of threads executing simultaneously. LLDB can’t reach into the GPU’s
+parallel execution environment.</p>
+<p><strong>The solution</strong>: CUDA-GDB - a specialized debugger that understands GPU
+threads, GPU memory, and parallel execution.</p>
 <h3 id="why-you-need-cuda-gdb"><a class="header" href="#why-you-need-cuda-gdb">Why you need CUDA-GDB</a></h3>
 <p>Let’s understand what makes GPU debugging fundamentally different:</p>
 <p><strong>CPU debugging (LLDB):</strong></p>
@@ -619,7 +730,9 @@ pixi run mojo debug solutions/p01/p01_debug
 <li>Complex memory hierarchy (global, shared, local, registers)</li>
 <li>Same variable has different values across threads</li>
 </ul>
-<p><strong>Real example</strong>: In your <code>add_10</code> kernel, the variable <code>thread_idx.x</code> has a <strong>different value in every thread</strong> - thread 0 sees <code>0</code>, thread 1 sees <code>1</code>, etc. Only CUDA-GDB can show you this parallel reality.</p>
+<p><strong>Real example</strong>: In your <code>add_10</code> kernel, the variable <code>thread_idx.x</code> has a
+<strong>different value in every thread</strong> - thread 0 sees <code>0</code>, thread 1 sees <code>1</code>, etc.
+Only CUDA-GDB can show you this parallel reality.</p>
 <h3 id="launch-cuda-gdb-debugger"><a class="header" href="#launch-cuda-gdb-debugger">Launch CUDA-GDB debugger</a></h3>
 <p><strong>Step 1: Start GPU kernel debugging</strong></p>
 <p>Choose your approach:</p>
@@ -629,14 +742,15 @@ pixi run setup-cuda-gdb
 # We'll use JIT + CUDA-GDB (Approach 2 from above)
 pixi run mojo debug --cuda-gdb --break-on-launch solutions/p01/p01.mojo
 </code></pre>
-<p>We’ll use the <strong>JIT + CUDA-GDB approach</strong> since it’s perfect for learning and quick iterations.</p>
+<p>We’ll use the <strong>JIT + CUDA-GDB approach</strong> since it’s perfect for learning and
+quick iterations.</p>
 <p><strong>Step 2: Launch and automatically stop at GPU kernel entry</strong></p>
 <p>The CUDA-GDB prompt looks like: <code>(cuda-gdb)</code>. Start the program:</p>
 <pre><code class="language-gdb"># Run the program - it automatically stops when the GPU kernel launches
 (cuda-gdb) run
 </code></pre>
 <p>Output:</p>
-<pre><code>Starting program: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo...
+<pre><code class="language-text">Starting program: /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/default/bin/mojo...
 [Thread debugging using libthread_db enabled]
 ...
 [Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0)]
@@ -645,14 +759,19 @@ CUDA thread hit application kernel entry function breakpoint, p01_add_10_UnsafeP
    &lt;&lt;&lt;(1,1,1),(4,1,1)&gt;&gt;&gt; (output=0x302000000, a=0x302000200) at p01.mojo:16
 16          i = thread_idx.x
 </code></pre>
-<p><strong>Success! You’re automatically stopped inside the GPU kernel!</strong> The <code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16 where <code>i = thread_idx.x</code> executes.</p>
-<p><strong>Important</strong>: You <strong>don’t</strong> need to manually set breakpoints like <code>break add_10</code> - the kernel entry breakpoint is automatic. GPU kernel functions have mangled names in CUDA-GDB (like <code>p01_add_10_UnsafePointer...</code>), but you’re already inside the kernel and can start debugging immediately.</p>
+<p><strong>Success! You’re automatically stopped inside the GPU kernel!</strong> The
+<code>--break-on-launch</code> flag caught the kernel launch and you’re now at line 16
+where <code>i = thread_idx.x</code> executes.</p>
+<p><strong>Important</strong>: You <strong>don’t</strong> need to manually set breakpoints like
+<code>break add_10</code> - the kernel entry breakpoint is automatic. GPU kernel functions
+have mangled names in CUDA-GDB (like <code>p01_add_10_UnsafePointer...</code>), but you’re
+already inside the kernel and can start debugging immediately.</p>
 <p><strong>Step 3: Explore the parallel execution</strong></p>
 <pre><code class="language-gdb"># See all the GPU threads that are paused at your breakpoint
 (cuda-gdb) info cuda threads
 </code></pre>
 <p>Output:</p>
-<pre><code>  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
+<pre><code class="language-text">  BlockIdx ThreadIdx To BlockIdx To ThreadIdx Count                 PC                                                       Filename  Line
 Kernel 0
 *  (0,0,0)   (0,0,0)     (0,0,0)      (3,0,0)     4 0x00007fffd326fb70 /home/ubuntu/workspace/mojo-gpu-puzzles/solutions/p01/p01.mojo    16
 </code></pre>
@@ -668,159 +787,177 @@ Kernel 0
 (cuda-gdb) next
 </code></pre>
 <p>Output:</p>
-<pre><code>p01_add_10_UnsafePointer... at p01.mojo:17
+<pre><code class="language-text">p01_add_10_UnsafePointer... at p01.mojo:17
 17          output[i] = a[i] + 10.0
 </code></pre>
 <pre><code class="language-gdb"># Local variables work with pre-compiled binaries!
 (cuda-gdb) print i
 </code></pre>
 <p>Output:</p>
-<pre><code>$1 = 0                    # This thread's index (captures thread_idx.x value)
+<pre><code class="language-text">$1 = 0                    # This thread's index (captures thread_idx.x value)
 </code></pre>
 <pre><code class="language-gdb"># GPU built-ins don't work, but you don't need them
 (cuda-gdb) print thread_idx.x
 </code></pre>
 <p>Output:</p>
-<pre><code>No symbol "thread_idx" in current context.
+<pre><code class="language-text">No symbol "thread_idx" in current context.
 </code></pre>
 <pre><code class="language-gdb"># Access thread-specific data using local variables
 (cuda-gdb) print a[i]     # This thread's input: a[0]
 </code></pre>
 <p>Output:</p>
-<pre><code>$2 = {0}                  # Input value (Mojo scalar format)
+<pre><code class="language-text">$2 = {0}                  # Input value (Mojo scalar format)
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print output[i] # This thread's output BEFORE computation
 </code></pre>
 <p>Output:</p>
-<pre><code>$3 = {0}                  # Still zero - computation hasn't executed yet!
+<pre><code class="language-text">$3 = {0}                  # Still zero - computation hasn't executed yet!
 </code></pre>
 <pre><code class="language-gdb"># Execute the computation line
 (cuda-gdb) next
 </code></pre>
 <p>Output:</p>
-<pre><code>13      fn add_10(         # Steps to function signature line after computation
+<pre><code class="language-text">13      fn add_10(         # Steps to function signature line after computation
 </code></pre>
 <pre><code class="language-gdb"># Now check the result
 (cuda-gdb) print output[i]
 </code></pre>
 <p>Output:</p>
-<pre><code>$4 = {10}                 # Now shows the computed result: 0 + 10 = 10
+<pre><code class="language-text">$4 = {10}                 # Now shows the computed result: 0 + 10 = 10
 </code></pre>
 <pre><code class="language-gdb"># Function parameters are still available
 (cuda-gdb) print a
 </code></pre>
 <p>Output:</p>
-<pre><code>$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$5 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <p><strong>Step 5: Navigate between parallel threads</strong></p>
 <pre><code class="language-gdb"># Switch to a different thread to see its execution
 (cuda-gdb) cuda thread (1,0,0)
 </code></pre>
 <p>Output:</p>
-<pre><code>[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
+<pre><code class="language-text">[Switching focus to CUDA kernel 0, grid 1, block (0,0,0), thread (1,0,0), device 0, sm 0, warp 0, lane 1]
 13      fn add_10(         # Thread 1 is also at function signature
 </code></pre>
 <pre><code class="language-gdb"># Check the thread's local variable
 (cuda-gdb) print i
 </code></pre>
 <p>Output:</p>
-<pre><code>$5 = 1                    # Thread 1's index (different from Thread 0!)
+<pre><code class="language-text">$5 = 1                    # Thread 1's index (different from Thread 0!)
 </code></pre>
 <pre><code class="language-gdb"># Examine what this thread processes
 (cuda-gdb) print a[i]     # This thread's input: a[1]
 </code></pre>
 <p>Output:</p>
-<pre><code>$6 = {1}                  # Input value for thread 1
+<pre><code class="language-text">$6 = {1}                  # Input value for thread 1
 </code></pre>
 <pre><code class="language-gdb"># Thread 1's computation is already done (parallel execution!)
 (cuda-gdb) print output[i] # This thread's output: output[1]
 </code></pre>
 <p>Output:</p>
-<pre><code>$7 = {11}                 # 1 + 10 = 11 (already computed)
+<pre><code class="language-text">$7 = {11}                 # 1 + 10 = 11 (already computed)
 </code></pre>
 <pre><code class="language-gdb"># BEST TECHNIQUE: View all thread results at once
 (cuda-gdb) print output[0]@4
 </code></pre>
 <p>Output:</p>
-<pre><code>$8 = {{10}, {11}, {12}, {13}}     # All 4 threads' results in one command!
+<pre><code class="language-text">$8 = {{10}, {11}, {12}, {13}}     # All 4 threads' results in one command!
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print a[0]@4
 </code></pre>
 <p>Output:</p>
-<pre><code>$9 = {{0}, {1}, {2}, {3}}         # All input values for comparison
+<pre><code class="language-text">$9 = {{0}, {1}, {2}, {3}}         # All input values for comparison
 </code></pre>
 <pre><code class="language-gdb"># Don't step too far or you'll lose CUDA context
 (cuda-gdb) next
 </code></pre>
 <p>Output:</p>
-<pre><code>[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # Back to host thread
+<pre><code class="language-text">[Switching to Thread 0x7ffff7e25840 (LWP 306942)]  # Back to host thread
 0x00007fffeca3f831 in ?? () from /lib/x86_64-linux-gnu/libcuda.so.1
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print output[i]
 </code></pre>
 <p>Output:</p>
-<pre><code>No symbol "output" in current context.  # Lost GPU context!
+<pre><code class="language-text">No symbol "output" in current context.  # Lost GPU context!
 </code></pre>
 <p><strong>Key insights from this debugging session:</strong></p>
 <ul>
-<li>🤯 <strong>Parallel execution is real</strong> - when you switch to thread (1,0,0), its computation is already done!</li>
-<li><strong>Each thread has different data</strong> - <code>i=0</code> vs <code>i=1</code>, <code>a[i]={0}</code> vs <code>a[i]={1}</code>, <code>output[i]={10}</code> vs <code>output[i]={11}</code></li>
-<li><strong>Array inspection is powerful</strong> - <code>print output[0]@4</code> shows all threads’ results: <code>{{10}, {11}, {12}, {13}}</code></li>
-<li><strong>GPU context is fragile</strong> - stepping too far switches back to host thread and loses GPU variables</li>
+<li>🤯 <strong>Parallel execution is real</strong> - when you switch to thread (1,0,0), its
+computation is already done!</li>
+<li><strong>Each thread has different data</strong> - <code>i=0</code> vs <code>i=1</code>, <code>a[i]={0}</code> vs <code>a[i]={1}</code>,
+<code>output[i]={10}</code> vs <code>output[i]={11}</code></li>
+<li><strong>Array inspection is powerful</strong> - <code>print output[0]@4</code> shows all threads’
+results: <code>{{10}, {11}, {12}, {13}}</code></li>
+<li><strong>GPU context is fragile</strong> - stepping too far switches back to host thread and
+loses GPU variables</li>
 </ul>
-<p>This demonstrates the fundamental nature of parallel computing: <strong>same code, different data per thread, executing simultaneously.</strong></p>
+<p>This demonstrates the fundamental nature of parallel computing:
+<strong>same code, different data per thread, executing simultaneously.</strong></p>
 <h3 id="what-youve-learned-with-cuda-gdb"><a class="header" href="#what-youve-learned-with-cuda-gdb">What you’ve learned with CUDA-GDB</a></h3>
-<p>You’ve completed GPU kernel execution debugging with <strong>pre-compiled binaries</strong>. Here’s what actually works:</p>
+<p>You’ve completed GPU kernel execution debugging with <strong>pre-compiled binaries</strong>.
+Here’s what actually works:</p>
 <p><strong>GPU debugging capabilities you gained:</strong></p>
 <ul>
-<li>✅ <strong>Debug GPU kernels automatically</strong> - <code>--break-on-launch</code> stops at kernel entry</li>
+<li>✅ <strong>Debug GPU kernels automatically</strong> - <code>--break-on-launch</code> stops at kernel
+entry</li>
 <li>✅ <strong>Navigate between GPU threads</strong> - switch contexts with <code>cuda thread</code></li>
-<li>✅ <strong>Access local variables</strong> - <code>print i</code> works with <code>-O0 -g</code> compiled binaries</li>
-<li>✅ <strong>Inspect thread-specific data</strong> - each thread shows different <code>i</code>, <code>a[i]</code>, <code>output[i]</code> values</li>
-<li>✅ <strong>View all thread results</strong> - <code>print output[0]@4</code> shows <code>{{10}, {11}, {12}, {13}}</code> in one command</li>
+<li>✅ <strong>Access local variables</strong> - <code>print i</code> works with <code>-O0 -g</code> compiled
+binaries</li>
+<li>✅ <strong>Inspect thread-specific data</strong> - each thread shows different <code>i</code>, <code>a[i]</code>,
+<code>output[i]</code> values</li>
+<li>✅ <strong>View all thread results</strong> - <code>print output[0]@4</code> shows
+<code>{{10}, {11}, {12}, {13}}</code> in one command</li>
 <li>✅ <strong>Step through GPU code</strong> - <code>next</code> executes computation and shows results</li>
-<li>✅ <strong>See parallel execution</strong> - threads execute simultaneously (other threads already computed when you switch)</li>
+<li>✅ <strong>See parallel execution</strong> - threads execute simultaneously (other threads
+already computed when you switch)</li>
 <li>✅ <strong>Access function parameters</strong> - examine <code>output</code> and <code>a</code> pointers</li>
-<li>❌ <strong>GPU built-ins unavailable</strong> - <code>thread_idx.x</code>, <code>blockIdx.x</code> etc. don’t work (but local variables do!)</li>
+<li>❌ <strong>GPU built-ins unavailable</strong> - <code>thread_idx.x</code>, <code>blockIdx.x</code> etc. don’t
+work (but local variables do!)</li>
 <li>📊 <strong>Mojo scalar format</strong> - values display as <code>{10}</code> instead of <code>10.0</code></li>
 <li>⚠️ <strong>Fragile GPU context</strong> - stepping too far loses access to GPU variables</li>
 </ul>
 <p><strong>Key insights</strong>:</p>
 <ul>
-<li><strong>Pre-compiled binaries</strong> (<code>mojo build -O0 -g</code>) are essential - local variables preserved</li>
-<li><strong>Array inspection with <code>@N</code></strong> - most efficient way to see all parallel results at once</li>
-<li><strong>GPU built-ins are missing</strong> - but local variables like <code>i</code> capture what you need</li>
+<li><strong>Pre-compiled binaries</strong> (<code>mojo build -O0 -g</code>) are essential - local
+variables preserved</li>
+<li><strong>Array inspection with <code>@N</code></strong> - most efficient way to see all parallel
+results at once</li>
+<li><strong>GPU built-ins are missing</strong> - but local variables like <code>i</code> capture what you
+need</li>
 <li><strong>Mojo uses <code>{value}</code> format</strong> - scalars display as <code>{10}</code> instead of <code>10.0</code></li>
-<li><strong>Be careful with stepping</strong> - easy to lose GPU context and return to host thread</li>
+<li><strong>Be careful with stepping</strong> - easy to lose GPU context and return to host
+thread</li>
 </ul>
 <p><strong>Real-world debugging techniques</strong></p>
-<p>Now let’s explore practical debugging scenarios you’ll encounter in real GPU programming:</p>
+<p>Now let’s explore practical debugging scenarios you’ll encounter in real GPU
+programming:</p>
 <h4 id="technique-1-verifying-thread-boundaries"><a class="header" href="#technique-1-verifying-thread-boundaries">Technique 1: Verifying thread boundaries</a></h4>
 <pre><code class="language-gdb"># Check if all 4 threads computed correctly
 (cuda-gdb) print output[0]@4
 </code></pre>
 <p>Output:</p>
-<pre><code>$8 = {{10}, {11}, {12}, {13}}    # All 4 threads computed correctly
+<pre><code class="language-text">$8 = {{10}, {11}, {12}, {13}}    # All 4 threads computed correctly
 </code></pre>
 <pre><code class="language-gdb"># Check beyond valid range to detect out-of-bounds issues
 (cuda-gdb) print output[0]@5
 </code></pre>
 <p>Output:</p>
-<pre><code>$9 = {{10}, {11}, {12}, {13}, {0}}  # Element 4 is uninitialized (good!)
+<pre><code class="language-text">$9 = {{10}, {11}, {12}, {13}, {0}}  # Element 4 is uninitialized (good!)
 </code></pre>
 <pre><code class="language-gdb"># Compare with input to verify computation
 (cuda-gdb) print a[0]@4
 </code></pre>
 <p>Output:</p>
-<pre><code>$10 = {{0}, {1}, {2}, {3}}       # Input values: 0+10=10, 1+10=11, etc.
+<pre><code class="language-text">$10 = {{0}, {1}, {2}, {3}}       # Input values: 0+10=10, 1+10=11, etc.
 </code></pre>
-<p><strong>Why this matters</strong>: Out-of-bounds access is the #1 cause of GPU crashes. These debugging steps catch it early.</p>
+<p><strong>Why this matters</strong>: Out-of-bounds access is the #1 cause of GPU crashes. These
+debugging steps catch it early.</p>
 <h4 id="technique-2-understanding-thread-organization"><a class="header" href="#technique-2-understanding-thread-organization">Technique 2: Understanding thread organization</a></h4>
 <pre><code class="language-gdb"># See how your threads are organized into blocks
 (cuda-gdb) info cuda blocks
 </code></pre>
 <p>Output:</p>
-<pre><code>  BlockIdx To BlockIdx Count   State
+<pre><code class="language-text">  BlockIdx To BlockIdx Count   State
 Kernel 0
 *  (0,0,0)     (0,0,0)     1 running
 </code></pre>
@@ -828,68 +965,81 @@ Kernel 0
 (cuda-gdb) info cuda threads
 </code></pre>
 <p>Output shows which threads are active, stopped, or have errors.</p>
-<p><strong>Why this matters</strong>: Understanding thread block organization helps debug synchronization and shared memory issues.</p>
+<p><strong>Why this matters</strong>: Understanding thread block organization helps debug
+synchronization and shared memory issues.</p>
 <h4 id="technique-3-memory-access-pattern-analysis"><a class="header" href="#technique-3-memory-access-pattern-analysis">Technique 3: Memory access pattern analysis</a></h4>
 <pre><code class="language-gdb"># Check GPU memory addresses:
 (cuda-gdb) print a               # Input array GPU pointer
 </code></pre>
 <p>Output:</p>
-<pre><code>$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
+<pre><code class="language-text">$9 = (!pop.scalar&lt;f32&gt; * @register) 0x302000200
 </code></pre>
 <pre><code class="language-gdb">(cuda-gdb) print output          # Output array GPU pointer
 </code></pre>
 <p>Output:</p>
-<pre><code>$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
+<pre><code class="language-text">$10 = (!pop.scalar&lt;f32&gt; * @register) 0x302000000
 </code></pre>
 <pre><code class="language-gdb"># Verify memory access pattern using local variables:
 (cuda-gdb) print a[i]            # Each thread accesses its own element using 'i'
 </code></pre>
 <p>Output:</p>
-<pre><code>$11 = {0}                        # Thread's input data
+<pre><code class="language-text">$11 = {0}                        # Thread's input data
 </code></pre>
-<p><strong>Why this matters</strong>: Memory access patterns affect performance and correctness. Wrong patterns cause race conditions or crashes.</p>
+<p><strong>Why this matters</strong>: Memory access patterns affect performance and correctness.
+Wrong patterns cause race conditions or crashes.</p>
 <h4 id="technique-4-results-verification-and-completion"><a class="header" href="#technique-4-results-verification-and-completion">Technique 4: Results verification and completion</a></h4>
 <pre><code class="language-gdb"># After stepping through kernel execution, verify the final results
 (cuda-gdb) print output[0]@4
 </code></pre>
 <p>Output:</p>
-<pre><code>$11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
+<pre><code class="language-text">$11 = {10.0, 11.0, 12.0, 13.0}    # Perfect! Each element increased by 10
 </code></pre>
 <pre><code class="language-gdb"># Let the program complete normally
 (cuda-gdb) continue
 </code></pre>
 <p>Output:</p>
-<pre><code>...Program output shows success...
+<pre><code class="language-text">...Program output shows success...
 </code></pre>
 <pre><code class="language-gdb"># Exit the debugger
 (cuda-gdb) exit
 </code></pre>
 <p>You’ve completed debugging a GPU kernel execution from setup to results.</p>
 <h2 id="your-gpu-debugging-progress-key-insights"><a class="header" href="#your-gpu-debugging-progress-key-insights">Your GPU debugging progress: key insights</a></h2>
-<p>You’ve completed a comprehensive GPU debugging tutorial. Here’s what you discovered about parallel computing:</p>
+<p>You’ve completed a comprehensive GPU debugging tutorial. Here’s what you
+discovered about parallel computing:</p>
 <h3 id="deep-insights-about-parallel-execution"><a class="header" href="#deep-insights-about-parallel-execution">Deep insights about parallel execution</a></h3>
 <ol>
 <li>
-<p><strong>Thread indexing in action</strong>: You <strong>saw</strong> <code>thread_idx.x</code> have different values (0, 1, 2, 3…) across parallel threads - not just read about it in theory</p>
+<p><strong>Thread indexing in action</strong>: You <strong>saw</strong> <code>thread_idx.x</code> have different
+values (0, 1, 2, 3…) across parallel threads - not just read about it in
+theory</p>
 </li>
 <li>
-<p><strong>Memory access patterns revealed</strong>: Each thread accesses <code>a[thread_idx.x]</code> and writes to <code>output[thread_idx.x]</code>, creating perfect data parallelism with no conflicts</p>
+<p><strong>Memory access patterns revealed</strong>: Each thread accesses <code>a[thread_idx.x]</code>
+and writes to <code>output[thread_idx.x]</code>, creating perfect data parallelism with
+no conflicts</p>
 </li>
 <li>
-<p><strong>Parallel execution demystified</strong>: Thousands of threads executing the <strong>same kernel code</strong> simultaneously, but each processing <strong>different data elements</strong></p>
+<p><strong>Parallel execution demystified</strong>: Thousands of threads executing the
+<strong>same kernel code</strong> simultaneously, but each processing
+<strong>different data elements</strong></p>
 </li>
 <li>
-<p><strong>GPU memory hierarchy</strong>: Arrays live in global GPU memory, accessible by all threads but with thread-specific indexing</p>
+<p><strong>GPU memory hierarchy</strong>: Arrays live in global GPU memory, accessible by all
+threads but with thread-specific indexing</p>
 </li>
 </ol>
 <h3 id="debugging-techniques-that-transfer-to-all-puzzles"><a class="header" href="#debugging-techniques-that-transfer-to-all-puzzles">Debugging techniques that transfer to all puzzles</a></h3>
-<p><strong>From Puzzle 01 to Puzzle 08 and beyond</strong>, you now have techniques that work universally:</p>
+<p><strong>From Puzzle 01 to Puzzle 08 and beyond</strong>, you now have techniques that work
+universally:</p>
 <ul>
 <li><strong>Start with LLDB</strong> for CPU-side issues (device setup, memory allocation)</li>
 <li><strong>Switch to CUDA-GDB</strong> for GPU kernel issues (thread behavior, memory access)</li>
-<li><strong>Use conditional breakpoints</strong> to focus on specific threads or data conditions</li>
+<li><strong>Use conditional breakpoints</strong> to focus on specific threads or data
+conditions</li>
 <li><strong>Navigate between threads</strong> to understand parallel execution patterns</li>
-<li><strong>Verify memory access patterns</strong> to catch race conditions and out-of-bounds errors</li>
+<li><strong>Verify memory access patterns</strong> to catch race conditions and out-of-bounds
+errors</li>
 </ul>
 <p><strong>Scalability</strong>: These same techniques work whether you’re debugging:</p>
 <ul>
@@ -899,7 +1049,8 @@ Kernel 0
 </ul>
 <hr />
 <h2 id="essential-debugging-commands-reference"><a class="header" href="#essential-debugging-commands-reference">Essential debugging commands reference</a></h2>
-<p>Now that you’ve learned the debugging workflow, here’s your <strong>quick reference guide</strong> for daily debugging sessions. Bookmark this section!</p>
+<p>Now that you’ve learned the debugging workflow, here’s your
+<strong>quick reference guide</strong> for daily debugging sessions. Bookmark this section!</p>
 <h3 id="gdb-command-abbreviations-save-time"><a class="header" href="#gdb-command-abbreviations-save-time">GDB command abbreviations (save time!)</a></h3>
 <p><strong>Most commonly used shortcuts</strong> for faster debugging:</p>
 <div class="table-wrapper"><table><thead><tr><th>Abbreviation</th><th>Full Command</th><th>Function</th></tr></thead><tbody>
@@ -922,7 +1073,8 @@ Kernel 0
 </code></pre>
 <p><strong>⚡ Pro tip</strong>: Use abbreviations for 3-5x faster debugging sessions!</p>
 <h2 id="lldb-commands-cpu-host-code-debugging"><a class="header" href="#lldb-commands-cpu-host-code-debugging">LLDB commands (CPU host code debugging)</a></h2>
-<p><strong>When to use</strong>: Debugging device setup, memory allocation, program flow, host-side crashes</p>
+<p><strong>When to use</strong>: Debugging device setup, memory allocation, program flow,
+host-side crashes</p>
 <h3 id="execution-control"><a class="header" href="#execution-control">Execution control</a></h3>
 <pre><code class="language-bash">(lldb) run                    # Launch your program
 (lldb) continue              # Resume execution (alias: c)
@@ -943,7 +1095,8 @@ Kernel 0
 (lldb) print array[0]@4      # Show first 4 array elements
 </code></pre>
 <h2 id="cuda-gdb-commands-gpu-kernel-debugging"><a class="header" href="#cuda-gdb-commands-gpu-kernel-debugging">CUDA-GDB commands (GPU kernel debugging)</a></h2>
-<p><strong>When to use</strong>: Debugging GPU kernels, thread behavior, parallel execution, GPU memory issues</p>
+<p><strong>When to use</strong>: Debugging GPU kernels, thread behavior, parallel execution, GPU
+memory issues</p>
 <h3 id="gpu-state-inspection"><a class="header" href="#gpu-state-inspection">GPU state inspection</a></h3>
 <pre><code class="language-bash">(cuda-gdb) info cuda threads    # Show all GPU threads and their state
 (cuda-gdb) info cuda blocks     # Show all thread blocks
@@ -988,28 +1141,39 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 </code></pre>
 <hr />
 <h2 id="youve-learned-the-essentials-of-gpu-debugging"><a class="header" href="#youve-learned-the-essentials-of-gpu-debugging">You’ve learned the essentials of GPU debugging</a></h2>
-<p>You’ve completed a comprehensive tutorial on GPU debugging fundamentals. Here’s what you’ve accomplished:</p>
+<p>You’ve completed a comprehensive tutorial on GPU debugging fundamentals. Here’s
+what you’ve accomplished:</p>
 <h3 id="skills-youve-learned"><a class="header" href="#skills-youve-learned">Skills you’ve learned</a></h3>
 <p><strong>Multi-level debugging knowledge</strong>:</p>
 <ul>
-<li>✅ <strong>CPU host debugging</strong> with LLDB - debug device setup, memory allocation, program flow</li>
-<li>✅ <strong>GPU kernel debugging</strong> with CUDA-GDB - debug parallel threads, GPU memory, race conditions</li>
-<li>✅ <strong>JIT vs binary debugging</strong> - choose the right approach for different scenarios</li>
-<li>✅ <strong>Environment management</strong> with pixi - ensure consistent, reliable debugging setups</li>
+<li>✅ <strong>CPU host debugging</strong> with LLDB - debug device setup, memory allocation,
+program flow</li>
+<li>✅ <strong>GPU kernel debugging</strong> with CUDA-GDB - debug parallel threads, GPU
+memory, race conditions</li>
+<li>✅ <strong>JIT vs binary debugging</strong> - choose the right approach for different
+scenarios</li>
+<li>✅ <strong>Environment management</strong> with pixi - ensure consistent, reliable
+debugging setups</li>
 </ul>
 <p><strong>Real parallel programming insights</strong>:</p>
 <ul>
-<li><strong>Saw threads in action</strong> - witnessed <code>thread_idx.x</code> having different values across parallel threads</li>
-<li><strong>Understood memory hierarchy</strong> - debugged global GPU memory, shared memory, thread-local variables</li>
-<li><strong>Learned thread navigation</strong> - jumped between thousands of parallel threads efficiently</li>
+<li><strong>Saw threads in action</strong> - witnessed <code>thread_idx.x</code> having different values
+across parallel threads</li>
+<li><strong>Understood memory hierarchy</strong> - debugged global GPU memory, shared memory,
+thread-local variables</li>
+<li><strong>Learned thread navigation</strong> - jumped between thousands of parallel threads
+efficiently</li>
 </ul>
 <h3 id="from-theory-to-practice"><a class="header" href="#from-theory-to-practice">From theory to practice</a></h3>
 <p>You didn’t just read about GPU debugging - you <strong>experienced it</strong>:</p>
 <ul>
 <li><strong>Debugged real code</strong>: Puzzle 01’s <code>add_10</code> kernel with actual GPU execution</li>
-<li><strong>Saw real debugger output</strong>: LLDB assembly, CUDA-GDB thread states, memory addresses</li>
-<li><strong>Used professional tools</strong>: The same CUDA-GDB used in production GPU development</li>
-<li><strong>Solved real scenarios</strong>: Out-of-bounds access, race conditions, kernel launch failures</li>
+<li><strong>Saw real debugger output</strong>: LLDB assembly, CUDA-GDB thread states, memory
+addresses</li>
+<li><strong>Used professional tools</strong>: The same CUDA-GDB used in production GPU
+development</li>
+<li><strong>Solved real scenarios</strong>: Out-of-bounds access, race conditions, kernel
+launch failures</li>
 </ul>
 <h3 id="your-debugging-toolkit-1"><a class="header" href="#your-debugging-toolkit-1">Your debugging toolkit</a></h3>
 <p><strong>Quick decision guide</strong> (keep this handy!):</p>
@@ -1035,7 +1199,8 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 </code></pre>
 <hr />
 <h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
-<p>GPU debugging involves thousands of parallel threads, complex memory hierarchies, and specialized tools. You now have:</p>
+<p>GPU debugging involves thousands of parallel threads, complex memory
+hierarchies, and specialized tools. You now have:</p>
 <ul>
 <li><strong>Systematic workflows</strong> that work for any GPU program</li>
 <li><strong>Professional tools</strong> familiarity with LLDB and CUDA-GDB</li>
@@ -1051,7 +1216,9 @@ pixi run mojo debug --cuda-gdb --break-on-launch debug_binary
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html">NVIDIA CUDA-GDB User Guide</a></li>
 <li><a href="https://docs.nvidia.com/cuda/cuda-gdb/index.html#command-reference">CUDA-GDB Command Reference</a></li>
 </ul>
-<p><strong>Note</strong>: GPU debugging requires patience and systematic investigation. The workflow and commands in this puzzle provide the foundation for debugging complex GPU issues you’ll encounter in real applications.</p>
+<p><strong>Note</strong>: GPU debugging requires patience and systematic investigation. The
+workflow and commands in this puzzle provide the foundation for debugging
+complex GPU issues you’ll encounter in real applications.</p>
 
                     </main>
 

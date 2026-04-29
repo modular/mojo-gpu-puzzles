@@ -210,12 +210,19 @@
                     <main>
                         <h1 id="-the-silent-memory-corruption"><a class="header" href="#-the-silent-memory-corruption">👮🏼‍♂️ The Silent Memory Corruption</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Learn how to detect memory violations that can silently corrupt GPU programs, even when tests appear to pass. Using NVIDIA’s <code>compute-sanitizer</code> (available through <code>pixi</code>) with the <code>memcheck</code> tool, you’ll discover hidden memory bugs that could cause unpredictable behavior in your GPU code.</p>
-<p><strong>Key insight</strong>: A GPU program can produce “correct” results while simultaneously performing illegal memory accesses.</p>
-<p><strong>Prerequisites</strong>: Understanding of <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4 TileTensor</a> and basic GPU memory concepts.</p>
+<p>Learn how to detect memory violations that can silently corrupt GPU programs,
+even when tests appear to pass. Using NVIDIA’s <code>compute-sanitizer</code> (available
+through <code>pixi</code>) with the <code>memcheck</code> tool, you’ll discover hidden memory bugs
+that could cause unpredictable behavior in your GPU code.</p>
+<p><strong>Key insight</strong>: A GPU program can produce “correct” results while
+simultaneously performing illegal memory accesses.</p>
+<p><strong>Prerequisites</strong>: Understanding of
+<a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4 TileTensor</a> and basic GPU
+memory concepts.</p>
 <h2 id="the-silent-memory-bug-discovery"><a class="header" href="#the-silent-memory-bug-discovery">The silent memory bug discovery</a></h2>
 <h3 id="test-passes-but-is-my-code-actually-correct"><a class="header" href="#test-passes-but-is-my-code-actually-correct">Test passes, but is my code actually correct?</a></h3>
-<p>Let’s start with a seemingly innocent program that appears to work perfectly (this is <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a> without guards):</p>
+<p>Let’s start with a seemingly innocent program that appears to work perfectly
+(this is <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a> without guards):</p>
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -237,11 +244,15 @@ out: HostBuffer([10.0, 11.0, 12.0, 13.0])
 expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 ✅ Memory test PASSED! (memcheck may find bounds violations)
 </code></pre>
-<p>✅ <strong>Test PASSED!</strong> The output matches expected results perfectly. Case closed, right?</p>
+<p>✅ <strong>Test PASSED!</strong> The output matches expected results perfectly. Case closed,
+right?</p>
 <p><strong>Wrong!</strong> Let’s see what <code>compute-sanitizer</code> reveals:</p>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
-<p><strong>Note</strong>: <code>MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0</code> is a command-line environment variable setting that disables a device context’s buffer cache. This setting can reveal memory issues, like bounds violations, that are otherwise masked by the normal caching behavior.</p>
+<p><strong>Note</strong>: <code>MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0</code> is a
+command-line environment variable setting that disables a device context’s
+buffer cache. This setting can reveal memory issues, like bounds violations,
+that are otherwise masked by the normal caching behavior.</p>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
 out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
@@ -287,13 +298,16 @@ Running memory bug example (bounds checking issue)...
 <ul>
 <li><strong>Tensor size</strong>: 2×2 (valid indices: 0, 1)</li>
 <li><strong>Thread grid</strong>: 3×3 (thread indices: 0, 1, 2)</li>
-<li><strong>Out-of-bounds threads</strong>: <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> access invalid memory</li>
-<li><strong>Missing bounds check</strong>: No validation of <code>thread_idx</code> against tensor dimensions</li>
+<li><strong>Out-of-bounds threads</strong>: <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> access invalid
+memory</li>
+<li><strong>Missing bounds check</strong>: No validation of <code>thread_idx</code> against tensor
+dimensions</li>
 </ul>
 <h3 id="understanding-the-7-total-errors"><a class="header" href="#understanding-the-7-total-errors">Understanding the 7 total errors</a></h3>
 <p><strong>4 Memory Violations:</strong></p>
 <ul>
-<li>Each out-of-bounds thread <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> caused an “Invalid <strong>global</strong> read”</li>
+<li>Each out-of-bounds thread <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code> caused an
+“Invalid <strong>global</strong> read”</li>
 </ul>
 <p><strong>3 CUDA Runtime Errors:</strong></p>
 <ul>
@@ -301,7 +315,8 @@ Running memory bug example (bounds checking issue)...
 <li><code>cuEventCreate</code> failed during cleanup</li>
 <li><code>cuMemFreeAsync</code> failed during memory deallocation</li>
 </ul>
-<p><strong>Key Insight</strong>: Memory violations have cascading effects - one bad memory access causes multiple downstream CUDA API failures.</p>
+<p><strong>Key Insight</strong>: Memory violations have cascading effects - one bad memory
+access causes multiple downstream CUDA API failures.</p>
 <p><strong>Why tests still passed:</strong></p>
 <ul>
 <li>Valid threads <code>(0,0)</code>, <code>(0,1)</code>, <code>(1,0)</code>, <code>(1,1)</code> wrote correct results</li>
@@ -310,24 +325,33 @@ Running memory bug example (bounds checking issue)...
 </ul>
 <h2 id="understanding-undefined-behavior-ub"><a class="header" href="#understanding-undefined-behavior-ub">Understanding undefined behavior (UB)</a></h2>
 <h3 id="what-is-undefined-behavior"><a class="header" href="#what-is-undefined-behavior">What is undefined behavior?</a></h3>
-<p><strong>Undefined Behavior (UB)</strong> occurs when a program performs operations that have no defined meaning according to the language specification. Out-of-bounds memory access is a classic example of undefined behavior.</p>
+<p><strong>Undefined Behavior (UB)</strong> occurs when a program performs operations that have
+no defined meaning according to the language specification. Out-of-bounds memory
+access is a classic example of undefined behavior.</p>
 <p><strong>Key characteristics of UB:</strong></p>
 <ul>
-<li>The program can do <strong>literally anything</strong>: crash, produce wrong results, appear to work, or corrupt memory</li>
-<li><strong>No guarantees</strong>: Behavior may change between compilers, hardware, drivers, or even different runs</li>
+<li>The program can do <strong>literally anything</strong>: crash, produce wrong results,
+appear to work, or corrupt memory</li>
+<li><strong>No guarantees</strong>: Behavior may change between compilers, hardware, drivers,
+or even different runs</li>
 </ul>
 <h3 id="why-undefined-behavior-is-especially-dangerous"><a class="header" href="#why-undefined-behavior-is-especially-dangerous">Why undefined behavior is especially dangerous</a></h3>
 <p><strong>Correctness issues:</strong></p>
 <ul>
-<li><strong>Unpredictable results</strong>: Your program may work during testing but fail in production</li>
-<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on different runs</li>
+<li><strong>Unpredictable results</strong>: Your program may work during testing but fail in
+production</li>
+<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on
+different runs</li>
 <li><strong>Silent corruption</strong>: UB can corrupt data without any visible errors</li>
-<li><strong>Compiler optimizations</strong>: Compilers assume no UB occurs and may optimize in unexpected ways</li>
+<li><strong>Compiler optimizations</strong>: Compilers assume no UB occurs and may optimize in
+unexpected ways</li>
 </ul>
 <p><strong>Security vulnerabilities:</strong></p>
 <ul>
-<li><strong>Buffer overflows</strong>: Classic source of security exploits in systems programming</li>
-<li><strong>Memory corruption</strong>: Can lead to privilege escalation and code injection attacks</li>
+<li><strong>Buffer overflows</strong>: Classic source of security exploits in systems
+programming</li>
+<li><strong>Memory corruption</strong>: Can lead to privilege escalation and code injection
+attacks</li>
 <li><strong>Information leakage</strong>: Out-of-bounds reads can expose sensitive data</li>
 <li><strong>Control flow hijacking</strong>: UB can be exploited to redirect program execution</li>
 </ul>
@@ -335,18 +359,22 @@ Running memory bug example (bounds checking issue)...
 <p><strong>Massive scale impact:</strong></p>
 <ul>
 <li><strong>Thread divergence</strong>: One thread’s UB can affect entire warps (32 threads)</li>
-<li><strong>Memory coalescing</strong>: Out-of-bounds access can corrupt neighboring threads’ data</li>
+<li><strong>Memory coalescing</strong>: Out-of-bounds access can corrupt neighboring threads’
+data</li>
 <li><strong>Kernel failures</strong>: UB can cause entire GPU kernels to fail catastrophically</li>
 </ul>
 <p><strong>Hardware variations:</strong></p>
 <ul>
-<li><strong>Different GPU architectures</strong>: UB may manifest differently on different GPU models</li>
+<li><strong>Different GPU architectures</strong>: UB may manifest differently on different GPU
+models</li>
 <li><strong>Driver differences</strong>: Same UB may behave differently across driver versions</li>
-<li><strong>Memory layout changes</strong>: GPU memory allocation patterns can change UB manifestation</li>
+<li><strong>Memory layout changes</strong>: GPU memory allocation patterns can change UB
+manifestation</li>
 </ul>
 <h2 id="fixing-the-memory-violation"><a class="header" href="#fixing-the-memory-violation">Fixing the memory violation</a></h2>
 <h3 id="the-solution"><a class="header" href="#the-solution">The solution</a></h3>
-<p>As we saw in <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>, we need to bound-check as follows:</p>
+<p>As we saw in <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>, we need to bound-check as
+follows:</p>
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
@@ -359,7 +387,8 @@ Running memory bug example (bounds checking issue)...
 
 
 </code></pre>
-<p>The fix is simple: <strong>always validate thread indices against data dimensions</strong> before accessing memory.</p>
+<p>The fix is simple: <strong>always validate thread indices against data dimensions</strong>
+before accessing memory.</p>
 <h3 id="verification-with-compute-sanitizer"><a class="header" href="#verification-with-compute-sanitizer">Verification with compute-sanitizer</a></h3>
 <pre><code class="language-bash"># Fix the bounds checking in your copy of p10.mojo, then run:
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
@@ -382,7 +411,11 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 </code></pre>
 <p><strong>✅ SUCCESS:</strong> No memory violations detected!</p>
 <blockquote>
-<p><strong>Note on the segfault</strong>: The crash lines above (“intermediate process terminated by signal 11”) are a known compatibility issue between Mojo’s process initialization and compute-sanitizer’s injection libraries. They appear <em>before</em> the GPU kernel runs and do not affect the sanitizer’s analysis. See the note at the end of this page for details.</p>
+<p><strong>Note on the segfault</strong>: The crash lines above (“intermediate process
+terminated by signal 11”) are a known compatibility issue between Mojo’s
+process initialization and compute-sanitizer’s injection libraries. They
+appear <em>before</em> the GPU kernel runs and do not affect the sanitizer’s
+analysis. See the note at the end of this page for details.</p>
 </blockquote>
 <h2 id="key-learning-points"><a class="header" href="#key-learning-points">Key learning points</a></h2>
 <h3 id="why-manual-bounds-checking-matters"><a class="header" href="#why-manual-bounds-checking-matters">Why manual bounds checking matters</a></h3>
@@ -394,15 +427,24 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h3 id="gpu-memory-safety-rules"><a class="header" href="#gpu-memory-safety-rules">GPU memory safety rules</a></h3>
 <ol>
 <li><strong>Always validate thread indices</strong> against data dimensions</li>
-<li><strong>Avoid undefined behavior (UB) at all costs</strong> - out-of-bounds access is UB and can break everything</li>
+<li><strong>Avoid undefined behavior (UB) at all costs</strong> - out-of-bounds access is UB
+and can break everything</li>
 <li><strong>Use compute-sanitizer</strong> during development and testing</li>
 <li><strong>Never assume “it works” without memory checking</strong></li>
-<li><strong>Test with different grid/block configurations</strong> to catch undefined behavior (UB) that manifests inconsistently</li>
+<li><strong>Test with different grid/block configurations</strong> to catch undefined behavior
+(UB) that manifests inconsistently</li>
 </ol>
 <h3 id="compute-sanitizer-best-practices"><a class="header" href="#compute-sanitizer-best-practices">Compute-sanitizer best practices</a></h3>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
-<p><strong>Note on Mojo + compute-sanitizer compatibility</strong>: You may see a crash at the start of the sanitizer output — lines like <code>close: Bad file descriptor</code>, a stack dump, and <code>intermediate process terminated by signal 11 (Segmentation fault)</code>. This is a known issue where compute-sanitizer’s injection libraries conflict with Mojo’s process initialization. Despite the crash, the sanitizer completes its GPU kernel analysis correctly. Always use the <code>========= ERROR SUMMARY</code> line at the end as the authoritative result, and look for <code>========= Invalid</code> lines for specific memory violations.</p>
+<p><strong>Note on Mojo + compute-sanitizer compatibility</strong>: You may see a crash at the
+start of the sanitizer output — lines like <code>close: Bad file descriptor</code>, a stack
+dump, and <code>intermediate process terminated by signal 11 (Segmentation fault)</code>.
+This is a known issue where compute-sanitizer’s injection libraries conflict
+with Mojo’s process initialization. Despite the crash, the sanitizer completes
+its GPU kernel analysis correctly. Always use the <code>========= ERROR SUMMARY</code> line
+at the end as the authoritative result, and look for <code>========= Invalid</code> lines
+for specific memory violations.</p>
 
                     </main>
 

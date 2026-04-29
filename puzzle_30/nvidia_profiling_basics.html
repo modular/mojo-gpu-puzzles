@@ -210,15 +210,24 @@
                     <main>
                         <h1 id="-nvidia-profiling-basics"><a class="header" href="#-nvidia-profiling-basics">📚 NVIDIA Profiling Basics</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>You’ve learned GPU programming fundamentals and advanced patterns. Part II taught you debugging techniques for <strong>correctness</strong> using <code>compute-sanitizer</code> and <code>cuda-gdb</code>, while other parts covered different GPU features like warp programming, memory systems, and block-level operations. Your kernels work correctly - but are they <strong>fast</strong>?</p>
+<p>You’ve learned GPU programming fundamentals and advanced patterns. Part II
+taught you debugging techniques for <strong>correctness</strong> using <code>compute-sanitizer</code>
+and <code>cuda-gdb</code>, while other parts covered different GPU features like warp
+programming, memory systems, and block-level operations. Your kernels work
+correctly - but are they <strong>fast</strong>?</p>
 <blockquote>
-<p>This tutorial follows NVIDIA’s recommended profiling methodology from the <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling">CUDA Best Practices Guide</a>.</p>
+<p>This tutorial follows NVIDIA’s recommended profiling methodology from the
+<a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling">CUDA Best Practices Guide</a>.</p>
 </blockquote>
-<p><strong>Key Insight</strong>: A correct kernel can still be orders of magnitude slower than optimal. Profiling bridges the gap between working code and high-performance code.</p>
+<p><strong>Key Insight</strong>: A correct kernel can still be orders of magnitude slower than
+optimal. Profiling bridges the gap between working code and high-performance
+code.</p>
 <h2 id="the-profiling-toolkit"><a class="header" href="#the-profiling-toolkit">The profiling toolkit</a></h2>
-<p>Since you have <code>cuda-toolkit</code> via pixi, you have access to NVIDIA’s professional profiling suite:</p>
+<p>Since you have <code>cuda-toolkit</code> via pixi, you have access to NVIDIA’s professional
+profiling suite:</p>
 <h3 id="nsight-systems-nsys---the-big-picture-tool"><a class="header" href="#nsight-systems-nsys---the-big-picture-tool">NSight Systems (<code>nsys</code>) - the “big picture” tool</a></h3>
-<p><strong>Purpose</strong>: System-wide performance analysis (<a href="https://docs.nvidia.com/nsight-systems/">NSight Systems Documentation</a>)</p>
+<p><strong>Purpose</strong>: System-wide performance analysis
+(<a href="https://docs.nvidia.com/nsight-systems/">NSight Systems Documentation</a>)</p>
 <ul>
 <li>Timeline view of CPU-GPU interaction</li>
 <li>Memory transfer bottlenecks</li>
@@ -244,7 +253,8 @@ pixi run nsys profile --trace=cuda,nvtx --output=timeline mojo your_program.mojo
 pixi run nsys stats --force-export=true timeline.nsys-rep
 </code></pre>
 <h3 id="nsight-compute-ncu---the-kernel-deep-dive-tool"><a class="header" href="#nsight-compute-ncu---the-kernel-deep-dive-tool">NSight Compute (<code>ncu</code>) - the “kernel deep-dive” tool</a></h3>
-<p><strong>Purpose</strong>: Detailed single-kernel performance analysis (<a href="https://docs.nvidia.com/nsight-compute/">NSight Compute Documentation</a>)</p>
+<p><strong>Purpose</strong>: Detailed single-kernel performance analysis
+(<a href="https://docs.nvidia.com/nsight-compute/">NSight Compute Documentation</a>)</p>
 <ul>
 <li>Roofline model analysis</li>
 <li>Memory hierarchy utilization</li>
@@ -270,7 +280,7 @@ pixi run ncu --set full --output kernel_profile mojo your_program.mojo
 pixi run ncu --kernel-name regex:your_kernel_name mojo your_program.mojo
 </code></pre>
 <h2 id="tool-selection-decision-tree"><a class="header" href="#tool-selection-decision-tree">Tool selection decision tree</a></h2>
-<pre><code>Performance Problem
+<pre><code class="language-text">Performance Problem
         |
         v
 Know which kernel?
@@ -290,17 +300,25 @@ Analysis &lt;----+     NSight Compute
 </code></pre>
 <p><strong>Quick Decision Guide</strong>:</p>
 <ul>
-<li><strong>Start with NSight Systems (<code>nsys</code>)</strong> if you’re unsure where the bottleneck is</li>
+<li><strong>Start with NSight Systems (<code>nsys</code>)</strong> if you’re unsure where the bottleneck
+is</li>
 <li><strong>Use NSight Compute (<code>ncu</code>)</strong> when you know exactly which kernel to optimize</li>
 <li><strong>Use both</strong> for comprehensive analysis (common workflow)</li>
 </ul>
 <h2 id="hands-on-system-wide-profiling-with-nsight-systems"><a class="header" href="#hands-on-system-wide-profiling-with-nsight-systems">Hands-on: system-wide profiling with NSight Systems</a></h2>
-<p>Let’s profile the Matrix Multiplication implementations from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> to understand performance differences.</p>
+<p>Let’s profile the Matrix Multiplication implementations from
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> to understand performance differences.</p>
 <blockquote>
-<p><strong>GUI Note</strong>: The NSight Systems and Compute GUIs (<code>nsys-ui</code>, <code>ncu-ui</code>) require a display and OpenGL support. On headless servers or remote systems without X11 forwarding, use the command-line versions (<code>nsys</code>, <code>ncu</code>) with text-based analysis via <code>nsys stats</code> and <code>ncu --import --page details</code>. You can also transfer <code>.nsys-rep</code> and <code>.ncu-rep</code> files to local machines for GUI analysis.</p>
+<p><strong>GUI Note</strong>: The NSight Systems and Compute GUIs (<code>nsys-ui</code>, <code>ncu-ui</code>)
+require a display and OpenGL support. On headless servers or remote systems
+without X11 forwarding, use the command-line versions (<code>nsys</code>, <code>ncu</code>) with
+text-based analysis via <code>nsys stats</code> and <code>ncu --import --page details</code>. You
+can also transfer <code>.nsys-rep</code> and <code>.ncu-rep</code> files to local machines for GUI
+analysis.</p>
 </blockquote>
 <h3 id="step-1-prepare-your-code-for-profiling"><a class="header" href="#step-1-prepare-your-code-for-profiling">Step 1: Prepare your code for profiling</a></h3>
-<p><strong>Critical</strong>: For accurate profiling, build with full debug information while keeping optimizations enabled:</p>
+<p><strong>Critical</strong>: For accurate profiling, build with full debug information while
+keeping optimizations enabled:</p>
 <pre><code class="language-bash">pixi shell -e nvidia
 # Build with full debug info (for comprehensive source mapping) with optimizations enabled
 mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimized
@@ -310,9 +328,12 @@ mojo build --debug-level=full solutions/p16/p16.mojo -o solutions/p16/p16_optimi
 </code></pre>
 <p><strong>Why this matters</strong>:</p>
 <ul>
-<li><strong>Full debug info</strong>: Provides complete symbol tables, variable names, and source line mapping for profilers</li>
-<li><strong>Comprehensive analysis</strong>: Enables NSight tools to correlate performance data with specific code locations</li>
-<li><strong>Optimizations enabled</strong>: Ensures realistic performance measurements that match production builds</li>
+<li><strong>Full debug info</strong>: Provides complete symbol tables, variable names, and
+source line mapping for profilers</li>
+<li><strong>Comprehensive analysis</strong>: Enables NSight tools to correlate performance data
+with specific code locations</li>
+<li><strong>Optimizations enabled</strong>: Ensures realistic performance measurements that
+match production builds</li>
 </ul>
 <h3 id="step-2-capture-system-wide-profile"><a class="header" href="#step-2-capture-system-wide-profile">Step 2: Capture system-wide profile</a></h3>
 <pre><code class="language-bash"># Profile the optimized build with comprehensive tracing
@@ -362,10 +383,14 @@ nsys stats --force-export=true matmul_naive.nsys-rep
 </code></pre>
 <p><strong>Key Performance Insights</strong>:</p>
 <ul>
-<li><strong>Memory allocation dominates</strong>: 81.9% of total time spent on <code>cuMemAllocAsync</code></li>
-<li><strong>Kernel is lightning fast</strong>: Only 1,920 ns (0.000001920 seconds) execution time</li>
-<li><strong>Memory transfer breakdown</strong>: 49.4% Device→Host, 36.0% memset, 14.6% Host→Device</li>
-<li><strong>Tiny data sizes</strong>: All memory operations are &lt; 0.001 MB (4 float32 values = 16 bytes)</li>
+<li><strong>Memory allocation dominates</strong>: 81.9% of total time spent on
+<code>cuMemAllocAsync</code></li>
+<li><strong>Kernel is lightning fast</strong>: Only 1,920 ns (0.000001920 seconds) execution
+time</li>
+<li><strong>Memory transfer breakdown</strong>: 49.4% Device→Host, 36.0% memset, 14.6%
+Host→Device</li>
+<li><strong>Tiny data sizes</strong>: All memory operations are &lt; 0.001 MB (4 float32 values =
+16 bytes)</li>
 </ul>
 <h3 id="step-4-compare-implementations"><a class="header" href="#step-4-compare-implementations">Step 4: Compare implementations</a></h3>
 <p>Profile different versions and compare:</p>
@@ -387,8 +412,10 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep
 </code></pre>
 <p><strong>How to compare the results</strong>:</p>
 <ol>
-<li><strong>Look at GPU Kernel Summary</strong> - Compare execution times between implementations</li>
-<li><strong>Check Memory Operations</strong> - See if shared memory reduces global memory traffic</li>
+<li><strong>Look at GPU Kernel Summary</strong> - Compare execution times between
+implementations</li>
+<li><strong>Check Memory Operations</strong> - See if shared memory reduces global memory
+traffic</li>
 <li><strong>Compare API overhead</strong> - All should have similar memory allocation patterns</li>
 </ol>
 <p><strong>Manual comparison workflow</strong>:</p>
@@ -422,21 +449,27 @@ nsys stats --force-export=true matmul_idiomatic_tiled.nsys-rep &gt; idiomatic_ti
 <ul>
 <li><strong>All variants dominated by memory allocation</strong> (&gt;81% of time)</li>
 <li><strong>Kernel execution is irrelevant</strong> compared to setup costs</li>
-<li><strong>“Optimizations” can hurt</strong>: Shared memory adds 3.3% overhead, async_copy adds 15.6%</li>
-<li><strong>The real lesson</strong>: For tiny workloads, algorithm choice doesn’t matter - overhead dominates everything</li>
+<li><strong>“Optimizations” can hurt</strong>: Shared memory adds 3.3% overhead, async_copy
+adds 15.6%</li>
+<li><strong>The real lesson</strong>: For tiny workloads, algorithm choice doesn’t matter -
+overhead dominates everything</li>
 </ul>
 <p><strong>Why This Happens</strong>:</p>
 <ul>
-<li>GPU setup cost (memory allocation, kernel launch) is fixed regardless of problem size</li>
+<li>GPU setup cost (memory allocation, kernel launch) is fixed regardless of
+problem size</li>
 <li>For tiny problems, this fixed cost dwarfs computation time</li>
 <li>Optimizations designed for large problems become overhead for small ones</li>
 </ul>
 <p><strong>Real-World Profiling Lessons</strong>:</p>
 <ul>
 <li><strong>Problem size context matters</strong>: Both 2×2 and 9×9 are tiny for GPUs</li>
-<li><strong>Fixed costs dominate small problems</strong>: Memory allocation, kernel launch overhead</li>
-<li><strong>“Optimizations” can hurt tiny workloads</strong>: Shared memory, async operations add overhead</li>
-<li><strong>Don’t optimize tiny problems</strong>: Focus on algorithms that scale to real workloads</li>
+<li><strong>Fixed costs dominate small problems</strong>: Memory allocation, kernel launch
+overhead</li>
+<li><strong>“Optimizations” can hurt tiny workloads</strong>: Shared memory, async operations
+add overhead</li>
+<li><strong>Don’t optimize tiny problems</strong>: Focus on algorithms that scale to real
+workloads</li>
 <li><strong>Always benchmark</strong>: Assumptions about “better” code are often wrong</li>
 </ul>
 <p><strong>Understanding Small Kernel Profiling</strong>:
@@ -467,7 +500,9 @@ ncu \
 </code></pre>
 <blockquote>
 <p><strong>Common Issue: Permission Error</strong></p>
-<p>If you get <code>ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters</code>, try these &gt; solutions:</p>
+<p>If you get
+<code>ERR_NVGPUCTRPERM - The user does not have permission to access NVIDIA GPU Performance Counters</code>,
+try these &gt; solutions:</p>
 <pre><code class="language-bash"># Add NVIDIA driver option (safer than rmmod)
 echo 'options nvidia "NVreg_RestrictProfilingToAdminUsers=0"' | sudo tee -a /etc/modprobe.d/nvidia-kernel-common.conf
 
@@ -529,8 +564,10 @@ Achieved Occupancy                    %         2.09
 <h4 id="why-performance-is-so-poor"><a class="header" href="#why-performance-is-so-poor">Why performance is so poor</a></h4>
 <ul>
 <li><strong>Tiny problem size</strong>: 2×2 matrix = 4 elements total</li>
-<li><strong>Poor launch configuration</strong>: 9 threads in 1 block (should be multiples of 32)</li>
-<li><strong>Massive underutilization</strong>: 0.00 waves per SM (need thousands for efficiency)</li>
+<li><strong>Poor launch configuration</strong>: 9 threads in 1 block (should be multiples of
+32)</li>
+<li><strong>Massive underutilization</strong>: 0.00 waves per SM (need thousands for
+efficiency)</li>
 </ul>
 <h4 id="key-optimization-recommendations-from-nsight-compute"><a class="header" href="#key-optimization-recommendations-from-nsight-compute">Key optimization recommendations from NSight Compute</a></h4>
 <ul>
@@ -543,16 +580,21 @@ Achieved Occupancy                    %         2.09
 <ol>
 <li><strong>Tiny problems are GPU poison</strong>: 2×2 matrices completely waste GPU resources</li>
 <li><strong>Launch configuration matters</strong>: Wrong thread/block sizes kill performance</li>
-<li><strong>Scale matters more than algorithm</strong>: No optimization can fix a fundamentally tiny problem</li>
+<li><strong>Scale matters more than algorithm</strong>: No optimization can fix a
+fundamentally tiny problem</li>
 <li><strong>NSight Compute is honest</strong>: It tells us when our kernel performance is poor</li>
 </ol>
 <p><strong>The Real Lesson</strong>:</p>
 <ul>
-<li><strong>Don’t optimize toy problems</strong> - they’re not representative of real GPU workloads</li>
-<li><strong>Focus on realistic workloads</strong> - 1000×1000+ matrices where optimizations actually matter</li>
-<li><strong>Use profiling to guide optimization</strong> - but only on problems worth optimizing</li>
+<li><strong>Don’t optimize toy problems</strong> - they’re not representative of real GPU
+workloads</li>
+<li><strong>Focus on realistic workloads</strong> - 1000×1000+ matrices where optimizations
+actually matter</li>
+<li><strong>Use profiling to guide optimization</strong> - but only on problems worth
+optimizing</li>
 </ul>
-<p><strong>For our tiny 2×2 example</strong>: All the sophisticated algorithms (shared memory, tiling) just add overhead to an already overhead-dominated workload.</p>
+<p><strong>For our tiny 2×2 example</strong>: All the sophisticated algorithms (shared memory,
+tiling) just add overhead to an already overhead-dominated workload.</p>
 <h2 id="reading-profiler-output-like-a-performance-detective"><a class="header" href="#reading-profiler-output-like-a-performance-detective">Reading profiler output like a performance detective</a></h2>
 <h3 id="common-performance-patterns"><a class="header" href="#common-performance-patterns">Common performance patterns</a></h3>
 <h4 id="pattern-1-memory-bound-kernel"><a class="header" href="#pattern-1-memory-bound-kernel">Pattern 1: Memory-bound kernel</a></h4>
@@ -568,7 +610,7 @@ Achieved Occupancy                    %         2.09
 <strong>NSight Compute shows</strong>: Low warp execution efficiency
 <strong>Solution</strong>: Minimize conditional branches, restructure algorithms</p>
 <h3 id="profiling-detective-workflow"><a class="header" href="#profiling-detective-workflow">Profiling detective workflow</a></h3>
-<pre><code>Performance Issue
+<pre><code class="language-text">Performance Issue
         |
         v
 NSight Systems: Big Picture
@@ -592,18 +634,21 @@ Pipeline            |
            Access
 </code></pre>
 <h2 id="profiling-best-practices"><a class="header" href="#profiling-best-practices">Profiling best practices</a></h2>
-<p>For comprehensive profiling guidelines, refer to the <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics">Best Practices Guide - Performance Metrics</a>.</p>
+<p>For comprehensive profiling guidelines, refer to the
+<a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#performance-metrics">Best Practices Guide - Performance Metrics</a>.</p>
 <h3 id="dos"><a class="header" href="#dos">Do’s</a></h3>
 <ol>
 <li><strong>Profile representative workloads</strong>: Use realistic data sizes and patterns</li>
-<li><strong>Build with full debug info</strong>: Use <code>--debug-level=full</code> for comprehensive profiling data and source mapping with optimizations</li>
+<li><strong>Build with full debug info</strong>: Use <code>--debug-level=full</code> for comprehensive
+profiling data and source mapping with optimizations</li>
 <li><strong>Warm up the GPU</strong>: Run kernels multiple times, profile later iterations</li>
 <li><strong>Compare alternatives</strong>: Always profile multiple implementations</li>
 <li><strong>Focus on hotspots</strong>: Optimize the kernels that take the most time</li>
 </ol>
 <h3 id="donts"><a class="header" href="#donts">Don’ts</a></h3>
 <ol>
-<li><strong>Don’t profile without debug info</strong>: You won’t be able to map performance back to source code (<code>mojo build --help</code>)</li>
+<li><strong>Don’t profile without debug info</strong>: You won’t be able to map performance
+back to source code (<code>mojo build --help</code>)</li>
 <li><strong>Don’t profile single runs</strong>: GPU performance can vary between runs</li>
 <li><strong>Don’t ignore memory transfers</strong>: CPU-GPU transfers often dominate</li>
 <li><strong>Don’t optimize prematurely</strong>: Profile first, then optimize</li>
@@ -634,7 +679,8 @@ Kernel execution: 2ms
 GPU -&gt; CPU transfer: 48ms
 # Total: 100ms (kernel is only 2%!)
 </code></pre>
-<p><strong>Solution</strong>: Overlap transfers with compute, reduce transfer frequency (covered in Part IX)</p>
+<p><strong>Solution</strong>: Overlap transfers with compute, reduce transfer frequency (covered
+in Part IX)</p>
 <h4 id="pitfall-4-single-kernel-focus"><a class="header" href="#pitfall-4-single-kernel-focus">Pitfall 4: Single kernel focus</a></h4>
 <pre><code class="language-bash"># Wrong: Only profile the "slow" kernel
 ncu --kernel-name regex:slow_kernel program
@@ -715,7 +761,8 @@ ncu \
 <li><code>--clock-control=base</code>: Lock clocks to base frequencies</li>
 <li><code>--section=SpeedOfLight</code>: Include Speed of Light analysis</li>
 <li><code>--metrics=...</code>: Collect specific metrics only</li>
-<li><code>--kernel-name regex:pattern</code>: Target kernels using regex patterns (not <code>--kernel-regex</code>)</li>
+<li><code>--kernel-name regex:pattern</code>: Target kernels using regex patterns (not
+<code>--kernel-regex</code>)</li>
 </ul>
 <h3 id="profiling-workflow-best-practices"><a class="header" href="#profiling-workflow-best-practices">Profiling workflow best practices</a></h3>
 <h4 id="1-progressive-profiling-strategy"><a class="header" href="#1-progressive-profiling-strategy">1. Progressive profiling strategy</a></h4>
@@ -805,11 +852,16 @@ fi
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Now that you understand profiling fundamentals:</p>
 <ol>
-<li><strong>Practice with your existing kernels</strong>: Profile puzzles you’ve already solved</li>
-<li><strong>Prepare for optimization</strong>: Puzzle 31 will use these insights for occupancy optimization</li>
-<li><strong>Understand the tools</strong>: Experiment with different NSight Systems and NSight Compute options</li>
+<li><strong>Practice with your existing kernels</strong>: Profile puzzles you’ve already
+solved</li>
+<li><strong>Prepare for optimization</strong>: Puzzle 31 will use these insights for occupancy
+optimization</li>
+<li><strong>Understand the tools</strong>: Experiment with different NSight Systems and NSight
+Compute options</li>
 </ol>
-<p><strong>Remember</strong>: Profiling is not just about finding slow code - it’s about understanding your program’s behavior and making informed optimization decisions.</p>
+<p><strong>Remember</strong>: Profiling is not just about finding slow code - it’s about
+understanding your program’s behavior and making informed optimization
+decisions.</p>
 <p>For additional profiling resources, see:</p>
 <ul>
 <li><a href="https://docs.nvidia.com/cuda/profiler-users-guide/">NVIDIA Profiler User’s Guide</a></li>

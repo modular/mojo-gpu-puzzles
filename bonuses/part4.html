@@ -213,7 +213,9 @@
 <p><em>This challenge extends <a href="../puzzle_18/puzzle_18.html">Puzzle 18: Softmax Op</a></em></p>
 <p>Here are some advanced challenges to extend your softmax implementation:</p>
 <h3 id="1-large-scale-softmax-handling-tpb--size"><a class="header" href="#1-large-scale-softmax-handling-tpb--size">1. Large-scale softmax: Handling <code>TPB &lt; SIZE</code></a></h3>
-<p>When the input size exceeds the number of threads per block (<code>TPB &lt; SIZE</code>), our current implementation fails because a single block cannot process the entire array. Two approaches to solve this:</p>
+<p>When the input size exceeds the number of threads per block (<code>TPB &lt; SIZE</code>), our
+current implementation fails because a single block cannot process the entire
+array. Two approaches to solve this:</p>
 <h4 id="11-buffer-reduction"><a class="header" href="#11-buffer-reduction">1.1 Buffer reduction</a></h4>
 <ul>
 <li>Store block-level results (max and sum) in device memory</li>
@@ -237,12 +239,15 @@
 </ul>
 <h2 id="challenge-ii-advanced-attention-mechanisms"><a class="header" href="#challenge-ii-advanced-attention-mechanisms">Challenge II: advanced attention mechanisms</a></h2>
 <p><em>This challenge extends <a href="../puzzle_19/puzzle_19.html">Puzzle 19: Attention Op</a></em></p>
-<p>Building on the vector attention implementation, here are advanced challenges that push the boundaries of attention mechanisms:</p>
+<p>Building on the vector attention implementation, here are advanced challenges
+that push the boundaries of attention mechanisms:</p>
 <h3 id="1-larger-sequence-lengths"><a class="header" href="#1-larger-sequence-lengths">1. Larger sequence lengths</a></h3>
-<p>Extend the attention mechanism to handle longer sequences using the existing kernels:</p>
+<p>Extend the attention mechanism to handle longer sequences using the existing
+kernels:</p>
 <h4 id="11-sequence-length-scaling"><a class="header" href="#11-sequence-length-scaling">1.1 Sequence length scaling</a></h4>
 <ul>
-<li>Modify the attention implementation to handle <code>SEQ_LEN = 32</code> and <code>SEQ_LEN = 64</code></li>
+<li>Modify the attention implementation to handle <code>SEQ_LEN = 32</code> and
+<code>SEQ_LEN = 64</code></li>
 <li>Update the <code>TPB</code> (threads per block) parameter accordingly</li>
 <li>Ensure the transpose kernel handles the larger matrix sizes correctly</li>
 </ul>

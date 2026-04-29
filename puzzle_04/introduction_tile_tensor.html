@@ -209,10 +209,13 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction-to-tiletensor"><a class="header" href="#introduction-to-tiletensor">Introduction to TileTensor</a></h1>
-<p>Let’s take a quick break from solving puzzles to preview a powerful abstraction that will make our GPU programming journey more enjoyable:
-🥁 … the <strong><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
+<p>Let’s take a quick break from solving puzzles to preview a powerful abstraction
+that will make our GPU programming journey more enjoyable: 🥁… the
+<strong><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></strong>.</p>
 <blockquote>
-<p>💡 <em>This is a motivational overview of TileTensor’s capabilities. Don’t worry about understanding everything now - we’ll explore each feature in depth as we progress through the puzzles</em>.</p>
+<p>💡 <em>This is a motivational overview of TileTensor’s capabilities. Don’t worry
+about understanding everything now - we’ll explore each feature in depth as we
+progress through the puzzles</em>.</p>
 </blockquote>
 <h2 id="the-challenge-growing-complexity"><a class="header" href="#the-challenge-growing-complexity">The challenge: Growing complexity</a></h2>
 <p>Let’s look at the challenges we’ve faced so far:</p>
@@ -233,14 +236,19 @@ if row &lt; height and col &lt; width:
     output[idx] = a[idx] + 10.0
 </code></pre>
 <h2 id="the-solution-a-peek-at-tiletensor"><a class="header" href="#the-solution-a-peek-at-tiletensor">The solution: A peek at TileTensor</a></h2>
-<p>TileTensor will help us tackle these challenges with elegant solutions. Here’s a glimpse of what’s coming:</p>
+<p>TileTensor will help us tackle these challenges with elegant solutions. Here’s a
+glimpse of what’s coming:</p>
 <ol>
-<li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset calculations</li>
-<li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled organizations</li>
+<li><strong>Natural Indexing</strong>: Use <code>tensor[i, j]</code> instead of manual offset
+calculations</li>
+<li><strong>Flexible Memory Layouts</strong>: Support for row-major, column-major, and tiled
+organizations</li>
 <li><strong>Performance Optimization</strong>: Efficient memory access patterns for GPU</li>
 </ol>
 <h2 id="a-taste-of-whats-ahead"><a class="header" href="#a-taste-of-whats-ahead">A taste of what’s ahead</a></h2>
-<p>Let’s look at a few examples of what TileTensor can do. Don’t worry about understanding all the details now - we’ll cover each feature thoroughly in upcoming puzzles.</p>
+<p>Let’s look at a few examples of what TileTensor can do. Don’t worry about
+understanding all the details now - we’ll cover each feature thoroughly in
+upcoming puzzles.</p>
 <h3 id="basic-usage-example"><a class="header" href="#basic-usage-example">Basic usage example</a></h3>
 <pre><code class="language-mojo">from layout import TileTensor
 from layout.tile_layout import row_major
@@ -258,14 +266,21 @@ tensor = TileTensor(buffer, layout)
 tensor[0, 0] = 1.0  # First element
 tensor[1, 2] = 2.0  # Last element
 </code></pre>
-<p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides from the <a href="https://docs.modular.com/mojo/manual/">Mojo manual</a></p>
+<p>To learn more about <code>Layout</code> and <code>TileTensor</code>, see these guides from the
+<a href="https://docs.modular.com/mojo/manual/">Mojo manual</a></p>
 <ul>
 <li><a href="https://docs.modular.com/mojo/manual/layout/layouts">Introduction to layouts</a></li>
 <li><a href="https://docs.modular.com/mojo/manual/layout/tensors">Using TileTensor</a></li>
 </ul>
 <h2 id="quick-example"><a class="header" href="#quick-example">Quick example</a></h2>
-<p>Let’s put everything together with a simple example that demonstrates the basics of TileTensor:</p>
-<pre><code class="language-mojo">from std.gpu.host import DeviceContext
+<p>Let’s put everything together with a simple example that demonstrates the basics
+of TileTensor:</p>
+<pre><code class="language-mojo"># ===----------------------------------------------------------------------=== #
+#
+# This file is Modular Inc proprietary.
+#
+# ===----------------------------------------------------------------------=== #
+from std.gpu.host import DeviceContext
 from layout import TileTensor
 from layout.tile_layout import row_major
 
@@ -293,9 +308,7 @@ def main() raises:
     a.enqueue_fill(0)
     tensor = TileTensor(a, layout)
     # Note: since `tensor` is a device tensor we can't print it without the kernel wrapper
-    ctx.enqueue_function[kernel, kernel](
-        tensor, grid_dim=1, block_dim=1
-    )
+    ctx.enqueue_function[kernel, kernel](tensor, grid_dim=1, block_dim=1)
 
     ctx.synchronize()
 </code></pre>
@@ -344,15 +357,19 @@ After:
 <li>Automatic memory layout handling</li>
 <li>Natural multi-dimensional indexing</li>
 </ul>
-<p>While this example is straightforward, the same patterns will scale to complex GPU operations in upcoming puzzles. You’ll see how these basic concepts extend to:</p>
+<p>While this example is straightforward, the same patterns will scale to complex
+GPU operations in upcoming puzzles. You’ll see how these basic concepts extend
+to:</p>
 <ul>
 <li>Multi-threaded GPU operations</li>
 <li>Shared memory optimizations</li>
 <li>Complex tiling strategies</li>
 <li>Hardware-accelerated computations</li>
 </ul>
-<p>Ready to start your GPU programming journey with TileTensor? Let’s dive into the puzzles!</p>
-<p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these fundamental concepts to create increasingly sophisticated GPU programs.</p>
+<p>Ready to start your GPU programming journey with TileTensor? Let’s dive into the
+puzzles!</p>
+<p>💡 <strong>Tip</strong>: Keep this example in mind as we progress - we’ll build upon these
+fundamental concepts to create increasingly sophisticated GPU programs.</p>
 
                     </main>
 

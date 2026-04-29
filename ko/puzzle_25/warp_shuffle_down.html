@@ -210,10 +210,21 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="warpshuffle_down-일대일-통신"><a class="header" href="#warpshuffle_down-일대일-통신"><code>warp.shuffle_down()</code> 일대일 통신</a></h1>
-<p>워프 레벨 이웃 통신에서는 <code>shuffle_down()</code>을 사용하여 워프 내 인접 레인의 데이터에 접근할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 유한 차분, 이동 평균, 이웃 기반 계산을 효율적으로 수행할 수 있습니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down()</a> 연산은 SIMT 실행을 활용하여 각 레인이 같은 워프 내 이웃의 데이터에 접근할 수 있게 하며, 효율적인 스텐실 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다.</em></p>
+<p>워프 레벨 이웃 통신에서는 <code>shuffle_down()</code>을 사용하여 워프 내 인접 레인의
+데이터에 접근할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적
+동기화 없이 유한 차분, 이동 평균, 이웃 기반 계산을 효율적으로 수행할 수
+있습니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down()</a>
+연산은 SIMT 실행을 활용하여 각 레인이 같은 워프 내 이웃의 데이터에 접근할 수
+있게 하며, 효율적인 스텐실 패턴과 슬라이딩 윈도우 연산을 가능하게 합니다.</em></p>
 <blockquote>
-<p><strong>스텐실 연산이란?</strong> <a href="https://en.wikipedia.org/wiki/Iterative_%EC%8A%A4%ED%85%90%EC%8B%A4_Loops">스텐실</a> 연산은 각 출력 요소가 이웃 입력 요소의 고정된 패턴에 의존하는 계산입니다. 대표적인 예로 유한 차분(도함수), 합성곱, 이동 평균이 있습니다. “스텐실“은 이웃 접근 패턴을 가리킵니다 - 예를 들어 <code>[i-1, i, i+1]</code>을 읽는 3점 스텐실이나 <code>[i-2, i-1, i, i+1, i+2]</code>를 읽는 5점 스텐실이 있습니다.</p>
+<p><strong>스텐실 연산이란?</strong>
+<a href="https://en.wikipedia.org/wiki/Iterative_%EC%8A%A4%ED%85%90%EC%8B%A4_Loops">스텐실</a> 연산은 각 출력
+요소가 이웃 입력 요소의 고정된 패턴에 의존하는 계산입니다. 대표적인 예로 유한
+차분(도함수), 합성곱, 이동 평균이 있습니다. “스텐실“은 이웃 접근 패턴을
+가리킵니다 - 예를 들어 <code>[i-1, i, i+1]</code>을 읽는 3점 스텐실이나
+<code>[i-2, i-1, i, i+1, i+2]</code>를 읽는 5점 스텐실이 있습니다.</p>
 </blockquote>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -224,9 +235,11 @@
 <li>확장된 이웃 접근을 위한 <strong>다중 오프셋 셔플</strong></li>
 <li>멀티 블록 시나리오에서의 <strong>워프 간 조정</strong></li>
 </ul>
-<p><code>shuffle_down</code> 연산은 각 레인이 더 높은 인덱스의 레인에서 데이터를 가져올 수 있게 합니다:
-\[\Large \text{shuffle_down}(\text{value}, \text{offset}) = \text{value_from_lane}(\text{lane_id} + \text{offset})\]</p>
-<p>이를 통해 복잡한 이웃 접근 패턴이 간단한 워프 레벨 연산으로 변환되어, 명시적 메모리 인덱싱 없이 효율적인 스텐실 계산이 가능합니다.</p>
+<p><code>shuffle_down</code> 연산은 각 레인이 더 높은 인덱스의 레인에서 데이터를 가져올 수
+있게 합니다: \[\Large \text{shuffle_down}(\text{value}, \text{offset}) =
+\text{value_from_lane}(\text{lane_id} + \text{offset})\]</p>
+<p>이를 통해 복잡한 이웃 접근 패턴이 간단한 워프 레벨 연산으로 변환되어, 명시적
+메모리 인덱싱 없이 효율적인 스텐실 계산이 가능합니다.</p>
 <h2 id="1-기본-이웃-차분"><a class="header" href="#1-기본-이웃-차분">1. 기본 이웃 차분</a></h2>
 <h3 id="구성"><a class="header" href="#구성">구성</a></h3>
 <ul>
@@ -268,7 +281,9 @@ if lane &lt; WARP_SIZE - 1:
 <p><code>shuffle_down()</code>으로 다음 요소에 접근하여 유한 차분을 구현합니다.</p>
 <p><strong>수학적 연산:</strong> 각 요소의 이산 도함수(유한 차분)를 계산합니다:
 \[\Large \text{output}[i] = \text{input}[i+1] - \text{input}[i]\]</p>
-<p>입력 데이터 <code>[0, 1, 4, 9, 16, 25, ...]</code> (제곱수: <code>i * i</code>)를 차분값 <code>[1, 3, 5, 7, 9, ...]</code> (홀수)로 변환하여, 이차 함수의 이산 도함수를 효과적으로 계산합니다.</p>
+<p>입력 데이터 <code>[0, 1, 4, 9, 16, 25, ...]</code> (제곱수: <code>i * i</code>)를 차분값
+<code>[1, 3, 5, 7, 9, ...]</code> (홀수)로 변환하여, 이차 함수의 이산 도함수를 효과적으로
+계산합니다.</p>
 <pre><code class="language-mojo">comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
@@ -300,7 +315,9 @@ def neighbor_difference[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-shuffle_down-이해하기"><a class="header" href="#1-shuffle_down-이해하기">1. <strong>shuffle_down 이해하기</strong></a></h3>
-<p><code>shuffle_down(value, offset)</code> 연산은 각 레인이 더 높은 인덱스의 레인에서 데이터를 받을 수 있게 합니다. 명시적 메모리 로드 없이 이웃 요소에 접근하는 방법을 살펴보세요.</p>
+<p><code>shuffle_down(value, offset)</code> 연산은 각 레인이 더 높은 인덱스의 레인에서
+데이터를 받을 수 있게 합니다. 명시적 메모리 로드 없이 이웃 요소에 접근하는
+방법을 살펴보세요.</p>
 <p><strong><code>shuffle_down(val, 1)</code>이 하는 일:</strong></p>
 <ul>
 <li>레인 0이 레인 1의 값을 받음</li>
@@ -310,15 +327,18 @@ def neighbor_difference[
 <li>레인 31은 미정의 값을 받음 (경계 검사로 처리)</li>
 </ul>
 <h3 id="2-워프-경계-고려사항"><a class="header" href="#2-워프-경계-고려사항">2. <strong>워프 경계 고려사항</strong></a></h3>
-<p>워프의 가장자리에서 어떤 일이 일어나는지 생각해 보세요. 일부 레인은 셔플 연산으로 접근할 유효한 이웃이 없을 수 있습니다.</p>
-<p><strong>과제:</strong> 워프 경계에서 셔플 연산이 미정의 데이터를 반환할 수 있는 경우를 처리하도록 알고리즘을 설계하세요.</p>
+<p>워프의 가장자리에서 어떤 일이 일어나는지 생각해 보세요. 일부 레인은 셔플
+연산으로 접근할 유효한 이웃이 없을 수 있습니다.</p>
+<p><strong>과제:</strong> 워프 경계에서 셔플 연산이 미정의 데이터를 반환할 수 있는 경우를
+처리하도록 알고리즘을 설계하세요.</p>
 <p><code>WARP_SIZE = 32</code>에서의 이웃 차분:</p>
 <ul>
 <li>
 <p><strong>유효한 차분</strong> (<code>lane &lt; WARP_SIZE - 1</code>): <strong>레인 0-30</strong> (31개 레인)</p>
 <ul>
 <li><strong>조건</strong>: \(\text{lane_id}() \in {0, 1, \cdots, 30}\)</li>
-<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 다음 이웃의 값을 성공적으로 가져옴</li>
+<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 다음 이웃의 값을 성공적으로
+가져옴</li>
 <li><strong>결과</strong>: <code>output[i] = input[i+1] - input[i]</code> (유한 차분)</li>
 </ul>
 </li>
@@ -326,7 +346,8 @@ def neighbor_difference[
 <p><strong>경계 케이스</strong> (else): <strong>레인 31</strong> (1개 레인)</p>
 <ul>
 <li><strong>조건</strong>: \(\text{lane_id}() = 31\)</li>
-<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 미정의 데이터를 반환 (레인 32가 없음)</li>
+<li><strong>이유</strong>: <code>shuffle_down(current_val, 1)</code>이 미정의 데이터를 반환 (레인 32가
+없음)</li>
 <li><strong>결과</strong>: <code>output[i] = 0</code> (차분 계산 불가)</li>
 </ul>
 </li>
@@ -334,7 +355,8 @@ def neighbor_difference[
 <h3 id="3-레인-식별"><a class="header" href="#3-레인-식별">3. <strong>레인 식별</strong></a></h3>
 <pre><code class="language-mojo">lane = lane_id()  # 0부터 WARP_SIZE-1까지 반환
 </code></pre>
-<p><strong>레인 번호 매기기:</strong> 각 워프 내에서 레인은 0, 1, 2, …, <code>WARP_SIZE-1</code>로 번호가 매겨집니다</p>
+<p><strong>레인 번호 매기기:</strong> 각 워프 내에서 레인은 0, 1, 2,…, <code>WARP_SIZE-1</code>로 번호가
+매겨집니다</p>
 </div>
 </details>
 <p><strong>이웃 차분 테스트:</strong></p>
@@ -406,7 +428,8 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 솔루션은 <code>shuffle_down()</code>이 기존 배열 인덱싱을 효율적인 워프 레벨 통신으로 어떻게 변환하는지 보여줍니다.</p>
+<p>이 솔루션은 <code>shuffle_down()</code>이 기존 배열 인덱싱을 효율적인 워프 레벨 통신으로
+어떻게 변환하는지 보여줍니다.</p>
 <p><strong>알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]           # 각 레인이 자신의 요소를 읽음
@@ -418,7 +441,7 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
         output[global_i] = 0                       # 경계 처리
 </code></pre>
 <p><strong>SIMT 실행 상세 분석:</strong></p>
-<pre><code>사이클 1: 모든 레인이 동시에 값을 로드
+<pre><code class="language-text">사이클 1: 모든 레인이 동시에 값을 로드
   레인 0: current_val = input[0] = 0
   레인 1: current_val = input[1] = 1
   레인 2: current_val = input[2] = 4
@@ -446,7 +469,8 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 \[\Large D[i^2] = (i+1)^2 - i^2 = i^2 + 2i + 1 - i^2 = 2i + 1\]</p>
 <p><strong>shuffle_down이 우월한 이유:</strong></p>
 <ol>
-<li><strong>메모리 효율성</strong>: 기존 방식은 <code>input[global_i + 1]</code> 로드가 필요하여 캐시 미스를 유발할 수 있음</li>
+<li><strong>메모리 효율성</strong>: 기존 방식은 <code>input[global_i + 1]</code> 로드가 필요하여 캐시
+미스를 유발할 수 있음</li>
 <li><strong>경계 안전성</strong>: 범위 초과 접근 위험이 없음 - 하드웨어가 워프 경계를 처리</li>
 <li><strong>SIMT 최적화</strong>: 단일 명령이 모든 레인을 동시에 처리</li>
 <li><strong>레지스터 통신</strong>: 데이터가 메모리 계층 구조가 아닌 레지스터 사이를 이동</li>
@@ -469,14 +493,19 @@ expected: [1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25
 <h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
 <p>여러 <code>shuffle_down</code> 연산을 사용하여 3점 이동 평균을 구현합니다.</p>
 <p><strong>수학적 연산:</strong> 세 개의 연속 요소를 사용하여 슬라이딩 윈도우 평균을 계산합니다:
-\[\Large \text{output}[i] = \frac{1}{3}\left(\text{input}[i] + \text{input}[i+1] + \text{input}[i+2]\right)\]</p>
+\[\Large \text{output}[i] = \frac{1}{3}\left(\text{input}[i] +
+\text{input}[i+1] + \text{input}[i+2]\right)\]</p>
 <p><strong>경계 처리:</strong> 워프 경계에서 알고리즘이 우아하게 적응합니다:</p>
 <ul>
-<li><strong>3점 전체 윈도우</strong>: \(\text{output}[i] = \frac{1}{3}\sum_{k=0}^{2} \text{input}[i+k]\) - 모든 이웃이 사용 가능할 때</li>
-<li><strong>2점 윈도우</strong>: \(\text{output}[i] = \frac{1}{2}\sum_{k=0}^{1} \text{input}[i+k]\) - 다음 이웃만 사용 가능할 때</li>
-<li><strong>1점 윈도우</strong>: \(\text{output}[i] = \text{input}[i]\) - 이웃이 사용 불가할 때</li>
+<li><strong>3점 전체 윈도우</strong>: \(\text{output}[i] = \frac{1}{3}\sum_{k=0}^{2}
+\text{input}[i+k]\) - 모든 이웃이 사용 가능할 때</li>
+<li><strong>2점 윈도우</strong>: \(\text{output}[i] = \frac{1}{2}\sum_{k=0}^{1}
+\text{input}[i+k]\) - 다음 이웃만 사용 가능할 때</li>
+<li><strong>1점 윈도우</strong>: \(\text{output}[i] = \text{input}[i]\) - 이웃이 사용
+불가할 때</li>
 </ul>
-<p>이는 <code>shuffle_down()</code>이 워프 범위 내에서 자동 경계 처리와 함께 효율적인 스텐실 연산을 가능하게 하는 방법을 보여줍니다.</p>
+<p>이는 <code>shuffle_down()</code>이 워프 범위 내에서 자동 경계 처리와 함께 효율적인 스텐실
+연산을 가능하게 하는 방법을 보여줍니다.</p>
 <pre><code class="language-mojo">comptime SIZE_2 = 64
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
@@ -506,7 +535,8 @@ def moving_average_3[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-다중-오프셋-셔플-패턴"><a class="header" href="#1-다중-오프셋-셔플-패턴">1. <strong>다중 오프셋 셔플 패턴</strong></a></h3>
-<p>이 퍼즐은 여러 이웃에 동시에 접근해야 합니다. 서로 다른 오프셋으로 셔플 연산을 사용해야 합니다.</p>
+<p>이 퍼즐은 여러 이웃에 동시에 접근해야 합니다. 서로 다른 오프셋으로 셔플 연산을
+사용해야 합니다.</p>
 <p><strong>핵심 질문:</strong></p>
 <ul>
 <li><code>input[i+1]</code>과 <code>input[i+2]</code>를 셔플 연산으로 어떻게 가져올 수 있을까요?</li>
@@ -514,12 +544,13 @@ def moving_average_3[
 <li>같은 소스 값에 대해 여러 번 셔플을 수행할 수 있을까요?</li>
 </ul>
 <p><strong>시각화 개념:</strong></p>
-<pre><code>현재 레인이 필요한 값: current_val, next_val, next_next_val
+<pre><code class="language-text">현재 레인이 필요한 값: current_val, next_val, next_next_val
 셔플 오프셋:        0 (직접),    1,        2
 </code></pre>
 <p><strong>생각해 보세요:</strong> 몇 번의 셔플 연산이 필요하고, 어떤 오프셋을 사용해야 할까요?</p>
 <h3 id="2-단계적-경계-처리"><a class="header" href="#2-단계적-경계-처리">2. <strong>단계적 경계 처리</strong></a></h3>
-<p>단순한 이웃 차분과 달리, 이 퍼즐은 2개의 이웃에 접근해야 하므로 여러 경계 시나리오가 있습니다.</p>
+<p>단순한 이웃 차분과 달리, 이 퍼즐은 2개의 이웃에 접근해야 하므로 여러 경계
+시나리오가 있습니다.</p>
 <p><strong>고려할 경계 시나리오:</strong></p>
 <ul>
 <li><strong>전체 윈도우:</strong> 레인이 두 이웃 모두 접근 가능 → 3개 값 모두 사용</li>
@@ -533,7 +564,7 @@ def moving_average_3[
 <li>어떤 경계 조건을 검사해야 할까요?</li>
 </ul>
 <p><strong>고려할 패턴:</strong></p>
-<pre><code>if (두 이웃 모두 접근 가능):
+<pre><code class="language-text">if (두 이웃 모두 접근 가능):
     # 3점 평균
 elif (한 이웃만 접근 가능):
     # 2점 평균
@@ -554,7 +585,8 @@ else:
 <li>레인 경계와 전역 배열 경계를 모두 검사하고 있나요?</li>
 <li>서로 다른 블록에서 <code>global_i</code>와 <code>lane_id()</code>의 관계는 어떻게 될까요?</li>
 </ul>
-<p><strong>디버깅 팁:</strong> 각 블록의 경계 레인에서 어떤 일이 일어나는지 추적하여 로직을 테스트하세요.</p>
+<p><strong>디버깅 팁:</strong> 각 블록의 경계 레인에서 어떤 일이 일어나는지 추적하여 로직을
+테스트하세요.</p>
 </div>
 </details>
 <p><strong>이동 평균 테스트:</strong></p>
@@ -640,7 +672,7 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
         output[global_i] = current_val
 </code></pre>
 <p><strong>다중 오프셋 실행 추적 (<code>WARP_SIZE = 32</code>):</strong></p>
-<pre><code>초기 상태 (블록 0, 요소 0-31):
+<pre><code class="language-text">초기 상태 (블록 0, 요소 0-31):
   레인 0: current_val = input[0] = 1
   레인 1: current_val = input[1] = 2
   레인 2: current_val = input[2] = 4
@@ -673,12 +705,14 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 \[\Large h[i] = \sum_{k=0}^{K(i)-1} w_k^{(i)} \cdot f[i+k]\]</p>
 <p>위치에 따라 커널이 적응합니다:</p>
 <ul>
-<li><strong>내부 점</strong>: \(K(i) = 3\), \(\mathbf{w}^{(i)} = [\frac{1}{3}, \frac{1}{3}, \frac{1}{3}]\)</li>
-<li><strong>경계 근처</strong>: \(K(i) = 2\), \(\mathbf{w}^{(i)} = [\frac{1}{2}, \frac{1}{2}]\)</li>
+<li><strong>내부 점</strong>: \(K(i) = 3\), \(\mathbf{w}^{(i)} =
+[\frac{1}{3}, \frac{1}{3}, \frac{1}{3}]\)</li>
+<li><strong>경계 근처</strong>: \(K(i) = 2\), \(\mathbf{w}^{(i)} =
+[\frac{1}{2}, \frac{1}{2}]\)</li>
 <li><strong>경계</strong>: \(K(i) = 1\), \(\mathbf{w}^{(i)} = [1]\)</li>
 </ul>
 <p><strong>멀티 블록 조정:</strong> <code>SIZE_2 = 64</code>와 2개 블록:</p>
-<pre><code>블록 0 (전역 인덱스 0-31):
+<pre><code class="language-text">블록 0 (전역 인덱스 0-31):
   전역 인덱스 29, 30, 31에 레인 경계 적용
 
 블록 1 (전역 인덱스 32-63):
@@ -692,7 +726,9 @@ expected: HostBuffer([3.3333333, 6.3333335, 10.333333, 15.333333, 21.333334, 28.
 <li><strong>메모리 병합</strong>: 순차적 전역 메모리 접근 패턴이 GPU에 최적</li>
 <li><strong>레지스터 재사용</strong>: 모든 중간 값이 레지스터에 유지</li>
 </ol>
-<p><strong>신호 처리 관점:</strong> 이것은 임펄스 응답 \(h[n] = \frac{1}{3}[\delta[n] + \delta[n-1] + \delta[n-2]]\)를 가진 인과 FIR 필터로, 차단 주파수 \(f_c \approx 0.25f_s\)에서 스무딩을 제공합니다.</p>
+<p><strong>신호 처리 관점:</strong> 이것은 임펄스 응답 \(h[n] =
+\frac{1}{3}[\delta[n] + \delta[n-1] + \delta[n-2]]\)를 가진 인과 FIR
+필터로, 차단 주파수 \(f_c \approx 0.25f_s\)에서 스무딩을 제공합니다.</p>
 </div>
 </details>
 <h2 id="요약"><a class="header" href="#요약">요약</a></h2>

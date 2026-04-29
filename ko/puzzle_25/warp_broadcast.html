@@ -210,10 +210,19 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="warpbroadcast-일대다-통신"><a class="header" href="#warpbroadcast-일대다-통신"><code>warp.broadcast()</code> 일대다 통신</a></h1>
-<p>워프 레벨 조정에서는 <code>broadcast()</code>를 사용하여 하나의 레인에서 워프 내 다른 모든 레인으로 데이터를 공유할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 블록 레벨 계산, 조건부 로직 조정, 일대다 통신 패턴을 효율적으로 수행할 수 있습니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast()</a> 연산은 SIMT 실행을 활용하여 하나의 레인(보통 레인 0)이 계산한 값을 같은 워프의 모든 레인에 전달하며, 효율적인 조정 패턴과 집합적 의사결정을 가능하게 합니다.</em></p>
+<p>워프 레벨 조정에서는 <code>broadcast()</code>를 사용하여 하나의 레인에서 워프 내 다른 모든
+레인으로 데이터를 공유할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나
+명시적 동기화 없이 블록 레벨 계산, 조건부 로직 조정, 일대다 통신 패턴을
+효율적으로 수행할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast()</a>
+연산은 SIMT 실행을 활용하여 하나의 레인(보통 레인 0)이 계산한 값을 같은 워프의
+모든 레인에 전달하며, 효율적인 조정 패턴과 집합적 의사결정을 가능하게 합니다.</em></p>
 <blockquote>
-<p><strong>브로드캐스트 연산이란?</strong> 브로드캐스트 연산은 하나의 스레드가 값을 계산하고 그룹 내 다른 모든 스레드와 공유하는 통신 패턴입니다. 블록 레벨 통계 계산, 집합적 의사결정, 워프 내 모든 스레드에 설정 파라미터 전달 등의 조정 작업에 필수적입니다.</p>
+<p><strong>브로드캐스트 연산이란?</strong> 브로드캐스트 연산은 하나의 스레드가 값을 계산하고
+그룹 내 다른 모든 스레드와 공유하는 통신 패턴입니다. 블록 레벨 통계 계산,
+집합적 의사결정, 워프 내 모든 스레드에 설정 파라미터 전달 등의 조정 작업에
+필수적입니다.</p>
 </blockquote>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -224,9 +233,11 @@
 <li>레인 간 <strong>조건부 조정</strong></li>
 <li><strong>브로드캐스트-shuffle 결합</strong> 연산</li>
 </ul>
-<p><code>broadcast()</code> 연산은 하나의 레인(기본적으로 레인 0)이 자신의 값을 다른 모든 레인과 공유할 수 있게 합니다:
-\[\Large \text{broadcast}(\text{value}) = \text{value_from_lane_0_to_all_lanes}\]</p>
-<p>이를 통해 복잡한 조정 패턴이 간단한 워프 레벨 연산으로 변환되어, 명시적 동기화 없이 효율적인 집합 계산이 가능합니다.</p>
+<p><code>broadcast()</code> 연산은 하나의 레인(기본적으로 레인 0)이 자신의 값을 다른 모든
+레인과 공유할 수 있게 합니다: \[\Large \text{broadcast}(\text{value}) =
+\text{value_from_lane_0_to_all_lanes}\]</p>
+<p>이를 통해 복잡한 조정 패턴이 간단한 워프 레벨 연산으로 변환되어, 명시적 동기화
+없이 효율적인 집합 계산이 가능합니다.</p>
 <h2 id="브로드캐스트-개념"><a class="header" href="#브로드캐스트-개념">브로드캐스트 개념</a></h2>
 <p>기존 조정 방식은 복잡한 공유 메모리 패턴이 필요합니다:</p>
 <pre><code class="language-mojo"># 기존 방식 - 복잡하고 오류가 발생하기 쉬움
@@ -260,15 +271,19 @@ result = use_collective_value(collective_value)
 <li><strong>조합 가능</strong>: 다른 워프 연산과 쉽게 결합</li>
 </ul>
 <h2 id="1-기본-브로드캐스트"><a class="header" href="#1-기본-브로드캐스트">1. 기본 브로드캐스트</a></h2>
-<p>레인 0이 블록 레벨 통계를 계산하고 모든 레인과 공유하는 기본 브로드캐스트 패턴을 구현합니다.</p>
+<p>레인 0이 블록 레벨 통계를 계산하고 모든 레인과 공유하는 기본 브로드캐스트 패턴을
+구현합니다.</p>
 <p><strong>요구사항:</strong></p>
 <ul>
 <li>레인 0이 현재 블록의 처음 4개 요소의 합을 계산해야 합니다</li>
-<li>이 계산된 값을 <code>broadcast()</code>를 사용하여 워프의 다른 모든 레인과 공유해야 합니다</li>
+<li>이 계산된 값을 <code>broadcast()</code>를 사용하여 워프의 다른 모든 레인과 공유해야
+합니다</li>
 <li>각 레인은 이 공유된 값을 자신의 입력 요소에 더해야 합니다</li>
 </ul>
-<p><strong>테스트 데이터:</strong> 입력 <code>[1, 2, 3, 4, 5, 6, 7, 8, ...]</code>은 출력 <code>[11, 12, 13, 14, 15, 16, 17, 18, ...]</code>을 생성해야 합니다</p>
-<p><strong>과제:</strong> 하나의 레인만 블록 레벨 계산을 수행하되, 모든 레인이 그 결과를 자신의 개별 연산에 사용하려면 어떻게 조정해야 할까요?</p>
+<p><strong>테스트 데이터:</strong> 입력 <code>[1, 2, 3, 4, 5, 6, 7, 8, ...]</code>은 출력
+<code>[11, 12, 13, 14, 15, 16, 17, 18, ...]</code>을 생성해야 합니다</p>
+<p><strong>과제:</strong> 하나의 레인만 블록 레벨 계산을 수행하되, 모든 레인이 그 결과를 자신의
+개별 연산에 사용하려면 어떻게 조정해야 할까요?</p>
 <h3 id="구성"><a class="header" href="#구성">구성</a></h3>
 <ul>
 <li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
@@ -303,16 +318,18 @@ result = use_collective_value(collective_value)
 <div class="solution-tips">
 <h3 id="1-브로드캐스트-동작-방식-이해하기"><a class="header" href="#1-브로드캐스트-동작-방식-이해하기">1. <strong>브로드캐스트 동작 방식 이해하기</strong></a></h3>
 <p><code>broadcast(value)</code> 연산은 레인 0의 값을 가져와 워프의 모든 레인에 전달합니다.</p>
-<p><strong>핵심 통찰:</strong> 브로드캐스트에서는 레인 0의 값만 의미가 있습니다. 다른 레인의 값은 무시되지만, 모든 레인이 레인 0의 값을 수신합니다.</p>
+<p><strong>핵심 통찰:</strong> 브로드캐스트에서는 레인 0의 값만 의미가 있습니다. 다른 레인의
+값은 무시되지만, 모든 레인이 레인 0의 값을 수신합니다.</p>
 <p><strong>시각화:</strong></p>
-<pre><code>브로드캐스트 전: 레인 0은 val₀, 레인 1은 val₁, 레인 2는 val₂, ...
+<pre><code class="language-text">브로드캐스트 전: 레인 0은 val₀, 레인 1은 val₁, 레인 2는 val₂, ...
 브로드캐스트 후: 레인 0은 val₀, 레인 1은 val₀, 레인 2는 val₀, ...
 </code></pre>
-<p><strong>생각해 보세요:</strong> 레인 0만 브로드캐스트하려는 값을 계산하도록 하려면 어떻게 해야 할까요?</p>
+<p><strong>생각해 보세요:</strong> 레인 0만 브로드캐스트하려는 값을 계산하도록 하려면 어떻게
+해야 할까요?</p>
 <h3 id="2-레인별-계산"><a class="header" href="#2-레인별-계산">2. <strong>레인별 계산</strong></a></h3>
 <p>레인 0이 특별한 계산을 수행하고 다른 레인은 대기하도록 알고리즘을 설계합니다.</p>
 <p><strong>고려할 패턴:</strong></p>
-<pre><code>var shared_value = 초기값
+<pre><code class="language-text">var shared_value = 초기값
 if lane == 0:
     # 레인 0만 계산
     shared_value = 특별한_계산()
@@ -325,8 +342,10 @@ shared_value = broadcast(shared_value)
 <li>레인 0이 브로드캐스트할 올바른 값을 갖도록 하려면 어떻게 해야 할까요?</li>
 </ul>
 <h3 id="3-집합적-활용"><a class="header" href="#3-집합적-활용">3. <strong>집합적 활용</strong></a></h3>
-<p>브로드캐스트 후 모든 레인이 같은 값을 갖게 되며, 이를 각자의 개별 계산에 활용할 수 있습니다.</p>
-<p><strong>생각해 보세요:</strong> 각 레인이 브로드캐스트 값과 자신의 로컬 데이터를 어떻게 결합할까요?</p>
+<p>브로드캐스트 후 모든 레인이 같은 값을 갖게 되며, 이를 각자의 개별 계산에 활용할
+수 있습니다.</p>
+<p><strong>생각해 보세요:</strong> 각 레인이 브로드캐스트 값과 자신의 로컬 데이터를 어떻게
+결합할까요?</p>
 </div>
 </details>
 <p><strong>기본 브로드캐스트 테스트:</strong></p>
@@ -418,7 +437,7 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
     output[global_i] = broadcast_value + input[global_i]
 </code></pre>
 <p><strong>SIMT 실행 추적:</strong></p>
-<pre><code>사이클 1: 레인별 계산
+<pre><code class="language-text">사이클 1: 레인별 계산
   레인 0: input[0] + input[1] + input[2] + input[3] = 1+2+3+4 = 10을 계산
   레인 1: broadcast_value는 0.0 유지 (레인 0이 아님)
   레인 2: broadcast_value는 0.0 유지 (레인 0이 아님)
@@ -455,15 +474,19 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 </div>
 </details>
 <h2 id="2-조건부-브로드캐스트"><a class="header" href="#2-조건부-브로드캐스트">2. 조건부 브로드캐스트</a></h2>
-<p>레인 0이 블록 데이터를 분석하고 모든 레인에 영향을 미치는 결정을 내리는 조건부 조정을 구현합니다.</p>
+<p>레인 0이 블록 데이터를 분석하고 모든 레인에 영향을 미치는 결정을 내리는 조건부
+조정을 구현합니다.</p>
 <p><strong>요구사항:</strong></p>
 <ul>
 <li>레인 0이 현재 블록의 처음 8개 요소를 분석하고 최댓값을 찾아야 합니다</li>
 <li>이 최댓값을 <code>broadcast()</code>를 사용하여 다른 모든 레인에 전달해야 합니다</li>
-<li>각 레인은 조건부 로직을 적용합니다: 자신의 요소가 최댓값의 절반보다 크면 2배로, 그렇지 않으면 절반으로 만듭니다</li>
+<li>각 레인은 조건부 로직을 적용합니다: 자신의 요소가 최댓값의 절반보다 크면
+2배로, 그렇지 않으면 절반으로 만듭니다</li>
 </ul>
-<p><strong>테스트 데이터:</strong> 입력 <code>[3, 1, 7, 2, 9, 4, 6, 8, ...]</code> (반복 패턴)은 출력 <code>[1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, ...]</code>을 생성해야 합니다</p>
-<p><strong>과제:</strong> 블록 레벨 분석과 요소별 조건부 변환을 모든 레인에 걸쳐 어떻게 조정할까요?</p>
+<p><strong>테스트 데이터:</strong> 입력 <code>[3, 1, 7, 2, 9, 4, 6, 8, ...]</code> (반복 패턴)은 출력
+<code>[1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, ...]</code>을 생성해야 합니다</p>
+<p><strong>과제:</strong> 블록 레벨 분석과 요소별 조건부 변환을 모든 레인에 걸쳐 어떻게
+조정할까요?</p>
 <h3 id="구성-1"><a class="header" href="#구성-1">구성</a></h3>
 <ul>
 <li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
@@ -501,7 +524,8 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-분석과-의사결정"><a class="header" href="#1-분석과-의사결정">1. <strong>분석과 의사결정</strong></a></h3>
-<p>레인 0이 여러 데이터 포인트를 분석하고 다른 모든 레인의 동작을 안내할 결정을 내려야 합니다.</p>
+<p>레인 0이 여러 데이터 포인트를 분석하고 다른 모든 레인의 동작을 안내할 결정을
+내려야 합니다.</p>
 <p><strong>핵심 질문:</strong></p>
 <ul>
 <li>레인 0이 여러 요소를 효율적으로 분석하려면 어떻게 해야 할까요?</li>
@@ -509,14 +533,15 @@ expected: HostBuffer([11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0
 <li>데이터를 분석할 때 경계 조건은 어떻게 처리할까요?</li>
 </ul>
 <p><strong>고려할 패턴:</strong></p>
-<pre><code>var decision = 기본값
+<pre><code class="language-text">var decision = 기본값
 if lane == 0:
     # 블록 로컬 데이터 분석
     decision = 분석_후_결정()
 decision = broadcast(decision)
 </code></pre>
 <h3 id="2-조건부-실행-조정"><a class="header" href="#2-조건부-실행-조정">2. <strong>조건부 실행 조정</strong></a></h3>
-<p>브로드캐스트된 결정을 수신한 후, 모든 레인이 그 결정에 기반하여 서로 다른 로직을 적용해야 합니다.</p>
+<p>브로드캐스트된 결정을 수신한 후, 모든 레인이 그 결정에 기반하여 서로 다른 로직을
+적용해야 합니다.</p>
 <p><strong>생각해 보세요:</strong></p>
 <ul>
 <li>레인이 브로드캐스트 값을 사용하여 로컬 결정을 내리는 방법은?</li>
@@ -524,7 +549,7 @@ decision = broadcast(decision)
 <li>모든 레인에서 일관된 동작을 보장하려면 어떻게 해야 할까요?</li>
 </ul>
 <p><strong>조건부 패턴:</strong></p>
-<pre><code>if (로컬_데이터가 broadcast_기준을 충족):
+<pre><code class="language-text">if (로컬_데이터가 broadcast_기준을 충족):
     # 하나의 변환 적용
 else:
     # 다른 변환 적용
@@ -636,7 +661,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
         output[global_i] = current_input / 2.0  # 임계값 미만이면 절반
 </code></pre>
 <p><strong>의사결정 실행 추적:</strong></p>
-<pre><code>입력 데이터: [3.0, 1.0, 7.0, 2.0, 9.0, 4.0, 6.0, 8.0, ...]
+<pre><code class="language-text">입력 데이터: [3.0, 1.0, 7.0, 2.0, 9.0, 4.0, 6.0, 8.0, ...]
 
 단계 1: 레인 0이 처음 8개 요소의 최댓값을 찾음
   레인 0 분석:
@@ -669,7 +694,8 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 2x &amp; \text{if } x \geq \tau \\
 \frac{x}{2} &amp; \text{if } x &lt; \tau
 \end{cases}\]</p>
-<p>여기서 \(\tau = \frac{\max(\text{block_data})}{2}\)는 브로드캐스트된 임계값입니다.</p>
+<p>여기서 \(\tau = \frac{\max(\text{block_data})}{2}\)는 브로드캐스트된
+임계값입니다.</p>
 <p><strong>조정 패턴의 장점:</strong></p>
 <ol>
 <li><strong>중앙화된 분석</strong>: 하나의 레인이 분석하고 모든 레인이 혜택을 받음</li>
@@ -689,17 +715,20 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <p><code>broadcast()</code>와 <code>shuffle_down()</code>을 모두 결합한 고급 조정을 구현합니다.</p>
 <p><strong>요구사항:</strong></p>
 <ul>
-<li>레인 0이 블록의 처음 4개 요소의 평균을 계산하고 이 스케일링 팩터를 모든 레인에 브로드캐스트해야 합니다</li>
+<li>레인 0이 블록의 처음 4개 요소의 평균을 계산하고 이 스케일링 팩터를 모든 레인에
+브로드캐스트해야 합니다</li>
 <li>각 레인은 <code>shuffle_down(offset=1)</code>을 사용하여 다음 이웃의 값을 가져와야 합니다</li>
 <li>대부분의 레인: 스케일링 팩터에 <code>(현재_값 + 다음_이웃_값)</code>을 곱합니다</li>
 <li>워프의 마지막 레인: 스케일링 팩터에 <code>현재_값</code>만 곱합니다 (유효한 이웃 없음)</li>
 </ul>
-<p><strong>테스트 데이터:</strong> 입력은 <code>[2, 4, 6, 8, 1, 3, 5, 7, ...]</code> 패턴을 따릅니다 (처음 4개 요소: 2,4,6,8 이후 1,3,5,7 반복)</p>
+<p><strong>테스트 데이터:</strong> 입력은 <code>[2, 4, 6, 8, 1, 3, 5, 7, ...]</code> 패턴을 따릅니다 (처음
+4개 요소: 2,4,6,8 이후 1,3,5,7 반복)</p>
 <ul>
 <li>레인 0이 스케일링 팩터를 계산: <code>(2+4+6+8)/4 = 5.0</code></li>
 <li>예상 출력: <code>[30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, ...]</code></li>
 </ul>
-<p><strong>과제:</strong> 하나의 레인의 계산이 모든 레인에 영향을 미치면서, 각 레인이 자신의 이웃 데이터에도 접근해야 하는 상황에서 여러 워프 기본 요소를 어떻게 조정할까요?</p>
+<p><strong>과제:</strong> 하나의 레인의 계산이 모든 레인에 영향을 미치면서, 각 레인이 자신의
+이웃 데이터에도 접근해야 하는 상황에서 여러 워프 기본 요소를 어떻게 조정할까요?</p>
 <h3 id="구성-2"><a class="header" href="#구성-2">구성</a></h3>
 <ul>
 <li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU에 따라 32 또는 64)</li>
@@ -740,7 +769,7 @@ expected: HostBuffer([1.5, 0.5, 14.0, 1.0, 18.0, 2.0, 12.0, 16.0, 1.5, 0.5, 14.0
 <li>브로드캐스트 값이 이웃 데이터의 처리 방식에 영향</li>
 </ol>
 <p><strong>조정 패턴:</strong></p>
-<pre><code># 단계 1: 브로드캐스트 조정
+<pre><code class="language-text"># 단계 1: 브로드캐스트 조정
 var shared_param = lane_0이면_계산()
 shared_param = broadcast(shared_param)
 
@@ -760,7 +789,8 @@ result = 결합(current_val, neighbor_val, shared_param)
 <li>셔플 연산이 포함될 때 워프 경계에서 무슨 일이 일어날까요?</li>
 </ul>
 <h3 id="3-결합-연산-설계"><a class="header" href="#3-결합-연산-설계">3. <strong>결합 연산 설계</strong></a></h3>
-<p>브로드캐스트 파라미터와 셔플 기반 이웃 접근을 의미 있게 결합하는 방법을 생각하세요.</p>
+<p>브로드캐스트 파라미터와 셔플 기반 이웃 접근을 의미 있게 결합하는 방법을
+생각하세요.</p>
 <p><strong>패턴 고려사항:</strong></p>
 <ul>
 <li>브로드캐스트 파라미터가 입력, 출력, 또는 계산을 스케일링해야 할까요?</li>
@@ -843,7 +873,8 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 솔루션은 broadcast와 셔플 기본 요소를 결합한 가장 고급 워프 조정 패턴을 보여줍니다.</p>
+<p>이 솔루션은 broadcast와 셔플 기본 요소를 결합한 가장 고급 워프 조정 패턴을
+보여줍니다.</p>
 <p><strong>전체 알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     # 단계 1: 레인 0이 블록 로컬 스케일링 팩터를 계산
@@ -870,7 +901,7 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
         output[global_i] = current_val * scale_factor
 </code></pre>
 <p><strong>다중 기본 요소 실행 추적:</strong></p>
-<pre><code>입력 데이터: [2, 4, 6, 8, 1, 3, 5, 7, ...]
+<pre><code class="language-text">입력 데이터: [2, 4, 6, 8, 1, 3, 5, 7, ...]
 
 단계 1: 레인 0이 스케일링 팩터를 계산
   레인 0 계산: (input[0] + input[1] + input[2] + input[3]) / 4
@@ -903,12 +934,15 @@ expected: HostBuffer([30.0, 50.0, 70.0, 45.0, 20.0, 40.0, 60.0, 40.0, 20.0, 40.0
 <li><strong>수평 조정</strong> (shuffle): 레인 i → 레인 i+1</li>
 <li><strong>결합 계산</strong>: 브로드캐스트 데이터와 셔플 데이터를 모두 활용</li>
 </ol>
-<p><strong>수학적 기반:</strong>
-\[\Large \text{output}[i] = \begin{cases}
-(\text{input}[i] + \text{input}[i+1]) \cdot \beta &amp; \text{if lane } i &lt; \text{WARP_SIZE} - 1 \\
+<p><strong>수학적 기반:</strong> \[\Large \text{output}[i] = \begin{cases} (\text{input}[i]</p>
+<ul>
+<li>\text{input}[i+1]) \cdot \beta &amp; \text{if lane} i &lt; \text{WARP_SIZE} - 1
+\\
 \text{input}[i] \cdot \beta &amp; \text{if lane } i = \text{WARP_SIZE} - 1
-\end{cases}\]</p>
-<p>여기서 \(\beta = \frac{1}{4}\sum_{k=0}^{3} \text{input}[\text{block_start} + k]\)는 브로드캐스트된 스케일링 팩터입니다.</p>
+\end{cases}\]</li>
+</ul>
+<p>여기서 \(\beta = \frac{1}{4}\sum_{k=0}^{3}
+\text{input}[\text{block_start} + k]\)는 브로드캐스트된 스케일링 팩터입니다.</p>
 <p><strong>고급 조정의 장점:</strong></p>
 <ol>
 <li><strong>다단계 통신</strong>: 전역(broadcast)과 지역(shuffle) 조정의 결합</li>

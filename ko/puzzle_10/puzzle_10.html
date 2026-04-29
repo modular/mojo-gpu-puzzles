@@ -211,10 +211,12 @@
                         <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 <h1 id="puzzle-10-새니타이저로-메모리-오류와-경쟁-상태-찾기"><a class="header" href="#puzzle-10-새니타이저로-메모리-오류와-경쟁-상태-찾기">Puzzle 10: 새니타이저로 메모리 오류와 경쟁 상태 찾기</a></h1>
 <blockquote>
-<p>⚠️ 이 퍼즐은 호환되는 <strong>NVIDIA GPU</strong>에서만 작동합니다. 다른 GPU 벤더 지원을 위한 도구 개발이 진행 중입니다.</p>
+<p>⚠️ 이 퍼즐은 호환되는 <strong>NVIDIA GPU</strong>에서만 작동합니다. 다른 GPU 벤더 지원을
+위한 도구 개발이 진행 중입니다.</p>
 </blockquote>
 <h2 id="모든-gpu-개발자가-두려워하는-순간"><a class="header" href="#모든-gpu-개발자가-두려워하는-순간">모든 GPU 개발자가 두려워하는 순간</a></h2>
-<p>완벽해 보이는 GPU 코드를 작성했습니다. 알고리즘은 정확하고, 메모리 관리도 올바른 것 같고, 스레드 조율도 흠잡을 데 없어 보입니다. 자신 있게 테스트를 실행하면…</p>
+<p>완벽해 보이는 GPU 코드를 작성했습니다. 알고리즘은 정확하고, 메모리 관리도 올바른
+것 같고, 스레드 조율도 흠잡을 데 없어 보입니다. 자신 있게 테스트를 실행하면…</p>
 <ul>
 <li><strong>✅ 모든 테스트 통과</strong></li>
 <li><strong>✅ 성능도 훌륭함</strong></li>
@@ -226,35 +228,48 @@
 <li><strong>“실행할 때마다 결과가 달라요”</strong></li>
 <li><strong>“메모리 손상이 감지됐어요”</strong></li>
 </ul>
-<p><strong>조용히 숨어드는 GPU 버그</strong>의 세계에 오신 것을 환영합니다. 대규모 병렬 처리의 그늘에 숨어 있다가 가장 예상치 못한 순간에 튀어나오는 오류들이죠. 이런 버그들은 모든 테스트를 통과하고, 99%의 경우 올바른 결과를 내다가, 가장 중요한 순간에 치명적으로 실패합니다.</p>
-<p><strong>중요</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요하며, <code>compute-sanitizer</code>가 NVIDIA CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 수 있습니다.</p>
+<p><strong>조용히 숨어드는 GPU 버그</strong>의 세계에 오신 것을 환영합니다. 대규모 병렬 처리의
+그늘에 숨어 있다가 가장 예상치 못한 순간에 튀어나오는 오류들이죠. 이런 버그들은
+모든 테스트를 통과하고, 99%의 경우 올바른 결과를 내다가, 가장 중요한 순간에
+치명적으로 실패합니다.</p>
+<p><strong>중요</strong>: 이 퍼즐은 NVIDIA GPU 하드웨어가 필요하며, <code>compute-sanitizer</code>가 NVIDIA
+CUDA toolkit에 포함되어 있어 <code>pixi</code>를 통해서만 사용할 수 있습니다.</p>
 <h2 id="gpu-버그가-유난히-교활한-이유"><a class="header" href="#gpu-버그가-유난히-교활한-이유">GPU 버그가 유난히 교활한 이유</a></h2>
-<p>CPU 프로그램에서는 버그가 보통 즉각적인 크래시나 잘못된 결과로 자신의 존재를 알립니다. 하지만 GPU 버그는 <strong>숨기의 달인</strong>입니다:</p>
+<p>CPU 프로그램에서는 버그가 보통 즉각적인 크래시나 잘못된 결과로 자신의 존재를
+알립니다. 하지만 GPU 버그는 <strong>숨기의 달인</strong>입니다:</p>
 <p><strong>조용히 데이터를 손상시키는 패턴:</strong></p>
 <ul>
-<li><strong>크래시 없는 메모리 위반</strong>: 우연히 유효한 메모리 위치를 건드리는 범위 초과 접근</li>
+<li><strong>크래시 없는 메모리 위반</strong>: 우연히 유효한 메모리 위치를 건드리는 범위 초과
+접근</li>
 <li><strong>“대부분은 잘 동작하는” 경쟁 상태</strong>: 타이밍에 따라 무작위처럼 나타나는 버그</li>
 <li><strong>스레드 조율 실패</strong>: 특정 부하 조건에서만 발생하는 교착 상태</li>
 </ul>
 <p><strong>대규모 병렬 처리에서 증폭되는 문제:</strong></p>
 <ul>
-<li><strong>한 스레드의 버그가 수천 개에 영향</strong>: 메모리 위반 하나가 전체 워프를 손상시킬 수 있음</li>
+<li><strong>한 스레드의 버그가 수천 개에 영향</strong>: 메모리 위반 하나가 전체 워프를 손상시킬
+수 있음</li>
 <li><strong>경쟁 상태의 기하급수적 증가</strong>: 스레드가 많을수록 손상 가능성도 커짐</li>
 <li><strong>하드웨어 차이가 문제를 은폐</strong>: 같은 버그가 GPU 아키텍처마다 다르게 동작</li>
 </ul>
-<p>하지만 희소식이 있습니다: <strong>GPU 검사 도구를 익히면, 이렇게 찾기 어려운 버그들을 프로덕션에 도달하기 전에 잡아낼 수 있습니다</strong>.</p>
+<p>하지만 희소식이 있습니다: <strong>GPU 검사 도구를 익히면, 이렇게 찾기 어려운 버그들을
+프로덕션에 도달하기 전에 잡아낼 수 있습니다</strong>.</p>
 <h2 id="새니타이저-도구-모음-nvidia-compute-sanitizer"><a class="header" href="#새니타이저-도구-모음-nvidia-compute-sanitizer">새니타이저 도구 모음: NVIDIA compute-sanitizer</a></h2>
-<p><strong>NVIDIA compute-sanitizer</strong>는 GPU 버그에 맞서 싸우는 여러분의 비밀 무기입니다. 다음을 탐지할 수 있습니다:</p>
+<p><strong>NVIDIA compute-sanitizer</strong>는 GPU 버그에 맞서 싸우는 여러분의 비밀 무기입니다.
+다음을 탐지할 수 있습니다:</p>
 <ul>
 <li><strong>메모리 위반</strong>: 범위 초과 접근, 잘못된 포인터, 메모리 누수</li>
 <li><strong>경쟁 상태</strong>: 스레드 간 공유 메모리 hazard</li>
 <li><strong>동기화 버그</strong>: 교착 상태, barrier 오용, 부적절한 스레드 조율</li>
 <li><strong>그 외</strong>: <code>pixi run compute-sanitizer --help</code>로 확인</li>
 </ul>
-<p>📖 <strong>공식 문서</strong>: <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">NVIDIA Compute Sanitizer User Guide</a></p>
-<p><strong>GPU 프로그램의 X-ray</strong>라고 생각하면 됩니다. 일반 테스트로는 볼 수 없는 숨겨진 문제까지 드러내 줍니다.</p>
+<p>📖 <strong>공식 문서</strong>:
+<a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">NVIDIA Compute Sanitizer User Guide</a></p>
+<p><strong>GPU 프로그램의 X-ray</strong>라고 생각하면 됩니다. 일반 테스트로는 볼 수 없는 숨겨진
+문제까지 드러내 줍니다.</p>
 <h2 id="이-퍼즐에서-배울-내용"><a class="header" href="#이-퍼즐에서-배울-내용">이 퍼즐에서 배울 내용</a></h2>
-<p>이 퍼즐에서는 가장 찾기 어려운 GPU 버그를 체계적으로 찾아 수정하는 방법을 배웁니다. 유능한 GPU 개발자와 뛰어난 개발자를 구분 짓는 탐정 기술을 익히게 됩니다.</p>
+<p>이 퍼즐에서는 가장 찾기 어려운 GPU 버그를 체계적으로 찾아 수정하는 방법을
+배웁니다. 유능한 GPU 개발자와 뛰어난 개발자를 구분 짓는 탐정 기술을 익히게
+됩니다.</p>
 <h3 id="익히게-될-핵심-기술"><a class="header" href="#익히게-될-핵심-기술"><strong>익히게 될 핵심 기술</strong></a></h3>
 <ol>
 <li><strong>숨은 버그 찾기</strong> - 테스트로는 잡히지 않는 문제 발견</li>
@@ -269,9 +284,11 @@
 <li><strong>메모리 위반</strong> - 경고 없이 데이터를 망가뜨리는 조용한 암살자</li>
 <li><strong>경쟁 상태</strong> - 결과를 예측 불가능하게 만드는 혼돈의 씨앗</li>
 </ul>
-<p>각 시나리오에서 일반 테스트로는 보이지 않는 단서를 따라가며, GPU 버그 탐정처럼 사고하는 법을 배웁니다.</p>
+<p>각 시나리오에서 일반 테스트로는 보이지 않는 단서를 따라가며, GPU 버그 탐정처럼
+사고하는 법을 배웁니다.</p>
 <h2 id="버그-사냥-여정"><a class="header" href="#버그-사냥-여정">버그 사냥 여정</a></h2>
-<p>이 퍼즐은 조용한 손상을 발견하는 것부터 병렬 디버깅을 배우는 것까지, 체계적으로 설계된 과정을 안내합니다:</p>
+<p>이 퍼즐은 조용한 손상을 발견하는 것부터 병렬 디버깅을 배우는 것까지, 체계적으로
+설계된 과정을 안내합니다:</p>
 <h3 id="-메모리-위반-탐지"><a class="header" href="#-메모리-위반-탐지">👮🏼‍♂️ <a href="./memcheck.html">메모리 위반 탐지</a></a></h3>
 <p><strong>메모리 위반 조사</strong> - 테스트는 통과해도 메모리는 거짓말을 할 때</p>
 <ul>
@@ -293,12 +310,14 @@
 </ul>
 <p><strong>목표</strong>: 고급 동시성 디버깅 - 수천 개의 병렬 스레드를 길들이는 능력</p>
 <h2 id="gpu-탐정-마인드셋"><a class="header" href="#gpu-탐정-마인드셋">GPU 탐정 마인드셋</a></h2>
-<p>GPU 검사를 하려면 <strong>병렬 프로그램 탐정</strong>이 되어야 합니다. 다음과 같은 사건을 조사하게 됩니다:</p>
+<p>GPU 검사를 하려면 <strong>병렬 프로그램 탐정</strong>이 되어야 합니다. 다음과 같은 사건을
+조사하게 됩니다:</p>
 <ul>
 <li><strong>증거가 숨겨져 있다</strong> - 직접 관찰할 수 없는 병렬 실행 속에서 버그가 발생</li>
 <li><strong>용의자가 수없이 많다</strong> - 수천 개의 스레드 중 어떤 조합이든 범인일 수 있음</li>
 <li><strong>범행이 간헐적이다</strong> - 경쟁 상태와 타이밍에 따른 실패</li>
-<li><strong>전문 도구가 필요하다</strong> - 일반 디버깅으로는 볼 수 없는 것을 새니타이저가 보여줌</li>
+<li><strong>전문 도구가 필요하다</strong> - 일반 디버깅으로는 볼 수 없는 것을 새니타이저가
+보여줌</li>
 </ul>
 <p>하지만 훌륭한 탐정처럼, 여러분도 다음을 배우게 됩니다:</p>
 <ul>
@@ -313,7 +332,8 @@
 <li>Puzzle 1-8에서 다룬 GPU 프로그래밍 개념 (메모리 관리, 스레드 조율, 배리어)</li>
 <li><strong><a href="https://docs.modular.com/max/faq#gpu-requirements">호환 NVIDIA GPU 하드웨어</a></strong></li>
 <li><code>compute-sanitizer</code> 접근을 위한 <code>pixi</code> 패키지 매니저 환경 설정</li>
-<li><strong>선행 퍼즐</strong>: <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4</a>와 <a href="../puzzle_08/tile_tensor.html">Puzzle 8</a> 숙지 권장</li>
+<li><strong>선행 퍼즐</strong>: <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4</a>와
+<a href="../puzzle_08/tile_tensor.html">Puzzle 8</a> 숙지 권장</li>
 </ul>
 <p><strong>목표</strong>:</p>
 <ul>

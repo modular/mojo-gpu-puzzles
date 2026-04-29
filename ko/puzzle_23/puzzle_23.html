@@ -211,12 +211,15 @@
                         <!-- i18n-source-commit: 880bd66d68512416dd5cb724c08fa64530113525 -->
 <h1 id="puzzle-23-gpu-함수형-프로그래밍-패턴"><a class="header" href="#puzzle-23-gpu-함수형-프로그래밍-패턴">Puzzle 23: GPU 함수형 프로그래밍 패턴</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>Part VI: 함수형 GPU 프로그래밍</strong>에서는 GPU 연산을 위한 Mojo의 고수준 프로그래밍 패턴을 소개합니다. 벡터화, 메모리 최적화, 성능 튜닝을 자동으로 처리하는 함수형 접근 방식을 배우며, 수동 GPU 커널 프로그래밍을 대체합니다.</p>
-<p><strong>핵심 통찰:</strong> <em>현대 GPU 프로그래밍은 성능을 위해 우아함을 포기할 필요가 없습니다 - Mojo의 함수형 패턴은 두 가지를 모두 제공합니다.</em></p>
+<p><strong>Part VI: 함수형 GPU 프로그래밍</strong>에서는 GPU 연산을 위한 Mojo의 고수준
+프로그래밍 패턴을 소개합니다. 벡터화, 메모리 최적화, 성능 튜닝을 자동으로
+처리하는 함수형 접근 방식을 배우며, 수동 GPU 커널 프로그래밍을 대체합니다.</p>
+<p><strong>핵심 통찰:</strong> <em>현대 GPU 프로그래밍은 성능을 위해 우아함을 포기할 필요가
+없습니다 - Mojo의 함수형 패턴은 두 가지를 모두 제공합니다.</em></p>
 <h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
 <h3 id="gpu-실행-계층-구조"><a class="header" href="#gpu-실행-계층-구조"><strong>GPU 실행 계층 구조</strong></a></h3>
 <p>GPU 스레드와 SIMD 연산 사이의 근본적인 관계를 이해합니다:</p>
-<pre><code>GPU Device
+<pre><code class="language-text">GPU Device
 ├── Grid (전체 문제)
 │   ├── Block 1 (스레드 그룹, 공유 메모리)
 │   │   ├── Warp 1 (32개 스레드, 록스텝 실행) --&gt; Part VI에서 학습
@@ -233,7 +236,9 @@
 <li>스레드 스케줄링 자동 최적화</li>
 <li>메모리 계층 구조 최적화 내장</li>
 </ul>
-<p>💡 <strong>참고</strong>: 이 Part는 함수형 패턴에 초점을 맞추고 있으며, <strong>워프 레벨 프로그래밍</strong>과 고급 GPU 메모리 관리는 <strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong> 에서 자세히 다룹니다.</p>
+<p>💡 <strong>참고</strong>: 이 Part는 함수형 패턴에 초점을 맞추고 있으며,
+<strong>워프 레벨 프로그래밍</strong>과 고급 GPU 메모리 관리는
+<strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong> 에서 자세히 다룹니다.</p>
 <h3 id="네-가지-기본-패턴"><a class="header" href="#네-가지-기본-패턴"><strong>네 가지 기본 패턴</strong></a></h3>
 <p>GPU 함수형 프로그래밍의 핵심 패턴을 모두 다룹니다:</p>
 <ol>
@@ -243,7 +248,7 @@
 <li><strong>Mojo vectorize</strong>: 경계 검사를 포함한 안전한 자동 벡터화</li>
 </ol>
 <h3 id="한눈에-보는-성능-패턴"><a class="header" href="#한눈에-보는-성능-패턴"><strong>한눈에 보는 성능 패턴</strong></a></h3>
-<pre><code>문제: 1024개 요소의 벡터 두 개 더하기 (SIZE=1024, SIMD_WIDTH=4)
+<pre><code class="language-text">문제: 1024개 요소의 벡터 두 개 더하기 (SIZE=1024, SIMD_WIDTH=4)
 
 Elementwise:     256 스레드 × 1 SIMD 연산   = 높은 병렬성
 Tiled:           32 스레드  × 8 SIMD 연산  = 캐시 최적화
@@ -252,7 +257,7 @@ Mojo vectorize:  32 스레드  × 8 SIMD 연산  = 자동 안전성
 </code></pre>
 <h3 id="-실제-성능-분석"><a class="header" href="#-실제-성능-분석">📊 <strong>실제 성능 분석</strong></a></h3>
 <p>실증적 벤치마크 결과를 해석하는 방법을 배웁니다:</p>
-<pre><code>벤치마크 결과 (SIZE=1,048,576):
+<pre><code class="language-text">벤치마크 결과 (SIZE=1,048,576):
 elementwise:        11.34ms  ← 대규모에서 최대 병렬성이 유리
 tiled:              12.04ms  ← 지역성과 병렬성의 균형
 manual_vectorized:  15.75ms  ← 단순 연산에서 복잡한 인덱싱이 불리
@@ -290,7 +295,8 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 <li>메모리 지역성 원칙과 캐시 친화적 접근 패턴</li>
 <li>스레드-타일 매핑 vs 스레드-요소 매핑</li>
 </ul>
-<p><strong>핵심 통찰:</strong> 타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.</p>
+<p><strong>핵심 통찰:</strong> 타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의
+스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.</p>
 <h3 id="3-고급-벡터화"><a class="header" href="#3-고급-벡터화"><strong>3. 고급 벡터화</strong></a></h3>
 <p><strong>→ <a href="./vectorize.html">vectorize - SIMD 제어</a></strong></p>
 <p>수동 제어와 자동 벡터화 전략을 탐구합니다.</p>
@@ -316,7 +322,8 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 <li>패턴 비교와 스레드-작업 매핑</li>
 <li>워크로드에 맞는 올바른 패턴 선택</li>
 </ul>
-<p><strong>핵심 통찰:</strong> GPU 스레드가 병렬성의 구조를 제공하고, SIMD 연산이 각 스레드 내에서 벡터화를 제공합니다.</p>
+<p><strong>핵심 통찰:</strong> GPU 스레드가 병렬성의 구조를 제공하고, SIMD 연산이 각 스레드
+내에서 벡터화를 제공합니다.</p>
 <h3 id="-5-mojo-성능-벤치마킹"><a class="header" href="#-5-mojo-성능-벤치마킹">📊 <strong>5. Mojo 성능 벤치마킹</strong></a></h3>
 <p><strong>→ <a href="./benchmarking.html">Mojo 벤치마킹</a></strong></p>
 <p>GPU 성능을 과학적으로 측정, 분석, 최적화하는 방법을 배웁니다.</p>
@@ -329,10 +336,15 @@ vectorized:         13.38ms  ← 자동 최적화 오버헤드
 </ul>
 <p><strong>핵심 기법:</strong> <code>keep()</code>을 사용하여 벤치마크 코드의 컴파일러 최적화를 방지합니다.</p>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p>Elementwise 패턴부터 시작하여 각 섹션을 체계적으로 학습하세요. 각 퍼즐은 이전 개념을 기반으로 새로운 수준의 정교함을 도입합니다.</p>
-<p>💡 <strong>성공 팁</strong>: 각 패턴의 <strong>어떻게</strong>뿐만 아니라 <strong>왜</strong>를 이해하는 데 집중하세요. 여기서 형성하는 개념적 프레임워크는 GPU 프로그래밍 전반에 걸쳐 활용될 것입니다.</p>
-<p><strong>학습 목표</strong>: Part VI를 마치면, 저수준 GPU 메커니즘 대신 함수형 패턴의 관점에서 사고할 수 있게 되어, 더 유지보수하기 쉽고, 성능이 뛰어나며, 이식성이 높은 GPU 코드를 작성할 수 있습니다.</p>
-<p><strong>시작하기</strong>: <strong><a href="./elementwise.html">elementwise - 기본 GPU 함수형 연산</a></strong> 에서 함수형 GPU 프로그래밍을 시작하세요.</p>
+<p>Elementwise 패턴부터 시작하여 각 섹션을 체계적으로 학습하세요. 각 퍼즐은 이전
+개념을 기반으로 새로운 수준의 정교함을 도입합니다.</p>
+<p>💡 <strong>성공 팁</strong>: 각 패턴의 <strong>어떻게</strong>뿐만 아니라 <strong>왜</strong>를 이해하는 데 집중하세요.
+여기서 형성하는 개념적 프레임워크는 GPU 프로그래밍 전반에 걸쳐 활용될 것입니다.</p>
+<p><strong>학습 목표</strong>: Part VI를 마치면, 저수준 GPU 메커니즘 대신 함수형 패턴의 관점에서
+사고할 수 있게 되어, 더 유지보수하기 쉽고, 성능이 뛰어나며, 이식성이 높은 GPU
+코드를 작성할 수 있습니다.</p>
+<p><strong>시작하기</strong>: <strong><a href="./elementwise.html">elementwise - 기본 GPU 함수형 연산</a></strong> 에서
+함수형 GPU 프로그래밍을 시작하세요.</p>
 
                     </main>
 

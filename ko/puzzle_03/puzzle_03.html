@@ -215,7 +215,8 @@
 </div>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
 <p>벡터 <code>a</code>의 각 위치에 10을 더해 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
-<p><strong>참고</strong>: <em>스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가 없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다.</em></p>
+<p><strong>참고</strong>: <em>스레드 수가 데이터 개수보다 많아서, 일부 스레드는 처리할 데이터가
+없습니다. 이런 스레드가 범위를 벗어난 메모리에 접근하지 않도록 방지해야 합니다.</em></p>
 <div class="video-container breakpoint-sm">
 <iframe src="https://www.youtube.com/embed/YFKutZbRYSM" allowfullscreen></iframe>
 </div>
@@ -326,9 +327,10 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <li>가드 내부: 입력값에 10을 더합니다</li>
 </ul>
 <blockquote>
-<p>경계 검사 없이도 테스트가 통과되는 이유가 궁금할 수 있습니다!
-테스트 통과가 코드의 안전성이나 미정의 동작(Undefined Behavior) 부재를 보장하지는 않는다는 점을 항상 기억하세요.
-<a href="../puzzle_10/puzzle_10.html">Puzzle 10</a>에서 이런 경우를 살펴보고, 안전성 버그를 잡는 도구를 사용해 봅니다.</p>
+<p>경계 검사 없이도 테스트가 통과되는 이유가 궁금할 수 있습니다! 테스트 통과가
+코드의 안전성이나 미정의 동작(Undefined Behavior) 부재를 보장하지는 않는다는
+점을 항상 기억하세요. <a href="../puzzle_10/puzzle_10.html">Puzzle 10</a>에서 이런 경우를
+살펴보고, 안전성 버그를 잡는 도구를 사용해 봅니다.</p>
 </blockquote>
 </div>
 </details>
@@ -350,7 +352,9 @@ if i &lt; height and j &lt; width: ...
 if i &lt; height and j &lt; width and k &lt; depth and
    i &gt;= padding and j &gt;= padding: ...
 </code></pre>
-<p>이런 경계 처리 패턴은 Puzzle 4의 <a href="../puzzle_04/introduction_tile_tensor.html">TileTensor 알아보기</a>에서 배우면 훨씬 깔끔해집니다. TileTensor는 형태 관리 기능을 기본으로 제공합니다.</p>
+<p>이런 경계 처리 패턴은 Puzzle 4의
+<a href="../puzzle_04/introduction_tile_tensor.html">TileTensor 알아보기</a>에서 배우면 훨씬
+깔끔해집니다. TileTensor는 형태 관리 기능을 기본으로 제공합니다.</p>
 
                     </main>
 

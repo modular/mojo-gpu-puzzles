@@ -210,7 +210,9 @@
                     <main>
                         <h1 id="tiled-matrix-multiplication"><a class="header" href="#tiled-matrix-multiplication">Tiled Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using tiled matrix multiplication with TileTensor. This approach handles large matrices by processing them in smaller chunks (tiles).</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) using
+tiled matrix multiplication with TileTensor. This approach handles large
+matrices by processing them in smaller chunks (tiles).</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
 <li>Matrix tiling with TileTensor for efficient computation</li>
@@ -310,14 +312,15 @@ def matmul_tiled(
 <div class="solution-tips">
 <ol>
 <li>
-<p>Use the standard indexing convention: <code>local_row = thread_idx.y</code> and <code>local_col = thread_idx.x</code></p>
+<p>Use the standard indexing convention: <code>local_row = thread_idx.y</code> and
+<code>local_col = thread_idx.x</code></p>
 </li>
 <li>
 <p>Calculate global positions:</p>
-<pre><code>global_row = block_idx.y * TPB + local_row
+<pre><code class="language-text">global_row = block_idx.y * TPB + local_row
 </code></pre>
 <p>and</p>
-<pre><code>global_col = block_idx.x * TPB + local_col
+<pre><code class="language-text">global_col = block_idx.x * TPB + local_col
 </code></pre>
 <p><strong>Understanding the global indexing formula:</strong></p>
 <ul>
@@ -336,26 +339,29 @@ def matmul_tiled(
 <li>
 <p>Adding them gives our thread’s actual row in the full matrix</p>
 <p><strong>Example with TPB=3:</strong></p>
-</li>
-</ul>
 <pre><code class="language-txt">Block Layout:        Global Matrix (9×9):
 [B00][B01][B02]      [0 1 2 | 3 4 5 | 6 7 8]
 [B10][B11][B12]  →   [9 A B | C D E | F G H]
 [B20][B21][B22]      [I J K | L M N | O P Q]
-                     ——————————————————————
-                     [R S T | U V W | X Y Z]
-                     [a b c | d e f | g h i]
-                     [j k l | m n o | p q r]
-                     ——————————————————————
-                     [s t u | v w x | y z α]
-                     [β γ δ | ε ζ η | θ ι κ]
-                     [λ μ ν | ξ ο π | ρ σ τ]
+                    ——————————————————————
+                    [R S T | U V W | X Y Z]
+                    [a b c | d e f | g h i]
+                    [j k l | m n o | p q r]
+                    ——————————————————————
+                    [s t u | v w x | y z α]
+                    [β γ δ | ε ζ η | θ ι κ]
+                    [λ μ ν | ξ ο π | ρ σ τ]
 
 Thread(1,2) in Block(1,0):
 - block_idx.y = 1, local_row = 1
 - global_row = 1 * 3 + 1 = 4
 - This thread handles row 4 of the matrix
+
+```text
+
 </code></pre>
+</li>
+</ul>
 </li>
 <li>
 <p>Allocate shared memory (now pre-initialized with <code>.fill(0)</code>)</p>
@@ -453,7 +459,9 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 </code></pre>
 <div class="solution-explanation">
-<p>The tiled matrix multiplication implementation demonstrates efficient handling of matrices \((9 \times 9)\) using small tiles \((3 \times 3)\). Here’s how it works:</p>
+<p>The tiled matrix multiplication implementation demonstrates efficient handling
+of matrices \((9 \times 9)\) using small tiles \((3 \times 3)\). Here’s how
+it works:</p>
 <ol>
 <li>
 <p><strong>Shared memory allocation</strong></p>
@@ -486,7 +494,9 @@ For each tile:
 <p><strong>Memory loading pattern</strong></p>
 <ul>
 <li>
-<p>With perfect \((9 \times 9)\) tiling, bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.</p>
+<p>With perfect \((9 \times 9)\) tiling, bounds check is technically
+unnecessary but included for defensive programming and consistency with
+other matrix sizes.</p>
 <pre><code class="language-mojo">   # Load A tile - global row stays the same, col determined by tile
    if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
        a_shared[local_row, local_col] = a[
@@ -520,10 +530,15 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 </code></pre>
 <p><strong>Shared memory bank conflicts explained:</strong></p>
 <ul>
-<li><strong>Left (Good)</strong>: <code>b_shared[k,threadIdx.x]</code> accesses different banks, <code>a_shared[0,k]</code> broadcasts to all threads</li>
-<li><strong>Right (Bad)</strong>: If b_shared were column-major, threads would access same bank simultaneously</li>
-<li><strong>Key insight</strong>: This is about shared memory access patterns, not global memory coalescing</li>
-<li><strong>Bank structure</strong>: Shared memory has 32 banks; conflicts occur when multiple threads access different addresses in the same bank simultaneously</li>
+<li><strong>Left (Good)</strong>: <code>b_shared[k,threadIdx.x]</code> accesses different banks,
+<code>a_shared[0,k]</code> broadcasts to all threads</li>
+<li><strong>Right (Bad)</strong>: If b_shared were column-major, threads would access same
+bank simultaneously</li>
+<li><strong>Key insight</strong>: This is about shared memory access patterns, not global
+memory coalescing</li>
+<li><strong>Bank structure</strong>: Shared memory has 32 banks; conflicts occur when
+multiple threads access different addresses in the same bank
+simultaneously</li>
 </ul>
 </li>
 </ul>
@@ -538,10 +553,12 @@ Parallel access to different banks    Serialized access to same bank of b_shared
 </ol>
 <p>Key performance features:</p>
 <ul>
-<li>Processes \((9 \times 9)\) matrix using \((3 \times 3)\) tiles (perfect fit!)</li>
+<li>Processes \((9 \times 9)\) matrix using \((3 \times 3)\) tiles (perfect
+fit!)</li>
 <li>Uses shared memory for fast tile access</li>
 <li>Minimizes global memory transactions with coalesced memory access</li>
-<li>Optimized shared memory layout and access pattern to avoid shared memory bank conflicts</li>
+<li>Optimized shared memory layout and access pattern to avoid shared memory bank
+conflicts</li>
 </ul>
 <ol start="6">
 <li>
@@ -550,7 +567,8 @@ Parallel access to different banks    Serialized access to same bank of b_shared
    output[tiled_row, tiled_col] = acc
 </code></pre>
 <ul>
-<li>Defensive bounds checking included for other matrix sizes and tiling strategies</li>
+<li>Defensive bounds checking included for other matrix sizes and tiling
+strategies</li>
 <li>Direct assignment to output matrix</li>
 <li>All threads write valid results</li>
 </ul>
@@ -668,14 +686,19 @@ def matmul_idiomatic_tiled[
 
 </code></pre>
 <div class="solution-explanation">
-<p>The idiomatic tiled matrix multiplication leverages Mojo’s TileTensor API and asynchronous memory operations for a beautifully clean implementation.</p>
-<p><strong>🔑 Key Point: This implementation performs standard matrix multiplication A × B using coalesced loading for both matrices.</strong></p>
+<p>The idiomatic tiled matrix multiplication leverages Mojo’s TileTensor API and
+asynchronous memory operations for a beautifully clean implementation.</p>
+<p><strong>🔑 Key Point: This implementation performs standard matrix multiplication A ×
+B using coalesced loading for both matrices.</strong></p>
 <p><strong>What this implementation does:</strong></p>
 <ul>
-<li><strong>Matrix operation</strong>: Standard \(A \times B\) multiplication (not \(A \times B^T\))</li>
-<li><strong>Loading pattern</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced access</li>
+<li><strong>Matrix operation</strong>: Standard \(A \times B\) multiplication (not \(A
+\times B^T\))</li>
+<li><strong>Loading pattern</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced
+access</li>
 <li><strong>Computation</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
-<li><strong>Data layout</strong>: No transposition during loading - both matrices loaded in same orientation</li>
+<li><strong>Data layout</strong>: No transposition during loading - both matrices loaded in
+same orientation</li>
 </ul>
 <p><strong>What this implementation does NOT do:</strong></p>
 <ul>
@@ -683,7 +706,8 @@ def matmul_idiomatic_tiled[
 <li>Does NOT use transposed loading patterns</li>
 <li>Does NOT transpose data during copy operations</li>
 </ul>
-<p>With the \((9 \times 9)\) matrix size, we get perfect tiling that eliminates all boundary checks:</p>
+<p>With the \((9 \times 9)\) matrix size, we get perfect tiling that eliminates
+all boundary checks:</p>
 <ol>
 <li>
 <p><strong>TileTensor tile API</strong></p>
@@ -691,7 +715,10 @@ def matmul_idiomatic_tiled[
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
-<p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)” without manual coordinate calculation. See the <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">documentation</a> for more details.</p>
+<p>This directly expresses “get the tile at position (block_idx.y, block_idx.x)”
+without manual coordinate calculation. See the
+<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">documentation</a>
+for more details.</p>
 </li>
 <li>
 <p><strong>Asynchronous memory operations</strong></p>
@@ -709,16 +736,24 @@ async_copy_wait_all()
 </code></pre>
 <p>These operations:</p>
 <ul>
-<li>Use dedicated copy engines that bypass registers and enable compute-memory overlap via <a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
+<li>Use dedicated copy engines that bypass registers and enable compute-memory
+overlap via
+<a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a></li>
 <li>Use specialized thread layouts for optimal memory access patterns</li>
 <li>Eliminate the need for manual memory initialization</li>
 <li><strong>Important</strong>:
 <ul>
-<li>Standard GPU loads are already asynchronous; these provide better resource utilization and register bypass</li>
-<li><code>copy_dram_to_sram_async</code> assumes that you are using a 1d thread block (<code>block_dim.y == block_dim.z == 1</code>) and all the threads from a thread block participate in the copy unless you specify otherwise.  This behaviour in overridden by specifying:
+<li>Standard GPU loads are already asynchronous; these provide better
+resource utilization and register bypass</li>
+<li><code>copy_dram_to_sram_async</code> assumes that you are using a 1d thread block
+(<code>block_dim.y == block_dim.z == 1</code>) and all the threads from a thread
+block participate in the copy unless you specify otherwise. This
+behaviour in overridden by specifying:
 <ul>
-<li><code>block_dim_count</code>: the dimensionality of the thread block (<code>2</code> for the 2d thread block <code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code>)</li>
-<li><code>num_threads</code>: the number of threads in the thread block (<code>TPB*TPB == 9</code>)</li>
+<li><code>block_dim_count</code>: the dimensionality of the thread block (<code>2</code> for the
+2d thread block <code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code>)</li>
+<li><code>num_threads</code>: the number of threads in the thread block
+(<code>TPB*TPB == 9</code>)</li>
 </ul>
 </li>
 </ul>
@@ -732,11 +767,15 @@ comptime load_b_layout = row_major[1, TPB]()    # Coalesced loading
 # Note: Both matrices use the same layout for standard A × B multiplication
 </code></pre>
 <p><strong>Memory Access Analysis for Current Implementation:</strong></p>
-<p>Both matrices use <code>row_major[1, TPB]()</code> for coalesced loading from global memory:</p>
+<p>Both matrices use <code>row_major[1, TPB]()</code> for coalesced loading from global
+memory:</p>
 <ul>
-<li><code>load_a_layout</code>: Threads cooperate to load consecutive elements from matrix A rows</li>
-<li><code>load_b_layout</code>: Threads cooperate to load consecutive elements from matrix B rows</li>
-<li><strong>Key insight</strong>: Thread layout determines how threads cooperate during copy, not the final data layout</li>
+<li><code>load_a_layout</code>: Threads cooperate to load consecutive elements from matrix
+A rows</li>
+<li><code>load_b_layout</code>: Threads cooperate to load consecutive elements from matrix
+B rows</li>
+<li><strong>Key insight</strong>: Thread layout determines how threads cooperate during
+copy, not the final data layout</li>
 </ul>
 <p><strong>Actual Computation Pattern (proves this is A × B):</strong></p>
 <pre><code class="language-mojo"># This is the actual computation in the current implementation
@@ -754,9 +793,12 @@ Both patterns are coalesced with row_major[1, TPB]()
 </code></pre>
 <p><strong>Three separate memory concerns:</strong></p>
 <ol>
-<li><strong>Global-to-shared coalescing</strong>: <code>row_major[1, TPB]()</code> ensures coalesced global memory access</li>
-<li><strong>Shared memory computation</strong>: <code>a_shared[local_row, k] * b_shared[k, local_col]</code> avoids bank conflicts</li>
-<li><strong>Matrix operation</strong>: The computation pattern determines this is A × B, not A × B^T</li>
+<li><strong>Global-to-shared coalescing</strong>: <code>row_major[1, TPB]()</code> ensures coalesced
+global memory access</li>
+<li><strong>Shared memory computation</strong>:
+<code>a_shared[local_row, k] * b_shared[k, local_col]</code> avoids bank conflicts</li>
+<li><strong>Matrix operation</strong>: The computation pattern determines this is A × B,
+not A × B^T</li>
 </ol>
 </li>
 <li>
@@ -764,7 +806,8 @@ Both patterns are coalesced with row_major[1, TPB]()
 <pre><code class="language-mojo">@parameter
 for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
 </code></pre>
-<p>With \((9 \times 9)\) matrices and \((3 \times 3)\) tiles, every tile is exactly full-sized. No boundary checking needed!</p>
+<p>With \((9 \times 9)\) matrices and \((3 \times 3)\) tiles, every tile is
+exactly full-sized. No boundary checking needed!</p>
 </li>
 <li>
 <p><strong>Clean tile processing with defensive bounds checking</strong></p>
@@ -772,19 +815,28 @@ for idx in range(size // TPB):  # Perfect division: 9 // 3 = 3
 if tiled_row &lt; size and tiled_col &lt; size:
     out_tile[local_row, local_col] = acc
 </code></pre>
-<p>With perfect \((9 \times 9)\) tiling, this bounds check is technically unnecessary but included for defensive programming and consistency with other matrix sizes.</p>
+<p>With perfect \((9 \times 9)\) tiling, this bounds check is technically
+unnecessary but included for defensive programming and consistency with other
+matrix sizes.</p>
 </li>
 </ol>
 <h3 id="performance-considerations"><a class="header" href="#performance-considerations">Performance considerations</a></h3>
-<p>The idiomatic implementation maintains the performance benefits of tiling while providing cleaner abstractions:</p>
+<p>The idiomatic implementation maintains the performance benefits of tiling while
+providing cleaner abstractions:</p>
 <ol>
 <li><strong>Memory locality</strong>: Exploits spatial and temporal locality through tiling</li>
-<li><strong>Coalesced access</strong>: Specialized load layouts ensure coalesced memory access patterns</li>
-<li><strong>Compute-memory overlap</strong>: Potential overlap through asynchronous memory operations</li>
+<li><strong>Coalesced access</strong>: Specialized load layouts ensure coalesced memory access
+patterns</li>
+<li><strong>Compute-memory overlap</strong>: Potential overlap through asynchronous memory
+operations</li>
 <li><strong>Shared memory efficiency</strong>: No redundant initialization of shared memory</li>
-<li><strong>Register pressure</strong>: Uses accumulation registers for optimal compute throughput</li>
+<li><strong>Register pressure</strong>: Uses accumulation registers for optimal compute
+throughput</li>
 </ol>
-<p>This implementation shows how high-level abstractions can express complex GPU algorithms without sacrificing performance. It’s a prime example of Mojo’s philosophy: combining high-level expressiveness with low-level performance control.</p>
+<p>This implementation shows how high-level abstractions can express complex GPU
+algorithms without sacrificing performance. It’s a prime example of Mojo’s
+philosophy: combining high-level expressiveness with low-level performance
+control.</p>
 <h3 id="key-differences-from-manual-tiling"><a class="header" href="#key-differences-from-manual-tiling">Key differences from manual tiling</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Manual Tiling</th><th>Idiomatic Tiling</th></tr></thead><tbody>
 <tr><td>Memory access</td><td>Direct indexing with bounds checks</td><td>TileTensor tile API</td></tr>
@@ -796,9 +848,11 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <tr><td>Performance</td><td>Explicit control over memory patterns</td><td>Optimized layouts with register bypass</td></tr>
 </tbody></table>
 </div>
-<p>The idiomatic approach is not just cleaner but also potentially more performant due to the use of specialized memory layouts and asynchronous operations.</p>
+<p>The idiomatic approach is not just cleaner but also potentially more performant
+due to the use of specialized memory layouts and asynchronous operations.</p>
 <h3 id="educational-when-would-transposed-loading-be-useful"><a class="header" href="#educational-when-would-transposed-loading-be-useful">Educational: When would transposed loading be useful?</a></h3>
-<p>The current implementation does NOT use transposed loading. This section is purely educational to show what’s possible with the layout system.</p>
+<p>The current implementation does NOT use transposed loading. This section is
+purely educational to show what’s possible with the layout system.</p>
 <p><strong>Current implementation recap:</strong></p>
 <ul>
 <li>Uses <code>row_major[1, TPB]()</code> for both matrices</li>
@@ -806,7 +860,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <li>No data transposition during copy</li>
 </ul>
 <p><strong>Educational scenarios where you WOULD use transposed loading:</strong></p>
-<p>While this puzzle uses standard coalesced loading for both matrices, the layout system’s flexibility enables powerful optimizations in other scenarios:</p>
+<p>While this puzzle uses standard coalesced loading for both matrices, the layout
+system’s flexibility enables powerful optimizations in other scenarios:</p>
 <pre><code class="language-mojo"># Example: Loading pre-transposed matrix B^T to compute A × B
 # (This is NOT what the current implementation does)
 comptime load_b_layout = row_major[TPB, 1]()   # Load B^T with coalesced access
@@ -815,31 +870,42 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </code></pre>
 <p><strong>Use cases for transposed loading (not used in this puzzle):</strong></p>
 <ol>
-<li><strong>Pre-transposed input matrices</strong>: When \(B\) is already stored transposed in global memory</li>
-<li><strong>Different algorithms</strong>: Computing \(A^T \times B\), \(A \times B^T\), or \(A^T \times B^T\)</li>
-<li><strong>Memory layout conversion</strong>: Converting between row-major and column-major layouts</li>
-<li><strong>Avoiding transpose operations</strong>: Loading data directly in the required orientation</li>
+<li><strong>Pre-transposed input matrices</strong>: When \(B\) is already stored transposed
+in global memory</li>
+<li><strong>Different algorithms</strong>: Computing \(A^T \times B\), \(A \times B^T\),
+or \(A^T \times B^T\)</li>
+<li><strong>Memory layout conversion</strong>: Converting between row-major and column-major
+layouts</li>
+<li><strong>Avoiding transpose operations</strong>: Loading data directly in the required
+orientation</li>
 </ol>
 <p><strong>Key distinction:</strong></p>
 <ul>
-<li><strong>Current implementation</strong>: Both matrices use <code>row_major[1, TPB]()</code> for standard \(A \times B\) multiplication</li>
-<li><strong>Transposed loading example</strong>: Would use different layouts to handle pre-transposed data or different matrix operations</li>
+<li><strong>Current implementation</strong>: Both matrices use <code>row_major[1, TPB]()</code> for
+standard \(A \times B\) multiplication</li>
+<li><strong>Transposed loading example</strong>: Would use different layouts to handle
+pre-transposed data or different matrix operations</li>
 </ul>
-<p>This demonstrates Mojo’s philosophy: providing low-level control when needed while maintaining high-level abstractions for common cases.</p>
+<p>This demonstrates Mojo’s philosophy: providing low-level control when needed
+while maintaining high-level abstractions for common cases.</p>
 <hr />
 <h2 id="summary-key-takeaways"><a class="header" href="#summary-key-takeaways">Summary: Key takeaways</a></h2>
 <p><strong>What the idiomatic tiled implementation actually does:</strong></p>
 <ol>
 <li><strong>Matrix Operation</strong>: Standard A × B multiplication</li>
-<li><strong>Memory Loading</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced access</li>
-<li><strong>Computation Pattern</strong>: <code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
+<li><strong>Memory Loading</strong>: Both matrices use <code>row_major[1, TPB]()</code> for coalesced
+access</li>
+<li><strong>Computation Pattern</strong>:
+<code>acc += a_shared[local_row, k] * b_shared[k, local_col]</code></li>
 <li><strong>Data Layout</strong>: No transposition during loading</li>
 </ol>
 <p><strong>Why this is optimal:</strong></p>
 <ul>
-<li><strong>Coalesced global memory access</strong>: <code>row_major[1, TPB]()</code> ensures efficient loading</li>
+<li><strong>Coalesced global memory access</strong>: <code>row_major[1, TPB]()</code> ensures efficient
+loading</li>
 <li><strong>Bank conflict avoidance</strong>: Shared memory access pattern avoids conflicts</li>
-<li><strong>Standard algorithm</strong>: Implements the most common matrix multiplication pattern</li>
+<li><strong>Standard algorithm</strong>: Implements the most common matrix multiplication
+pattern</li>
 </ul>
 </div>
 </details>

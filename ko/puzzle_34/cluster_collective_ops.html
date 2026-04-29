@@ -211,16 +211,31 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="-클러스터-전체-집합-연산"><a class="header" href="#-클러스터-전체-집합-연산">☸️ 클러스터 전체 집합 연산</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는 <strong>클러스터 전체 집합 연산</strong>을 구현하는 방법을 배웁니다 - <a href="../puzzle_27/block_sum.html">Puzzle 27</a>에서 익힌 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을 <strong>여러 스레드 블록</strong>에 걸쳐 확장합니다.</p>
-<p><strong>도전 과제</strong>: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별 리덕션을 하나의 전역 결과로 합치는 클러스터 전체 리덕션을 구현합니다.</p>
-<p><strong>핵심 학습</strong>: 전체 클러스터 조정을 위한 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와 효율적인 최종 리덕션을 위한 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 배웁니다.</p>
+<p>이전 섹션의 기본 클러스터 조정을 바탕으로, 이 도전에서는
+<strong>클러스터 전체 집합 연산</strong>을 구현하는 방법을 배웁니다 -
+<a href="../puzzle_27/block_sum.html">Puzzle 27</a>에서 익힌
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum</code></a> 패턴을
+<strong>여러 스레드 블록</strong>에 걸쳐 확장합니다.</p>
+<p><strong>도전 과제</strong>: 4개의 조정된 블록에 걸쳐 1024개 요소를 처리하고, 각 블록의 개별
+리덕션을 하나의 전역 결과로 합치는 클러스터 전체 리덕션을 구현합니다.</p>
+<p><strong>핵심 학습</strong>: 전체 클러스터 조정을 위한
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>와
+효율적인 최종 리덕션을 위한
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+배웁니다.</p>
 <h2 id="문제-대규모-전역-합산"><a class="header" href="#문제-대규모-전역-합산">문제: 대규모 전역 합산</a></h2>
-<p>단일 블록은 (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>에서 배웠듯이) 스레드 수와 <a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 용량</a>에 의해 제한됩니다. <a href="../puzzle_27/block_sum.html">단일 블록 리덕션</a>을 넘어서는 <strong>대규모 데이터셋</strong>의 전역 통계(평균, 분산, 합계)를 구하려면 <strong>클러스터 전체 집합 연산</strong>이 필요합니다.</p>
+<p>단일 블록은 (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>에서 배웠듯이) 스레드 수와
+<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 용량</a>에 의해 제한됩니다.
+<a href="../puzzle_27/block_sum.html">단일 블록 리덕션</a>을 넘어서는 <strong>대규모 데이터셋</strong>의
+전역 통계(평균, 분산, 합계)를 구하려면 <strong>클러스터 전체 집합 연산</strong>이 필요합니다.</p>
 <p><strong>과제</strong>: 다음과 같은 클러스터 전체 합산 리덕션을 구현하세요:</p>
 <ol>
-<li>각 블록이 로컬 리덕션을 수행합니다 (<a href="../puzzle_27/block_sum.html">Puzzle 27의 <code>block.sum()</code></a>과 유사)</li>
-<li><a href="../puzzle_29/barrier.html">Puzzle 29의 동기화</a>를 사용하여 블록들이 부분 결과를 합칩니다</li>
-<li>선출된 하나의 스레드가 <a href="../puzzle_24/warp_sum.html">워프 선출 패턴</a>을 사용하여 최종 전역 합계를 계산합니다</li>
+<li>각 블록이 로컬 리덕션을 수행합니다
+(<a href="../puzzle_27/block_sum.html">Puzzle 27의 <code>block.sum()</code></a>과 유사)</li>
+<li><a href="../puzzle_29/barrier.html">Puzzle 29의 동기화</a>를 사용하여 블록들이 부분 결과를
+합칩니다</li>
+<li>선출된 하나의 스레드가 <a href="../puzzle_24/warp_sum.html">워프 선출 패턴</a>을 사용하여
+최종 전역 합계를 계산합니다</li>
 </ol>
 <h3 id="문제-명세"><a class="header" href="#문제-명세">문제 명세</a></h3>
 <p><strong>알고리즘 흐름:</strong></p>
@@ -231,7 +246,9 @@
 <p><strong>조정 요구사항:</strong></p>
 <ol>
 <li><strong>로컬 리덕션</strong>: 각 블록이 트리 리덕션으로 부분 합을 계산합니다</li>
-<li><strong>클러스터 동기화</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로 모든 부분 결과가 준비되었는지 보장합니다</li>
+<li><strong>클러스터 동기화</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>로
+모든 부분 결과가 준비되었는지 보장합니다</li>
 <li><strong>최종 집계</strong>: 선출된 하나의 스레드가 모든 부분 결과를 합칩니다</li>
 </ol>
 <h2 id="설정"><a class="header" href="#설정">설정</a></h2>
@@ -267,41 +284,57 @@
 <div class="solution-tips">
 <h3 id="로컬-리덕션-패턴"><a class="header" href="#로컬-리덕션-패턴"><strong>로컬 리덕션 패턴</strong></a></h3>
 <ul>
-<li><a href="../puzzle_27/block_sum.html">Puzzle 27의 block sum에서 사용한 트리 리덕션 패턴</a>을 활용합니다</li>
-<li>stride = <code>tpb // 2</code>로 시작하여 매 반복마다 절반으로 줄입니다 (고전적인 <a href="../puzzle_12/puzzle_12.html">Puzzle 12의 리덕션</a>)</li>
+<li><a href="../puzzle_27/block_sum.html">Puzzle 27의 block sum에서 사용한 트리 리덕션 패턴</a>을
+활용합니다</li>
+<li>stride = <code>tpb // 2</code>로 시작하여 매 반복마다 절반으로 줄입니다 (고전적인
+<a href="../puzzle_12/puzzle_12.html">Puzzle 12의 리덕션</a>)</li>
 <li>각 단계에서 <code>local_i &lt; stride</code>인 스레드만 참여합니다</li>
-<li>리덕션 단계 사이에 <code>barrier()</code>를 사용합니다 (<a href="../puzzle_29/barrier.html">Puzzle 29의 배리어 개념</a>)</li>
+<li>리덕션 단계 사이에 <code>barrier()</code>를 사용합니다
+(<a href="../puzzle_29/barrier.html">Puzzle 29의 배리어 개념</a>)</li>
 </ul>
 <h3 id="클러스터-조정-전략"><a class="header" href="#클러스터-조정-전략"><strong>클러스터 조정 전략</strong></a></h3>
 <ul>
 <li>안정적인 인덱싱을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
-<li>전체 클러스터 동기화를 위해 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를 사용합니다 (arrive/wait보다 강력)</li>
+<li>전체 클러스터 동기화를 위해
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>를
+사용합니다 (arrive/wait보다 강력)</li>
 <li>최종 전역 집계는 하나의 스레드만 수행해야 합니다</li>
 </ul>
 <h3 id="효율적인-선출-패턴"><a class="header" href="#효율적인-선출-패턴"><strong>효율적인 선출 패턴</strong></a></h3>
 <ul>
-<li>첫 번째 블록(<code>my_block_rank == 0</code>) 내에서 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를 사용합니다 (<a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>의 패턴)</li>
+<li>첫 번째 블록(<code>my_block_rank == 0</code>) 내에서
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>를
+사용합니다 (<a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>의 패턴)</li>
 <li>중복 연산을 피하기 위해 하나의 스레드만 최종 합산을 수행하도록 보장합니다</li>
-<li>선출된 스레드가 <code>temp_storage</code>에서 모든 부분 결과를 읽습니다 (<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 접근</a>과 유사)</li>
+<li>선출된 스레드가 <code>temp_storage</code>에서 모든 부분 결과를 읽습니다
+(<a href="../puzzle_08/puzzle_08.html">Puzzle 8의 공유 메모리 접근</a>과 유사)</li>
 </ul>
 <h3 id="메모리-접근-패턴"><a class="header" href="#메모리-접근-패턴"><strong>메모리 접근 패턴</strong></a></h3>
 <ul>
-<li>각 스레드가 경계 검사와 함께 <code>input[global_i]</code>를 읽습니다 (<a href="../puzzle_03/puzzle_03.html">Puzzle 3의 가드</a>)</li>
-<li>블록 내부 리덕션을 위해 <a href="../puzzle_08/puzzle_08.html">공유 메모리</a>에 중간 결과를 저장합니다</li>
+<li>각 스레드가 경계 검사와 함께 <code>input[global_i]</code>를 읽습니다
+(<a href="../puzzle_03/puzzle_03.html">Puzzle 3의 가드</a>)</li>
+<li>블록 내부 리덕션을 위해 <a href="../puzzle_08/puzzle_08.html">공유 메모리</a>에 중간 결과를
+저장합니다</li>
 <li>블록 간 통신을 위해 부분 결과를 <code>temp_storage[block_id]</code>에 저장합니다</li>
-<li>최종 결과는 <code>output[0]</code>에 기록합니다 (<a href="../puzzle_27/block_sum.html">블록 조정</a>의 단일 쓰기 패턴)</li>
+<li>최종 결과는 <code>output[0]</code>에 기록합니다 (<a href="../puzzle_27/block_sum.html">블록 조정</a>의
+단일 쓰기 패턴)</li>
 </ul>
 </div>
 </details>
 <h2 id="클러스터-api-참조"><a class="header" href="#클러스터-api-참조">클러스터 API 참조</a></h2>
-<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> 모듈:</strong></p>
+<p><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+모듈:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: 전체 클러스터 동기화 - arrive/wait 패턴보다 강력</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: 효율적인 조정을 위해 워프 내에서 단일 스레드를 선출</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: 클러스터 내 고유한 블록 식별자를 반환</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+전체 클러스터 동기화 - arrive/wait 패턴보다 강력</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+효율적인 조정을 위해 워프 내에서 단일 스레드를 선출</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+클러스터 내 고유한 블록 식별자를 반환</li>
 </ul>
 <h2 id="트리-리덕션-패턴"><a class="header" href="#트리-리덕션-패턴">트리 리덕션 패턴</a></h2>
-<p><a href="../puzzle_27/puzzle_27.html">Puzzle 27의 전통적인 내적</a>에서 배운 <strong>트리 리덕션 패턴</strong>을 떠올려 보세요:</p>
+<p><a href="../puzzle_27/puzzle_27.html">Puzzle 27의 전통적인 내적</a>에서 배운
+<strong>트리 리덕션 패턴</strong>을 떠올려 보세요:</p>
 <pre><code class="language-txt">Stride 128: [T0] += [T128], [T1] += [T129], [T2] += [T130], ...
 Stride 64:  [T0] += [T64],  [T1] += [T65],  [T2] += [T66],  ...
 Stride 32:  [T0] += [T32],  [T1] += [T33],  [T2] += [T34],  ...
@@ -309,7 +342,8 @@ Stride 16:  [T0] += [T16],  [T1] += [T17],  [T2] += [T18],  ...
 ...
 Stride 1:   [T0] += [T1] → Final result at T0
 </code></pre>
-<p><strong>이제 이 패턴을 클러스터 규모로 확장합니다</strong> - 각 블록이 하나의 부분 결과를 생성한 뒤, 블록 간에 결합합니다.</p>
+<p><strong>이제 이 패턴을 클러스터 규모로 확장합니다</strong> - 각 블록이 하나의 부분 결과를
+생성한 뒤, 블록 간에 결합합니다.</p>
 <h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -395,7 +429,8 @@ Error: 0.0
 
 </code></pre>
 <div class="solution-explanation">
-<p><strong>클러스터 집합 연산 풀이는 분산 컴퓨팅의 고전적인 패턴을 보여줍니다: 로컬 리덕션 → 전역 조정 → 최종 집계:</strong></p>
+<p><strong>클러스터 집합 연산 풀이는 분산 컴퓨팅의 고전적인 패턴을 보여줍니다: 로컬
+리덕션 → 전역 조정 → 최종 집계:</strong></p>
 <h2 id="1단계-로컬-블록-리덕션-전통적-트리-리덕션"><a class="header" href="#1단계-로컬-블록-리덕션-전통적-트리-리덕션"><strong>1단계: 로컬 블록 리덕션 (전통적 트리 리덕션)</strong></a></h2>
 <p><strong>데이터 로딩 및 초기화:</strong></p>
 <pre><code class="language-mojo">var my_value: Float32 = 0.0
@@ -425,13 +460,17 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <p><strong>부분 결과 저장:</strong></p>
 <ul>
 <li>스레드 0만 기록합니다: <code>temp_storage[block_id] = shared_mem[0]</code></li>
-<li>각 블록이 자신의 합계를 <code>temp_storage[0]</code>, <code>temp_storage[1]</code>, <code>temp_storage[2]</code>, <code>temp_storage[3]</code>에 저장합니다</li>
+<li>각 블록이 자신의 합계를 <code>temp_storage[0]</code>, <code>temp_storage[1]</code>,
+<code>temp_storage[2]</code>, <code>temp_storage[3]</code>에 저장합니다</li>
 </ul>
 <h2 id="2단계-클러스터-동기화"><a class="header" href="#2단계-클러스터-동기화"><strong>2단계: 클러스터 동기화</strong></a></h2>
 <p><strong>전체 클러스터 배리어:</strong></p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는 <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다 <strong>더 강력한 보장</strong>을 제공합니다</li>
-<li>어떤 블록이든 다음으로 진행하기 전에 <strong>모든 블록이 로컬 리덕션을 완료</strong>하도록 보장합니다</li>
+<li><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>는
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>/<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>보다
+<strong>더 강력한 보장</strong>을 제공합니다</li>
+<li>어떤 블록이든 다음으로 진행하기 전에 <strong>모든 블록이 로컬 리덕션을 완료</strong>하도록
+보장합니다</li>
 <li>클러스터 내 모든 블록에 걸친 하드웨어 가속 동기화입니다</li>
 </ul>
 <h2 id="3단계-최종-전역-집계"><a class="header" href="#3단계-최종-전역-집계"><strong>3단계: 최종 전역 집계</strong></a></h2>
@@ -444,8 +483,10 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </code></pre>
 <p><strong>왜 이 선출 전략을 사용할까?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: 워프당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다</li>
-<li><strong><code>my_block_rank == 0</code></strong>: 단일 쓰기를 보장하기 위해 첫 번째 블록에서만 선출합니다</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+워프당 정확히 하나의 스레드를 선택하는 하드웨어 기본 요소입니다</li>
+<li><strong><code>my_block_rank == 0</code></strong>: 단일 쓰기를 보장하기 위해 첫 번째 블록에서만
+선출합니다</li>
 <li><strong>결과</strong>: 전체 클러스터에서 단 하나의 스레드만 최종 합산을 수행합니다</li>
 <li><strong>효율성</strong>: 1024개 전체 스레드에 걸친 중복 연산을 피합니다</li>
 </ul>
@@ -465,8 +506,10 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 </ul>
 <p><strong>동기화 보장:</strong></p>
 <ul>
-<li><strong><code>barrier()</code></strong>: 블록 내 모든 스레드가 각 트리 리덕션 단계를 완료하도록 보장합니다</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>: <strong>전역 배리어</strong> - 모든 블록이 동일한 실행 지점에 도달합니다</li>
+<li><strong><code>barrier()</code></strong>: 블록 내 모든 스레드가 각 트리 리덕션 단계를 완료하도록
+보장합니다</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a></strong>:
+<strong>전역 배리어</strong> - 모든 블록이 동일한 실행 지점에 도달합니다</li>
 <li><strong>단일 쓰기</strong>: 선출을 통해 최종 출력에 대한 경쟁 상태를 방지합니다</li>
 </ul>
 <p><strong>알고리즘 복잡도 분석:</strong></p>
@@ -505,7 +548,11 @@ Step 8: stride=1    [T0]+=T1    → Final result at shared_mem[0]
 <li><strong>더 나은 활용률</strong>: 더 많은 GPU 연산 유닛을 동시에 사용합니다</li>
 <li><strong>확장 가능한 패턴</strong>: 복잡한 다단계 알고리즘의 기반이 됩니다</li>
 </ul>
-<p><strong>다음 단계</strong>: 최종 도전을 할 준비가 되셨나요? <strong><a href="./advanced_cluster_patterns.html">고급 클러스터 알고리즘</a></strong> 으로 이동하여 <a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>+<a href="../puzzle_27/block_sum.html">블록 조정</a>+클러스터 동기화를 결합한 계층적 패턴을 배워보세요. <a href="../puzzle_30/profile_kernels.html">성능 최적화 기법</a>을 기반으로 합니다!</p>
+<p><strong>다음 단계</strong>: 최종 도전을 할 준비가 되셨나요?
+<strong><a href="./advanced_cluster_patterns.html">고급 클러스터 알고리즘</a></strong> 으로 이동하여
+<a href="../puzzle_24/warp_sum.html">워프 프로그래밍</a>+<a href="../puzzle_27/block_sum.html">블록 조정</a>+클러스터
+동기화를 결합한 계층적 패턴을 배워보세요.
+<a href="../puzzle_30/profile_kernels.html">성능 최적화 기법</a>을 기반으로 합니다!</p>
 
                     </main>
 

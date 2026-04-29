@@ -210,11 +210,15 @@
                     <main>
                         <h1 id="-detective-work-first-case"><a class="header" href="#-detective-work-first-case">🧐 Detective Work: First Case</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>This puzzle presents a crashing GPU program where your task is to identify the issue using only <code>(cuda-gdb)</code> debugging tools, without examining the source code. Apply your debugging skills to solve the mystery!</p>
-<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> to understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run:</p>
+<p>This puzzle presents a crashing GPU program where your task is to identify the
+issue using only <code>(cuda-gdb)</code> debugging tools, without examining the source
+code. Apply your debugging skills to solve the mystery!</p>
+<p><strong>Prerequisites</strong>: Complete <a href="./essentials.html">Mojo GPU Debugging Essentials</a> to
+understand CUDA-GDB setup and basic debugging commands. Make sure you’ve run:</p>
 <pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
-<p>This auto-detects your CUDA installation and sets up the necessary links for GPU debugging.</p>
+<p>This auto-detects your CUDA installation and sets up the necessary links for GPU
+debugging.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this debugging challenge, you’ll learn about:</p>
 <ul>
@@ -234,7 +238,8 @@
 
 
 </code></pre>
-<p>To experience the bug firsthand, run the following command in your terminal (<code>pixi</code> only):</p>
+<p>To experience the bug firsthand, run the following command in your terminal
+(<code>pixi</code> only):</p>
 <pre><code class="language-bash">pixi run -e nvidia p09 --first-case
 </code></pre>
 <p>You’ll see output like this when the program crashes:</p>
@@ -246,7 +251,8 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="your-task-detective-work"><a class="header" href="#your-task-detective-work">Your task: detective work</a></h2>
-<p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging strategy to investigate this crash?</p>
+<p><strong>Challenge</strong>: Without looking at the code yet, what would be your debugging
+strategy to investigate this crash?</p>
 <p>Start with:</p>
 <pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --first-case
 </code></pre>
@@ -254,13 +260,20 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> means the GPU tried to access invalid memory</li>
-<li><strong>Check the breakpoint information</strong> - Look at the function parameters shown when CUDA-GDB stops</li>
-<li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer parameter</li>
-<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large hex numbers (what does <code>0x0</code> mean?)</li>
-<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see which one fails</li>
-<li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence from symptom to root cause</li>
-<li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another doesn’t, focus on the broken one</li>
+<li><strong>Read the crash message carefully</strong> - <code>CUDA_ERROR_ILLEGAL_ADDRESS</code> means the
+GPU tried to access invalid memory</li>
+<li><strong>Check the breakpoint information</strong> - Look at the function parameters shown
+when CUDA-GDB stops</li>
+<li><strong>Inspect all pointers systematically</strong> - Use <code>print</code> to examine each pointer
+parameter</li>
+<li><strong>Look for suspicious addresses</strong> - Valid GPU addresses are typically large
+hex numbers (what does <code>0x0</code> mean?)</li>
+<li><strong>Test memory access</strong> - Try accessing the data through each pointer to see
+which one fails</li>
+<li><strong>Apply the systematic approach</strong> - Like a detective, follow the evidence
+from symptom to root cause</li>
+<li><strong>Compare valid vs invalid patterns</strong> - If one pointer works and another
+doesn’t, focus on the broken one</li>
 </ol>
 </div>
 </details>
@@ -273,7 +286,7 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 </code></pre>
 <h3 id="examine-the-breakpoint-information"><a class="header" href="#examine-the-breakpoint-information">Examine the Breakpoint Information</a></h3>
 <p>When CUDA-GDB stops, it immediately shows valuable clues:</p>
-<pre><code>(cuda-gdb) run
+<pre><code class="language-text">(cuda-gdb) run
 CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
     at /home/ubuntu/workspace/mojo-gpu-puzzles/problems/p09/p09.mojo:31
 31          i = thread_idx.x
@@ -284,7 +297,7 @@ CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
 <li><code>a</code> is <code>0x0</code> - this is a null pointer!</li>
 </ul>
 <h3 id="systematic-variable-inspection"><a class="header" href="#systematic-variable-inspection">Systematic variable inspection</a></h3>
-<pre><code>(cuda-gdb) next
+<pre><code class="language-text">(cuda-gdb) next
 32          output[i] = a[i] + 10.0
 (cuda-gdb) print i
 $1 = 0
@@ -300,18 +313,23 @@ $3 = (!pop.scalar&lt;f32&gt; * @register) 0x0
 <li>❌ Input pointer <code>0x0</code> is null</li>
 </ul>
 <h3 id="confirm-the-problem"><a class="header" href="#confirm-the-problem">Confirm the Problem</a></h3>
-<pre><code>(cuda-gdb) print a[i]
+<pre><code class="language-text">(cuda-gdb) print a[i]
 Cannot access memory at address 0x0
 </code></pre>
-<p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash cause!</p>
+<p><strong>Smoking Gun</strong>: Cannot access memory at null address - this confirms the crash
+cause!</p>
 <h2 id="root-cause-analysis"><a class="header" href="#root-cause-analysis">Root cause analysis</a></h2>
-<p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a> for <code>--first-crash</code>, we see that the host code creates a null pointer instead of allocating proper GPU memory:</p>
+<p><strong>The Problem</strong>: Now if we look at the <a href="../../../problems/p09/p09.mojo">code</a>
+for <code>--first-crash</code>, we see that the host code creates a null pointer instead of
+allocating proper GPU memory:</p>
 <pre><code class="language-mojo"> input_buf = ctx.enqueue_create_buffer[dtype](0)  # Creates a `DeviceBuffer` with 0 elements. Since there are zero elements, no memory is allocated, which results in a NULL pointer!
 </code></pre>
 <p><strong>Why This Crashes</strong>:</p>
 <ol>
-<li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0) elements.</li>
-<li>since there are no elements for which to allocate memory, this returns a null pointer.</li>
+<li><code>ctx.enqueue_create_buffer[dtype](0)</code> creates a <code>DeviceBuffer</code> with zero (0)
+elements.</li>
+<li>since there are no elements for which to allocate memory, this returns a null
+pointer.</li>
 <li>This null pointer gets passed to the GPU kernel</li>
 <li>When kernel tries <code>a[i]</code>, it dereferences null → <code>CUDA_ERROR_ILLEGAL_ADDRESS</code></li>
 </ol>
@@ -338,7 +356,10 @@ input_buf.enqueue_fill(0)
 <li><strong>Test memory access</strong> - Try dereferencing suspicious pointers</li>
 <li><strong>Trace back to allocation</strong> - Find where the problematic pointer was created</li>
 </ol>
-<p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU programming. The systematic CUDA-GDB investigation approach you learned here applies to debugging many other GPU memory issues, race conditions, and kernel crashes.</p>
+<p><strong>💡 Key Insight</strong>: This type of null pointer bug is extremely common in GPU
+programming. The systematic CUDA-GDB investigation approach you learned here
+applies to debugging many other GPU memory issues, race conditions, and kernel
+crashes.</p>
 </div>
 </details>
 <h2 id="next-steps-from-crashes-to-silent-bugs"><a class="header" href="#next-steps-from-crashes-to-silent-bugs">Next steps: from crashes to silent bugs</a></h2>
@@ -349,8 +370,10 @@ input_buf.enqueue_fill(0)
 <li><strong>Use CUDA-GDB effectively</strong> for memory-related debugging</li>
 </ul>
 <h3 id="your-next-challenge-detective-work-second-case"><a class="header" href="#your-next-challenge-detective-work-second-case">Your next challenge: <a href="./second_case.html">Detective Work: Second Case</a></a></h3>
-<p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but produces <strong>wrong results</strong>?</p>
-<p>The <a href="./second_case.html">Second Case</a> presents a completely different debugging challenge:</p>
+<p><strong>But what if your program doesn’t crash?</strong> What if it runs perfectly but
+produces <strong>wrong results</strong>?</p>
+<p>The <a href="./second_case.html">Second Case</a> presents a completely different debugging
+challenge:</p>
 <ul>
 <li><strong>No crash messages</strong> to guide you</li>
 <li><strong>No obvious pointer problems</strong> to investigate</li>
@@ -361,9 +384,12 @@ input_buf.enqueue_fill(0)
 <ul>
 <li><strong>Logic bug detection</strong> - Finding algorithmic errors without crashes</li>
 <li><strong>Pattern analysis</strong> - Using incorrect output to trace back to root causes</li>
-<li><strong>Execution flow debugging</strong> - When variable inspection fails due to optimizations</li>
+<li><strong>Execution flow debugging</strong> - When variable inspection fails due to
+optimizations</li>
 </ul>
-<p>The systematic investigation approach you learned here - reading clues, forming hypotheses, testing systematically - forms the foundation for debugging the more subtle logic errors ahead.</p>
+<p>The systematic investigation approach you learned here - reading clues, forming
+hypotheses, testing systematically - forms the foundation for debugging the more
+subtle logic errors ahead.</p>
 
                     </main>
 

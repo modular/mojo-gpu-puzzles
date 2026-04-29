@@ -213,26 +213,34 @@
 <blockquote>
 <h2 id="커널-퓨전과-오토그래드-통합"><a class="header" href="#커널-퓨전과-오토그래드-통합">커널 퓨전과 오토그래드 통합</a></h2>
 <p><strong>커널 퓨전</strong> 과 <strong>오토그래드 통합</strong>에 초점을 맞춰 Part V를 이어갑니다.</p>
-<p><a href="../puzzle_21/puzzle_21.html">Puzzle 21: 임베딩 Op</a>에 이어, 여러 연산을 하나의 효율적인 커널로 결합하고 이를 PyTorch의 오토그래드 시스템과 통합하는 방법을 알아봅니다. 배울 내용은 다음과 같습니다:</p>
+<p><a href="../puzzle_21/puzzle_21.html">Puzzle 21: 임베딩 Op</a>에 이어, 여러 연산을 하나의
+효율적인 커널로 결합하고 이를 PyTorch의 오토그래드 시스템과 통합하는 방법을
+알아봅니다. 배울 내용은 다음과 같습니다:</p>
 <ul>
 <li>커널 퓨전이 순방향 패스(forward pass)와 역방향 패스(backward pass) 모두에서 성능을 개선하는 원리</li>
 <li>퓨전 연산에 커스텀 역방향 패스가 필수적인 이유</li>
 <li>적절한 기울기 흐름을 갖춘 퓨전 커널 설계 방법</li>
 <li>서로 다른 퓨전 전략이 가져오는 성능 차이</li>
 </ul>
-<p>이 퍼즐은 <strong>연산을 어떻게 결합하느냐</strong>가 <strong>어떻게 구현하느냐</strong>만큼 중요할 수 있음을 보여줍니다.</p>
+<p>이 퍼즐은 <strong>연산을 어떻게 결합하느냐</strong>가 <strong>어떻게 구현하느냐</strong>만큼 중요할 수
+있음을 보여줍니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이 퍼즐에서는 순방향 패스와 역방향 패스를 모두 포함하는 퓨전 LayerNorm + Linear 연산을 구현합니다. 퓨전과 언퓨전 구현 모두 동일한 결과를 생성하지만, 서로 다른 전략을 사용하여 상당한 성능 차이를 보입니다.</p>
+<p>이 퍼즐에서는 순방향 패스와 역방향 패스를 모두 포함하는 퓨전 LayerNorm + Linear
+연산을 구현합니다. 퓨전과 언퓨전 구현 모두 동일한 결과를 생성하지만, 서로 다른
+전략을 사용하여 상당한 성능 차이를 보입니다.</p>
 <p>비교할 내용:</p>
 <ul>
 <li><strong>언퓨전 방식</strong>: LayerNorm과 Linear를 별도의 커널로 실행</li>
 <li><strong>퓨전 커널</strong>: 하나의 커널에서 두 연산을 결합하여 실행</li>
 <li><strong>커스텀 역방향 패스</strong>: 퓨전 연산을 위한 기울기 계산</li>
 </ul>
-<p>이 비교를 통해 딥러닝 연산에서 커널 퓨전과 적절한 기울기 계산이 얼마나 중요한지 체감할 수 있습니다.</p>
+<p>이 비교를 통해 딥러닝 연산에서 커널 퓨전과 적절한 기울기 계산이 얼마나 중요한지
+체감할 수 있습니다.</p>
 <h2 id="배경-layernorm--linear-연산"><a class="header" href="#배경-layernorm--linear-연산">배경: LayerNorm + Linear 연산</a></h2>
-<p>LayerNorm과 Linear는 트랜스포머 아키텍처의 핵심 연산으로, 특히 어텐션 메커니즘과 피드포워드 네트워크에서 빈번하게 사용됩니다. 일반적인 사용 방식은 다음과 같습니다:</p>
+<p>LayerNorm과 Linear는 트랜스포머 아키텍처의 핵심 연산으로, 특히 어텐션 메커니즘과
+피드포워드 네트워크에서 빈번하게 사용됩니다. 일반적인 사용 방식은 다음과
+같습니다:</p>
 <pre><code class="language-python">import torch
 import torch.nn.functional as F
 
@@ -255,16 +263,19 @@ output = F.linear(ln_output, linear_weight, linear_bias)
 # This is what you'll implement in this puzzle
 output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, linear_bias)
 </code></pre>
-<p>퓨전 연산으로 결합하면 하나의 효율적인 커널에서 다음과 같은 이점을 얻을 수 있습니다:</p>
+<p>퓨전 연산으로 결합하면 하나의 효율적인 커널에서 다음과 같은 이점을 얻을 수
+있습니다:</p>
 <ul>
 <li>메모리 대역폭 사용량 절감</li>
 <li>커널 실행 오버헤드 최소화</li>
 <li>캐시 활용도 향상</li>
 <li>중간 결과 저장을 위한 메모리 할당 제거</li>
 </ul>
-<p>실제로 이러한 퓨전은 순방향 패스와 역방향 패스 모두에서 최대 1.5~2배의 속도 향상을 제공할 수 있으며, 이는 트랜스포머 학습 효율에 매우 중요합니다.</p>
+<p>실제로 이러한 퓨전은 순방향 패스와 역방향 패스 모두에서 최대 1.5~2배의 속도
+향상을 제공할 수 있으며, 이는 트랜스포머 학습 효율에 매우 중요합니다.</p>
 <h3 id="커스텀-역방향-패스가-중요한-이유"><a class="header" href="#커스텀-역방향-패스가-중요한-이유">커스텀 역방향 패스가 중요한 이유</a></h3>
-<p>PyTorch의 오토그래드 시스템은 개별 연산에 대한 기울기를 자동으로 계산하지만, 퓨전 연산에는 다음과 같은 이유로 커스텀 역방향 패스가 필요합니다:</p>
+<p>PyTorch의 오토그래드 시스템은 개별 연산에 대한 기울기를 자동으로 계산하지만,
+퓨전 연산에는 다음과 같은 이유로 커스텀 역방향 패스가 필요합니다:</p>
 <ul>
 <li>수치 안정성 유지</li>
 <li>적절한 기울기 흐름 보장</li>
@@ -296,15 +307,22 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>역방향 패스에서의 수치 안정성</li>
 </ul>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p>커널 퓨전과 오토그래드 통합을 탐구할 준비가 되셨나요? <strong><a href="./forward_pass.html">퓨전 vs 언퓨전 커널</a></strong> 에서 퓨전 커널을 구현한 후, <strong><a href="./backward_pass.html">오토그래드 통합과 역방향 패스</a></strong> 로 넘어가 기울기 계산을 이해해 보세요.</p>
+<p>커널 퓨전과 오토그래드 통합을 탐구할 준비가 되셨나요?
+<strong><a href="./forward_pass.html">퓨전 vs 언퓨전 커널</a></strong> 에서 퓨전 커널을 구현한 후,
+<strong><a href="./backward_pass.html">오토그래드 통합과 역방향 패스</a></strong> 로 넘어가 기울기 계산을
+이해해 보세요.</p>
 <p>이 퍼즐에는 다음을 검증하는 종합 테스트 프레임워크가 포함되어 있습니다:</p>
 <ul>
 <li>순방향 패스와 역방향 패스 모두에서 PyTorch 구현과의 수치적 정확도</li>
 <li>CPU와 GPU 구현 간의 성능 비교</li>
-<li>모든 파라미터(입력, LayerNorm 가중치/바이어스, Linear 가중치/바이어스)에 대한 기울기 계산 정확도</li>
+<li>모든 파라미터(입력, LayerNorm 가중치/바이어스, Linear 가중치/바이어스)에 대한
+기울기 계산 정확도</li>
 <li>커널 퓨전을 통한 메모리 사용량 최적화</li>
 </ul>
-<p>💡 <strong>성공 팁:</strong> 서로 다른 구현 방식(퓨전 vs 언퓨전)이 순방향 패스와 역방향 패스 성능 모두에 어떤 영향을 미치는지 주의 깊게 살펴보세요. 이 통찰은 LayerNorm + Linear를 넘어 다양한 딥러닝 연산에 적용됩니다. 특히 역방향 패스 구현은 학습 효율과 수치 안정성에 직접적인 영향을 미치므로 매우 중요합니다.</p>
+<p>💡 <strong>성공 팁:</strong> 서로 다른 구현 방식(퓨전 vs 언퓨전)이 순방향 패스와 역방향 패스
+성능 모두에 어떤 영향을 미치는지 주의 깊게 살펴보세요. 이 통찰은 LayerNorm +
+Linear를 넘어 다양한 딥러닝 연산에 적용됩니다. 특히 역방향 패스 구현은 학습
+효율과 수치 안정성에 직접적인 영향을 미치므로 매우 중요합니다.</p>
 
                     </main>
 

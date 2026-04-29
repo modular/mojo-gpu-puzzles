@@ -210,8 +210,10 @@
                     <main>
                         <!-- i18n-source-commit: 1cd13cbe87682d50679d452938efab4cc79ddb78 -->
 <h1 id="단일-블록을-사용한-기본-버전"><a class="header" href="#단일-블록을-사용한-기본-버전">단일 블록을 사용한 기본 버전</a></h1>
-<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다.</em></p>
+<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
+<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
+1회만 필요합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
 <ul>
@@ -219,7 +221,8 @@
 <li>스레드 간 데이터 의존성 관리하기</li>
 <li>겹치는 영역에 공유 메모리 활용하기</li>
 </ul>
-<p>핵심은 경계 조건을 올바르게 유지하면서도 겹치는 원소에 효율적으로 접근하는 방법을 이해하는 것입니다.</p>
+<p>핵심은 경계 조건을 올바르게 유지하면서도 겹치는 원소에 효율적으로 접근하는
+방법을 이해하는 것입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>입력 배열 크기: <code>SIZE = 6</code></li>
@@ -265,7 +268,8 @@ def conv_1d_simple(
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>으로 공유 메모리 할당</li>
+<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[SIZE]())</code>으로
+공유 메모리 할당</li>
 <li>입력을 <code>shared_a[local_i]</code>에, 커널을 <code>shared_b[local_i]</code>에 로드</li>
 <li>데이터 로드 후 <code>barrier()</code> 호출</li>
 <li>경계 안에서 곱을 합산: <code>if local_i + j &lt; SIZE</code></li>
@@ -354,7 +358,8 @@ expected: HostBuffer([5.0, 8.0, 11.0, 14.0, 5.0, 0.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>공유 메모리를 활용해 겹치는 원소에 효율적으로 접근하는 1D 합성곱 구현입니다. 단계별로 살펴보겠습니다:</p>
+<p>공유 메모리를 활용해 겹치는 원소에 효율적으로 접근하는 1D 합성곱 구현입니다.
+단계별로 살펴보겠습니다:</p>
 <h3 id="메모리-레이아웃"><a class="header" href="#메모리-레이아웃">메모리 레이아웃</a></h3>
 <pre><code class="language-txt">입력 배열 a:       [0  1  2  3  4  5]
 커널 b:          [0  1  2]
@@ -380,8 +385,7 @@ output[5] = a[5]*b[0] + 0*b[1]   + 0*b[2]     = 5*0 + 0*1 + 0*2 = 0
 </ol>
 <h3 id="구현-상세"><a class="header" href="#구현-상세">구현 상세</a></h3>
 <ol>
-<li>
-<p><strong>스레드 참여 범위와 효율성</strong>:</p>
+<li><strong>스레드 참여 범위와 효율성</strong>:
 <ul>
 <li>
 <p>적절한 스레드 가드가 없는 비효율적 접근:</p>
@@ -407,14 +411,19 @@ if global_i &lt; SIZE:
 </code></pre>
 </li>
 </ul>
-<p>핵심적인 차이는 가드의 위치입니다. 비효율적 버전은 <code>global_i &gt;= SIZE</code>인 스레드를 포함해 <strong>모든 스레드가 합성곱 연산을 수행</strong>한 뒤, 마지막 쓰기에서만 가드를 적용합니다. 이로 인해:</p>
+</li>
+</ol>
+<p>핵심적인 차이는 가드의 위치입니다. 비효율적 버전은 <code>global_i &gt;= SIZE</code>인 스레드를
+포함해 <strong>모든 스레드가 합성곱 연산을 수행</strong>한 뒤, 마지막 쓰기에서만 가드를
+적용합니다. 이로 인해:</p>
 <ul>
 <li><strong>불필요한 연산</strong>: 유효 범위 밖의 스레드가 쓸모없는 작업을 수행</li>
 <li><strong>효율 저하</strong>: 사용되지 않을 연산에 자원 소비</li>
 <li><strong>GPU 활용도 저하</strong>: 의미 없는 계산에 GPU 코어를 낭비</li>
 </ul>
-<p>효율적 버전은 유효한 <code>global_i</code> 값을 가진 스레드만 연산을 수행하므로 GPU 자원을 더 잘 활용합니다.</p>
-</li>
+<p>효율적 버전은 유효한 <code>global_i</code> 값을 가진 스레드만 연산을 수행하므로 GPU 자원을
+더 잘 활용합니다.</p>
+<ol start="2">
 <li>
 <p><strong>주요 구현 특징</strong>:</p>
 <ul>

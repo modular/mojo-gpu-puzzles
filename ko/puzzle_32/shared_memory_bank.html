@@ -211,15 +211,29 @@
                         <!-- i18n-source-commit: 682d932e25a4853e788236c40c9d23d6e9ec64ab -->
 <h1 id="-공유-메모리-뱅크-이해하기"><a class="header" href="#-공유-메모리-뱅크-이해하기">📚 공유 메모리 뱅크 이해하기</a></h1>
 <h2 id="지금까지-배운-것을-바탕으로"><a class="header" href="#지금까지-배운-것을-바탕으로">지금까지 배운 것을 바탕으로</a></h2>
-<p>GPU 최적화 여정에서 이미 많은 길을 걸어왔습니다. <a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>에서는 공유 메모리가 전역 메모리보다 훨씬 빠른 블록 내부 저장소를 제공한다는 것을 배웠습니다. <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>에서는 행렬 곱셈 커널이 공유 메모리를 사용하여 데이터 타일을 캐싱하고, 비용이 큰 전역 메모리 접근을 줄이는 방법을 확인했습니다.</p>
-<p>하지만 공유 메모리에는 병렬 연산을 직렬화시킬 수 있는 숨겨진 성능 함정이 도사리고 있습니다: <strong>뱅크 충돌</strong>.</p>
-<p><strong>성능 미스터리:</strong> 겉보기에 동일한 방식으로 공유 메모리에 접근하는 두 커널을 작성할 수 있습니다 - 둘 다 같은 양의 데이터를 사용하고, 완벽한 점유율을 가지며, 경쟁 상태도 없습니다. 그런데 하나가 다른 것보다 32배 느립니다. 범인은? 스레드가 공유 메모리 뱅크에 접근하는 방식입니다.</p>
+<p>GPU 최적화 여정에서 이미 많은 길을 걸어왔습니다.
+<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>에서는 공유 메모리가 전역 메모리보다 훨씬
+빠른 블록 내부 저장소를 제공한다는 것을 배웠습니다.
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>에서는 행렬 곱셈 커널이 공유 메모리를
+사용하여 데이터 타일을 캐싱하고, 비용이 큰 전역 메모리 접근을 줄이는 방법을
+확인했습니다.</p>
+<p>하지만 공유 메모리에는 병렬 연산을 직렬화시킬 수 있는 숨겨진 성능 함정이
+도사리고 있습니다: <strong>뱅크 충돌</strong>.</p>
+<p><strong>성능 미스터리:</strong> 겉보기에 동일한 방식으로 공유 메모리에 접근하는 두 커널을
+작성할 수 있습니다 - 둘 다 같은 양의 데이터를 사용하고, 완벽한 점유율을 가지며,
+경쟁 상태도 없습니다. 그런데 하나가 다른 것보다 32배 느립니다. 범인은? 스레드가
+공유 메모리 뱅크에 접근하는 방식입니다.</p>
 <h2 id="공유-메모리-뱅크란"><a class="header" href="#공유-메모리-뱅크란">공유 메모리 뱅크란?</a></h2>
-<p>공유 메모리를 <strong>뱅크</strong>라고 불리는 32개의 독립적인 메모리 유닛의 집합이라고 생각하세요. 각 뱅크는 클록 사이클당 하나의 메모리 요청을 처리할 수 있습니다. 이 뱅킹 시스템이 존재하는 근본적인 이유는 <strong>하드웨어 병렬성</strong> 때문입니다.</p>
-<p>32개 스레드로 구성된 워프가 동시에 공유 메모리에 접근해야 할 때, <strong>각 스레드가 서로 다른 뱅크에 접근한다면</strong> GPU는 32개의 요청을 모두 병렬로 처리할 수 있습니다. 여러 스레드가 같은 뱅크에 접근하려 하면 하드웨어는 이를 <strong>직렬화</strong>해야 하므로, 1사이클이면 될 연산이 여러 사이클로 늘어납니다.</p>
+<p>공유 메모리를 <strong>뱅크</strong>라고 불리는 32개의 독립적인 메모리 유닛의 집합이라고
+생각하세요. 각 뱅크는 클록 사이클당 하나의 메모리 요청을 처리할 수 있습니다. 이
+뱅킹 시스템이 존재하는 근본적인 이유는 <strong>하드웨어 병렬성</strong> 때문입니다.</p>
+<p>32개 스레드로 구성된 워프가 동시에 공유 메모리에 접근해야 할 때,
+<strong>각 스레드가 서로 다른 뱅크에 접근한다면</strong> GPU는 32개의 요청을 모두 병렬로
+처리할 수 있습니다. 여러 스레드가 같은 뱅크에 접근하려 하면 하드웨어는 이를
+<strong>직렬화</strong>해야 하므로, 1사이클이면 될 연산이 여러 사이클로 늘어납니다.</p>
 <h3 id="뱅크-주소-매핑"><a class="header" href="#뱅크-주소-매핑">뱅크 주소 매핑</a></h3>
 <p>공유 메모리의 각 4바이트 워드는 다음 공식에 따라 특정 뱅크에 배정됩니다:</p>
-<pre><code>bank_id = (byte_address / 4) % 32
+<pre><code class="language-text">bank_id = (byte_address / 4) % 32
 </code></pre>
 <p>공유 메모리의 처음 128바이트가 뱅크에 매핑되는 방식은 다음과 같습니다:</p>
 <div class="table-wrapper"><table><thead><tr><th>Address Range</th><th>Bank ID</th><th>Example <code>float32</code> Elements</th></tr></thead><tbody>
@@ -232,16 +246,20 @@
 <tr><td>132-135 bytes</td><td>Bank 1</td><td><code>shared[33]</code></td></tr>
 </tbody></table>
 </div>
-<p><strong>핵심 통찰:</strong> <code>float32</code> 배열에서 뱅킹 패턴은 32개 요소마다 반복되며, 이는 32개 스레드로 구성된 워프 크기와 정확히 일치합니다. 이것은 우연이 아닙니다 - 최적의 병렬 접근을 위해 설계된 것입니다.</p>
+<p><strong>핵심 통찰:</strong> <code>float32</code> 배열에서 뱅킹 패턴은 32개 요소마다 반복되며, 이는 32개
+스레드로 구성된 워프 크기와 정확히 일치합니다. 이것은 우연이 아닙니다 - 최적의
+병렬 접근을 위해 설계된 것입니다.</p>
 <h2 id="뱅크-충돌의-유형"><a class="header" href="#뱅크-충돌의-유형">뱅크 충돌의 유형</a></h2>
 <h3 id="충돌-없음-이상적인-경우"><a class="header" href="#충돌-없음-이상적인-경우">충돌 없음: 이상적인 경우</a></h3>
-<p>워프 내 각 스레드가 서로 다른 뱅크에 접근하면 32개의 접근이 모두 1사이클에 완료됩니다:</p>
+<p>워프 내 각 스레드가 서로 다른 뱅크에 접근하면 32개의 접근이 모두 1사이클에
+완료됩니다:</p>
 <pre><code class="language-mojo"># Perfect case: each thread accesses a different bank
 shared[thread_idx.x]  # Thread 0→Bank 0, Thread 1→Bank 1, ..., Thread 31→Bank 31
 </code></pre>
 <p><strong>결과:</strong> 32개 병렬 접근, 총 1사이클</p>
 <h3 id="n-way-뱅크-충돌"><a class="header" href="#n-way-뱅크-충돌">N-way 뱅크 충돌</a></h3>
-<p>N개의 스레드가 같은 뱅크의 서로 다른 주소에 접근하면 하드웨어가 접근을 직렬화합니다:</p>
+<p>N개의 스레드가 같은 뱅크의 서로 다른 주소에 접근하면 하드웨어가 접근을
+직렬화합니다:</p>
 <pre><code class="language-mojo"># 2-way conflict: stride-2 access pattern
 shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; Thread 1,17→Bank 1; etc.
 </code></pre>
@@ -251,12 +269,16 @@ shared[thread_idx.x * 32]  # All threads→Bank 0
 </code></pre>
 <p><strong>결과:</strong> 32회 직렬화된 접근, 총 32사이클 (효율 3%)</p>
 <h3 id="브로드캐스트-예외"><a class="header" href="#브로드캐스트-예외">브로드캐스트 예외</a></h3>
-<p>충돌 규칙에는 한 가지 중요한 예외가 있습니다: <strong>브로드캐스트 접근</strong>. 모든 스레드가 <strong>동일한 주소</strong>를 읽으면 하드웨어가 이를 단일 메모리 접근으로 최적화합니다:</p>
+<p>충돌 규칙에는 한 가지 중요한 예외가 있습니다: <strong>브로드캐스트 접근</strong>. 모든
+스레드가 <strong>동일한 주소</strong>를 읽으면 하드웨어가 이를 단일 메모리 접근으로
+최적화합니다:</p>
 <pre><code class="language-mojo"># Broadcast: all threads read the same value
 constant = shared[0]  # All threads read shared[0]
 </code></pre>
 <p><strong>결과:</strong> 1회 접근으로 32개 스레드에 브로드캐스트, 총 1사이클</p>
-<p>이 최적화가 존재하는 이유는 브로드캐스트가 흔한 패턴(상수 로딩, 리덕션 연산 등)이고, 하드웨어가 추가 메모리 대역폭 없이 단일 값을 모든 스레드에 복제할 수 있기 때문입니다.</p>
+<p>이 최적화가 존재하는 이유는 브로드캐스트가 흔한 패턴(상수 로딩, 리덕션 연산
+등)이고, 하드웨어가 추가 메모리 대역폭 없이 단일 값을 모든 스레드에 복제할 수
+있기 때문입니다.</p>
 <h2 id="뱅크-충돌이-중요한-이유"><a class="header" href="#뱅크-충돌이-중요한-이유">뱅크 충돌이 중요한 이유</a></h2>
 <h3 id="성능-영향"><a class="header" href="#성능-영향">성능 영향</a></h3>
 <p>뱅크 충돌은 공유 메모리 접근 시간을 직접적으로 배가시킵니다:</p>
@@ -268,11 +290,23 @@ constant = shared[0]  # All threads read shared[0]
 </tbody></table>
 </div>
 <h3 id="실전-맥락"><a class="header" href="#실전-맥락">실전 맥락</a></h3>
-<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 메모리 접근 패턴이 극적인 성능 차이를 만들어낸다는 것을 배웠습니다. 뱅크 충돌은 이 원리가 공유 메모리 수준에서 작동하는 또 다른 사례입니다.</p>
-<p>전역 메모리 병합이 DRAM 대역폭 활용에 영향을 주는 것처럼, 뱅크 충돌은 공유 메모리 처리량에 영향을 줍니다. 차이는 규모에 있습니다: 전역 메모리 지연 시간은 수백 사이클이지만, 공유 메모리 충돌은 접근당 몇 사이클만 추가합니다. 그러나 공유 메모리를 집중적으로 사용하는 연산 집약적 커널에서는 이 “몇 사이클“이 빠르게 누적됩니다.</p>
+<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 메모리 접근 패턴이 극적인 성능 차이를
+만들어낸다는 것을 배웠습니다. 뱅크 충돌은 이 원리가 공유 메모리 수준에서
+작동하는 또 다른 사례입니다.</p>
+<p>전역 메모리 병합이 DRAM 대역폭 활용에 영향을 주는 것처럼, 뱅크 충돌은 공유
+메모리 처리량에 영향을 줍니다. 차이는 규모에 있습니다: 전역 메모리 지연 시간은
+수백 사이클이지만, 공유 메모리 충돌은 접근당 몇 사이클만 추가합니다. 그러나 공유
+메모리를 집중적으로 사용하는 연산 집약적 커널에서는 이 “몇 사이클“이 빠르게
+누적됩니다.</p>
 <h3 id="워프-실행과의-관계"><a class="header" href="#워프-실행과의-관계">워프 실행과의 관계</a></h3>
-<p><a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>에서 워프가 SIMT(Single Instruction, Multiple Thread) 방식으로 실행된다는 것을 배웠습니다. 워프가 뱅크 충돌에 부딪히면 직렬화된 메모리 접근이 완료될 때까지 <strong>32개 스레드 모두가 대기</strong>해야 합니다. 이 대기 시간은 충돌을 일으킨 스레드만이 아니라 워프 전체의 진행에 영향을 미칩니다.</p>
-<p>이는 <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>의 점유율 개념과 연결됩니다: 뱅크 충돌은 워프가 메모리 지연 시간을 효과적으로 숨기는 것을 방해하여, 높은 점유율의 실질적인 이점을 줄일 수 있습니다.</p>
+<p><a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>에서 워프가 SIMT(Single Instruction,
+Multiple Thread) 방식으로 실행된다는 것을 배웠습니다. 워프가 뱅크 충돌에
+부딪히면 직렬화된 메모리 접근이 완료될 때까지 <strong>32개 스레드 모두가 대기</strong>해야
+합니다. 이 대기 시간은 충돌을 일으킨 스레드만이 아니라 워프 전체의 진행에 영향을
+미칩니다.</p>
+<p>이는 <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>의 점유율 개념과 연결됩니다: 뱅크
+충돌은 워프가 메모리 지연 시간을 효과적으로 숨기는 것을 방해하여, 높은 점유율의
+실질적인 이점을 줄일 수 있습니다.</p>
 <h2 id="뱅크-충돌-감지하기"><a class="header" href="#뱅크-충돌-감지하기">뱅크 충돌 감지하기</a></h2>
 <h3 id="시각적-패턴-인식"><a class="header" href="#시각적-패턴-인식">시각적 패턴 인식</a></h3>
 <p>접근 패턴을 분석하면 뱅크 충돌을 예측할 수 있는 경우가 많습니다:</p>
@@ -293,7 +327,8 @@ constant = shared[0]  # All threads read shared[0]
 # Bank:       0   0   0   0  ...   0  ❌ All threads→Bank 0
 </code></pre>
 <h3 id="nsight-computencu를-사용한-프로파일링"><a class="header" href="#nsight-computencu를-사용한-프로파일링">NSight Compute(<code>ncu</code>)를 사용한 프로파일링</a></h3>
-<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 배운 프로파일링 방법론을 바탕으로, 뱅크 충돌을 정량적으로 측정할 수 있습니다:</p>
+<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 배운 프로파일링 방법론을 바탕으로,
+뱅크 충돌을 정량적으로 측정할 수 있습니다:</p>
 <pre><code class="language-bash"># Key metrics for shared memory bank conflicts
 ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st your_kernel
 
@@ -301,7 +336,10 @@ ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_b
 ncu --metrics=smsp__sass_average_branch_targets_threads_uniform.pct your_kernel
 ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 </code></pre>
-<p><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code>와 <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> 메트릭은 커널 실행 중 로드 및 스토어 연산의 뱅크 충돌 횟수를 직접 카운트합니다. 공유 메모리 접근 횟수와 결합하면 충돌 비율을 구할 수 있으며, 이는 핵심적인 성능 지표입니다.</p>
+<p><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code>와
+<code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> 메트릭은 커널 실행 중
+로드 및 스토어 연산의 뱅크 충돌 횟수를 직접 카운트합니다. 공유 메모리 접근
+횟수와 결합하면 충돌 비율을 구할 수 있으며, 이는 핵심적인 성능 지표입니다.</p>
 <h2 id="뱅크-충돌이-가장-중요한-경우"><a class="header" href="#뱅크-충돌이-가장-중요한-경우">뱅크 충돌이 가장 중요한 경우</a></h2>
 <h3 id="연산-집약적-커널"><a class="header" href="#연산-집약적-커널">연산 집약적 커널</a></h3>
 <p>뱅크 충돌은 다음과 같은 커널에서 가장 큰 영향을 미칩니다:</p>
@@ -312,13 +350,18 @@ ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 </ul>
 <p><strong>대표적인 시나리오:</strong></p>
 <ul>
-<li>행렬 곱셈 내부 루프 (<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 버전과 같은)</li>
+<li>행렬 곱셈 내부 루프 (<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 버전과
+같은)</li>
 <li>공유 메모리 캐싱을 사용하는 스텐실 연산</li>
 <li>병렬 리덕션 연산</li>
 </ul>
 <h3 id="메모리-바운드-vs-연산-바운드-트레이드오프"><a class="header" href="#메모리-바운드-vs-연산-바운드-트레이드오프">메모리 바운드 vs 연산 바운드 트레이드오프</a></h3>
-<p><a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 메모리 바운드 워크로드에서는 점유율이 덜 중요하다는 것을 보았듯이, 커널이 전역 메모리 대역폭에 병목이 걸리거나 산술 강도가 매우 낮은 경우에는 뱅크 충돌의 영향도 줄어듭니다.</p>
-<p>그러나 공유 메모리를 사용하는 많은 커널은 바로 메모리 바운드에서 연산 바운드로 전환하기 <strong>위해</strong> 공유 메모리를 활용합니다. 이런 경우 뱅크 충돌은 애초에 공유 메모리를 도입한 이유였던 성능 향상을 달성하지 못하게 만들 수 있습니다.</p>
+<p><a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 메모리 바운드 워크로드에서는 점유율이
+덜 중요하다는 것을 보았듯이, 커널이 전역 메모리 대역폭에 병목이 걸리거나 산술
+강도가 매우 낮은 경우에는 뱅크 충돌의 영향도 줄어듭니다.</p>
+<p>그러나 공유 메모리를 사용하는 많은 커널은 바로 메모리 바운드에서 연산 바운드로
+전환하기 <strong>위해</strong> 공유 메모리를 활용합니다. 이런 경우 뱅크 충돌은 애초에 공유
+메모리를 도입한 이유였던 성능 향상을 달성하지 못하게 만들 수 있습니다.</p>
 <h2 id="앞으로의-방향"><a class="header" href="#앞으로의-방향">앞으로의 방향</a></h2>
 <p>공유 메모리 뱅킹을 이해하면 다음과 같은 기초를 갖추게 됩니다:</p>
 <ol>
@@ -327,7 +370,8 @@ ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 <li>높은 공유 메모리 처리량을 유지하는 <strong>충돌 없는 알고리즘 설계</strong></li>
 <li>알고리즘 복잡도와 메모리 효율 사이의 <strong>균형 잡힌 판단</strong></li>
 </ol>
-<p>다음 섹션에서는 이 지식을 실습에 적용하여 일반적인 충돌 패턴과 해결책을 직접 다뤄봅니다 - 이론적 이해를 실전 최적화 역량으로 바꾸는 과정입니다.</p>
+<p>다음 섹션에서는 이 지식을 실습에 적용하여 일반적인 충돌 패턴과 해결책을 직접
+다뤄봅니다 - 이론적 이해를 실전 최적화 역량으로 바꾸는 과정입니다.</p>
 
                     </main>
 

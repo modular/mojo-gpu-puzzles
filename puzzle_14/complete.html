@@ -209,8 +209,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="complete-version"><a class="header" href="#complete-version">Complete Version</a></h1>
-<p>Implement a kernel that computes a prefix-sum over 1D TileTensor <code>a</code> and stores it in 1D TileTensor <code>output</code>.</p>
-<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to synchronize across multiple blocks to get the correct result.</em></p>
+<p>Implement a kernel that computes a prefix-sum over 1D TileTensor <code>a</code> and stores
+it in 1D TileTensor <code>output</code>.</p>
+<p><strong>Note:</strong> <em>If the size of <code>a</code> is greater than the block size, we need to
+synchronize across multiple blocks to get the correct result.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE_2 = 15</code> elements</li>
@@ -220,18 +222,28 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>Multiple blocks</strong>: When the input array is larger than one block, we need a multi-phase approach</li>
+<li><strong>Multiple blocks</strong>: When the input array is larger than one block, we need a
+multi-phase approach</li>
 <li><strong>Block-level sync</strong>: Within a block, use <code>barrier()</code> to synchronize threads</li>
-<li><strong>Host-level sync</strong>: Between blocks, Mojo’s <code>DeviceContext</code> ensures kernel launches are ordered, which means they start in the order they where scheduled and wait for the previous kernel to finish before starting. You may need to use <code>ctx.synchronize()</code> to ensure all GPU work is complete before reading results back to the host.</li>
-<li><strong>Auxiliary storage</strong>: Use extra space to store block sums for cross-block communication</li>
+<li><strong>Host-level sync</strong>: Between blocks, Mojo’s <code>DeviceContext</code> ensures kernel
+launches are ordered, which means they start in the order they where scheduled
+and wait for the previous kernel to finish before starting. You may need to
+use <code>ctx.synchronize()</code> to ensure all GPU work is complete before reading
+results back to the host.</li>
+<li><strong>Auxiliary storage</strong>: Use extra space to store block sums for cross-block
+communication</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>You need to complete two separate kernel functions for the multi-block prefix sum:</p>
+<p>You need to complete two separate kernel functions for the multi-block prefix
+sum:</p>
 <ol>
-<li><strong>First kernel</strong> (<code>prefix_sum_local_phase</code>): Computes local prefix sums within each block and stores block sums</li>
-<li><strong>Second kernel</strong> (<code>prefix_sum_block_sum_phase</code>): Adds previous block sums to elements in subsequent blocks</li>
+<li><strong>First kernel</strong> (<code>prefix_sum_local_phase</code>): Computes local prefix sums
+within each block and stores block sums</li>
+<li><strong>Second kernel</strong> (<code>prefix_sum_block_sum_phase</code>): Adds previous block sums to
+elements in subsequent blocks</li>
 </ol>
-<p>The main function will handle the necessary host-side synchronization between these kernels.</p>
+<p>The main function will handle the necessary host-side synchronization between
+these kernels.</p>
 <pre><code class="language-mojo">comptime SIZE_2 = 15
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (TPB, 1)
@@ -264,7 +276,11 @@ def prefix_sum_block_sum_phase(
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p14/p14.mojo" class="filename">View full file: problems/p14/p14.mojo</a></p>
-<p>The key to this puzzle is understanding that <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> only synchronizes threads within a block, not across blocks. For cross-block synchronization, you need to enqueue multiple kernels that run sequentially on the device:</p>
+<p>The key to this puzzle is understanding that
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> only
+synchronizes threads within a block, not across blocks. For cross-block
+synchronization, you need to enqueue multiple kernels that run sequentially on
+the device:</p>
 <pre><code class="language-mojo">            # Phase 1: Local prefix sums
             ctx.enqueue_function[
                 prefix_sum_local_phase, prefix_sum_local_phase
@@ -286,26 +302,34 @@ def prefix_sum_block_sum_phase(
                 block_dim=THREADS_PER_BLOCK_2,
             )
 </code></pre>
-<p>Note how the two kernels are enqueued sequentially, but <code>out_tensor</code> is not transferred back to the host until both kernels complete their work. It’s Mojo’s <code>DeviceContext</code> using a single execution stream that ensures all enqueued kernels execute sequentially. You can use <code>ctx.synchronize()</code> to explicitly wait for all GPU work to finish, for example before reading results back to the host.</p>
+<p>Note how the two kernels are enqueued sequentially, but <code>out_tensor</code> is not
+transferred back to the host until both kernels complete their work. It’s Mojo’s
+<code>DeviceContext</code> using a single execution stream that ensures all enqueued
+kernels execute sequentially. You can use <code>ctx.synchronize()</code> to explicitly wait
+for all GPU work to finish, for example before reading results back to the host.</p>
 <details>
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="1-build-on-the-simple-prefix-sum"><a class="header" href="#1-build-on-the-simple-prefix-sum">1. Build on the simple prefix sum</a></h3>
-<p>The <a href="./simple.html">Simple Version</a> shows how to implement a single-block prefix sum. You’ll need to extend that approach to work across multiple blocks:</p>
-<pre><code>Simple version (single block): [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
+<p>The <a href="./simple.html">Simple Version</a> shows how to implement a single-block prefix
+sum. You’ll need to extend that approach to work across multiple blocks:</p>
+<pre><code class="language-text">Simple version (single block): [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
 
 Complete version (two blocks):
 Block 0: [0,1,2,3,4,5,6,7] → [0,1,3,6,10,15,21,28]
 Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 </code></pre>
-<p>But how do we handle the second block’s values? They need to include sums from the first block!</p>
+<p>But how do we handle the second block’s values? They need to include sums from
+the first block!</p>
 <h3 id="2-two-phase-approach"><a class="header" href="#2-two-phase-approach">2. Two-phase approach</a></h3>
 <p>The simple prefix sum can’t synchronize across blocks, so split the work:</p>
 <ol>
-<li><strong>First phase</strong>: Each block computes its own local prefix sum (just like the simple version)</li>
+<li><strong>First phase</strong>: Each block computes its own local prefix sum (just like the
+simple version)</li>
 <li><strong>Second phase</strong>: Blocks incorporate the sums from previous blocks</li>
 </ol>
-<p>Remember: <code>barrier()</code> only synchronizes threads within one block. You need host-level synchronization between phases.</p>
+<p>Remember: <code>barrier()</code> only synchronizes threads within one block. You need
+host-level synchronization between phases.</p>
 <h3 id="3-extended-memory-strategy"><a class="header" href="#3-extended-memory-strategy">3. Extended memory strategy</a></h3>
 <p>Since blocks can’t directly communicate, you need somewhere to store block sums:</p>
 <ul>
@@ -317,15 +341,20 @@ Block 1: [8,9,10,11,12,13,14] → [8,17,27,38,50,63,77]
 <ul>
 <li><strong>Different layouts</strong>: Input and output may have different shapes</li>
 <li><strong>Boundary handling</strong>: Always check <code>global_i &lt; size</code> for array bounds</li>
-<li><strong>Thread role specialization</strong>: Only specific threads (e.g., last thread) should store block sums</li>
-<li><strong>Two kernel synchronization</strong>: It must be ensured that the second kernel runs only after the first kernel completes.</li>
+<li><strong>Thread role specialization</strong>: Only specific threads (e.g., last thread)
+should store block sums</li>
+<li><strong>Two kernel synchronization</strong>: It must be ensured that the second kernel runs
+only after the first kernel completes.</li>
 </ul>
 <h3 id="5-debugging-strategy"><a class="header" href="#5-debugging-strategy">5. Debugging Strategy</a></h3>
-<p>If you encounter issues, try visualizing the intermediate state after the first phase:</p>
-<pre><code>After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
+<p>If you encounter issues, try visualizing the intermediate state after the first
+phase:</p>
+<pre><code class="language-text">After first phase: [0,1,3,6,10,15,21,28, 8,17,27,38,50,63,77, ???,???]
 </code></pre>
-<p>Where <code>???</code> should contain your block sums that will be used in the second phase.</p>
-<p>Remember, to inspect intermediate results you need to explicitly ensure that the device has completed its work.</p>
+<p>Where <code>???</code> should contain your block sums that will be used in the second
+phase.</p>
+<p>Remember, to inspect intermediate results you need to explicitly ensure that the
+device has completed its work.</p>
 </div>
 </details>
 <h3 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h3>
@@ -445,49 +474,61 @@ def prefix_sum_block_sum_phase(
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution implements a multi-block prefix sum using a two-kernel approach to handle an array that spans multiple thread blocks. Let’s break down each aspect in detail:</p>
+<p>This solution implements a multi-block prefix sum using a two-kernel approach to
+handle an array that spans multiple thread blocks. Let’s break down each aspect
+in detail:</p>
 <h2 id="the-challenge-of-cross-block-communication"><a class="header" href="#the-challenge-of-cross-block-communication">The challenge of cross-block communication</a></h2>
-<p>The fundamental limitation in GPU programming is that threads can only synchronize within a block using <code>barrier()</code>. When data spans multiple blocks, we face the challenge: <strong>How do we ensure blocks can communicate their partial results to other blocks?</strong></p>
+<p>The fundamental limitation in GPU programming is that threads can only
+synchronize within a block using <code>barrier()</code>. When data spans multiple blocks,
+we face the challenge: <strong>How do we ensure blocks can communicate their partial
+results to other blocks?</strong></p>
 <h3 id="memory-layout-visualization"><a class="header" href="#memory-layout-visualization">Memory layout visualization</a></h3>
 <p>For our test case with <code>SIZE_2 = 15</code> and <code>TPB = 8</code>:</p>
-<pre><code>Input array:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+<pre><code class="language-text">Input array:  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 
 Block 0 processes: [0, 1, 2, 3, 4, 5, 6, 7]
 Block 1 processes: [8, 9, 10, 11, 12, 13, 14] (7 valid elements)
 </code></pre>
 <p>We extend the output buffer to include space for block sums:</p>
-<pre><code>Extended buffer: [data values (15 elements)] + [block sums (2 elements)]
+<pre><code class="language-text">Extended buffer: [data values (15 elements)] + [block sums (2 elements)]
                  [0...14] + [block0_sum, block1_sum]
 </code></pre>
-<p>The size of this extended buffer is: <code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
+<p>The size of this extended buffer is:
+<code>EXTENDED_SIZE = SIZE_2 + num_blocks = 15 + 2 = 17</code></p>
 <h2 id="phase-1-kernel-local-prefix-sums"><a class="header" href="#phase-1-kernel-local-prefix-sums">Phase 1 kernel: Local prefix sums</a></h2>
 <h3 id="race-condition-prevention-in-local-phase"><a class="header" href="#race-condition-prevention-in-local-phase">Race condition prevention in local phase</a></h3>
-<p>The local phase uses the same explicit synchronization pattern as the simple version to prevent read-write hazards:</p>
+<p>The local phase uses the same explicit synchronization pattern as the simple
+version to prevent read-write hazards:</p>
 <ul>
-<li><strong>Read Phase</strong>: All threads first read the values they need into a local variable <code>current_val</code></li>
-<li><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete before any writes begin</li>
-<li><strong>Write Phase</strong>: All threads then safely write their computed values back to shared memory</li>
+<li><strong>Read Phase</strong>: All threads first read the values they need into a local
+variable <code>current_val</code></li>
+<li><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete before any writes
+begin</li>
+<li><strong>Write Phase</strong>: All threads then safely write their computed values back to
+shared memory</li>
 </ul>
-<p>This prevents race conditions that could occur when multiple threads simultaneously access the same shared memory locations during the parallel reduction.</p>
+<p>This prevents race conditions that could occur when multiple threads
+simultaneously access the same shared memory locations during the parallel
+reduction.</p>
 <h3 id="step-by-step-execution-for-block-0"><a class="header" href="#step-by-step-execution-for-block-0">Step-by-step execution for Block 0</a></h3>
 <ol>
 <li>
 <p><strong>Load values into shared memory</strong>:</p>
-<pre><code>shared = [0, 1, 2, 3, 4, 5, 6, 7]
+<pre><code class="language-text">shared = [0, 1, 2, 3, 4, 5, 6, 7]
 </code></pre>
 </li>
 <li>
 <p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
 <p><strong>Iteration 1</strong> (offset=1):</p>
 <p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
-<pre><code>T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
+<pre><code class="language-text">T₁ reads shared[0] = 0    T₅ reads shared[4] = 4
 T₂ reads shared[1] = 1    T₆ reads shared[5] = 5
 T₃ reads shared[2] = 2    T₇ reads shared[6] = 6
 T₄ reads shared[3] = 3
 </code></pre>
 <p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
 <p><strong>Write Phase</strong>: Each thread adds its read value:</p>
-<pre><code>shared[0] = 0              (unchanged)
+<pre><code class="language-text">shared[0] = 0              (unchanged)
 shared[1] = 1 + 0 = 1
 shared[2] = 2 + 1 = 3
 shared[3] = 3 + 2 = 5
@@ -499,13 +540,13 @@ shared[7] = 7 + 6 = 13
 <p>After barrier: <code>shared = [0, 1, 3, 5, 7, 9, 11, 13]</code></p>
 <p><strong>Iteration 2</strong> (offset=2):</p>
 <p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
-<pre><code>T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
+<pre><code class="language-text">T₂ reads shared[0] = 0    T₅ reads shared[3] = 5
 T₃ reads shared[1] = 1    T₆ reads shared[4] = 7
 T₄ reads shared[2] = 3    T₇ reads shared[5] = 9
 </code></pre>
 <p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
 <p><strong>Write Phase</strong>: Each thread adds its read value:</p>
-<pre><code>shared[0] = 0              (unchanged)
+<pre><code class="language-text">shared[0] = 0              (unchanged)
 shared[1] = 1              (unchanged)
 shared[2] = 3 + 0 = 3      (unchanged)
 shared[3] = 5 + 1 = 6
@@ -517,12 +558,12 @@ shared[7] = 13 + 9 = 22
 <p>After barrier: <code>shared = [0, 1, 3, 6, 10, 14, 18, 22]</code></p>
 <p><strong>Iteration 3</strong> (offset=4):</p>
 <p><strong>Read Phase</strong>: Each active thread reads the value it needs:</p>
-<pre><code>T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
+<pre><code class="language-text">T₄ reads shared[0] = 0    T₆ reads shared[2] = 3
 T₅ reads shared[1] = 1    T₇ reads shared[3] = 6
 </code></pre>
 <p><strong>Synchronization</strong>: <code>barrier()</code> ensures all reads complete</p>
 <p><strong>Write Phase</strong>: Each thread adds its read value:</p>
-<pre><code>shared[0] = 0              (unchanged)
+<pre><code class="language-text">shared[0] = 0              (unchanged)
 shared[1] = 1              (unchanged)
 shared[2] = 3              (unchanged)
 shared[3] = 6              (unchanged)
@@ -535,12 +576,12 @@ shared[7] = 22 + 6 = 28
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
+<pre><code class="language-text">output[0...7] = [0, 1, 3, 6, 10, 15, 21, 28]
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread):</p>
-<pre><code>output[15] = 28  // at position size + block_idx.x = 15 + 0
+<pre><code class="language-text">output[15] = 28  // at position size + block_idx.x = 15 + 0
 </code></pre>
 </li>
 </ol>
@@ -548,43 +589,56 @@ shared[7] = 22 + 6 = 28
 <ol>
 <li>
 <p><strong>Load values into shared memory</strong>:</p>
-<pre><code>shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
+<pre><code class="language-text">shared = [8, 9, 10, 11, 12, 13, 14, uninitialized]
 </code></pre>
-<p>Note: Thread 7 doesn’t load anything since <code>global_i = 15 &gt;= SIZE_2</code>, leaving <code>shared[7]</code> uninitialized. This is safe because Thread 7 won’t participate in the final output.</p>
+<p>Note: Thread 7 doesn’t load anything since <code>global_i = 15 &gt;= SIZE_2</code>, leaving
+<code>shared[7]</code> uninitialized. This is safe because Thread 7 won’t participate in
+the final output.</p>
 </li>
 <li>
 <p><strong>Iterations of parallel reduction</strong> (\(\log_2(TPB) = 3\) iterations):</p>
-<p>Only the first 7 threads participate in meaningful computation. After all three iterations:</p>
-<pre><code>shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
+<p>Only the first 7 threads participate in meaningful computation. After all
+three iterations:</p>
+<pre><code class="language-text">shared = [8, 17, 27, 38, 50, 63, 77, uninitialized]
 </code></pre>
 </li>
 <li>
 <p><strong>Write local results back to global memory</strong>:</p>
-<pre><code>output[8...14] = [8, 17, 27, 38, 50, 63, 77]  // Only 7 valid outputs
+<pre><code class="language-text">output[8...14] = [8, 17, 27, 38, 50, 63, 77]  // Only 7 valid outputs
 </code></pre>
 </li>
 <li>
 <p><strong>Store block sum in auxiliary space</strong> (only last thread in block):</p>
-<pre><code>output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
+<pre><code class="language-text">output[16] = shared[7]  // Thread 7 (TPB-1) stores whatever is in shared[7]
 </code></pre>
-<p>Note: Even though Thread 7 doesn’t load valid input data, it still participates in the prefix sum computation within the block. The <code>shared[7]</code> position gets updated during the parallel reduction iterations, but since it started uninitialized, the final value is unpredictable. However, this doesn’t affect correctness because Block 1 is the last block, so this block sum is never used in Phase 2.</p>
+<p>Note: Even though Thread 7 doesn’t load valid input data, it still
+participates in the prefix sum computation within the block. The <code>shared[7]</code>
+position gets updated during the parallel reduction iterations, but since it
+started uninitialized, the final value is unpredictable. However, this
+doesn’t affect correctness because Block 1 is the last block, so this block
+sum is never used in Phase 2.</p>
 </li>
 </ol>
 <p>After Phase 1, the output buffer contains:</p>
-<pre><code>[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
+<pre><code class="language-text">[0, 1, 3, 6, 10, 15, 21, 28, 8, 17, 27, 38, 50, 63, 77, 28, ???]
                                                         ^   ^
                                                 Block sums stored here
 </code></pre>
-<p>Note: The last block sum (???) is unpredictable since it’s based on uninitialized memory, but this doesn’t affect the final result.</p>
+<p>Note: The last block sum (???) is unpredictable since it’s based on
+uninitialized memory, but this doesn’t affect the final result.</p>
 <h2 id="host-device-synchronization-when-its-actually-needed"><a class="header" href="#host-device-synchronization-when-its-actually-needed">Host-device synchronization: When it’s actually needed</a></h2>
-<p>The two kernel phases execute sequentially <strong>without any explicit synchronization</strong> between them:</p>
+<p>The two kernel phases execute sequentially
+<strong>without any explicit synchronization</strong> between them:</p>
 <pre><code class="language-mojo"># Phase 1: Local prefix sums
 ctx.enqueue_function[prefix_sum_local_phase[...], prefix_sum_local_phase[...]](...)
 
 # Phase 2: Add block sums (automatically waits for Phase 1)
 ctx.enqueue_function[prefix_sum_block_sum_phase[...], prefix_sum_block_sum_phase[...]](...)
 </code></pre>
-<p><strong>Key insight</strong>: Mojo’s <code>DeviceContext</code> uses a single execution stream (CUDA stream on NVIDIA GPUs, HIP stream on AMD ROCm GPUs), which guarantees that kernel launches execute in the exact order they are enqueued. No explicit synchronization is needed between kernels.</p>
+<p><strong>Key insight</strong>: Mojo’s <code>DeviceContext</code> uses a single execution stream (CUDA
+stream on NVIDIA GPUs, HIP stream on AMD ROCm GPUs), which guarantees that
+kernel launches execute in the exact order they are enqueued. No explicit
+synchronization is needed between kernels.</p>
 <p><strong>When <code>ctx.synchronize()</code> is needed</strong>:</p>
 <pre><code class="language-mojo"># After both kernels complete, before reading results on host
 ctx.synchronize()  # Host waits for GPU to finish
@@ -594,10 +648,13 @@ with out.map_to_host() as out_host:  # Now safe to read GPU results
 </code></pre>
 <p>The <code>ctx.synchronize()</code> call serves its traditional purpose:</p>
 <ul>
-<li><strong>Host-device synchronization</strong>: Ensures the host waits for all GPU work to complete before accessing results</li>
+<li><strong>Host-device synchronization</strong>: Ensures the host waits for all GPU work to
+complete before accessing results</li>
 <li><strong>Memory safety</strong>: Prevents reading GPU memory before computations finish</li>
 </ul>
-<p><strong>Execution model</strong>: Unlike <code>barrier()</code> which synchronizes threads within a block, kernel ordering comes from Mojo’s single-stream execution model, while <code>ctx.synchronize()</code> handles host-device coordination.</p>
+<p><strong>Execution model</strong>: Unlike <code>barrier()</code> which synchronizes threads within a
+block, kernel ordering comes from Mojo’s single-stream execution model, while
+<code>ctx.synchronize()</code> handles host-device coordination.</p>
 <h2 id="phase-2-kernel-block-sum-addition"><a class="header" href="#phase-2-kernel-block-sum-addition">Phase 2 kernel: Block sum addition</a></h2>
 <ol>
 <li>
@@ -605,18 +662,19 @@ with out.map_to_host() as out_host:  # Now safe to read GPU results
 </li>
 <li>
 <p><strong>Block 1</strong>: Each thread adds Block 0’s sum to its element:</p>
-<pre><code>prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
+<pre><code class="language-text">prev_block_sum = output[size + block_idx.x - 1] = output[15] = 28
 output[global_i] += prev_block_sum
 </code></pre>
 <p>Block 1 values are transformed:</p>
-<pre><code>Before: [8, 17, 27, 38, 50, 63, 77]
+<pre><code class="language-text">Before: [8, 17, 27, 38, 50, 63, 77]
 After:  [36, 45, 55, 66, 78, 91, 105]
 </code></pre>
 </li>
 </ol>
 <h2 id="performance-and-optimization-considerations"><a class="header" href="#performance-and-optimization-considerations">Performance and optimization considerations</a></h2>
 <h3 id="key-implementation-details"><a class="header" href="#key-implementation-details">Key implementation details</a></h3>
-<p><strong>Local phase synchronization pattern</strong>: Each iteration within a block follows a strict read → sync → write pattern:</p>
+<p><strong>Local phase synchronization pattern</strong>: Each iteration within a block follows a
+strict read → sync → write pattern:</p>
 <ol>
 <li><code>var current_val: out.element_type = 0</code> - Initialize local variable</li>
 <li><code>current_val = shared[local_i - offset]</code> - Read phase (if conditions met)</li>
@@ -624,21 +682,35 @@ After:  [36, 45, 55, 66, 78, 91, 105]
 <li><code>shared[local_i] += current_val</code> - Write phase (if conditions met)</li>
 <li><code>barrier()</code> - Standard synchronization before next iteration</li>
 </ol>
-<p><strong>Cross-block synchronization</strong>: The algorithm uses two levels of synchronization:</p>
+<p><strong>Cross-block synchronization</strong>: The algorithm uses two levels of
+synchronization:</p>
 <ul>
-<li><strong>Intra-block</strong>: <code>barrier()</code> synchronizes threads within each block during local prefix sum computation</li>
-<li><strong>Inter-block</strong>: The <code>DeviceContext</code> context manager that launches enqueued kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To explicitly enforce host-device synchronization before reading results, <code>ctx.synchronize()</code> is used.</li>
+<li><strong>Intra-block</strong>: <code>barrier()</code> synchronizes threads within each block during
+local prefix sum computation</li>
+<li><strong>Inter-block</strong>: The <code>DeviceContext</code> context manager that launches enqueued
+kernels sequentially to ensure Phase 1 completes before Phase 2 begins. To
+explicitly enforce host-device synchronization before reading results,
+<code>ctx.synchronize()</code> is used.</li>
 </ul>
-<p><strong>Race condition prevention</strong>: The explicit read-write separation in the local phase prevents the race condition that would occur if threads simultaneously read from and write to the same shared memory locations during parallel reduction.</p>
+<p><strong>Race condition prevention</strong>: The explicit read-write separation in the local
+phase prevents the race condition that would occur if threads simultaneously
+read from and write to the same shared memory locations during parallel
+reduction.</p>
 <ol>
 <li>
-<p><strong>Work efficiency</strong>: This implementation has \(O(n \log n)\) work complexity, while the sequential algorithm is \(O(n)\). This is a classic space-time tradeoff in parallel algorithms.</p>
+<p><strong>Work efficiency</strong>: This implementation has \(O(n \log n)\) work
+complexity, while the sequential algorithm is \(O(n)\). This is a classic
+space-time tradeoff in parallel algorithms.</p>
 </li>
 <li>
-<p><strong>Memory overhead</strong>: The extra space for block sums is minimal (just one element per block).</p>
+<p><strong>Memory overhead</strong>: The extra space for block sums is minimal (just one
+element per block).</p>
 </li>
 </ol>
-<p>This two-kernel approach is a fundamental pattern in GPU programming for algorithms that require cross-block communication. The same strategy can be applied to other parallel algorithms like radix sort, histogram calculation, and reduction operations.</p>
+<p>This two-kernel approach is a fundamental pattern in GPU programming for
+algorithms that require cross-block communication. The same strategy can be
+applied to other parallel algorithms like radix sort, histogram calculation, and
+reduction operations.</p>
 </div>
 </details>
 

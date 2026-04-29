@@ -209,8 +209,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="block-boundary-version"><a class="header" href="#block-boundary-version">Block Boundary Version</a></h1>
-<p>Implement a kernel that computes a 1D convolution between 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code>.</p>
-<p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and 1 global write per thread.</em></p>
+<p>Implement a kernel that computes a 1D convolution between 1D TileTensor <code>a</code> and
+1D TileTensor <code>b</code> and stores it in 1D TileTensor <code>output</code>.</p>
+<p><strong>Note:</strong> <em>You need to handle the general case. You only need 2 global reads and
+1 global write per thread.</em></p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Input array size: <code>SIZE_2 = 15</code> elements</li>
@@ -255,7 +257,9 @@ def conv_1d_block_boundary(
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <ol>
-<li>Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code> for shared memory</li>
+<li>Use
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code>
+for shared memory</li>
 <li>Load main data: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>Load boundary: <code>if local_i &lt; CONV_2 - 1</code> handle next block data</li>
 <li>Load kernel: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -343,7 +347,8 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>The solution handles block boundary cases in 1D convolution using extended shared memory. Here’s a detailed analysis:</p>
+<p>The solution handles block boundary cases in 1D convolution using extended
+shared memory. Here’s a detailed analysis:</p>
 <h3 id="memory-layout-and-sizing"><a class="header" href="#memory-layout-and-sizing">Memory layout and sizing</a></h3>
 <pre><code class="language-txt">Test Configuration:
 - Full array size: SIZE_2 = 15 elements
@@ -366,7 +371,8 @@ Size calculation:
 shared_a = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())
 shared_b = stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[CONV_2]())
 </code></pre>
-<p>This allocation pattern ensures we have enough space for both the block’s data and the overlap region.</p>
+<p>This allocation pattern ensures we have enough space for both the block’s
+data and the overlap region.</p>
 </li>
 <li>
 <p><strong>Data Loading Strategy</strong>:</p>
@@ -415,7 +421,8 @@ if local_i &lt; CONV_2 - 1:
 <ul>
 <li>Uses <code>@parameter</code> for compile-time loop unrolling</li>
 <li>Proper type inference with <code>output.element_type</code></li>
-<li>Semantically correct bounds check: only compute convolution for valid input positions</li>
+<li>Semantically correct bounds check: only compute convolution for valid input
+positions</li>
 </ul>
 </li>
 </ol>
@@ -432,7 +439,8 @@ Thread 7: [7 8 9 10] × [0 1 2 3]  // Uses overlap data
 </li>
 <li>
 <p><strong>Block 1 Access Pattern</strong>:
-Note how starting from thread 4, <code>global_i + j &lt; SIZE_2</code> evaluates to <code>False</code> and hence iterations are skipped.</p>
+Note how starting from thread 4, <code>global_i + j &lt; SIZE_2</code> evaluates to <code>False</code>
+and hence iterations are skipped.</p>
 <pre><code class="language-txt">Thread 0: [8  9 10 11] × [0 1 2 3]
 Thread 1: [9 10 11 12] × [0 1 2 3]
 ...
@@ -472,20 +480,26 @@ Thread 7: skipped                    // global_i + j &lt; SIZE_2 evaluates to fa
 <li>
 <p><strong>Boundary Handling</strong>:</p>
 <ul>
-<li>Explicit zero initialization for out-of-bounds elements which prevents reading from uninitialized shared memory</li>
-<li>Semantically correct boundary checking using <code>global_i + j &lt; SIZE_2</code> instead of shared memory bounds</li>
+<li>Explicit zero initialization for out-of-bounds elements which prevents
+reading from uninitialized shared memory</li>
+<li>Semantically correct boundary checking using <code>global_i + j &lt; SIZE_2</code>
+instead of shared memory bounds</li>
 <li>Proper handling of edge cases without over-computation</li>
 </ul>
 </li>
 </ol>
 <h3 id="boundary-condition-improvement"><a class="header" href="#boundary-condition-improvement">Boundary condition improvement</a></h3>
-<p>The solution uses <code>if global_i + j &lt; SIZE_2:</code> rather than checking shared memory bounds. This pattern is:</p>
+<p>The solution uses <code>if global_i + j &lt; SIZE_2:</code> rather than checking shared memory
+bounds. This pattern is:</p>
 <ul>
-<li><strong>Mathematically correct</strong>: Only computes convolution where input data actually exists</li>
-<li><strong>More efficient</strong>: Avoids unnecessary computations for positions beyond the input array</li>
+<li><strong>Mathematically correct</strong>: Only computes convolution where input data
+actually exists</li>
+<li><strong>More efficient</strong>: Avoids unnecessary computations for positions beyond the
+input array</li>
 <li><strong>Safer</strong>: Prevents reliance on zero-padding behavior in shared memory</li>
 </ul>
-<p>This implementation achieves efficient cross-block convolution while maintaining:</p>
+<p>This implementation achieves efficient cross-block convolution while
+maintaining:</p>
 <ul>
 <li>Memory safety through proper bounds checking</li>
 <li>High performance through optimized memory access</li>

@@ -210,20 +210,31 @@
                     <main>
                         <h1 id="puzzle-11-pooling"><a class="header" href="#puzzle-11-pooling">Puzzle 11: Pooling</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that compute the running sum of the last 3 positions of 1D TileTensor <code>a</code> and stores it in 1D TileTensor <code>output</code>.</p>
-<p><strong>Pooling</strong> is an operation that condenses a region of values into a single summary value — for example, their sum, maximum, or average. A <strong>sliding window</strong> applies this condensation repeatedly by moving a fixed-size window one step at a time across the input, producing one output value per window position. Here the window is 3 elements wide and the summary function is a sum, so each output element equals the sum of the current element and the two preceding it (with special cases at the boundaries where fewer than 3 elements are available).</p>
-<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1 global write per thread.</em></p>
+<p>Implement a kernel that compute the running sum of the last 3 positions of 1D
+TileTensor <code>a</code> and stores it in 1D TileTensor <code>output</code>.</p>
+<p><strong>Pooling</strong> is an operation that condenses a region of values into a single
+summary value — for example, their sum, maximum, or average. A
+<strong>sliding window</strong> applies this condensation repeatedly by moving a fixed-size
+window one step at a time across the input, producing one output value per
+window position. Here the window is 3 elements wide and the summary function is
+a sum, so each output element equals the sum of the current element and the two
+preceding it (with special cases at the boundaries where fewer than 3 elements
+are available).</p>
+<p><strong>Note:</strong> <em>You have 1 thread per position. You only need 1 global read and 1
+global write per thread.</em></p>
 <img src="./media/11-w.png" alt="Pooling visualization" class="light-mode-img">
 <img src="./media/11-b.png" alt="Pooling visualization" class="dark-mode-img">
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
 <ul>
 <li>Using TileTensor for sliding window operations</li>
-<li>Managing shared memory with TileTensor address_space that we saw in <a href="../puzzle_08/puzzle_08.html">puzzle 8</a></li>
+<li>Managing shared memory with TileTensor address_space that we saw in
+<a href="../puzzle_08/puzzle_08.html">puzzle 8</a></li>
 <li>Efficient neighbor access patterns</li>
 <li>Boundary condition handling</li>
 </ul>
-<p>The key insight is how TileTensor simplifies shared memory management while maintaining efficient window-based operations.</p>
+<p>The key insight is how TileTensor simplifies shared memory management while
+maintaining efficient window-based operations.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
@@ -233,7 +244,8 @@
 </ul>
 <p>Notes:</p>
 <ul>
-<li><strong>TileTensor allocation</strong>: Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
+<li><strong>TileTensor allocation</strong>: Use
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code></li>
 <li><strong>Window access</strong>: Natural indexing for 3-element windows</li>
 <li><strong>Edge handling</strong>: Special cases for first two positions</li>
 <li><strong>Memory pattern</strong>: One shared memory load per thread</li>
@@ -344,7 +356,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The solution implements a sliding window sum using TileTensor with these key steps:</p>
+<p>The solution implements a sliding window sum using TileTensor with these key
+steps:</p>
 <ol>
 <li>
 <p><strong>Shared memory setup</strong></p>
@@ -401,14 +414,15 @@ window_sum = shared[i-2] + shared[i-1] + shared[i]
 </li>
 </ol>
 <blockquote>
-<p><strong>Single-block assumption:</strong> This solution is correct because the puzzle is configured with
-<code>BLOCKS_PER_GRID = (1, 1)</code> and <code>SIZE == TPB = 8</code>, guaranteeing every thread belongs to the
-same block so <code>global_i == local_i</code>. Under this constraint, <code>local_i &gt;= 2</code> whenever
-<code>global_i &gt; 1</code>, so <code>shared[local_i - 2]</code> and <code>shared[local_i - 1]</code> are always valid.</p>
-<p>In a <strong>multi-block</strong> kernel the first two threads of each block beyond block 0 would have
-<code>local_i = 0</code> or <code>local_i = 1</code> while <code>global_i &gt; 1</code>, causing out-of-bounds shared memory
-reads. The robust pattern for multi-block pooling guards with <code>local_i</code> and falls back to
-global reads for the halo elements:</p>
+<p><strong>Single-block assumption:</strong> This solution is correct because the puzzle is
+configured with <code>BLOCKS_PER_GRID = (1, 1)</code> and <code>SIZE == TPB = 8</code>, guaranteeing
+every thread belongs to the same block so <code>global_i == local_i</code>. Under this
+constraint, <code>local_i &gt;= 2</code> whenever <code>global_i &gt; 1</code>, so <code>shared[local_i - 2]</code>
+and <code>shared[local_i - 1]</code> are always valid.</p>
+<p>In a <strong>multi-block</strong> kernel the first two threads of each block beyond block 0
+would have <code>local_i = 0</code> or <code>local_i = 1</code> while <code>global_i &gt; 1</code>, causing
+out-of-bounds shared memory reads. The robust pattern for multi-block pooling
+guards with <code>local_i</code> and falls back to global reads for the halo elements:</p>
 <pre><code class="language-mojo">if local_i &gt;= 2:
     output[global_i] = shared[local_i-2] + shared[local_i-1] + shared[local_i]
 elif local_i == 1 and global_i &gt;= 2:
@@ -433,7 +447,8 @@ elif local_i == 0 and global_i &gt;= 2:
 </ul>
 </li>
 </ol>
-<p>This approach combines the performance of shared memory with TileTensor’s safety and ergonomics:</p>
+<p>This approach combines the performance of shared memory with TileTensor’s safety
+and ergonomics:</p>
 <ul>
 <li>Minimizes global memory access</li>
 <li>Simplifies window operations</li>

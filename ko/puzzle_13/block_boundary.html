@@ -210,8 +210,10 @@
                     <main>
                         <!-- i18n-source-commit: 29894ca396ed4e90fc447bf66b8e2a216576d8a8 -->
 <h1 id="블록-경계-버전"><a class="header" href="#블록-경계-버전">블록 경계 버전</a></h1>
-<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다.</em></p>
+<p>1D TileTensor <code>a</code>와 1D TileTensor <code>b</code>의 1D 합성곱을 계산하여 1D TileTensor
+<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
+1회만 필요합니다.</em></p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>입력 배열 크기: <code>SIZE_2 = 15</code></li>
@@ -256,7 +258,8 @@ def conv_1d_block_boundary(
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code>으로 공유 메모리 할당</li>
+<li><code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB + CONV_2 - 1]())</code>으로
+공유 메모리 할당</li>
 <li>메인 데이터 로드: <code>shared_a[local_i] = a[global_i]</code></li>
 <li>경계 데이터 로드: <code>if local_i &lt; CONV_2 - 1</code>일 때 다음 블록의 데이터 처리</li>
 <li>커널 로드: <code>shared_b[local_i] = b[local_i]</code></li>
@@ -344,7 +347,8 @@ expected: HostBuffer([14.0, 20.0, 26.0, 32.0, 38.0, 44.0, 50.0, 56.0, 62.0, 68.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>확장된 공유 메모리를 사용해 블록 경계를 넘는 1D 합성곱을 처리하는 솔루션입니다. 자세히 분석해 보겠습니다:</p>
+<p>확장된 공유 메모리를 사용해 블록 경계를 넘는 1D 합성곱을 처리하는 솔루션입니다.
+자세히 분석해 보겠습니다:</p>
 <h3 id="메모리-레이아웃과-크기-계산"><a class="header" href="#메모리-레이아웃과-크기-계산">메모리 레이아웃과 크기 계산</a></h3>
 <pre><code class="language-txt">테스트 구성:
 - 전체 배열 크기: SIZE_2 = 15
@@ -433,7 +437,8 @@ Thread 7: [7 8 9 10] × [0 1 2 3]  // 겹침 영역 데이터 사용
 </li>
 <li>
 <p><strong>Block 1 접근 패턴</strong>:
-Thread 4부터는 <code>global_i + j &lt; SIZE_2</code>가 <code>False</code>가 되어 해당 반복을 건너뛰는 점에 주목하세요.</p>
+Thread 4부터는 <code>global_i + j &lt; SIZE_2</code>가 <code>False</code>가 되어 해당 반복을 건너뛰는
+점에 주목하세요.</p>
 <pre><code class="language-txt">Thread 0: [8  9 10 11] × [0 1 2 3]
 Thread 1: [9 10 11 12] × [0 1 2 3]
 ...
@@ -473,14 +478,17 @@ Thread 7: 건너뜀                      // 모든 j에 대해 global_i + j &lt;
 <li>
 <p><strong>경계 처리</strong>:</p>
 <ul>
-<li>범위 밖 원소를 명시적으로 0으로 설정하여 초기화되지 않은 공유 메모리 읽기 방지</li>
-<li><code>global_i + j &lt; SIZE_2</code>로 공유 메모리가 아닌 실제 입력 범위 기준의 경계 검사</li>
+<li>범위 밖 원소를 명시적으로 0으로 설정하여 초기화되지 않은 공유 메모리 읽기
+방지</li>
+<li><code>global_i + j &lt; SIZE_2</code>로 공유 메모리가 아닌 실제 입력 범위 기준의 경계
+검사</li>
 <li>불필요한 연산 없이 적절한 엣지 케이스 처리</li>
 </ul>
 </li>
 </ol>
 <h3 id="경계-조건-개선"><a class="header" href="#경계-조건-개선">경계 조건 개선</a></h3>
-<p>이 솔루션은 공유 메모리 범위를 확인하는 대신 <code>if global_i + j &lt; SIZE_2:</code>를 사용합니다. 이 패턴은:</p>
+<p>이 솔루션은 공유 메모리 범위를 확인하는 대신 <code>if global_i + j &lt; SIZE_2:</code>를
+사용합니다. 이 패턴은:</p>
 <ul>
 <li><strong>수학적으로 정확</strong>: 입력 데이터가 실제로 존재하는 위치에서만 합성곱 계산</li>
 <li><strong>더 효율적</strong>: 입력 배열을 넘어선 위치에 대한 불필요한 연산 회피</li>

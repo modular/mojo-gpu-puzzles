@@ -210,12 +210,16 @@
                     <main>
                         <h1 id="-fused-vs-unfused-kernels"><a class="header" href="#-fused-vs-unfused-kernels">⚛️ Fused vs Unfused Kernels</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we explore the performance benefits of kernel fusion by implementing and comparing two approaches to the <a href="https://arxiv.org/abs/1607.06450">LayerNorm</a> and Linear operation:</p>
+<p>In this puzzle, we explore the performance benefits of kernel fusion by
+implementing and comparing two approaches to the
+<a href="https://arxiv.org/abs/1607.06450">LayerNorm</a> and Linear operation:</p>
 <ol>
 <li><strong>Unfused approach</strong>: Executes LayerNorm and Linear as separate operations</li>
-<li><strong>Fused kernel</strong>: Combines LayerNorm and Linear operations into a single GPU kernel</li>
+<li><strong>Fused kernel</strong>: Combines LayerNorm and Linear operations into a single GPU
+kernel</li>
 </ol>
-<p>This comparison demonstrates how kernel fusion can significantly improve performance by:</p>
+<p>This comparison demonstrates how kernel fusion can significantly improve
+performance by:</p>
 <ul>
 <li>Reducing memory bandwidth usage</li>
 <li>Minimizing kernel launch overhead</li>
@@ -235,33 +239,42 @@
 <ol>
 <li>
 <p>LayerNorm:
-\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</p>
+\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 +
+\epsilon}} + \beta \]</p>
 </li>
 <li>
 <p>Linear:
 \[\Large \text{Linear}(x) = Wx + b \]</p>
 </li>
 </ol>
-<p>When fused, we compute:
-\[\Large \text{Fused}(x) = W(\gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \]</p>
+<p>When fused, we compute: \[\Large \text{Fused}(x) = W(\gamma \odot \frac{x -
+\mu}{\sqrt{\sigma^2 + \epsilon}} + \beta) + b \]</p>
 <h2 id="understanding-layernorm"><a class="header" href="#understanding-layernorm">Understanding LayerNorm</a></h2>
-<p>LayerNorm is a normalization technique that helps stabilize and accelerate the training of deep neural networks. Let’s break down its components and parameters:</p>
+<p>LayerNorm is a normalization technique that helps stabilize and accelerate the
+training of deep neural networks. Let’s break down its components and
+parameters:</p>
 <h3 id="what-layernorm-does"><a class="header" href="#what-layernorm-does">What LayerNorm does</a></h3>
 <ol>
 <li>
-<p><strong>Normalization</strong>: LayerNorm normalizes the activations across the features (hidden dimensions) for each sample independently. This means:</p>
+<p><strong>Normalization</strong>: LayerNorm normalizes the activations across the features
+(hidden dimensions) for each sample independently. This means:</p>
 <ul>
-<li>For each sequence position, it computes statistics across the hidden dimension</li>
+<li>For each sequence position, it computes statistics across the hidden
+dimension</li>
 <li>Each sample in the batch is normalized independently</li>
-<li>This is different from <a href="https://arxiv.org/abs/1502.03167">BatchNorm</a>, which normalizes across the batch dimension</li>
+<li>This is different from <a href="https://arxiv.org/abs/1502.03167">BatchNorm</a>, which
+normalizes across the batch dimension</li>
 </ul>
 </li>
 <li>
 <p><strong>Parameters</strong>:</p>
 <ul>
-<li>\(\gamma\) (scale): A learnable parameter vector that allows the network to learn the optimal scale for each feature</li>
-<li>\(\beta\) (shift): A learnable parameter vector that allows the network to learn the optimal shift for each feature</li>
-<li>\(\epsilon\): A small constant (1e-5) added to the variance to prevent division by zero</li>
+<li>\(\gamma\) (scale): A learnable parameter vector that allows the network
+to learn the optimal scale for each feature</li>
+<li>\(\beta\) (shift): A learnable parameter vector that allows the network
+to learn the optimal shift for each feature</li>
+<li>\(\epsilon\): A small constant (1e-5) added to the variance to prevent
+division by zero</li>
 </ul>
 </li>
 </ol>
@@ -273,7 +286,8 @@
 <ul>
 <li>Transforms each feature to have zero mean and unit variance</li>
 <li>Makes the network’s learning process more stable</li>
-<li>Helps prevent the “internal covariate shift” problem where the distribution of layer inputs changes during training</li>
+<li>Helps prevent the “internal covariate shift” problem where the distribution
+of layer inputs changes during training</li>
 </ul>
 </li>
 <li>
@@ -296,7 +310,8 @@
 <p><strong>Sequence modeling</strong>:</p>
 <ul>
 <li>Particularly effective in transformer architectures</li>
-<li>Helps maintain consistent signal magnitude across different sequence lengths</li>
+<li>Helps maintain consistent signal magnitude across different sequence
+lengths</li>
 <li>Enables better handling of variable-length sequences</li>
 </ul>
 </li>
@@ -328,13 +343,16 @@
 </ul>
 </li>
 <li>
-<p><strong>Normalization and Scaling</strong>:
-\[\Large \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</p>
+<p><strong>Normalization and Scaling</strong>: \[\Large \text{LayerNorm}(x) = \gamma \odot
+\frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</p>
 <ul>
 <li>First normalizes the input to have zero mean and unit variance</li>
-<li>Then applies learnable scale (\(\gamma\)) and shift (\(\beta\)) parameters</li>
-<li>The \(\odot\) symbol represents elementwise multiplication (Hadamard product)</li>
-<li>For example, if \(\gamma = [1.2, 0.8, 1.5]\)  and normalized input is \([0.5, -0.3, 0.7]\), then \(\gamma \odot x = [0.6, -0.24, 1.05]\)</li>
+<li>Then applies learnable scale (\(\gamma\)) and shift (\(\beta\))
+parameters</li>
+<li>The \(\odot\) symbol represents elementwise multiplication (Hadamard
+product)</li>
+<li>For example, if \(\gamma = [1.2, 0.8, 1.5]\) and normalized input is
+\([0.5, -0.3, 0.7]\), then \(\gamma \odot x = [0.6, -0.24, 1.05]\)</li>
 </ul>
 </li>
 </ol>
@@ -350,14 +368,16 @@
 <li>
 <p><strong>Feature Learning</strong>:</p>
 <ul>
-<li>The scale (\(\gamma\)) and shift (\(\beta\)) parameters allow the network to learn which features are important</li>
+<li>The scale (\(\gamma\)) and shift (\(\beta\)) parameters allow the
+network to learn which features are important</li>
 <li>Can effectively learn to ignore or emphasize certain features</li>
 </ul>
 </li>
 <li>
 <p><strong>Independence</strong>:</p>
 <ul>
-<li>Unlike BatchNorm, LayerNorm’s statistics are computed independently for each sample</li>
+<li>Unlike BatchNorm, LayerNorm’s statistics are computed independently for
+each sample</li>
 <li>Makes it more suitable for variable-length sequences and small batch sizes</li>
 </ul>
 </li>
@@ -373,9 +393,12 @@
 </ul>
 <h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
 <h3 id="1-unfused-implementation"><a class="header" href="#1-unfused-implementation">1. Unfused implementation</a></h3>
-<p>The unfused approach executes operations separately using multiple kernels. Here are some of the kernels we wrote in the previous chapters:</p>
+<p>The unfused approach executes operations separately using multiple kernels. Here
+are some of the kernels we wrote in the previous chapters:</p>
 <h4 id="matrix-multiplication-kernel"><a class="header" href="#matrix-multiplication-kernel">Matrix multiplication kernel</a></h4>
-<p>From <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>, we reuse the tiled matrix multiplication kernel for the linear transformation. This kernel includes bounds checking to handle variable matrix dimensions safely:</p>
+<p>From <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>, we reuse the tiled matrix
+multiplication kernel for the linear transformation. This kernel includes bounds
+checking to handle variable matrix dimensions safely:</p>
 <pre><code class="language-mojo"># Idiomatic tiled matmul from p19.mojo
 def matmul_idiomatic_tiled[
     rows: Int,
@@ -464,7 +487,8 @@ def matmul_idiomatic_tiled[
 
 </code></pre>
 <h4 id="transpose-kernel"><a class="header" href="#transpose-kernel">Transpose kernel</a></h4>
-<p>For efficient memory access patterns, we use a transpose kernel with shared memory tiling:</p>
+<p>For efficient memory access patterns, we use a transpose kernel with shared
+memory tiling:</p>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
     cols: Int,
@@ -750,7 +774,8 @@ UNFUSED Algorithm Test Completed!
 
 </code></pre>
 <div class="solution-explanation">
-<p>The unfused implementation follows a straightforward approach where each thread handles one element of the output tensor. Let’s break down the key components:</p>
+<p>The unfused implementation follows a straightforward approach where each thread
+handles one element of the output tensor. Let’s break down the key components:</p>
 <ol>
 <li>
 <p><strong>Thread and Block Organization</strong>:</p>
@@ -815,7 +840,8 @@ normalized = (input_val - mean_val) * inv_std * rebind[Scalar[dtype]](
 output[batch_idx, seq_idx, hidden_idx] = normalized
 </code></pre>
 <ul>
-<li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
+<li>Apply normalization: \[\Large \text{normalized} = \gamma \odot \frac{x -
+\mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
 <li>Scale with learnable parameter <code>γ</code> (ln_weight)</li>
 <li>Add learnable bias <code>β</code> (ln_bias)</li>
 <li>Store result in output tensor</li>
@@ -881,7 +907,9 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </ul>
 </li>
 </ol>
-<p>This implementation is correct but not optimal for performance, as shown in the benchmark results where it’s slightly slower than the CPU version. The fused implementation will address these performance limitations by:</p>
+<p>This implementation is correct but not optimal for performance, as shown in the
+benchmark results where it’s slightly slower than the CPU version. The fused
+implementation will address these performance limitations by:</p>
 <ul>
 <li>Computing statistics once per sequence</li>
 <li>Reusing normalized values</li>
@@ -891,7 +919,8 @@ output[batch_idx, seq_idx, hidden_idx] = normalized
 </div>
 </details>
 <h3 id="2-fused-kernel-implementation"><a class="header" href="#2-fused-kernel-implementation">2. Fused kernel implementation</a></h3>
-<p>The fused kernel combines LayerNorm and Linear operations into a single GPU kernel:</p>
+<p>The fused kernel combines LayerNorm and Linear operations into a single GPU
+kernel:</p>
 <pre><code class="language-mojo">def minimal_fused_kernel[
     batch_size: Int,
     seq_len: Int,
@@ -1132,8 +1161,10 @@ FUSED Algorithm Test Completed!
 <ul>
 <li>Compute sum and squared sum for the sequence position</li>
 <li>Calculate mean: \[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</li>
-<li>Calculate variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</li>
-<li>Compute inverse standard deviation: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>Calculate variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i -
+\mu)^2 \]</li>
+<li>Compute inverse standard deviation: \[\Large \text{inv_std} =
+\frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
 </ul>
 </li>
 <li>
@@ -1141,8 +1172,10 @@ FUSED Algorithm Test Completed!
 <ul>
 <li>For each output dimension:
 <ul>
-<li>Compute normalized value: \[\Large \text{normalized} = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
-<li>Multiply with linear weight and accumulate: \[\Large \text{acc} = \sum_{h=1}^{H} \text{normalized}<em>h \cdot W</em>{out,h} \]</li>
+<li>Compute normalized value: \[\Large \text{normalized} = \gamma \odot
+\frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta \]</li>
+<li>Multiply with linear weight and accumulate: \[\Large \text{acc} =
+\sum_{h=1}^{H} \text{normalized}<em>h \cdot W</em>{out,h} \]</li>
 <li>Add linear bias: \[\Large \text{output} = \text{acc} + b_{out} \]</li>
 </ul>
 </li>
@@ -1160,11 +1193,13 @@ FUSED Algorithm Test Completed!
 </ul>
 </li>
 </ol>
-<p>This implementation achieves better performance than the unfused version by reducing memory bandwidth usage and kernel launch overhead.</p>
+<p>This implementation achieves better performance than the unfused version by
+reducing memory bandwidth usage and kernel launch overhead.</p>
 </div>
 </details>
 <h2 id="advantages-of-kernel-fusion"><a class="header" href="#advantages-of-kernel-fusion">Advantages of kernel fusion</a></h2>
-<p>In this puzzle, we’ve explored two approaches to implementing LayerNorm + Linear operations:</p>
+<p>In this puzzle, we’ve explored two approaches to implementing LayerNorm + Linear
+operations:</p>
 <ol>
 <li>
 <p><strong>Unfused implementation</strong>:</p>
@@ -1195,7 +1230,9 @@ FUSED Algorithm Test Completed!
 <li>No intermediate tensor allocations between operations</li>
 <li>Reduced global memory reads/writes</li>
 <li>Reuse of normalized values for linear transformation</li>
-<li>Memory bandwidth reduction: \[\Large \text{reduction} = \frac{\text{unfused_bandwidth} - \text{fused_bandwidth}}{\text{unfused_bandwidth}}\]</li>
+<li>Memory bandwidth reduction: \[\Large \text{reduction} =
+\frac{\text{unfused_bandwidth} -
+\text{fused_bandwidth}}{\text{unfused_bandwidth}}\]</li>
 </ul>
 </li>
 <li>
@@ -1250,7 +1287,10 @@ FUSED Algorithm Test Completed!
 </ul>
 </li>
 </ol>
-<p>💡 <strong>Key insight</strong>: Kernel fusion is particularly beneficial for operations that are frequently used together in neural networks, like LayerNorm + Linear in transformer architectures. The performance benefits become more significant with larger input sizes and more complex models.</p>
+<p>💡 <strong>Key insight</strong>: Kernel fusion is particularly beneficial for operations that
+are frequently used together in neural networks, like LayerNorm + Linear in
+transformer architectures. The performance benefits become more significant with
+larger input sizes and more complex models.</p>
 
                     </main>
 

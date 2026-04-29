@@ -211,14 +211,22 @@
                         <!-- i18n-source-commit: 0b65eaf4dea76e1eb968b4fc2ca14e563df205a2 -->
 <h1 id="-탐정-수사-두-번째-사례"><a class="header" href="#-탐정-수사-두-번째-사례">🔍 탐정 수사: 두 번째 사례</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><a href="./first_case.html">첫 번째 사례에서 익힌 크래시 디버깅 스킬</a>을 바탕으로, 이번에는 전혀 다른 유형의 도전을 마주합니다: 크래시 없이 잘못된 결과를 내는 <strong>로직 버그</strong>입니다.</p>
+<p><a href="./first_case.html">첫 번째 사례에서 익힌 크래시 디버깅 스킬</a>을 바탕으로, 이번에는
+전혀 다른 유형의 도전을 마주합니다: 크래시 없이 잘못된 결과를 내는
+<strong>로직 버그</strong>입니다.</p>
 <p><strong>디버깅 관점의 전환:</strong></p>
 <ul>
-<li><strong><a href="./first_case.html">첫 번째 사례</a></strong>: 명확한 크래시 신호(<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>)가 조사를 안내함</li>
-<li><strong>두 번째 사례</strong>: 크래시도 없고 에러 메시지도 없음 - 탐정처럼 파헤쳐야 하는 미묘하게 잘못된 결과만 있음</li>
+<li><strong><a href="./first_case.html">첫 번째 사례</a></strong>: 명확한 크래시
+신호(<code>CUDA_ERROR_ILLEGAL_ADDRESS</code>)가 조사를 안내함</li>
+<li><strong>두 번째 사례</strong>: 크래시도 없고 에러 메시지도 없음 - 탐정처럼 파헤쳐야 하는
+미묘하게 잘못된 결과만 있음</li>
 </ul>
-<p>이번 중급 디버깅 챌린지에서는 <code>TileTensor</code> 연산을 사용하는 <strong>알고리즘 오류</strong>를 조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서 훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.</p>
-<p><strong>사전 준비</strong>: <a href="./essentials.html">Mojo GPU 디버깅의 핵심</a>과 <a href="./first_case.html">탐정 수사: 첫 번째 사례</a>를 먼저 완료해서 CUDA-GDB 워크플로우와 체계적인 디버깅 기법을 익혀두세요. 아래 명령을 실행했는지 확인하세요:</p>
+<p>이번 중급 디버깅 챌린지에서는 <code>TileTensor</code> 연산을 사용하는 <strong>알고리즘 오류</strong>를
+조사합니다. 프로그램은 성공적으로 실행되지만 잘못된 출력을 내는데, 실제 개발에서
+훨씬 흔하면서도 까다로운 디버깅 시나리오입니다.</p>
+<p><strong>사전 준비</strong>: <a href="./essentials.html">Mojo GPU 디버깅의 핵심</a>과
+<a href="./first_case.html">탐정 수사: 첫 번째 사례</a>를 먼저 완료해서 CUDA-GDB 워크플로우와
+체계적인 디버깅 기법을 익혀두세요. 아래 명령을 실행했는지 확인하세요:</p>
 <pre><code class="language-bash">pixi run -e nvidia setup-cuda-gdb
 </code></pre>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
@@ -266,13 +274,16 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 </code></pre>
 <h2 id="과제-탐정-수사"><a class="header" href="#과제-탐정-수사">과제: 탐정 수사</a></h2>
-<p><strong>도전</strong>: 프로그램은 크래시 없이 실행되지만 일정한 패턴으로 잘못된 결과를 냅니다. 코드를 보지 않은 상태에서, 이 로직 버그를 조사하기 위한 체계적인 접근 방식은 무엇일까요?</p>
+<p><strong>도전</strong>: 프로그램은 크래시 없이 실행되지만 일정한 패턴으로 잘못된 결과를
+냅니다. 코드를 보지 않은 상태에서, 이 로직 버그를 조사하기 위한 체계적인 접근
+방식은 무엇일까요?</p>
 <p><strong>생각해 볼 점:</strong></p>
 <ul>
 <li>잘못된 결과에서 어떤 패턴이 보이나요?</li>
 <li>제대로 돌지 않는 것 같은 반복문은 어떻게 조사할 건가요?</li>
 <li>변수를 직접 검사할 수 없을 때 어떤 디버깅 전략이 효과적일까요?</li>
-<li>조사를 안내해 줄 크래시 신호가 없을 때, <a href="./first_case.html">첫 번째 사례</a>의 체계적인 조사 방법을 어떻게 적용할 수 있을까요?</li>
+<li>조사를 안내해 줄 크래시 신호가 없을 때, <a href="./first_case.html">첫 번째 사례</a>의
+체계적인 조사 방법을 어떻게 적용할 수 있을까요?</li>
 </ul>
 <p>다음 명령으로 시작해 보세요:</p>
 <pre><code class="language-bash">pixi run -e nvidia mojo debug --cuda-gdb --break-on-launch problems/p09/p09.mojo --second-case
@@ -293,14 +304,18 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ol>
-<li><strong>패턴 분석부터</strong> - 기대값과 실제 결과의 관계를 살펴보세요 (차이에 어떤 수학적 패턴이 있나요?)</li>
+<li><strong>패턴 분석부터</strong> - 기대값과 실제 결과의 관계를 살펴보세요 (차이에 어떤
+수학적 패턴이 있나요?)</li>
 <li><strong>실행 흐름에 집중</strong> - 변수에 접근할 수 없으면 반복 횟수를 세어보세요</li>
-<li><strong>단순한 브레이크포인트 사용</strong> - 최적화된 코드에서는 복잡한 디버깅 명령이 실패하기 쉽습니다</li>
-<li><strong>수학적 추론</strong> - 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 따져보세요</li>
+<li><strong>단순한 브레이크포인트 사용</strong> - 최적화된 코드에서는 복잡한 디버깅 명령이
+실패하기 쉽습니다</li>
+<li><strong>수학적 추론</strong> - 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을
+따져보세요</li>
 <li><strong>누락된 데이터 조사</strong> - 결과가 일관되게 기대보다 작다면, 무엇이 빠졌을까요?</li>
 <li><strong>호스트 출력 검증</strong> - 최종 결과에서 버그의 패턴이 드러나는 경우가 많습니다</li>
 <li><strong>알고리즘 경계 분석</strong> - 반복문이 올바른 개수의 요소를 처리하는지 확인하세요</li>
-<li><strong>작동하는 케이스와 교차 검증</strong> - 스레드 3은 정확하게 작동하는데 다른 것들은 왜 안 될까요?</li>
+<li><strong>작동하는 케이스와 교차 검증</strong> - 스레드 3은 정확하게 작동하는데 다른 것들은
+왜 안 될까요?</li>
 </ol>
 </div>
 </details>
@@ -324,7 +339,8 @@ To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=tru
 <li>스레드 2: 3.0 얻음, 기대값 6.0 → 3.0 누락</li>
 <li>스레드 3: 5.0 얻음, 기대값 5.0 → ✅ 정확</li>
 </ul>
-<p><strong>초기 가설</strong>: 각 스레드가 일부 데이터를 누락하고 있는데, 스레드 3만 정확하게 작동합니다.</p>
+<p><strong>초기 가설</strong>: 각 스레드가 일부 데이터를 누락하고 있는데, 스레드 3만 정확하게
+작동합니다.</p>
 <h3 id="2단계-커널-진입"><a class="header" href="#2단계-커널-진입">2단계: 커널 진입</a></h3>
 <h4 id="step-3-브레이크포인트-진입-확인"><a class="header" href="#step-3-브레이크포인트-진입-확인">Step 3: 브레이크포인트 진입 확인</a></h4>
 <p>실제 디버깅 세션에서는 다음과 같이 진행됩니다:</p>
@@ -369,7 +385,8 @@ $2 = {0}
 (cuda-gdb) p a.ptr[0]@4
 $3 = {{0}, {1}, {2}, {3}}
 </code></pre>
-<p><strong>🎯 돌파구</strong>: <code>a.ptr[0]@4</code>로 전체 입력 배열을 볼 수 있습니다! 이것이 TileTensor 데이터를 검사하는 방법입니다.</p>
+<p><strong>🎯 돌파구</strong>: <code>a.ptr[0]@4</code>로 전체 입력 배열을 볼 수 있습니다! 이것이 TileTensor
+데이터를 검사하는 방법입니다.</p>
 <h3 id="3단계-핵심-반복문-조사"><a class="header" href="#3단계-핵심-반복문-조사">3단계: 핵심 반복문 조사</a></h3>
 <h4 id="step-6-반복문-모니터링-설정"><a class="header" href="#step-6-반복문-모니터링-설정">Step 6: 반복문 모니터링 설정</a></h4>
 <pre><code class="language-bash">(cuda-gdb) b 42
@@ -389,7 +406,8 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 (cuda-gdb) n
 41          for offset in range(ITER):
 </code></pre>
-<p><strong>첫 번째 반복 완료</strong>: 반복문이 42번 줄 → 43번 줄 → 41번 줄로 돌아왔습니다. 반복문이 계속됩니다.</p>
+<p><strong>첫 번째 반복 완료</strong>: 반복문이 42번 줄 → 43번 줄 → 41번 줄로 돌아왔습니다.
+반복문이 계속됩니다.</p>
 <h4 id="step-8-두-번째-반복-offset--1"><a class="header" href="#step-8-두-번째-반복-offset--1">Step 8: 두 번째 반복 (offset = 1)</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
 
@@ -411,7 +429,8 @@ CUDA thread hit Breakpoint 1, p09_process_sliding_window_...
 <pre><code class="language-bash">(cuda-gdb) n
 47          output[thread_id] = window_sum
 </code></pre>
-<p><strong>결정적 발견</strong>: 반복문이 2번만 돌고 종료되었습니다! 42번 줄의 브레이크포인트에 다시 걸리지 않고 47번 줄로 바로 넘어갔습니다.</p>
+<p><strong>결정적 발견</strong>: 반복문이 2번만 돌고 종료되었습니다! 42번 줄의 브레이크포인트에
+다시 걸리지 않고 47번 줄로 바로 넘어갔습니다.</p>
 <p><strong>결론</strong>: 반복문이 정확히 <strong>2번</strong> 돌고 종료되었습니다.</p>
 <h4 id="step-10-커널-실행-완료와-컨텍스트-손실"><a class="header" href="#step-10-커널-실행-완료와-컨텍스트-손실">Step 10: 커널 실행 완료와 컨텍스트 손실</a></h4>
 <pre><code class="language-bash">(cuda-gdb) n
@@ -424,7 +443,8 @@ No symbol "output" in current context.
 (cuda-gdb) p offset
 No symbol "offset" in current context.
 </code></pre>
-<p><strong>🔍 컨텍스트 손실</strong>: 커널 실행이 끝나면 커널 변수에 더 이상 접근할 수 없습니다. 정상적인 동작입니다.</p>
+<p><strong>🔍 컨텍스트 손실</strong>: 커널 실행이 끝나면 커널 변수에 더 이상 접근할 수 없습니다.
+정상적인 동작입니다.</p>
 <h3 id="4단계-근본-원인-분석"><a class="header" href="#4단계-근본-원인-분석">4단계: 근본 원인 분석</a></h3>
 <h4 id="step-11-관찰된-실행에서-알고리즘-분석"><a class="header" href="#step-11-관찰된-실행에서-알고리즘-분석">Step 11: 관찰된 실행에서 알고리즘 분석</a></h4>
 <p>디버깅 세션에서 관찰한 것:</p>
@@ -435,10 +455,12 @@ No symbol "offset" in current context.
 </ol>
 <p>각 스레드가 계산해야 할 것:</p>
 <ul>
-<li><strong>스레드 0</strong>: window_sum = input[-1] + input[0] + input[1] = (경계) + 0 + 1 = 1.0</li>
+<li><strong>스레드 0</strong>: window_sum = input[-1] + input[0] + input[1] = (경계) + 0 + 1 =
+1.0</li>
 <li><strong>스레드 1</strong>: window_sum = input[0] + input[1] + input[2] = 0 + 1 + 2 = 3.0</li>
 <li><strong>스레드 2</strong>: window_sum = input[1] + input[2] + input[3] = 1 + 2 + 3 = 6.0</li>
-<li><strong>스레드 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (경계) = 5.0</li>
+<li><strong>스레드 3</strong>: window_sum = input[2] + input[3] + input[4] = 2 + 3 + (경계) =
+5.0</li>
 </ul>
 <h4 id="step-12-스레드-0의-실제-실행-추적"><a class="header" href="#step-12-스레드-0의-실제-실행-추적">Step 12: 스레드 0의 실제 실행 추적</a></h4>
 <p>2번만 반복할 경우 (offset = 0, 1):</p>
@@ -471,12 +493,15 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
         value = rebind[Scalar[dtype]](a[idx])
         window_sum += value
 </code></pre>
-<p><strong>🎯 근본 원인 확인</strong>: 크기 3의 슬라이딩 윈도우를 위해 <code>ITER = 2</code>가 <code>ITER = 3</code>이어야 합니다.</p>
-<p><strong>수정 방법</strong>: 소스 코드에서 <code>comptime ITER = 2</code>를 <code>comptime ITER = 3</code>으로 변경합니다.</p>
+<p><strong>🎯 근본 원인 확인</strong>: 크기 3의 슬라이딩 윈도우를 위해 <code>ITER = 2</code>가
+<code>ITER = 3</code>이어야 합니다.</p>
+<p><strong>수정 방법</strong>: 소스 코드에서 <code>comptime ITER = 2</code>를 <code>comptime ITER = 3</code>으로
+변경합니다.</p>
 <h2 id="핵심-디버깅-교훈"><a class="header" href="#핵심-디버깅-교훈">핵심 디버깅 교훈</a></h2>
 <p><strong>변수에 접근할 수 없을 때</strong>:</p>
 <ol>
-<li><strong>실행 흐름에 집중</strong> - 브레이크포인트가 몇 번 걸리는지, 반복이 몇 번 도는지 세어보세요</li>
+<li><strong>실행 흐름에 집중</strong> - 브레이크포인트가 몇 번 걸리는지, 반복이 몇 번 도는지
+세어보세요</li>
 <li><strong>수학적 추론 사용</strong> - 일어나야 할 일과 실제로 일어나는 일을 따져보세요</li>
 <li><strong>패턴 분석</strong> - 잘못된 결과가 조사를 이끌도록 하세요</li>
 <li><strong>교차 검증</strong> - 여러 데이터 포인트에 대해 가설을 테스트하세요</li>
@@ -492,9 +517,13 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
 <ul>
 <li>TileTensor 추상화를 사용해도 근본적인 알고리즘 버그는 그대로 드러납니다</li>
 <li>텐서 내용을 검사하려 하기보다 알고리즘 로직에 집중하세요</li>
-<li>체계적인 추론으로 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을 추적하세요</li>
+<li>체계적인 추론으로 각 스레드가 접근해야 하는 것과 실제로 접근하는 것을
+추적하세요</li>
 </ul>
-<p><strong>💡 핵심 통찰</strong>: 이런 유형의 off-by-one (<em>역주: 경계값이 1만큼 어긋나는 오류</em>) 반복문 버그는 GPU 프로그래밍에서 매우 흔합니다. 여기서 배운 체계적인 접근법 - 제한된 디버거 정보에 수학적 분석과 패턴 인식을 결합하는 것 - 은 도구에 한계가 있을 때 전문 GPU 개발자들이 디버깅하는 방식 그대로입니다.</p>
+<p><strong>💡 핵심 통찰</strong>: 이런 유형의 off-by-one (<em>역주: 경계값이 1만큼 어긋나는 오류</em>)
+반복문 버그는 GPU 프로그래밍에서 매우 흔합니다. 여기서 배운 체계적인 접근법 -
+제한된 디버거 정보에 수학적 분석과 패턴 인식을 결합하는 것 - 은 도구에 한계가
+있을 때 전문 GPU 개발자들이 디버깅하는 방식 그대로입니다.</p>
 </div>
 </details>
 <h2 id="다음-단계-로직-버그에서-교착-상태로"><a class="header" href="#다음-단계-로직-버그에서-교착-상태로">다음 단계: 로직 버그에서 교착 상태로</a></h2>
@@ -506,7 +535,8 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
 <li>✅ 디버거 도구에 한계가 있을 때 <strong>수학적 추론 적용</strong></li>
 </ul>
 <h3 id="마지막-도전-탐정-수사-세-번째-사례"><a class="header" href="#마지막-도전-탐정-수사-세-번째-사례">마지막 도전: <a href="./third_case.html">탐정 수사: 세 번째 사례</a></a></h3>
-<p><strong>그런데 프로그램이 크래시하지도 않고 끝나지도 않는다면요?</strong> <strong>그냥 영원히 멈춰버린다면요?</strong></p>
+<p><strong>그런데 프로그램이 크래시하지도 않고 끝나지도 않는다면요?</strong>
+<strong>그냥 영원히 멈춰버린다면요?</strong></p>
 <p><a href="./third_case.html">세 번째 사례</a>는 궁극의 디버깅 도전을 제시합니다:</p>
 <ul>
 <li>❌ <strong>크래시 메시지 없음</strong> (첫 번째 사례처럼)</li>
@@ -526,7 +556,9 @@ for offset in range(ITER):           # ← 2번만 반복: [0, 1]
 <li><strong>두 번째 사례</strong>: 결과 패턴 분석하기 → 로직 버그 찾기</li>
 <li><strong>세 번째 사례</strong>: 스레드 상태 조사하기 → 조율 버그 찾기</li>
 </ol>
-<p>이전 두 사례에서 배운 체계적인 조사 스킬 - 가설 수립, 증거 수집, 패턴 분석 - 은 가장 어려운 GPU 문제를 디버깅할 때 핵심이 됩니다: 조율이 어긋나 영원히 서로를 기다리는 스레드들.</p>
+<p>이전 두 사례에서 배운 체계적인 조사 스킬 - 가설 수립, 증거 수집, 패턴 분석 - 은
+가장 어려운 GPU 문제를 디버깅할 때 핵심이 됩니다: 조율이 어긋나 영원히 서로를
+기다리는 스레드들.</p>
 
                     </main>
 

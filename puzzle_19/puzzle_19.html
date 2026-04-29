@@ -210,34 +210,49 @@
                     <main>
                         <h1 id="puzzle-19-attention-op"><a class="header" href="#puzzle-19-attention-op">Puzzle 19: Attention Op</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph operation. Attention is a fundamental building block of modern neural networks, popularized particularly by <a href="https://arxiv.org/abs/1706.03762">transformers</a>, that allows models to focus on relevant parts of the input when making predictions.</p>
+<p>In this puzzle, we’ll implement the attention mechanism as a custom MAX Graph
+operation. Attention is a fundamental building block of modern neural networks,
+popularized particularly by <a href="https://arxiv.org/abs/1706.03762">transformers</a>,
+that allows models to focus on relevant parts of the input when making
+predictions.</p>
 <p>Mathematically, the attention function is defined as:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p>Where:</p>
 <ul>
-<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)~\) - represents what we’re looking for</li>
-<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)~\) - represents what’s available to match against</li>
-<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)~\) - represents the information to retrieve</li>
+<li>\(Q\) is the <strong>query vector</strong> of shape \((d,)~\) - represents what we’re
+looking for</li>
+<li>\(K\) is the <strong>key matrix</strong> of shape \((\text{seq_len}, d)~\) -
+represents what’s available to match against</li>
+<li>\(V\) is the <strong>value matrix</strong> of shape \((\text{seq_len}, d)~\) -
+represents the information to retrieve</li>
 <li>The output is a <strong>weighted combination</strong> vector of shape \((d,)\)</li>
 </ul>
 <p>The computation involves three main steps:</p>
 <ol>
-<li><strong>Attention Scores</strong>: Compute \(Q \cdot K^T\) to measure how well the query matches each key vector</li>
-<li><strong>Attention Weights</strong>: Apply softmax to convert scores into a probability distribution (weights sum to 1)</li>
-<li><strong>Weighted Sum</strong>: Combine value vectors using attention weights to produce the final output</li>
+<li><strong>Attention Scores</strong>: Compute \(Q \cdot K^T\) to measure how well the query
+matches each key vector</li>
+<li><strong>Attention Weights</strong>: Apply softmax to convert scores into a probability
+distribution (weights sum to 1)</li>
+<li><strong>Weighted Sum</strong>: Combine value vectors using attention weights to produce
+the final output</li>
 </ol>
 <h2 id="understanding-attention-a-step-by-step-breakdown"><a class="header" href="#understanding-attention-a-step-by-step-breakdown">Understanding attention: a step-by-step breakdown</a></h2>
-<p>Think of attention as a <strong>smart lookup mechanism</strong>. Given a query (what you’re looking for), attention finds the most relevant information from a collection of key-value pairs:</p>
+<p>Think of attention as a <strong>smart lookup mechanism</strong>. Given a query (what you’re
+looking for), attention finds the most relevant information from a collection of
+key-value pairs:</p>
 <ol>
 <li>
-<p><strong>Step 1 - Similarity Matching</strong>: Compare your query \(Q\) against all keys \(K\) to get similarity scores</p>
+<p><strong>Step 1 - Similarity Matching</strong>: Compare your query \(Q\) against all keys
+\(K\) to get similarity scores</p>
 <ul>
-<li>Compute \(Q \cdot K^T\) where each score measures how well \(Q\) matches each key vector</li>
+<li>Compute \(Q \cdot K^T\) where each score measures how well \(Q\)
+matches each key vector</li>
 <li>Higher scores = better matches</li>
 </ul>
 </li>
 <li>
-<p><strong>Step 2 - Probability Distribution</strong>: Convert raw scores into normalized weights</p>
+<p><strong>Step 2 - Probability Distribution</strong>: Convert raw scores into normalized
+weights</p>
 <ul>
 <li>Apply softmax to ensure all weights sum to 1.0</li>
 <li>This creates a probability distribution over which values to focus on</li>
@@ -251,9 +266,12 @@
 </ul>
 </li>
 </ol>
-<p><strong>Real-world analogy</strong>: Imagine searching a library. Your query is what you want to find, the book titles are keys, and the book contents are values. Attention computes how relevant each book is to your query, then gives you a summary weighted by relevance.</p>
+<p><strong>Real-world analogy</strong>: Imagine searching a library. Your query is what you want
+to find, the book titles are keys, and the book contents are values. Attention
+computes how relevant each book is to your query, then gives you a summary
+weighted by relevance.</p>
 <h3 id="visual-computation-flow"><a class="header" href="#visual-computation-flow">Visual computation flow</a></h3>
-<pre><code>Input:  Q(16,)    K(16,16)    V(16,16)
+<pre><code class="language-text">Input:  Q(16,)    K(16,16)    V(16,16)
          ↓           ↓           ↓
 Step 1: Q(1,16) @ K^T(16,16) → Scores(1,16)
          ↓
@@ -261,20 +279,32 @@ Step 2: softmax(Scores) → Weights(1,16)  [sum = 1.0]
          ↓
 Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
-<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to \((1,16)\) so we can use matrix multiplication instead of manual dot products. This allows us to leverage the highly optimized tiled matmul kernel from Puzzle 18!</p>
-<p>Our GPU implementation <strong>reuses and combines optimized kernels from previous puzzles</strong>:</p>
+<p><strong>Key insight</strong>: We reshape the query vector \(Q\) from shape \((16,)\) to
+\((1,16)\) so we can use matrix multiplication instead of manual dot products.
+This allows us to leverage the highly optimized tiled matmul kernel from Puzzle
+18!</p>
+<p>Our GPU implementation
+<strong>reuses and combines optimized kernels from previous puzzles</strong>:</p>
 <ul>
-<li><strong><a href="../puzzle_16/puzzle_16.html">Tiled matrix multiplication from Puzzle 16</a></strong> for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
+<li><strong><a href="../puzzle_16/puzzle_16.html">Tiled matrix multiplication from Puzzle 16</a></strong>
+for efficient \(Q \cdot K^T\) and \(\text{weights} \cdot V\) operations</li>
 <li><strong>Shared memory transpose</strong> for computing \(K^T\) efficiently</li>
-<li><strong><a href="../puzzle_18/puzzle_18.html">Parallel softmax from Puzzle 18</a></strong> for numerically stable attention weight computation</li>
+<li><strong><a href="../puzzle_18/puzzle_18.html">Parallel softmax from Puzzle 18</a></strong> for
+numerically stable attention weight computation</li>
 </ul>
 <blockquote>
-<p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex operations by combining proven, optimized kernels from previous puzzles. Rather than writing everything from scratch, we leverage the <code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_kernel</code> from Puzzle 18, showcasing the power of modular GPU kernel design.</p>
+<p><strong>🔄 Kernel Reuse Strategy</strong>: This puzzle demonstrates how to build complex
+operations by combining proven, optimized kernels from previous puzzles.
+Rather than writing everything from scratch, we leverage the
+<code>matmul_idiomatic_tiled</code> from Puzzle 16 and <code>softmax_kernel</code> from Puzzle 18,
+showcasing the power of modular GPU kernel design.</p>
 </blockquote>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <ul>
 <li>Vector attention mechanism for sequence processing</li>
-<li><strong>Kernel reuse</strong>: Leveraging proven implementations from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
+<li><strong>Kernel reuse</strong>: Leveraging proven implementations from
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
 <li>Efficient matrix multiplication using shared memory tiling</li>
 <li>Memory-optimized tensor reshaping to minimize buffer allocation</li>
 <li>Integration of multiple optimized kernels into a single operation</li>
@@ -283,11 +313,15 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
-<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16~\) - number of key/value vectors in our sequence</li>
-<li><strong>Model dimension</strong>: \(\text{D} = 16~\) - dimensionality of each vector (query, keys, values)</li>
+<li><strong>Sequence length</strong>: \(\text{SEQ_LEN} = 16~\) - number of key/value vectors
+in our sequence</li>
+<li><strong>Model dimension</strong>: \(\text{D} = 16~\) - dimensionality of each vector
+(query, keys, values)</li>
 <li><strong>Threads per block</strong>: Individually optimized for each kernel</li>
-<li><strong>Grid dimensions</strong>: Computed dynamically to handle different matrix sizes efficiently</li>
-<li><strong>Shared memory</strong>: Utilized in transpose, matmul, and softmax kernels for performance</li>
+<li><strong>Grid dimensions</strong>: Computed dynamically to handle different matrix sizes
+efficiently</li>
+<li><strong>Shared memory</strong>: Utilized in transpose, matmul, and softmax kernels for
+performance</li>
 </ul>
 <p>Layout configuration:</p>
 <ul>
@@ -299,11 +333,16 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </ul>
 <p>Key aspects of this puzzle include:</p>
 <ol>
-<li><strong>Multi-kernel orchestration</strong>: Combining transpose, matmul, and softmax operations</li>
-<li><strong>Memory optimization</strong>: Using reshape operations and buffer reuse to minimize allocations</li>
-<li><strong>Numerical stability</strong>: Leveraging the proven softmax implementation from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
-<li><strong>Performance optimization</strong>: Using tiled algorithms from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> for all matrix operations</li>
-<li><strong>Multi-input operations</strong>: Handling three input tensors (Q, K, V) in a single custom op</li>
+<li><strong>Multi-kernel orchestration</strong>: Combining transpose, matmul, and softmax
+operations</li>
+<li><strong>Memory optimization</strong>: Using reshape operations and buffer reuse to
+minimize allocations</li>
+<li><strong>Numerical stability</strong>: Leveraging the proven softmax implementation from
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></li>
+<li><strong>Performance optimization</strong>: Using tiled algorithms from
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> for all matrix operations</li>
+<li><strong>Multi-input operations</strong>: Handling three input tensors (Q, K, V) in a
+single custom op</li>
 </ol>
 <p>Our attention custom operation will:</p>
 <ul>
@@ -313,7 +352,10 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <li>Match the results of NumPy reference implementation</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>To complete this puzzle, we’ll leverage the tiled matmul kernel from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and the softmax kernel from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. You only need to implement the transpose kernel in the Mojo file using shared memory.</p>
+<p>To complete this puzzle, we’ll leverage the tiled matmul kernel from
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> and the softmax kernel from
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>. You only need to implement the transpose
+kernel in the Mojo file using shared memory.</p>
 <h3 id="1-implement-the-transpose-kernel"><a class="header" href="#1-implement-the-transpose-kernel">1. Implement the transpose kernel</a></h3>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
@@ -337,33 +379,46 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>Transpose Kernel Implementation Guide:</strong></p>
 <ol>
 <li>
-<p><strong>Shared Memory Setup</strong>: Use <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]())</code> to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared memory tile for efficient data exchange between threads</p>
+<p><strong>Shared Memory Setup</strong>: Use
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]())</code>
+to create a square <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> shared
+memory tile for efficient data exchange between threads</p>
 </li>
 <li>
 <p><strong>Thread Indexing</strong>: Map threads to matrix elements:</p>
 <ul>
-<li><code>local_row = thread_idx.y</code>, <code>local_col = thread_idx.x</code> (position within the block)</li>
-<li><code>global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row</code> (position in the full matrix)</li>
+<li><code>local_row = thread_idx.y</code>, <code>local_col = thread_idx.x</code> (position within the
+block)</li>
+<li><code>global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row</code> (position
+in the full matrix)</li>
 </ul>
 </li>
 <li>
 <p><strong>Two-Phase Operation</strong>:</p>
 <ul>
-<li><strong>Phase 1</strong>: Load data from global memory into shared memory with normal indexing</li>
-<li><strong>Phase 2</strong>: Store data from shared memory to global memory with swapped indexing</li>
+<li><strong>Phase 1</strong>: Load data from global memory into shared memory with normal
+indexing</li>
+<li><strong>Phase 2</strong>: Store data from shared memory to global memory with swapped
+indexing</li>
 </ul>
 </li>
 <li>
-<p><strong>Critical Synchronization</strong>: Call <code>barrier()</code> between loading and storing to ensure all threads have finished loading before any thread starts storing</p>
+<p><strong>Critical Synchronization</strong>: Call <code>barrier()</code> between loading and storing to
+ensure all threads have finished loading before any thread starts storing</p>
 </li>
 <li>
-<p><strong>Transpose Magic</strong>: The transpose happens through swapped indexing: <code>shared_tile[local_col, local_row]</code> instead of <code>shared_tile[local_row, local_col]</code></p>
+<p><strong>Transpose Magic</strong>: The transpose happens through swapped indexing:
+<code>shared_tile[local_col, local_row]</code> instead of
+<code>shared_tile[local_row, local_col]</code></p>
 </li>
 <li>
-<p><strong>Boundary Handling</strong>: Check bounds when accessing global memory to avoid out-of-bounds reads/writes for matrices that don’t perfectly divide by <code>TRANSPOSE_BLOCK_DIM_XY</code> x <code>TRANSPOSE_BLOCK_DIM_XY</code></p>
+<p><strong>Boundary Handling</strong>: Check bounds when accessing global memory to avoid
+out-of-bounds reads/writes for matrices that don’t perfectly divide by
+<code>TRANSPOSE_BLOCK_DIM_XY</code> x <code>TRANSPOSE_BLOCK_DIM_XY</code></p>
 </li>
 <li>
-<p><strong>Memory Coalescing</strong>: This pattern ensures both reads and writes are coalesced for optimal memory bandwidth utilization</p>
+<p><strong>Memory Coalescing</strong>: This pattern ensures both reads and writes are
+coalesced for optimal memory bandwidth utilization</p>
 </li>
 </ol>
 </div>
@@ -477,7 +532,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
   </div>
 </div>
 <p>When successful, you should see output similar to on CPU and GPU:</p>
-<pre><code>Input shapes: Q=(16,), K=(16, 16), V=(16, 16)
+<pre><code class="language-text">Input shapes: Q=(16,), K=(16, 16), V=(16, 16)
 Sample Q values: [ 0.04967142 -0.01382643  0.06476886  0.15230298 -0.02341534]
 Sample K[0] values: [-0.10128311  0.03142473 -0.09080241 -0.14123037  0.14656489]
 Sample V[0] values: [ 0.11631638  0.00102331 -0.09815087  0.04621035  0.01990597]
@@ -557,27 +612,43 @@ Output vector norms:
   GPU: 0.092764
   Expected: 0.092764
 </code></pre>
-<p>This indicates that your custom MAX Graph operation correctly implements the attention algorithm and produces results matching the NumPy reference implementation.</p>
+<p>This indicates that your custom MAX Graph operation correctly implements the
+attention algorithm and produces results matching the NumPy reference
+implementation.</p>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>To solve this puzzle, we need to implement the transpose kernel in Mojo and complete the Python graph definition for our attention custom operation. This puzzle builds upon concepts from previous puzzles, combining <strong>tiled matrix multiplication from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and <strong>softmax from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete attention mechanism.</p>
+<p>To solve this puzzle, we need to implement the transpose kernel in Mojo and
+complete the Python graph definition for our attention custom operation. This
+puzzle builds upon concepts from previous puzzles, combining
+<strong>tiled matrix multiplication from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a></strong> and
+<strong>softmax from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a></strong> into a complete
+attention mechanism.</p>
 <h3 id="reused-kernels"><a class="header" href="#reused-kernels">Reused kernels</a></h3>
 <p>Our implementation directly incorporates these proven kernels:</p>
 <ol>
-<li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> - Powers both \(Q \times K^T\) and \(\text{weights} \times V\) operations</li>
-<li><strong><code>softmax_kernel</code></strong> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a> - Provides numerically stable attention weight computation</li>
+<li><strong><code>matmul_idiomatic_tiled</code></strong> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> -
+Powers both \(Q \times K^T\) and \(\text{weights} \times V\)
+operations</li>
+<li><strong><code>softmax_kernel</code></strong> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a> - Provides
+numerically stable attention weight computation</li>
 </ol>
-<p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations built by orchestrating proven, optimized components rather than monolithic implementations.</p>
+<p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations
+built by orchestrating proven, optimized components rather than monolithic
+implementations.</p>
 <p>The attention operation follows the canonical mathematical definition:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p><strong>Breaking down the math</strong>:</p>
 <ul>
-<li>\(Q \cdot K^T~\): Query-key similarity scores of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{softmax}(\cdot)~\): Normalize scores to probabilities of shape: \((1, \text{seq_len})\)</li>
-<li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1, d)\)</li>
+<li>\(Q \cdot K^T~\): Query-key similarity scores of shape: \((1,
+\text{seq_len})\)</li>
+<li>\(\text{softmax}(\cdot)~\): Normalize scores to probabilities of shape:
+\((1, \text{seq_len})\)</li>
+<li>\(\text{weights} \cdot V~\): Weighted combination of values of shape: \((1,
+d)\)</li>
 </ul>
-<p>This involves several computational steps that we optimize using GPU kernels from previous puzzles.</p>
+<p>This involves several computational steps that we optimize using GPU kernels
+from previous puzzles.</p>
 <h3 id="1-transpose-kernel-implementation"><a class="header" href="#1-transpose-kernel-implementation">1. Transpose kernel implementation</a></h3>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
@@ -623,7 +694,8 @@ Output vector norms:
 
 </code></pre>
 <div class="solution-explanation">
-<p>The transpose kernel uses <strong>shared memory tiling</strong> to achieve coalesced memory access patterns. Key implementation details:</p>
+<p>The transpose kernel uses <strong>shared memory tiling</strong> to achieve coalesced memory
+access patterns. Key implementation details:</p>
 <h4 id="critical-transpose-pattern"><a class="header" href="#critical-transpose-pattern">Critical transpose pattern</a></h4>
 <pre><code class="language-mojo"># Load with normal indexing
 shared_tile[local_row, local_col] = inp[global_row, global_col]
@@ -631,7 +703,10 @@ barrier()
 # Store with swapped indexing for transpose
 output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
-<p>The transpose happens through <strong>swapped indexing</strong> in shared memory access (<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and <strong>swapped block coordinates</strong> for output positioning. This ensures both reads and writes remain coalesced while achieving the transpose operation.</p>
+<p>The transpose happens through <strong>swapped indexing</strong> in shared memory access
+(<code>[local_col, local_row]</code> instead of <code>[local_row, local_col]</code>) and
+<strong>swapped block coordinates</strong> for output positioning. This ensures both reads
+and writes remain coalesced while achieving the transpose operation.</p>
 </div>
 <h3 id="2-gpu-kernel-orchestration"><a class="header" href="#2-gpu-kernel-orchestration">2. GPU kernel orchestration</a></h3>
 <pre><code class="language-mojo">
@@ -715,7 +790,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 
 </code></pre>
 <div class="solution-explanation">
-<p>The GPU orchestration demonstrates <strong>sophisticated kernel chaining</strong> and <strong>zero-copy memory optimization</strong>:</p>
+<p>The GPU orchestration demonstrates <strong>sophisticated kernel chaining</strong> and
+<strong>zero-copy memory optimization</strong>:</p>
 <h4 id="advanced-memory-optimization-strategies"><a class="header" href="#advanced-memory-optimization-strategies">Advanced memory optimization strategies</a></h4>
 <pre><code class="language-mojo"># Zero-copy reshaping - no data movement, just reinterpret tensor shape
 q_2d = q_tensor.reshape[layout_q_2d]()
@@ -724,21 +800,30 @@ weights = scores_2d.reshape[layout_scores]()
 </code></pre>
 <p>The implementation achieves <strong>maximum memory efficiency</strong> through:</p>
 <ul>
-<li><strong>Zero-copy reshaping</strong>: Reinterpreting tensor shapes without moving data in memory</li>
-<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual purposes as both scores \((1,\text{seq_len})\) and weights \((\text{seq_len},)\)</li>
-<li><strong>Minimal allocations</strong>: Only 2 temporary buffers power the entire attention operation</li>
+<li><strong>Zero-copy reshaping</strong>: Reinterpreting tensor shapes without moving data in
+memory</li>
+<li><strong>Intelligent buffer reuse</strong>: The same <code>scores_weights_buf</code> serves dual
+purposes as both scores \((1,\text{seq_len})\) and weights
+\((\text{seq_len},)\)</li>
+<li><strong>Minimal allocations</strong>: Only 2 temporary buffers power the entire attention
+operation</li>
 <li><strong>Memory coalescing</strong>: All operations maintain optimal memory access patterns</li>
 </ul>
 <h4 id="strategic-kernel-reuse-pattern"><a class="header" href="#strategic-kernel-reuse-pattern">Strategic kernel reuse pattern</a></h4>
 <ul>
-<li><strong>Steps 3 &amp; 7</strong>: Both leverage <code>matmul_idiomatic_tiled</code> from <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>
+<li><strong>Steps 3 &amp; 7</strong>: Both leverage <code>matmul_idiomatic_tiled</code> from
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>
 <ul>
-<li>Step 3: \(Q \times K^T\) → attention scores computation \((1,d) \times (d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
-<li>Step 7: \(\text{weights} \times V\) → final weighted output \((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
-<li>Both operations include bounds checking for robustness with variable matrix dimensions</li>
+<li>Step 3: \(Q \times K^T\) → attention scores computation \((1,d) \times
+(d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
+<li>Step 7: \(\text{weights} \times V\) → final weighted output
+\((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
+<li>Both operations include bounds checking for robustness with variable matrix
+dimensions</li>
 </ul>
 </li>
-<li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>
+<li><strong>Step 5</strong>: Employs <code>softmax_kernel</code> from
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>
 <ul>
 <li>Converts raw scores into normalized probability distribution</li>
 <li>Ensures numerical stability through max subtraction and parallel reduction</li>
@@ -746,36 +831,48 @@ weights = scores_2d.reshape[layout_scores]()
 </ul>
 </li>
 </ul>
-<p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations built by orchestrating proven, optimized kernels rather than monolithic implementations!</p>
+<p>This exemplifies <strong>modular GPU architecture</strong>: complex neural network operations
+built by orchestrating proven, optimized kernels rather than monolithic
+implementations!</p>
 </div>
 <h3 id="key-implementation-insights"><a class="header" href="#key-implementation-insights">Key implementation insights</a></h3>
 <div class="solution-explanation">
 <h4 id="memory-optimization-strategy"><a class="header" href="#memory-optimization-strategy">Memory optimization strategy</a></h4>
-<p>The implementation achieves <strong>minimal memory allocation</strong> through aggressive buffer reuse:</p>
+<p>The implementation achieves <strong>minimal memory allocation</strong> through aggressive
+buffer reuse:</p>
 <pre><code class="language-mojo"># Only 2 temporary buffers needed for the entire operation
 k_t_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len * d)
 scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 </code></pre>
 <p><strong>Key optimization insights</strong>:</p>
 <ul>
-<li>The same <code>scores_weights_buf</code> is reused for both attention scores and weights through reshape operations</li>
+<li>The same <code>scores_weights_buf</code> is reused for both attention scores and weights
+through reshape operations</li>
 <li>Zero-copy tensor reshaping eliminates unnecessary data movement</li>
 </ul>
 <h4 id="kernel-reuse-architecture"><a class="header" href="#kernel-reuse-architecture">Kernel reuse architecture</a></h4>
-<p>This puzzle showcases <strong>modular kernel design</strong> by combining three specialized kernels:</p>
+<p>This puzzle showcases <strong>modular kernel design</strong> by combining three specialized
+kernels:</p>
 <ul>
-<li><strong><code>matmul_idiomatic_tiled</code></strong> (used twice) - Powers both \(Q \times K^T\) and \(\text{weights} \times V\) operations</li>
-<li><strong><code>softmax_kernel</code></strong> - Provides numerically stable attention weight computation with parallel reduction</li>
-<li><strong><code>transpose_kernel</code></strong> - Enables efficient \(K^T\) computation with coalesced memory access</li>
+<li><strong><code>matmul_idiomatic_tiled</code></strong> (used twice) - Powers both \(Q \times K^T\)
+and \(\text{weights} \times V\) operations</li>
+<li><strong><code>softmax_kernel</code></strong> - Provides numerically stable attention weight
+computation with parallel reduction</li>
+<li><strong><code>transpose_kernel</code></strong> - Enables efficient \(K^T\) computation with
+coalesced memory access</li>
 </ul>
 <p><strong>Architectural benefits</strong>:</p>
 <ul>
 <li><strong>Composability</strong>: Complex operations built from proven components</li>
 <li><strong>Maintainability</strong>: Each kernel has a single, well-defined responsibility</li>
-<li><strong>Performance</strong>: Leverages highly optimized implementations from previous puzzles</li>
-<li><strong>Scalability</strong>: Modular design enables easy extension to larger attention mechanisms</li>
+<li><strong>Performance</strong>: Leverages highly optimized implementations from previous
+puzzles</li>
+<li><strong>Scalability</strong>: Modular design enables easy extension to larger attention
+mechanisms</li>
 </ul>
-<p>The implementation demonstrates that <strong>sophisticated neural network operations</strong> can be built by orchestrating simpler, well-tested GPU kernels rather than writing monolithic implementations.</p>
+<p>The implementation demonstrates that <strong>sophisticated neural network operations</strong>
+can be built by orchestrating simpler, well-tested GPU kernels rather than
+writing monolithic implementations.</p>
 </div>
 </details>
 

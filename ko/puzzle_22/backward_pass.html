@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="-오토그래드-통합과-역방향-패스"><a class="header" href="#-오토그래드-통합과-역방향-패스">⛓️ 오토그래드 통합과 역방향 패스</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을 살펴봅니다. 역방향 패스는 다음에 대한 기울기를 계산합니다:</p>
+<p>이 퍼즐에서는 퓨전 LayerNorm + Linear 연산의 역방향 패스(backward pass) 구현을
+살펴봅니다. 역방향 패스는 다음에 대한 기울기를 계산합니다:</p>
 <ul>
 <li>입력 텐서</li>
 <li>LayerNorm 스케일 (\(\gamma\))과 시프트 (\(\beta\)) 파라미터</li>
@@ -220,8 +221,12 @@
 <p>구현할 수학적 연산은 다음과 같습니다:</p>
 <ol>
 <li>
-<p>LayerNorm 역방향 패스 (유도 과정의 상세 내용은 <a href="#layernorm-%EC%97%AD%EB%B0%A9%ED%96%A5-%ED%8C%A8%EC%8A%A4%EC%9D%98-%EC%83%81%EC%84%B8-%EC%9C%A0%EB%8F%84">LayerNorm 역방향 패스의 상세 유도</a> 참조):
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
+<p>LayerNorm 역방향 패스 (유도 과정의 상세 내용은
+<a href="#layernorm-%EC%97%AD%EB%B0%A9%ED%96%A5-%ED%8C%A8%EC%8A%A4%EC%9D%98-%EC%83%81%EC%84%B8-%EC%9C%A0%EB%8F%84">LayerNorm 역방향 패스의 상세 유도</a>
+참조):
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot
+\gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x -
+\mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
 </li>
 <li>
 <p>Linear 역방향 패스:
@@ -231,8 +236,9 @@
 </li>
 <li>
 <p>퓨전 연산의 연쇄 법칙:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}} \frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial x} \]
-여기서:</p>
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}}
+\frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial
+x} \] 여기서:</p>
 </li>
 </ol>
 <ul>
@@ -292,9 +298,11 @@
 <li>데이터 타입: <code>DType.float32</code></li>
 </ul>
 <h2 id="구현-고급"><a class="header" href="#구현-고급">구현 (고급)</a></h2>
-<p>퓨전 역방향 패스 커널은 LayerNorm과 Linear의 역방향 패스 연산을 하나의 GPU 커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:</p>
+<p>퓨전 역방향 패스 커널은 LayerNorm과 Linear의 역방향 패스 연산을 하나의 GPU
+커널로 결합합니다. 이 구현은 다음을 신중하게 다뤄야 하는 도전적인 과제입니다:</p>
 <ul>
-<li>기울기 누적을 위한 <a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">원자적 연산</a></li>
+<li>기울기 누적을 위한
+<a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">원자적 연산</a></li>
 <li>기울기 계산에서의 수치 안정성</li>
 <li>효율적인 GPU 활용을 위한 메모리 접근 패턴</li>
 <li>연산 간 적절한 동기화</li>
@@ -704,7 +712,8 @@ BACKWARD PASS Test Completed!
 <li>출력 텐서: <code>[batch_size, seq_len, output_dim]</code></li>
 <li>가중치 행렬: <code>[output_dim, hidden_dim]</code></li>
 <li>기울기: 입력 기울기용 <code>[batch_size, seq_len, hidden_dim]</code></li>
-<li>파라미터 기울기: LayerNorm용 <code>[hidden_dim]</code>, Linear용 <code>[output_dim, hidden_dim]</code></li>
+<li>파라미터 기울기: LayerNorm용 <code>[hidden_dim]</code>, Linear용
+<code>[output_dim, hidden_dim]</code></li>
 </ul>
 </li>
 </ul>
@@ -716,15 +725,27 @@ BACKWARD PASS Test Completed!
 <ul>
 <li>평균: \[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</li>
 <li>분산: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</li>
-<li>역표준편차: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>역표준편차: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 +
+\epsilon}} \]</li>
 </ul>
 </li>
-<li>정규화된 값을 계산합니다: \[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>정규화된 값을 계산합니다: \[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2
+<ul>
+<li>\epsilon}} \]</li>
+</ul>
+</li>
 <li>기울기를 계산합니다:
 <ul>
-<li>입력 기울기: \[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</li>
-<li>스케일 기울기: \[\Large \frac{\partial L}{\partial \gamma} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \]</li>
-<li>시프트 기울기: \[\Large \frac{\partial L}{\partial \beta} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \]</li>
+<li>입력 기울기: \[\Large \frac{\partial L}{\partial x} = \frac{\partial
+L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1
+<ul>
+<li>\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</li>
+</ul>
+</li>
+<li>스케일 기울기: \[\Large \frac{\partial L}{\partial \gamma} =
+\sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \]</li>
+<li>시프트 기울기: \[\Large \frac{\partial L}{\partial \beta} =
+\sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \]</li>
 </ul>
 </li>
 </ul>
@@ -734,9 +755,12 @@ BACKWARD PASS Test Completed!
 <ul>
 <li>각 출력 차원에 대해:
 <ul>
-<li>Bias 기울기: \[\Large \frac{\partial L}{\partial b} = \frac{\partial L}{\partial y} \]</li>
-<li>가중치 기울기: \[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \]</li>
-<li>입력 기울기: \[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \]</li>
+<li>Bias 기울기: \[\Large \frac{\partial L}{\partial b} = \frac{\partial
+L}{\partial y} \]</li>
+<li>가중치 기울기: \[\Large \frac{\partial L}{\partial W} = \frac{\partial
+L}{\partial y}x^T \]</li>
+<li>입력 기울기: \[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial
+L}{\partial y} \]</li>
 </ul>
 </li>
 <li>기울기 누적을 위한 원자적 연산 사용:
@@ -807,11 +831,13 @@ BACKWARD PASS Test Completed!
 <li>적절한 메모리 정렬 보장</li>
 <li>효율적인 오토그래드 통합</li>
 </ul>
-<p>퓨전 역방향 패스는 LayerNorm + Linear 연산이 자주 함께 사용되는 트랜스포머 아키텍처에서 특히 중요하며, 실제 애플리케이션에서 상당한 성능 이점을 제공합니다.</p>
+<p>퓨전 역방향 패스는 LayerNorm + Linear 연산이 자주 함께 사용되는 트랜스포머
+아키텍처에서 특히 중요하며, 실제 애플리케이션에서 상당한 성능 이점을 제공합니다.</p>
 </div>
 </details>
 <h2 id="성능-고려-사항"><a class="header" href="#성능-고려-사항">성능 고려 사항</a></h2>
-<p>역방향 패스 구현은 오버헤드를 최소화하기 위해 최적화된 <code>torch.compile</code>을 사용합니다:</p>
+<p>역방향 패스 구현은 오버헤드를 최소화하기 위해 최적화된 <code>torch.compile</code>을
+사용합니다:</p>
 <pre><code class="language-python"># Compilation configuration
 torch._dynamo.config.cache_size_limit = 64  # Increase cache
 torch._dynamo.config.suppress_errors = True  # Handle errors gracefully
@@ -826,7 +852,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>적절한 오류 처리는 기울기 계산에 매우 중요합니다</li>
 <li>컴파일 오버헤드는 학습 시간에 큰 영향을 줄 수 있습니다</li>
 </ul>
-<p>역방향 패스는 정확성을 유지하면서 컴파일 오버헤드를 최소화하기 위해 <code>reduce-overhead</code> 모드로 컴파일됩니다. 이것이 특히 중요한 이유는:</p>
+<p>역방향 패스는 정확성을 유지하면서 컴파일 오버헤드를 최소화하기 위해
+<code>reduce-overhead</code> 모드로 컴파일됩니다. 이것이 특히 중요한 이유는:</p>
 <ul>
 <li>역방향 패스는 학습 중에 빈번하게 호출됩니다</li>
 <li>기울기 계산은 수치적으로 안정적이어야 합니다</li>
@@ -835,7 +862,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>오토그래드 통합이 효율적이어야 합니다</li>
 </ul>
 <h2 id="layernorm-역방향-패스의-상세-유도"><a class="header" href="#layernorm-역방향-패스의-상세-유도">LayerNorm 역방향 패스의 상세 유도</a></h2>
-<p>LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용하여 유도됩니다. 단계별 유도 과정은 다음과 같습니다:</p>
+<p>LayerNorm의 역방향 패스 기울기는 연쇄 법칙을 주의 깊게 적용하여 유도됩니다.
+단계별 유도 과정은 다음과 같습니다:</p>
 <h3 id="순방향-패스-연산"><a class="header" href="#순방향-패스-연산">순방향 패스 연산</a></h3>
 <ul>
 <li>평균: \(\mu = \frac{1}{H} \sum_{i=1}^{H} x_i\)</li>
@@ -845,25 +873,34 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 </ul>
 <h3 id="연쇄-법칙-적용"><a class="header" href="#연쇄-법칙-적용">연쇄 법칙 적용</a></h3>
 <p>\(\frac{\partial L}{\partial x}\)를 계산하기 위해 연쇄 법칙을 적용합니다:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\]</p>
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}
+\frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\]</p>
 <h3 id="기울기-구성-요소"><a class="header" href="#기울기-구성-요소">기울기 구성 요소</a></h3>
 <h4 id="출력에서-정규화된-값으로"><a class="header" href="#출력에서-정규화된-값으로">출력에서 정규화된 값으로</a></h4>
 <ul>
 <li>\(\frac{\partial y}{\partial \hat{x}} = \gamma\) (요소별 곱셈)</li>
 </ul>
 <h4 id="정규화된-값에서-입력으로"><a class="header" href="#정규화된-값에서-입력으로">정규화된 값에서 입력으로</a></h4>
-<p>기울기 \(\frac{\partial \hat{x}}{\partial x}\)에는 세 가지 구성 요소가 있습니다:</p>
+<p>기울기 \(\frac{\partial \hat{x}}{\partial x}\)에는 세 가지 구성 요소가
+있습니다:</p>
 <ul>
 <li>분자를 통한 직접적 효과: \(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
-<li>평균을 통한 간접적 효과: \(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
-<li>분산을 통한 간접적 효과: \(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x - \mu)\)</li>
+<li>평균을 통한 간접적 효과: \(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 +
+\epsilon}}\)</li>
+<li>분산을 통한 간접적 효과: \(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x
+<ul>
+<li>\mu)\)</li>
+</ul>
+</li>
 </ul>
 <h3 id="항-결합"><a class="header" href="#항-결합">항 결합</a></h3>
-<p>정규화 항을 통한 기울기는 다음과 같이 정리됩니다:
-\[\Large \frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<p>정규화 항을 통한 기울기는 다음과 같이 정리됩니다: \[\Large \frac{\partial
+\hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} -
+\frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
 <h3 id="최종-기울기-표현식"><a class="header" href="#최종-기울기-표현식">최종 기울기 표현식</a></h3>
-<p>모든 항을 결합하면:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<p>모든 항을 결합하면: \[\Large \frac{\partial L}{\partial x} = \frac{\partial
+L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
+\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
 <h3 id="핵심-통찰"><a class="header" href="#핵심-통찰">핵심 통찰</a></h3>
 <ul>
 <li>연쇄 법칙은 x가 출력에 영향을 미치는 모든 경로를 고려합니다</li>
@@ -879,7 +916,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>기울기가 은닉 차원 H 전체에 걸쳐 적절히 스케일링됩니다</li>
 <li>수치 안정성을 위해 연산 순서가 순방향 패스와 일치합니다</li>
 </ul>
-<p>이 유도를 통해 역방향 패스가 순방향 패스와 동일한 수치적 특성을 유지하면서 필요한 모든 기울기를 효율적으로 계산할 수 있습니다.</p>
+<p>이 유도를 통해 역방향 패스가 순방향 패스와 동일한 수치적 특성을 유지하면서
+필요한 모든 기울기를 효율적으로 계산할 수 있습니다.</p>
 
                     </main>
 

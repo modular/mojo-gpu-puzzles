@@ -210,8 +210,16 @@
                     <main>
                         <h1 id="puzzle-6-blocks"><a class="header" href="#puzzle-6-blocks">Puzzle 6: Blocks</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in <code>output</code>.</p>
-<p>A <strong>thread block</strong> (or just <strong>block</strong>) is a group of threads that execute together on a single GPU multiprocessor. All threads in a block share the same shared memory and can synchronize with each other. When data is larger than one block can handle, the GPU schedules multiple blocks — each block independently processes its portion of the data. The global position of a thread is computed from both its position within the block (<code>thread_idx.x</code>) and which block it belongs to (<code>block_idx.x</code>): <code>global_i = block_dim.x * block_idx.x + thread_idx.x</code>.</p>
+<p>Implement a kernel that adds 10 to each position of vector <code>a</code> and stores it in
+<code>output</code>.</p>
+<p>A <strong>thread block</strong> (or just <strong>block</strong>) is a group of threads that execute
+together on a single GPU multiprocessor. All threads in a block share the same
+shared memory and can synchronize with each other. When data is larger than one
+block can handle, the GPU schedules multiple blocks — each block independently
+processes its portion of the data. The global position of a thread is computed
+from both its position within the block (<code>thread_idx.x</code>) and which block it
+belongs to (<code>block_idx.x</code>):
+<code>global_i = block_dim.x * block_idx.x + thread_idx.x</code>.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of a.</em></p>
 <img src="./media/06.png" alt="Blocks visualization" class="light-mode-img">
 <img src="./media/06d.png" alt="Blocks visualization" class="dark-mode-img">
@@ -222,7 +230,9 @@
 <li>Coordinating multiple blocks of threads</li>
 <li>Computing global thread positions</li>
 </ul>
-<p>The key insight is understanding how blocks of threads work together to process data that’s larger than a single block’s capacity, while maintaining correct element-to-thread mapping.</p>
+<p>The key insight is understanding how blocks of threads work together to process
+data that’s larger than a single block’s capacity, while maintaining correct
+element-to-thread mapping.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 9
 comptime BLOCKS_PER_GRID = (3, 1)
@@ -242,7 +252,8 @@ def add_10_blocks(
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p06/p06.mojo" class="filename">View full file: problems/p06/p06.mojo</a></p>
 <blockquote>
-<p>Note: The <code>TileTensor</code> variant of this puzzle is very similar so we leave it to the reader.</p>
+<p>Note: The <code>TileTensor</code> variant of this puzzle is very similar so we leave it
+to the reader.</p>
 </blockquote>
 <details>
 <summary><strong>Tips</strong></summary>
@@ -305,7 +316,8 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0])
 <p><strong>Global thread indexing</strong></p>
 <ul>
 <li>
-<p>Combines block and thread indices: <code>block_dim.x * block_idx.x + thread_idx.x</code></p>
+<p>Combines block and thread indices:
+<code>block_dim.x * block_idx.x + thread_idx.x</code></p>
 </li>
 <li>
 <p>Maps each thread to a unique global position</p>
@@ -342,7 +354,8 @@ Block 2:             [6 7 8]
 <p><strong>Bounds checking</strong></p>
 <ul>
 <li>Guard condition <code>i &lt; size</code> handles edge cases</li>
-<li>Prevents out-of-bounds access when size isn’t perfectly divisible by block size</li>
+<li>Prevents out-of-bounds access when size isn’t perfectly divisible by block
+size</li>
 <li>Essential for handling partial blocks at the end of data</li>
 </ul>
 </li>
@@ -355,7 +368,8 @@ Block 2:             [6 7 8]
 </ul>
 </li>
 </ol>
-<p>This pattern forms the foundation for processing large datasets that exceed the size of a single thread block.</p>
+<p>This pattern forms the foundation for processing large datasets that exceed the
+size of a single thread block.</p>
 </div>
 </details>
 

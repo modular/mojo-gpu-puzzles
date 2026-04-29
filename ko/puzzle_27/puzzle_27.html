@@ -211,13 +211,22 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="puzzle-27-블록-전체-패턴"><a class="header" href="#puzzle-27-블록-전체-패턴">Puzzle 27: 블록 전체 패턴</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>Puzzle 27: 블록 전체 패턴</strong>에 오신 것을 환영합니다! 이 퍼즐은 GPU 병렬 프로그래밍의 핵심 구성 요소인 <strong>블록 레벨 통신 기본 요소</strong>를 소개합니다. 전체 스레드 블록에 걸친 고급 병렬 알고리즘을 구현할 수 있게 해주는 세 가지 핵심 통신 패턴을 탐구하며, 복잡한 수동 동기화를 간결하고 하드웨어에 최적화된 연산으로 대체합니다.</p>
-<p><strong>목표:</strong> 복잡한 공유 메모리 + 배리어 + 트리 리덕션 패턴(Puzzle 12)에서 벗어나, 여러 워프에 걸친 하드웨어 최적화 블록 전체 통신 기본 요소를 활용하는 간결한 단일 함수 호출 알고리즘으로 전환합니다.</p>
-<p><strong>핵심 통찰:</strong> <em>GPU 스레드 블록은 정교한 하드웨어 조율로 실행됩니다 - Mojo의 블록 연산은 크로스 워프 통신과 전용 하드웨어 유닛을 활용하여 완벽한 병렬 프로그래밍 빌딩 블록을 제공합니다: 리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
+<p><strong>Puzzle 27: 블록 전체 패턴</strong>에 오신 것을 환영합니다! 이 퍼즐은 GPU 병렬
+프로그래밍의 핵심 구성 요소인 <strong>블록 레벨 통신 기본 요소</strong>를 소개합니다. 전체
+스레드 블록에 걸친 고급 병렬 알고리즘을 구현할 수 있게 해주는 세 가지 핵심 통신
+패턴을 탐구하며, 복잡한 수동 동기화를 간결하고 하드웨어에 최적화된 연산으로
+대체합니다.</p>
+<p><strong>목표:</strong> 복잡한 공유 메모리 + 배리어 + 트리 리덕션 패턴(Puzzle 12)에서 벗어나,
+여러 워프에 걸친 하드웨어 최적화 블록 전체 통신 기본 요소를 활용하는 간결한 단일
+함수 호출 알고리즘으로 전환합니다.</p>
+<p><strong>핵심 통찰:</strong> <em>GPU 스레드 블록은 정교한 하드웨어 조율로 실행됩니다 - Mojo의
+블록 연산은 크로스 워프 통신과 전용 하드웨어 유닛을 활용하여 완벽한 병렬
+프로그래밍 빌딩 블록을 제공합니다: 리덕션(전체→하나), 스캔(전체→각각),
+브로드캐스트(하나→전체).</em></p>
 <h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
 <h3 id="블록-레벨-통신-모델"><a class="header" href="#블록-레벨-통신-모델"><strong>블록 레벨 통신 모델</strong></a></h3>
 <p>GPU 스레드 블록 내 세 가지 기본 통신 패턴을 이해합니다:</p>
-<pre><code>GPU 스레드 블록 (128 스레드, 4개 또는 2개 워프, 하드웨어 조율)
+<pre><code class="language-text">GPU 스레드 블록 (128 스레드, 4개 또는 2개 워프, 하드웨어 조율)
 전체→하나 (Reduction):     모든 스레드 → 스레드 0에 단일 결과
 전체→각각 (Scan):         모든 스레드 → 각 스레드가 누적 위치를 받음
 하나→전체 (Broadcast):     스레드 0 → 모든 스레드가 같은 값을 받음
@@ -238,12 +247,17 @@
 <h3 id="mojo의-블록-연산"><a class="header" href="#mojo의-블록-연산"><strong>Mojo의 블록 연산</strong></a></h3>
 <p><code>gpu.primitives.block</code>의 완전한 병렬 프로그래밍 도구 모음을 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>: 합계, 평균, 최댓값/최솟값을 위한 전체→하나 리덕션</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>: 병렬 필터링과 추출을 위한 전체→각각 스캔</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>: 매개변수 공유와 조율을 위한 하나→전체 분배</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum"><code>block.sum(value)</code></a></strong>:
+합계, 평균, 최댓값/최솟값을 위한 전체→하나 리덕션</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum"><code>block.prefix_sum(value)</code></a></strong>:
+병렬 필터링과 추출을 위한 전체→각각 스캔</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast"><code>block.broadcast(value)</code></a></strong>:
+매개변수 공유와 조율을 위한 하나→전체 분배</li>
 </ol>
 <blockquote>
-<p><strong>참고:</strong> 이 기본 요소들은 통계 연산, 히스토그램 구간 분류, 정규화 워크플로우와 같은 고급 병렬 알고리즘을 가능하게 합니다. 이런 알고리즘을 기본 요소 없이 구현하려면 수십 줄의 복잡한 공유 메모리 조율 코드가 필요합니다.</p>
+<p><strong>참고:</strong> 이 기본 요소들은 통계 연산, 히스토그램 구간 분류, 정규화
+워크플로우와 같은 고급 병렬 알고리즘을 가능하게 합니다. 이런 알고리즘을 기본
+요소 없이 구현하려면 수십 줄의 복잡한 공유 메모리 조율 코드가 필요합니다.</p>
 </blockquote>
 <h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
 <pre><code class="language-mojo"># 복잡한 블록 전체 리덕션 (기존 방식 - Puzzle 12에서):
@@ -298,7 +312,8 @@ total = warp.sum[warp_size=WARP_SIZE](val=partial_product)
 total = block.sum[block_size=128, broadcast=False](val=partial_product)
 </code></pre>
 <h2 id="세-가지-기본-통신-패턴"><a class="header" href="#세-가지-기본-통신-패턴">세 가지 기본 통신 패턴</a></h2>
-<p>블록 레벨 프로그래밍은 모든 병렬 통신 요구를 충족하는 세 가지 핵심 기본 요소를 제공합니다:</p>
+<p>블록 레벨 프로그래밍은 모든 병렬 통신 요구를 충족하는 세 가지 핵심 기본 요소를
+제공합니다:</p>
 <h3 id="1-전체하나-리덕션-blocksum"><a class="header" href="#1-전체하나-리덕션-blocksum"><strong>1. 전체→하나: 리덕션 (<code>block.sum()</code>)</strong></a></h3>
 <ul>
 <li><strong>패턴</strong>: 모든 스레드가 기여 → 하나의 스레드가 결과를 받음</li>
@@ -324,7 +339,8 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <p>세 단계로 이 퍼즐을 완성하며, 단순한 것에서 복잡한 것으로 진행합니다:</p>
 <h3 id="part-1-blocksum의-핵심"><a class="header" href="#part-1-blocksum의-핵심"><strong>Part 1: <a href="./block_sum.html">block.sum()의 핵심</a></strong></a></h3>
 <p><strong>복잡한 리덕션을 단순한 함수 호출로 변환</strong></p>
-<p><code>block.sum()</code>으로 내적을 구현하며 블록 리덕션의 기본 패턴을 배웁니다. 블록 연산이 15줄 이상의 수동 배리어를 단일 최적화 호출로 대체하는 방법을 보여줍니다.</p>
+<p><code>block.sum()</code>으로 내적을 구현하며 블록 리덕션의 기본 패턴을 배웁니다. 블록
+연산이 15줄 이상의 수동 배리어를 단일 최적화 호출로 대체하는 방법을 보여줍니다.</p>
 <p><strong>핵심 개념:</strong></p>
 <ul>
 <li>여러 워프에 걸친 블록 전체 동기화</li>
@@ -332,11 +348,14 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <li>스레드 0 결과 관리</li>
 <li>기존 방식과의 성능 비교</li>
 </ul>
-<p><strong>학습 목표:</strong> <code>block.sum()</code>이 블록 규모에서 warp.sum()의 단순함을 제공하는 방법을 이해합니다.</p>
+<p><strong>학습 목표:</strong> <code>block.sum()</code>이 블록 규모에서 warp.sum()의 단순함을 제공하는
+방법을 이해합니다.</p>
 <hr />
 <h3 id="part-2-blockprefix_sum과-병렬-히스토그램-구간-분류"><a class="header" href="#part-2-blockprefix_sum과-병렬-히스토그램-구간-분류"><strong>Part 2: <a href="./block_prefix_sum.html">block.prefix_sum()과 병렬 히스토그램 구간 분류</a></strong></a></h3>
 <p><strong>고급 병렬 필터링과 추출</strong></p>
-<p>히스토그램 구간 분류를 위해 <code>block.prefix_sum()</code>을 사용하여 고급 병렬 알고리즘을 구축합니다. 누적 합이 단순한 리덕션으로는 구현하기 어려운 복잡한 데이터 재구성을 가능하게 하는 방법을 보여줍니다.</p>
+<p>히스토그램 구간 분류를 위해 <code>block.prefix_sum()</code>을 사용하여 고급 병렬 알고리즘을
+구축합니다. 누적 합이 단순한 리덕션으로는 구현하기 어려운 복잡한 데이터 재구성을
+가능하게 하는 방법을 보여줍니다.</p>
 <p><strong>핵심 개념:</strong></p>
 <ul>
 <li>이진 프레디케이트를 이용한 병렬 필터링</li>
@@ -344,11 +363,14 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <li>고급 파티셔닝 알고리즘</li>
 <li>크로스 스레드 데이터 추출 패턴</li>
 </ul>
-<p><strong>학습 목표:</strong> <code>block.prefix_sum()</code>이 단순한 집계를 넘어서는 고급 병렬 알고리즘을 가능하게 하는 방법을 이해합니다.</p>
+<p><strong>학습 목표:</strong> <code>block.prefix_sum()</code>이 단순한 집계를 넘어서는 고급 병렬
+알고리즘을 가능하게 하는 방법을 이해합니다.</p>
 <hr />
 <h3 id="part-3-blockbroadcast와-벡터-정규화"><a class="header" href="#part-3-blockbroadcast와-벡터-정규화"><strong>Part 3: <a href="./block_broadcast.html">block.broadcast()와 벡터 정규화</a></strong></a></h3>
 <p><strong>모든 패턴을 결합하는 완전한 워크플로우</strong></p>
-<p>블록 연산 도구 모음 전체를 사용하여 벡터 평균 정규화를 구현합니다. 세 가지 기본 요소가 어떻게 함께 작동하여 수학적 정확성을 갖춘 실제 연산 문제를 해결하는지 보여줍니다.</p>
+<p>블록 연산 도구 모음 전체를 사용하여 벡터 평균 정규화를 구현합니다. 세 가지 기본
+요소가 어떻게 함께 작동하여 수학적 정확성을 갖춘 실제 연산 문제를 해결하는지
+보여줍니다.</p>
 <p><strong>핵심 개념:</strong></p>
 <ul>
 <li>하나→전체 통신 패턴</li>
@@ -359,7 +381,7 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <p><strong>학습 목표:</strong> 고급 병렬 알고리즘을 위해 블록 연산을 조합하는 방법을 이해합니다.</p>
 <h2 id="블록-연산이-중요한-이유"><a class="header" href="#블록-연산이-중요한-이유">블록 연산이 중요한 이유</a></h2>
 <h3 id="코드-단순화-변환"><a class="header" href="#코드-단순화-변환"><strong>코드 단순화 변환:</strong></a></h3>
-<pre><code>기존 방식:     20줄 이상의 배리어, 공유 메모리, 복잡한 인덱싱
+<pre><code class="language-text">기존 방식:     20줄 이상의 배리어, 공유 메모리, 복잡한 인덱싱
 블록 연산:     3-5줄의 조합 가능한 하드웨어 최적화 기본 요소
 </code></pre>
 <h3 id="성능-이점"><a class="header" href="#성능-이점"><strong>성능 이점:</strong></a></h3>
@@ -379,7 +401,8 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <p>이 퍼즐을 시작하기 전에 다음을 완료해야 합니다:</p>
 <ul>
 <li><strong><a href="../puzzle_12/puzzle_12.html">Puzzle 12: 내적</a></strong>: 수동 GPU 동기화에 대한 이해</li>
-<li><strong><a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a></strong>: 워프 레벨 프로그래밍 경험</li>
+<li><strong><a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a></strong>: 워프 레벨 프로그래밍
+경험</li>
 </ul>
 <h2 id="학습-성과"><a class="header" href="#학습-성과">학습 성과</a></h2>
 <p>세 파트를 모두 완료하면 다음을 이해하게 됩니다:</p>
@@ -391,8 +414,13 @@ total = block.sum[block_size=128, broadcast=False](val=partial_product)
 <li><strong>아키텍처 독립적 프로그래밍</strong> - 하드웨어 최적화 기본 요소 활용</li>
 </ol>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p><strong>권장 순서:</strong> 각 파트가 이전 파트의 개념을 기반으로 하므로 순서대로 완성하세요. 단순한 리덕션 → 고급 파티셔닝 → 완전한 워크플로우로 이어지는 진행이 블록 레벨 GPU 프로그래밍을 이해하는 최적의 학습 경로를 제공합니다.</p>
-<p>💡 <strong>핵심 통찰</strong>: 블록 연산은 프로그래머 생산성과 하드웨어 성능 사이의 최적 지점을 나타냅니다 - 고수준 연산의 단순함과 세심하게 최적화된 저수준 구현의 효율성을 동시에 제공합니다. 이 퍼즐은 현대 GPU 프로그래밍에 적합한 추상화 수준에서 사고하는 법을 가르칩니다.</p>
+<p><strong>권장 순서:</strong> 각 파트가 이전 파트의 개념을 기반으로 하므로 순서대로 완성하세요.
+단순한 리덕션 → 고급 파티셔닝 → 완전한 워크플로우로 이어지는 진행이 블록 레벨
+GPU 프로그래밍을 이해하는 최적의 학습 경로를 제공합니다.</p>
+<p>💡 <strong>핵심 통찰</strong>: 블록 연산은 프로그래머 생산성과 하드웨어 성능 사이의 최적
+지점을 나타냅니다 - 고수준 연산의 단순함과 세심하게 최적화된 저수준 구현의
+효율성을 동시에 제공합니다. 이 퍼즐은 현대 GPU 프로그래밍에 적합한 추상화
+수준에서 사고하는 법을 가르칩니다.</p>
 
                     </main>
 

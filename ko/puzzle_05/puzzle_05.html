@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: 430a6f13dcfdbf8b417585a7b28f41a575467d2b -->
 <h1 id="puzzle-5-브로드캐스트"><a class="header" href="#puzzle-5-브로드캐스트">Puzzle 5: 브로드캐스트</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>1D TileTensor <code>a</code>와 <code>b</code>를 브로드캐스트로 더해 2D TileTensor <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>1D TileTensor <code>a</code>와 <code>b</code>를 브로드캐스트로 더해 2D TileTensor <code>output</code>에 저장하는
+커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다.</em></p>
 <img src="/puzzle_05/media/05.png" alt="Broadcast 시각화" class="light-mode-img">
 <img src="/puzzle_05/media/05d.png" alt="Broadcast 시각화" class="dark-mode-img">
@@ -222,12 +223,15 @@
 <li>서로 다른 텐서 크기 다루기</li>
 <li><code>TileTensor</code>로 2D 인덱싱 처리하기</li>
 </ul>
-<p>핵심은 <code>TileTensor</code>가 서로 다른 텐서 크기 \((1, n)\)와 \((n, 1)\)을 \((n,n)\)으로 자연스럽게 브로드캐스트할 수 있다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.</p>
+<p>핵심은 <code>TileTensor</code>가 서로 다른 텐서 크기 \((1, n)\)와 \((n, 1)\)을
+\((n,n)\)으로 자연스럽게 브로드캐스트할 수 있다는 점입니다. 그러면서도 경계
+검사는 여전히 필요합니다.</p>
 <ul>
 <li><strong>텐서 크기</strong>: 입력 벡터의 크기는 \((1, n)\)과 \((n, 1)\)</li>
 <li><strong>브로드캐스트</strong>: 두 차원을 결합해 \((n,n)\) 출력 생성</li>
 <li><strong>가드 조건</strong>: 출력 크기에 대한 경계 검사는 여전히 필요</li>
-<li><strong>스레드 범위</strong>: 텐서 원소 \((2 \times 2)\)보다 스레드 \((3 \times 3)\)가 많음</li>
+<li><strong>스레드 범위</strong>: 텐서 원소 \((2 \times 2)\)보다 스레드 \((3 \times 3)\)가
+많음</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2

@@ -210,9 +210,13 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="임베딩-커널-병합-vs-비병합"><a class="header" href="#임베딩-커널-병합-vs-비병합">임베딩 커널: 병합 vs 비병합</a></h1>
-<p>이 퍼즐에서는 동일한 결과를 생성하지만 서로 다른 메모리 접근 패턴을 사용하는 두 가지 GPU 임베딩 커널을 구현합니다. GPU 성능에서 메모리 병합이 얼마나 중요한지 직접 체험할 수 있습니다.</p>
+<p>이 퍼즐에서는 동일한 결과를 생성하지만 서로 다른 메모리 접근 패턴을 사용하는 두
+가지 GPU 임베딩 커널을 구현합니다. GPU 성능에서 메모리 병합이 얼마나 중요한지
+직접 체험할 수 있습니다.</p>
 <h2 id="1d-병합-커널-최적화된-접근법"><a class="header" href="#1d-병합-커널-최적화된-접근법">1D 병합 커널 (최적화된 접근법)</a></h2>
-<p>이 커널은 각 스레드가 정확히 하나의 출력 요소를 처리하는 단순한 1D 그리드를 사용합니다. 핵심은 연속된 스레드가 연속된 메모리 위치에 접근하여 최적의 메모리 병합을 달성한다는 점입니다.</p>
+<p>이 커널은 각 스레드가 정확히 하나의 출력 요소를 처리하는 단순한 1D 그리드를
+사용합니다. 핵심은 연속된 스레드가 연속된 메모리 위치에 접근하여 최적의 메모리
+병합을 달성한다는 점입니다.</p>
 <p><strong>스레드 구성:</strong></p>
 <ul>
 <li><strong>그리드 구성</strong>: <code>[total_elements // 256]</code> 블록, 블록당 <code>256</code> 스레드</li>
@@ -278,20 +282,25 @@ def embedding_kernel_coalesced[
 <div class="solution-tips">
 <ul>
 <li><code>global_idx = block_idx.x * block_dim.x + thread_idx.x</code>로 시작하세요</li>
-<li>나눗셈과 나머지 연산으로 3D 좌표를 구합니다: <code>batch_idx = global_idx // (seq_len * embed_dim)</code></li>
-<li><code>remaining = global_idx % (seq_len * embed_dim)</code>을 사용하면 이후 계산이 간단해집니다</li>
+<li>나눗셈과 나머지 연산으로 3D 좌표를 구합니다:
+<code>batch_idx = global_idx // (seq_len * embed_dim)</code></li>
+<li><code>remaining = global_idx % (seq_len * embed_dim)</code>을 사용하면 이후 계산이
+간단해집니다</li>
 <li>항상 경계 검사를 하세요: <code>if global_idx &gt;= total_elements: return</code></li>
 <li>유효하지 않은 토큰 인덱스는 출력을 0으로 설정하세요</li>
-<li>임베딩 조회: <code>output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]</code></li>
+<li>임베딩 조회:
+<code>output[batch_idx, seq_idx, embed_idx] = weights[token_idx, embed_idx]</code></li>
 </ul>
 </div>
 </details>
 <h2 id="2d-비병합-커널-비교용-접근법"><a class="header" href="#2d-비병합-커널-비교용-접근법">2D 비병합 커널 (비교용 접근법)</a></h2>
-<p>이 커널은 X 차원이 <code>(batch × seq)</code> 위치를, Y 차원이 임베딩 차원을 담당하는 2D 그리드를 사용합니다. 이 방식은 메모리 접근이 병합되지 않을 수 있습니다.</p>
+<p>이 커널은 X 차원이 <code>(batch × seq)</code> 위치를, Y 차원이 임베딩 차원을 담당하는 2D
+그리드를 사용합니다. 이 방식은 메모리 접근이 병합되지 않을 수 있습니다.</p>
 <p><strong>스레드 구성:</strong></p>
 <ul>
 <li><strong>그리드 구성</strong>: <code>[batch x seq // 16, embed_dim // 16]</code> 블록, <code>16 x 16</code> 스레드</li>
-<li><strong>스레드 매핑</strong>: <code>thread_idx.x</code>는 batch/sequence에, <code>thread_idx.y</code>는 임베딩 차원에 매핑</li>
+<li><strong>스레드 매핑</strong>: <code>thread_idx.x</code>는 batch/sequence에, <code>thread_idx.y</code>는 임베딩
+차원에 매핑</li>
 <li><strong>메모리 패턴</strong>: 워프 내 스레드들이 흩어진 메모리 위치에 접근할 수 있음</li>
 </ul>
 <p><strong>구현할 내용:</strong></p>
@@ -350,17 +359,22 @@ def embedding_kernel_coalesced[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <ul>
-<li>X, Y 스레드 좌표를 모두 사용합니다: <code>batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
+<li>X, Y 스레드 좌표를 모두 사용합니다:
+<code>batch_seq_idx = block_idx.x * block_dim.x + thread_idx.x</code></li>
 <li>그리고: <code>embed_idx = block_idx.y * block_dim.y + thread_idx.y</code></li>
-<li><code>batch_seq_idx</code>를 batch와 sequence 인덱스로 분리합니다: <code>batch_idx = batch_seq_idx // seq_len</code></li>
-<li>두 차원 모두 경계 검사를 잊지 마세요: <code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
+<li><code>batch_seq_idx</code>를 batch와 sequence 인덱스로 분리합니다:
+<code>batch_idx = batch_seq_idx // seq_len</code></li>
+<li>두 차원 모두 경계 검사를 잊지 마세요:
+<code>if batch_seq_idx &gt;= total_positions or embed_idx &gt;= embed_dim</code></li>
 <li>토큰 조회는 1D와 동일하지만, 스레드당 하나의 임베딩 차원만 처리합니다</li>
 <li>이 커널은 전체 벡터가 아닌 스레드당 하나의 임베딩 차원을 처리합니다</li>
 </ul>
 </div>
 </details>
 <h2 id="커스텀-op-등록"><a class="header" href="#커스텀-op-등록">커스텀 op 등록</a></h2>
-<p>커널들은 PyTorch와 쉽게 통합할 수 있도록 커스텀 연산으로 래핑됩니다. 등록 패턴은 <a href="../puzzle_17/puzzle_17.html#max-%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%A4%EC%8A%A4%ED%85%80-op-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0">MAX 그래프 커스텀 op 이해하기</a>에서 설명한 MAX 커스텀 op과 동일합니다:</p>
+<p>커널들은 PyTorch와 쉽게 통합할 수 있도록 커스텀 연산으로 래핑됩니다. 등록 패턴은
+<a href="../puzzle_17/puzzle_17.html#max-%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%A4%EC%8A%A4%ED%85%80-op-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0">MAX 그래프 커스텀 op 이해하기</a>에서
+설명한 MAX 커스텀 op과 동일합니다:</p>
 <h3 id="1d-병합-연산"><a class="header" href="#1d-병합-연산">1D 병합 연산</a></h3>
 <p>이 연산은 최적화된 1D 임베딩 커널을 <code>"embedding"</code>으로 등록합니다:</p>
 <pre><code class="language-mojo">import compiler
@@ -464,9 +478,11 @@ struct EmbeddingCustomOp:
 </code></pre>
 <p><strong>등록의 핵심 요소:</strong></p>
 <ul>
-<li><strong>단순한 그리드 구성</strong>: <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> 블록으로 직관적인 1D 그리드 사용</li>
+<li><strong>단순한 그리드 구성</strong>: <code>ceildiv(total_elements, THREADS_PER_BLOCK)</code> 블록으로
+직관적인 1D 그리드 사용</li>
 <li><strong>메모리 최적화</strong>: 단일 <code>enqueue_memset</code> 호출로 출력 버퍼를 효율적으로 초기화</li>
-<li><strong>컴파일 타임 파라미터</strong>: 모든 텐서 차원을 컴파일 타임 파라미터로 전달하여 최적 성능 달성</li>
+<li><strong>컴파일 타임 파라미터</strong>: 모든 텐서 차원을 컴파일 타임 파라미터로 전달하여
+최적 성능 달성</li>
 <li><strong>디바이스 추상화</strong>: GPU 실행과 CPU 폴백을 매끄럽게 처리</li>
 </ul>
 <h3 id="2d-비병합-연산"><a class="header" href="#2d-비병합-연산">2D 비병합 연산</a></h3>
@@ -570,10 +586,13 @@ struct Embedding2DCustomOp:
 </code></pre>
 <p><strong>1D 연산과의 주요 차이점:</strong></p>
 <ul>
-<li><strong>복잡한 그리드 구성</strong>: <code>blocks_x</code>와 <code>blocks_y</code>를 별도로 계산하는 2D 그리드 사용</li>
-<li><strong>고정 블록 차원</strong>: 2D 스레드 구성을 위해 <code>BLOCK_X = 16</code>, <code>BLOCK_Y = 16</code>으로 고정</li>
+<li><strong>복잡한 그리드 구성</strong>: <code>blocks_x</code>와 <code>blocks_y</code>를 별도로 계산하는 2D 그리드
+사용</li>
+<li><strong>고정 블록 차원</strong>: 2D 스레드 구성을 위해 <code>BLOCK_X = 16</code>, <code>BLOCK_Y = 16</code>으로
+고정</li>
 <li><strong>동일한 메모리 관리</strong>: 메모리 초기화와 CPU 폴백 로직은 동일</li>
-<li><strong>다른 커널 호출 방식</strong>: 2D 그리드 차원 <code>(blocks_x, blocks_y)</code>과 블록 차원 <code>(BLOCK_X, BLOCK_Y)</code> 전달</li>
+<li><strong>다른 커널 호출 방식</strong>: 2D 그리드 차원 <code>(blocks_x, blocks_y)</code>과 블록 차원
+<code>(BLOCK_X, BLOCK_Y)</code> 전달</li>
 </ul>
 <h3 id="공통-래퍼-기능"><a class="header" href="#공통-래퍼-기능">공통 래퍼 기능</a></h3>
 <p>두 커스텀 연산은 다음과 같은 필수 인프라를 제공합니다:</p>
@@ -612,7 +631,9 @@ struct Embedding2DCustomOp:
 </li>
 </ol>
 <h3 id="pytorch-통합"><a class="header" href="#pytorch-통합">PyTorch 통합</a></h3>
-<p>등록된 연산은 <a href="https://docs.modular.com/max/api/python/torch/">CustomOpLibrary</a>를 통해 파이썬에서 호출할 수 있습니다:</p>
+<p>등록된 연산은
+<a href="https://docs.modular.com/max/api/python/torch/">CustomOpLibrary</a>를 통해
+파이썬에서 호출할 수 있습니다:</p>
 <pre><code class="language-python"># Load the custom operations
 ops = CustomOpLibrary(mojo_kernels)
 
@@ -626,7 +647,8 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
     indices, weights
 )
 </code></pre>
-<p>이 접근법의 장점은 동일한 커널 구현을 다양한 파이썬 프레임워크에서 사용하면서도 최적의 성능 특성을 유지할 수 있다는 것입니다.</p>
+<p>이 접근법의 장점은 동일한 커널 구현을 다양한 파이썬 프레임워크에서 사용하면서도
+최적의 성능 특성을 유지할 수 있다는 것입니다.</p>
 <h2 id="코드-실행"><a class="header" href="#코드-실행">코드 실행</a></h2>
 <p>다음 명령으로 퍼즐을 실행할 수 있습니다:</p>
 <div class="code-tabs" data-tab-group="package-manager">
@@ -649,7 +671,7 @@ result_2d = ops.embedding_2d[{"batch_size": B, "seq_len": L, "vocab_size": V, "e
   </div>
 </div>
 <p>성공하면 다음과 비슷한 출력을 볼 수 있습니다:</p>
-<pre><code>Puzzle 21: Mojo Embedding Kernel Comparison
+<pre><code class="language-text">Puzzle 21: Mojo Embedding Kernel Comparison
 ======================================================================
 Configuration: B=8, L=512, V=10000, E=512
 ------------------------------------------------------------
@@ -800,7 +822,8 @@ Key Learning Points:
 <p><strong>메모리 접근 패턴</strong>:</p>
 <ul>
 <li><strong>1D 커널</strong>: 연속된 스레드가 연속된 임베딩 차원에 접근 → 병합됨</li>
-<li><strong>2D 커널</strong>: 스레드 접근 패턴이 블록 구성에 따라 달라짐 → 병합되지 않을 수 있음</li>
+<li><strong>2D 커널</strong>: 스레드 접근 패턴이 블록 구성에 따라 달라짐 → 병합되지 않을 수
+있음</li>
 </ul>
 </li>
 <li>
@@ -820,8 +843,10 @@ Key Learning Points:
 </ul>
 <p>2D 커널의 성능이 떨어질 수 있는 이유:</p>
 <ul>
-<li><strong>흩어진 메모리 접근</strong>: 워프 내 스레드들이 서로 다른 임베딩 벡터에 접근할 수 있음</li>
-<li><strong>복잡한 그리드 구성</strong>: 16×16 블록이 메모리 레이아웃과 최적으로 맞지 않을 수 있음</li>
+<li><strong>흩어진 메모리 접근</strong>: 워프 내 스레드들이 서로 다른 임베딩 벡터에 접근할 수
+있음</li>
+<li><strong>복잡한 그리드 구성</strong>: 16×16 블록이 메모리 레이아웃과 최적으로 맞지 않을 수
+있음</li>
 <li><strong>워프 분기</strong>: 서로 다른 스레드가 서로 다른 실행 경로를 따를 수 있음</li>
 </ul>
 </div>
@@ -835,7 +860,8 @@ Key Learning Points:
 <tr><td><strong>사용 목적</strong></td><td>프로덕션 커널</td><td>교육용 비교</td></tr>
 </tbody></table>
 </div>
-<p>핵심 교훈: <strong>메모리 병합</strong>은 임베딩과 같은 메모리 바운드 연산에서 2~3배의 성능 차이를 가져올 수 있습니다.</p>
+<p>핵심 교훈: <strong>메모리 병합</strong>은 임베딩과 같은 메모리 바운드 연산에서 2~3배의 성능
+차이를 가져올 수 있습니다.</p>
 
                     </main>
 

@@ -211,7 +211,10 @@
                         <h1 id="puzzle-29-gpu-synchronization-primitives"><a class="header" href="#puzzle-29-gpu-synchronization-primitives">Puzzle 29: GPU Synchronization Primitives</a></h1>
 <blockquote>
 <p><strong>Beyond Simple Parallelism</strong></p>
-<p>This chapter introduces <strong>synchronization patterns</strong> that enable complex GPU algorithms requiring precise coordination between threads. Unlike previous puzzles that focused on simple parallel operations, these challenges explore <strong>architectural approaches</strong> used in production GPU software.</p>
+<p>This chapter introduces <strong>synchronization patterns</strong> that enable complex GPU
+algorithms requiring precise coordination between threads. Unlike previous
+puzzles that focused on simple parallel operations, these challenges explore
+<strong>architectural approaches</strong> used in production GPU software.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
 <li><strong>Thread specialization</strong>: Different thread groups executing distinct algorithms within a single block</li>
@@ -220,10 +223,18 @@
 <li><strong>Memory barrier coordination</strong>: Explicit control over memory visibility and ordering</li>
 <li><strong>Iterative algorithm patterns</strong>: Double-buffering and pipeline coordination for complex computations</li>
 </ul>
-<p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns, but real-world applications require <strong>sophisticated coordination</strong> between different processing phases, memory access patterns, and algorithmic stages. These puzzles bridge the gap between academic examples and production GPU computing.</p>
+<p><strong>Why this matters:</strong> Most GPU tutorials teach simple data-parallel patterns,
+but real-world applications require <strong>sophisticated coordination</strong> between
+different processing phases, memory access patterns, and algorithmic stages.
+These puzzles bridge the gap between academic examples and production GPU
+computing.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>GPU synchronization is the foundation that enables complex parallel algorithms to work correctly and efficiently. This chapter explores three fundamental synchronization patterns that appear throughout high-performance GPU computing: <strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and <strong>streaming computation</strong>.</p>
+<p>GPU synchronization is the foundation that enables complex parallel algorithms
+to work correctly and efficiently. This chapter explores three fundamental
+synchronization patterns that appear throughout high-performance GPU computing:
+<strong>pipeline coordination</strong>, <strong>memory barrier management</strong>, and
+<strong>streaming computation</strong>.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
 <li><strong>Understand when and why</strong> different synchronization primitives are needed</li>
@@ -231,44 +242,61 @@
 <li><strong>Implement iterative patterns</strong> that require precise memory coordination</li>
 <li><strong>Optimize synchronization overhead</strong> while maintaining correctness guarantees</li>
 </ul>
-<p><strong>Architectural progression:</strong> These puzzles follow a carefully designed progression from basic pipeline coordination to advanced memory barrier management, culminating in streaming computation patterns used in high-throughput applications.</p>
+<p><strong>Architectural progression:</strong> These puzzles follow a carefully designed
+progression from basic pipeline coordination to advanced memory barrier
+management, culminating in streaming computation patterns used in
+high-throughput applications.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p><strong>Thread coordination paradigms:</strong></p>
 <ul>
-<li><strong>Simple parallelism</strong>: All threads execute identical operations (previous puzzles)</li>
-<li><strong>Specialized parallelism</strong>: Different thread groups execute distinct algorithms (this chapter)</li>
-<li><strong>Pipeline parallelism</strong>: Sequential stages with producer-consumer relationships</li>
+<li><strong>Simple parallelism</strong>: All threads execute identical operations (previous
+puzzles)</li>
+<li><strong>Specialized parallelism</strong>: Different thread groups execute distinct
+algorithms (this chapter)</li>
+<li><strong>Pipeline parallelism</strong>: Sequential stages with producer-consumer
+relationships</li>
 <li><strong>Iterative parallelism</strong>: Multiple passes with careful buffer management</li>
 </ul>
 <p><strong>Synchronization primitive hierarchy:</strong></p>
 <ul>
-<li><strong>Basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>: Simple thread synchronization within blocks</li>
-<li><strong>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a></strong>: Fine-grained memory barrier control with state tracking</li>
-<li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer synchronization</li>
+<li><strong>Basic
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
+Simple thread synchronization within blocks</li>
+<li><strong>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a></strong>:
+Fine-grained memory barrier control with state tracking</li>
+<li><strong>Streaming coordination</strong>: Asynchronous copy and bulk transfer
+synchronization</li>
 </ul>
 <p><strong>Memory consistency models:</strong></p>
 <ul>
-<li><strong>Shared memory coordination</strong>: Fast on-chip memory for inter-thread communication</li>
-<li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different memory spaces</li>
-<li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative algorithms</li>
+<li><strong>Shared memory coordination</strong>: Fast on-chip memory for inter-thread
+communication</li>
+<li><strong>Global memory ordering</strong>: Ensuring visibility of writes across different
+memory spaces</li>
+<li><strong>Buffer management</strong>: Double-buffering and ping-pong patterns for iterative
+algorithms</li>
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p><strong>System architecture:</strong></p>
 <ul>
 <li><strong>Block size</strong>: <code>TPB = 256</code> threads per block for optimal occupancy</li>
 <li><strong>Grid configuration</strong>: Multiple blocks processing different data tiles</li>
-<li><strong>Memory hierarchy</strong>: Strategic use of shared memory, registers, and global memory</li>
+<li><strong>Memory hierarchy</strong>: Strategic use of shared memory, registers, and global
+memory</li>
 <li><strong>Data types</strong>: <code>DType.float32</code> for numerical computations</li>
 </ul>
 <p><strong>Synchronization patterns covered:</strong></p>
 <ol>
 <li><strong>Multi-stage pipelines</strong>: Thread specialization with barrier coordination</li>
-<li><strong>Double-buffered iterations</strong>: Memory barrier management for iterative algorithms</li>
-<li><strong>Streaming computation</strong>: Asynchronous copy coordination for high-throughput processing</li>
+<li><strong>Double-buffered iterations</strong>: Memory barrier management for iterative
+algorithms</li>
+<li><strong>Streaming computation</strong>: Asynchronous copy coordination for high-throughput
+processing</li>
 </ol>
 <p><strong>Performance considerations:</strong></p>
 <ul>
-<li><strong>Synchronization overhead</strong>: Understanding the cost of different barrier types</li>
+<li><strong>Synchronization overhead</strong>: Understanding the cost of different barrier
+types</li>
 <li><strong>Memory bandwidth</strong>: Optimizing access patterns for maximum throughput</li>
 <li><strong>Thread utilization</strong>: Balancing specialized roles with overall efficiency</li>
 </ul>
@@ -276,30 +304,43 @@
 <p>This chapter contains three interconnected puzzles that build upon each other:</p>
 <h3 id="multi-stage-pipeline-coordination"><a class="header" href="#multi-stage-pipeline-coordination"><strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong></a></h3>
 <p><strong>Focus</strong>: Thread specialization and pipeline architecture</p>
-<p>Learn how to design GPU kernels where different thread groups execute completely different algorithms within the same block. This puzzle introduces <strong>producer-consumer relationships</strong> and strategic barrier placement for coordinating between different algorithmic stages.</p>
+<p>Learn how to design GPU kernels where different thread groups execute completely
+different algorithms within the same block. This puzzle introduces
+<strong>producer-consumer relationships</strong> and strategic barrier placement for
+coordinating between different algorithmic stages.</p>
 <p><strong>Key concepts</strong>:</p>
 <ul>
 <li>Thread role specialization (Stage 1: load, Stage 2: process, Stage 3: output)</li>
 <li>Producer-consumer data flow between processing stages</li>
 <li>Strategic barrier placement between different algorithms</li>
 </ul>
-<p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific computations, neural network layer coordination</p>
+<p><strong>Real-world applications</strong>: Image processing pipelines, multi-stage scientific
+computations, neural network layer coordination</p>
 <h3 id="double-buffered-stencil-computation"><a class="header" href="#double-buffered-stencil-computation"><strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong></a></h3>
 <p><strong>Focus</strong>: Advanced memory barrier APIs and iterative processing</p>
-<p>Explore <strong>fine-grained synchronization control</strong> using <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> for iterative algorithms that require precise memory coordination. This puzzle demonstrates double-buffering patterns essential for iterative solvers and simulation algorithms.</p>
+<p>Explore <strong>fine-grained synchronization control</strong> using
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> for iterative
+algorithms that require precise memory coordination. This puzzle demonstrates
+double-buffering patterns essential for iterative solvers and simulation
+algorithms.</p>
 <p><strong>Key concepts</strong>:</p>
 <ul>
-<li>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> vs basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
+<li>Advanced <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier APIs</a> vs
+basic <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
 <li>Double-buffering with alternating read/write buffer roles</li>
 <li>Iterative algorithm coordination with explicit memory barriers</li>
 </ul>
-<p><strong>Real-world applications</strong>: Iterative solvers (Jacobi, Gauss-Seidel), cellular automata, simulation time-stepping</p>
+<p><strong>Real-world applications</strong>: Iterative solvers (Jacobi, Gauss-Seidel), cellular
+automata, simulation time-stepping</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <p><strong>Recommended approach:</strong></p>
 <ol>
-<li><strong>Start with <a href="barrier.html">Pipeline Coordination</a></strong>: Understand thread specialization basics</li>
-<li><strong>Progress to <a href="memory_barrier.html">Memory Barriers</a></strong>: Learn fine-grained synchronization control</li>
-<li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput applications</li>
+<li><strong>Start with <a href="barrier.html">Pipeline Coordination</a></strong>: Understand thread
+specialization basics</li>
+<li><strong>Progress to <a href="memory_barrier.html">Memory Barriers</a></strong>: Learn fine-grained
+synchronization control</li>
+<li><strong>Apply to streaming patterns</strong>: Combine concepts for high-throughput
+applications</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
 <ul>
@@ -307,9 +348,15 @@
 <li>Understanding of memory hierarchies and access patterns</li>
 <li>Familiarity with barrier synchronization from previous puzzles</li>
 </ul>
-<p><strong>Learning outcomes:</strong>
-By completing this chapter, you’ll have the foundation to design and implement sophisticated GPU algorithms that require precise coordination, preparing you for the architectural complexity found in production GPU computing applications.</p>
-<p><strong>Ready to dive in?</strong> Start with <strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread specialization fundamentals, then advance to <strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong> to explore advanced memory barrier techniques.</p>
+<p><strong>Learning outcomes:</strong> By completing this chapter, you’ll have the foundation to
+design and implement sophisticated GPU algorithms that require precise
+coordination, preparing you for the architectural complexity found in production
+GPU computing applications.</p>
+<p><strong>Ready to dive in?</strong> Start with
+<strong><a href="barrier.html">Multi-Stage Pipeline Coordination</a></strong> to learn thread
+specialization fundamentals, then advance to
+<strong><a href="memory_barrier.html">Double-Buffered Stencil Computation</a></strong> to explore advanced
+memory barrier techniques.</p>
 
                     </main>
 

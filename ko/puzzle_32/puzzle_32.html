@@ -211,21 +211,37 @@
                         <!-- i18n-source-commit: 9d44e8f2ab89f20eb789ee96c8ee86a0578245dd -->
 <h1 id="puzzle-32-뱅크-충돌"><a class="header" href="#puzzle-32-뱅크-충돌">Puzzle 32: 뱅크 충돌</a></h1>
 <h2 id="이-퍼즐이-중요한-이유"><a class="header" href="#이-퍼즐이-중요한-이유">이 퍼즐이 중요한 이유</a></h2>
-<p><strong>성능 최적화 3부작의 완결:</strong> <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 GPU 프로파일링 도구를 배우고, <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 점유율 최적화를 이해했습니다. 이제 성능 최적화 퍼즐의 마지막 조각을 맞출 준비가 되었습니다: <strong>공유 메모리 효율</strong>.</p>
-<p><strong>숨겨진 성능 함정:</strong> 완벽한 점유율, 최적의 전역 메모리 병합, 동일한 수학적 연산을 갖춘 GPU 커널을 작성하고도 <strong>스레드가 공유 메모리에 접근하는 방식</strong> 때문에 극적인 성능 차이를 경험할 수 있습니다. 뱅크 충돌은 GPU 프로그래밍에서 가장 미묘하면서도 영향력이 큰 성능 함정 중 하나입니다.</p>
+<p><strong>성능 최적화 3부작의 완결:</strong> <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 GPU
+프로파일링 도구를 배우고, <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 점유율
+최적화를 이해했습니다. 이제 성능 최적화 퍼즐의 마지막 조각을 맞출 준비가
+되었습니다: <strong>공유 메모리 효율</strong>.</p>
+<p><strong>숨겨진 성능 함정:</strong> 완벽한 점유율, 최적의 전역 메모리 병합, 동일한 수학적
+연산을 갖춘 GPU 커널을 작성하고도 <strong>스레드가 공유 메모리에 접근하는 방식</strong>
+때문에 극적인 성능 차이를 경험할 수 있습니다. 뱅크 충돌은 GPU 프로그래밍에서
+가장 미묘하면서도 영향력이 큰 성능 함정 중 하나입니다.</p>
 <p><strong>학습 여정:</strong></p>
 <ul>
-<li><strong>Puzzle 30</strong>에서는 NSight 프로파일링으로 성능을 <strong>측정하고 진단</strong>하는 법을 배웠습니다</li>
-<li><strong>Puzzle 31</strong>에서는 점유율 분석을 통해 리소스 사용을 <strong>예측하고 제어</strong>하는 법을 배웠습니다</li>
-<li><strong>Puzzle 32</strong>에서는 최대 효율을 위해 <strong>공유 메모리 접근 패턴을 최적화</strong>하는 법을 배웁니다</li>
+<li><strong>Puzzle 30</strong>에서는 NSight 프로파일링으로 성능을 <strong>측정하고 진단</strong>하는 법을
+배웠습니다</li>
+<li><strong>Puzzle 31</strong>에서는 점유율 분석을 통해 리소스 사용을 <strong>예측하고 제어</strong>하는
+법을 배웠습니다</li>
+<li><strong>Puzzle 32</strong>에서는 최대 효율을 위해 <strong>공유 메모리 접근 패턴을 최적화</strong>하는
+법을 배웁니다</li>
 </ul>
-<p><strong>GPU를 넘어서 적용되는 원리:</strong> 메모리 뱅킹, 충돌 감지, 체계적인 접근 패턴 최적화의 원리는 CPU 캐시 계층 구조부터 분산 메모리 아키텍처까지 다양한 병렬 컴퓨팅 시스템에 적용됩니다.</p>
+<p><strong>GPU를 넘어서 적용되는 원리:</strong> 메모리 뱅킹, 충돌 감지, 체계적인 접근 패턴
+최적화의 원리는 CPU 캐시 계층 구조부터 분산 메모리 아키텍처까지 다양한 병렬
+컴퓨팅 시스템에 적용됩니다.</p>
 <blockquote>
 <p><strong>참고: 이 퍼즐은 NVIDIA GPU 전용입니다</strong></p>
-<p>뱅크 충돌 분석은 NVIDIA의 32-뱅크 공유 메모리 아키텍처와 NSight Compute 프로파일링 도구를 사용합니다. 최적화 원리는 널리 적용되지만, 구체적인 기법과 측정 방법은 NVIDIA CUDA에 초점을 맞추고 있습니다.</p>
+<p>뱅크 충돌 분석은 NVIDIA의 32-뱅크 공유 메모리 아키텍처와 NSight Compute
+프로파일링 도구를 사용합니다. 최적화 원리는 널리 적용되지만, 구체적인 기법과
+측정 방법은 NVIDIA CUDA에 초점을 맞추고 있습니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>공유 메모리 뱅크 충돌</strong>은 워프 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른 주소에 동시에 접근할 때 발생하며, 하드웨어가 이러한 접근을 직렬화하도록 강제합니다. 단일 사이클 메모리 연산이어야 할 것이 여러 사이클의 직렬화된 접근으로 바뀔 수 있습니다.</p>
+<p><strong>공유 메모리 뱅크 충돌</strong>은 워프 내의 여러 스레드가 동일한 메모리 뱅크의 서로
+다른 주소에 동시에 접근할 때 발생하며, 하드웨어가 이러한 접근을 직렬화하도록
+강제합니다. 단일 사이클 메모리 연산이어야 할 것이 여러 사이클의 직렬화된
+접근으로 바뀔 수 있습니다.</p>
 <p><strong>발견하게 될 것:</strong></p>
 <ul>
 <li>하드웨어 수준에서 GPU 공유 메모리 뱅킹이 작동하는 방식</li>
@@ -233,7 +249,9 @@
 <li>성능에 영향을 미치기 전에 뱅크 충돌을 예측하고 측정하는 방법</li>
 <li>충돌 없는 알고리즘을 설계하기 위한 전문적인 최적화 전략</li>
 </ul>
-<p><strong>탐정 방법론:</strong> 이 퍼즐은 이전 성능 퍼즐과 동일한 근거 기반 접근법을 따릅니다 - 프로파일링 도구로 숨겨진 비효율을 밝혀낸 다음, 체계적인 최적화 원칙을 적용하여 제거합니다.</p>
+<p><strong>탐정 방법론:</strong> 이 퍼즐은 이전 성능 퍼즐과 동일한 근거 기반 접근법을 따릅니다 -
+프로파일링 도구로 숨겨진 비효율을 밝혀낸 다음, 체계적인 최적화 원칙을 적용하여
+제거합니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p><strong>공유 메모리 아키텍처의 기초:</strong></p>
 <ul>
@@ -250,9 +268,11 @@
 <li><strong>성능 검증</strong>: 체계적인 측정을 통한 근거 기반 최적화</li>
 </ul>
 <h2 id="퍼즐-구성"><a class="header" href="#퍼즐-구성">퍼즐 구성</a></h2>
-<p>이 퍼즐은 전문성을 점진적으로 쌓아가는 두 개의 상호 보완적인 섹션으로 구성되어 있습니다:</p>
+<p>이 퍼즐은 전문성을 점진적으로 쌓아가는 두 개의 상호 보완적인 섹션으로 구성되어
+있습니다:</p>
 <h3 id="-공유-메모리-뱅크-이해하기"><a class="header" href="#-공유-메모리-뱅크-이해하기"><strong><a href="./shared_memory_bank.html">📚 공유 메모리 뱅크 이해하기</a></strong></a></h3>
-<p>명확한 설명과 실용적인 예제를 통해 GPU 공유 메모리 뱅킹의 이론적 기초를 학습합니다.</p>
+<p>명확한 설명과 실용적인 예제를 통해 GPU 공유 메모리 뱅킹의 이론적 기초를
+학습합니다.</p>
 <p><strong>배우게 될 것:</strong></p>
 <ul>
 <li>NVIDIA의 32-뱅크 아키텍처가 병렬 접근을 가능하게 하는 방식</li>
@@ -260,22 +280,27 @@
 <li>충돌 유형과 성능에 미치는 영향</li>
 <li>이전 개념과의 연결 (워프 실행, 점유율, 프로파일링)</li>
 </ul>
-<p><strong>핵심 통찰:</strong> 하드웨어를 이해하면 코드를 작성하기 전에 성능을 예측할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong> 하드웨어를 이해하면 코드를 작성하기 전에 성능을 예측할 수
+있습니다.</p>
 <h3 id="충돌-없는-패턴"><a class="header" href="#충돌-없는-패턴"><strong><a href="./conflict_free_patterns.html">충돌 없는 패턴</a></strong></a></h3>
 <p>뱅킹 지식을 활용하여 전문 프로파일링 기법으로 성능 미스터리를 풀어봅니다.</p>
-<p><strong>탐정 도전 과제:</strong> 두 커널이 동일한 결과를 계산하지만 공유 메모리 접근 효율은 극적으로 다릅니다. NSight Compute를 사용하여 한 커널은 체계적인 뱅크 충돌을 겪고 다른 커널은 최적의 성능을 달성하는 이유를 밝혀내세요.</p>
+<p><strong>탐정 도전 과제:</strong> 두 커널이 동일한 결과를 계산하지만 공유 메모리 접근 효율은
+극적으로 다릅니다. NSight Compute를 사용하여 한 커널은 체계적인 뱅크 충돌을 겪고
+다른 커널은 최적의 성능을 달성하는 이유를 밝혀내세요.</p>
 <p><strong>길러지는 역량:</strong> 패턴 분석, 충돌 측정, 체계적 최적화, 근거 기반 성능 개선.</p>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
 <p><strong>학습 경로:</strong></p>
 <ol>
 <li><strong><a href="./shared_memory_bank.html">공유 메모리 뱅크 이해하기</a></strong> - 이론적 기초 쌓기</li>
-<li><strong><a href="./conflict_free_patterns.html">충돌 없는 패턴</a></strong> - 실전 최적화에 탐정 역량 적용하기</li>
+<li><strong><a href="./conflict_free_patterns.html">충돌 없는 패턴</a></strong> - 실전 최적화에 탐정 역량
+적용하기</li>
 </ol>
 <p><strong>선수 조건:</strong></p>
 <ul>
 <li><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 익힌 GPU 프로파일링 경험</li>
 <li><a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 익힌 리소스 최적화 이해</li>
-<li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>과 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>에서 익힌 공유 메모리 프로그래밍 경험</li>
+<li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>과
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>에서 익힌 공유 메모리 프로그래밍 경험</li>
 </ul>
 <p><strong>하드웨어 요구 사항:</strong></p>
 <ul>
@@ -297,8 +322,12 @@
 <li><strong>하드웨어 인식</strong>: 소프트웨어가 하드웨어 제약에 어떻게 매핑되는지 이해</li>
 <li><strong>패턴 인식</strong>: 알고리즘 설계에서 문제가 되는 접근 패턴 식별</li>
 </ul>
-<p><strong>학습 성과:</strong> 공유 메모리 접근 패턴을 설계, 측정, 최적화하는 역량까지 갖추면 GPU 성능 최적화 도구 세트가 완성됩니다 - 전문가 수준의 GPU 프로그래밍을 위한 마지막 퍼즐 조각입니다.</p>
-<p>전역 메모리 병합에서 점유율 관리를 거쳐 공유 메모리 뱅킹 효율까지, 이 퍼즐은 <strong>최적의 GPU 성능을 위해서는 여러 수준에서 하드웨어를 이해해야 한다</strong>는 것을 보여줍니다.</p>
+<p><strong>학습 성과:</strong> 공유 메모리 접근 패턴을 설계, 측정, 최적화하는 역량까지 갖추면
+GPU 성능 최적화 도구 세트가 완성됩니다 - 전문가 수준의 GPU 프로그래밍을 위한
+마지막 퍼즐 조각입니다.</p>
+<p>전역 메모리 병합에서 점유율 관리를 거쳐 공유 메모리 뱅킹 효율까지, 이 퍼즐은
+<strong>최적의 GPU 성능을 위해서는 여러 수준에서 하드웨어를 이해해야 한다</strong>는 것을
+보여줍니다.</p>
 
                     </main>
 

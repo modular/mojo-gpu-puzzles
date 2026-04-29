@@ -211,16 +211,22 @@
                         <h1 id="-warp-lanes--simt-execution"><a class="header" href="#-warp-lanes--simt-execution">🧠 Warp lanes &amp; SIMT execution</a></h1>
 <h2 id="mental-model-for-warp-programming-vs-simd"><a class="header" href="#mental-model-for-warp-programming-vs-simd">Mental model for warp programming vs SIMD</a></h2>
 <h3 id="what-is-a-warp"><a class="header" href="#what-is-a-warp">What is a warp?</a></h3>
-<p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute <strong>the same instruction at the same time</strong> on different data. Think of it as a <strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector processor.</p>
+<p>A <strong>warp</strong> is a group of 32 (or 64) GPU threads that execute
+<strong>the same instruction at the same time</strong> on different data. Think of it as a
+<strong>synchronized vector unit</strong> where each thread acts like a “lane” in a vector
+processor.</p>
 <p><strong>Simple example:</strong></p>
 <pre><code class="language-mojo">from gpu.primitives.warp import sum
 # All 32 threads in the warp execute this simultaneously:
 var my_value = input[my_thread_id]     # Each gets different data
 var warp_total = sum(my_value)         # All contribute to one sum
 </code></pre>
-<p>What just happened? Instead of 32 separate threads doing complex coordination, the <strong>warp</strong> automatically synchronized them to produce a single result. This is <strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
+<p>What just happened? Instead of 32 separate threads doing complex coordination,
+the <strong>warp</strong> automatically synchronized them to produce a single result. This is
+<strong>SIMT (Single Instruction, Multiple Thread)</strong> execution.</p>
 <h3 id="simt-vs-simd-comparison"><a class="header" href="#simt-vs-simd-comparison">SIMT vs SIMD comparison</a></h3>
-<p>If you’re familiar with CPU vector programming (SIMD), GPU warps are similar but with key differences:</p>
+<p>If you’re familiar with CPU vector programming (SIMD), GPU warps are similar but
+with key differences:</p>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU SIMD (e.g., AVX)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
 <tr><td><strong>Programming model</strong></td><td>Explicit vector operations</td><td>Thread-based programming</td></tr>
 <tr><td><strong>Data width</strong></td><td>Fixed (256/512 bits)</td><td>Flexible (32/64 threads)</td></tr>
@@ -248,7 +254,8 @@ var partial = my_data * coefficient    # All threads compute simultaneously
 var total = sum(partial)               # Hardware coordinates the sum
 </code></pre>
 <h3 id="core-concepts-that-make-warps-powerful"><a class="header" href="#core-concepts-that-make-warps-powerful">Core concepts that make warps powerful</a></h3>
-<p><strong>1. Lane identity:</strong> Each thread has a “lane ID” (0 to 31) that’s essentially free to access</p>
+<p><strong>1. Lane identity:</strong> Each thread has a “lane ID” (0 to 31) that’s essentially
+free to access</p>
 <pre><code class="language-mojo">var my_lane = lane_id()  # Just reading a hardware register
 </code></pre>
 <p><strong>2. Implicit synchronization:</strong> No barriers needed within a warp</p>
@@ -259,10 +266,14 @@ var sum = sum(my_contribution)
 <pre><code class="language-mojo"># Get value from lane 0 to all other lanes
 var broadcasted = shuffle_idx(my_value, 0)
 </code></pre>
-<p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as efficient vector operations, combining the ease of thread programming with the performance of vector processing.</p>
+<p><strong>Key insight:</strong> SIMT lets you write natural thread code that executes as
+efficient vector operations, combining the ease of thread programming with the
+performance of vector processing.</p>
 <h3 id="where-warps-fit-in-gpu-execution-hierarchy"><a class="header" href="#where-warps-fit-in-gpu-execution-hierarchy">Where warps fit in GPU execution hierarchy</a></h3>
-<p>For complete context on how warps relate to the overall GPU execution model, see <a href="../puzzle_23/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps fit:</p>
-<pre><code>GPU Device
+<p>For complete context on how warps relate to the overall GPU execution model, see
+<a href="../puzzle_23/gpu-thread-vs-simd.html">GPU Threading vs SIMD</a>. Here’s where warps
+fit:</p>
+<pre><code class="language-text">GPU Device
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
 │   │   ├── Warp 1 (32 threads, lockstep execution) ← This level
@@ -272,12 +283,20 @@ var broadcasted = shuffle_idx(my_value, 0)
 │   │   └── Warp 2 (32 threads)
 │   └── Block 2 (independent group)
 </code></pre>
-<p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations that coordinate all 32 threads within a single warp, enabling powerful primitives like <code>sum()</code> that would otherwise require complex shared memory coordination.</p>
-<p>This mental model supports recognizing when problems map naturally to warp operations versus requiring traditional shared memory approaches.</p>
+<p><strong>Warp programming operates at the “Warp level”</strong> - you work with operations
+that coordinate all 32 threads within a single warp, enabling powerful
+primitives like <code>sum()</code> that would otherwise require complex shared memory
+coordination.</p>
+<p>This mental model supports recognizing when problems map naturally to warp
+operations versus requiring traditional shared memory approaches.</p>
 <h2 id="the-hardware-foundation-of-warp-programming"><a class="header" href="#the-hardware-foundation-of-warp-programming">The hardware foundation of warp programming</a></h2>
-<p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is crucial for effective warp programming. This isn’t just a software abstraction - it’s how GPU hardware actually works at the silicon level.</p>
+<p>Understanding <strong>Single Instruction, Multiple Thread (SIMT)</strong> execution is
+crucial for effective warp programming. This isn’t just a software abstraction -
+it’s how GPU hardware actually works at the silicon level.</p>
 <h2 id="what-is-simt-execution"><a class="header" href="#what-is-simt-execution">What is SIMT execution?</a></h2>
-<p><strong>SIMT</strong> means that within a warp, all threads execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>. This is fundamentally different from CPU threads, which can execute completely different instructions independently.</p>
+<p><strong>SIMT</strong> means that within a warp, all threads execute the <strong>same instruction</strong>
+at the <strong>same time</strong> on <strong>different data</strong>. This is fundamentally different from
+CPU threads, which can execute completely different instructions independently.</p>
 <h3 id="cpu-vs-gpu-execution-models"><a class="header" href="#cpu-vs-gpu-execution-models">CPU vs GPU Execution Models</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>CPU (MIMD)</th><th>GPU Warp (SIMT)</th></tr></thead><tbody>
 <tr><td><strong>Instruction Model</strong></td><td>Multiple Instructions, Multiple Data</td><td>Single Instruction, Multiple Thread</td></tr>
@@ -299,7 +318,8 @@ var broadcasted = shuffle_idx(my_value, 0)
 <li><strong>… (all lanes execute simultaneously)</strong></li>
 <li><strong>Lane 31</strong>: Operates on <code>Data31</code> → <code>Result31</code></li>
 </ul>
-<p><strong>Key insight:</strong> All lanes execute the <strong>same instruction</strong> at the <strong>same time</strong> on <strong>different data</strong>.</p>
+<p><strong>Key insight:</strong> All lanes execute the <strong>same instruction</strong> at the <strong>same time</strong>
+on <strong>different data</strong>.</p>
 <h3 id="why-simt-works-for-gpus"><a class="header" href="#why-simt-works-for-gpus">Why SIMT works for GPUs</a></h3>
 <p>GPUs are optimized for <strong>throughput</strong>, not latency. SIMT enables:</p>
 <ul>
@@ -317,7 +337,8 @@ from gpu.primitives.warp import WARP_SIZE
 # Within a kernel function:
 my_lane = lane_id()  # Returns 0-31 (NVIDIA/RDNA) or 0-63 (CDNA)
 </code></pre>
-<p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware register, not computing a value.</p>
+<p><strong>Key insight:</strong> <code>lane_id()</code> is <strong>free</strong> - it’s just reading a hardware
+register, not computing a value.</p>
 <h3 id="synchronization-within-warps"><a class="header" href="#synchronization-within-warps">Synchronization within warps</a></h3>
 <p>The most powerful aspect of SIMT: <strong>implicit synchronization</strong>.</p>
 <pre><code class="language-mojo"># Example with thread_idx.x &lt; WARP_SIZE
@@ -332,7 +353,9 @@ from gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # Implicit synchronization!
 </code></pre>
-<p><strong>Why no barriers needed?</strong> All lanes execute each instruction at exactly the same time. When <code>sum()</code> starts, all lanes have already computed their <code>partial_result</code>.</p>
+<p><strong>Why no barriers needed?</strong> All lanes execute each instruction at exactly the
+same time. When <code>sum()</code> starts, all lanes have already computed their
+<code>partial_result</code>.</p>
 <h2 id="warp-divergence-and-convergence"><a class="header" href="#warp-divergence-and-convergence">Warp divergence and convergence</a></h2>
 <h3 id="what-happens-with-conditional-code"><a class="header" href="#what-happens-with-conditional-code">What happens with conditional code?</a></h3>
 <pre><code class="language-mojo">if lane_id() % 2 == 0:
@@ -355,8 +378,10 @@ else:
 <ul>
 <li><strong>Step 2</strong>: Only even lanes execute <code>compute_even()</code> while odd lanes wait</li>
 <li><strong>Step 3</strong>: Only odd lanes execute <code>compute_odd()</code> while even lanes wait</li>
-<li><strong>Total time</strong>: <code>time(compute_even) + time(compute_odd)</code> (sequential execution)</li>
-<li><strong>Without divergence</strong>: <code>max(time(compute_even), time(compute_odd))</code> (parallel execution)</li>
+<li><strong>Total time</strong>: <code>time(compute_even) + time(compute_odd)</code> (sequential
+execution)</li>
+<li><strong>Without divergence</strong>: <code>max(time(compute_even), time(compute_odd))</code> (parallel
+execution)</li>
 </ul>
 <p><strong>Performance impact:</strong></p>
 <ol>
@@ -466,12 +491,19 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </ul>
 <h3 id="shared-memory-bank-conflicts"><a class="header" href="#shared-memory-bank-conflicts">Shared memory bank conflicts</a></h3>
 <p><strong>What is a bank conflict?</strong></p>
-<p>Assume that a GPU shared memory is divided into 32 independent <strong>banks</strong> that can be accessed simultaneously. A <strong>bank conflict</strong> occurs when multiple threads in a warp try to access different addresses within the same bank at the same time. When this happens, the hardware must <strong>serialize</strong> these accesses, turning what should be a single-cycle operation into multiple cycles.</p>
+<p>Assume that a GPU shared memory is divided into 32 independent <strong>banks</strong> that
+can be accessed simultaneously. A <strong>bank conflict</strong> occurs when multiple threads
+in a warp try to access different addresses within the same bank at the same
+time. When this happens, the hardware must <strong>serialize</strong> these accesses, turning
+what should be a single-cycle operation into multiple cycles.</p>
 <p><strong>Key concepts:</strong></p>
 <ul>
-<li><strong>No conflict</strong>: Each thread accesses a different bank → All accesses happen simultaneously (1 cycle)</li>
-<li><strong>Bank conflict</strong>: Multiple threads access the same bank → Accesses happen sequentially (N cycles for N threads)</li>
-<li><strong>Broadcast</strong>: All threads access the same address → Hardware optimizes this to 1 cycle</li>
+<li><strong>No conflict</strong>: Each thread accesses a different bank → All accesses happen
+simultaneously (1 cycle)</li>
+<li><strong>Bank conflict</strong>: Multiple threads access the same bank → Accesses happen
+sequentially (N cycles for N threads)</li>
+<li><strong>Broadcast</strong>: All threads access the same address → Hardware optimizes this
+to 1 cycle</li>
 </ul>
 <p><strong>Shared memory bank organization:</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Bank</th><th>Addresses (byte offsets)</th><th>Example Data (float32)</th></tr></thead><tbody>
@@ -511,7 +543,10 @@ var value = input[global_i]  # Lane 0→input[0], Lane 1→input[1], etc.
 </tbody></table>
 </div>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
-<p>Now that you understand the SIMT foundation, you’re ready to see how these concepts enable powerful warp operations. The next section will show you how <code>sum()</code> transforms complex reduction patterns into simple, efficient function calls.</p>
+<p>Now that you understand the SIMT foundation, you’re ready to see how these
+concepts enable powerful warp operations. The next section will show you how
+<code>sum()</code> transforms complex reduction patterns into simple, efficient function
+calls.</p>
 <p><strong>→ Continue to <a href="./warp_sum.html">warp.sum() Essentials</a></strong></p>
 
                     </main>

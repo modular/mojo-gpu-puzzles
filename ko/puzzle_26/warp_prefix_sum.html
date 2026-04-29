@@ -210,10 +210,21 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="warpprefix_sum-하드웨어-최적화-병렬-스캔"><a class="header" href="#warpprefix_sum-하드웨어-최적화-병렬-스캔"><code>warp.prefix_sum()</code> 하드웨어 최적화 병렬 스캔</a></h1>
-<p>워프 레벨 병렬 스캔 연산에서는 <code>prefix_sum()</code>을 사용하여 복잡한 공유 메모리 알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해 수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬 파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum()</a> 연산은 하드웨어 가속 병렬 스캔을 활용하여 워프 레인에 걸쳐 \(O(\log n)\) 복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로 대체합니다.</em></p>
+<p>워프 레벨 병렬 스캔 연산에서는 <code>prefix_sum()</code>을 사용하여 복잡한 공유 메모리
+알고리즘을 하드웨어 최적화 기본 요소로 대체할 수 있습니다. 이 강력한 연산을 통해
+수십 줄의 공유 메모리 및 동기화 코드가 필요했을 효율적인 누적 계산, 병렬
+파티셔닝, 고급 조정 알고리즘을 구현할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum()</a>
+연산은 하드웨어 가속 병렬 스캔을 활용하여 워프 레인에 걸쳐 \(O(\log n)\)
+복잡도로 누적 연산을 수행하며, 복잡한 다단계 알고리즘을 단일 함수 호출로
+대체합니다.</em></p>
 <blockquote>
-<p><strong>병렬 스캔이란?</strong> <a href="https://en.wikipedia.org/wiki/Prefix_sum">병렬 스캔 (누적 합)</a>은 데이터 요소에 걸쳐 누적 연산을 수행하는 기본적인 병렬 기본 요소입니다. 덧셈의 경우 <code>[a, b, c, d]</code>를 <code>[a, a+b, a+b+c, a+b+c+d]</code>로 변환합니다. 이 연산은 스트림 컴팩션, quicksort 파티셔닝, 병렬 정렬 같은 병렬 알고리즘에 필수적입니다.</p>
+<p><strong>병렬 스캔이란?</strong>
+<a href="https://en.wikipedia.org/wiki/Prefix_sum">병렬 스캔 (누적 합)</a>은 데이터
+요소에 걸쳐 누적 연산을 수행하는 기본적인 병렬 기본 요소입니다. 덧셈의 경우
+<code>[a, b, c, d]</code>를 <code>[a, a+b, a+b+c, a+b+c+d]</code>로 변환합니다. 이 연산은 스트림
+컴팩션, quicksort 파티셔닝, 병렬 정렬 같은 병렬 알고리즘에 필수적입니다.</p>
 </blockquote>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -224,7 +235,8 @@
 <li>여러 워프 기본 요소를 결합한 <strong>고급 병렬 파티셔닝</strong></li>
 <li>복잡한 공유 메모리를 대체하는 <strong>단일 워프 알고리즘 최적화</strong></li>
 </ul>
-<p>이를 통해 다단계 공유 메모리 알고리즘이 우아한 단일 함수 호출로 변환되어, 명시적 동기화 없이 효율적인 병렬 스캔 연산이 가능합니다.</p>
+<p>이를 통해 다단계 공유 메모리 알고리즘이 우아한 단일 함수 호출로 변환되어, 명시적
+동기화 없이 효율적인 병렬 스캔 연산이 가능합니다.</p>
 <h2 id="1-워프-포함-누적-합"><a class="header" href="#1-워프-포함-누적-합">1. 워프 포함 누적 합</a></h2>
 <h3 id="구성"><a class="header" href="#구성">구성</a></h3>
 <ul>
@@ -235,7 +247,9 @@
 <li>레이아웃: <code>row_major[SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="prefix_sum의-이점"><a class="header" href="#prefix_sum의-이점">prefix_sum의 이점</a></h3>
-<p>기존 누적 합은 복잡한 다단계 공유 메모리 알고리즘이 필요합니다. <a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a>에서는 명시적 공유 메모리 관리로 이를 힘들게 구현했습니다:</p>
+<p>기존 누적 합은 복잡한 다단계 공유 메모리 알고리즘이 필요합니다.
+<a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a>에서는 명시적 공유 메모리 관리로
+이를 힘들게 구현했습니다:</p>
 <pre><code class="language-mojo">def prefix_sum_simple(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -291,9 +305,10 @@ output[global_i] = scan_result
 </ul>
 <h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
 <p>하드웨어 최적화 <code>prefix_sum()</code> 기본 요소를 사용하여 포함 누적 합을 구현합니다.</p>
-<p><strong>수학적 연산:</strong> 각 레인이 자신의 위치까지 모든 요소의 합을 포함하는 누적 합을 계산합니다:
-\[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
-<p>입력 데이터 <code>[1, 2, 3, 4, 5, ...]</code>를 누적 합 <code>[1, 3, 6, 10, 15, ...]</code>으로 변환하며, 각 위치에 이전 모든 요소와 자기 자신의 합이 담깁니다.</p>
+<p><strong>수학적 연산:</strong> 각 레인이 자신의 위치까지 모든 요소의 합을 포함하는 누적 합을
+계산합니다: \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
+<p>입력 데이터 <code>[1, 2, 3, 4, 5, ...]</code>를 누적 합 <code>[1, 3, 6, 10, 15, ...]</code>으로
+변환하며, 각 위치에 이전 모든 요소와 자기 자신의 합이 담깁니다.</p>
 <pre><code class="language-mojo">def warp_inclusive_prefix_sum[
     size: Int
 ](
@@ -338,9 +353,11 @@ output[global_i] = scan_result
 <li>어떤 매개변수가 이 동작을 제어하나요?</li>
 <li>포함 스캔에서 각 레인은 무엇을 출력해야 하나요?</li>
 </ul>
-<p><strong>힌트</strong>: 함수 시그니처를 보고 누적 연산에서 “포함(inclusive)“이 무엇을 의미하는지 생각해 보세요.</p>
+<p><strong>힌트</strong>: 함수 시그니처를 보고 누적 연산에서 “포함(inclusive)“이 무엇을
+의미하는지 생각해 보세요.</p>
 <h3 id="2-단일-워프-제한"><a class="header" href="#2-단일-워프-제한">2. <strong>단일 워프 제한</strong></a></h3>
-<p>이 하드웨어 기본 요소는 단일 워프 내에서만 동작합니다. 이 제한의 의미를 생각해 보세요.</p>
+<p>이 하드웨어 기본 요소는 단일 워프 내에서만 동작합니다. 이 제한의 의미를 생각해
+보세요.</p>
 <p><strong>생각해 보세요:</strong></p>
 <ul>
 <li>여러 워프가 있으면 어떻게 되나요?</li>
@@ -433,7 +450,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 솔루션은 <code>prefix_sum()</code>이 복잡한 다단계 알고리즘을 하드웨어 최적화된 단일 함수 호출로 어떻게 대체하는지 보여줍니다.</p>
+<p>이 솔루션은 <code>prefix_sum()</code>이 복잡한 다단계 알고리즘을 하드웨어 최적화된 단일
+함수 호출로 어떻게 대체하는지 보여줍니다.</p>
 <p><strong>알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]
@@ -447,7 +465,7 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
     output[global_i] = scan_result
 </code></pre>
 <p><strong>SIMT 실행 상세 분석:</strong></p>
-<pre><code>입력: [1, 2, 3, 4, 5, 6, 7, 8, ...]
+<pre><code class="language-text">입력: [1, 2, 3, 4, 5, 6, 7, 8, ...]
 
 사이클 1: 모든 레인이 동시에 값을 로드
   Lane 0: current_val = 1
@@ -476,12 +494,16 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 \[\Large \text{output}[i] = \sum_{j=0}^{i} \text{input}[j]\]</p>
 <p><strong>Puzzle 14 방식과의 비교:</strong></p>
 <ul>
-<li><strong><a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a></strong>: 공유 메모리 ~30줄 + 다중 배리어 + 복잡한 인덱싱</li>
+<li><strong><a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a></strong>: 공유 메모리 ~30줄 + 다중
+배리어 + 복잡한 인덱싱</li>
 <li><strong>워프 기본 요소</strong>: 하드웨어 가속의 함수 호출 1개</li>
 <li><strong>성능</strong>: 같은 \(O(\log n)\) 복잡도이지만, 전용 하드웨어에서 구현</li>
 <li><strong>메모리</strong>: 명시적 할당 대비 공유 메모리 사용량 제로</li>
 </ul>
-<p><strong>Puzzle 12에서의 발전:</strong> 현대 GPU 아키텍처의 강력함을 보여줍니다 - Puzzle 12에서 신중한 수동 구현이 필요했던 것이 이제는 하드웨어 가속 기본 요소 하나로 해결됩니다. 워프 레벨 <code>prefix_sum()</code>은 구현 복잡도 제로로 같은 알고리즘적 이점을 제공합니다.</p>
+<p><strong>Puzzle 12에서의 발전:</strong> 현대 GPU 아키텍처의 강력함을 보여줍니다 - Puzzle
+12에서 신중한 수동 구현이 필요했던 것이 이제는 하드웨어 가속 기본 요소 하나로
+해결됩니다. 워프 레벨 <code>prefix_sum()</code>은 구현 복잡도 제로로 같은 알고리즘적 이점을
+제공합니다.</p>
 <p><strong>prefix_sum이 우월한 이유:</strong></p>
 <ol>
 <li><strong>하드웨어 가속</strong>: 현대 GPU의 전용 스캔 유닛</li>
@@ -496,7 +518,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <li><strong>병렬성</strong>: <code>WARP_SIZE</code>개 레인 모두 동시에 참여</li>
 <li><strong>확장성</strong>: 하드웨어 최적화를 동반한 \(O(\log n)\) 복잡도</li>
 </ul>
-<p><strong>중요한 제한사항</strong>: 이 기본 요소는 단일 워프 내에서만 동작합니다. 멀티 워프 시나리오에서는 워프 간 추가 조정이 필요합니다.</p>
+<p><strong>중요한 제한사항</strong>: 이 기본 요소는 단일 워프 내에서만 동작합니다. 멀티 워프
+시나리오에서는 워프 간 추가 조정이 필요합니다.</p>
 </div>
 </details>
 <h2 id="2-워프-파티션"><a class="header" href="#2-워프-파티션">2. 워프 파티션</a></h2>
@@ -507,15 +530,18 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 </ul>
 <h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
-<p><code>shuffle_xor</code>과 <code>prefix_sum</code> 기본 요소를 <strong>모두</strong> 사용하여 단일 워프 병렬 파티셔닝을 구현합니다.</p>
-<p><strong>수학적 연산:</strong> 피벗 값을 기준으로 요소를 분할하여, <code>&lt; pivot</code>인 요소는 왼쪽에, <code>&gt;= pivot</code>인 요소는 오른쪽에 배치합니다:
+<p><code>shuffle_xor</code>과 <code>prefix_sum</code> 기본 요소를 <strong>모두</strong> 사용하여 단일 워프 병렬
+파티셔닝을 구현합니다.</p>
+<p><strong>수학적 연산:</strong> 피벗 값을 기준으로 요소를 분할하여, <code>&lt; pivot</code>인 요소는 왼쪽에,
+<code>&gt;= pivot</code>인 요소는 오른쪽에 배치합니다:
 \[\Large \text{output} = [\text{elements} &lt; \text{pivot}] \,|\, [\text{elements} \geq \text{pivot}]\]</p>
 <p><strong>고급 알고리즘:</strong> 이 알고리즘은 두 가지 정교한 워프 기본 요소를 결합합니다:</p>
 <ol>
 <li><strong><code>shuffle_xor()</code></strong>: 왼쪽 요소 개수를 세기 위한 워프 레벨 버터플라이 리덕션</li>
 <li><strong><code>prefix_sum()</code></strong>: 각 파티션 내 위치 계산을 위한 비포함 스캔</li>
 </ol>
-<p>이는 단일 워프 내에서 여러 워프 기본 요소를 결합하여 복잡한 병렬 알고리즘을 구현하는 강력함을 보여줍니다.</p>
+<p>이는 단일 워프 내에서 여러 워프 기본 요소를 결합하여 복잡한 병렬 알고리즘을
+구현하는 강력함을 보여줍니다.</p>
 <pre><code class="language-mojo">def warp_partition[
     size: Int
 ](
@@ -552,7 +578,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-다단계-알고리즘-구조"><a class="header" href="#1-다단계-알고리즘-구조">1. <strong>다단계 알고리즘 구조</strong></a></h3>
-<p>이 알고리즘은 여러 조정된 단계가 필요합니다. 파티셔닝에 필요한 논리적 단계를 생각해 보세요.</p>
+<p>이 알고리즘은 여러 조정된 단계가 필요합니다. 파티셔닝에 필요한 논리적 단계를
+생각해 보세요.</p>
 <p><strong>고려할 핵심 단계:</strong></p>
 <ul>
 <li>어떤 요소가 어느 파티션에 속하는지 어떻게 식별하나요?</li>
@@ -577,7 +604,8 @@ expected: [1.0, 3.0, 6.0, 10.0, 15.0, 21.0, 28.0, 36.0, 45.0, 55.0, 66.0, 78.0, 
 <li>이 두 연산이 어떻게 함께 동작하나요?</li>
 </ul>
 <h3 id="4-위치-계산"><a class="header" href="#4-위치-계산">4. <strong>위치 계산</strong></a></h3>
-<p>가장 까다로운 부분은 각 요소가 출력에서 어디에 기록되어야 하는지 계산하는 것입니다.</p>
+<p>가장 까다로운 부분은 각 요소가 출력에서 어디에 기록되어야 하는지 계산하는
+것입니다.</p>
 <p><strong>핵심 통찰:</strong></p>
 <ul>
 <li>왼쪽 파티션 요소: 최종 위치를 무엇이 결정하나요?</li>
@@ -672,7 +700,8 @@ pivot: 5.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 솔루션은 여러 워프 기본 요소 간의 고급 조정을 통해 정교한 병렬 알고리즘을 구현하는 방법을 보여줍니다.</p>
+<p>이 솔루션은 여러 워프 기본 요소 간의 고급 조정을 통해 정교한 병렬 알고리즘을
+구현하는 방법을 보여줍니다.</p>
 <p><strong>전체 알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]
@@ -703,7 +732,7 @@ pivot: 5.0
         output[Int(warp_left_total + warp_right_pos)] = current_val
 </code></pre>
 <p><strong>다단계 실행 추적 (8-레인 예제, pivot=5, 값 [3,7,1,8,2,9,4,6]):</strong></p>
-<pre><code>초기 상태:
+<pre><code class="language-text">초기 상태:
   Lane 0: current_val=3 (&lt; 5)  Lane 1: current_val=7 (&gt;= 5)
   Lane 2: current_val=1 (&lt; 5)  Lane 3: current_val=8 (&gt;= 5)
   Lane 4: current_val=2 (&lt; 5)  Lane 5: current_val=9 (&gt;= 5)
@@ -740,15 +769,15 @@ pivot: 5.0
 최종 결과: [3, 1, 2, 4, 7, 8, 9, 6] (&lt; pivot | &gt;= pivot)
 </code></pre>
 <p><strong>수학적 통찰:</strong> 이중 워프 기본 요소를 사용한 병렬 파티셔닝을 구현합니다:
-\[\Large \begin{align}
-\text{left_pos}[i] &amp;= \text{prefix_sum}_{\text{exclusive}}(\text{predicate_left}[i]) \\
-\text{right_pos}[i] &amp;= \text{prefix_sum}_{\text{exclusive}}(\text{predicate_right}[i]) \\
+\[\Large \begin{align} \text{left_pos}[i] &amp;=
+\text{prefix_sum}_{\text{exclusive}}(\text{predicate_left}[i]) \\
+\text{right_pos}[i] &amp;=
+\text{prefix_sum}_{\text{exclusive}}(\text{predicate_right}[i]) \\
 \text{left_total} &amp;= \text{butterfly_reduce}(\text{predicate_left}) \\
 \text{final_pos}[i] &amp;= \begin{cases}
 \text{left_pos}[i] &amp; \text{if } \text{input}[i] &lt; \text{pivot} \\
-\text{left_total} + \text{right_pos}[i] &amp; \text{if } \text{input}[i] \geq \text{pivot}
-\end{cases}
-\end{align}\]</p>
+\text{left_total} + \text{right_pos}[i] &amp; \text{if} \text{input}[i] \geq
+\text{pivot} \end{cases} \end{align}\]</p>
 <p><strong>다중 기본 요소 접근 방식이 동작하는 이유:</strong></p>
 <ol>
 <li><strong>프레디케이트 생성</strong>: 각 요소의 파티션 소속을 식별</li>
@@ -766,7 +795,8 @@ pivot: 5.0
 </ul>
 <p><strong>성능 특성:</strong></p>
 <ul>
-<li><strong>통신 단계</strong>: \(2 \times \log_2(\text{WARP_SIZE})\) (누적 합 + 버터플라이 리덕션)</li>
+<li><strong>통신 단계</strong>: \(2 \times \log_2(\text{WARP_SIZE})\) (누적 합 +
+버터플라이 리덕션)</li>
 <li><strong>메모리 효율성</strong>: 공유 메모리 제로, 모두 레지스터 기반</li>
 <li><strong>병렬성</strong>: 알고리즘 전체에서 모든 레인이 활성 상태</li>
 <li><strong>확장성</strong>: 모든 <code>WARP_SIZE</code> (32, 64 등)에서 동작</li>
@@ -781,7 +811,9 @@ pivot: 5.0
 </div>
 </details>
 <h2 id="요약"><a class="header" href="#요약">요약</a></h2>
-<p><code>prefix_sum()</code> 기본 요소는 복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 가속 병렬 스캔 연산을 가능하게 합니다. 두 가지 문제를 통해 다음을 배웠습니다:</p>
+<p><code>prefix_sum()</code> 기본 요소는 복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는
+하드웨어 가속 병렬 스캔 연산을 가능하게 합니다. 두 가지 문제를 통해 다음을
+배웠습니다:</p>
 <h3 id="핵심-누적-합-패턴"><a class="header" href="#핵심-누적-합-패턴"><strong>핵심 누적 합 패턴</strong></a></h3>
 <ol>
 <li>
@@ -836,7 +868,9 @@ final_pos = local_pos + partition_offset
 <li><strong>Quicksort 파티셔닝</strong>: 병렬 정렬 알고리즘의 핵심 빌딩 블록</li>
 <li><strong>병렬 알고리즘</strong>: 부하 분산, 작업 분배, 데이터 재구조화</li>
 </ul>
-<p><code>prefix_sum()</code>과 <code>shuffle_xor()</code>의 결합은 현대 GPU 워프 기본 요소가 최소한의 코드 복잡도와 최적의 성능 특성으로 정교한 병렬 알고리즘을 어떻게 구현할 수 있는지를 보여줍니다.</p>
+<p><code>prefix_sum()</code>과 <code>shuffle_xor()</code>의 결합은 현대 GPU 워프 기본 요소가 최소한의
+코드 복잡도와 최적의 성능 특성으로 정교한 병렬 알고리즘을 어떻게 구현할 수
+있는지를 보여줍니다.</p>
 
                     </main>
 

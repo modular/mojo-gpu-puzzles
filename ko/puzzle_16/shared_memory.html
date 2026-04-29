@@ -211,7 +211,10 @@
                         <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
 <h1 id="공유-메모리-버전"><a class="header" href="#공유-메모리-버전">공유 메모리 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>정방 행렬 \(A\) 와 \(B\) 의 행렬 곱셈을 구현하고 결과를 \(\text{output}\)에 저장하는 퍼즐입니다. 공유 메모리를 활용하여 메모리 접근 패턴을 최적화합니다. 연산 전에 행렬 블록을 공유 메모리에 미리 로드하는 방식입니다.</p>
+<p>정방 행렬 \(A\) 와 \(B\) 의 행렬 곱셈을 구현하고 결과를
+\(\text{output}\)에 저장하는 퍼즐입니다. 공유 메모리를 활용하여 메모리 접근
+패턴을 최적화합니다. 연산 전에 행렬 블록을 공유 메모리에 미리 로드하는
+방식입니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
 <ul>
@@ -221,7 +224,8 @@
 <li>2D 인덱싱을 사용한 협력적 데이터 로딩</li>
 <li>행렬 연산에 TileTensor를 효율적으로 활용하기</li>
 </ul>
-<p>핵심은 TileTensor를 통해 빠른 공유 메모리를 활용하여 비용이 큰 전역 메모리 접근을 최소화하는 것입니다.</p>
+<p>핵심은 TileTensor를 통해 빠른 공유 메모리를 활용하여 비용이 큰 전역 메모리
+접근을 최소화하는 것입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>행렬 크기: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -335,7 +339,8 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>TileTensor를 활용한 공유 메모리 구현은 효율적인 메모리 접근 패턴을 통해 성능을 향상시킵니다:</p>
+<p>TileTensor를 활용한 공유 메모리 구현은 효율적인 메모리 접근 패턴을 통해 성능을
+향상시킵니다:</p>
 <h3 id="메모리-구성"><a class="header" href="#메모리-구성">메모리 구성</a></h3>
 <pre><code class="language-txt">Input Tensors (2×2):                Shared Memory (3×3):
 Matrix A:                           a_shared:

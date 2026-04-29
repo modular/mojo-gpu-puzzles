@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
 <h1 id="puzzle-15-축-합계"><a class="header" href="#puzzle-15-축-합계">Puzzle 15: 축 합계</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>2D 행렬 <code>a</code>의 각 행에 대해 합계를 계산하여 TileTensor를 사용해 <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p>2D 행렬 <code>a</code>의 각 행에 대해 합계를 계산하여 TileTensor를 사용해 <code>output</code>에
+저장하는 커널을 구현하세요.</p>
 <img src="/puzzle_15/media/15-w.png" alt="축 합계 시각화" class="light-mode-img">
 <img src="/puzzle_15/media/15-b.png" alt="축 합계 시각화" class="dark-mode-img">
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
@@ -222,7 +223,9 @@
 <li>효율적인 공유 메모리 리덕션 패턴</li>
 <li>다차원 텐서 레이아웃 다루기</li>
 </ul>
-<p>핵심은 스레드 블록을 행렬의 행에 매핑하고, TileTensor의 차원별 인덱싱을 활용하면서 각 블록 내에서 효율적인 병렬 리덕션을 수행하는 방법을 이해하는 것입니다.</p>
+<p>핵심은 스레드 블록을 행렬의 행에 매핑하고, TileTensor의 차원별 인덱싱을
+활용하면서 각 블록 내에서 효율적인 병렬 리덕션을 수행하는 방법을 이해하는
+것입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>행렬 크기: \(\text{BATCH} \times \text{SIZE} = 4 \times 6\)</li>
@@ -367,7 +370,8 @@ expected: HostBuffer([15.0, 51.0, 87.0, 123.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>TileTensor를 활용해 2D 행렬의 행 방향 합계를 병렬로 구하는 리덕션 구현입니다. 단계별로 살펴보겠습니다:</p>
+<p>TileTensor를 활용해 2D 행렬의 행 방향 합계를 병렬로 구하는 리덕션 구현입니다.
+단계별로 살펴보겠습니다:</p>
 <h3 id="행렬-레이아웃과-블록-매핑"><a class="header" href="#행렬-레이아웃과-블록-매핑">행렬 레이아웃과 블록 매핑</a></h3>
 <pre><code class="language-txt">Input Matrix (4×6) with TileTensor:                Block Assignment:
 [[ a[0,0]  a[0,1]  a[0,2]  a[0,3]  a[0,4]  a[0,5] ] → Block(0,0)
@@ -421,7 +425,9 @@ while stride &gt; 0:
     barrier()
     stride //= 2
 </code></pre>
-<p><strong>참고</strong>: 이 구현에서는 같은 반복 내에서 스레드들이 공유 메모리를 동시에 읽고 쓰기 때문에 잠재적인 경쟁 상태가 발생할 수 있습니다. 더 안전한 방법은 읽기와 쓰기 단계를 분리하는 것입니다:</p>
+<p><strong>참고</strong>: 이 구현에서는 같은 반복 내에서 스레드들이 공유 메모리를 동시에 읽고
+쓰기 때문에 잠재적인 경쟁 상태가 발생할 수 있습니다. 더 안전한 방법은 읽기와
+쓰기 단계를 분리하는 것입니다:</p>
 <pre><code class="language-mojo">stride = TPB // 2
 while stride &gt; 0:
     var temp_val: output.element_type = 0
@@ -465,7 +471,8 @@ while stride &gt; 0:
 <li>최소한의 배리어 (리덕션 중에만 사용)</li>
 <li>행 간 독립적인 처리</li>
 <li>블록 간 통신 불필요</li>
-<li><strong>경쟁 상태 고려사항</strong>: 현재 구현에서는 병렬 리덕션 중에 읽기-쓰기 충돌이 발생할 수 있으며, 명시적인 읽기-쓰기 단계 분리로 해결할 수 있습니다</li>
+<li><strong>경쟁 상태 고려사항</strong>: 현재 구현에서는 병렬 리덕션 중에 읽기-쓰기 충돌이
+발생할 수 있으며, 명시적인 읽기-쓰기 단계 분리로 해결할 수 있습니다</li>
 </ul>
 </li>
 </ol>

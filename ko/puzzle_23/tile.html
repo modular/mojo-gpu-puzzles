@@ -211,10 +211,19 @@
                         <!-- i18n-source-commit: 5426b744b3cbf1861feb709814917d33f03bb103 -->
 <h1 id="tile---메모리-효율적인-타일링-처리"><a class="header" href="#tile---메모리-효율적인-타일링-처리">tile - 메모리 효율적인 타일링 처리</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>elementwise</strong> 패턴을 기반으로, 이 퍼즐에서는 <strong>타일링 처리</strong>를 소개합니다. 이는 GPU에서 메모리 접근 패턴과 캐시 활용을 최적화하는 핵심 기법입니다. 각 스레드가 전체 배열에 걸쳐 개별 SIMD 벡터를 처리하는 대신, 타일링은 데이터를 캐시 메모리에 더 잘 맞는 작고 관리 가능한 청크로 구성합니다.</p>
-<p><strong><a href="../puzzle_16/tiled.html">Puzzle 16의 타일링 행렬 곱셈</a></strong> 에서 이미 타일링을 경험한 바 있습니다. 거기서는 타일을 사용해 대규모 행렬을 효율적으로 처리했습니다. 여기서는 동일한 타일링 원칙을 벡터 연산에 적용하여, 이 기법이 2D 행렬에서 1D 배열까지 어떻게 확장되는지 보여줍니다.</p>
-<p>Mojo의 타일링 방식을 사용하여 동일한 벡터 덧셈 연산을 구현합니다. 각 GPU 스레드가 데이터의 타일 전체를 순차적으로 처리하며, 메모리 지역성이 특정 워크로드에서 어떻게 성능을 향상시킬 수 있는지 보여줍니다.</p>
-<p><strong>핵심 통찰:</strong> <em>타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의 스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.</em></p>
+<p><strong>elementwise</strong> 패턴을 기반으로, 이 퍼즐에서는 <strong>타일링 처리</strong>를 소개합니다.
+이는 GPU에서 메모리 접근 패턴과 캐시 활용을 최적화하는 핵심 기법입니다. 각
+스레드가 전체 배열에 걸쳐 개별 SIMD 벡터를 처리하는 대신, 타일링은 데이터를 캐시
+메모리에 더 잘 맞는 작고 관리 가능한 청크로 구성합니다.</p>
+<p><strong><a href="../puzzle_16/tiled.html">Puzzle 16의 타일링 행렬 곱셈</a></strong> 에서 이미 타일링을
+경험한 바 있습니다. 거기서는 타일을 사용해 대규모 행렬을 효율적으로
+처리했습니다. 여기서는 동일한 타일링 원칙을 벡터 연산에 적용하여, 이 기법이 2D
+행렬에서 1D 배열까지 어떻게 확장되는지 보여줍니다.</p>
+<p>Mojo의 타일링 방식을 사용하여 동일한 벡터 덧셈 연산을 구현합니다. 각 GPU
+스레드가 데이터의 타일 전체를 순차적으로 처리하며, 메모리 지역성이 특정
+워크로드에서 어떻게 성능을 향상시킬 수 있는지 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong> <em>타일링은 병렬 폭을 메모리 지역성과 교환합니다 - 더 적은 수의
+스레드가 더 나은 캐시 활용으로 더 많은 작업을 수행합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
@@ -278,15 +287,18 @@ def tiled_elementwise_add[
 <p>타일링 방식은 데이터를 고정 크기의 청크로 나눕니다:</p>
 <pre><code class="language-mojo">num_tiles = (size + tile_size - 1) // tile_size  # 올림 나눗셈
 </code></pre>
-<p><code>TILE_SIZE=32</code>인 1024개 요소 벡터의 경우: <code>1024 ÷ 32 = 32</code>개 타일이 정확히 생깁니다.</p>
+<p><code>TILE_SIZE=32</code>인 1024개 요소 벡터의 경우: <code>1024 ÷ 32 = 32</code>개 타일이 정확히
+생깁니다.</p>
 <h3 id="2-타일-추출-패턴"><a class="header" href="#2-타일-추출-패턴">2. <strong>타일 추출 패턴</strong></a></h3>
-<p><a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를 참고하세요.</p>
+<p><a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">TileTensor <code>.tile</code> 문서</a>를
+참고하세요.</p>
 <pre><code class="language-mojo">tile_id = indices[0]  # 각 스레드가 처리할 타일 하나를 받음
 out_tile = output.tile[tile_size](tile_id)
 a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>
-<p><code>tile[size](id)</code> 메서드는 <code>id × size</code> 위치부터 시작하는 <code>size</code>개의 연속 요소에 대한 뷰를 생성합니다.</p>
+<p><code>tile[size](id)</code> 메서드는 <code>id × size</code> 위치부터 시작하는 <code>size</code>개의 연속 요소에
+대한 뷰를 생성합니다.</p>
 <h3 id="3-타일-내-순차-처리"><a class="header" href="#3-타일-내-순차-처리">3. <strong>타일 내 순차 처리</strong></a></h3>
 <p>요소별 방식과 달리, 타일을 순차적으로 처리합니다:</p>
 <pre><code class="language-mojo">@parameter
@@ -303,11 +315,14 @@ out_tile.store[simd_width](i, 0, result)  # 타일 내 위치 i에 저장
 <h3 id="5-스레드-구성의-차이점"><a class="header" href="#5-스레드-구성의-차이점">5. <strong>스레드 구성의 차이점</strong></a></h3>
 <pre><code class="language-mojo">elementwise[process_tiles, 1, target="gpu"](num_tiles, ctx)
 </code></pre>
-<p><code>SIMD_WIDTH</code> 대신 <code>1</code>을 사용합니다 - 각 스레드가 하나의 타일 전체를 순차적으로 처리합니다.</p>
+<p><code>SIMD_WIDTH</code> 대신 <code>1</code>을 사용합니다 - 각 스레드가 하나의 타일 전체를 순차적으로
+처리합니다.</p>
 <h3 id="6-메모리-접근-패턴-인사이트"><a class="header" href="#6-메모리-접근-패턴-인사이트">6. <strong>메모리 접근 패턴 인사이트</strong></a></h3>
-<p>각 스레드는 연속적인 메모리 블록(타일)에 접근한 다음, 다음 타일로 이동합니다. 이렇게 하면 각 스레드의 실행 내에서 우수한 <strong>공간 지역성</strong>이 만들어집니다.</p>
+<p>각 스레드는 연속적인 메모리 블록(타일)에 접근한 다음, 다음 타일로 이동합니다.
+이렇게 하면 각 스레드의 실행 내에서 우수한 <strong>공간 지역성</strong>이 만들어집니다.</p>
 <h3 id="7-디버깅-핵심-포인트"><a class="header" href="#7-디버깅-핵심-포인트">7. <strong>디버깅 핵심 포인트</strong></a></h3>
-<p>타일링을 사용하면 스레드 실행 수는 줄어들지만 각 스레드가 더 많은 작업을 수행합니다:</p>
+<p>타일링을 사용하면 스레드 실행 수는 줄어들지만 각 스레드가 더 많은 작업을
+수행합니다:</p>
 <ul>
 <li>요소별: ~256개 스레드 (SIMD_WIDTH=4 기준), 각각 4개 요소 처리</li>
 <li>Tiled: ~32개 스레드, 각각 32개 요소를 순차적으로 처리</li>
@@ -419,7 +434,7 @@ a_tile = a.tile[tile_size](tile_id)
 b_tile = b.tile[tile_size](tile_id)
 </code></pre>
 <p><strong>타일 매핑 시각화 (TILE_SIZE=32):</strong></p>
-<pre><code>원본 배열: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
+<pre><code class="language-text">원본 배열: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ..., 1023]
 
 Tile 0 (thread 0): [0, 1, 2, ..., 31]      ← 요소 0-31
 Tile 1 (thread 1): [32, 33, 34, ..., 63]   ← 요소 32-63
@@ -449,7 +464,7 @@ for i in range(tile_size):
 <li><strong>조정 비용 감소</strong>: SIMD 그룹 간 동기화가 불필요</li>
 </ul>
 <p><strong>하나의 타일 내 실행 패턴 (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code>스레드가 타일을 순차 처리:
+<pre><code class="language-text">스레드가 타일을 순차 처리:
 Step 0: 요소 [0:4]를 SIMD로 처리
 Step 1: 요소 [4:8]를 SIMD로 처리
 Step 2: 요소 [8:12]를 SIMD로 처리
@@ -460,13 +475,13 @@ Step 7: 요소 [28:32]를 SIMD로 처리
 <h3 id="4-메모리-접근-패턴-분석"><a class="header" href="#4-메모리-접근-패턴-분석">4. <strong>메모리 접근 패턴 분석</strong></a></h3>
 <p><strong>캐시 동작 비교:</strong></p>
 <p><strong>요소별 패턴:</strong></p>
-<pre><code>Thread 0: 글로벌 위치 [0, 4, 8, 12, ...] 접근    ← Stride = SIMD_WIDTH
+<pre><code class="language-text">Thread 0: 글로벌 위치 [0, 4, 8, 12, ...] 접근    ← Stride = SIMD_WIDTH
 Thread 1: 글로벌 위치 [4, 8, 12, 16, ...] 접근   ← Stride = SIMD_WIDTH
 ...
 결과: 메모리 접근이 전체 배열에 분산
 </code></pre>
 <p><strong>Tiled 패턴:</strong></p>
-<pre><code>Thread 0: 위치 [0:32]를 순차 접근               ← 연속적인 32개 요소 블록
+<pre><code class="language-text">Thread 0: 위치 [0:32]를 순차 접근               ← 연속적인 32개 요소 블록
 Thread 1: 위치 [32:64]를 순차 접근             ← 다음 연속적인 32개 요소 블록
 ...
 결과: 각 스레드 내에서 완벽한 공간 지역성
@@ -475,7 +490,8 @@ Thread 1: 위치 [32:64]를 순차 접근             ← 다음 연속적인 32
 <ul>
 <li><strong>L1 캐시</strong>: 작은 타일이 L1 캐시에 더 잘 맞아 캐시 미스 감소</li>
 <li><strong>메모리 대역폭</strong>: 순차 접근이 유효 대역폭을 극대화</li>
-<li><strong>TLB 효율</strong>: TLB 미스 감소 (<em>역주: TLB(Translation Lookaside Buffer)는 가상 주소를 물리 주소로 변환하는 캐시로, 미스가 줄면 메모리 접근이 빨라집니다</em>)</li>
+<li><strong>TLB 효율</strong>: TLB 미스 감소 (<em>역주: TLB(Translation Lookaside Buffer)는 가상
+주소를 물리 주소로 변환하는 캐시로, 미스가 줄면 메모리 접근이 빨라집니다</em>)</li>
 <li><strong>프리페칭</strong>: 하드웨어 프리페처가 순차 패턴에서 최적으로 동작</li>
 </ul>
 <h3 id="5-스레드-구성-전략"><a class="header" href="#5-스레드-구성-전략">5. <strong>스레드 구성 전략</strong></a></h3>
@@ -483,19 +499,23 @@ Thread 1: 위치 [32:64]를 순차 접근             ← 다음 연속적인 32
 </code></pre>
 <p><strong>왜 <code>SIMD_WIDTH</code> 대신 <code>1</code>인가?</strong></p>
 <ul>
-<li><strong>스레드 수</strong>: <code>num_tiles × SIMD_WIDTH</code>가 아닌 정확히 <code>num_tiles</code>개의 스레드만 실행</li>
+<li><strong>스레드 수</strong>: <code>num_tiles × SIMD_WIDTH</code>가 아닌 정확히 <code>num_tiles</code>개의 스레드만
+실행</li>
 <li><strong>작업 분배</strong>: 각 스레드가 하나의 완전한 타일을 처리</li>
 <li><strong>로드 밸런싱</strong>: 스레드당 더 많은 작업, 전체적으로 더 적은 스레드</li>
 <li><strong>메모리 지역성</strong>: 각 스레드의 작업이 공간적으로 지역화</li>
 </ul>
 <p><strong>성능 트레이드오프:</strong></p>
 <ul>
-<li><strong>더 적은 논리적 스레드</strong>: 낮은 점유율에서 모든 GPU 코어를 활용하지 못할 수 있음</li>
+<li><strong>더 적은 논리적 스레드</strong>: 낮은 점유율에서 모든 GPU 코어를 활용하지 못할 수
+있음</li>
 <li><strong>스레드당 더 많은 작업</strong>: 더 나은 캐시 활용과 조정 오버헤드 감소</li>
 <li><strong>순차 접근</strong>: 각 스레드 내에서 최적의 메모리 대역폭 활용</li>
 <li><strong>오버헤드 감소</strong>: 스레드 실행 및 조정 오버헤드 감소</li>
 </ul>
-<p><strong>중요 참고</strong>: “더 적은 스레드“는 논리적 프로그래밍 모델을 의미합니다. GPU 스케줄러는 여러 워프를 실행하고 메모리 지연 시 효율적으로 전환하여 높은 하드웨어 활용률을 달성할 수 있습니다.</p>
+<p><strong>중요 참고</strong>: “더 적은 스레드“는 논리적 프로그래밍 모델을 의미합니다. GPU
+스케줄러는 여러 워프를 실행하고 메모리 지연 시 효율적으로 전환하여 높은 하드웨어
+활용률을 달성할 수 있습니다.</p>
 <h3 id="6-성능-특성"><a class="header" href="#6-성능-특성">6. <strong>성능 특성</strong></a></h3>
 <p><strong>타일링이 도움이 되는 경우:</strong></p>
 <ul>
@@ -533,10 +553,11 @@ Thread 1: 위치 [32:64]를 순차 접근             ← 다음 연속적인 32
 <li><strong>SIMD 폭</strong>: 타일 크기는 SIMD 폭의 배수여야 함</li>
 </ul>
 <p><strong>비교 요약:</strong></p>
-<pre><code>Elementwise: 높은 병렬성, 분산된 메모리 접근
+<pre><code class="language-text">Elementwise: 높은 병렬성, 분산된 메모리 접근
 Tiled:       적당한 병렬성, 지역화된 메모리 접근
 </code></pre>
-<p>요소별 패턴과 타일링 패턴 간의 선택은 특정 워크로드 특성, 데이터 접근 패턴, 대상 하드웨어 능력에 따라 달라집니다.</p>
+<p>요소별 패턴과 타일링 패턴 간의 선택은 특정 워크로드 특성, 데이터 접근 패턴, 대상
+하드웨어 능력에 따라 달라집니다.</p>
 </div>
 </details>
 <h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
@@ -546,7 +567,9 @@ Tiled:       적당한 병렬성, 지역화된 메모리 접근
 <li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU 스레딩 vs SIMD 개념</a></strong>: 실행 계층 구조 이해</li>
 <li><strong><a href="./benchmarking.html">📊 Mojo 벤치마킹</a></strong>: 성능 분석과 최적화</li>
 </ul>
-<p>💡 <strong>핵심 요약</strong>: 타일링은 메모리 접근 패턴이 원시 연산 처리량보다 더 중요할 수 있음을 보여줍니다. 최고의 GPU 코드는 병렬성과 메모리 계층 구조 최적화의 균형을 맞춥니다.</p>
+<p>💡 <strong>핵심 요약</strong>: 타일링은 메모리 접근 패턴이 원시 연산 처리량보다 더 중요할 수
+있음을 보여줍니다. 최고의 GPU 코드는 병렬성과 메모리 계층 구조 최적화의 균형을
+맞춥니다.</p>
 
                     </main>
 

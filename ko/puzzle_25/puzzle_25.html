@@ -211,13 +211,23 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="puzzle-25-워프-통신"><a class="header" href="#puzzle-25-워프-통신">Puzzle 25: 워프 통신</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>Puzzle 25: 워프 통신 기본 요소</strong>에서는 고급 GPU <strong>워프 레벨 통신 연산</strong> - 워프 내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>과 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>를 사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을 배웁니다.</p>
-<p><strong>Part VII: GPU 워프 통신</strong>에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을 다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된 데이터 이동을 활용하는 효율적인 워프 통신 호출로 대체하는 방법을 배웁니다.</p>
-<p><strong>핵심 통찰:</strong> <em>GPU 워프는 록스텝으로 실행됩니다 - Mojo의 워프 통신 연산은 이 동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본 요소를 제공합니다.</em></p>
+<p><strong>Puzzle 25: 워프 통신 기본 요소</strong>에서는 고급 GPU <strong>워프 레벨 통신 연산</strong> - 워프
+내에서 효율적인 데이터 교환과 조정 패턴을 가능하게 하는 하드웨어 가속 기본
+요소를 소개합니다.
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down">shuffle_down</a>과
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast">broadcast</a>를
+사용하여 복잡한 공유 메모리 패턴 없이 이웃 통신과 집합 조정을 구현하는 방법을
+배웁니다.</p>
+<p><strong>Part VII: GPU 워프 통신</strong>에서는 스레드 그룹 내 워프 레벨 데이터 이동 연산을
+다룹니다. 복잡한 공유 메모리 + 인덱싱 + 경계 검사 패턴을 하드웨어 최적화된
+데이터 이동을 활용하는 효율적인 워프 통신 호출로 대체하는 방법을 배웁니다.</p>
+<p><strong>핵심 통찰:</strong> <em>GPU 워프는 록스텝으로 실행됩니다 - Mojo의 워프 통신 연산은 이
+동기화를 활용하여 자동 경계 처리와 명시적 동기화 없이 효율적인 데이터 교환 기본
+요소를 제공합니다.</em></p>
 <h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
 <h3 id="워프-통신-모델"><a class="header" href="#워프-통신-모델"><strong>워프 통신 모델</strong></a></h3>
 <p>GPU 워프 내 기본 통신 패턴을 이해합니다:</p>
-<pre><code>GPU 워프 (32 스레드, SIMT 록스텝 실행)
+<pre><code class="language-text">GPU 워프 (32 스레드, SIMT 록스텝 실행)
 ├── 레인 0  ──shuffle_down──&gt; 레인 1  ──shuffle_down──&gt; 레인 2
 ├── 레인 1  ──shuffle_down──&gt; 레인 2  ──shuffle_down──&gt; 레인 3
 ├── 레인 2  ──shuffle_down──&gt; 레인 3  ──shuffle_down──&gt; 레인 4
@@ -237,13 +247,20 @@
 <h3 id="mojo의-워프-통신-연산"><a class="header" href="#mojo의-워프-통신-연산"><strong>Mojo의 워프 통신 연산</strong></a></h3>
 <p><code>gpu.primitives.warp</code>의 핵심 통신 기본 요소를 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>: 더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>: 레인 0의 값을 모든 레인에 공유 (일대다)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>: 특정 레인에서 값을 가져오기 (임의 접근)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>: 더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_down"><code>shuffle_down(value, offset)</code></a></strong>:
+더 높은 인덱스의 레인에서 값을 가져오기 (이웃 접근)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/broadcast"><code>broadcast(value)</code></a></strong>:
+레인 0의 값을 모든 레인에 공유 (일대다)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_idx"><code>shuffle_idx(value, lane)</code></a></strong>:
+특정 레인에서 값을 가져오기 (임의 접근)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_up"><code>shuffle_up(value, offset)</code></a></strong>:
+더 낮은 인덱스의 레인에서 값을 가져오기 (역방향 이웃)</li>
 </ol>
 <blockquote>
-<p><strong>참고:</strong> 이 퍼즐은 가장 많이 사용되는 통신 패턴인 <code>shuffle_down()</code>과 <code>broadcast()</code>에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU 워프 문서</a>를 참고하세요.</p>
+<p><strong>참고:</strong> 이 퍼즐은 가장 많이 사용되는 통신 패턴인 <code>shuffle_down()</code>과
+<code>broadcast()</code>에 초점을 맞춥니다. 모든 워프 연산에 대한 전체 내용은
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/">Mojo GPU 워프 문서</a>를
+참고하세요.</p>
 </blockquote>
 <h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
 <pre><code class="language-mojo"># 복잡한 이웃 접근 패턴 (기존 방식):
@@ -282,7 +299,8 @@ else:
 <h2 id="선수-지식"><a class="header" href="#선수-지식">선수 지식</a></h2>
 <p>워프 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:</p>
 <ul>
-<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해 (<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a> 참고)</li>
+<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해
+(<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a> 참고)</li>
 <li><strong>GPU 스레드 계층 구조</strong>: 블록, 워프, 레인 번호 매기기</li>
 <li><strong>TileTensor 연산</strong>: 로드, 저장, 텐서 조작</li>
 <li><strong>경계 조건 처리</strong>: 병렬 알고리즘의 가장자리 케이스 관리</li>
@@ -347,10 +365,17 @@ result = use_shared_value(shared_value, local_data)
 <li><strong>다단계 동기화</strong> → 단일 통신 연산</li>
 </ul>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p>이웃 기반 셔플 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 브로드캐스트 패턴으로 나아갑니다.</p>
-<p>💡 <strong>성공 팁</strong>: 워프 통신을 같은 워프 내 스레드 간의 <strong>하드웨어 가속 메시지 패싱</strong>으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT 아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.</p>
-<p><strong>학습 목표</strong>: Puzzle 25를 마치면, 워프 통신이 복잡한 공유 메모리 패턴을 대체할 수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을 작성할 수 있게 됩니다.</p>
-<p><strong>시작하기</strong>: <strong><a href="./warp_shuffle_down.html">warp.shuffle_down()</a></strong> 에서 이웃 통신을 배운 다음, <strong><a href="./warp_broadcast.html">warp.broadcast()</a></strong> 에서 집합 조정 패턴으로 나아가세요.</p>
+<p>이웃 기반 셔플 연산으로 기초를 다진 다음, 고급 조정을 위한 집합 브로드캐스트
+패턴으로 나아갑니다.</p>
+<p>💡 <strong>성공 팁</strong>: 워프 통신을 같은 워프 내 스레드 간의
+<strong>하드웨어 가속 메시지 패싱</strong>으로 생각하세요. 이 멘탈 모델이 GPU의 SIMT
+아키텍처를 활용하는 효율적인 통신 패턴으로 안내할 것입니다.</p>
+<p><strong>학습 목표</strong>: Puzzle 25를 마치면, 워프 통신이 복잡한 공유 메모리 패턴을 대체할
+수 있는 상황을 인식하여 더 간단하고 빠른 이웃 기반 알고리즘과 조정 알고리즘을
+작성할 수 있게 됩니다.</p>
+<p><strong>시작하기</strong>: <strong><a href="./warp_shuffle_down.html">warp.shuffle_down()</a></strong> 에서 이웃 통신을
+배운 다음, <strong><a href="./warp_broadcast.html">warp.broadcast()</a></strong> 에서 집합 조정 패턴으로
+나아가세요.</p>
 
                     </main>
 

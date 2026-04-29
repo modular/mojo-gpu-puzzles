@@ -211,13 +211,25 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="puzzle-26-고급-워프-패턴"><a class="header" href="#puzzle-26-고급-워프-패턴">Puzzle 26: 고급 워프 패턴</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>Puzzle 26: 고급 워프 통신 기본 요소</strong>에서는 정교한 GPU <strong>워프 레벨 버터플라이 통신과 병렬 스캔 연산</strong> - 워프 내에서 효율적인 트리 기반 알고리즘과 병렬 리덕션을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다. <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>을 사용한 버터플라이 네트워크와 <a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>을 사용한 하드웨어 최적화 병렬 스캔을 배우며, 복잡한 다단계 공유 메모리 알고리즘 없이 이를 구현하는 방법을 익힙니다.</p>
-<p><strong>달성 목표:</strong> 복잡한 공유 메모리 + 배리어 + 다단계 리덕션 패턴에서 벗어나, 하드웨어 최적화된 버터플라이 네트워크와 병렬 스캔 유닛을 활용하는 우아한 단일 함수 호출 알고리즘으로 전환합니다.</p>
-<p><strong>핵심 통찰:</strong> <em>GPU 워프는 하드웨어에서 정교한 트리 기반 통신과 병렬 스캔 연산을 수행할 수 있습니다 - Mojo의 고급 워프 기본 요소는 버터플라이 네트워크와 전용 스캔 유닛을 활용하여 \(O(\log n)\) 알고리즘을 단일 명령 수준의 간결함으로 제공합니다.</em></p>
+<p><strong>Puzzle 26: 고급 워프 통신 기본 요소</strong>에서는 정교한 GPU
+<strong>워프 레벨 버터플라이 통신과 병렬 스캔 연산</strong> - 워프 내에서 효율적인 트리 기반
+알고리즘과 병렬 리덕션을 가능하게 하는 하드웨어 가속 기본 요소를 소개합니다.
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor</a>을
+사용한 버터플라이 네트워크와
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum">prefix_sum</a>을
+사용한 하드웨어 최적화 병렬 스캔을 배우며, 복잡한 다단계 공유 메모리 알고리즘
+없이 이를 구현하는 방법을 익힙니다.</p>
+<p><strong>달성 목표:</strong> 복잡한 공유 메모리 + 배리어 + 다단계 리덕션 패턴에서 벗어나,
+하드웨어 최적화된 버터플라이 네트워크와 병렬 스캔 유닛을 활용하는 우아한 단일
+함수 호출 알고리즘으로 전환합니다.</p>
+<p><strong>핵심 통찰:</strong> <em>GPU 워프는 하드웨어에서 정교한 트리 기반 통신과 병렬 스캔 연산을
+수행할 수 있습니다 - Mojo의 고급 워프 기본 요소는 버터플라이 네트워크와 전용
+스캔 유닛을 활용하여 \(O(\log n)\) 알고리즘을 단일 명령 수준의 간결함으로
+제공합니다.</em></p>
 <h2 id="배울-내용"><a class="header" href="#배울-내용">배울 내용</a></h2>
 <h3 id="고급-워프-통신-모델"><a class="header" href="#고급-워프-통신-모델"><strong>고급 워프 통신 모델</strong></a></h3>
 <p>GPU 워프 내 정교한 통신 패턴을 이해합니다:</p>
-<pre><code>GPU 워프 버터플라이 네트워크 (32 스레드, XOR 기반 통신)
+<pre><code class="language-text">GPU 워프 버터플라이 네트워크 (32 스레드, XOR 기반 통신)
 Offset 16: Lane 0 ↔ Lane 16, Lane 1 ↔ Lane 17, ..., Lane 15 ↔ Lane 31
 Offset 8:  Lane 0 ↔ Lane 8,  Lane 1 ↔ Lane 9,  ..., Lane 23 ↔ Lane 31
 Offset 4:  Lane 0 ↔ Lane 4,  Lane 1 ↔ Lane 5,  ..., Lane 27 ↔ Lane 31
@@ -238,12 +250,16 @@ Offset 1:  Lane 0 ↔ Lane 1,  Lane 2 ↔ Lane 3,  ..., Lane 30 ↔ Lane 31
 <h3 id="mojo의-고급-워프-연산"><a class="header" href="#mojo의-고급-워프-연산"><strong>Mojo의 고급 워프 연산</strong></a></h3>
 <p><code>gpu.primitives.warp</code>의 정교한 통신 기본 요소를 배웁니다:</p>
 <ol>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>: 트리 알고리즘을 위한 XOR 기반 버터플라이 통신</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>: 하드웨어 가속 병렬 스캔 연산</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor"><code>shuffle_xor(value, mask)</code></a></strong>:
+트리 알고리즘을 위한 XOR 기반 버터플라이 통신</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/prefix_sum"><code>prefix_sum(value)</code></a></strong>:
+하드웨어 가속 병렬 스캔 연산</li>
 <li><strong>고급 조정 패턴</strong>: 여러 기본 요소를 결합한 복잡한 알고리즘</li>
 </ol>
 <blockquote>
-<p><strong>참고:</strong> 이 기본 요소들은 병렬 리덕션, 스트림 컴팩션, quicksort 파티셔닝, FFT 연산 등 공유 메모리 조정 코드가 수십 줄 필요했을 정교한 병렬 알고리즘을 가능하게 합니다.</p>
+<p><strong>참고:</strong> 이 기본 요소들은 병렬 리덕션, 스트림 컴팩션, quicksort 파티셔닝, FFT
+연산 등 공유 메모리 조정 코드가 수십 줄 필요했을 정교한 병렬 알고리즘을
+가능하게 합니다.</p>
 </blockquote>
 <h3 id="성능-변환-예시"><a class="header" href="#성능-변환-예시"><strong>성능 변환 예시</strong></a></h3>
 <pre><code class="language-mojo"># 복잡한 병렬 리덕션 (기존 방식 - Puzzle 14 참고):
@@ -284,15 +300,19 @@ output[global_i] = scan_result
 <h2 id="선수-지식"><a class="header" href="#선수-지식">선수 지식</a></h2>
 <p>고급 워프 통신에 들어가기 전에 다음 내용에 익숙해야 합니다:</p>
 <ul>
-<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해 (<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a>와 <a href="../puzzle_25/puzzle_25.html">Puzzle 25: 워프 통신</a> 참고)</li>
+<li><strong>Part VII 워프 기초</strong>: SIMT 실행과 기본 워프 연산에 대한 이해
+(<a href="../puzzle_24/puzzle_24.html">Puzzle 24: 워프 기초</a>와
+<a href="../puzzle_25/puzzle_25.html">Puzzle 25: 워프 통신</a> 참고)</li>
 <li><strong>병렬 알고리즘 이론</strong>: 트리 리덕션, 병렬 스캔, 버터플라이 네트워크</li>
-<li><strong>GPU 메모리 계층 구조</strong>: 공유 메모리 패턴과 동기화 (<a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a> 참고)</li>
+<li><strong>GPU 메모리 계층 구조</strong>: 공유 메모리 패턴과 동기화
+(<a href="../puzzle_14/puzzle_14.html">Puzzle 14: 누적 합</a> 참고)</li>
 <li><strong>수학 연산</strong>: XOR 연산과 로그 복잡도에 대한 이해</li>
 </ul>
 <h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
 <h3 id="1-shuffle_xor을-이용한-버터플라이-통신"><a class="header" href="#1-shuffle_xor을-이용한-버터플라이-통신"><strong>1. shuffle_xor을 이용한 버터플라이 통신</strong></a></h3>
 <p><strong>→ <a href="./warp_shuffle_xor.html">warp.shuffle_xor()와 버터플라이 네트워크</a></strong></p>
-<p>효율적인 트리 알고리즘과 병렬 리덕션을 위한 XOR 기반 버터플라이 통신 패턴을 배웁니다.</p>
+<p>효율적인 트리 알고리즘과 병렬 리덕션을 위한 XOR 기반 버터플라이 통신 패턴을
+배웁니다.</p>
 <p><strong>배울 내용:</strong></p>
 <ul>
 <li><code>shuffle_xor()</code>으로 버터플라이 네트워크 토폴로지 구성하기</li>
@@ -310,7 +330,8 @@ while offset &gt; 0:
 </code></pre>
 <h3 id="2-prefix_sum을-이용한-하드웨어-가속-병렬-스캔"><a class="header" href="#2-prefix_sum을-이용한-하드웨어-가속-병렬-스캔"><strong>2. prefix_sum을 이용한 하드웨어 가속 병렬 스캔</strong></a></h3>
 <p><strong>→ <a href="./warp_prefix_sum.html">warp.prefix_sum()과 스캔 연산</a></strong></p>
-<p>복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 최적화 병렬 스캔 연산을 배웁니다.</p>
+<p>복잡한 다단계 알고리즘을 단일 함수 호출로 대체하는 하드웨어 최적화 병렬 스캔
+연산을 배웁니다.</p>
 <p><strong>배울 내용:</strong></p>
 <ul>
 <li><code>prefix_sum()</code>을 활용한 하드웨어 가속 누적 연산</li>
@@ -357,10 +378,20 @@ output[global_i] = scan_result  # 하드웨어 최적화 누적 합
 <li><strong>다중 기본 요소 알고리즘</strong>: 최적 성능의 복잡한 병렬 패턴</li>
 </ul>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p>고급 GPU 워프 레벨 통신을 활용할 준비가 되셨나요? 버터플라이 네트워크 연산으로 트리 기반 통신을 이해한 다음, 하드웨어 가속 병렬 스캔으로 나아가 최적의 알고리즘 성능을 달성하세요.</p>
-<p>💡 <strong>성공 팁</strong>: 고급 워프 연산을 <strong>하드웨어 가속 병렬 알고리즘 빌딩 블록</strong>으로 생각하세요. 이 기본 요소들은 복잡한 공유 메모리 알고리즘의 전체 범주를 단일 최적화 함수 호출로 대체합니다.</p>
-<p><strong>학습 목표</strong>: Puzzle 26을 마치면, 고급 워프 기본 요소가 복잡한 다단계 알고리즘을 대체할 수 있는 상황을 인식하여 훨씬 간단하고 빠른 트리 기반 리덕션, 병렬 스캔, 조정 패턴을 작성할 수 있게 됩니다.</p>
-<p><strong>시작하기</strong>: <strong><a href="./warp_shuffle_xor.html">warp.shuffle_xor()와 버터플라이 네트워크</a></strong> 에서 버터플라이 통신을 배운 다음, <strong><a href="./warp_prefix_sum.html">warp.prefix_sum()과 스캔 연산</a></strong> 에서 하드웨어 가속 병렬 스캔 패턴으로 나아가세요!</p>
+<p>고급 GPU 워프 레벨 통신을 활용할 준비가 되셨나요? 버터플라이 네트워크 연산으로
+트리 기반 통신을 이해한 다음, 하드웨어 가속 병렬 스캔으로 나아가 최적의 알고리즘
+성능을 달성하세요.</p>
+<p>💡 <strong>성공 팁</strong>: 고급 워프 연산을 <strong>하드웨어 가속 병렬 알고리즘 빌딩 블록</strong>으로
+생각하세요. 이 기본 요소들은 복잡한 공유 메모리 알고리즘의 전체 범주를 단일
+최적화 함수 호출로 대체합니다.</p>
+<p><strong>학습 목표</strong>: Puzzle 26을 마치면, 고급 워프 기본 요소가 복잡한 다단계
+알고리즘을 대체할 수 있는 상황을 인식하여 훨씬 간단하고 빠른 트리 기반 리덕션,
+병렬 스캔, 조정 패턴을 작성할 수 있게 됩니다.</p>
+<p><strong>시작하기</strong>:
+<strong><a href="./warp_shuffle_xor.html">warp.shuffle_xor()와 버터플라이 네트워크</a></strong> 에서
+버터플라이 통신을 배운 다음,
+<strong><a href="./warp_prefix_sum.html">warp.prefix_sum()과 스캔 연산</a></strong> 에서 하드웨어 가속
+병렬 스캔 패턴으로 나아가세요!</p>
 
                     </main>
 

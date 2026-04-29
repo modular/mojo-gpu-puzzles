@@ -212,16 +212,21 @@
 <h1 id="-워프-레인과-simt-실행"><a class="header" href="#-워프-레인과-simt-실행">🧠 워프 레인과 SIMT 실행</a></h1>
 <h2 id="워프-프로그래밍-vs-simd-멘탈-모델"><a class="header" href="#워프-프로그래밍-vs-simd-멘탈-모델">워프 프로그래밍 vs SIMD 멘탈 모델</a></h2>
 <h3 id="워프란-무엇인가"><a class="header" href="#워프란-무엇인가">워프란 무엇인가?</a></h3>
-<p><strong>워프</strong>는 32개(또는 64개)의 GPU 스레드가 서로 다른 데이터에 대해 <strong>동일한 명령을 동시에 실행</strong>하는 그룹입니다. 각 스레드가 벡터 프로세서의 “레인” 역할을 하는 <strong>동기화된 벡터 유닛</strong>이라고 생각하면 됩니다.</p>
+<p><strong>워프</strong>는 32개(또는 64개)의 GPU 스레드가 서로 다른 데이터에 대해
+<strong>동일한 명령을 동시에 실행</strong>하는 그룹입니다. 각 스레드가 벡터 프로세서의 “레인”
+역할을 하는 <strong>동기화된 벡터 유닛</strong>이라고 생각하면 됩니다.</p>
 <p><strong>간단한 예시:</strong></p>
 <pre><code class="language-mojo">from gpu.primitives.warp import sum
 # 워프 내 32개 스레드가 동시에 실행:
 var my_value = input[my_thread_id]     # 각 스레드가 서로 다른 데이터를 가져옴
 var warp_total = sum(my_value)         # 모든 스레드가 하나의 합계에 기여
 </code></pre>
-<p>무슨 일이 일어난 걸까요? 32개의 개별 스레드가 복잡한 조율을 하는 대신, <strong>워프</strong>가 자동으로 동기화하여 하나의 결과를 만들어냈습니다. 이것이 바로 <strong>SIMT(Single Instruction, Multiple Thread)</strong> 실행입니다.</p>
+<p>무슨 일이 일어난 걸까요? 32개의 개별 스레드가 복잡한 조율을 하는 대신,
+<strong>워프</strong>가 자동으로 동기화하여 하나의 결과를 만들어냈습니다. 이것이 바로
+<strong>SIMT(Single Instruction, Multiple Thread)</strong> 실행입니다.</p>
 <h3 id="simt-vs-simd-비교"><a class="header" href="#simt-vs-simd-비교">SIMT vs SIMD 비교</a></h3>
-<p>CPU 벡터 프로그래밍(SIMD)에 익숙하다면, GPU 워프는 비슷하지만 핵심적인 차이가 있습니다:</p>
+<p>CPU 벡터 프로그래밍(SIMD)에 익숙하다면, GPU 워프는 비슷하지만 핵심적인 차이가
+있습니다:</p>
 <div class="table-wrapper"><table><thead><tr><th>관점</th><th>CPU SIMD (예: AVX)</th><th>GPU 워프 (SIMT)</th></tr></thead><tbody>
 <tr><td><strong>프로그래밍 모델</strong></td><td>명시적 벡터 연산</td><td>스레드 기반 프로그래밍</td></tr>
 <tr><td><strong>데이터 폭</strong></td><td>고정 (256/512 비트)</td><td>유연 (32/64 스레드)</td></tr>
@@ -249,7 +254,8 @@ var partial = my_data * coefficient    # 모든 스레드가 동시에 계산
 var total = sum(partial)               # 하드웨어가 합산을 조율
 </code></pre>
 <h3 id="워프를-강력하게-만드는-핵심-개념"><a class="header" href="#워프를-강력하게-만드는-핵심-개념">워프를 강력하게 만드는 핵심 개념</a></h3>
-<p><strong>1. 레인 식별:</strong> 각 스레드는 사실상 비용 없이 접근할 수 있는 “레인 ID” (0~31)를 갖습니다</p>
+<p><strong>1. 레인 식별:</strong> 각 스레드는 사실상 비용 없이 접근할 수 있는 “레인 ID” (0~31)를
+갖습니다</p>
 <pre><code class="language-mojo">var my_lane = lane_id()  # 하드웨어 레지스터를 읽을 뿐
 </code></pre>
 <p><strong>2. 암시적 동기화:</strong> 워프 내에서 배리어가 필요 없습니다</p>
@@ -260,10 +266,14 @@ var sum = sum(my_contribution)
 <pre><code class="language-mojo"># 레인 0의 값을 다른 모든 레인으로 전달
 var broadcasted = shuffle_idx(my_value, 0)
 </code></pre>
-<p><strong>핵심 통찰:</strong> SIMT를 사용하면 자연스러운 스레드 코드를 작성하면서도 효율적인 벡터 연산으로 실행할 수 있어, 스레드 프로그래밍의 편리함과 벡터 처리의 성능을 모두 얻을 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong> SIMT를 사용하면 자연스러운 스레드 코드를 작성하면서도 효율적인
+벡터 연산으로 실행할 수 있어, 스레드 프로그래밍의 편리함과 벡터 처리의 성능을
+모두 얻을 수 있습니다.</p>
 <h3 id="gpu-실행-계층-구조에서-워프의-위치"><a class="header" href="#gpu-실행-계층-구조에서-워프의-위치">GPU 실행 계층 구조에서 워프의 위치</a></h3>
-<p>워프가 전체 GPU 실행 모델과 어떻게 연결되는지 자세히 알아보려면 <a href="../puzzle_23/gpu-thread-vs-simd.html">GPU 스레딩 vs SIMD 개념</a>을 참고하세요. 워프의 위치는 다음과 같습니다:</p>
-<pre><code>GPU 디바이스
+<p>워프가 전체 GPU 실행 모델과 어떻게 연결되는지 자세히 알아보려면
+<a href="../puzzle_23/gpu-thread-vs-simd.html">GPU 스레딩 vs SIMD 개념</a>을 참고하세요.
+워프의 위치는 다음과 같습니다:</p>
+<pre><code class="language-text">GPU 디바이스
 ├── 그리드 (전체 문제)
 │   ├── 블록 1 (스레드 그룹, 공유 메모리)
 │   │   ├── 워프 1 (32 스레드, 록스텝 실행) ← 이 레벨
@@ -273,12 +283,19 @@ var broadcasted = shuffle_idx(my_value, 0)
 │   │   └── 워프 2 (32 스레드)
 │   └── 블록 2 (독립적인 그룹)
 </code></pre>
-<p><strong>워프 프로그래밍은 “워프 레벨“에서 동작합니다</strong> - 단일 워프 내의 32개 스레드를 모두 조율하는 연산을 다루며, 그렇지 않으면 복잡한 공유 메모리 조율이 필요한 <code>sum()</code> 같은 강력한 기본 요소를 사용할 수 있습니다.</p>
-<p>이 멘탈 모델은 문제가 워프 연산에 자연스럽게 매핑되는 경우와 기존의 공유 메모리 방식이 필요한 경우를 구분하는 데 도움이 됩니다.</p>
+<p><strong>워프 프로그래밍은 “워프 레벨“에서 동작합니다</strong> - 단일 워프 내의 32개 스레드를
+모두 조율하는 연산을 다루며, 그렇지 않으면 복잡한 공유 메모리 조율이 필요한
+<code>sum()</code> 같은 강력한 기본 요소를 사용할 수 있습니다.</p>
+<p>이 멘탈 모델은 문제가 워프 연산에 자연스럽게 매핑되는 경우와 기존의 공유 메모리
+방식이 필요한 경우를 구분하는 데 도움이 됩니다.</p>
 <h2 id="워프-프로그래밍의-하드웨어-기반"><a class="header" href="#워프-프로그래밍의-하드웨어-기반">워프 프로그래밍의 하드웨어 기반</a></h2>
-<p><strong>Single Instruction, Multiple Thread(SIMT)</strong> 실행을 이해하는 것은 효과적인 워프 프로그래밍에 필수적입니다. 이것은 단순한 소프트웨어 추상화가 아니라, GPU 하드웨어가 실리콘 수준에서 실제로 작동하는 방식입니다.</p>
+<p><strong>Single Instruction, Multiple Thread(SIMT)</strong> 실행을 이해하는 것은 효과적인 워프
+프로그래밍에 필수적입니다. 이것은 단순한 소프트웨어 추상화가 아니라, GPU
+하드웨어가 실리콘 수준에서 실제로 작동하는 방식입니다.</p>
 <h2 id="simt-실행이란"><a class="header" href="#simt-실행이란">SIMT 실행이란?</a></h2>
-<p><strong>SIMT</strong>란 워프 내에서 모든 스레드가 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을 <strong>동시에</strong> 실행한다는 뜻입니다. 이는 완전히 다른 명령을 독립적으로 실행할 수 있는 CPU 스레드와 근본적으로 다릅니다.</p>
+<p><strong>SIMT</strong>란 워프 내에서 모든 스레드가 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을
+<strong>동시에</strong> 실행한다는 뜻입니다. 이는 완전히 다른 명령을 독립적으로 실행할 수
+있는 CPU 스레드와 근본적으로 다릅니다.</p>
 <h3 id="cpu-vs-gpu-실행-모델"><a class="header" href="#cpu-vs-gpu-실행-모델">CPU vs GPU 실행 모델</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>관점</th><th>CPU (MIMD)</th><th>GPU 워프 (SIMT)</th></tr></thead><tbody>
 <tr><td><strong>명령 모델</strong></td><td>Multiple Instructions, Multiple Data</td><td>Single Instruction, Multiple Thread</td></tr>
@@ -300,9 +317,11 @@ var broadcasted = shuffle_idx(my_value, 0)
 <li><strong>… (모든 레인이 동시에 실행)</strong></li>
 <li><strong>레인 31</strong>: <code>Data31</code>에 연산 → <code>Result31</code></li>
 </ul>
-<p><strong>핵심 통찰:</strong> 모든 레인이 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을 <strong>동시에</strong> 실행합니다.</p>
+<p><strong>핵심 통찰:</strong> 모든 레인이 <strong>서로 다른 데이터</strong>에 대해 <strong>같은 명령</strong>을
+<strong>동시에</strong> 실행합니다.</p>
 <h3 id="simt가-gpu에-적합한-이유"><a class="header" href="#simt가-gpu에-적합한-이유">SIMT가 GPU에 적합한 이유</a></h3>
-<p>GPU는 지연 시간이 아닌 <strong>처리량</strong>에 최적화되어 있습니다. SIMT가 가능하게 하는 것들:</p>
+<p>GPU는 지연 시간이 아닌 <strong>처리량</strong>에 최적화되어 있습니다. SIMT가 가능하게 하는
+것들:</p>
 <ul>
 <li><strong>하드웨어 단순화</strong>: 하나의 명령 디코더가 32개 또는 64개 스레드를 처리</li>
 <li><strong>실행 효율성</strong>: 워프 내 스레드 간 복잡한 스케줄링 불필요</li>
@@ -318,7 +337,8 @@ from gpu.primitives.warp import WARP_SIZE
 # 커널 함수 내에서:
 my_lane = lane_id()  # 0-31 (NVIDIA/RDNA) 또는 0-63 (CDNA) 반환
 </code></pre>
-<p><strong>핵심 통찰:</strong> <code>lane_id()</code>는 <strong>비용이 없습니다</strong> - 값을 계산하는 것이 아니라 하드웨어 레지스터를 읽을 뿐입니다.</p>
+<p><strong>핵심 통찰:</strong> <code>lane_id()</code>는 <strong>비용이 없습니다</strong> - 값을 계산하는 것이 아니라
+하드웨어 레지스터를 읽을 뿐입니다.</p>
 <h3 id="워프-내-동기화"><a class="header" href="#워프-내-동기화">워프 내 동기화</a></h3>
 <p>SIMT의 가장 강력한 측면: <strong>암시적 동기화</strong>.</p>
 <pre><code class="language-mojo"># thread_idx.x &lt; WARP_SIZE인 경우의 예시
@@ -333,7 +353,9 @@ from gpu.primitives.warp import sum
 
 var total = sum(partial_result)  # 암시적 동기화!
 </code></pre>
-<p><strong>왜 배리어가 필요 없을까요?</strong> 모든 레인이 각 명령을 정확히 같은 시점에 실행하기 때문입니다. <code>sum()</code>이 시작될 때, 모든 레인은 이미 <code>partial_result</code> 계산을 마친 상태입니다.</p>
+<p><strong>왜 배리어가 필요 없을까요?</strong> 모든 레인이 각 명령을 정확히 같은 시점에 실행하기
+때문입니다. <code>sum()</code>이 시작될 때, 모든 레인은 이미 <code>partial_result</code> 계산을 마친
+상태입니다.</p>
 <h2 id="워프-분기와-수렴"><a class="header" href="#워프-분기와-수렴">워프 분기와 수렴</a></h2>
 <h3 id="조건-코드에서-무슨-일이-일어날까"><a class="header" href="#조건-코드에서-무슨-일이-일어날까">조건 코드에서 무슨 일이 일어날까?</a></h3>
 <pre><code class="language-mojo">if lane_id() % 2 == 0:
@@ -467,12 +489,18 @@ var value = input[global_i]  # 레인 0→input[0], 레인 1→input[1], 등
 </ul>
 <h3 id="공유-메모리-뱅크-충돌"><a class="header" href="#공유-메모리-뱅크-충돌">공유 메모리 뱅크 충돌</a></h3>
 <p><strong>뱅크 충돌이란?</strong></p>
-<p>GPU 공유 메모리가 동시 접근이 가능한 32개의 독립적인 <strong>뱅크</strong>로 나뉘어 있다고 가정합니다. <strong>뱅크 충돌</strong>은 워프 내 여러 스레드가 같은 뱅크의 서로 다른 주소에 동시에 접근하려 할 때 발생합니다. 이 경우 하드웨어가 접근을 <strong>직렬화</strong>해야 하므로, 단일 사이클이어야 할 연산이 여러 사이클로 늘어납니다.</p>
+<p>GPU 공유 메모리가 동시 접근이 가능한 32개의 독립적인 <strong>뱅크</strong>로 나뉘어 있다고
+가정합니다. <strong>뱅크 충돌</strong>은 워프 내 여러 스레드가 같은 뱅크의 서로 다른 주소에
+동시에 접근하려 할 때 발생합니다. 이 경우 하드웨어가 접근을 <strong>직렬화</strong>해야
+하므로, 단일 사이클이어야 할 연산이 여러 사이클로 늘어납니다.</p>
 <p><strong>핵심 개념:</strong></p>
 <ul>
-<li><strong>충돌 없음</strong>: 각 스레드가 서로 다른 뱅크에 접근 → 모든 접근이 동시에 발생 (1 사이클)</li>
-<li><strong>뱅크 충돌</strong>: 여러 스레드가 같은 뱅크에 접근 → 접근이 순차적으로 발생 (N개 스레드에 N 사이클)</li>
-<li><strong>브로드캐스트</strong>: 모든 스레드가 같은 주소에 접근 → 하드웨어가 1 사이클로 최적화</li>
+<li><strong>충돌 없음</strong>: 각 스레드가 서로 다른 뱅크에 접근 → 모든 접근이 동시에 발생 (1
+사이클)</li>
+<li><strong>뱅크 충돌</strong>: 여러 스레드가 같은 뱅크에 접근 → 접근이 순차적으로 발생 (N개
+스레드에 N 사이클)</li>
+<li><strong>브로드캐스트</strong>: 모든 스레드가 같은 주소에 접근 → 하드웨어가 1 사이클로
+최적화</li>
 </ul>
 <p><strong>공유 메모리 뱅크 구성:</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>뱅크</th><th>주소 (바이트 오프셋)</th><th>예시 데이터 (float32)</th></tr></thead><tbody>
@@ -512,7 +540,9 @@ var value = input[global_i]  # 레인 0→input[0], 레인 1→input[1], 등
 </tbody></table>
 </div>
 <h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
-<p>SIMT의 기반을 이해했으니, 이 개념이 어떻게 강력한 워프 연산을 가능하게 하는지 알아볼 차례입니다. 다음 섹션에서는 <code>sum()</code>이 복잡한 리덕션 패턴을 간단하고 효율적인 함수 호출로 어떻게 변환하는지 보여줍니다.</p>
+<p>SIMT의 기반을 이해했으니, 이 개념이 어떻게 강력한 워프 연산을 가능하게 하는지
+알아볼 차례입니다. 다음 섹션에서는 <code>sum()</code>이 복잡한 리덕션 패턴을 간단하고
+효율적인 함수 호출로 어떻게 변환하는지 보여줍니다.</p>
 <p><strong>→ 다음: <a href="./warp_sum.html">warp.sum()의 핵심</a></strong></p>
 
                     </main>

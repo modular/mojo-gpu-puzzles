@@ -211,13 +211,18 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="vectorize---simd-제어"><a class="header" href="#vectorize---simd-제어">vectorize - SIMD 제어</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이 퍼즐에서는 수동 벡터화와 <a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>를 사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 <strong>고급 벡터화 기법</strong>을 탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:</p>
+<p>이 퍼즐에서는 수동 벡터화와
+<a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>를
+사용하여 GPU 커널 내에서 SIMD 연산을 정밀하게 제어하는 <strong>고급 벡터화 기법</strong>을
+탐구합니다. 벡터화된 연산에 대해 두 가지 다른 접근법을 구현합니다:</p>
 <ol>
 <li><strong>수동 벡터화</strong>: 명시적 인덱스 계산을 통한 직접적인 SIMD 제어</li>
 <li><strong>Mojo의 vectorize 함수</strong>: 자동 경계 검사를 포함한 고수준 벡터화</li>
 </ol>
-<p>두 접근법 모두 타일링 개념을 기반으로 하지만, 제어, 안전성, 성능 최적화 간의 트레이드오프가 다릅니다.</p>
-<p><strong>핵심 통찰:</strong> <em>벡터화 전략은 성능 요구 사항과 복잡도 수준에 따라 달리 선택해야 합니다.</em></p>
+<p>두 접근법 모두 타일링 개념을 기반으로 하지만, 제어, 안전성, 성능 최적화 간의
+트레이드오프가 다릅니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em>벡터화 전략은 성능 요구 사항과 복잡도 수준에 따라 달리 선택해야 합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
@@ -392,7 +397,8 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
 <div class="solution-explanation">
 <h3 id="수동-벡터화-심층-분석"><a class="header" href="#수동-벡터화-심층-분석">수동 벡터화 심층 분석</a></h3>
-<p><strong>수동 벡터화</strong>는 명시적 인덱스 계산을 통해 SIMD 연산에 대한 직접적인 제어를 제공합니다:</p>
+<p><strong>수동 벡터화</strong>는 명시적 인덱스 계산을 통해 SIMD 연산에 대한 직접적인 제어를
+제공합니다:</p>
 <ul>
 <li><strong>청크 기반 구성</strong>: <code>chunk_size = tile_size * simd_width</code></li>
 <li><strong>전역 인덱싱</strong>: 메모리 위치의 직접 계산</li>
@@ -402,7 +408,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 </code></pre>
 <p><strong>청크 구성 시각화 (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code>원본 배열: [0, 1, 2, 3, ..., 1023]
+<pre><code class="language-text">원본 배열: [0, 1, 2, 3, ..., 1023]
 
 청크 0 (thread 0): [0:128]    ← 128개 요소 = 4개씩 32개 SIMD 그룹
 청크 1 (thread 1): [128:256]  ← 다음 128개 요소
@@ -581,7 +587,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
         def vectorized_add[
             width: Int
-        ](i: Int) unified {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width &lt;= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))
@@ -629,7 +635,7 @@ actual_tile_size = tile_end - tile_start
 <li><strong>루프 관리</strong>: 벡터화 루프를 자동으로 처리</li>
 </ul>
 <p><strong>실행 시각화 (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code>Tile 0 처리:
+<pre><code class="language-text">Tile 0 처리:
   vectorize 호출 0: 요소 [0:4]를 SIMD_WIDTH=4로 처리
   vectorize 호출 1: 요소 [4:8]를 SIMD_WIDTH=4로 처리
   ...
@@ -666,7 +672,7 @@ actual_tile_size = tile_end - tile_start
 </ul>
 <h3 id="고급-최적화-인사이트"><a class="header" href="#고급-최적화-인사이트">고급 최적화 인사이트</a></h3>
 <p><strong>메모리 대역폭 활용:</strong></p>
-<pre><code>수동:      8 스레드 × 32 SIMD 연산 = 총 256회 SIMD 연산
+<pre><code class="language-text">수동:      8 스레드 × 32 SIMD 연산 = 총 256회 SIMD 연산
 vectorize: 32 스레드 × 8 SIMD 연산 = 총 256회 SIMD 연산
 </code></pre>
 <p>둘 다 비슷한 총 처리량을 달성하지만, 병렬성 전략이 다릅니다.</p>
@@ -695,14 +701,17 @@ vectorize: 32 스레드 × 8 SIMD 연산 = 총 256회 SIMD 연산
 <li>깔끔한 벡터화 로직을 위해 중첩 파라미터 함수 사용</li>
 <li>경계 조건에는 자동 경계 검사와 나머지 처리 신뢰</li>
 </ul>
-<p>두 접근법 모두 GPU 성능 최적화 도구 모음에서 유효한 전략입니다. 수동 벡터화는 최대한의 제어를, Mojo의 vectorize는 안전성과 자동 나머지 처리를 제공합니다.</p>
+<p>두 접근법 모두 GPU 성능 최적화 도구 모음에서 유효한 전략입니다. 수동 벡터화는
+최대한의 제어를, Mojo의 vectorize는 안전성과 자동 나머지 처리를 제공합니다.</p>
 <h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
 <p>세 가지 기본 패턴을 모두 이해했다면:</p>
 <ul>
 <li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU 스레딩 vs SIMD 개념</a></strong>: 실행 계층 구조 이해</li>
 <li><strong><a href="./benchmarking.html">📊 Mojo 벤치마킹</a></strong>: 성능 분석과 최적화</li>
 </ul>
-<p>💡 <strong>핵심 요약</strong>: 벡터화 전략은 성능 요구 사항에 따라 달리 선택해야 합니다. 수동 벡터화는 최대한의 제어를, Mojo의 vectorize 함수는 안전성과 자동 나머지 처리를 제공합니다. 구체적인 성능 요구 사항과 개발 제약 조건에 따라 선택하세요.</p>
+<p>💡 <strong>핵심 요약</strong>: 벡터화 전략은 성능 요구 사항에 따라 달리 선택해야 합니다. 수동
+벡터화는 최대한의 제어를, Mojo의 vectorize 함수는 안전성과 자동 나머지 처리를
+제공합니다. 구체적인 성능 요구 사항과 개발 제약 조건에 따라 선택하세요.</p>
 
                     </main>
 

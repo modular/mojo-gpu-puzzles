@@ -210,8 +210,17 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="blockprefix_sum과-병렬-히스토그램-구간-분류"><a class="header" href="#blockprefix_sum과-병렬-히스토그램-구간-분류">block.prefix_sum()과 병렬 히스토그램 구간 분류</a></h1>
-<p>이 퍼즐은 블록 레벨 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum</a> 연산을 사용하여 고급 병렬 필터링과 추출을 위한 병렬 히스토그램 구간 분류를 구현합니다. 각 스레드가 자신의 요소가 속할 대상 구간을 결정한 다음, <code>block.prefix_sum()</code>을 적용하여 특정 구간의 요소를 추출하기 위한 쓰기 위치를 계산합니다. 누적 합이 단순한 리덕션을 넘어 고급 병렬 파티셔닝을 가능하게 하는 방법을 보여줍니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum()</a> 연산은 블록 내 모든 스레드에 걸쳐 일치하는 요소의 누적 쓰기 위치를 계산하여 병렬 필터링과 추출을 제공합니다.</em></p>
+<p>이 퍼즐은 블록 레벨
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum</a>
+연산을 사용하여 고급 병렬 필터링과 추출을 위한 병렬 히스토그램 구간 분류를
+구현합니다. 각 스레드가 자신의 요소가 속할 대상 구간을 결정한 다음,
+<code>block.prefix_sum()</code>을 적용하여 특정 구간의 요소를 추출하기 위한 쓰기 위치를
+계산합니다. 누적 합이 단순한 리덕션을 넘어 고급 병렬 파티셔닝을 가능하게 하는
+방법을 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/prefix_sum">block.prefix_sum()</a>
+연산은 블록 내 모든 스레드에 걸쳐 일치하는 요소의 누적 쓰기 위치를 계산하여 병렬
+필터링과 추출을 제공합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 다루는 내용:</p>
 <ul>
@@ -221,9 +230,10 @@
 <li>블록 전체 조율을 통한 <strong>히스토그램 구간 분류</strong></li>
 <li><strong>비포함(exclusive) vs 포함(inclusive)</strong> 누적 합 패턴</li>
 </ul>
-<p>이 알고리즘은 특정 값 범위(구간)에 속하는 요소를 추출하여 히스토그램을 구성합니다:
-\[\Large \text{Bin}_k = \{x_i : k/N \leq x_i &lt; (k+1)/N\}\]</p>
-<p>각 스레드가 자신의 요소가 속하는 구간을 결정하고, <code>block.prefix_sum()</code>이 병렬 추출을 조율합니다.</p>
+<p>이 알고리즘은 특정 값 범위(구간)에 속하는 요소를 추출하여 히스토그램을
+구성합니다: \[\Large \text{Bin}_k = \{x_i: k/N \leq x_i &lt; (k+1)/N\}\]</p>
+<p>각 스레드가 자신의 요소가 속하는 구간을 결정하고, <code>block.prefix_sum()</code>이 병렬
+추출을 조율합니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>벡터 크기: <code>SIZE = 128</code> 요소</li>
@@ -326,9 +336,11 @@ local_i = thread_idx.x
 <pre><code class="language-mojo">my_value = input_data[global_i][0]  # 내적에서처럼 SIMD 추출
 bin_number = Int(floor(my_value * num_bins))
 </code></pre>
-<p><strong>경계 사례 처리</strong>: 정확히 1.0인 값은 구간 <code>NUM_BINS</code>에 들어가지만, 실제 구간은 0부터 <code>NUM_BINS-1</code>까지입니다. <code>if</code> 문을 사용하여 최대 구간을 제한하세요.</p>
+<p><strong>경계 사례 처리</strong>: 정확히 1.0인 값은 구간 <code>NUM_BINS</code>에 들어가지만, 실제 구간은
+0부터 <code>NUM_BINS-1</code>까지입니다. <code>if</code> 문을 사용하여 최대 구간을 제한하세요.</p>
 <h3 id="3-이진-프레디케이트-생성"><a class="header" href="#3-이진-프레디케이트-생성">3. <strong>이진 프레디케이트 생성</strong></a></h3>
-<p>이 스레드의 요소가 target_bin에 속하는지를 나타내는 정수 변수(0 또는 1)를 만듭니다:</p>
+<p>이 스레드의 요소가 target_bin에 속하는지를 나타내는 정수 변수(0 또는 1)를
+만듭니다:</p>
 <pre><code class="language-mojo">var belongs_to_target: Int = 0
 if (thread_has_valid_element) and (my_bin == target_bin):
     belongs_to_target = 1
@@ -342,20 +354,23 @@ if (thread_has_valid_element) and (my_bin == target_bin):
     exclusive=True             # 핵심: 각 스레드 이전의 위치를 제공
 ](val=SIMD[DType.int32, 1](my_predicate_value))
 </code></pre>
-<p><strong>왜 비포함(exclusive)인가?</strong> 위치 5에서 프레디케이트=1인 스레드는, 자신 앞에 4개의 요소가 있었다면 output[4]에 써야 합니다.</p>
+<p><strong>왜 비포함(exclusive)인가?</strong> 위치 5에서 프레디케이트=1인 스레드는, 자신 앞에
+4개의 요소가 있었다면 output[4]에 써야 합니다.</p>
 <h3 id="5-조건부-쓰기-패턴"><a class="header" href="#5-조건부-쓰기-패턴">5. <strong>조건부 쓰기 패턴</strong></a></h3>
 <p><code>belongs_to_target == 1</code>인 스레드만 기록해야 합니다:</p>
 <pre><code class="language-mojo">if belongs_to_target == 1:
     bin_output[Int(offset[0])] = my_value  # 인덱싱을 위해 SIMD를 Int로 변환
 </code></pre>
-<p>이것은 <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>의 경계 검사 패턴과 동일하지만, 조건이 “대상 구간에 속하는지“로 바뀌었습니다.</p>
+<p>이것은 <a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>의 경계 검사 패턴과 동일하지만,
+조건이 “대상 구간에 속하는지“로 바뀌었습니다.</p>
 <h3 id="6-최종-개수-계산"><a class="header" href="#6-최종-개수-계산">6. <strong>최종 개수 계산</strong></a></h3>
 <p>마지막 스레드(스레드 0이 아님!)가 총 개수를 계산합니다:</p>
 <pre><code class="language-mojo">if local_i == tpb - 1:  # 블록의 마지막 스레드
     total_count = offset[0] + belongs_to_target  # 포함 = 비포함 + 자신의 기여분
     count_output[0] = total_count
 </code></pre>
-<p><strong>왜 마지막 스레드인가?</strong> 가장 높은 <code>offset</code> 값을 가지므로, <code>offset + 기여분</code>이 총 개수가 됩니다.</p>
+<p><strong>왜 마지막 스레드인가?</strong> 가장 높은 <code>offset</code> 값을 가지므로, <code>offset + 기여분</code>이
+총 개수가 됩니다.</p>
 <h3 id="7-데이터-타입과-변환"><a class="header" href="#7-데이터-타입과-변환">7. <strong>데이터 타입과 변환</strong></a></h3>
 <p>이전 퍼즐의 패턴을 기억하세요:</p>
 <ul>
@@ -492,10 +507,11 @@ Bin 7 extracted elements:
 
 </code></pre>
 <div class="solution-explanation">
-<p><code>block.prefix_sum()</code> 커널은 이전 퍼즐의 개념을 기반으로 고급 병렬 조율 패턴을 보여줍니다:</p>
+<p><code>block.prefix_sum()</code> 커널은 이전 퍼즐의 개념을 기반으로 고급 병렬 조율 패턴을
+보여줍니다:</p>
 <h2 id="단계별-알고리즘-분석"><a class="header" href="#단계별-알고리즘-분석"><strong>단계별 알고리즘 분석:</strong></a></h2>
 <h3 id="1단계-요소-처리-puzzle-12-내적과-유사"><a class="header" href="#1단계-요소-처리-puzzle-12-내적과-유사"><strong>1단계: 요소 처리 (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> 내적과 유사)</strong></a></h3>
-<pre><code>스레드 인덱싱 (익숙한 패턴):
+<pre><code class="language-text">스레드 인덱싱 (익숙한 패턴):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 전역 요소 인덱스
   local_i = thread_idx.x                               // 로컬 스레드 인덱스
 
@@ -507,7 +523,7 @@ Bin 7 extracted elements:
   ...
 </code></pre>
 <h3 id="2단계-구간-분류-새로운-개념"><a class="header" href="#2단계-구간-분류-새로운-개념"><strong>2단계: 구간 분류 (새로운 개념)</strong></a></h3>
-<pre><code>floor 연산을 사용한 구간 계산:
+<pre><code class="language-text">floor 연산을 사용한 구간 계산:
   스레드 0:  my_bin = Int(floor(0.00 * 8)) = 0  // 값 [0.000, 0.125) → 구간 0
   스레드 1:  my_bin = Int(floor(0.01 * 8)) = 0  // 값 [0.000, 0.125) → 구간 0
   스레드 13: my_bin = Int(floor(0.13 * 8)) = 1  // 값 [0.125, 0.250) → 구간 1
@@ -515,7 +531,7 @@ Bin 7 extracted elements:
   ...
 </code></pre>
 <h3 id="3단계-이진-프레디케이트-생성-필터링-패턴"><a class="header" href="#3단계-이진-프레디케이트-생성-필터링-패턴"><strong>3단계: 이진 프레디케이트 생성 (필터링 패턴)</strong></a></h3>
-<pre><code>target_bin=0에 대해 추출 마스크 생성:
+<pre><code class="language-text">target_bin=0에 대해 추출 마스크 생성:
   스레드 0:  belongs_to_target = 1  (구간 0 == 대상 0)
   스레드 1:  belongs_to_target = 1  (구간 0 == 대상 0)
   스레드 13: belongs_to_target = 0  (구간 1 != 대상 0)
@@ -525,7 +541,7 @@ Bin 7 extracted elements:
 이진 배열 생성: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 </code></pre>
 <h3 id="4단계-병렬-누적-합-마법이-일어나는-곳"><a class="header" href="#4단계-병렬-누적-합-마법이-일어나는-곳"><strong>4단계: 병렬 누적 합 (마법이 일어나는 곳!)</strong></a></h3>
-<pre><code>프레디케이트에 block.prefix_sum[exclusive=True] 적용:
+<pre><code class="language-text">프레디케이트에 block.prefix_sum[exclusive=True] 적용:
 입력:      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, ...]
 비포함:    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, -, -, -, ...]
                                                       ^
@@ -534,7 +550,7 @@ Bin 7 extracted elements:
 핵심 통찰: 각 스레드가 출력 배열에서 자신의 쓰기 위치를 받습니다!
 </code></pre>
 <h3 id="5단계-조율된-추출-조건부-쓰기"><a class="header" href="#5단계-조율된-추출-조건부-쓰기"><strong>5단계: 조율된 추출 (조건부 쓰기)</strong></a></h3>
-<pre><code>belongs_to_target=1인 스레드만 기록:
+<pre><code class="language-text">belongs_to_target=1인 스레드만 기록:
   스레드 0:  bin_output[0] = 0.00   // write_offset[0] = 0 사용
   스레드 1:  bin_output[1] = 0.01   // write_offset[1] = 1 사용
   스레드 12: bin_output[12] = 0.12  // write_offset[12] = 12 사용
@@ -545,7 +561,7 @@ Bin 7 extracted elements:
 결과: [0.00, 0.01, 0.02, ..., 0.12, ???, ???, ...] // 빈틈없이 채워짐!
 </code></pre>
 <h3 id="6단계-개수-계산-blocksum-패턴과-유사"><a class="header" href="#6단계-개수-계산-blocksum-패턴과-유사"><strong>6단계: 개수 계산 (block.sum() 패턴과 유사)</strong></a></h3>
-<pre><code>마지막 스레드가 총 개수를 계산 (스레드 0이 아님!):
+<pre><code class="language-text">마지막 스레드가 총 개수를 계산 (스레드 0이 아님!):
   if local_i == tpb - 1:  // 이 경우 스레드 127
       total = write_offset[0] + belongs_to_target  // 포함 합 공식
       count_output[0] = total
@@ -582,7 +598,8 @@ Bin 7 extracted elements:
 <li><strong>완전 활용</strong>: 데이터 분포에 관계없이 모든 스레드가 작업</li>
 <li><strong>최적 메모리 대역폭</strong>: GPU 메모리 계층 구조에 최적화된 패턴</li>
 </ul>
-<p>이것은 <code>block.prefix_sum()</code>이 <code>block.sum()</code> 같은 단순한 기본 요소로는 복잡하거나 불가능한 고급 병렬 알고리즘을 어떻게 가능하게 하는지 보여줍니다.</p>
+<p>이것은 <code>block.prefix_sum()</code>이 <code>block.sum()</code> 같은 단순한 기본 요소로는 복잡하거나
+불가능한 고급 병렬 알고리즘을 어떻게 가능하게 하는지 보여줍니다.</p>
 </div>
 </details>
 <h2 id="성능-인사이트"><a class="header" href="#성능-인사이트">성능 인사이트</a></h2>
@@ -610,12 +627,16 @@ Bin 7 extracted elements:
 <h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
 <p><code>block.prefix_sum()</code> 연산을 배웠으니, 다음으로 진행할 수 있습니다:</p>
 <ul>
-<li><strong><a href="./block_broadcast.html">block.broadcast()와 벡터 정규화</a></strong>: 블록 내 모든 스레드에 값을 공유</li>
+<li><strong><a href="./block_broadcast.html">block.broadcast()와 벡터 정규화</a></strong>: 블록 내 모든
+스레드에 값을 공유</li>
 <li><strong>멀티 블록 알고리즘</strong>: 더 큰 문제를 위한 여러 블록 간 조율</li>
 <li><strong>고급 병렬 알고리즘</strong>: 정렬, 그래프 탐색, 동적 부하 분산</li>
 <li><strong>복잡한 메모리 패턴</strong>: 블록 연산과 고급 메모리 접근의 결합</li>
 </ul>
-<p>💡 <strong>핵심 요점</strong>: 블록 누적 합 연산은 GPU 프로그래밍을 단순한 병렬 계산에서 고급 병렬 알고리즘으로 변환합니다. <code>block.sum()</code>이 리덕션을 단순화했다면, <code>block.prefix_sum()</code>은 고성능 병렬 알고리즘에 필수적인 고급 데이터 재구성 패턴을 가능하게 합니다.</p>
+<p>💡 <strong>핵심 요점</strong>: 블록 누적 합 연산은 GPU 프로그래밍을 단순한 병렬 계산에서 고급
+병렬 알고리즘으로 변환합니다. <code>block.sum()</code>이 리덕션을 단순화했다면,
+<code>block.prefix_sum()</code>은 고성능 병렬 알고리즘에 필수적인 고급 데이터 재구성 패턴을
+가능하게 합니다.</p>
 
                     </main>
 

@@ -214,7 +214,8 @@
 <iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
 </div>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>2D 정사각 행렬 <code>a</code>의 각 위치에 10을 더해 2D 정사각 행렬 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>2D 정사각 행렬 <code>a</code>의 각 위치에 10을 더해 2D 정사각 행렬 <code>output</code>에 저장하는
+커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다</em>.</p>
 <div class="video-container breakpoint-sm">
 <iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
@@ -232,7 +233,8 @@
 \[\Large output[i,j] = a[i,j] + 10\]</p>
 <blockquote>
 <h2 id="스레드-인덱싱-규칙"><a class="header" href="#스레드-인덱싱-규칙">스레드 인덱싱 규칙</a></h2>
-<p>GPU 프로그래밍에서 2D 행렬을 다룰 때는 스레드 인덱스와 행렬 좌표 사이의 자연스러운 매핑을 따릅니다:</p>
+<p>GPU 프로그래밍에서 2D 행렬을 다룰 때는 스레드 인덱스와 행렬 좌표 사이의
+자연스러운 매핑을 따릅니다:</p>
 <ul>
 <li><code>thread_idx.y</code>는 행(row) 인덱스</li>
 <li><code>thread_idx.x</code>는 열(column) 인덱스</li>
@@ -246,16 +248,25 @@
 <li>스레드 블록을 행렬 구조에 맞춰 2D 그리드로 구성하는 일반적인 GPU 프로그래밍 패턴</li>
 </ol>
 <h3 id="역사적-배경"><a class="header" href="#역사적-배경">역사적 배경</a></h3>
-<p>그래픽이나 이미지 처리에서는 보통 \((x,y)\) 좌표를 쓰지만, 행렬 연산에서는 전통적으로 (row, column) 인덱싱을 써왔습니다. 초기 컴퓨터가 2D 데이터를 저장하고 처리하던 방식에서 비롯된 것입니다: 위에서 아래로 한 줄씩, 각 줄은 왼쪽에서 오른쪽으로 읽었죠. 이런 행 우선(row-major) 메모리 레이아웃은 메모리를 순차적으로 접근하는 방식과 맞아서 CPU와 GPU 모두에서 효율적임이 입증되었습니다. GPU 프로그래밍에서 병렬 처리용 스레드 블록이 도입됐을 때, <code>thread_idx.y</code>를 행에, <code>thread_idx.x</code>를 열에 매핑한 건 기존에 확립된 행렬 인덱싱 규칙과 일관성을 유지하려는 자연스러운 선택이었습니다.</p>
+<p>그래픽이나 이미지 처리에서는 보통 \((x,y)\) 좌표를 쓰지만, 행렬 연산에서는
+전통적으로 (row, column) 인덱싱을 써왔습니다. 초기 컴퓨터가 2D 데이터를
+저장하고 처리하던 방식에서 비롯된 것입니다: 위에서 아래로 한 줄씩, 각 줄은
+왼쪽에서 오른쪽으로 읽었죠. 이런 행 우선(row-major) 메모리 레이아웃은 메모리를
+순차적으로 접근하는 방식과 맞아서 CPU와 GPU 모두에서 효율적임이
+입증되었습니다. GPU 프로그래밍에서 병렬 처리용 스레드 블록이 도입됐을 때,
+<code>thread_idx.y</code>를 행에, <code>thread_idx.x</code>를 열에 매핑한 건 기존에 확립된 행렬
+인덱싱 규칙과 일관성을 유지하려는 자연스러운 선택이었습니다.</p>
 </blockquote>
 <h2 id="구현-방식"><a class="header" href="#구현-방식">구현 방식</a></h2>
 <h3 id="-원시-메모리-방식"><a class="header" href="#-원시-메모리-방식"><a href="./raw.html">🔰 원시 메모리 방식</a></a></h3>
 <p>수동으로 메모리를 관리하면서 2D 인덱싱이 어떻게 동작하는지 알아봅니다.</p>
 <h3 id="-tiletensor-알아보기"><a class="header" href="#-tiletensor-알아보기"><a href="./introduction_tile_tensor.html">📚 TileTensor 알아보기</a></a></h3>
-<p>GPU에서 다차원 배열 연산과 메모리 관리를 간편하게 해주는 강력한 추상화를 소개합니다.</p>
+<p>GPU에서 다차원 배열 연산과 메모리 관리를 간편하게 해주는 강력한 추상화를
+소개합니다.</p>
 <h3 id="-현대적-2d-연산"><a class="header" href="#-현대적-2d-연산"><a href="./tile_tensor.html">🚀 현대적 2D 연산</a></a></h3>
 <p>자연스러운 2D 인덱싱과 자동 경계 검사를 갖춘 TileTensor를 직접 써봅니다.</p>
-<p>💡 <strong>참고</strong>: 이 퍼즐부터는 더 깔끔하고 안전한 GPU 코드를 위해 TileTensor를 주로 사용합니다.</p>
+<p>💡 <strong>참고</strong>: 이 퍼즐부터는 더 깔끔하고 안전한 GPU 코드를 위해 TileTensor를 주로
+사용합니다.</p>
 
                     </main>
 

@@ -210,8 +210,15 @@
                     <main>
                         <h1 id="puzzle-8-shared-memory"><a class="header" href="#puzzle-8-shared-memory">Puzzle 8: Shared Memory</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of a 1D TileTensor <code>a</code> and stores it in 1D TileTensor <code>output</code>.</p>
-<p><strong>Shared memory</strong> is fast, on-chip storage that is visible to all threads within the same block. Unlike global memory (which all blocks can access but is slow), shared memory has latency similar to a CPU register cache. Each block gets its own private shared memory region — threads in one block cannot see the shared memory of another block. Because threads can read and write to the same shared memory locations, coordination via <code>barrier()</code> is required to prevent one thread from reading a value before another thread has finished writing it.</p>
+<p>Implement a kernel that adds 10 to each position of a 1D TileTensor <code>a</code> and
+stores it in 1D TileTensor <code>output</code>.</p>
+<p><strong>Shared memory</strong> is fast, on-chip storage that is visible to all threads within
+the same block. Unlike global memory (which all blocks can access but is slow),
+shared memory has latency similar to a CPU register cache. Each block gets its
+own private shared memory region — threads in one block cannot see the shared
+memory of another block. Because threads can read and write to the same shared
+memory locations, coordination via <code>barrier()</code> is required to prevent one thread
+from reading a value before another thread has finished writing it.</p>
 <p><strong>Note:</strong> <em>You have fewer threads per block than the size of <code>a</code>.</em></p>
 <img src="./media/08.png" alt="Shared memory visualization" class="light-mode-img">
 <img src="./media/08d.png" alt="Shared memory visualization" class="dark-mode-img">
@@ -222,7 +229,8 @@
 <li>Thread synchronization with shared memory</li>
 <li>Block-local data management with TileTensor</li>
 </ul>
-<p>The key insight is how TileTensor simplifies shared memory management while maintaining the performance benefits of block-local storage.</p>
+<p>The key insight is how TileTensor simplifies shared memory management while
+maintaining the performance benefits of block-local storage.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Array size: <code>SIZE = 8</code> elements</li>
@@ -231,9 +239,17 @@
 <li>Shared memory: <code>TPB</code> elements per block</li>
 </ul>
 <blockquote>
-<p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory that threads in that block can read and write to. This needs to be a literal python constant, not a variable. After writing to shared memory you need to call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> to ensure that threads do not cross.</p>
+<p><strong>Warning</strong>: Each block can only have a <em>constant</em> amount of shared memory
+that threads in that block can read and write to. This needs to be a literal
+python constant, not a variable. After writing to shared memory you need to
+call <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a> to
+ensure that threads do not cross.</p>
 </blockquote>
-<p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly necessary since each thread only accesses its own shared memory location. However, it’s included to teach proper shared memory synchronization patterns for more complex scenarios where threads need to coordinate access to shared data.</p>
+<p><strong>Educational Note</strong>: In this specific puzzle, the <code>barrier()</code> isn’t strictly
+necessary since each thread only accesses its own shared memory location.
+However, it’s included to teach proper shared memory synchronization patterns
+for more complex scenarios where threads need to coordinate access to shared
+data.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime TPB = 4
 comptime SIZE = 8
@@ -340,7 +356,8 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates how TileTensor simplifies shared memory usage while maintaining performance:</p>
+<p>This solution demonstrates how TileTensor simplifies shared memory usage while
+maintaining performance:</p>
 <ol>
 <li>
 <p><strong>Memory hierarchy with TileTensor</strong></p>
@@ -379,8 +396,14 @@ barrier()    ↓         ↓        ↓         ↓   # Wait for all loads
 <p>Result: <code>output[global_i] = shared[local_i] + 10 = 11</code></p>
 </li>
 </ul>
-<p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since each thread only writes to and reads from its own shared memory location (<code>shared[local_i]</code>). However, it’s included for educational purposes to demonstrate proper shared memory synchronization patterns that are essential when threads need to access each other’s data.</p>
 </li>
+</ol>
+<p><strong>Note</strong>: In this specific case, the <code>barrier()</code> isn’t strictly necessary since
+each thread only writes to and reads from its own shared memory location
+(<code>shared[local_i]</code>). However, it’s included for educational purposes to
+demonstrate proper shared memory synchronization patterns that are essential
+when threads need to access each other’s data.</p>
+<ol start="3">
 <li>
 <p><strong>TileTensor benefits</strong></p>
 <ul>
@@ -411,7 +434,8 @@ Block 1 output: [11 11 11 11]
 </ul>
 </li>
 </ol>
-<p>This pattern shows how TileTensor maintains the performance benefits of shared memory while providing a more ergonomic API and built-in features.</p>
+<p>This pattern shows how TileTensor maintains the performance benefits of shared
+memory while providing a more ergonomic API and built-in features.</p>
 </div>
 </details>
 

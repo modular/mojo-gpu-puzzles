@@ -211,12 +211,18 @@
                         <!-- i18n-source-commit: 88f1de7b3de457cc54820fd71512acbcadf073d9 -->
 <h1 id="-메모리-위반-탐지"><a class="header" href="#-메모리-위반-탐지">👮🏼‍♂️ 메모리 위반 탐지</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>테스트가 통과하는 것처럼 보여도 GPU 프로그램을 조용히 손상시킬 수 있는 메모리 위반을 탐지하는 방법을 배웁니다. NVIDIA의 <code>compute-sanitizer</code>(<code>pixi</code>를 통해 사용 가능)와 <code>memcheck</code> 도구를 사용하여, GPU 코드에서 예측 불가능한 동작을 일으킬 수 있는 숨은 메모리 버그를 발견하게 됩니다.</p>
-<p><strong>핵심 통찰</strong>: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에 “올바른” 결과를 만들어낼 수 있습니다.</p>
-<p><strong>선행 학습</strong>: <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4 TileTensor</a>와 기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.</p>
+<p>테스트가 통과하는 것처럼 보여도 GPU 프로그램을 조용히 손상시킬 수 있는 메모리
+위반을 탐지하는 방법을 배웁니다. NVIDIA의 <code>compute-sanitizer</code>(<code>pixi</code>를 통해 사용
+가능)와 <code>memcheck</code> 도구를 사용하여, GPU 코드에서 예측 불가능한 동작을 일으킬 수
+있는 숨은 메모리 버그를 발견하게 됩니다.</p>
+<p><strong>핵심 통찰</strong>: GPU 프로그램은 불법적인 메모리 접근을 수행하면서도 동시에
+“올바른” 결과를 만들어낼 수 있습니다.</p>
+<p><strong>선행 학습</strong>: <a href="../puzzle_04/introduction_tile_tensor.html">Puzzle 4 TileTensor</a>와
+기본적인 GPU 메모리 개념에 대한 이해가 필요합니다.</p>
 <h2 id="조용한-메모리-버그의-발견"><a class="header" href="#조용한-메모리-버그의-발견">조용한 메모리 버그의 발견</a></h2>
 <h3 id="테스트는-통과했지만-코드가-정말-올바른-걸까"><a class="header" href="#테스트는-통과했지만-코드가-정말-올바른-걸까">테스트는 통과했지만, 코드가 정말 올바른 걸까?</a></h3>
-<p>얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가 없는 <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>입니다):</p>
+<p>얼핏 무해해 보이고 완벽하게 동작하는 듯한 프로그램으로 시작해 봅시다 (가드가
+없는 <a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>입니다):</p>
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=False, dtype, LayoutType, ImmutAnyOrigin],
@@ -242,7 +248,13 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <p><strong>아닙니다!</strong> <code>compute-sanitizer</code>가 무엇을 보여주는지 봅시다:</p>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
 </code></pre>
-<p><strong>참고</strong>: <code>MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0</code>은 디바이스 컨텍스트의 버퍼 캐시를 비활성화하는 명령줄 환경 변수 설정입니다. 이 설정은 일반적인 캐싱 동작에 의해 숨겨지던 경계 위반 같은 메모리 문제를 드러낼 수 있습니다. (<em>역주: 버퍼 캐시가 활성화되면 해제된 메모리를 즉시 반환하지 않고 재사용을 위해 보관합니다. 이 때문에 범위를 벗어난 접근이 아직 유효한 캐시 영역에 닿아 오류가 드러나지 않을 수 있습니다. 비활성화하면 메모리가 즉시 반환되어 위반이 감지됩니다.</em>)</p>
+<p><strong>참고</strong>: <code>MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0</code>은 디바이스
+컨텍스트의 버퍼 캐시를 비활성화하는 명령줄 환경 변수 설정입니다. 이 설정은
+일반적인 캐싱 동작에 의해 숨겨지던 경계 위반 같은 메모리 문제를 드러낼 수
+있습니다. (<em>역주: 버퍼 캐시가 활성화되면 해제된 메모리를 즉시 반환하지 않고
+재사용을 위해 보관합니다. 이 때문에 범위를 벗어난 접근이 아직 유효한 캐시 영역에
+닿아 오류가 드러나지 않을 수 있습니다. 비활성화하면 메모리가 즉시 반환되어
+위반이 감지됩니다.</em>)</p>
 <pre><code class="language-txt">========= COMPUTE-SANITIZER
 out shape: 2 x 2
 Running memory bug example (bounds checking issue)...
@@ -288,13 +300,15 @@ Running memory bug example (bounds checking issue)...
 <ul>
 <li><strong>텐서 크기</strong>: 2×2 (유효한 인덱스: 0, 1)</li>
 <li><strong>스레드 그리드</strong>: 3×3 (스레드 인덱스: 0, 1, 2)</li>
-<li><strong>범위 초과 스레드</strong>: <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code>가 잘못된 메모리에 접근</li>
+<li><strong>범위 초과 스레드</strong>: <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code>가 잘못된 메모리에
+접근</li>
 <li><strong>경계 검사 누락</strong>: 텐서 차원에 대한 <code>thread_idx</code> 검증이 없음</li>
 </ul>
 <h3 id="7개-오류-전체-이해하기"><a class="header" href="#7개-오류-전체-이해하기">7개 오류 전체 이해하기</a></h3>
 <p><strong>4개의 메모리 위반:</strong></p>
 <ul>
-<li>각 범위 초과 스레드 <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code>가 <code>Invalid __global__ read</code>를 발생시킴</li>
+<li>각 범위 초과 스레드 <code>(2,1)</code>, <code>(0,2)</code>, <code>(1,2)</code>, <code>(2,2)</code>가
+<code>Invalid __global__ read</code>를 발생시킴</li>
 </ul>
 <p><strong>3개의 CUDA 런타임 오류:</strong></p>
 <ul>
@@ -302,7 +316,8 @@ Running memory bug example (bounds checking issue)...
 <li>정리 과정에서 <code>cuEventCreate</code> 실패</li>
 <li>메모리 해제 과정에서 <code>cuMemFreeAsync</code> 실패</li>
 </ul>
-<p><strong>핵심 통찰</strong>: 메모리 위반은 연쇄 효과를 일으킵니다 - 하나의 잘못된 메모리 접근이 여러 후속 CUDA API 실패를 야기합니다.</p>
+<p><strong>핵심 통찰</strong>: 메모리 위반은 연쇄 효과를 일으킵니다 - 하나의 잘못된 메모리
+접근이 여러 후속 CUDA API 실패를 야기합니다.</p>
 <p><strong>그럼에도 테스트가 통과한 이유:</strong></p>
 <ul>
 <li>유효한 스레드 <code>(0,0)</code>, <code>(0,1)</code>, <code>(1,0)</code>, <code>(1,1)</code>이 올바른 결과를 기록함</li>
@@ -311,11 +326,14 @@ Running memory bug example (bounds checking issue)...
 </ul>
 <h2 id="미정의-동작-이해하기"><a class="header" href="#미정의-동작-이해하기">미정의 동작 이해하기</a></h2>
 <h3 id="미정의-동작이란"><a class="header" href="#미정의-동작이란">미정의 동작이란?</a></h3>
-<p><strong>미정의 동작(Undefined Behavior, UB)</strong> 은 프로그램이 언어 명세상 정의되지 않은 연산을 수행할 때 발생합니다. 범위 초과 메모리 접근이 대표적인 예입니다.</p>
+<p><strong>미정의 동작(Undefined Behavior, UB)</strong> 은 프로그램이 언어 명세상 정의되지 않은
+연산을 수행할 때 발생합니다. 범위 초과 메모리 접근이 대표적인 예입니다.</p>
 <p><strong>미정의 동작의 주요 특성:</strong></p>
 <ul>
-<li>프로그램이 <strong>말 그대로 무슨 짓이든</strong> 할 수 있음: 크래시, 잘못된 결과, 정상 동작하는 것처럼 보이기, 메모리 손상</li>
-<li><strong>어떤 보장도 없음</strong>: 컴파일러, 하드웨어, 드라이버, 심지어 실행할 때마다 동작이 달라질 수 있음</li>
+<li>프로그램이 <strong>말 그대로 무슨 짓이든</strong> 할 수 있음: 크래시, 잘못된 결과, 정상
+동작하는 것처럼 보이기, 메모리 손상</li>
+<li><strong>어떤 보장도 없음</strong>: 컴파일러, 하드웨어, 드라이버, 심지어 실행할 때마다
+동작이 달라질 수 있음</li>
 </ul>
 <h3 id="미정의-동작이-특히-위험한-이유"><a class="header" href="#미정의-동작이-특히-위험한-이유">미정의 동작이 특히 위험한 이유</a></h3>
 <p><strong>정확성 문제:</strong></p>
@@ -323,31 +341,37 @@ Running memory bug example (bounds checking issue)...
 <li><strong>예측 불가능한 결과</strong>: 테스트 중에는 동작하다가 프로덕션에서 실패할 수 있음</li>
 <li><strong>비결정적 동작</strong>: 같은 코드가 다른 실행에서 다른 결과를 낼 수 있음</li>
 <li><strong>조용한 손상</strong>: 미정의 동작은 가시적인 오류 없이 데이터를 손상시킬 수 있음</li>
-<li><strong>컴파일러 최적화</strong>: 컴파일러는 미정의 동작이 없다고 가정하고 예상치 못한 방식으로 최적화할 수 있음</li>
+<li><strong>컴파일러 최적화</strong>: 컴파일러는 미정의 동작이 없다고 가정하고 예상치 못한
+방식으로 최적화할 수 있음</li>
 </ul>
 <p><strong>보안 취약점:</strong></p>
 <ul>
 <li><strong>버퍼 오버플로우</strong>: 시스템 프로그래밍에서 보안 공격의 고전적인 원인</li>
 <li><strong>메모리 손상</strong>: 권한 상승이나 코드 인젝션 공격으로 이어질 수 있음</li>
 <li><strong>정보 유출</strong>: 범위를 벗어난 읽기로 민감한 데이터가 노출될 수 있음</li>
-<li><strong>제어 흐름 하이재킹</strong>: 미정의 동작을 악용해 프로그램 실행 흐름을 탈취할 수 있음</li>
+<li><strong>제어 흐름 하이재킹</strong>: 미정의 동작을 악용해 프로그램 실행 흐름을 탈취할 수
+있음</li>
 </ul>
 <h3 id="gpu-특유의-미정의-동작-위험성"><a class="header" href="#gpu-특유의-미정의-동작-위험성">GPU 특유의 미정의 동작 위험성</a></h3>
 <p><strong>대규모 영향:</strong></p>
 <ul>
-<li><strong>스레드 분기</strong>: 한 스레드의 미정의 동작이 전체 워프(32개 스레드)에 영향을 줄 수 있음</li>
+<li><strong>스레드 분기</strong>: 한 스레드의 미정의 동작이 전체 워프(32개 스레드)에 영향을 줄
+수 있음</li>
 <li><strong>메모리 병합</strong>: 범위 초과 접근이 인접 스레드의 데이터를 손상시킬 수 있음</li>
 <li><strong>커널 실패</strong>: 미정의 동작이 GPU 커널 전체를 완전히 망가뜨릴 수 있음</li>
 </ul>
 <p><strong>하드웨어 차이:</strong></p>
 <ul>
 <li><strong>다른 GPU 아키텍처</strong>: 미정의 동작이 다른 GPU 모델에서 다르게 나타날 수 있음</li>
-<li><strong>드라이버 차이</strong>: 같은 미정의 동작이 드라이버 버전에 따라 다르게 동작할 수 있음</li>
-<li><strong>메모리 레이아웃 변경</strong>: GPU 메모리 할당 패턴에 따라 미정의 동작이 다르게 나타날 수 있음</li>
+<li><strong>드라이버 차이</strong>: 같은 미정의 동작이 드라이버 버전에 따라 다르게 동작할 수
+있음</li>
+<li><strong>메모리 레이아웃 변경</strong>: GPU 메모리 할당 패턴에 따라 미정의 동작이 다르게
+나타날 수 있음</li>
 </ul>
 <h2 id="메모리-위반-수정하기"><a class="header" href="#메모리-위반-수정하기">메모리 위반 수정하기</a></h2>
 <h3 id="해결책"><a class="header" href="#해결책">해결책</a></h3>
-<p><a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>에서 본 것처럼, 다음과 같이 경계 검사를 해야 합니다:</p>
+<p><a href="../puzzle_04/tile_tensor.html">Puzzle 04</a>에서 본 것처럼, 다음과 같이 경계 검사를
+해야 합니다:</p>
 <pre><code class="language-mojo">def add_10_2d(
     output: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
     a: TileTensor[mut=True, dtype, LayoutType, MutAnyOrigin],
@@ -360,7 +384,8 @@ Running memory bug example (bounds checking issue)...
 
 
 </code></pre>
-<p>해결책은 간단합니다: <strong>메모리에 접근하기 전에 항상 스레드 인덱스를 데이터 차원에 대해 검증</strong>하세요.</p>
+<p>해결책은 간단합니다:
+<strong>메모리에 접근하기 전에 항상 스레드 인덱스를 데이터 차원에 대해 검증</strong>하세요.</p>
 <h3 id="compute-sanitizer로-검증"><a class="header" href="#compute-sanitizer로-검증">compute-sanitizer로 검증</a></h3>
 <pre><code class="language-bash"># p10.mojo 복사본에서 경계 검사를 수정한 후 실행:
 MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo problems/p10/p10.mojo --memory-bug
@@ -384,15 +409,19 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <h3 id="gpu-메모리-안전-규칙"><a class="header" href="#gpu-메모리-안전-규칙">GPU 메모리 안전 규칙</a></h3>
 <ol>
 <li><strong>항상 스레드 인덱스를 검증</strong>하여 데이터 차원과 비교</li>
-<li><strong>미정의 동작을 어떤 대가를 치르더라도 피하기</strong> - 범위 초과 접근은 미정의 동작이며 모든 것을 망가뜨릴 수 있음</li>
+<li><strong>미정의 동작을 어떤 대가를 치르더라도 피하기</strong> - 범위 초과 접근은 미정의
+동작이며 모든 것을 망가뜨릴 수 있음</li>
 <li><strong>개발과 테스트 중 compute-sanitizer 사용</strong></li>
 <li><strong>메모리 검사 없이 “동작한다“고 절대 가정하지 않기</strong></li>
-<li><strong>다양한 그리드/블록 구성으로 테스트</strong>하여 일관성 없이 나타나는 미정의 동작 포착</li>
+<li><strong>다양한 그리드/블록 구성으로 테스트</strong>하여 일관성 없이 나타나는 미정의 동작
+포착</li>
 </ol>
 <h3 id="compute-sanitizer-모범-사례"><a class="header" href="#compute-sanitizer-모범-사례">compute-sanitizer 모범 사례</a></h3>
 <pre><code class="language-bash">MODULAR_DEVICE_CONTEXT_MEMORY_MANAGER_SIZE_PERCENT=0 pixi run compute-sanitizer --tool memcheck mojo your_code.mojo
 </code></pre>
-<p><strong>참고</strong>: 새니타이저 출력에서 Mojo 런타임 경고를 볼 수 있습니다. 실제 메모리 위반을 확인하려면 <code>========= Invalid</code>와 <code>========= ERROR SUMMARY</code> 라인에 집중하세요.</p>
+<p><strong>참고</strong>: 새니타이저 출력에서 Mojo 런타임 경고를 볼 수 있습니다. 실제 메모리
+위반을 확인하려면 <code>========= Invalid</code>와 <code>========= ERROR SUMMARY</code> 라인에
+집중하세요.</p>
 
                     </main>
 

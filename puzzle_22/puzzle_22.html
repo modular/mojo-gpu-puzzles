@@ -211,27 +211,37 @@
                         <h1 id="puzzle-22-kernel-fusion-and-custom-backward-pass"><a class="header" href="#puzzle-22-kernel-fusion-and-custom-backward-pass">Puzzle 22: Kernel Fusion and Custom Backward Pass</a></h1>
 <blockquote>
 <h2 id="kernel-fusion-and-autograd-integration"><a class="header" href="#kernel-fusion-and-autograd-integration">Kernel fusion and autograd integration</a></h2>
-<p>We’re continuing Part IV with a focus on <strong>kernel fusion</strong> and <strong>autograd integration</strong>.</p>
-<p>Building on <a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>, you’ll now explore how to combine multiple operations into a single efficient kernel and integrate it with PyTorch’s autograd system. You’ll learn:</p>
+<p>We’re continuing Part IV with a focus on <strong>kernel fusion</strong> and
+<strong>autograd integration</strong>.</p>
+<p>Building on <a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>, you’ll now explore how to
+combine multiple operations into a single efficient kernel and integrate it
+with PyTorch’s autograd system. You’ll learn:</p>
 <ul>
 <li>How kernel fusion improves performance in both forward and backward passes</li>
 <li>Why custom backward passes are crucial for fused operations</li>
 <li>How to design fused kernels with proper gradient flow</li>
 <li>The performance implications of different fusion strategies</li>
 </ul>
-<p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as important as <strong>how you implement them</strong>.</p>
+<p>This puzzle demonstrates that <strong>how you combine operations</strong> can be as
+important as <strong>how you implement them</strong>.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both forward and backward passes. While both fused and unfused implementations produce identical results, they use different strategies that lead to significant performance differences.</p>
+<p>In this puzzle, you’ll implement fused LayerNorm + Linear operations with both
+forward and backward passes. While both fused and unfused implementations
+produce identical results, they use different strategies that lead to
+significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
 <li><strong>Unfused approach</strong>: Separate kernels for LayerNorm and Linear</li>
 <li><strong>Fused kernel</strong>: Combined operation in a single kernel</li>
 <li><strong>Custom backward pass</strong>: Gradient computation for fused operations</li>
 </ul>
-<p>This comparison teaches the critical importance of kernel fusion and proper gradient computation in deep learning operations.</p>
+<p>This comparison teaches the critical importance of kernel fusion and proper
+gradient computation in deep learning operations.</p>
 <h2 id="background-layernorm--linear-operations"><a class="header" href="#background-layernorm--linear-operations">Background: LayerNorm + Linear operations</a></h2>
-<p>LayerNorm and Linear are fundamental operations in transformer architectures, particularly in attention mechanisms and feed-forward networks. Here’s how they’re typically used:</p>
+<p>LayerNorm and Linear are fundamental operations in transformer architectures,
+particularly in attention mechanisms and feed-forward networks. Here’s how
+they’re typically used:</p>
 <pre><code class="language-python">import torch
 import torch.nn.functional as F
 
@@ -261,9 +271,11 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Improves cache utilization</li>
 <li>Eliminates intermediate allocations</li>
 </ul>
-<p>In practice, this fusion can provide up to 1.5-2x speedup in both forward and backward passes, which is crucial for transformer training efficiency.</p>
+<p>In practice, this fusion can provide up to 1.5-2x speedup in both forward and
+backward passes, which is crucial for transformer training efficiency.</p>
 <h3 id="why-custom-backward-passes-matter"><a class="header" href="#why-custom-backward-passes-matter">Why custom backward passes matter</a></h3>
-<p>PyTorch’s autograd system automatically computes gradients for individual operations, but fused operations require custom backward passes to:</p>
+<p>PyTorch’s autograd system automatically computes gradients for individual
+operations, but fused operations require custom backward passes to:</p>
 <ul>
 <li>Maintain numerical stability</li>
 <li>Ensure proper gradient flow</li>
@@ -271,9 +283,11 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Handle atomic operations for gradient accumulation</li>
 </ul>
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
-<p>This puzzle is structured in two parts to build your understanding systematically:</p>
+<p>This puzzle is structured in two parts to build your understanding
+systematically:</p>
 <h3 id="forward-pass-implementation"><a class="header" href="#forward-pass-implementation"><strong><a href="./forward_pass.html">Forward pass implementation</a></strong></a></h3>
-<p>Start here to implement the fused forward kernel and understand kernel fusion benefits.</p>
+<p>Start here to implement the fused forward kernel and understand kernel fusion
+benefits.</p>
 <p><strong>What you’ll do:</strong></p>
 <ul>
 <li>Implement both unfused and fused forward kernels</li>
@@ -295,15 +309,24 @@ output_fused = fused_layernorm_linear(x, ln_weight, ln_bias, linear_weight, line
 <li>Numerical stability in backward passes</li>
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to explore kernel fusion and autograd integration? Start with the <strong><a href="./forward_pass.html">Forward pass implementation</a></strong> to implement the fused kernel, then move to <strong><a href="./backward_pass.html">Backward pass implementation</a></strong> to understand gradient computation.</p>
+<p>Ready to explore kernel fusion and autograd integration? Start with the
+<strong><a href="./forward_pass.html">Forward pass implementation</a></strong> to implement the fused
+kernel, then move to <strong><a href="./backward_pass.html">Backward pass implementation</a></strong> to
+understand gradient computation.</p>
 <p>The puzzle includes a comprehensive testing framework that verifies:</p>
 <ul>
-<li>Numerical correctness against PyTorch’s implementation for both forward and backward passes</li>
+<li>Numerical correctness against PyTorch’s implementation for both forward and
+backward passes</li>
 <li>Performance comparison between our CPU and GPU implementations</li>
-<li>Gradient computation accuracy for all parameters (input, LayerNorm weights/bias, Linear weights/bias)</li>
+<li>Gradient computation accuracy for all parameters (input, LayerNorm
+weights/bias, Linear weights/bias)</li>
 <li>Memory usage optimization through kernel fusion</li>
 </ul>
-<p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs unfused) affect both forward and backward pass performance - this insight applies to many deep learning operations beyond LayerNorm + Linear. The backward pass implementation is particularly important as it directly impacts training efficiency and numerical stability.</p>
+<p>💡 <strong>Success tip:</strong> Pay attention to how the different implementations (fused vs
+unfused) affect both forward and backward pass performance - this insight
+applies to many deep learning operations beyond LayerNorm + Linear. The backward
+pass implementation is particularly important as it directly impacts training
+efficiency and numerical stability.</p>
 
                     </main>
 

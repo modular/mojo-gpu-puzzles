@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: 224fad345fe6e71377c89cdc596f8e28d58a1fa4 -->
 <h1 id="타일링-버전"><a class="header" href="#타일링-버전">타일링 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는 커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.</p>
+<p>TileTensor를 사용한 타일링 행렬 곱셈으로 정방 행렬 \(A\) 와 \(B\) 를 곱하는
+커널을 구현하세요. 큰 행렬을 작은 조각(타일)으로 나누어 처리하는 방식입니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <ul>
 <li>TileTensor를 사용한 행렬 타일링으로 효율적인 연산</li>
@@ -311,14 +312,15 @@ def matmul_tiled(
 <div class="solution-tips">
 <ol>
 <li>
-<p>표준 인덱싱 규칙을 사용하세요: <code>local_row = thread_idx.y</code>, <code>local_col = thread_idx.x</code></p>
+<p>표준 인덱싱 규칙을 사용하세요: <code>local_row = thread_idx.y</code>,
+<code>local_col = thread_idx.x</code></p>
 </li>
 <li>
 <p>전역 위치 계산:</p>
-<pre><code>global_row = block_idx.y * TPB + local_row
+<pre><code class="language-text">global_row = block_idx.y * TPB + local_row
 </code></pre>
 <p>그리고</p>
-<pre><code>global_col = block_idx.x * TPB + local_col
+<pre><code class="language-text">global_col = block_idx.x * TPB + local_col
 </code></pre>
 <p><strong>전역 인덱싱 공식 이해하기:</strong></p>
 <ul>
@@ -337,26 +339,29 @@ def matmul_tiled(
 <li>
 <p>둘을 더하면 전체 행렬에서의 실제 행 위치가 됩니다</p>
 <p><strong>TPB=3 예시:</strong></p>
-</li>
-</ul>
 <pre><code class="language-txt">Block Layout:        Global Matrix (9×9):
 [B00][B01][B02]      [0 1 2 | 3 4 5 | 6 7 8]
 [B10][B11][B12]  →   [9 A B | C D E | F G H]
 [B20][B21][B22]      [I J K | L M N | O P Q]
-                     ——————————————————————
-                     [R S T | U V W | X Y Z]
-                     [a b c | d e f | g h i]
-                     [j k l | m n o | p q r]
-                     ——————————————————————
-                     [s t u | v w x | y z α]
-                     [β γ δ | ε ζ η | θ ι κ]
-                     [λ μ ν | ξ ο π | ρ σ τ]
+                    ——————————————————————
+                    [R S T | U V W | X Y Z]
+                    [a b c | d e f | g h i]
+                    [j k l | m n o | p q r]
+                    ——————————————————————
+                    [s t u | v w x | y z α]
+                    [β γ δ | ε ζ η | θ ι κ]
+                    [λ μ ν | ξ ο π | ρ σ τ]
 
 Thread(1,2) in Block(1,0):
 - block_idx.y = 1, local_row = 1
 - global_row = 1 * 3 + 1 = 4
 - 이 스레드는 행렬의 4번째 행을 담당
+
+```text
+
 </code></pre>
+</li>
+</ul>
 </li>
 <li>
 <p>공유 메모리 할당 (<code>.fill(0)</code>으로 사전 초기화됨)</p>
@@ -454,7 +459,9 @@ expected: HostBuffer([3672.0, 3744.0, 3816.0, 3888.0, 3960.0, 4032.0, 4104.0, 41
 
 </code></pre>
 <div class="solution-explanation">
-<p>타일링 행렬 곱셈 구현은 작은 타일 \((3 \times 3)\) 을 사용하여 큰 행렬 \((9 \times 9)\) 을 효율적으로 처리하는 방법을 보여줍니다. 동작 방식은 다음과 같습니다:</p>
+<p>타일링 행렬 곱셈 구현은 작은 타일 \((3 \times 3)\) 을 사용하여 큰 행렬 \((9
+\times 9)\) 을 효율적으로 처리하는 방법을 보여줍니다. 동작 방식은 다음과
+같습니다:</p>
 <ol>
 <li>
 <p><strong>공유 메모리 할당</strong></p>
@@ -487,7 +494,8 @@ a_shared[TPB, TPB]  b_shared[TPB, TPB]
 <p><strong>메모리 로딩 패턴</strong></p>
 <ul>
 <li>
-<p>\((9 \times 9)\) 이 딱 나눠지므로 경계 검사가 기술적으로는 불필요하지만, 방어적 프로그래밍과 다른 행렬 크기에도 대응할 수 있도록 포함합니다.</p>
+<p>\((9 \times 9)\) 이 딱 나눠지므로 경계 검사가 기술적으로는 불필요하지만,
+방어적 프로그래밍과 다른 행렬 크기에도 대응할 수 있도록 포함합니다.</p>
 <pre><code class="language-mojo">   # A 타일 로드 - 전역 행은 그대로, 열은 타일에 의해 결정
    if tiled_row &lt; size and (tile * TPB + local_col) &lt; size:
        a_shared[local_row, local_col] = a[
@@ -521,10 +529,14 @@ Thread2: a_shared[0,k] b_shared[k,2]  Thread2: a_shared[k,0] b_shared[2,k]
 </code></pre>
 <p><strong>공유 메모리 뱅크 충돌 설명:</strong></p>
 <ul>
-<li><strong>왼쪽 (Good)</strong>: <code>b_shared[k,threadIdx.x]</code>는 서로 다른 뱅크에 접근하고, <code>a_shared[0,k]</code>는 모든 스레드에 브로드캐스트 됩니다</li>
-<li><strong>오른쪽 (Bad)</strong>: b_shared가 열 우선이었다면 스레드들이 동시에 같은 뱅크에 접근하게 됩니다</li>
-<li><strong>핵심</strong>: 이것은 전역 메모리 병합이 아닌 공유 메모리 접근 패턴에 관한 것입니다</li>
-<li><strong>뱅크 구조</strong>: 공유 메모리는 32개 뱅크로 구성되어 있으며, 여러 스레드가 동시에 같은 뱅크의 다른 주소에 접근할 때 충돌이 발생합니다</li>
+<li><strong>왼쪽 (Good)</strong>: <code>b_shared[k,threadIdx.x]</code>는 서로 다른 뱅크에 접근하고,
+<code>a_shared[0,k]</code>는 모든 스레드에 브로드캐스트 됩니다</li>
+<li><strong>오른쪽 (Bad)</strong>: b_shared가 열 우선이었다면 스레드들이 동시에 같은
+뱅크에 접근하게 됩니다</li>
+<li><strong>핵심</strong>: 이것은 전역 메모리 병합이 아닌 공유 메모리 접근 패턴에 관한
+것입니다</li>
+<li><strong>뱅크 구조</strong>: 공유 메모리는 32개 뱅크로 구성되어 있으며, 여러 스레드가
+동시에 같은 뱅크의 다른 주소에 접근할 때 충돌이 발생합니다</li>
 </ul>
 </li>
 </ul>
@@ -669,8 +681,10 @@ def matmul_idiomatic_tiled[
 
 </code></pre>
 <div class="solution-explanation">
-<p>관용적 타일링 행렬 곱셈은 Mojo의 TileTensor API와 비동기 메모리 연산을 활용하여 깔끔한 구현을 제공합니다.</p>
-<p><strong>핵심 포인트: 이 구현은 두 행렬 모두 병합 로딩을 사용하여 표준 A × B 행렬 곱셈을 수행합니다.</strong></p>
+<p>관용적 타일링 행렬 곱셈은 Mojo의 TileTensor API와 비동기 메모리 연산을 활용하여
+깔끔한 구현을 제공합니다.</p>
+<p><strong>핵심 포인트: 이 구현은 두 행렬 모두 병합 로딩을 사용하여 표준 A × B 행렬
+곱셈을 수행합니다.</strong></p>
 <p><strong>이 구현이 하는 것:</strong></p>
 <ul>
 <li><strong>행렬 연산</strong>: 표준 \(A \times B\) 곱셈 (\(A \times B^T\) 가 아님)</li>
@@ -684,7 +698,8 @@ def matmul_idiomatic_tiled[
 <li>전치 로딩 패턴을 사용하지 않음</li>
 <li>복사 과정에서 데이터를 전치하지 않음</li>
 </ul>
-<p>\((9 \times 9)\) 행렬 크기에서는 완벽한 타일링이 이루어져 모든 경계 검사가 불필요합니다:</p>
+<p>\((9 \times 9)\) 행렬 크기에서는 완벽한 타일링이 이루어져 모든 경계 검사가
+불필요합니다:</p>
 <ol>
 <li>
 <p><strong>TileTensor 타일 API</strong></p>
@@ -692,7 +707,10 @@ def matmul_idiomatic_tiled[
 a_tile = a.tile[TPB, TPB](block_idx.y, idx)
 b_tile = b.tile[TPB, TPB](idx, block_idx.x)
 </code></pre>
-<p>수동 좌표 계산 없이 “(block_idx.y, block_idx.x) 위치의 타일을 가져온다“를 직접 표현합니다. 자세한 내용은 <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile">문서</a>를 참고하세요.</p>
+<p>수동 좌표 계산 없이 “(block_idx.y, block_idx.x) 위치의 타일을 가져온다“를
+직접 표현합니다. 자세한 내용은
+<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile">문서</a>를
+참고하세요.</p>
 </li>
 <li>
 <p><strong>비동기 메모리 연산</strong></p>
@@ -710,15 +728,23 @@ async_copy_wait_all()
 </code></pre>
 <p>이 연산들은:</p>
 <ul>
-<li>레지스터를 우회하는 전용 복사 엔진을 사용하여 연산과 메모리 전송의 중첩을 가능하게 합니다 (<a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a> 참고)</li>
+<li>레지스터를 우회하는 전용 복사 엔진을 사용하여 연산과 메모리 전송의 중첩을
+가능하게 합니다
+(<a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/">copy_dram_to_sram_async</a>
+참고)</li>
 <li>최적의 메모리 접근 패턴을 위한 특화된 스레드 레이아웃을 사용합니다</li>
 <li>수동 메모리 초기화가 불필요합니다</li>
 <li><strong>중요</strong>:
 <ul>
-<li>표준 GPU 로드는 이미 비동기적입니다. 이 함수들은 더 나은 리소스 활용과 레지스터 우회를 제공합니다</li>
-<li><code>copy_dram_to_sram_async</code>는 기본적으로 1D 스레드 블록(<code>block_dim.y == block_dim.z == 1</code>)을 가정하며, 별도 지정이 없으면 스레드 블록의 모든 스레드가 복사에 참여합니다. 다음을 지정하여 이 동작을 변경할 수 있습니다:
+<li>표준 GPU 로드는 이미 비동기적입니다. 이 함수들은 더 나은 리소스 활용과
+레지스터 우회를 제공합니다</li>
+<li><code>copy_dram_to_sram_async</code>는 기본적으로 1D 스레드
+블록(<code>block_dim.y == block_dim.z == 1</code>)을 가정하며, 별도 지정이 없으면
+스레드 블록의 모든 스레드가 복사에 참여합니다. 다음을 지정하여 이 동작을
+변경할 수 있습니다:
 <ul>
-<li><code>block_dim_count</code>: 스레드 블록의 차원 수 (2D 스레드 블록 <code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code>의 경우 <code>2</code>)</li>
+<li><code>block_dim_count</code>: 스레드 블록의 차원 수 (2D 스레드 블록
+<code>THREADS_PER_BLOCK_TILED = (TPB, TPB)</code>의 경우 <code>2</code>)</li>
 <li><code>num_threads</code>: 스레드 블록의 스레드 수 (<code>TPB*TPB == 9</code>)</li>
 </ul>
 </li>
@@ -733,11 +759,13 @@ comptime load_b_layout = row_major[1, TPB]()    # 병합 로딩
 # 참고: 표준 A × B 곱셈에서 두 행렬 모두 같은 레이아웃을 사용
 </code></pre>
 <p><strong>현재 구현의 메모리 접근 분석:</strong></p>
-<p>두 행렬 모두 전역 메모리에서 병합 로딩을 위해 <code>row_major[1, TPB]()</code>를 사용합니다:</p>
+<p>두 행렬 모두 전역 메모리에서 병합 로딩을 위해 <code>row_major[1, TPB]()</code>를
+사용합니다:</p>
 <ul>
 <li><code>load_a_layout</code>: 스레드들이 협력하여 행렬 A 행의 연속 원소를 로드</li>
 <li><code>load_b_layout</code>: 스레드들이 협력하여 행렬 B 행의 연속 원소를 로드</li>
-<li><strong>핵심</strong>: 스레드 레이아웃은 복사 시 스레드 간 협력 방식을 결정하며, 최종 데이터 레이아웃과는 별개입니다</li>
+<li><strong>핵심</strong>: 스레드 레이아웃은 복사 시 스레드 간 협력 방식을 결정하며, 최종
+데이터 레이아웃과는 별개입니다</li>
 </ul>
 <p><strong>실제 연산 패턴 (A × B임을 증명):</strong></p>
 <pre><code class="language-mojo"># 현재 구현의 실제 연산
@@ -756,7 +784,8 @@ row_major[1, TPB]()로 두 패턴 모두 병합
 <p><strong>세 가지 별개의 메모리 고려사항:</strong></p>
 <ol>
 <li><strong>전역→공유 병합</strong>: <code>row_major[1, TPB]()</code>로 병합 전역 메모리 접근 보장</li>
-<li><strong>공유 메모리 연산</strong>: <code>a_shared[local_row, k] * b_shared[k, local_col]</code>로 뱅크 충돌 회피</li>
+<li><strong>공유 메모리 연산</strong>: <code>a_shared[local_row, k] * b_shared[k, local_col]</code>로
+뱅크 충돌 회피</li>
 <li><strong>행렬 연산</strong>: 연산 패턴이 A × B를 결정 (A × B^T가 아님)</li>
 </ol>
 </li>
@@ -765,7 +794,8 @@ row_major[1, TPB]()로 두 패턴 모두 병합
 <pre><code class="language-mojo">@parameter
 for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
 </code></pre>
-<p>\((9 \times 9)\) 행렬과 \((3 \times 3)\) 타일에서는 모든 타일이 정확히 꽉 차기 때문에 경계 검사가 필요 없습니다!</p>
+<p>\((9 \times 9)\) 행렬과 \((3 \times 3)\) 타일에서는 모든 타일이 정확히 꽉
+차기 때문에 경계 검사가 필요 없습니다!</p>
 </li>
 <li>
 <p><strong>방어적 경계 검사를 포함한 깔끔한 타일 처리</strong></p>
@@ -773,7 +803,9 @@ for idx in range(size // TPB):  # 나머지 없는 나눗셈: 9 // 3 = 3
 if tiled_row &lt; size and tiled_col &lt; size:
     out_tile[local_row, local_col] = acc
 </code></pre>
-<p>\((9 \times 9)\) 의 완벽한 타일링에서는 이 경계 검사가 기술적으로 불필요하지만, 방어적 프로그래밍과 다른 행렬 크기와의 일관성을 위해 포함합니다.</p>
+<p>\((9 \times 9)\) 의 완벽한 타일링에서는 이 경계 검사가 기술적으로
+불필요하지만, 방어적 프로그래밍과 다른 행렬 크기와의 일관성을 위해
+포함합니다.</p>
 </li>
 </ol>
 <h3 id="성능-고려사항"><a class="header" href="#성능-고려사항">성능 고려사항</a></h3>
@@ -785,7 +817,9 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <li><strong>공유 메모리 효율</strong>: 불필요한 공유 메모리 초기화 없음</li>
 <li><strong>레지스터 압력</strong>: 최적의 연산 처리량을 위한 누적 레지스터 사용</li>
 </ol>
-<p>이 구현은 고수준 추상화로도 성능 저하 없이 복잡한 GPU 알고리즘을 표현할 수 있음을 보여줍니다. 고수준의 표현력과 저수준의 성능 제어를 결합하는 Mojo의 철학을 잘 보여주는 예시입니다.</p>
+<p>이 구현은 고수준 추상화로도 성능 저하 없이 복잡한 GPU 알고리즘을 표현할 수
+있음을 보여줍니다. 고수준의 표현력과 저수준의 성능 제어를 결합하는 Mojo의 철학을
+잘 보여주는 예시입니다.</p>
 <h3 id="수동-타일링과의-주요-차이점"><a class="header" href="#수동-타일링과의-주요-차이점">수동 타일링과의 주요 차이점</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>기능</th><th>수동 Tiling</th><th>관용적 Tiling</th></tr></thead><tbody>
 <tr><td>메모리 접근</td><td>경계 검사가 있는 직접 인덱싱</td><td>TileTensor 타일 API</td></tr>
@@ -797,9 +831,11 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <tr><td>성능</td><td>메모리 패턴의 명시적 제어</td><td>레지스터 우회를 포함한 최적화된 레이아웃</td></tr>
 </tbody></table>
 </div>
-<p>관용적 접근 방식은 단순히 더 깔끔할 뿐 아니라, 특화된 메모리 레이아웃과 비동기 연산 덕분에 성능도 더 좋을 수 있습니다.</p>
+<p>관용적 접근 방식은 단순히 더 깔끔할 뿐 아니라, 특화된 메모리 레이아웃과 비동기
+연산 덕분에 성능도 더 좋을 수 있습니다.</p>
 <h3 id="참고-전치-로딩은-언제-유용할까"><a class="header" href="#참고-전치-로딩은-언제-유용할까">참고: 전치 로딩은 언제 유용할까?</a></h3>
-<p>현재 구현은 전치 로딩을 사용하지 않습니다. 이 섹션은 레이아웃 시스템으로 할 수 있는 것을 보여주기 위한 교육적 내용입니다.</p>
+<p>현재 구현은 전치 로딩을 사용하지 않습니다. 이 섹션은 레이아웃 시스템으로 할 수
+있는 것을 보여주기 위한 교육적 내용입니다.</p>
 <p><strong>현재 구현 요약:</strong></p>
 <ul>
 <li>두 행렬 모두 <code>row_major[1, TPB]()</code> 사용</li>
@@ -807,7 +843,8 @@ if tiled_row &lt; size and tiled_col &lt; size:
 <li>복사 중 데이터 전치 없음</li>
 </ul>
 <p><strong>전치 로딩을 사용하는 교육적 시나리오:</strong></p>
-<p>이 퍼즐은 두 행렬 모두 표준 병합 로딩을 사용하지만, 레이아웃 시스템의 유연성은 다른 시나리오에서 강력한 최적화를 가능하게 합니다:</p>
+<p>이 퍼즐은 두 행렬 모두 표준 병합 로딩을 사용하지만, 레이아웃 시스템의 유연성은
+다른 시나리오에서 강력한 최적화를 가능하게 합니다:</p>
 <pre><code class="language-mojo"># 예시: A × B를 계산하기 위해 사전 전치된 행렬 B^T를 로드
 # (현재 구현에서는 이렇게 하지 않음)
 comptime load_b_layout = row_major[TPB, 1]()   # B^T를 병합 접근으로 로드
@@ -816,17 +853,22 @@ copy_dram_to_sram_async[src_thread_layout=load_b_layout, dst_thread_layout=store
 </code></pre>
 <p><strong>전치 로딩의 활용 사례 (이 퍼즐에서는 사용하지 않음):</strong></p>
 <ol>
-<li><strong>이미 전치된 입력 행렬</strong>: \(B\) 가 전역 메모리에 전치 상태로 저장되어 있는 경우</li>
-<li><strong>다른 알고리즘</strong>: \(A^T \times B\), \(A \times B^T\), 또는 \(A^T \times B^T\) 계산</li>
+<li><strong>이미 전치된 입력 행렬</strong>: \(B\) 가 전역 메모리에 전치 상태로 저장되어 있는
+경우</li>
+<li><strong>다른 알고리즘</strong>: \(A^T \times B\), \(A \times B^T\), 또는 \(A^T \times
+B^T\) 계산</li>
 <li><strong>메모리 레이아웃 변환</strong>: 행 우선과 열 우선 레이아웃 간 변환</li>
 <li><strong>별도 전치 연산 없이 로드</strong>: 필요한 방향으로 데이터를 직접 로드</li>
 </ol>
 <p><strong>핵심 구분:</strong></p>
 <ul>
-<li><strong>현재 구현</strong>: 두 행렬 모두 표준 \(A \times B\) 곱셈에 <code>row_major[1, TPB]()</code> 사용</li>
-<li><strong>전치 로딩 예시</strong>: 이미 전치된 데이터나 다른 행렬 연산을 처리할 때 다른 레이아웃 사용</li>
+<li><strong>현재 구현</strong>: 두 행렬 모두 표준 \(A \times B\) 곱셈에 <code>row_major[1, TPB]()</code>
+사용</li>
+<li><strong>전치 로딩 예시</strong>: 이미 전치된 데이터나 다른 행렬 연산을 처리할 때 다른
+레이아웃 사용</li>
 </ul>
-<p>이것은 Mojo의 철학을 보여줍니다: 일반적인 경우에 고수준 추상화를 유지하면서도, 필요할 때 저수준 제어를 제공합니다.</p>
+<p>이것은 Mojo의 철학을 보여줍니다: 일반적인 경우에 고수준 추상화를 유지하면서도,
+필요할 때 저수준 제어를 제공합니다.</p>
 <hr />
 <h2 id="요약-핵심-정리"><a class="header" href="#요약-핵심-정리">요약: 핵심 정리</a></h2>
 <p><strong>관용적 타일링 구현이 실제로 하는 것:</strong></p>

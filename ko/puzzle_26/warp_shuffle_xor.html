@@ -210,10 +210,22 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="warpshuffle_xor-버터플라이-통신"><a class="header" href="#warpshuffle_xor-버터플라이-통신"><code>warp.shuffle_xor()</code> 버터플라이 통신</a></h1>
-<p>워프 레벨 버터플라이 통신에서는 <code>shuffle_xor()</code>을 사용하여 워프 내에 정교한 트리 기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나 명시적 동기화 없이 효율적인 병렬 리덕션, 정렬 네트워크, 고급 조정 알고리즘을 구현할 수 있습니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a> 연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, 워프 크기에 대해 \(O(\log n)\) 복잡도로 확장되는 효율적인 버터플라이 네트워크와 병렬 알고리즘을 가능하게 합니다.</em></p>
+<p>워프 레벨 버터플라이 통신에서는 <code>shuffle_xor()</code>을 사용하여 워프 내에 정교한 트리
+기반 통신 패턴을 구성할 수 있습니다. 이 강력한 기본 요소를 통해 공유 메모리나
+명시적 동기화 없이 효율적인 병렬 리덕션, 정렬 네트워크, 고급 조정 알고리즘을
+구현할 수 있습니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/shuffle_xor">shuffle_xor()</a>
+연산은 SIMT 실행을 활용하여 XOR 기반 통신 트리를 생성하며, 워프 크기에 대해
+\(O(\log n)\) 복잡도로 확장되는 효율적인 버터플라이 네트워크와 병렬
+알고리즘을 가능하게 합니다.</em></p>
 <blockquote>
-<p><strong>버터플라이 네트워크란?</strong> <a href="https://en.wikipedia.org/wiki/Butterfly_network">버터플라이 네트워크</a>는 스레드들이 인덱스의 XOR 패턴에 따라 데이터를 교환하는 통신 토폴로지입니다. 이름은 시각적으로 그렸을 때 나비 날개처럼 보이는 연결 패턴에서 유래했습니다. 이 네트워크는 \(O(\log n)\) 통신 복잡도를 가능하게 하기 때문에 FFT, bitonic 정렬, 병렬 리덕션 같은 병렬 알고리즘의 기반이 됩니다.</p>
+<p><strong>버터플라이 네트워크란?</strong>
+<a href="https://en.wikipedia.org/wiki/Butterfly_network">버터플라이 네트워크</a>는
+스레드들이 인덱스의 XOR 패턴에 따라 데이터를 교환하는 통신 토폴로지입니다.
+이름은 시각적으로 그렸을 때 나비 날개처럼 보이는 연결 패턴에서 유래했습니다.
+이 네트워크는 \(O(\log n)\) 통신 복잡도를 가능하게 하기 때문에 FFT, bitonic
+정렬, 병렬 리덕션 같은 병렬 알고리즘의 기반이 됩니다.</p>
 </blockquote>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -224,9 +236,12 @@
 <li>고급 조정을 위한 <strong>조건부 버터플라이 연산</strong></li>
 <li>복잡한 공유 메모리를 대체하는 <strong>하드웨어 최적화 병렬 기본 요소</strong></li>
 </ul>
-<p><code>shuffle_xor</code> 연산은 각 레인이 <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a> 패턴에 따라 다른 레인과 데이터를 교환할 수 있게 합니다:
-\[\Large \text{shuffle_xor}(\text{value}, \text{mask}) = \text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
-<p>이를 통해 복잡한 병렬 알고리즘이 우아한 버터플라이 통신 패턴으로 변환되어, 명시적 조정 없이 효율적인 트리 리덕션과 정렬 네트워크가 가능합니다.</p>
+<p><code>shuffle_xor</code> 연산은 각 레인이 <a href="https://en.wikipedia.org/wiki/Exclusive_or">XOR</a>
+패턴에 따라 다른 레인과 데이터를 교환할 수 있게 합니다: \[\Large
+\text{shuffle_xor}(\text{value}, \text{mask}) =
+\text{value_from_lane}(\text{lane_id} \oplus \text{mask})\]</p>
+<p>이를 통해 복잡한 병렬 알고리즘이 우아한 버터플라이 통신 패턴으로 변환되어,
+명시적 조정 없이 효율적인 트리 리덕션과 정렬 네트워크가 가능합니다.</p>
 <h2 id="1-기본-버터플라이-페어-교환"><a class="header" href="#1-기본-버터플라이-페어-교환">1. 기본 버터플라이 페어 교환</a></h2>
 <h3 id="구성"><a class="header" href="#구성">구성</a></h3>
 <ul>
@@ -272,7 +287,9 @@ output[global_i] = swapped_val
 <p><code>shuffle_xor()</code>을 사용하여 인접 페어 간 값을 교환하는 페어 교환을 구현합니다.</p>
 <p><strong>수학적 연산:</strong> XOR 패턴으로 인접 페어를 만들어 값을 교환합니다:
 \[\Large \text{output}[i] = \text{input}[i \oplus 1]\]</p>
-<p>입력 데이터 <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code>을 페어 <code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>으로 변환하며, 각 페어 <code>(i, i+1)</code>이 XOR 통신으로 값을 교환합니다.</p>
+<p>입력 데이터 <code>[0, 1, 2, 3, 4, 5, 6, 7, ...]</code>을 페어
+<code>[1, 0, 3, 2, 5, 4, 7, 6, ...]</code>으로 변환하며, 각 페어 <code>(i, i+1)</code>이 XOR 통신으로
+값을 교환합니다.</p>
 <pre><code class="language-mojo">
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p26/p26.mojo" class="filename">전체 파일 보기: problems/p26/p26.mojo</a></p>
@@ -280,14 +297,17 @@ output[global_i] = swapped_val
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-shuffle_xor-이해하기"><a class="header" href="#1-shuffle_xor-이해하기">1. <strong>shuffle_xor 이해하기</strong></a></h3>
-<p><code>shuffle_xor(value, mask)</code> 연산은 각 레인이 XOR 마스크만큼 차이나는 레인과 데이터를 교환할 수 있게 합니다. 서로 다른 마스크 값으로 레인 ID를 XOR했을 때 어떤 일이 일어나는지 생각해 보세요.</p>
+<p><code>shuffle_xor(value, mask)</code> 연산은 각 레인이 XOR 마스크만큼 차이나는 레인과
+데이터를 교환할 수 있게 합니다. 서로 다른 마스크 값으로 레인 ID를 XOR했을 때
+어떤 일이 일어나는지 생각해 보세요.</p>
 <p><strong>탐구할 핵심 질문:</strong></p>
 <ul>
 <li>레인 0이 마스크 1로 XOR하면 어떤 파트너를 얻나요?</li>
 <li>레인 1이 마스크 1로 XOR하면 어떤 파트너를 얻나요?</li>
 <li>패턴이 보이나요?</li>
 </ul>
-<p><strong>힌트</strong>: 처음 몇 개의 레인 ID에 대해 XOR 연산을 직접 해보면 페어링 패턴을 이해할 수 있습니다.</p>
+<p><strong>힌트</strong>: 처음 몇 개의 레인 ID에 대해 XOR 연산을 직접 해보면 페어링 패턴을
+이해할 수 있습니다.</p>
 <h3 id="2-xor-페어-패턴"><a class="header" href="#2-xor-페어-패턴">2. <strong>XOR 페어 패턴</strong></a></h3>
 <p>레인 ID의 이진 표현과 최하위 비트를 뒤집으면 어떻게 되는지 생각해 보세요.</p>
 <p><strong>고려할 질문:</strong></p>
@@ -297,8 +317,10 @@ output[global_i] = swapped_val
 <li>왜 이것이 완벽한 페어를 만드나요?</li>
 </ul>
 <h3 id="3-경계-검사-불필요"><a class="header" href="#3-경계-검사-불필요">3. <strong>경계 검사 불필요</strong></a></h3>
-<p><code>shuffle_down()</code>과 달리 <code>shuffle_xor()</code> 연산은 워프 경계 내에서 유지됩니다. 작은 마스크로의 XOR이 절대로 범위 밖의 레인 ID를 만들지 않는 이유를 생각해 보세요.</p>
-<p><strong>생각해 보세요</strong>: 유효한 레인 ID를 1과 XOR했을 때 나올 수 있는 최대 레인 ID는 얼마인가요?</p>
+<p><code>shuffle_down()</code>과 달리 <code>shuffle_xor()</code> 연산은 워프 경계 내에서 유지됩니다. 작은
+마스크로의 XOR이 절대로 범위 밖의 레인 ID를 만들지 않는 이유를 생각해 보세요.</p>
+<p><strong>생각해 보세요</strong>: 유효한 레인 ID를 1과 XOR했을 때 나올 수 있는 최대 레인 ID는
+얼마인가요?</p>
 </div>
 </details>
 <p><strong>버터플라이 페어 교환 테스트:</strong></p>
@@ -364,7 +386,8 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 풀이는 <code>shuffle_xor()</code>이 XOR 통신 패턴을 통해 완벽한 페어 교환을 어떻게 만드는지 보여줍니다.</p>
+<p>이 풀이는 <code>shuffle_xor()</code>이 XOR 통신 패턴을 통해 완벽한 페어 교환을 어떻게
+만드는지 보여줍니다.</p>
 <p><strong>알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]              # 각 레인이 자신의 요소를 읽음
@@ -374,7 +397,7 @@ expected: [1.0, 0.0, 3.0, 2.0, 5.0, 4.0, 7.0, 6.0, 9.0, 8.0, 11.0, 10.0, 13.0, 1
     output[global_i] = swapped_val
 </code></pre>
 <p><strong>SIMT 실행 상세 분석:</strong></p>
-<pre><code>사이클 1: 모든 레인이 동시에 값을 로드
+<pre><code class="language-text">사이클 1: 모든 레인이 동시에 값을 로드
   Lane 0: current_val = input[0] = 0
   Lane 1: current_val = input[1] = 1
   Lane 2: current_val = input[2] = 2
@@ -427,17 +450,21 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <li>블록 구성: <code>(WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 </ul>
 <h3 id="완성할-코드-1"><a class="header" href="#완성할-코드-1">완성할 코드</a></h3>
-<p>감소하는 offset으로 버터플라이 <code>shuffle_xor</code>을 사용하여 병렬 최댓값 리덕션을 구현합니다.</p>
+<p>감소하는 offset으로 버터플라이 <code>shuffle_xor</code>을 사용하여 병렬 최댓값 리덕션을
+구현합니다.</p>
 <p><strong>수학적 연산:</strong> 트리 리덕션을 통해 모든 워프 레인에서 최댓값을 계산합니다:
-\[\Large \text{max_result} = \max_{i=0}^{\small\text{WARP_SIZE}-1} \text{input}[i]\]</p>
-<p><strong>버터플라이 리덕션 패턴:</strong> XOR 오프셋을 <code>WARP_SIZE/2</code>에서 <code>1</code>까지 절반씩 줄여가며, 통신 범위가 단계마다 반으로 좁아지는 이진 트리를 구성합니다:</p>
+\[\Large \text{max_result} = \max_{i=0}^{\small\text{WARP_SIZE}-1}
+\text{input}[i]\]</p>
+<p><strong>버터플라이 리덕션 패턴:</strong> XOR 오프셋을 <code>WARP_SIZE/2</code>에서 <code>1</code>까지 절반씩
+줄여가며, 통신 범위가 단계마다 반으로 좁아지는 이진 트리를 구성합니다:</p>
 <ul>
 <li><strong>1단계</strong>: <code>WARP_SIZE/2</code> 거리의 레인과 비교 (워프 전체를 포괄)</li>
 <li><strong>2단계</strong>: <code>WARP_SIZE/4</code> 거리의 레인과 비교 (범위를 절반으로 좁힘)</li>
 <li><strong>3단계</strong>: <code>WARP_SIZE/8</code> 거리의 레인과 비교</li>
 <li><strong>4단계</strong>: <code>offset = 1</code>이 될 때까지 계속 절반으로 줄임</li>
 </ul>
-<p>\(\log_2(\text{WARP_SIZE})\) 단계를 거치면 모든 레인이 전역 최댓값을 갖게 됩니다. 이 방식은 모든 <code>WARP_SIZE</code> (32, 64 등)에서 동작합니다.</p>
+<p>\(\log_2(\text{WARP_SIZE})\) 단계를 거치면 모든 레인이 전역 최댓값을 갖게
+됩니다. 이 방식은 모든 <code>WARP_SIZE</code> (32, 64 등)에서 동작합니다.</p>
 <pre><code class="language-mojo">def butterfly_parallel_max[
     size: Int
 ](
@@ -461,16 +488,19 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-버터플라이-리덕션-이해하기"><a class="header" href="#1-버터플라이-리덕션-이해하기">1. <strong>버터플라이 리덕션 이해하기</strong></a></h3>
-<p>버터플라이 리덕션은 이진 트리 통신 패턴을 생성합니다. 각 단계에서 문제 크기를 체계적으로 줄이는 방법을 생각해 보세요.</p>
+<p>버터플라이 리덕션은 이진 트리 통신 패턴을 생성합니다. 각 단계에서 문제 크기를
+체계적으로 줄이는 방법을 생각해 보세요.</p>
 <p><strong>핵심 질문:</strong></p>
 <ul>
 <li>최대 범위를 커버하려면 시작 offset이 얼마여야 하나요?</li>
 <li>단계 사이에 오프셋을 어떻게 변경해야 하나요?</li>
 <li>언제 리덕션을 멈춰야 하나요?</li>
 </ul>
-<p><strong>힌트</strong>: “버터플라이“라는 이름은 통신 패턴에서 유래합니다 - 작은 예제에 대해 직접 그려보세요.</p>
+<p><strong>힌트</strong>: “버터플라이“라는 이름은 통신 패턴에서 유래합니다 - 작은 예제에 대해
+직접 그려보세요.</p>
 <h3 id="2-xor-리덕션-특성"><a class="header" href="#2-xor-리덕션-특성">2. <strong>XOR 리덕션 특성</strong></a></h3>
-<p>XOR은 각 단계에서 겹치지 않는 통신 페어를 생성합니다. 이것이 병렬 리덕션에서 왜 중요한지 생각해 보세요.</p>
+<p>XOR은 각 단계에서 겹치지 않는 통신 페어를 생성합니다. 이것이 병렬 리덕션에서 왜
+중요한지 생각해 보세요.</p>
 <p><strong>생각해 보세요:</strong></p>
 <ul>
 <li>서로 다른 오프셋으로의 XOR이 어떻게 다른 통신 패턴을 만드나요?</li>
@@ -490,14 +520,15 @@ i - 1 &amp; \text{if } i \bmod 2 = 1
 <li>마지막 단계 후: 각 레인이 전역 최댓값을 알게 됩니다</li>
 </ul>
 <h3 id="4-이-패턴이-동작하는-이유"><a class="header" href="#4-이-패턴이-동작하는-이유">4. <strong>이 패턴이 동작하는 이유</strong></a></h3>
-<p>버터플라이 리덕션은 \(\log_2(\text{WARP_SIZE})\) 단계 후에 다음을 보장합니다:</p>
+<p>버터플라이 리덕션은 \(\log_2(\text{WARP_SIZE})\) 단계 후에 다음을
+보장합니다:</p>
 <ul>
 <li><strong>모든 레인</strong>이 <strong>다른 모든 레인의</strong> 값을 간접적으로 확인</li>
 <li><strong>중복 통신 없음</strong>: 각 페어가 단계당 정확히 한 번 교환</li>
 <li><strong>최적 복잡도</strong>: \(O(n)\) 순차 비교 대신 \(O(\log n)\) 단계</li>
 </ul>
 <p><strong>추적 예제</strong> (4개 레인, 값 [3, 1, 7, 2]):</p>
-<pre><code>초기 상태: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
+<pre><code class="language-text">초기 상태: Lane 0=3, Lane 1=1, Lane 2=7, Lane 3=2
 
 1단계 (offset=2): 0 ↔ 2, 1 ↔ 3
   Lane 0: max(3, 7) = 7
@@ -575,7 +606,8 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 풀이는 <code>shuffle_xor()</code>이 \(O(\log n)\) 복잡도의 효율적인 병렬 리덕션 트리를 어떻게 생성하는지 보여줍니다.</p>
+<p>이 풀이는 <code>shuffle_xor()</code>이 \(O(\log n)\) 복잡도의 효율적인 병렬 리덕션
+트리를 어떻게 생성하는지 보여줍니다.</p>
 <p><strong>전체 알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     max_val = input[global_i]  # 로컬 값으로 시작
@@ -589,7 +621,7 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
     output[global_i] = max_val  # 모든 레인이 전역 최댓값을 가짐
 </code></pre>
 <p><strong>버터플라이 실행 추적 (8-레인 예제, 값 [0,2,4,6,8,10,12,1000]):</strong></p>
-<pre><code>초기 상태:
+<pre><code class="language-text">초기 상태:
   Lane 0: max_val = 0,    Lane 1: max_val = 2
   Lane 2: max_val = 4,    Lane 3: max_val = 6
   Lane 4: max_val = 8,    Lane 5: max_val = 10
@@ -615,9 +647,11 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 
 최종 결과: 모든 레인의 max_val = 1000
 </code></pre>
-<p><strong>수학적 통찰:</strong> 버터플라이 통신으로 병렬 리덕션 연산자를 구현합니다:
-\[\Large \text{Reduce}(\oplus, [a_0, a_1, \ldots, a_{n-1}]) = a_0 \oplus a_1 \oplus \cdots \oplus a_{n-1}\]</p>
-<p>여기서 \(\oplus\)는 <code>max</code> 연산이며, 버터플라이 패턴이 최적 \(O(\log n)\) 복잡도를 보장합니다.</p>
+<p><strong>수학적 통찰:</strong> 버터플라이 통신으로 병렬 리덕션 연산자를 구현합니다: \[\Large
+\text{Reduce}(\oplus, [a_0, a_1, \ldots, a_{n-1}]) = a_0 \oplus a_1 \oplus
+\cdots \oplus a_{n-1}\]</p>
+<p>여기서 \(\oplus\)는 <code>max</code> 연산이며, 버터플라이 패턴이 최적 \(O(\log n)\)
+복잡도를 보장합니다.</p>
 <p><strong>버터플라이 리덕션이 우월한 이유:</strong></p>
 <ol>
 <li><strong>로그 복잡도</strong>: 순차 리덕션의 \(O(n)\)에 비해 \(O(\log n)\)</li>
@@ -627,9 +661,11 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 </ol>
 <p><strong>성능 특성:</strong></p>
 <ul>
-<li><strong>단계 수</strong>: \(\log_2(\text{WARP_SIZE})\) (예: 32-스레드 워프는 5단계, 64-스레드 워프는 6단계)</li>
+<li><strong>단계 수</strong>: \(\log_2(\text{WARP_SIZE})\) (예: 32-스레드 워프는 5단계,
+64-스레드 워프는 6단계)</li>
 <li><strong>단계당 지연 시간</strong>: 1 사이클 (레지스터 교환 + 비교)</li>
-<li><strong>총 지연 시간</strong>: 순차 방식의 \((\text{WARP_SIZE}-1)\) 사이클 대비 \(\log_2(\text{WARP_SIZE})\) 사이클</li>
+<li><strong>총 지연 시간</strong>: 순차 방식의 \((\text{WARP_SIZE}-1)\) 사이클 대비
+\(\log_2(\text{WARP_SIZE})\) 사이클</li>
 <li><strong>병렬성</strong>: 알고리즘 전체에서 모든 레인이 활성 상태</li>
 </ul>
 </div>
@@ -642,13 +678,17 @@ expected: [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.
 <li>블록 구성: <code>THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)</code> 블록당 스레드 수</li>
 </ul>
 <h3 id="완성할-코드-2"><a class="header" href="#완성할-코드-2">완성할 코드</a></h3>
-<p>짝수 레인은 최댓값을, 홀수 레인은 최솟값을 저장하는 조건부 버터플라이 리덕션을 구현합니다.</p>
-<p><strong>수학적 연산:</strong> 최댓값과 최솟값 모두에 대해 버터플라이 리덕션을 수행한 후, 레인 홀짝에 따라 조건부로 출력합니다:
-\[\Large \text{output}[i] = \begin{cases}
-\max_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 0 \\
+<p>짝수 레인은 최댓값을, 홀수 레인은 최솟값을 저장하는 조건부 버터플라이 리덕션을
+구현합니다.</p>
+<p><strong>수학적 연산:</strong> 최댓값과 최솟값 모두에 대해 버터플라이 리덕션을 수행한 후, 레인
+홀짝에 따라 조건부로 출력합니다: \[\Large \text{output}[i] = \begin{cases}
+\max_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if} i \bmod 2 = 0
+\\
 \min_{j=0}^{\text{WARP_SIZE}-1} \text{input}[j] &amp; \text{if } i \bmod 2 = 1
 \end{cases}\]</p>
-<p><strong>이중 리덕션 패턴:</strong> 버터플라이 트리를 통해 최댓값과 최솟값을 동시에 추적한 후, 레인 ID 홀짝에 따라 조건부로 출력합니다. 이는 버터플라이 패턴이 복잡한 다중 값 리덕션으로 어떻게 확장되는지를 보여줍니다.</p>
+<p><strong>이중 리덕션 패턴:</strong> 버터플라이 트리를 통해 최댓값과 최솟값을 동시에 추적한 후,
+레인 ID 홀짝에 따라 조건부로 출력합니다. 이는 버터플라이 패턴이 복잡한 다중 값
+리덕션으로 어떻게 확장되는지를 보여줍니다.</p>
 <pre><code class="language-mojo">comptime SIZE_2 = 64
 comptime BLOCKS_PER_GRID_2 = (2, 1)
 comptime THREADS_PER_BLOCK_2 = (WARP_SIZE, 1)
@@ -682,7 +722,8 @@ def butterfly_conditional_max[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-이중-추적-버터플라이-리덕션"><a class="header" href="#1-이중-추적-버터플라이-리덕션">1. <strong>이중 추적 버터플라이 리덕션</strong></a></h3>
-<p>이 퍼즐은 버터플라이 트리를 통해 두 가지 다른 값을 동시에 추적해야 합니다. 여러 리덕션을 병렬로 실행하는 방법을 생각해 보세요.</p>
+<p>이 퍼즐은 버터플라이 트리를 통해 두 가지 다른 값을 동시에 추적해야 합니다. 여러
+리덕션을 병렬로 실행하는 방법을 생각해 보세요.</p>
 <p><strong>핵심 질문:</strong></p>
 <ul>
 <li>리덕션 과정에서 최댓값과 최솟값을 어떻게 동시에 유지할 수 있나요?</li>
@@ -698,7 +739,8 @@ def butterfly_conditional_max[
 <li>레인 ID에 어떻게 접근하나요?</li>
 </ul>
 <h3 id="3-min과-max-동시-버터플라이-리덕션"><a class="header" href="#3-min과-max-동시-버터플라이-리덕션">3. <strong>min과 max 동시 버터플라이 리덕션</strong></a></h3>
-<p>이 과제의 핵심은 같은 버터플라이 통신 패턴으로 min과 max를 효율적으로 병렬 계산하는 것입니다.</p>
+<p>이 과제의 핵심은 같은 버터플라이 통신 패턴으로 min과 max를 효율적으로 병렬
+계산하는 것입니다.</p>
 <p><strong>생각해 보세요:</strong></p>
 <ul>
 <li>min과 max에 별도의 셔플 연산이 필요한가요?</li>
@@ -706,7 +748,8 @@ def butterfly_conditional_max[
 <li>두 리덕션 모두 올바르게 완료되려면 어떻게 해야 하나요?</li>
 </ul>
 <h3 id="4-멀티-블록-경계-고려사항"><a class="header" href="#4-멀티-블록-경계-고려사항">4. <strong>멀티 블록 경계 고려사항</strong></a></h3>
-<p>이 퍼즐은 여러 블록을 사용합니다. 이것이 리덕션 범위에 어떤 영향을 미치는지 생각해 보세요.</p>
+<p>이 퍼즐은 여러 블록을 사용합니다. 이것이 리덕션 범위에 어떤 영향을 미치는지
+생각해 보세요.</p>
 <p><strong>중요한 고려사항:</strong></p>
 <ul>
 <li>각 버터플라이 리덕션의 범위는 어디까지인가요?</li>
@@ -783,7 +826,8 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
 
 </code></pre>
 <div class="solution-explanation">
-<p>이 풀이는 이중 추적과 조건부 출력을 사용하는 고급 버터플라이 리덕션을 보여줍니다.</p>
+<p>이 풀이는 이중 추적과 조건부 출력을 사용하는 고급 버터플라이 리덕션을
+보여줍니다.</p>
 <p><strong>전체 알고리즘 분석:</strong></p>
 <pre><code class="language-mojo">if global_i &lt; size:
     current_val = input[global_i]
@@ -807,7 +851,7 @@ expected: [9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0, 9.0, 0.0,
         output[global_i] = min_val      # 홀수 레인: 최솟값
 </code></pre>
 <p><strong>이중 리덕션 실행 추적 (4-레인 예제, 값 [3, 1, 7, 2]):</strong></p>
-<pre><code>초기 상태:
+<pre><code class="language-text">초기 상태:
   Lane 0: current_val=3, min_val=3
   Lane 1: current_val=1, min_val=1
   Lane 2: current_val=7, min_val=7
@@ -842,8 +886,8 @@ while offset &gt; 0:
 \[\Large \begin{align}
 \text{max_result} &amp;= \max_{i=0}^{n-1} \text{input}[i] \\
 \text{min_result} &amp;= \min_{i=0}^{n-1} \text{input}[i] \\
-\text{output}[i] &amp;= \text{lane_parity}(i) \; \text{?} \; \text{min_result} : \text{max_result}
-\end{align}\]</p>
+\text{output}[i] &amp;= \text{lane_parity}(i) \; \text{?} \;
+\text{min_result}: \text{max_result} \end{align}\]</p>
 <p><strong>이중 버터플라이 리덕션이 동작하는 이유:</strong></p>
 <ol>
 <li><strong>독립적 리덕션</strong>: Max와 min 리덕션은 수학적으로 독립</li>
@@ -861,7 +905,8 @@ while offset &gt; 0:
 </div>
 </details>
 <h2 id="요약"><a class="header" href="#요약">요약</a></h2>
-<p><code>shuffle_xor()</code> 기본 요소는 효율적인 병렬 알고리즘의 기반이 되는 강력한 버터플라이 통신 패턴을 가능하게 합니다. 세 가지 문제를 통해 다음을 배웠습니다:</p>
+<p><code>shuffle_xor()</code> 기본 요소는 효율적인 병렬 알고리즘의 기반이 되는 강력한
+버터플라이 통신 패턴을 가능하게 합니다. 세 가지 문제를 통해 다음을 배웠습니다:</p>
 <h3 id="핵심-버터플라이-패턴"><a class="header" href="#핵심-버터플라이-패턴"><strong>핵심 버터플라이 패턴</strong></a></h3>
 <ol>
 <li>
@@ -919,7 +964,8 @@ while offset &gt; 0:
 <li><strong>Bitonic 정렬</strong>: 병렬 정렬 네트워크</li>
 <li><strong>그래프 알고리즘</strong>: 트리 순회와 연결성</li>
 </ul>
-<p><code>shuffle_xor()</code> 기본 요소는 복잡한 병렬 조정을 우아하고 하드웨어 최적화된 통신 패턴으로 변환하며, 다양한 GPU 아키텍처에서 효율적으로 확장됩니다.</p>
+<p><code>shuffle_xor()</code> 기본 요소는 복잡한 병렬 조정을 우아하고 하드웨어 최적화된 통신
+패턴으로 변환하며, 다양한 GPU 아키텍처에서 효율적으로 확장됩니다.</p>
 
                     </main>
 

@@ -209,22 +209,34 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="how-to-use-this-book"><a class="header" href="#how-to-use-this-book">How to Use This Book</a></h2>
-<p>Each puzzle maintains a consistent structure to support systematic skill development:</p>
+<p>Each puzzle maintains a consistent structure to support systematic skill
+development:</p>
 <ul>
 <li><strong>Overview</strong>: Problem definition and key concepts for each challenge</li>
 <li><strong>Configuration</strong>: Technical setup and memory organization details</li>
-<li><strong>Code to Complete</strong>: Implementation framework in <code>problems/pXX/</code> with clearly marked sections to fill in</li>
-<li><strong>Tips</strong>: Strategic hints available when needed, without revealing complete solutions</li>
-<li><strong>Solution</strong>: Comprehensive implementation analysis, including performance considerations and conceptual explanations</li>
+<li><strong>Code to Complete</strong>: Implementation framework in <code>problems/pXX/</code> with clearly
+marked sections to fill in</li>
+<li><strong>Tips</strong>: Strategic hints available when needed, without revealing complete
+solutions</li>
+<li><strong>Solution</strong>: Comprehensive implementation analysis, including performance
+considerations and conceptual explanations</li>
 </ul>
-<p>The puzzles increase in complexity systematically, building new concepts on established foundations. Working through them sequentially is recommended, as advanced puzzles assume familiarity with concepts from earlier challenges.</p>
+<p>The puzzles increase in complexity systematically, building new concepts on
+established foundations. Working through them sequentially is recommended, as
+advanced puzzles assume familiarity with concepts from earlier challenges.</p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
-<p>All puzzles integrate with a testing framework that validates implementations against expected results. Each puzzle provides specific execution instructions and solution verification procedures.</p>
+<p>All puzzles integrate with a testing framework that validates implementations
+against expected results. Each puzzle provides specific execution instructions
+and solution verification procedures.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="system-requirements"><a class="header" href="#system-requirements">System requirements</a></h3>
-<p>Make sure your system meets our <a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
+<p>Make sure your system meets our
+<a href="https://docs.modular.com/max/packages#system-requirements">system requirements</a>.</p>
 <h3 id="compatible-gpu"><a class="header" href="#compatible-gpu">Compatible GPU</a></h3>
-<p>You’ll need a <a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the puzzles. After setup, you can verify your GPU compatibility using the <code>gpu-specs</code> command (see Quick Start section below).</p>
+<p>You’ll need a
+<a href="https://docs.modular.com/max/faq#gpu-requirements">compatible GPU</a> to run the
+puzzles. After setup, you can verify your GPU compatibility using the
+<code>gpu-specs</code> command (see Quick Start section below).</p>
 <h2 id="operating-system"><a class="header" href="#operating-system">Operating System</a></h2>
 <blockquote>
 <p>[!NOTE]
@@ -236,10 +248,14 @@ Here is some documentation how to setup GPU support in your OS for</p>
 </ul>
 </blockquote>
 <h3 id="windows-wsl2-for-linux-with-nvidia"><a class="header" href="#windows-wsl2-for-linux-with-nvidia">Windows WSL2 for Linux with NVIDIA</a></h3>
-<p>To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu please follow the <a href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">NVIDIA CUDA on WLS Guide</a>.</p>
-<p>The important information is to install the NVIDIA Windows CUDA Driver for <em>Windows</em> because they fully support WSL2.
-Once a Windows NVIDIA GPU driver is installed on the system, CUDA becomes available within WSL 2.
-The CUDA driver installed on Windows host will be stubbed inside the WSL 2 as libcuda.so, therefore users must not install any NVIDIA GPU Linux driver within WSL 2.</p>
+<p>To setup NVIVIA GPU support on Windows Subsystem for Linux (WSL2) e.g. Unbuntu
+please follow the
+<a href="https://docs.nvidia.com/cuda/wsl-user-guide/index.html">NVIDIA CUDA on WLS Guide</a>.</p>
+<p>The important information is to install the NVIDIA Windows CUDA Driver for
+<em>Windows</em> because they fully support WSL2. Once a Windows NVIDIA GPU driver is
+installed on the system, CUDA becomes available within WSL 2. The CUDA driver
+installed on Windows host will be stubbed inside the WSL 2 as libcuda.so,
+therefore users must not install any NVIDIA GPU Linux driver within WSL 2.</p>
 <p>Once you have installed the drivers please test the installation</p>
 <p>Verify from Windows: Open PowerShell (not WSL)</p>
 <pre><code class="language-bash">nvidia-smi
@@ -248,7 +264,8 @@ The CUDA driver installed on Windows host will be stubbed inside the WSL 2 as li
 <pre><code class="language-bash">ls -l /usr/lib/wsl/lib/nvidia-smi
 /usr/lib/wsl/lib/nvidia-smi
 </code></pre>
-<p>Check setup from Pixi optionally install missing requirements e.g. for cuda-gdb debugging</p>
+<p>Check setup from Pixi optionally install missing requirements e.g. for cuda-gdb
+debugging</p>
 <pre><code class="language-bash">pixi run nvidia-smi
 pixi run setup-cuda-gdb
 pixi run mojo debug --help
@@ -256,7 +273,8 @@ pixi run cuda-gdb --version
 </code></pre>
 <p>For WSL you can install VSCode as your Editor</p>
 <ul>
-<li>Install VS Code on Windows from <a href="https://code.visualstudio.com/">https://code.visualstudio.com/</a>.</li>
+<li>Install VS Code on Windows from
+<a href="https://code.visualstudio.com/">https://code.visualstudio.com/</a>.</li>
 <li>Then install the Remote - WSL extension.</li>
 </ul>
 <blockquote>
@@ -299,31 +317,39 @@ All puzzles 1-15 are working on Linux.</p>
 <h3 id="macos-apple-silicon"><a class="header" href="#macos-apple-silicon">macOS Apple Silicon</a></h3>
 <p>For <code>osx-arm64</code> users, you’ll need:</p>
 <ul>
-<li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code> and if it fails you’d need to upgrade.</li>
+<li><strong>macOS 15.0 or later</strong> for optimal compatibility. Run <code>pixi run check-macos</code>
+and if it fails you’d need to upgrade.</li>
 <li><strong>Xcode 16 or later</strong> (minimum required). Use <code>xcodebuild -version</code> to check.</li>
 </ul>
-<p>If <code>xcrun -sdk macosx metal</code> outputs <code>cannot execute tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
+<p>If <code>xcrun -sdk macosx metal</code> outputs
+<code>cannot execute tool 'metal' due to missing Metal toolchain</code> proceed by running</p>
 <pre><code class="language-bash">xcodebuild -downloadComponent MetalToolchain
 </code></pre>
 <p>and then <code>xcrun -sdk macosx metal</code>, should give you the <code>no input files error</code>.</p>
 <blockquote>
 <p>[!NOTE]
-Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to enable more. Please stay tuned!</p>
+Currently the puzzles 1-8 and 11-15 are working on macOS. We’re working to
+enable more. Please stay tuned!</p>
 </blockquote>
 <h2 id="programming-knowledge"><a class="header" href="#programming-knowledge">Programming knowledge</a></h2>
 <p>Basic knowledge of:</p>
 <ul>
 <li>Programming fundamentals (variables, loops, conditionals, functions)</li>
 <li>Parallel computing concepts (threads, synchronization, race conditions)</li>
-<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language basics parts and <a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
-<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU programming fundamentals</a> is helpful!</li>
+<li>Basic familiarity with <a href="https://docs.modular.com/mojo/manual/">Mojo</a> (language
+basics parts and
+<a href="https://docs.modular.com/mojo/manual/pointers/">intro to pointers</a> section)</li>
+<li><a href="https://docs.modular.com/mojo/manual/gpu/fundamentals">GPU programming fundamentals</a>
+is helpful!</li>
 </ul>
-<p>No prior GPU programming experience is necessary! We’ll build that knowledge through the puzzles.</p>
+<p>No prior GPU programming experience is necessary! We’ll build that knowledge
+through the puzzles.</p>
 <p>Let’s begin our journey into the exciting world of GPU computing with Mojo🔥!</p>
 <h2 id="setting-up-your-environment"><a class="header" href="#setting-up-your-environment">Setting up your environment</a></h2>
 <ol>
 <li>
-<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a> and navigate to the repository:</p>
+<p><a href="https://github.com/modular/mojo-gpu-puzzles">Clone the GitHub repository</a>
+and navigate to the repository:</p>
 <pre><code class="language-bash"># Clone the repository
 git clone https://github.com/modular/mojo-gpu-puzzles
 cd mojo-gpu-puzzles
@@ -331,36 +357,51 @@ cd mojo-gpu-puzzles
 </li>
 <li>
 <p>Install a package manager to run the Mojo🔥 programs:</p>
-<h4 id="option-1-highly-recommended-pixi"><a class="header" href="#option-1-highly-recommended-pixi"><strong>Option 1 (Highly recommended)</strong>: <a href="https://pixi.sh/latest/#installation">pixi</a></a></h4>
+</li>
+</ol>
+<h3 id="option-1-highly-recommended"><a class="header" href="#option-1-highly-recommended"><strong>Option 1 (Highly recommended)</strong></a></h3>
+<p><a href="https://pixi.sh/latest/#installation">pixi</a></p>
 <p><code>pixi</code> is the <strong>recommended option</strong> for this project because:</p>
 <ul>
 <li>Easy access to Modular’s MAX/Mojo packages</li>
 <li>Handles GPU dependencies</li>
 <li>Full conda + PyPI ecosystem support</li>
 </ul>
-<blockquote>
-<p><strong>Note: Some puzzles only work with <code>pixi</code></strong></p>
-</blockquote>
-<p><strong>Install:</strong></p>
-<pre><code class="language-bash">curl -fsSL https://pixi.sh/install.sh | sh
-</code></pre>
-<p><strong>Update:</strong></p>
-<pre><code class="language-bash">pixi self-update
+<pre><code>&gt; **Note: Some puzzles only work with `pixi`**
+
+**Install:**
+
+ ```bash
+curl -fsSL https://pixi.sh/install.sh | sh
+ ```
+
+**Update:**
+
+ ```bash
+pixi self-update
+ ```
 </code></pre>
 <h4 id="option-2-uv"><a class="header" href="#option-2-uv"><strong>Option 2</strong>: <a href="https://docs.astral.sh/uv/getting-started/installation/"><code>uv</code></a></a></h4>
-<p><strong>Install:</strong></p>
-<pre><code class="language-bash">curl -fsSL https://astral.sh/uv/install.sh | sh
+<pre><code>**Install:**
+
+```bash
+curl -fsSL https://astral.sh/uv/install.sh | sh
+```
+
+**Update:**
+
+```bash
+uv self update
+```
+
+**Create a virtual environment:**
+
+```bash
+uv venv &amp;&amp; source .venv/bin/activate
+```
 </code></pre>
-<p><strong>Update:</strong></p>
-<pre><code class="language-bash">uv self update
-</code></pre>
-<p><strong>Create a virtual environment:</strong></p>
-<pre><code class="language-bash">uv venv &amp;&amp; source .venv/bin/activate
-</code></pre>
-</li>
-<li>
-<p><strong>Verify setup and run your first puzzle:</strong></p>
-</li>
+<ol start="3">
+<li><strong>Verify setup and run your first puzzle:</strong></li>
 </ol>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -414,14 +455,18 @@ uv run poe p01
 <h2 id="working-with-puzzles"><a class="header" href="#working-with-puzzles">Working with puzzles</a></h2>
 <h3 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h3>
 <ul>
-<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/problems"><code>problems/</code></a></strong>: Where you implement your solutions (this is where you work!)</li>
-<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions"><code>solutions/</code></a></strong>: Reference solutions for comparison and learning that we use throughout the book</li>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/problems"><code>problems/</code></a></strong>:
+Where you implement your solutions (this is where you work!)</li>
+<li><strong><a href="https://github.com/modular/mojo-gpu-puzzles/tree/main/solutions"><code>solutions/</code></a></strong>:
+Reference solutions for comparison and learning that we use throughout the
+book</li>
 </ul>
 <h3 id="workflow"><a class="header" href="#workflow">Workflow</a></h3>
 <ol>
 <li>Navigate to <code>problems/pXX/</code> to find the puzzle template</li>
 <li>Implement your solution in the provided framework</li>
-<li>Test your implementation: <code>pixi run pXX</code> or <code>uv run poe pXX</code> (remember to include your platform with <code>-e platform</code> such as <code>-e amd</code>)</li>
+<li>Test your implementation: <code>pixi run pXX</code> or <code>uv run poe pXX</code> (remember to
+include your platform with <code>-e platform</code> such as <code>-e amd</code>)</li>
 <li>Compare with <code>solutions/pXX/</code> to learn different approaches</li>
 </ol>
 <h3 id="essential-commands"><a class="header" href="#essential-commands">Essential commands</a></h3>
@@ -471,7 +516,8 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
   </div>
 </div>
 <h2 id="gpu-support-matrix"><a class="header" href="#gpu-support-matrix">GPU support matrix</a></h2>
-<p>The following table shows GPU platform compatibility for each puzzle. Different puzzles require different GPU features and vendor-specific tools.</p>
+<p>The following table shows GPU platform compatibility for each puzzle. Different
+puzzles require different GPU features and vendor-specific tools.</p>
 <div class="table-wrapper"><table><thead><tr><th>Puzzle</th><th>NVIDIA GPU</th><th>AMD GPU</th><th>Apple GPU</th><th>Notes</th></tr></thead><tbody>
 <tr><td><strong>Part I: GPU Fundamentals</strong></td><td></td><td></td><td></td><td></td></tr>
 <tr><td>1 - Map</td><td>✅</td><td>✅</td><td>✅</td><td>Basic GPU kernels</td></tr>
@@ -536,22 +582,30 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 <ul>
 <li>Most puzzles (1-8, 11-29) work with ROCm support</li>
 <li>Missing only: Debugging tools (9-10), profiling (30-32), Tensor Cores (33-34)</li>
-<li>Excellent for learning GPU programming including advanced algorithms and memory patterns</li>
+<li>Excellent for learning GPU programming including advanced algorithms and
+memory patterns</li>
 </ul>
 <p><strong>Apple GPUs (Basic Support)</strong></p>
 <ul>
-<li>A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are supported</li>
+<li>A selection of fundamental (1-8, 11-18) and advanced (23-27) puzzles are
+supported</li>
 <li>Missing: All advanced features, debugging, profiling tools</li>
 <li>Suitable for learning basic GPU programming patterns</li>
 </ul>
 <blockquote>
-<p><strong>Future Support</strong>: We’re actively working to expand tooling and platform support for AMD and Apple GPUs. Missing features like debugging tools, profiling capabilities, and advanced GPU operations are planned for future releases. Check back for updates as we continue to broaden cross-platform compatibility.</p>
+<p><strong>Future Support</strong>: We’re actively working to expand tooling and platform
+support for AMD and Apple GPUs. Missing features like debugging tools,
+profiling capabilities, and advanced GPU operations are planned for future
+releases. Check back for updates as we continue to broaden cross-platform
+compatibility.</p>
 </blockquote>
 <h2 id="gpu-resources"><a class="header" href="#gpu-resources">GPU Resources</a></h2>
 <h3 id="free-cloud-gpu-platforms"><a class="header" href="#free-cloud-gpu-platforms">Free cloud GPU platforms</a></h3>
-<p>If you don’t have local GPU access, several cloud platforms offer free GPU resources for learning and experimentation:</p>
+<p>If you don’t have local GPU access, several cloud platforms offer free GPU
+resources for learning and experimentation:</p>
 <h4 id="google-colab"><a class="header" href="#google-colab"><strong>Google Colab</strong></a></h4>
-<p>Google Colab provides free GPU access with some limitations for Mojo GPU programming:</p>
+<p>Google Colab provides free GPU access with some limitations for Mojo GPU
+programming:</p>
 <p><strong>Available GPUs:</strong></p>
 <ul>
 <li>Tesla T4 (older Turing architecture)</li>
@@ -559,13 +613,18 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 </ul>
 <p><strong>Limitations for Mojo GPU Puzzles:</strong></p>
 <ul>
-<li><strong>Older GPU architecture</strong>: T4 GPUs may have limited compatibility with advanced Mojo GPU features</li>
+<li><strong>Older GPU architecture</strong>: T4 GPUs may have limited compatibility with
+advanced Mojo GPU features</li>
 <li><strong>Session limits</strong>: 12-hour maximum runtime, then automatic disconnect</li>
-<li><strong>Limited debugging support</strong>: NVIDIA debugging tools (puzzles 9-10) may not be fully available</li>
-<li><strong>Package installation restrictions</strong>: May require workarounds for Mojo/MAX installation</li>
-<li><strong>Performance limitations</strong>: Shared infrastructure affects consistent benchmarking</li>
+<li><strong>Limited debugging support</strong>: NVIDIA debugging tools (puzzles 9-10) may not
+be fully available</li>
+<li><strong>Package installation restrictions</strong>: May require workarounds for Mojo/MAX
+installation</li>
+<li><strong>Performance limitations</strong>: Shared infrastructure affects consistent
+benchmarking</li>
 </ul>
-<p><strong>Recommended for:</strong> Basic GPU programming concepts (puzzles 1-8, 11-15) and learning fundamental patterns.</p>
+<p><strong>Recommended for:</strong> Basic GPU programming concepts (puzzles 1-8, 11-15) and
+learning fundamental patterns.</p>
 <h4 id="kaggle-notebooks"><a class="header" href="#kaggle-notebooks"><strong>Kaggle Notebooks</strong></a></h4>
 <p>Kaggle offers more generous free GPU access:</p>
 <p><strong>Available GPUs:</strong></p>
@@ -575,29 +634,40 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
 </ul>
 <p><strong>Advantages over Colab:</strong></p>
 <ul>
-<li><strong>More generous time limits</strong>: 30 hours per week compared to Colab’s daily session limits</li>
+<li><strong>More generous time limits</strong>: 30 hours per week compared to Colab’s daily
+session limits</li>
 <li><strong>Better persistence</strong>: Notebooks save automatically</li>
 <li><strong>Consistent environment</strong>: More reliable package installation</li>
 </ul>
 <p><strong>Limitations for Mojo GPU Puzzles:</strong></p>
 <ul>
-<li><strong>Same GPU architecture constraints</strong>: T4 compatibility issues with advanced features</li>
-<li><strong>Limited debugging tools</strong>: NVIDIA profiling and debugging tools (puzzles 9-10, 30-32) unavailable</li>
+<li><strong>Same GPU architecture constraints</strong>: T4 compatibility issues with advanced
+features</li>
+<li><strong>Limited debugging tools</strong>: NVIDIA profiling and debugging tools (puzzles
+9-10, 30-32) unavailable</li>
 <li><strong>Mojo installation complexity</strong>: Requires manual setup of Mojo environment</li>
 <li><strong>No cluster programming support</strong>: Advanced puzzles (33-34) won’t work</li>
 </ul>
-<p><strong>Recommended for:</strong> Extended learning sessions on fundamental GPU programming (puzzles 1-16).</p>
+<p><strong>Recommended for:</strong> Extended learning sessions on fundamental GPU programming
+(puzzles 1-16).</p>
 <h3 id="recommendations"><a class="header" href="#recommendations">Recommendations</a></h3>
 <ul>
-<li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34 puzzles)</li>
-<li><strong>Comprehensive Learning</strong>: AMD GPUs work well for most content (27 of 34 puzzles)</li>
-<li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of 34 puzzles)</li>
-<li><strong>Free Platform Learning</strong>: Google Colab/Kaggle suitable for basic to intermediate concepts (puzzles 1-16)</li>
-<li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and performance analysis</li>
-<li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster programming</li>
+<li><strong>Complete Learning Path</strong>: Use NVIDIA GPU for full curriculum access (all 34
+puzzles)</li>
+<li><strong>Comprehensive Learning</strong>: AMD GPUs work well for most content (27 of 34
+puzzles)</li>
+<li><strong>Basic Understanding</strong>: Apple GPUs suitable for fundamental concepts (13 of
+34 puzzles)</li>
+<li><strong>Free Platform Learning</strong>: Google Colab/Kaggle suitable for basic to
+intermediate concepts (puzzles 1-16)</li>
+<li><strong>Debugging &amp; Profiling</strong>: NVIDIA GPU required for debugging tools and
+performance analysis</li>
+<li><strong>Modern GPU Features</strong>: NVIDIA GPU required for Tensor Cores and cluster
+programming</li>
 </ul>
 <h2 id="development"><a class="header" href="#development">Development</a></h2>
-<p>Please see details in the <a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>.</p>
+<p>Please see details in the
+<a href="https://github.com/modular/mojo-gpu-puzzles#development">README</a>.</p>
 <h2 id="join-the-community"><a class="header" href="#join-the-community">Join the community</a></h2>
 <p align="center" style="display: flex; justify-content: center; gap: 10px;">
   <a href="https://www.modular.com/company/talk-to-us">
@@ -610,7 +680,8 @@ uv run mojo solutions/pXX/pXX.mojo     # Reference solution
     <img src="https://img.shields.io/badge/Discord-Join_Chat-5865F2?logo=discord" alt="Discord">
   </a>
 </p>
-<p>Join our vibrant community to discuss GPU programming, share solutions, and get help!</p>
+<p>Join our vibrant community to discuss GPU programming, share solutions, and get
+help!</p>
 
                     </main>
 

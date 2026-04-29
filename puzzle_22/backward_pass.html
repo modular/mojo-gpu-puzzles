@@ -210,7 +210,9 @@
                     <main>
                         <h1 id="-autograd-integration--backward-pass"><a class="header" href="#-autograd-integration--backward-pass">⛓️ Autograd Integration &amp; Backward Pass</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, we explore the backward pass implementation of the fused LayerNorm + Linear operation. The backward pass computes gradients with respect to:</p>
+<p>In this puzzle, we explore the backward pass implementation of the fused
+LayerNorm + Linear operation. The backward pass computes gradients with respect
+to:</p>
 <ul>
 <li>Input tensor</li>
 <li>LayerNorm scale (\(\gamma\)) and shift (\(\beta\)) parameters</li>
@@ -219,8 +221,11 @@
 <p>The mathematical operations we’re implementing are:</p>
 <ol>
 <li>
-<p>LayerNorm backward (details of derivation in <a href="#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a>):
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
+<p>LayerNorm backward (details of derivation in
+<a href="#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a>):
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot
+\gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x -
+\mu)^2}{H(\sigma^2 + \epsilon)}) \]</p>
 </li>
 <li>
 <p>Linear backward:
@@ -230,8 +235,9 @@
 </li>
 <li>
 <p>Chain Rule for Fused Operation:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}} \frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial x} \]
-where:</p>
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y_{linear}}
+\frac{\partial y_{linear}}{\partial y_{norm}} \frac{\partial y_{norm}}{\partial
+x} \] where:</p>
 </li>
 </ol>
 <ul>
@@ -291,9 +297,12 @@ where:</p>
 <li>Data type: <code>DType.float32</code></li>
 </ul>
 <h2 id="implementation-challenging"><a class="header" href="#implementation-challenging">Implementation (challenging)</a></h2>
-<p>The fused backward kernel combines LayerNorm and Linear backward operations into a single GPU kernel. This is a challenging implementation that requires careful handling of:</p>
+<p>The fused backward kernel combines LayerNorm and Linear backward operations into
+a single GPU kernel. This is a challenging implementation that requires careful
+handling of:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">Atomic operations</a> for gradient accumulation</li>
+<li><a href="https://docs.modular.com/mojo/std/os/atomic/Atomic/">Atomic operations</a> for
+gradient accumulation</li>
 <li>Numerical stability in gradient computations</li>
 <li>Memory access patterns for efficient GPU utilization</li>
 <li>Proper synchronization between operations</li>
@@ -695,7 +704,8 @@ BACKWARD PASS Test Completed!
 <li>
 <p><strong>Thread organization and memory layout</strong>:</p>
 <ul>
-<li>Grid dimensions: <code>[batch_size, seq_len]</code> for one thread block per sequence position</li>
+<li>Grid dimensions: <code>[batch_size, seq_len]</code> for one thread block per sequence
+position</li>
 <li>Thread indices: <code>batch_idx = block_idx.x</code>, <code>seq_idx = block_idx.y</code></li>
 <li>Memory layout:
 <ul>
@@ -703,7 +713,8 @@ BACKWARD PASS Test Completed!
 <li>Output tensor: <code>[batch_size, seq_len, output_dim]</code></li>
 <li>Weight matrix: <code>[output_dim, hidden_dim]</code></li>
 <li>Gradients: <code>[batch_size, seq_len, hidden_dim]</code> for input gradients</li>
-<li>Parameter gradients: <code>[hidden_dim]</code> for LayerNorm, <code>[output_dim, hidden_dim]</code> for Linear</li>
+<li>Parameter gradients: <code>[hidden_dim]</code> for LayerNorm,
+<code>[output_dim, hidden_dim]</code> for Linear</li>
 </ul>
 </li>
 </ul>
@@ -714,16 +725,26 @@ BACKWARD PASS Test Completed!
 <li>Recompute forward pass statistics in same order as forward pass:
 <ul>
 <li>Mean: \[\Large \mu = \frac{1}{H} \sum_{i=1}^{H} x_i \]</li>
-<li>Variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2 \]</li>
-<li>Inverse standard deviation: \[\Large \text{inv_std} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>Variance: \[\Large \sigma^2 = \frac{1}{H} \sum_{i=1}^{H} (x_i - \mu)^2
+\]</li>
+<li>Inverse standard deviation: \[\Large \text{inv_std} =
+\frac{1}{\sqrt{\sigma^2 + \epsilon}} \]</li>
 </ul>
 </li>
-<li>Compute normalized values: \[\Large \hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \]</li>
+<li>Compute normalized values: \[\Large \hat{x} = \frac{x -
+\mu}{\sqrt{\sigma^2 + \epsilon}} \]</li>
 <li>Calculate gradients:
 <ul>
-<li>Input gradient: \[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</li>
-<li>Scale gradient: \[\Large \frac{\partial L}{\partial \gamma} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \]</li>
-<li>Shift gradient: \[\Large \frac{\partial L}{\partial \beta} = \sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \]</li>
+<li>Input gradient: \[\Large \frac{\partial L}{\partial x} = \frac{\partial
+L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1
+<ul>
+<li>\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)}) \]</li>
+</ul>
+</li>
+<li>Scale gradient: \[\Large \frac{\partial L}{\partial \gamma} =
+\sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \odot \hat{x}_i \]</li>
+<li>Shift gradient: \[\Large \frac{\partial L}{\partial \beta} =
+\sum_{i=1}^{H} \frac{\partial L}{\partial y_i} \]</li>
 </ul>
 </li>
 </ul>
@@ -733,9 +754,12 @@ BACKWARD PASS Test Completed!
 <ul>
 <li>For each output dimension:
 <ul>
-<li>Bias gradient: \[\Large \frac{\partial L}{\partial b} = \frac{\partial L}{\partial y} \]</li>
-<li>Weight gradient: \[\Large \frac{\partial L}{\partial W} = \frac{\partial L}{\partial y}x^T \]</li>
-<li>Input gradient: \[\Large \frac{\partial L}{\partial x} = W^T\frac{\partial L}{\partial y} \]</li>
+<li>Bias gradient: \[\Large \frac{\partial L}{\partial b} = \frac{\partial
+L}{\partial y} \]</li>
+<li>Weight gradient: \[\Large \frac{\partial L}{\partial W} = \frac{\partial
+L}{\partial y}x^T \]</li>
+<li>Input gradient: \[\Large \frac{\partial L}{\partial x} =
+W^T\frac{\partial L}{\partial y} \]</li>
 </ul>
 </li>
 <li>Use atomic operations for gradient accumulation:
@@ -806,11 +830,14 @@ BACKWARD PASS Test Completed!
 <li>Ensuring proper memory alignment</li>
 <li>Efficient autograd integration</li>
 </ul>
-<p>The fused backward pass is particularly important in transformer architectures where LayerNorm + Linear operations are frequently used together, making the performance benefits significant for real-world applications.</p>
+<p>The fused backward pass is particularly important in transformer architectures
+where LayerNorm + Linear operations are frequently used together, making the
+performance benefits significant for real-world applications.</p>
 </div>
 </details>
 <h2 id="performance-considerations"><a class="header" href="#performance-considerations">Performance considerations</a></h2>
-<p>The backward pass implementation uses <code>torch.compile</code> with optimizations to minimize overhead:</p>
+<p>The backward pass implementation uses <code>torch.compile</code> with optimizations to
+minimize overhead:</p>
 <pre><code class="language-python"># Compilation configuration
 torch._dynamo.config.cache_size_limit = 64  # Increase cache
 torch._dynamo.config.suppress_errors = True  # Handle errors gracefully
@@ -825,7 +852,9 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>Proper error handling is crucial for gradient computation</li>
 <li>Compilation overhead can significantly impact training time</li>
 </ul>
-<p>The backward pass is compiled with <code>reduce-overhead</code> mode to minimize the compilation overhead while maintaining correctness. This is especially important because:</p>
+<p>The backward pass is compiled with <code>reduce-overhead</code> mode to minimize the
+compilation overhead while maintaining correctness. This is especially important
+because:</p>
 <ul>
 <li>Backward passes are called frequently during training</li>
 <li>Gradient computation needs to be numerically stable</li>
@@ -834,7 +863,8 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>Autograd integration needs to be efficient</li>
 </ul>
 <h2 id="detailed-derivation-of-layernorm-backward-pass"><a class="header" href="#detailed-derivation-of-layernorm-backward-pass">Detailed derivation of LayerNorm backward pass</a></h2>
-<p>The backward pass gradient for LayerNorm is derived through careful application of the chain rule. Here’s the step-by-step derivation:</p>
+<p>The backward pass gradient for LayerNorm is derived through careful application
+of the chain rule. Here’s the step-by-step derivation:</p>
 <h3 id="forward-pass-operations"><a class="header" href="#forward-pass-operations">Forward pass operations</a></h3>
 <ul>
 <li>Mean: \(\mu = \frac{1}{H} \sum_{i=1}^{H} x_i\)</li>
@@ -844,29 +874,36 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 </ul>
 <h3 id="chain-rule-application"><a class="header" href="#chain-rule-application">Chain rule application</a></h3>
 <p>To compute \(\frac{\partial L}{\partial x}\), we apply the chain rule:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\]</p>
+\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y}
+\frac{\partial y}{\partial \hat{x}} \frac{\partial \hat{x}}{\partial x}\]</p>
 <h3 id="gradient-components"><a class="header" href="#gradient-components">Gradient components</a></h3>
 <h4 id="output-to-normalized-value"><a class="header" href="#output-to-normalized-value">Output to normalized value</a></h4>
 <ul>
-<li>\(\frac{\partial y}{\partial \hat{x}} = \gamma\) (element-wise multiplication)</li>
+<li>\(\frac{\partial y}{\partial \hat{x}} = \gamma\) (element-wise
+multiplication)</li>
 </ul>
 <h4 id="normalized-value-to-input"><a class="header" href="#normalized-value-to-input">Normalized value to input</a></h4>
 <p>The gradient \(\frac{\partial \hat{x}}{\partial x}\) has three components:</p>
 <ul>
 <li>Direct effect through numerator: \(\frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
-<li>Indirect effect through mean: \(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 + \epsilon}}\)</li>
-<li>Indirect effect through variance: \(-\frac{(x - \mu)}{H(\sigma^2 + \epsilon)^{3/2}} (x - \mu)\)</li>
+<li>Indirect effect through mean: \(-\frac{1}{H} \frac{1}{\sqrt{\sigma^2 +
+\epsilon}}\)</li>
+<li>Indirect effect through variance: \(-\frac{(x - \mu)}{H(\sigma^2 +
+\epsilon)^{3/2}} (x - \mu)\)</li>
 </ul>
 <h3 id="combining-terms"><a class="header" href="#combining-terms">Combining terms</a></h3>
-<p>The gradient through the normalization term can be simplified to:
-\[\Large \frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<p>The gradient through the normalization term can be simplified to: \[\Large
+\frac{\partial \hat{x}}{\partial x} = \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
+\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
 <h3 id="final-gradient-expression"><a class="header" href="#final-gradient-expression">Final gradient expression</a></h3>
-<p>Combining all terms:
-\[\Large \frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 - \frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
+<p>Combining all terms: \[\Large \frac{\partial L}{\partial x} = \frac{\partial
+L}{\partial y} \odot \gamma \odot \frac{1}{\sqrt{\sigma^2 + \epsilon}} (1 -
+\frac{1}{H} - \frac{(x - \mu)^2}{H(\sigma^2 + \epsilon)})\]</p>
 <h3 id="key-insights"><a class="header" href="#key-insights">Key insights</a></h3>
 <ul>
 <li>The chain rule accounts for all paths through which x affects the output</li>
-<li>The normalization term \(\sqrt{\sigma^2 + \epsilon}\) appears in both numerator and denominator</li>
+<li>The normalization term \(\sqrt{\sigma^2 + \epsilon}\) appears in both
+numerator and denominator</li>
 <li>The mean and variance terms create additional paths for gradient flow</li>
 <li>The final expression combines all effects into a single efficient computation</li>
 </ul>
@@ -878,7 +915,9 @@ torch._dynamo.config.automatic_dynamic_shapes = True  # Dynamic shapes
 <li>Gradients are properly scaled across the hidden dimension H</li>
 <li>The computation order matches the forward pass for numerical stability</li>
 </ul>
-<p>This derivation ensures that the backward pass maintains the same numerical properties as the forward pass while efficiently computing all necessary gradients.</p>
+<p>This derivation ensures that the backward pass maintains the same numerical
+properties as the forward pass while efficiently computing all necessary
+gradients.</p>
 
                     </main>
 

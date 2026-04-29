@@ -209,7 +209,8 @@
                 <div id="content" class="content">
                     <main>
                         <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and
+stores it in 2D square matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn about:</p>
@@ -218,12 +219,15 @@
 <li>Converting 2D coordinates to 1D memory indices</li>
 <li>Handling boundary checks in two dimensions</li>
 </ul>
-<p>The key insight is understanding how to map from 2D thread coordinates \((i,j)\) to elements in a row-major matrix of size \(n \times n\), while ensuring thread indices are within bounds.</p>
+<p>The key insight is understanding how to map from 2D thread coordinates
+\((i,j)\) to elements in a row-major matrix of size \(n \times n\), while
+ensuring thread indices are within bounds.</p>
 <ul>
 <li><strong>2D indexing</strong>: Each thread has a unique \((i,j)\) position</li>
 <li><strong>Memory layout</strong>: Row-major ordering maps 2D to 1D memory</li>
 <li><strong>Guard condition</strong>: Need bounds checking in both dimensions</li>
-<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than matrix elements \((2 \times 2)\)</li>
+<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than matrix elements \((2
+\times 2)\)</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2
@@ -302,7 +306,7 @@ expected: HostBuffer([10.0, 11.0, 12.0, 13.0])
 <div class="solution-explanation">
 <p>This solution:</p>
 <ol>
-<li>Get 2D indices:  <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
+<li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
 <li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
 <li>Inside guard: <code>output[row * size + col] = a[row * size + col] + 10.0</code></li>
 </ol>

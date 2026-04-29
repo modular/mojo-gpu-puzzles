@@ -210,8 +210,16 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="blockbroadcast와-벡터-정규화"><a class="header" href="#blockbroadcast와-벡터-정규화">block.broadcast()와 벡터 정규화</a></h1>
-<p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과 <a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a> 연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체 모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을 받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해 어떻게 함께 동작하는지 보여줍니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> 연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다: 리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
+<p><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/sum">block.sum</a>과
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast</a>
+연산을 결합하여 벡터 평균 정규화를 구현하고, 블록 레벨 통신 워크플로우의 전체
+모습을 보여줍니다. 각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을
+받아 자신의 요소를 정규화하여, 블록 연산이 실제 병렬 알고리즘을 해결하기 위해
+어떻게 함께 동작하는지 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a>
+연산은 하나→전체 통신을 가능하게 하여, 기본 블록 통신 패턴을 완성합니다:
+리덕션(전체→하나), 스캔(전체→각각), 브로드캐스트(하나→전체).</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
@@ -221,9 +229,10 @@
 <li>여러 연산을 결합하는 <strong>완전한 블록 연산 워크플로우</strong></li>
 <li>조율된 블록 기본 요소를 사용한 <strong>실제 알고리즘 구현</strong></li>
 </ul>
-<p>이 알고리즘은 벡터 평균 정규화를 보여줍니다:
-\[\Large \text{output}[i] = \frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\]</p>
-<p>각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을 받아 자신의 요소를 정규화합니다.</p>
+<p>이 알고리즘은 벡터 평균 정규화를 보여줍니다: \[\Large \text{output}[i] =
+\frac{\text{input}[i]}{\frac{1}{N}\sum_{j=0}^{N-1} \text{input}[j]}\]</p>
+<p>각 스레드가 평균 계산에 기여한 다음, 브로드캐스트된 평균을 받아 자신의 요소를
+정규화합니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>벡터 크기: <code>SIZE = 128</code> 요소</li>
@@ -345,7 +354,8 @@ if global_i &lt; size:
 if local_i == 0:
     # total_sum과 size로 평균 계산
 </code></pre>
-<p><strong>왜 스레드 0인가?</strong> <code>block.sum()</code> 패턴에서 스레드 0이 결과를 받는 것과 일관성을 유지합니다.</p>
+<p><strong>왜 스레드 0인가?</strong> <code>block.sum()</code> 패턴에서 스레드 0이 결과를 받는 것과 일관성을
+유지합니다.</p>
 <h3 id="4-blockbroadcast-api-개념"><a class="header" href="#4-blockbroadcast-api-개념">4. <strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/block/broadcast">block.broadcast()</a> API 개념</strong></a></h3>
 <p>함수 시그니처를 살펴보세요 - 다음이 필요합니다:</p>
 <ul>
@@ -360,20 +370,23 @@ if local_i == 0:
 ](val=SIMD[DType.float32, 1](value_to_broadcast), src_thread=UInt(0))
 </code></pre>
 <h3 id="5-브로드캐스트-패턴-이해하기"><a class="header" href="#5-브로드캐스트-패턴-이해하기">5. <strong>브로드캐스트 패턴 이해하기</strong></a></h3>
-<p><strong>핵심 통찰</strong>: <code>block.broadcast()</code>는 하나의 스레드에서 값을 가져와 모든 스레드에 전달합니다:</p>
+<p><strong>핵심 통찰</strong>: <code>block.broadcast()</code>는 하나의 스레드에서 값을 가져와 모든 스레드에
+전달합니다:</p>
 <ul>
 <li><strong>스레드 0</strong>이 계산된 평균값을 가지고 있음</li>
 <li><strong>모든 스레드</strong>가 같은 평균값이 필요</li>
 <li><strong><code>block.broadcast()</code></strong> 가 스레드 0의 값을 모두에게 복사</li>
 </ul>
-<p>이것은 <code>block.sum()</code>(전체→하나)의 반대이며, <code>block.prefix_sum()</code>(전체→각각 위치)과도 다릅니다.</p>
+<p>이것은 <code>block.sum()</code>(전체→하나)의 반대이며, <code>block.prefix_sum()</code>(전체→각각
+위치)과도 다릅니다.</p>
 <h3 id="6-최종-정규화-단계"><a class="header" href="#6-최종-정규화-단계">6. <strong>최종 정규화 단계</strong></a></h3>
 <p>모든 스레드가 브로드캐스트된 평균을 받으면, 자신의 요소를 정규화합니다:</p>
 <pre><code class="language-mojo">if global_i &lt; size:
     normalized_value = my_value / broadcasted_mean[0]  # SIMD 추출
     output_data[global_i] = normalized_value
 </code></pre>
-<p><strong>SIMD 추출</strong>: <code>block.broadcast()</code>가 SIMD를 반환하므로 <code>[0]</code>으로 스칼라를 추출해야 합니다.</p>
+<p><strong>SIMD 추출</strong>: <code>block.broadcast()</code>가 SIMD를 반환하므로 <code>[0]</code>으로 스칼라를
+추출해야 합니다.</p>
 <h3 id="7-이전-퍼즐에서의-패턴-인식"><a class="header" href="#7-이전-퍼즐에서의-패턴-인식">7. <strong>이전 퍼즐에서의 패턴 인식</strong></a></h3>
 <ul>
 <li><strong>스레드 인덱싱</strong>: 항상 동일한 <code>global_i</code>, <code>local_i</code> 패턴</li>
@@ -476,10 +489,12 @@ Output mean: 1.0
 
 </code></pre>
 <div class="solution-explanation">
-<p><code>block.broadcast()</code> 커널은 세 가지 기본 통신 패턴을 모두 결합하여 수학적으로 검증 가능한 결과를 생성하는 실제 알고리즘으로 완전한 블록 연산 워크플로우를 보여줍니다:</p>
+<p><code>block.broadcast()</code> 커널은 세 가지 기본 통신 패턴을 모두 결합하여 수학적으로
+검증 가능한 결과를 생성하는 실제 알고리즘으로 완전한 블록 연산 워크플로우를
+보여줍니다:</p>
 <h2 id="구체적인-실행을-통한-완전한-알고리즘-분석"><a class="header" href="#구체적인-실행을-통한-완전한-알고리즘-분석"><strong>구체적인 실행을 통한 완전한 알고리즘 분석:</strong></a></h2>
 <h3 id="1단계-병렬-데이터-로딩-모든-이전-퍼즐에서-확립된-패턴"><a class="header" href="#1단계-병렬-데이터-로딩-모든-이전-퍼즐에서-확립된-패턴"><strong>1단계: 병렬 데이터 로딩 (모든 이전 퍼즐에서 확립된 패턴)</strong></a></h3>
-<pre><code>스레드 인덱싱 (모든 퍼즐에서 일관됨):
+<pre><code class="language-text">스레드 인덱싱 (모든 퍼즐에서 일관됨):
   global_i = block_dim.x * block_idx.x + thread_idx.x  // 입력 배열 위치에 매핑
   local_i = thread_idx.x                              // 블록 내 위치 (0-127)
 
@@ -494,7 +509,7 @@ TileTensor 패턴을 사용한 병렬 요소 로딩:
 128개 스레드가 동시에 로드 - 완벽한 병렬 효율!
 </code></pre>
 <h3 id="2단계-블록-전체-합계-리덕션-앞서-배운-blocksum-지식-활용"><a class="header" href="#2단계-블록-전체-합계-리덕션-앞서-배운-blocksum-지식-활용"><strong>2단계: 블록 전체 합계 리덕션 (앞서 배운 block.sum() 지식 활용)</strong></a></h3>
-<pre><code>128개 스레드에 걸친 block.sum() 조율:
+<pre><code class="language-text">128개 스레드에 걸친 block.sum() 조율:
   기여분 분석:
     - 값 1,2,3,4,5,6,7,8이 각각 16번 반복 (128/8 = 16)
     - 스레드 기여분: 16×1 + 16×2 + 16×3 + 16×4 + 16×5 + 16×6 + 16×7 + 16×8
@@ -507,7 +522,7 @@ block.sum() 하드웨어 실행:
 스레드 1-127: total_sum에 접근 불가 (block.sum에서 broadcast=False)
 </code></pre>
 <h3 id="3단계-독점적-평균-계산-단일-스레드-처리"><a class="header" href="#3단계-독점적-평균-계산-단일-스레드-처리"><strong>3단계: 독점적 평균 계산 (단일 스레드 처리)</strong></a></h3>
-<pre><code>스레드 0이 핵심 계산을 수행:
+<pre><code class="language-text">스레드 0이 핵심 계산을 수행:
   입력: total_sum[0] = 576.0, size = 128
   계산: mean_value = 576.0 / 128.0 = 4.5
 
@@ -520,7 +535,7 @@ block.sum() 하드웨어 실행:
 핵심 통찰: 이 시점에서 올바른 평균값을 가진 것은 스레드 0뿐입니다!
 </code></pre>
 <h3 id="4단계-블록-전체-브로드캐스트-분배-하나--전체-통신"><a class="header" href="#4단계-블록-전체-브로드캐스트-분배-하나--전체-통신"><strong>4단계: 블록 전체 브로드캐스트 분배 (하나 → 전체 통신)</strong></a></h3>
-<pre><code>block.broadcast() API 실행:
+<pre><code class="language-text">block.broadcast() API 실행:
   소스: src_thread = UInt(0) → 스레드 0의 mean_value = 4.5
   대상: 블록 내 모든 128 스레드
 
@@ -541,7 +556,7 @@ block.broadcast() 실행 후:
 결과: 완벽한 동기화 - 모든 스레드가 동일한 평균값을 가짐!
 </code></pre>
 <h3 id="5단계-병렬-평균-정규화-조율된-처리"><a class="header" href="#5단계-병렬-평균-정규화-조율된-처리"><strong>5단계: 병렬 평균 정규화 (조율된 처리)</strong></a></h3>
-<pre><code>각 스레드가 브로드캐스트된 평균을 사용하여 독립적으로 정규화:
+<pre><code class="language-text">각 스레드가 브로드캐스트된 평균을 사용하여 독립적으로 정규화:
   스레드 0:   normalized = 1.0 / 4.5 = 0.22222222...
   스레드 1:   normalized = 2.0 / 4.5 = 0.44444444...
   스레드 2:   normalized = 3.0 / 4.5 = 0.66666666...
@@ -556,7 +571,7 @@ block.broadcast() 실행 후:
 각 값을 원래 평균으로 나누면 평균이 1.0인 출력을 생성
 </code></pre>
 <h3 id="6단계-정확성-검증"><a class="header" href="#6단계-정확성-검증"><strong>6단계: 정확성 검증</strong></a></h3>
-<pre><code>입력 분석:
+<pre><code class="language-text">입력 분석:
   - 합계: 576.0, 평균: 4.5
   - 최댓값: 8.0, 최솟값: 1.0
   - 범위: [1.0, 8.0]
@@ -572,7 +587,7 @@ block.broadcast() 실행 후:
 </code></pre>
 <h2 id="이-완전한-워크플로우가-수학적계산적으로-우수한-이유"><a class="header" href="#이-완전한-워크플로우가-수학적계산적으로-우수한-이유"><strong>이 완전한 워크플로우가 수학적·계산적으로 우수한 이유:</strong></a></h2>
 <h3 id="기술적-정확성과-검증"><a class="header" href="#기술적-정확성과-검증"><strong>기술적 정확성과 검증:</strong></a></h3>
-<pre><code>수학적 정확성 증명:
+<pre><code class="language-text">수학적 정확성 증명:
   입력: x₁, x₂, ..., xₙ (n = 128)
   평균: μ = (∑xᵢ)/n = 576/128 = 4.5
 
@@ -583,15 +598,18 @@ block.broadcast() 실행 후:
 </code></pre>
 <h3 id="puzzle-12-기초-패턴과의-연결"><a class="header" href="#puzzle-12-기초-패턴과의-연결"><strong><a href="../puzzle_12/tile_tensor.html">Puzzle 12</a> (기초 패턴)과의 연결:</strong></a></h3>
 <ul>
-<li><strong>스레드 조율의 진화</strong>: 동일한 <code>global_i</code>, <code>local_i</code> 패턴이지만 블록 기본 요소 사용</li>
-<li><strong>메모리 접근 패턴</strong>: 동일한 TileTensor SIMD 추출 <code>[0]</code>이지만 최적화된 워크플로우</li>
+<li><strong>스레드 조율의 진화</strong>: 동일한 <code>global_i</code>, <code>local_i</code> 패턴이지만 블록 기본 요소
+사용</li>
+<li><strong>메모리 접근 패턴</strong>: 동일한 TileTensor SIMD 추출 <code>[0]</code>이지만 최적화된
+워크플로우</li>
 <li><strong>복잡성 제거</strong>: 20줄 이상의 수동 배리어를 2개의 블록 연산으로 대체</li>
 <li><strong>교육적 진행</strong>: 수동 → 자동, 복잡 → 단순, 오류 발생 가능 → 신뢰성</li>
 </ul>
 <h3 id="blocksum-완벽한-통합과의-연결"><a class="header" href="#blocksum-완벽한-통합과의-연결"><strong><a href="./block_sum.html"><code>block.sum()</code></a> (완벽한 통합)과의 연결:</strong></a></h3>
 <ul>
 <li><strong>API 일관성</strong>: 동일한 템플릿 구조 <code>[block_size=tpb, broadcast=False]</code></li>
-<li><strong>결과 흐름 설계</strong>: 스레드 0이 합계를 수신하고, 자연스럽게 파생 파라미터를 계산</li>
+<li><strong>결과 흐름 설계</strong>: 스레드 0이 합계를 수신하고, 자연스럽게 파생 파라미터를
+계산</li>
 <li><strong>매끄러운 조합</strong>: <code>block.sum()</code>의 출력이 계산 + 브로드캐스트의 입력이 됨</li>
 <li><strong>성능 최적화</strong>: 단일 커널 워크플로우 vs 다중 패스 방식</li>
 </ul>
@@ -601,7 +619,8 @@ block.broadcast() 실행 후:
 <p><strong>분배 패턴</strong>: <code>prefix_sum</code>은 고유한 위치를, <code>broadcast</code>는 공유 값을 제공</p>
 </li>
 <li>
-<p><strong>사용 시나리오</strong>: <code>prefix_sum</code>은 병렬 파티셔닝용, <code>broadcast</code>는 매개변수 공유용</p>
+<p><strong>사용 시나리오</strong>: <code>prefix_sum</code>은 병렬 파티셔닝용, <code>broadcast</code>는 매개변수
+공유용</p>
 </li>
 <li>
 <p><strong>템플릿 일관성</strong>: 모든 연산에서 동일한 <code>dtype</code>, <code>block_size</code> 파라미터 패턴</p>
@@ -611,7 +630,7 @@ block.broadcast() 실행 후:
 </li>
 </ul>
 <h3 id="고급-알고리즘-인사이트"><a class="header" href="#고급-알고리즘-인사이트"><strong>고급 알고리즘 인사이트:</strong></a></h3>
-<pre><code>통신 패턴 비교:
+<pre><code class="language-text">통신 패턴 비교:
   기존 방식:
     1. 수동 리덕션:         O(log n), 명시적 배리어 필요
     2. 공유 메모리 쓰기:     O(1), 동기화 필요
@@ -625,7 +644,7 @@ block.broadcast() 실행 후:
     총합: 두 개의 기본 요소, 자동 동기화, 증명된 정확성
 </code></pre>
 <h3 id="실제-응용-알고리즘-패턴"><a class="header" href="#실제-응용-알고리즘-패턴"><strong>실제 응용 알고리즘 패턴:</strong></a></h3>
-<pre><code>일반적인 병렬 알고리즘 구조:
+<pre><code class="language-text">일반적인 병렬 알고리즘 구조:
   1단계: 병렬 데이터 처리        → 모든 스레드가 기여
   2단계: 전역 파라미터 계산      → 하나의 스레드가 계산
   3단계: 파라미터 분배          → 모든 스레드가 수신
@@ -663,17 +682,20 @@ block.broadcast() 실행 후:
 <p><strong>완전한 블록 연산 진행:</strong></p>
 <ol>
 <li><strong>수동 조율</strong> (<a href="../puzzle_12/tile_tensor.html">Puzzle 12</a>): 병렬 기초 이해</li>
-<li><strong>워프 기본 요소</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): 하드웨어 가속 패턴 학습</li>
+<li><strong>워프 기본 요소</strong> (<a href="../puzzle_24/warp_sum.html">Puzzle 24</a>): 하드웨어 가속
+패턴 학습</li>
 <li><strong>블록 리덕션</strong> (<a href="./block_sum.html"><code>block.sum()</code></a>): 전체→하나 통신 학습</li>
-<li><strong>블록 스캔</strong> (<a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): 전체→각각 통신 학습</li>
+<li><strong>블록 스캔</strong> (<a href="./block_prefix_sum.html"><code>block.prefix_sum()</code></a>): 전체→각각 통신
+학습</li>
 <li><strong>블록 브로드캐스트</strong> (<code>block.broadcast()</code>): 하나→전체 통신 학습</li>
 </ol>
-<p><strong>전체 그림:</strong> 블록 연산은 고급 병렬 알고리즘을 위한 기본 통신 빌딩 블록을 제공하며, 복잡한 수동 조율을 깔끔하고 조합 가능한 기본 요소로 대체합니다.</p>
+<p><strong>전체 그림:</strong> 블록 연산은 고급 병렬 알고리즘을 위한 기본 통신 빌딩 블록을
+제공하며, 복잡한 수동 조율을 깔끔하고 조합 가능한 기본 요소로 대체합니다.</p>
 <h2 id="성능-인사이트와-기술-분석"><a class="header" href="#성능-인사이트와-기술-분석">성능 인사이트와 기술 분석</a></h2>
 <h3 id="정량적-성능-비교"><a class="header" href="#정량적-성능-비교"><strong>정량적 성능 비교:</strong></a></h3>
 <p><strong><code>block.broadcast()</code> vs 기존 공유 메모리 방식 (참고용):</strong></p>
 <p><strong>기존 수동 방식:</strong></p>
-<pre><code>1단계: 수동 리덕션
+<pre><code class="language-text">1단계: 수동 리덕션
   • 공유 메모리 할당: ~5 사이클
   • 배리어 동기화: ~10 사이클
   • 트리 리덕션 루프: ~15 사이클
@@ -692,7 +714,7 @@ block.broadcast() 실행 후:
   + 수동 오류 디버깅
 </code></pre>
 <p><strong>블록 연산 방식:</strong></p>
-<pre><code>1단계: block.sum()
+<pre><code class="language-text">1단계: block.sum()
   • 하드웨어 최적화: ~3 사이클
   • 자동 배리어: 명시적 비용 0
   • 최적화된 리덕션: ~8 사이클
@@ -718,7 +740,7 @@ block.broadcast() 실행 후:
 <li><strong>결합 워크플로우</strong>: 단일 커널이 전역 메모리 왕복을 100% 감소</li>
 </ul>
 <p><strong>메모리 대역폭 활용:</strong></p>
-<pre><code>기존 멀티 커널 방식:
+<pre><code class="language-text">기존 멀티 커널 방식:
   커널 1: 입력 → 리덕션 → 전역 메모리 쓰기
   커널 2: 전역 메모리 읽기 → 브로드캐스트 → 출력
   총 전역 메모리 전송: 배열 크기의 3배
@@ -747,7 +769,7 @@ block.broadcast() 실행 후:
 <li><strong>조율된 처리</strong>: 모든 스레드가 동일한 계산된 매개변수가 필요할 때</li>
 </ul>
 <h3 id="조합의-이점"><a class="header" href="#조합의-이점"><strong>조합의 이점:</strong></a></h3>
-<pre><code>개별 연산:   좋은 성능, 제한된 범위
+<pre><code class="language-text">개별 연산:   좋은 성능, 제한된 범위
 결합 연산:   탁월한 성능, 포괄적인 알고리즘
 
 실제 응용에서 볼 수 있는 조합 예시:
@@ -765,7 +787,11 @@ block.broadcast() 실행 후:
 <li><strong>알고리즘 설계</strong>: 블록 연산 빌딩 블록을 사용한 병렬 알고리즘 구조화</li>
 <li><strong>성능 최적화</strong>: 최적의 블록 크기와 연산 조합 선택</li>
 </ul>
-<p>💡 <strong>핵심 요점</strong>: 블록 연산 3부작(<code>sum</code>, <code>prefix_sum</code>, <code>broadcast</code>)은 블록 레벨 병렬 프로그래밍을 위한 완전한 통신 기본 요소를 제공합니다. 이 연산들을 조합하면 GPU 하드웨어 최적화를 활용하는 깔끔하고 유지보수하기 쉬운 코드로 고급 병렬 알고리즘을 구현할 수 있습니다. 평균 정규화는 이 연산들이 함께 작동하여 실제 연산 문제를 효율적으로 해결하는 방법을 보여줍니다.</p>
+<p>💡 <strong>핵심 요점</strong>: 블록 연산 3부작(<code>sum</code>, <code>prefix_sum</code>, <code>broadcast</code>)은 블록 레벨
+병렬 프로그래밍을 위한 완전한 통신 기본 요소를 제공합니다. 이 연산들을 조합하면
+GPU 하드웨어 최적화를 활용하는 깔끔하고 유지보수하기 쉬운 코드로 고급 병렬
+알고리즘을 구현할 수 있습니다. 평균 정규화는 이 연산들이 함께 작동하여 실제 연산
+문제를 효율적으로 해결하는 방법을 보여줍니다.</p>
 
                     </main>
 

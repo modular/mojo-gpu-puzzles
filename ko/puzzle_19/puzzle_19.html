@@ -211,29 +211,39 @@
                         <!-- i18n-source-commit: 2bb7071f5afbc671e252b0dc6902b520793c11d5 -->
 <h1 id="puzzle-19-어텐션-op"><a class="header" href="#puzzle-19-어텐션-op">Puzzle 19: 어텐션 Op</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이 퍼즐에서는 어텐션 메커니즘을 커스텀 MAX 그래프 연산으로 구현합니다. 어텐션은 <a href="https://arxiv.org/abs/1706.03762">트랜스포머</a>와 함께 널리 알려진 현대 신경망의 핵심 요소로, 모델이 예측할 때 입력에서 관련된 부분에 집중할 수 있게 해줍니다.</p>
+<p>이 퍼즐에서는 어텐션 메커니즘을 커스텀 MAX 그래프 연산으로 구현합니다. 어텐션은
+<a href="https://arxiv.org/abs/1706.03762">트랜스포머</a>와 함께 널리 알려진 현대 신경망의
+핵심 요소로, 모델이 예측할 때 입력에서 관련된 부분에 집중할 수 있게 해줍니다.</p>
 <p>수학적으로 어텐션 함수는 다음과 같이 정의됩니다:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p>여기서:</p>
 <ul>
 <li>\(Q\)는 \((d,)~\) 형태의 <strong>쿼리 벡터</strong> - 찾으려는 대상을 나타냅니다</li>
-<li>\(K\)는 \((\text{seq_len}, d)~\) 형태의 <strong>키 행렬</strong> - 매칭할 수 있는 대상을 나타냅니다</li>
-<li>\(V\)는 \((\text{seq_len}, d)~\) 형태의 <strong>값 행렬</strong> - 검색할 정보를 나타냅니다</li>
+<li>\(K\)는 \((\text{seq_len}, d)~\) 형태의 <strong>키 행렬</strong> - 매칭할 수 있는
+대상을 나타냅니다</li>
+<li>\(V\)는 \((\text{seq_len}, d)~\) 형태의 <strong>값 행렬</strong> - 검색할 정보를
+나타냅니다</li>
 <li>출력은 \((d,)\) 형태의 <strong>가중합</strong> 벡터입니다</li>
 </ul>
 <p>연산은 세 가지 주요 단계로 이루어집니다:</p>
 <ol>
-<li><strong>어텐션 점수</strong>: \(Q \cdot K^T\)를 계산하여 쿼리가 각 키 벡터와 얼마나 잘 매칭되는지 측정합니다</li>
-<li><strong>어텐션 가중치</strong>: 소프트맥스를 적용하여 점수를 확률 분포로 변환합니다 (가중치의 합 = 1)</li>
-<li><strong>가중 합</strong>: 어텐션 가중치를 사용하여 값 벡터들을 결합해 최종 출력을 생성합니다</li>
+<li><strong>어텐션 점수</strong>: \(Q \cdot K^T\)를 계산하여 쿼리가 각 키 벡터와 얼마나 잘
+매칭되는지 측정합니다</li>
+<li><strong>어텐션 가중치</strong>: 소프트맥스를 적용하여 점수를 확률 분포로 변환합니다
+(가중치의 합 = 1)</li>
+<li><strong>가중 합</strong>: 어텐션 가중치를 사용하여 값 벡터들을 결합해 최종 출력을
+생성합니다</li>
 </ol>
 <h2 id="어텐션-이해하기-단계별-분석"><a class="header" href="#어텐션-이해하기-단계별-분석">어텐션 이해하기: 단계별 분석</a></h2>
-<p>어텐션을 <strong>스마트 검색 메커니즘</strong>으로 생각해 보세요. 쿼리(찾고자 하는 것)가 주어지면, 어텐션은 키-값 쌍의 모음에서 가장 관련성 높은 정보를 찾아냅니다:</p>
+<p>어텐션을 <strong>스마트 검색 메커니즘</strong>으로 생각해 보세요. 쿼리(찾고자 하는 것)가
+주어지면, 어텐션은 키-값 쌍의 모음에서 가장 관련성 높은 정보를 찾아냅니다:</p>
 <ol>
 <li>
-<p><strong>1단계 - 유사도 매칭</strong>: 쿼리 \(Q\)를 모든 키 \(K\)와 비교하여 유사도 점수를 구합니다</p>
+<p><strong>1단계 - 유사도 매칭</strong>: 쿼리 \(Q\)를 모든 키 \(K\)와 비교하여 유사도
+점수를 구합니다</p>
 <ul>
-<li>\(Q \cdot K^T\)를 계산하여 \(Q\)가 각 키 벡터와 얼마나 잘 매칭되는지 측정합니다</li>
+<li>\(Q \cdot K^T\)를 계산하여 \(Q\)가 각 키 벡터와 얼마나 잘 매칭되는지
+측정합니다</li>
 <li>높은 점수 = 더 좋은 매칭</li>
 </ul>
 </li>
@@ -252,9 +262,11 @@
 </ul>
 </li>
 </ol>
-<p><strong>실생활 비유</strong>: 도서관에서 검색하는 것을 상상해 보세요. 쿼리는 찾고 싶은 것이고, 책 제목은 키이며, 책 내용은 값입니다. 어텐션은 각 책이 쿼리와 얼마나 관련 있는지 계산한 다음, 관련도에 따라 가중 요약을 제공합니다.</p>
+<p><strong>실생활 비유</strong>: 도서관에서 검색하는 것을 상상해 보세요. 쿼리는 찾고 싶은
+것이고, 책 제목은 키이며, 책 내용은 값입니다. 어텐션은 각 책이 쿼리와 얼마나
+관련 있는지 계산한 다음, 관련도에 따라 가중 요약을 제공합니다.</p>
 <h3 id="연산-흐름-시각화"><a class="header" href="#연산-흐름-시각화">연산 흐름 시각화</a></h3>
-<pre><code>Input:  Q(16,)    K(16,16)    V(16,16)
+<pre><code class="language-text">Input:  Q(16,)    K(16,16)    V(16,16)
          ↓           ↓           ↓
 Step 1: Q(1,16) @ K^T(16,16) → Scores(1,16)
          ↓
@@ -262,20 +274,28 @@ Step 2: softmax(Scores) → Weights(1,16)  [sum = 1.0]
          ↓
 Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 </code></pre>
-<p><strong>핵심 아이디어</strong>: 쿼리 벡터 \(Q\)를 \((16,)\)에서 \((1,16)\)으로 변환하면, 내적 대신 행렬 곱셈을 사용할 수 있습니다. 덕분에 Puzzle 18의 고도로 최적화된 타일링 matmul 커널을 그대로 활용할 수 있습니다!</p>
+<p><strong>핵심 아이디어</strong>: 쿼리 벡터 \(Q\)를 \((16,)\)에서 \((1,16)\)으로
+변환하면, 내적 대신 행렬 곱셈을 사용할 수 있습니다. 덕분에 Puzzle 18의 고도로
+최적화된 타일링 matmul 커널을 그대로 활용할 수 있습니다!</p>
 <p>GPU 구현은 <strong>이전 퍼즐에서 최적화된 커널들을 재사용하고 결합합니다</strong>:</p>
 <ul>
-<li><strong><a href="../puzzle_16/puzzle_16.html">Puzzle 16의 타일링 행렬 곱셈</a></strong> — 효율적인 \(Q \cdot K^T\) 및 \(\text{weights} \cdot V\) 연산에 사용</li>
+<li><strong><a href="../puzzle_16/puzzle_16.html">Puzzle 16의 타일링 행렬 곱셈</a></strong> — 효율적인 \(Q
+\cdot K^T\) 및 \(\text{weights} \cdot V\) 연산에 사용</li>
 <li><strong>공유 메모리 전치</strong> — \(K^T\)를 효율적으로 계산</li>
-<li><strong><a href="../puzzle_18/puzzle_18.html">Puzzle 18의 병렬 소프트맥스</a></strong> — 수치적으로 안정적인 어텐션 가중치 계산에 사용</li>
+<li><strong><a href="../puzzle_18/puzzle_18.html">Puzzle 18의 병렬 소프트맥스</a></strong> — 수치적으로
+안정적인 어텐션 가중치 계산에 사용</li>
 </ul>
 <blockquote>
-<p><strong>🔄 커널 재사용 전략</strong>: 이 퍼즐은 이전 퍼즐에서 검증된 최적화 커널들을 결합하여 복잡한 연산을 구축하는 방법을 보여줍니다. 모든 것을 처음부터 작성하는 대신, Puzzle 16의 <code>matmul_idiomatic_tiled</code>과 Puzzle 18의 <code>softmax_kernel</code>을 활용하여 모듈형 GPU 커널 설계의 강력함을 보여줍니다.</p>
+<p><strong>🔄 커널 재사용 전략</strong>: 이 퍼즐은 이전 퍼즐에서 검증된 최적화 커널들을
+결합하여 복잡한 연산을 구축하는 방법을 보여줍니다. 모든 것을 처음부터 작성하는
+대신, Puzzle 16의 <code>matmul_idiomatic_tiled</code>과 Puzzle 18의 <code>softmax_kernel</code>을
+활용하여 모듈형 GPU 커널 설계의 강력함을 보여줍니다.</p>
 </blockquote>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <ul>
 <li>시퀀스 처리를 위한 벡터 어텐션 메커니즘</li>
-<li><strong>커널 재사용</strong>: <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>과 <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 검증된 구현 활용</li>
+<li><strong>커널 재사용</strong>: <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>과
+<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 검증된 구현 활용</li>
 <li>공유 메모리 tiling을 활용한 효율적인 행렬 곱셈</li>
 <li>버퍼 할당을 최소화하는 메모리 최적화 텐서 형태 변환</li>
 <li>여러 최적화 커널을 단일 연산으로 통합</li>
@@ -302,8 +322,10 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <ol>
 <li><strong>다중 커널 오케스트레이션</strong>: 전치, matmul, 소프트맥스 연산의 결합</li>
 <li><strong>메모리 최적화</strong>: 형태 변환 연산과 버퍼 재사용으로 메모리 할당 최소화</li>
-<li><strong>수치 안정성</strong>: <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 검증된 소프트맥스 구현 활용</li>
-<li><strong>성능 최적화</strong>: 모든 행렬 연산에 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 알고리즘 사용</li>
+<li><strong>수치 안정성</strong>: <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 검증된 소프트맥스
+구현 활용</li>
+<li><strong>성능 최적화</strong>: 모든 행렬 연산에 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의
+타일링 알고리즘 사용</li>
 <li><strong>다중 입력 연산</strong>: 단일 커스텀 op에서 세 개의 입력 텐서(Q, K, V) 처리</li>
 </ol>
 <p>어텐션 커스텀 연산은 다음과 같은 일을 수행합니다:</p>
@@ -314,7 +336,9 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <li>NumPy 참조 구현 결과와 일치</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<p>이 퍼즐을 완성하려면 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 matmul 커널과 <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 소프트맥스 커널을 활용합니다. 공유 메모리를 사용하여 Mojo 파일에서 전치 커널만 구현하면 됩니다.</p>
+<p>이 퍼즐을 완성하려면 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 matmul
+커널과 <a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 소프트맥스 커널을 활용합니다.
+공유 메모리를 사용하여 Mojo 파일에서 전치 커널만 구현하면 됩니다.</p>
 <h3 id="1-전치-커널-구현하기"><a class="header" href="#1-전치-커널-구현하기">1. 전치 커널 구현하기</a></h3>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
@@ -338,33 +362,46 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
 <p><strong>전치 커널 구현 가이드:</strong></p>
 <ol>
 <li>
-<p><strong>공유 메모리 설정</strong>: <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]())</code>을 사용하여 <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> 크기의 정사각형 공유 메모리 타일을 생성합니다. 이를 통해 스레드 간 효율적인 데이터 교환이 가능합니다.</p>
+<p><strong>공유 메모리 설정</strong>:
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TRANSPOSE_BLOCK_DIM_XY, TRANSPOSE_BLOCK_DIM_XY]())</code>을
+사용하여 <code>TRANSPOSE_BLOCK_DIM_XY</code> × <code>TRANSPOSE_BLOCK_DIM_XY</code> 크기의 정사각형
+공유 메모리 타일을 생성합니다. 이를 통해 스레드 간 효율적인 데이터 교환이
+가능합니다.</p>
 </li>
 <li>
 <p><strong>스레드 인덱싱</strong>: 스레드를 행렬 요소에 매핑합니다:</p>
 <ul>
 <li><code>local_row = thread_idx.y</code>, <code>local_col = thread_idx.x</code> (블록 내 위치)</li>
-<li><code>global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row</code> (전체 행렬에서의 위치)</li>
+<li><code>global_row = block_idx.y * TRANSPOSE_BLOCK_DIM_XY + local_row</code> (전체
+행렬에서의 위치)</li>
 </ul>
 </li>
 <li>
 <p><strong>2단계 연산</strong>:</p>
 <ul>
-<li><strong>1단계</strong>: 전역 메모리에서 공유 메모리로 일반 인덱싱으로 데이터를 로드합니다</li>
-<li><strong>2단계</strong>: 공유 메모리에서 전역 메모리로 뒤바꾼 인덱싱으로 데이터를 저장합니다</li>
+<li><strong>1단계</strong>: 전역 메모리에서 공유 메모리로 일반 인덱싱으로 데이터를
+로드합니다</li>
+<li><strong>2단계</strong>: 공유 메모리에서 전역 메모리로 뒤바꾼 인덱싱으로 데이터를
+저장합니다</li>
 </ul>
 </li>
 <li>
-<p><strong>필수 동기화</strong>: 로드와 저장 사이에 <code>barrier()</code>를 호출하여 모든 스레드가 로드를 완료한 후에야 저장을 시작하도록 보장합니다</p>
+<p><strong>필수 동기화</strong>: 로드와 저장 사이에 <code>barrier()</code>를 호출하여 모든 스레드가
+로드를 완료한 후에야 저장을 시작하도록 보장합니다</p>
 </li>
 <li>
-<p><strong>전치의 핵심</strong>: 전치는 뒤바꾼 인덱싱을 통해 이루어집니다: <code>shared_tile[local_row, local_col]</code> 대신 <code>shared_tile[local_col, local_row]</code>를 사용합니다</p>
+<p><strong>전치의 핵심</strong>: 전치는 뒤바꾼 인덱싱을 통해 이루어집니다:
+<code>shared_tile[local_row, local_col]</code> 대신
+<code>shared_tile[local_col, local_row]</code>를 사용합니다</p>
 </li>
 <li>
-<p><strong>경계 처리</strong>: 전역 메모리 접근 시 경계 검사를 수행하여 <code>TRANSPOSE_BLOCK_DIM_XY</code> x <code>TRANSPOSE_BLOCK_DIM_XY</code>로 정확히 나누어지지 않는 행렬에서 범위를 벗어난 읽기/쓰기를 방지합니다</p>
+<p><strong>경계 처리</strong>: 전역 메모리 접근 시 경계 검사를 수행하여
+<code>TRANSPOSE_BLOCK_DIM_XY</code> x <code>TRANSPOSE_BLOCK_DIM_XY</code>로 정확히 나누어지지 않는
+행렬에서 범위를 벗어난 읽기/쓰기를 방지합니다</p>
 </li>
 <li>
-<p><strong>메모리 병합</strong>: 이 패턴은 읽기와 쓰기 모두 병합되도록 보장하여 최적의 메모리 대역폭을 활용합니다</p>
+<p><strong>메모리 병합</strong>: 이 패턴은 읽기와 쓰기 모두 병합되도록 보장하여 최적의 메모리
+대역폭을 활용합니다</p>
 </li>
 </ol>
 </div>
@@ -478,7 +515,7 @@ Step 3: Weights(1,16) @ V(16,16) → Output(1,16) → reshape → Output(16,)
   </div>
 </div>
 <p>성공하면 CPU와 GPU에서 다음과 비슷한 출력을 볼 수 있습니다:</p>
-<pre><code>Input shapes: Q=(16,), K=(16, 16), V=(16, 16)
+<pre><code class="language-text">Input shapes: Q=(16,), K=(16, 16), V=(16, 16)
 Sample Q values: [ 0.04967142 -0.01382643  0.06476886  0.15230298 -0.02341534]
 Sample K[0] values: [-0.10128311  0.03142473 -0.09080241 -0.14123037  0.14656489]
 Sample V[0] values: [ 0.11631638  0.00102331 -0.09815087  0.04621035  0.01990597]
@@ -558,27 +595,37 @@ Output vector norms:
   GPU: 0.092764
   Expected: 0.092764
 </code></pre>
-<p>이 출력은 커스텀 MAX 그래프 연산이 어텐션 알고리즘을 올바르게 구현하여 NumPy 참조 구현과 일치하는 결과를 생성했음을 보여줍니다.</p>
+<p>이 출력은 커스텀 MAX 그래프 연산이 어텐션 알고리즘을 올바르게 구현하여 NumPy
+참조 구현과 일치하는 결과를 생성했음을 보여줍니다.</p>
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>이 퍼즐을 풀려면 Mojo에서 전치 커널을 구현하고 어텐션 커스텀 연산을 위한 파이썬 그래프 정의를 완성해야 합니다. 이 퍼즐은 이전 퍼즐의 개념들을 기반으로, <strong><a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 행렬 곱셈</strong>과 <strong><a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 소프트맥스</strong>를 결합하여 완전한 어텐션 메커니즘을 구성합니다.</p>
+<p>이 퍼즐을 풀려면 Mojo에서 전치 커널을 구현하고 어텐션 커스텀 연산을 위한 파이썬
+그래프 정의를 완성해야 합니다. 이 퍼즐은 이전 퍼즐의 개념들을 기반으로,
+<strong><a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 타일링 행렬 곱셈</strong>과
+<strong><a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>의 소프트맥스</strong>를 결합하여 완전한 어텐션
+메커니즘을 구성합니다.</p>
 <h3 id="재사용-커널"><a class="header" href="#재사용-커널">재사용 커널</a></h3>
 <p>구현에서 다음의 검증된 커널들을 직접 활용합니다:</p>
 <ol>
-<li><strong><code>matmul_idiomatic_tiled</code></strong> (<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>) - \(Q \times K^T\)와 \(\text{weights} \times V\) 연산 모두를 수행</li>
-<li><strong><code>softmax_kernel</code></strong> (<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>) - 수치적으로 안정적인 어텐션 가중치 계산 제공</li>
+<li><strong><code>matmul_idiomatic_tiled</code></strong> (<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>) - \(Q
+\times K^T\)와 \(\text{weights} \times V\) 연산 모두를 수행</li>
+<li><strong><code>softmax_kernel</code></strong> (<a href="../puzzle_18/puzzle_18.html">Puzzle 18</a>) - 수치적으로
+안정적인 어텐션 가중치 계산 제공</li>
 </ol>
-<p>이는 <strong>모듈형 GPU 아키텍처</strong>의 좋은 예시입니다: 단일 구현체가 아닌, 검증된 최적화 컴포넌트를 오케스트레이션하여 복잡한 신경망 연산을 구축합니다.</p>
+<p>이는 <strong>모듈형 GPU 아키텍처</strong>의 좋은 예시입니다: 단일 구현체가 아닌, 검증된
+최적화 컴포넌트를 오케스트레이션하여 복잡한 신경망 연산을 구축합니다.</p>
 <p>어텐션 연산은 표준적인 수학적 정의를 따릅니다:</p>
 <p>$$\Large \text{Attention}(Q, K, V) = \text{softmax}(Q \cdot K^T) \cdot V$$</p>
 <p><strong>수식 분석</strong>:</p>
 <ul>
 <li>\(Q \cdot K^T~\): 쿼리-키 유사도 점수, 형태: \((1, \text{seq_len})\)</li>
-<li>\(\text{softmax}(\cdot)~\): 점수를 확률로 정규화, 형태: \((1, \text{seq_len})\)</li>
+<li>\(\text{softmax}(\cdot)~\): 점수를 확률로 정규화, 형태: \((1,
+\text{seq_len})\)</li>
 <li>\(\text{weights} \cdot V~\): 값의 가중 결합, 형태: \((1, d)\)</li>
 </ul>
-<p>이 과정에는 이전 퍼즐의 GPU 커널을 활용하여 최적화하는 여러 연산 단계가 포함됩니다.</p>
+<p>이 과정에는 이전 퍼즐의 GPU 커널을 활용하여 최적화하는 여러 연산 단계가
+포함됩니다.</p>
 <h3 id="1-전치-커널-구현"><a class="header" href="#1-전치-커널-구현">1. 전치 커널 구현</a></h3>
 <pre><code class="language-mojo">def transpose_kernel[
     rows: Int,
@@ -624,7 +671,8 @@ Output vector norms:
 
 </code></pre>
 <div class="solution-explanation">
-<p>전치 커널은 <strong>공유 메모리 tiling</strong>을 사용하여 병합 메모리 접근 패턴을 달성합니다. 핵심 구현 내용은 다음과 같습니다:</p>
+<p>전치 커널은 <strong>공유 메모리 tiling</strong>을 사용하여 병합 메모리 접근 패턴을
+달성합니다. 핵심 구현 내용은 다음과 같습니다:</p>
 <h4 id="핵심-전치-패턴"><a class="header" href="#핵심-전치-패턴">핵심 전치 패턴</a></h4>
 <pre><code class="language-mojo"># 일반 인덱싱으로 로드
 shared_tile[local_row, local_col] = inp[global_row, global_col]
@@ -632,7 +680,10 @@ barrier()
 # 뒤바꾼 인덱싱으로 저장하여 전치
 output[out_row, out_col] = shared_tile[local_col, local_row]
 </code></pre>
-<p>전치는 공유 메모리 접근에서 <strong>뒤바꾼 인덱싱</strong>(<code>[local_row, local_col]</code> 대신 <code>[local_col, local_row]</code>)과 출력 위치 지정을 위한 <strong>뒤바꾼 블록 좌표</strong>를 통해 이루어집니다. 이를 통해 읽기와 쓰기 모두 병합을 유지하면서 전치 연산을 수행합니다.</p>
+<p>전치는 공유 메모리 접근에서 <strong>뒤바꾼 인덱싱</strong>(<code>[local_row, local_col]</code> 대신
+<code>[local_col, local_row]</code>)과 출력 위치 지정을 위한 <strong>뒤바꾼 블록 좌표</strong>를 통해
+이루어집니다. 이를 통해 읽기와 쓰기 모두 병합을 유지하면서 전치 연산을
+수행합니다.</p>
 </div>
 <h3 id="2-gpu-커널-오케스트레이션"><a class="header" href="#2-gpu-커널-오케스트레이션">2. GPU 커널 오케스트레이션</a></h3>
 <pre><code class="language-mojo">
@@ -716,7 +767,8 @@ output[out_row, out_col] = shared_tile[local_col, local_row]
 
 </code></pre>
 <div class="solution-explanation">
-<p>GPU 오케스트레이션은 <strong>정교한 커널 체이닝</strong>과 <strong>제로 카피 메모리 최적화</strong>를 보여줍니다:</p>
+<p>GPU 오케스트레이션은 <strong>정교한 커널 체이닝</strong>과 <strong>제로 카피 메모리 최적화</strong>를
+보여줍니다:</p>
 <h4 id="고급-메모리-최적화-전략"><a class="header" href="#고급-메모리-최적화-전략">고급 메모리 최적화 전략</a></h4>
 <pre><code class="language-mojo"># 제로 카피 reshape - 데이터 이동 없이 텐서 shape만 재해석
 q_2d = q_tensor.reshape[layout_q_2d]()
@@ -726,16 +778,20 @@ weights = scores_2d.reshape[layout_scores]()
 <p>구현은 다음을 통해 <strong>최대 메모리 효율</strong>을 달성합니다:</p>
 <ul>
 <li><strong>제로 카피 형태 변환</strong>: 메모리에서 데이터를 이동하지 않고 텐서 형태를 재해석</li>
-<li><strong>지능적 버퍼 재사용</strong>: 동일한 <code>scores_weights_buf</code>가 점수 \((1,\text{seq_len})\)와 가중치 \((\text{seq_len},)\) 이중 용도로 활용</li>
+<li><strong>지능적 버퍼 재사용</strong>: 동일한 <code>scores_weights_buf</code>가 점수
+\((1,\text{seq_len})\)와 가중치 \((\text{seq_len},)\) 이중 용도로 활용</li>
 <li><strong>최소 할당</strong>: 단 2개의 임시 버퍼로 전체 어텐션 연산 수행</li>
 <li><strong>메모리 병합</strong>: 모든 연산에서 최적의 메모리 접근 패턴 유지</li>
 </ul>
 <h4 id="전략적-커널-재사용-패턴"><a class="header" href="#전략적-커널-재사용-패턴">전략적 커널 재사용 패턴</a></h4>
 <ul>
-<li><strong>3단계 &amp; 7단계</strong>: 둘 다 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의 <code>matmul_idiomatic_tiled</code> 활용
+<li><strong>3단계 &amp; 7단계</strong>: 둘 다 <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>의
+<code>matmul_idiomatic_tiled</code> 활용
 <ul>
-<li>3단계: \(Q \times K^T\) → 어텐션 점수 계산 \((1,d) \times (d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
-<li>7단계: \(\text{weights} \times V\) → 최종 가중 출력 \((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
+<li>3단계: \(Q \times K^T\) → 어텐션 점수 계산 \((1,d) \times
+(d,\text{seq_len}) \rightarrow (1,\text{seq_len})\)</li>
+<li>7단계: \(\text{weights} \times V\) → 최종 가중 출력
+\((1,\text{seq_len}) \times (\text{seq_len},d) \rightarrow (1,d)\)</li>
 <li>두 연산 모두 다양한 행렬 크기를 안전하게 처리하기 위해 경계 검사 포함</li>
 </ul>
 </li>
@@ -747,7 +803,8 @@ weights = scores_2d.reshape[layout_scores]()
 </ul>
 </li>
 </ul>
-<p>이는 <strong>모듈형 GPU 아키텍처</strong>의 좋은 예시입니다: 단일 구현체가 아닌, 검증된 최적화 커널들을 오케스트레이션하여 복잡한 신경망 연산을 구축합니다!</p>
+<p>이는 <strong>모듈형 GPU 아키텍처</strong>의 좋은 예시입니다: 단일 구현체가 아닌, 검증된
+최적화 커널들을 오케스트레이션하여 복잡한 신경망 연산을 구축합니다!</p>
 </div>
 <h3 id="핵심-구현-인사이트"><a class="header" href="#핵심-구현-인사이트">핵심 구현 인사이트</a></h3>
 <div class="solution-explanation">
@@ -759,14 +816,17 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 </code></pre>
 <p><strong>핵심 최적화 포인트</strong>:</p>
 <ul>
-<li>동일한 <code>scores_weights_buf</code>가 형태 변환 연산을 통해 어텐션 점수와 가중치 모두에 재사용됩니다</li>
+<li>동일한 <code>scores_weights_buf</code>가 형태 변환 연산을 통해 어텐션 점수와 가중치
+모두에 재사용됩니다</li>
 <li>제로 카피 텐서 형태 변환으로 불필요한 데이터 이동을 제거합니다</li>
 </ul>
 <h4 id="커널-재사용-아키텍처"><a class="header" href="#커널-재사용-아키텍처">커널 재사용 아키텍처</a></h4>
 <p>이 퍼즐은 세 가지 특화된 커널을 결합하여 <strong>모듈형 커널 설계</strong>를 보여줍니다:</p>
 <ul>
-<li><strong><code>matmul_idiomatic_tiled</code></strong> (2회 사용) - \(Q \times K^T\)와 \(\text{weights} \times V\) 연산 모두를 수행</li>
-<li><strong><code>softmax_kernel</code></strong> - 병렬 리덕션을 활용하여 수치적으로 안정적인 어텐션 가중치 계산</li>
+<li><strong><code>matmul_idiomatic_tiled</code></strong> (2회 사용) - \(Q \times K^T\)와
+\(\text{weights} \times V\) 연산 모두를 수행</li>
+<li><strong><code>softmax_kernel</code></strong> - 병렬 리덕션을 활용하여 수치적으로 안정적인 어텐션
+가중치 계산</li>
 <li><strong><code>transpose_kernel</code></strong> - 병합 메모리 접근으로 효율적인 \(K^T\) 계산</li>
 </ul>
 <p><strong>아키텍처의 장점</strong>:</p>
@@ -776,7 +836,8 @@ scores_weights_buf = gpu_ctx.enqueue_create_buffer[dtype](seq_len)
 <li><strong>성능</strong>: 이전 퍼즐의 고도로 최적화된 구현 활용</li>
 <li><strong>확장성</strong>: 모듈형 설계로 더 큰 어텐션 메커니즘으로 확장 용이</li>
 </ul>
-<p>이 구현은 <strong>정교한 신경망 연산</strong>이 단일 구현체가 아닌, 더 단순하고 잘 검증된 GPU 커널들을 오케스트레이션하여 구축할 수 있음을 보여줍니다.</p>
+<p>이 구현은 <strong>정교한 신경망 연산</strong>이 단일 구현체가 아닌, 더 단순하고 잘 검증된 GPU
+커널들을 오케스트레이션하여 구축할 수 있음을 보여줍니다.</p>
 </div>
 </details>
 

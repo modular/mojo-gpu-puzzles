@@ -212,12 +212,14 @@
 <h1 id="puzzle-13-1d-합성곱"><a class="header" href="#puzzle-13-1d-합성곱">Puzzle 13: 1D 합성곱</a></h1>
 <blockquote>
 <h2 id="tiletensor로-전환하기"><a class="header" href="#tiletensor로-전환하기">TileTensor로 전환하기</a></h2>
-<p>지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께 살펴보았습니다:</p>
+<p>지금까지 GPU 퍼즐 여정에서 GPU 메모리 관리에 대한 두 가지 접근 방식을 함께
+살펴보았습니다:</p>
 <ol>
 <li><a href="https://docs.modular.com/mojo/std/memory/unsafe_pointer/UnsafePointer/">UnsafePointer</a>를 사용한 포인터 직접 조작 방식의 raw 메모리 관리</li>
-<li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/">TileTensor</a></li>
+<li>강력한 <code>address_space</code> 파라미터로 메모리를 할당하는, 보다 구조화된 <a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/">TileTensor</a></li>
 </ol>
-<p>이 퍼즐부터는 <code>TileTensor</code>로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을 제공합니다:</p>
+<p>이 퍼즐부터는 <code>TileTensor</code>로 완전히 전환합니다. 이 추상화는 다음과 같은 이점을
+제공합니다:</p>
 <ul>
 <li>타입 안전한 메모리 접근 패턴</li>
 <li>데이터 레이아웃의 명확한 표현</li>
@@ -226,15 +228,22 @@
 <li>내부 연산의 의도를 더 잘 드러내는 표현력 있는 코드</li>
 <li>앞으로 차차 알아갈 더 많은 것들!</li>
 </ul>
-<p>이러한 전환은 Mojo 🔥의 현대적 GPU 프로그래밍 모범 사례와 맞닿아 있습니다. 높은 수준의 추상화로 복잡성을 관리하면서도 성능은 그대로 유지할 수 있습니다.</p>
+<p>이러한 전환은 Mojo 🔥의 현대적 GPU 프로그래밍 모범 사례와 맞닿아 있습니다.
+높은 수준의 추상화로 복잡성을 관리하면서도 성능은 그대로 유지할 수 있습니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>신호 처리와 이미지 분석에서 합성곱(convolution)은 두 시퀀스를 결합해 새로운 시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 커널을 슬라이딩하면서 각 출력 원소를 계산하는 1D 합성곱을 GPU에서 구현해 봅니다.</p>
-<p><code>TileTensor</code> 추상화를 사용하여 벡터 <code>a</code>와 벡터 <code>b</code>의 1D 합성곱을 계산하고, 결과를 <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기 1회만 필요합니다.</em></p>
+<p>신호 처리와 이미지 분석에서 합성곱(convolution)은 두 시퀀스를 결합해 새로운
+시퀀스를 만들어내는 핵심 연산입니다. 이 퍼즐에서는 입력 배열 위로 커널을
+슬라이딩하면서 각 출력 원소를 계산하는 1D 합성곱을 GPU에서 구현해 봅니다.</p>
+<p><code>TileTensor</code> 추상화를 사용하여 벡터 <code>a</code>와 벡터 <code>b</code>의 1D 합성곱을 계산하고,
+결과를 <code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em>일반적인 경우를 처리해야 합니다. 스레드당 전역 읽기 2회, 전역 쓰기
+1회만 필요합니다.</em></p>
 <img src="/puzzle_13/media/13-w.gif" alt="1D 합성곱 시각화" class="light-mode-img">
 <img src="/puzzle_13/media/13-b.gif" alt="1D 합성곱 시각화" class="dark-mode-img">
-<p>합성곱이 처음이라면, 가중치가 적용된 슬라이딩 윈도우 연산이라고 생각하면 됩니다. 각 위치에서 커널 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는 다음과 같습니다:</p>
+<p>합성곱이 처음이라면, 가중치가 적용된 슬라이딩 윈도우 연산이라고 생각하면 됩니다.
+각 위치에서 커널 값과 대응하는 입력 값을 곱한 뒤 합산합니다. 수학적 표기로는
+다음과 같습니다:</p>
 <p>\[\Large output[i] = \sum_{j=0}^{\text{CONV}-1} a[i+j] \cdot b[j] \]</p>
 <p>의사 코드로 표현한 1D 합성곱:</p>
 <pre><code class="language-python">for i in range(SIZE):
@@ -245,15 +254,18 @@
 <p>이 퍼즐은 단계적으로 이해를 쌓아갈 수 있도록 두 파트로 나뉩니다:</p>
 <ul>
 <li>
-<p><a href="./simple.html">🔰 기본 버전</a>
-여기서부터 시작하세요. 단일 블록에서 TileTensor와 공유 메모리를 활용한 합성곱 구현의 기초를 익힙니다.</p>
+<p><a href="./simple.html">🔰 기본 버전</a> 여기서부터 시작하세요. 단일 블록에서 TileTensor와
+공유 메모리를 활용한 합성곱 구현의 기초를 익힙니다.</p>
 </li>
 <li>
-<p><a href="./block_boundary.html">⭐ 블록 경계 버전</a>
-이어서 블록 경계를 넘어 데이터를 공유해야 하는 더 까다로운 경우에 도전합니다. TileTensor의 기능을 본격적으로 활용합니다.</p>
+<p><a href="./block_boundary.html">⭐ 블록 경계 버전</a> 이어서 블록 경계를 넘어 데이터를
+공유해야 하는 더 까다로운 경우에 도전합니다. TileTensor의 기능을 본격적으로
+활용합니다.</p>
 </li>
 </ul>
-<p>각 버전은 메모리 접근 패턴과 스레드 간 협력 측면에서 서로 다른 도전 과제를 제시합니다. 기본 버전에서 합성곱 연산의 원리를 익힌 다음, 블록 경계 버전에서는 실제 GPU 프로그래밍에서 마주치는 복잡한 상황을 다루는 능력을 시험해 봅니다.</p>
+<p>각 버전은 메모리 접근 패턴과 스레드 간 협력 측면에서 서로 다른 도전 과제를
+제시합니다. 기본 버전에서 합성곱 연산의 원리를 익힌 다음, 블록 경계 버전에서는
+실제 GPU 프로그래밍에서 마주치는 복잡한 상황을 다루는 능력을 시험해 봅니다.</p>
 
                     </main>
 

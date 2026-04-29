@@ -212,17 +212,23 @@
 <h1 id="puzzle-17-1d-합성곱-op"><a class="header" href="#puzzle-17-1d-합성곱-op">Puzzle 17: 1D 합성곱 Op</a></h1>
 <blockquote>
 <h2 id="max-그래프로-파이썬-연동하기"><a class="header" href="#max-그래프로-파이썬-연동하기">MAX 그래프로 파이썬 연동하기</a></h2>
-<p>GPU 퍼즐 여정의 Part IV에 진입했습니다: <strong>MAX 그래프 커스텀 Op으로 파이썬 연동하기</strong>.</p>
-<p>이전 퍼즐들에서는 Mojo로 효율적인 GPU 커널을 작성하는 방법을 배웠습니다. 이제부터는 다음을 알아봅니다:</p>
+<p>GPU 퍼즐 여정의 Part IV에 진입했습니다:
+<strong>MAX 그래프 커스텀 Op으로 파이썬 연동하기</strong>.</p>
+<p>이전 퍼즐들에서는 Mojo로 효율적인 GPU 커널을 작성하는 방법을 배웠습니다.
+이제부터는 다음을 알아봅니다:</p>
 <ul>
 <li>커널을 파이썬에서 호출할 수 있는 커스텀 연산으로 패키징하기</li>
 <li>MAX 그래프 시스템과 통합하여 머신러닝을 가속하기</li>
 <li>하이레벨 파이썬 API와 로우레벨 GPU 코드 사이의 간극 메우기</li>
 </ul>
-<p>이를 통해 익숙한 파이썬 환경에서 작업하면서도 Mojo GPU 커널의 성능을 활용할 수 있습니다.</p>
+<p>이를 통해 익숙한 파이썬 환경에서 작업하면서도 Mojo GPU 커널의 성능을 활용할 수
+있습니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><a href="../puzzle_13/puzzle_13.html">Puzzle 13: 1D 합성곱</a>에서 GPU에서 효율적으로 동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을 <a href="https://docs.modular.com/max/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서 직접 호출할 수 있는 커스텀 연산으로 변환합니다.</p>
+<p><a href="../puzzle_13/puzzle_13.html">Puzzle 13: 1D 합성곱</a>에서 GPU에서 효율적으로
+동작하는 1D 합성곱 커널을 구현했습니다. 이번에는 이 커널을
+<a href="https://docs.modular.com/max/api/python/graph/">MAX 그래프</a>를 통해 파이썬에서
+직접 호출할 수 있는 커스텀 연산으로 변환합니다.</p>
 <p>사용할 1D 합성곱 커널은 이미 구현되어 있습니다:</p>
 <pre><code class="language-mojo">comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -279,10 +285,13 @@ def conv1d_kernel[
 </code></pre>
 <p>이 퍼즐의 핵심 요소는 다음과 같습니다:</p>
 <ol>
-<li><strong>커스텀 op 등록</strong>: <code>@compiler.register</code> 데코레이터를 통해 Mojo 함수를 파이썬에 노출하는 방법 이해하기</li>
-<li><strong>커스텀 op 패키징</strong>: Mojo 코드를 MAX 그래프에서 사용할 수 있도록 패키징하는 방법 익히기</li>
+<li><strong>커스텀 op 등록</strong>: <code>@compiler.register</code> 데코레이터를 통해 Mojo 함수를
+파이썬에 노출하는 방법 이해하기</li>
+<li><strong>커스텀 op 패키징</strong>: Mojo 코드를 MAX 그래프에서 사용할 수 있도록 패키징하는
+방법 익히기</li>
 <li><strong>파이썬 통합</strong>: MAX 그래프를 통해 파이썬에서 커스텀 연산 호출하기</li>
-<li><strong>크로스 언어 데이터 흐름</strong>: 파이썬과 GPU 사이의 데이터 타입과 메모리 관리하기</li>
+<li><strong>크로스 언어 데이터 흐름</strong>: 파이썬과 GPU 사이의 데이터 타입과 메모리
+관리하기</li>
 </ol>
 <p>이 커스텀 연산은 다음과 같은 일을 수행합니다:</p>
 <ul>
@@ -291,9 +300,11 @@ def conv1d_kernel[
 <li>최적화된 합성곱 커널 실행하기</li>
 <li>결과를 파이썬으로 반환하기</li>
 </ul>
-<p>이 퍼즐을 완성하면 파이썬의 풍부한 생태계와 Mojo의 강력한 GPU 성능을 잇는 매끄러운 다리를 만들게 됩니다.</p>
+<p>이 퍼즐을 완성하면 파이썬의 풍부한 생태계와 Mojo의 강력한 GPU 성능을 잇는
+매끄러운 다리를 만들게 됩니다.</p>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
-<p>이 퍼즐을 완성하려면 <code>conv1d.mojo</code>에서 <code>conv1d_kernel</code>을 호출하는 한 줄만 채우면 됩니다:</p>
+<p>이 퍼즐을 완성하려면 <code>conv1d.mojo</code>에서 <code>conv1d_kernel</code>을 호출하는 한 줄만 채우면
+됩니다:</p>
 <pre><code class="language-mojo">import compiler
 from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
@@ -371,7 +382,7 @@ struct Conv1DCustomOp:
   </div>
 </div>
 <p>성공하면 다음과 비슷한 출력을 볼 수 있습니다:</p>
-<pre><code>Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
+<pre><code class="language-text">Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
 Convolution kernel: [0. 1. 2. 3.]
 Expected result (NumPy calculation): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 Compiling 1D convolution graph...
@@ -379,11 +390,14 @@ Executing 1D convolution...
 1D Convolution result (custom Mojo kernel): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 Verification passed: Custom kernel results match NumPy calculation
 </code></pre>
-<p>이 출력은 커스텀 MAX 그래프 연산이 1D 합성곱 알고리즘을 올바르게 구현했음을 나타냅니다.</p>
+<p>이 출력은 커스텀 MAX 그래프 연산이 1D 합성곱 알고리즘을 올바르게 구현했음을
+나타냅니다.</p>
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>이 퍼즐을 풀려면 1D 합성곱 커널을 MAX 그래프 시스템과 통합해야 합니다. 핵심은 <code>Conv1DCustomOp</code> 구조체의 <code>execute</code> 메서드에서 커널을 올바르게 호출하는 것입니다.</p>
+<p>이 퍼즐을 풀려면 1D 합성곱 커널을 MAX 그래프 시스템과 통합해야 합니다. 핵심은
+<code>Conv1DCustomOp</code> 구조체의 <code>execute</code> 메서드에서 커널을 올바르게 호출하는
+것입니다.</p>
 <p>풀이는 다음과 같습니다:</p>
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 input_size, conv_size, OutLayout, OutLayout, ConvLayout
@@ -399,7 +413,10 @@ Verification passed: Custom kernel results match NumPy calculation
 <div class="solution-explanation">
 이 한 줄이 수행하는 중요한 작업들은 다음과 같습니다:
 <ol>
-<li>GPU 컨텍스트(<code>gpu_ctx</code>의 타입은 <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서 <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을 호출하여 커널 실행 예약</li>
+<li>GPU 컨텍스트(<code>gpu_ctx</code>의 타입은
+<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)에서
+<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>을
+호출하여 커널 실행 예약</li>
 <li>필요한 레이아웃과 크기 정보를 <strong>컴파일 타임</strong> 파라미터로 전달</li>
 <li>출력, 입력, 커널 텐서를 런타임 인자로 제공</li>
 <li>적절한 차원으로 실행 그리드 구성</li>
@@ -408,27 +425,34 @@ Verification passed: Custom kernel results match NumPy calculation
 <h3 id="파이썬-mojo-통합-흐름"><a class="header" href="#파이썬-mojo-통합-흐름">파이썬-Mojo 통합 흐름</a></h3>
 <ol>
 <li>
-<p><strong>파이썬 쪽 (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py" class="filename">problems/p17/p17.py</a>)</strong>:</p>
+<p><strong>파이썬 쪽 (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py"
+class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>입력과 커널용 NumPy 배열 생성</li>
 <li>MAX 그래프로 연산을 감싸는 <code>conv_1d()</code> 함수 호출</li>
-<li>NumPy 배열을 <code>Buffer.from_numpy(input).to(device)</code>로 <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffer로 변환</li>
+<li>NumPy 배열을 <code>Buffer.from_numpy(input).to(device)</code>로
+<a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffer로 변환</li>
 <li><code>custom_extensions=[mojo_kernels]</code>로 커스텀 연산 패키지 로드</li>
 </ul>
 </li>
 <li>
 <p><strong>그래프 구축</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로 입력 및 출력 텐서 타입 정의</li>
+<li><a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a>으로
+입력 및 출력 텐서 타입 정의</li>
 <li><code>parameters={...}</code>를 통해 연산의 파라미터 지정</li>
-<li><a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로 연산 그래프 생성</li>
-<li><a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로 커스텀 연산 호출</li>
+<li><a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a>로
+연산 그래프 생성</li>
+<li><a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a>로
+커스텀 연산 호출</li>
 </ul>
 </li>
 <li>
 <p><strong>커스텀 op 등록</strong>:</p>
 <ul>
-<li><code>@compiler.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출. <a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a> 참고</li>
+<li><code>@compiler.register("conv1d")</code> 데코레이터가 연산을 MAX 그래프에 노출.
+<a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a>
+참고</li>
 <li><code>execute</code> 메서드의 파라미터가 인터페이스(입력, 출력, 컨텍스트) 정의</li>
 <li>입출력 텐서가 커널에서 사용할 수 있도록 TileTensor로 변환</li>
 <li>Device context가 GPU 메모리 할당과 커널 실행 관리</li>
@@ -491,7 +515,9 @@ gpu_ctx.enqueue_function[..., ...](...) # 커널 예약
 </ul>
 </li>
 </ol>
-<p>이 풀이는 파이썬 데이터가 MAX 그래프를 거쳐 GPU에서 실행되고 다시 돌아오는 전체 흐름을 보여줍니다. Mojo의 강력한 타입 시스템과 매개변수화 함수를 활용하여 효율적이고 타입 안전한 가속 연산을 만들어냅니다.</p>
+<p>이 풀이는 파이썬 데이터가 MAX 그래프를 거쳐 GPU에서 실행되고 다시 돌아오는 전체
+흐름을 보여줍니다. Mojo의 강력한 타입 시스템과 매개변수화 함수를 활용하여
+효율적이고 타입 안전한 가속 연산을 만들어냅니다.</p>
 </details>
 <h2 id="max-그래프-커스텀-op-이해하기"><a class="header" href="#max-그래프-커스텀-op-이해하기">MAX 그래프 커스텀 op 이해하기</a></h2>
 <blockquote>
@@ -516,7 +542,8 @@ struct Conv1DCustomOp:
 </code></pre>
 <p>등록의 핵심 구성 요소:</p>
 <ul>
-<li>데코레이터에 전달하는 <strong>이름</strong>(<code>"conv1d"</code>)이 파이썬 코드에서 이 연산을 호출할 때 사용하는 이름</li>
+<li>데코레이터에 전달하는 <strong>이름</strong>(<code>"conv1d"</code>)이 파이썬 코드에서 이 연산을 호출할
+때 사용하는 이름</li>
 <li><strong>구조체</strong>에는 올바른 시그니처를 가진 <code>execute</code> 메서드가 있어야 함</li>
 <li><strong>OutputTensor</strong>와 <strong>InputTensor</strong> 타입이 파이썬 데이터와의 인터페이스를 정의</li>
 <li><strong>DeviceContextPtr</strong>이 실행 환경에 대한 접근을 제공</li>
@@ -531,7 +558,8 @@ struct Conv1DCustomOp:
 <li>MAX 그래프가 연산을 이해하는 데 필요한 메타데이터 생성</li>
 <li>파이썬에서 로드할 수 있는 바이너리 아티팩트(<code>op.mojopkg</code>)를 생성</li>
 </ol>
-<p>패키지는 MAX 그래프가 찾을 수 있는 위치에 배치해야 하며, 보통 파이썬 코드에서 접근 가능한 디렉토리에 둡니다.</p>
+<p>패키지는 MAX 그래프가 찾을 수 있는 위치에 배치해야 하며, 보통 파이썬 코드에서
+접근 가능한 디렉토리에 둡니다.</p>
 <h3 id="파이썬-통합"><a class="header" href="#파이썬-통합">파이썬 통합</a></h3>
 <p>파이썬 쪽에서 커스텀 연산을 사용하는 방법은 다음과 같습니다:</p>
 <pre><code class="language-python"># Mojo 연산이 포함된 디렉토리 경로

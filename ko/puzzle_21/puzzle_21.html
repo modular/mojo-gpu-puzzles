@@ -212,24 +212,32 @@
 <h1 id="puzzle-21-임베딩-op"><a class="header" href="#puzzle-21-임베딩-op">Puzzle 21: 임베딩 Op</a></h1>
 <blockquote>
 <h2 id="메모리-접근-패턴과-성능"><a class="header" href="#메모리-접근-패턴과-성능">메모리 접근 패턴과 성능</a></h2>
-<p><strong>메모리 바운드 연산</strong>과 <strong>GPU 메모리 접근 최적화</strong>에 초점을 맞춰 Part V를 이어갑니다.</p>
-<p><a href="../puzzle_20/puzzle_20.html">Puzzle 20: 1D 합성곱 Op</a>에 이어, 동일한 연산의 서로 다른 커널 구현이 성능에 얼마나 극적인 차이를 가져올 수 있는지 알아봅니다. 배울 내용은 다음과 같습니다:</p>
+<p><strong>메모리 바운드 연산</strong>과 <strong>GPU 메모리 접근 최적화</strong>에 초점을 맞춰 Part V를
+이어갑니다.</p>
+<p><a href="../puzzle_20/puzzle_20.html">Puzzle 20: 1D 합성곱 Op</a>에 이어, 동일한 연산의
+서로 다른 커널 구현이 성능에 얼마나 극적인 차이를 가져올 수 있는지 알아봅니다.
+배울 내용은 다음과 같습니다:</p>
 <ul>
 <li>GPU 메모리 병합이 성능에 미치는 영향</li>
 <li>메모리 바운드 연산에서 그리드 구성이 중요한 이유</li>
 <li>최적의 메모리 접근 패턴으로 커널을 설계하는 방법</li>
 <li>서로 다른 스레딩 전략이 가져오는 성능 차이</li>
 </ul>
-<p>이 퍼즐은 <strong>어떤 연산을 수행하느냐</strong>보다 <strong>메모리에 어떻게 접근하느냐</strong>가 더 중요할 수 있음을 보여줍니다.</p>
+<p>이 퍼즐은 <strong>어떤 연산을 수행하느냐</strong>보다 <strong>메모리에 어떻게 접근하느냐</strong>가 더
+중요할 수 있음을 보여줍니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>이 퍼즐에서는 신경망의 핵심 구성 요소인 임베딩(embedding) 연산을 위한 두 가지 GPU 커널을 구현합니다. 두 커널 모두 동일한 결과를 생성하지만, 서로 다른 메모리 접근 패턴을 사용하여 상당한 성능 차이를 보입니다.</p>
+<p>이 퍼즐에서는 신경망의 핵심 구성 요소인 임베딩(embedding) 연산을 위한 두 가지
+GPU 커널을 구현합니다. 두 커널 모두 동일한 결과를 생성하지만, 서로 다른 메모리
+접근 패턴을 사용하여 상당한 성능 차이를 보입니다.</p>
 <p>비교할 두 커널:</p>
 <ul>
 <li><strong>1D 병합(coalesced) 커널</strong>: 연속적인 메모리 접근으로 메모리 대역폭에 최적화</li>
-<li><strong>2D 비병합(non-coalesced) 커널</strong>: 비교를 위한 최적화되지 않은 메모리 접근 패턴</li>
+<li><strong>2D 비병합(non-coalesced) 커널</strong>: 비교를 위한 최적화되지 않은 메모리 접근
+패턴</li>
 </ul>
-<p>이 비교를 통해 GPU 커널 성능에서 메모리 병합이 얼마나 중요한지 체감할 수 있습니다.</p>
+<p>이 비교를 통해 GPU 커널 성능에서 메모리 병합이 얼마나 중요한지 체감할 수
+있습니다.</p>
 <h2 id="배경-임베딩-연산"><a class="header" href="#배경-임베딩-연산">배경: 임베딩 연산</a></h2>
 <p>임베딩 연산은 이산적인 토큰 인덱스를 밀집 벡터 표현으로 변환합니다:</p>
 <pre><code class="language-python"># Input: token indices
@@ -249,7 +257,8 @@ output[0,1] = embedding_table[5]  # lookup token 5's embedding
 output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 # ... and so on
 </code></pre>
-<p>이 연산은 <strong>메모리 바운드</strong>입니다. 성능은 임베딩 테이블에서 얼마나 효율적으로 읽고 출력 텐서에 쓸 수 있느냐에 달려 있습니다.</p>
+<p>이 연산은 <strong>메모리 바운드</strong>입니다. 성능은 임베딩 테이블에서 얼마나 효율적으로
+읽고 출력 텐서에 쓸 수 있느냐에 달려 있습니다.</p>
 <h2 id="학습-경로"><a class="header" href="#학습-경로">학습 경로</a></h2>
 <p>이 퍼즐은 체계적인 이해를 위해 두 부분으로 구성되어 있습니다:</p>
 <h3 id="병합-vs-비병합-커널"><a class="header" href="#병합-vs-비병합-커널"><strong><a href="./simple_embedding_kernel.html">병합 vs 비병합 커널</a></strong></a></h3>
@@ -271,8 +280,12 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <li>메모리 바운드 연산을 위한 최적화 전략</li>
 </ul>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
-<p>GPU 메모리 최적화를 탐구할 준비가 되셨나요? <strong><a href="./simple_embedding_kernel.html">병합 vs 비병합 커널</a></strong> 에서 코드를 구현한 후, <strong><a href="./performance.html">성능 비교</a></strong> 로 넘어가 성능 차이의 원인을 이해해 보세요.</p>
-<p>💡 <strong>성공 팁:</strong> 서로 다른 그리드 구성(1D vs 2D)이 메모리 접근 패턴에 어떤 영향을 미치는지 주의 깊게 살펴보세요. 이 통찰은 임베딩을 넘어 다양한 GPU 프로그래밍 시나리오에 적용됩니다.</p>
+<p>GPU 메모리 최적화를 탐구할 준비가 되셨나요?
+<strong><a href="./simple_embedding_kernel.html">병합 vs 비병합 커널</a></strong> 에서 코드를 구현한 후,
+<strong><a href="./performance.html">성능 비교</a></strong> 로 넘어가 성능 차이의 원인을 이해해 보세요.</p>
+<p>💡 <strong>성공 팁:</strong> 서로 다른 그리드 구성(1D vs 2D)이 메모리 접근 패턴에 어떤 영향을
+미치는지 주의 깊게 살펴보세요. 이 통찰은 임베딩을 넘어 다양한 GPU 프로그래밍
+시나리오에 적용됩니다.</p>
 
                     </main>
 

@@ -212,21 +212,42 @@
 <h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
 <blockquote>
 <p><strong>Hardware requirement: ⚠️ NVIDIA SM90+ Only</strong></p>
-<p>This puzzle requires <strong>NVIDIA Hopper architecture</strong> (H100, H200) or newer GPUs with SM90+ compute capability. The cluster programming APIs are hardware-accelerated and will raise errors on unsupported hardware. If you’re unsure about the underlying architecture, run <code>pixi run gpu-specs</code> and must have at least <code>Compute Cap: 9.0</code> (see <a href="../puzzle_30/nvidia_profiling_basics.html">GPU profiling basics</a> for hardware identification)</p>
+<p>This puzzle requires <strong>NVIDIA Hopper architecture</strong> (H100, H200) or newer GPUs
+with SM90+ compute capability. The cluster programming APIs are
+hardware-accelerated and will raise errors on unsupported hardware. If you’re
+unsure about the underlying architecture, run <code>pixi run gpu-specs</code> and must
+have at least <code>Compute Cap: 9.0</code> (see
+<a href="../puzzle_30/nvidia_profiling_basics.html">GPU profiling basics</a> for hardware
+identification)</p>
 </blockquote>
-<p>Building on your journey from <strong><a href="../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></strong> through <strong><a href="../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></strong>, you’ll now learn <strong>cluster-level programming</strong> - coordinating multiple thread blocks to solve problems that exceed single-block capabilities.</p>
+<p>Building on your journey from
+<strong><a href="../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></strong> through
+<strong><a href="../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></strong>, you’ll now
+learn <strong>cluster-level programming</strong> - coordinating multiple thread blocks to
+solve problems that exceed single-block capabilities.</p>
 <h2 id="what-are-thread-block-clusters"><a class="header" href="#what-are-thread-block-clusters">What are thread block clusters?</a></h2>
-<p>Thread Block Clusters are a revolutionary SM90+ feature that enable <strong>multiple thread blocks to cooperate</strong> on a single computational task with hardware-accelerated synchronization and communication primitives.</p>
+<p>Thread Block Clusters are a revolutionary SM90+ feature that enable
+<strong>multiple thread blocks to cooperate</strong> on a single computational task with
+hardware-accelerated synchronization and communication primitives.</p>
 <p><strong>Key capabilities:</strong></p>
 <ul>
-<li><strong>Inter-block synchronization</strong>: Coordinate multiple blocks with <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a></li>
-<li><strong>Block identification</strong>: Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a> for unique block coordination</li>
-<li><strong>Efficient coordination</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a> for optimized warp-level cooperation</li>
-<li><strong>Advanced patterns</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a> for selective block coordination</li>
+<li><strong>Inter-block synchronization</strong>: Coordinate multiple blocks with
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait</code></a></li>
+<li><strong>Block identification</strong>: Use
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster</code></a>
+for unique block coordination</li>
+<li><strong>Efficient coordination</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync</code></a>
+for optimized warp-level cooperation</li>
+<li><strong>Advanced patterns</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_mask_base"><code>cluster_mask_base</code></a>
+for selective block coordination</li>
 </ul>
 <h2 id="the-cluster-programming-model"><a class="header" href="#the-cluster-programming-model">The cluster programming model</a></h2>
-<h3 id="traditional-gpu-programming-hierarchy"><a class="header" href="#traditional-gpu-programming-hierarchy">Traditional GPU programming hierarchy:</a></h3>
-<pre><code>Grid (Multiple Blocks)
+<h3 id="traditional-gpu-programming-hierarchy"><a class="header" href="#traditional-gpu-programming-hierarchy">Traditional GPU programming hierarchy</a></h3>
+<pre><code class="language-text">Grid (Multiple Blocks)
 ├── Block (Multiple Warps) - barrier() synchronization
     ├── Warp (32 Threads) - SIMT lockstep execution
     │   ├── Lane 0  ─┐
@@ -237,7 +258,7 @@
         └── Thread (SIMD operations within each thread)
 </code></pre>
 <h3 id="new-cluster-programming-hierarchy"><a class="header" href="#new-cluster-programming-hierarchy"><strong>New: Cluster programming hierarchy:</strong></a></h3>
-<pre><code>Grid (Multiple Clusters)
+<pre><code class="language-text">Grid (Multiple Clusters)
 ├── 🆕 Cluster (Multiple Blocks) - cluster_sync(), cluster_arrive()
     ├── Block (Multiple Warps) - barrier() synchronization
         ├── Warp (32 Threads) - SIMT lockstep execution
@@ -250,58 +271,102 @@
 </code></pre>
 <p><strong>Execution Model Details:</strong></p>
 <ul>
-<li><strong>Thread Level</strong>: <a href="../puzzle_23/gpu-thread-vs-simd.html">SIMD operations</a> within individual threads</li>
-<li><strong>Warp Level</strong>: <a href="../puzzle_24/warp_simt.html">SIMT execution</a> - 32 threads in lockstep coordination</li>
-<li><strong>Block Level</strong>: <a href="../puzzle_27/puzzle_27.html">Multi-warp coordination</a> with shared memory and barriers</li>
+<li><strong>Thread Level</strong>: <a href="../puzzle_23/gpu-thread-vs-simd.html">SIMD operations</a> within
+individual threads</li>
+<li><strong>Warp Level</strong>: <a href="../puzzle_24/warp_simt.html">SIMT execution</a> - 32 threads in
+lockstep coordination</li>
+<li><strong>Block Level</strong>: <a href="../puzzle_27/puzzle_27.html">Multi-warp coordination</a> with
+shared memory and barriers</li>
 <li><strong>🆕 Cluster Level</strong>: Multi-block coordination with SM90+ cluster APIs</li>
 </ul>
 <h2 id="learning-progression"><a class="header" href="#learning-progression">Learning progression</a></h2>
-<p>This puzzle follows a carefully designed <strong>3-part progression</strong> that builds your cluster programming expertise:</p>
+<p>This puzzle follows a carefully designed <strong>3-part progression</strong> that builds your
+cluster programming expertise:</p>
 <h3 id="-multi-block-coordination-basics"><a class="header" href="#-multi-block-coordination-basics"><strong><a href="./cluster_coordination_basics.html">🔰 Multi-Block Coordination Basics</a></strong></a></h3>
 <p><strong>Focus</strong>: Understanding fundamental cluster synchronization patterns</p>
-<p>Learn how multiple thread blocks coordinate their execution using <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> and <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> for basic inter-block communication and data distribution.</p>
-<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
+<p>Learn how multiple thread blocks coordinate their execution using
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+and
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+for basic inter-block communication and data distribution.</p>
+<p><strong>Key APIs</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></p>
 <hr />
 <h3 id="-cluster-wide-collective-operations"><a class="header" href="#-cluster-wide-collective-operations"><strong><a href="./cluster_collective_ops.html">📊 Cluster-Wide Collective Operations</a></strong></a></h3>
 <p><strong>Focus</strong>: Extending block-level patterns to cluster scale</p>
-<p>Learn cluster-wide reductions and collective operations that extend familiar <code>block.sum()</code> concepts to coordinate across multiple thread blocks for large-scale computations.</p>
-<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient cluster coordination</p>
+<p>Learn cluster-wide reductions and collective operations that extend familiar
+<code>block.sum()</code> concepts to coordinate across multiple thread blocks for
+large-scale computations.</p>
+<p><strong>Key APIs</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+for efficient cluster coordination</p>
 <hr />
 <h3 id="-advanced-cluster-algorithms"><a class="header" href="#-advanced-cluster-algorithms"><strong><a href="./advanced_cluster_patterns.html">🚀 Advanced Cluster Algorithms</a></strong></a></h3>
 <p><strong>Focus</strong>: Production-ready multi-level coordination patterns</p>
-<p>Implement sophisticated algorithms combining warp-level, block-level, and cluster-level coordination for maximum GPU utilization and complex computational workflows.</p>
-<p><strong>Key APIs</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>, <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>, advanced coordination patterns</p>
+<p>Implement sophisticated algorithms combining warp-level, block-level, and
+cluster-level coordination for maximum GPU utilization and complex computational
+workflows.</p>
+<p><strong>Key APIs</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>,
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>,
+advanced coordination patterns</p>
 <h2 id="why-cluster-programming-matters"><a class="header" href="#why-cluster-programming-matters">Why cluster programming matters</a></h2>
-<p><strong>Problem Scale</strong>: Modern AI and scientific workloads often require computations that exceed single thread block capabilities:</p>
+<p><strong>Problem Scale</strong>: Modern AI and scientific workloads often require computations
+that exceed single thread block capabilities:</p>
 <ul>
-<li><strong>Large matrix operations</strong> requiring inter-block coordination (like <a href="../puzzle_16/puzzle_16.html">matrix multiplication from Puzzle 16</a>)</li>
-<li><strong>Multi-stage algorithms</strong> with <a href="../puzzle_29/barrier.html">producer-consumer dependencies from Puzzle 29</a></li>
-<li><strong>Global statistics</strong> across datasets larger than <a href="../puzzle_08/puzzle_08.html">shared memory from Puzzle 8</a></li>
+<li><strong>Large matrix operations</strong> requiring inter-block coordination (like
+<a href="../puzzle_16/puzzle_16.html">matrix multiplication from Puzzle 16</a>)</li>
+<li><strong>Multi-stage algorithms</strong> with
+<a href="../puzzle_29/barrier.html">producer-consumer dependencies from Puzzle 29</a></li>
+<li><strong>Global statistics</strong> across datasets larger than
+<a href="../puzzle_08/puzzle_08.html">shared memory from Puzzle 8</a></li>
 <li><strong>Advanced stencil computations</strong> requiring neighbor block communication</li>
 </ul>
-<p><strong>Hardware Evolution</strong>: As GPUs gain more compute units (see <a href="../puzzle_30/nvidia_profiling_basics.html">GPU architecture profiling in Puzzle 30</a>), <strong>cluster programming becomes essential</strong> for utilizing next-generation hardware efficiently.</p>
+<p><strong>Hardware Evolution</strong>: As GPUs gain more compute units (see
+<a href="../puzzle_30/nvidia_profiling_basics.html">GPU architecture profiling in Puzzle 30</a>),
+<strong>cluster programming becomes essential</strong> for utilizing next-generation hardware
+efficiently.</p>
 <h2 id="educational-value"><a class="header" href="#educational-value">Educational value</a></h2>
-<p>By completing this puzzle, you’ll have learned the complete <strong>GPU programming hierarchy</strong>:</p>
+<p>By completing this puzzle, you’ll have learned the complete
+<strong>GPU programming hierarchy</strong>:</p>
 <ul>
-<li><strong>Thread-level</strong>: <a href="../puzzle_23/gpu-thread-vs-simd.html">Individual computation units with SIMD operations</a></li>
-<li><strong><a href="../puzzle_24/puzzle_24.html">Warp-level</a></strong>: <a href="../puzzle_24/warp_simt.html">32-thread SIMT coordination</a> (Puzzles 24-26)</li>
-<li><strong><a href="../puzzle_27/puzzle_27.html">Block-level</a></strong>: <a href="../puzzle_27/block_sum.html">Multi-warp coordination with shared memory</a> (Puzzle 27)</li>
+<li><strong>Thread-level</strong>:
+<a href="../puzzle_23/gpu-thread-vs-simd.html">Individual computation units with SIMD operations</a></li>
+<li><strong><a href="../puzzle_24/puzzle_24.html">Warp-level</a></strong>:
+<a href="../puzzle_24/warp_simt.html">32-thread SIMT coordination</a> (Puzzles 24-26)</li>
+<li><strong><a href="../puzzle_27/puzzle_27.html">Block-level</a></strong>:
+<a href="../puzzle_27/block_sum.html">Multi-warp coordination with shared memory</a>
+(Puzzle 27)</li>
 <li><strong>🆕 Cluster-level</strong>: Multi-block coordination (Puzzle 34)</li>
-<li><strong>Grid-level</strong>: Independent block execution across <a href="../puzzle_30/profile_kernels.html">multiple streaming multiprocessors</a></li>
+<li><strong>Grid-level</strong>: Independent block execution across
+<a href="../puzzle_30/profile_kernels.html">multiple streaming multiprocessors</a></li>
 </ul>
-<p>This progression prepares you for <strong>next-generation GPU programming</strong> and <strong>large-scale parallel computing</strong> challenges, building on the <a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>.</p>
+<p>This progression prepares you for <strong>next-generation GPU programming</strong> and
+<strong>large-scale parallel computing</strong> challenges, building on the
+<a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <p><strong>Prerequisites</strong>:</p>
 <ul>
-<li>Complete understanding of <a href="../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></li>
-<li>Experience with <a href="../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></li>
-<li>Familiarity with GPU memory hierarchy from <a href="../puzzle_08/puzzle_08.html">shared memory concepts (Puzzle 8)</a></li>
-<li>Understanding of <a href="../puzzle_29/puzzle_29.html">GPU synchronization from barriers (Puzzle 29)</a></li>
+<li>Complete understanding of
+<a href="../puzzle_27/puzzle_27.html">block-level programming (Puzzle 27)</a></li>
+<li>Experience with
+<a href="../puzzle_24/puzzle_24.html">warp-level programming (Puzzles 24-26)</a></li>
+<li>Familiarity with GPU memory hierarchy from
+<a href="../puzzle_08/puzzle_08.html">shared memory concepts (Puzzle 8)</a></li>
+<li>Understanding of
+<a href="../puzzle_29/puzzle_29.html">GPU synchronization from barriers (Puzzle 29)</a></li>
 <li>Access to NVIDIA SM90+ hardware or compatible environment</li>
 </ul>
-<p><strong>Recommended approach</strong>: Follow the 3-part progression sequentially, as each part builds essential concepts for the next level of complexity.</p>
-<p><strong>Hardware note</strong>: If running on non-SM90+ hardware, the puzzles serve as <strong>educational examples</strong> of cluster programming concepts and API usage patterns.</p>
-<p>Ready to learn the future of GPU programming? Start with <strong><a href="./cluster_coordination_basics.html">Multi-Block Coordination Basics</a></strong> to learn fundamental cluster synchronization patterns!</p>
+<p><strong>Recommended approach</strong>: Follow the 3-part progression sequentially, as each
+part builds essential concepts for the next level of complexity.</p>
+<p><strong>Hardware note</strong>: If running on non-SM90+ hardware, the puzzles serve as
+<strong>educational examples</strong> of cluster programming concepts and API usage patterns.</p>
+<p>Ready to learn the future of GPU programming? Start with
+<strong><a href="./cluster_coordination_basics.html">Multi-Block Coordination Basics</a></strong> to learn
+fundamental cluster synchronization patterns!</p>
 
                     </main>
 

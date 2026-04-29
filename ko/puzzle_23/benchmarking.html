@@ -211,9 +211,13 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="-mojo-벤치마킹---성능-분석과-최적화"><a class="header" href="#-mojo-벤치마킹---성능-분석과-최적화">📊 Mojo 벤치마킹 - 성능 분석과 최적화</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>요소별</strong>, <strong>타일링</strong>, <strong>수동 벡터화</strong>, <strong>Mojo vectorize</strong> 패턴을 학습한 후, 이제 실제 성능을 측정할 차례입니다. <code>p21.mojo</code>에 내장된 벤치마킹 시스템을 사용하여 이러한 접근법을 과학적으로 비교하고 성능 특성을 이해하는 방법을 알아봅니다.</p>
+<p><strong>요소별</strong>, <strong>타일링</strong>, <strong>수동 벡터화</strong>, <strong>Mojo vectorize</strong> 패턴을 학습한 후,
+이제 실제 성능을 측정할 차례입니다. <code>p21.mojo</code>에 내장된 벤치마킹 시스템을
+사용하여 이러한 접근법을 과학적으로 비교하고 성능 특성을 이해하는 방법을
+알아봅니다.</p>
 <blockquote>
-<p><strong>핵심 통찰:</strong> <em>이론적 분석은 가치 있지만, 실증적 벤치마킹이 특정 하드웨어에서의 실제 성능을 보여줍니다.</em></p>
+<p><strong>핵심 통찰:</strong> <em>이론적 분석은 가치 있지만, 실증적 벤치마킹이 특정
+하드웨어에서의 실제 성능을 보여줍니다.</em></p>
 </blockquote>
 <h2 id="벤치마크-실행"><a class="header" href="#벤치마크-실행">벤치마크 실행</a></h2>
 <p>전체 벤치마크를 실행하려면:</p>
@@ -316,11 +320,14 @@ def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bench
 <li><strong>동기화</strong>: GPU 작업 완료 확인</li>
 </ol>
 <blockquote>
-<p><strong>중요: <code>keep()</code> 함수</strong>
-<code>keep(out.unsafe_ptr())</code>는 컴파일러가 연산 결과를 “사용되지 않는 코드“로 최적화하여 제거하는 것을 방지합니다. 이것이 없으면 알고리즘 대신 아무것도 측정하지 못할 수 있습니다! GPU 커널은 비동기적으로 실행되기 때문에 정확한 GPU 벤치마킹에 필수적입니다.</p>
+<p><strong>중요: <code>keep()</code> 함수</strong> <code>keep(out.unsafe_ptr())</code>는 컴파일러가 연산 결과를
+“사용되지 않는 코드“로 최적화하여 제거하는 것을 방지합니다. 이것이 없으면
+알고리즘 대신 아무것도 측정하지 못할 수 있습니다! GPU 커널은 비동기적으로
+실행되기 때문에 정확한 GPU 벤치마킹에 필수적입니다.</p>
 </blockquote>
 <h3 id="커스텀-반복이-gpu에-필요한-이유"><a class="header" href="#커스텀-반복이-gpu에-필요한-이유">커스텀 반복이 GPU에 필요한 이유</a></h3>
-<p>일반적인 벤치마킹은 CPU 스타일의 동기 실행을 가정합니다. GPU 커널은 비동기적으로 실행되므로 다음이 필요합니다:</p>
+<p>일반적인 벤치마킹은 CPU 스타일의 동기 실행을 가정합니다. GPU 커널은 비동기적으로
+실행되므로 다음이 필요합니다:</p>
 <ul>
 <li><strong>GPU 컨텍스트 관리</strong>: 적절한 DeviceContext 생명주기</li>
 <li><strong>메모리 관리</strong>: 반복 간 버퍼 정리</li>
@@ -376,7 +383,8 @@ def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bench
 </div>
 <h3 id="핵심-성능-인사이트"><a class="header" href="#핵심-성능-인사이트">핵심 성능 인사이트</a></h3>
 <blockquote>
-<p><strong>단순 메모리 바운드 연산의 경우:</strong> 최대 병렬성(elementwise)이 대규모에서 복잡한 메모리 최적화보다 우수합니다.</p>
+<p><strong>단순 메모리 바운드 연산의 경우:</strong> 최대 병렬성(elementwise)이 대규모에서
+복잡한 메모리 최적화보다 우수합니다.</p>
 </blockquote>
 <p><strong>요소별 패턴이 승리하는 이유:</strong></p>
 <ul>
@@ -419,7 +427,8 @@ def benchmark_pattern_parameterized[test_size: Int, tile_size: Int](mut b: Bench
 <p><strong>프로덕션 워크로드의 경우:</strong></p>
 <ul>
 <li><strong>대규모 데이터셋 (&gt;100K 요소)</strong>: 요소별 패턴이 일반적으로 최적</li>
-<li><strong>소규모/시작 데이터셋 (&lt;1K 요소)</strong>: 낮은 오버헤드를 위해 타일링 또는 vectorize</li>
+<li><strong>소규모/시작 데이터셋 (&lt;1K 요소)</strong>: 낮은 오버헤드를 위해 타일링 또는
+vectorize</li>
 <li><strong>개발 속도 우선</strong>: 자동 최적화를 위한 Mojo vectorize</li>
 <li><strong>수동 벡터화 지양</strong>: 단순 연산에서는 복잡도가 성능으로 보상되는 경우가 드묾</li>
 </ul>
@@ -473,9 +482,12 @@ benchmark_tiled_parameterized[256, 64]  # 큰 타일
 <li><strong>멀티 GPU 확장</strong>: 분산 GPU 컴퓨팅 패턴 이해</li>
 <li><strong>메모리 최적화</strong>: 공유 메모리와 고급 캐싱을 더 깊이 탐구</li>
 </ul>
-<p>💡 <strong>핵심 요약</strong>: 벤치마킹은 이론적 이해를 실질적인 성능 최적화로 전환합니다. 실증적 데이터를 사용하여 특정 하드웨어와 워크로드 특성에 가장 적합한 패턴을 선택하세요.</p>
+<p>💡 <strong>핵심 요약</strong>: 벤치마킹은 이론적 이해를 실질적인 성능 최적화로 전환합니다.
+실증적 데이터를 사용하여 특정 하드웨어와 워크로드 특성에 가장 적합한 패턴을
+선택하세요.</p>
 <h2 id="앞으로의-방향-더-많은-제어가-필요할-때"><a class="header" href="#앞으로의-방향-더-많은-제어가-필요할-때">앞으로의 방향: 더 많은 제어가 필요할 때</a></h2>
-<p>Part VI의 함수형 패턴은 대부분의 워크로드에서 우수한 성능을 제공하지만, 일부 알고리즘은 <strong>직접적인 스레드 간 통신</strong>이 필요합니다:</p>
+<p>Part VI의 함수형 패턴은 대부분의 워크로드에서 우수한 성능을 제공하지만, 일부
+알고리즘은 <strong>직접적인 스레드 간 통신</strong>이 필요합니다:</p>
 <h3 id="워프-프로그래밍이-유용한-알고리즘"><a class="header" href="#워프-프로그래밍이-유용한-알고리즘"><strong>워프 프로그래밍이 유용한 알고리즘:</strong></a></h3>
 <ul>
 <li><strong>리덕션</strong>: 스레드 그룹에 걸친 합계, 최댓값, 최솟값 연산</li>
@@ -488,9 +500,11 @@ benchmark_tiled_parameterized[256, 64]  # 큰 타일
 <ul>
 <li><strong>코드를 간소화</strong>하는지: 복잡한 공유 메모리 패턴을 단일 함수 호출로 대체</li>
 <li><strong>성능을 향상</strong>시키는지: 배리어를 제거하고 메모리 트래픽을 감소</li>
-<li><strong>새로운 알고리즘을 가능하게</strong> 하는지: 순수 함수형 접근으로는 불가능한 패턴을 구현</li>
+<li><strong>새로운 알고리즘을 가능하게</strong> 하는지: 순수 함수형 접근으로는 불가능한 패턴을
+구현</li>
 </ul>
-<p><strong>다음 내용</strong>: <a href="../puzzle_24/puzzle_24.html">Part VII: 워프 레벨 프로그래밍</a> - Puzzle 14의 누적 합을 완전히 새롭게 구현하는 것부터 시작합니다.</p>
+<p><strong>다음 내용</strong>: <a href="../puzzle_24/puzzle_24.html">Part VII: 워프 레벨 프로그래밍</a> -
+Puzzle 14의 누적 합을 완전히 새롭게 구현하는 것부터 시작합니다.</p>
 
                     </main>
 

@@ -211,17 +211,23 @@
                         <h1 id="puzzle-17-1d-convolution-op"><a class="header" href="#puzzle-17-1d-convolution-op">Puzzle 17: 1D Convolution Op</a></h1>
 <blockquote>
 <h2 id="bridging-to-python-with-max-graph"><a class="header" href="#bridging-to-python-with-max-graph">Bridging to Python with MAX Graph</a></h2>
-<p>We’re now entering Part IV of our GPU puzzle journey: <strong>Interfacing with Python via MAX Graph Custom Ops</strong>.</p>
-<p>In previous puzzles, we’ve learned how to write efficient GPU kernels in Mojo. Now we’ll explore how to:</p>
+<p>We’re now entering Part IV of our GPU puzzle journey:
+<strong>Interfacing with Python via MAX Graph Custom Ops</strong>.</p>
+<p>In previous puzzles, we’ve learned how to write efficient GPU kernels in Mojo.
+Now we’ll explore how to:</p>
 <ul>
 <li>Package these kernels as custom operations that can be called from Python</li>
 <li>Integrate with the MAX Graph system for accelerated machine learning</li>
 <li>Bridge the gap between high-level Python APIs and low-level GPU code</li>
 </ul>
-<p>This integration allows us to leverage the performance of Mojo GPU kernels while working in familiar Python environments.</p>
+<p>This integration allows us to leverage the performance of Mojo GPU kernels
+while working in familiar Python environments.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution kernel that runs efficiently on the GPU. Now we’ll take this kernel and transform it into a custom operation that can be called directly from Python using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
+<p>In <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>, we implemented a 1D convolution
+kernel that runs efficiently on the GPU. Now we’ll take this kernel and
+transform it into a custom operation that can be called directly from Python
+using <a href="https://docs.modular.com/max/api/python/graph/">MAX Graph</a>.</p>
 <p>The 1D convolution kernel we’ll be working with is already implemented:</p>
 <pre><code class="language-mojo">comptime TPB = 15
 comptime BLOCKS_PER_GRID = (2, 1)
@@ -278,10 +284,14 @@ def conv1d_kernel[
 </code></pre>
 <p>The key aspects of this puzzle include:</p>
 <ol>
-<li><strong>Custom op registration</strong>: Understanding how to expose Mojo functions to Python via the <code>@compiler.register</code> decorator</li>
-<li><strong>Packaging custom ops</strong>: Learning how to package Mojo code for use with MAX Graph</li>
-<li><strong>Python integration</strong>: Calling custom operations from Python through MAX Graph</li>
-<li><strong>Cross-language data flow</strong>: Managing data types and memory between Python and GPU</li>
+<li><strong>Custom op registration</strong>: Understanding how to expose Mojo functions to
+Python via the <code>@compiler.register</code> decorator</li>
+<li><strong>Packaging custom ops</strong>: Learning how to package Mojo code for use with MAX
+Graph</li>
+<li><strong>Python integration</strong>: Calling custom operations from Python through MAX
+Graph</li>
+<li><strong>Cross-language data flow</strong>: Managing data types and memory between Python
+and GPU</li>
 </ol>
 <p>This custom operation will:</p>
 <ul>
@@ -290,9 +300,11 @@ def conv1d_kernel[
 <li>Execute our optimized convolution kernel</li>
 <li>Return the results back to Python</li>
 </ul>
-<p>When you complete this puzzle, you’ll have created a seamless bridge between Python’s rich ecosystem and Mojo’s powerful GPU performance.</p>
+<p>When you complete this puzzle, you’ll have created a seamless bridge between
+Python’s rich ecosystem and Mojo’s powerful GPU performance.</p>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
-<p>To complete this puzzle, you only need to fill one line in <code>conv1d.mojo</code> to call the <code>conv1d_kernel</code>:</p>
+<p>To complete this puzzle, you only need to fill one line in <code>conv1d.mojo</code> to call
+the <code>conv1d_kernel</code>:</p>
 <pre><code class="language-mojo">import compiler
 from std.runtime.asyncrt import DeviceContextPtr
 from tensor import InputTensor, OutputTensor
@@ -370,7 +382,7 @@ struct Conv1DCustomOp:
   </div>
 </div>
 <p>When successful, you should see output similar to:</p>
-<pre><code>Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
+<pre><code class="language-text">Input array: [ 0.  1.  2.  3.  4.  5.  6.  7.  8.  9. 10. 11. 12. 13. 14.]
 Convolution kernel: [0. 1. 2. 3.]
 Expected result (NumPy calculation): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 Compiling 1D convolution graph...
@@ -378,11 +390,14 @@ Executing 1D convolution...
 1D Convolution result (custom Mojo kernel): [14. 20. 26. 32. 38. 44. 50. 56. 62. 68. 74. 80. 41. 14.  0.]
 Verification passed: Custom kernel results match NumPy calculation
 </code></pre>
-<p>This indicates that your custom MAX Graph operation correctly implements the 1D convolution algorithm.</p>
+<p>This indicates that your custom MAX Graph operation correctly implements the 1D
+convolution algorithm.</p>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
 <summary></summary>
-<p>To solve this puzzle, we need to integrate our 1D convolution kernel with the MAX Graph system. The key is to properly call our kernel from the <code>execute</code> method in the <code>Conv1DCustomOp</code> struct.</p>
+<p>To solve this puzzle, we need to integrate our 1D convolution kernel with the
+MAX Graph system. The key is to properly call our kernel from the <code>execute</code>
+method in the <code>Conv1DCustomOp</code> struct.</p>
 <p>The solution is:</p>
 <pre><code class="language-mojo">            comptime kernel = conv1d_kernel[
                 input_size, conv_size, OutLayout, OutLayout, ConvLayout
@@ -398,8 +413,13 @@ Verification passed: Custom kernel results match NumPy calculation
 <div class="solution-explanation">
 This single line does several important things:
 <ol>
-<li>Calls <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a> on the GPU context (<code>gpu_ctx</code> is of type <a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>) to schedule our kernel execution</li>
-<li>Passes the necessary layout and size information as <strong>compile-time</strong> parameters</li>
+<li>Calls
+<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/#enqueue_function">enqueue_function</a>
+on the GPU context (<code>gpu_ctx</code> is of type
+<a href="https://docs.modular.com/mojo/std/gpu/host/device_context/DeviceContext/">DeviceContext</a>)
+to schedule our kernel execution</li>
+<li>Passes the necessary layout and size information as <strong>compile-time</strong>
+parameters</li>
 <li>Provides the output, input, and kernel tensors as runtime arguments</li>
 <li>Configures the execution grid with the appropriate dimensions</li>
 </ol>
@@ -407,28 +427,37 @@ This single line does several important things:
 <h3 id="python-mojo-integration-flow"><a class="header" href="#python-mojo-integration-flow">Python-Mojo integration flow</a></h3>
 <ol>
 <li>
-<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py" class="filename">problems/p17/p17.py</a>)</strong>:</p>
+<p><strong>Python side (<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p17/p17.py"
+class="filename">problems/p17/p17.py</a>)</strong>:</p>
 <ul>
 <li>Creates NumPy arrays for input and kernel</li>
 <li>Calls <code>conv_1d()</code> function which wraps our operation in MAX Graph</li>
-<li>Converts NumPy arrays to <a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffers with <code>Buffer.from_numpy(input).to(device)</code></li>
+<li>Converts NumPy arrays to
+<a href="https://docs.modular.com/max/api/python/driver">MAX driver</a> Buffers with
+<code>Buffer.from_numpy(input).to(device)</code></li>
 <li>Loads the custom operation package with <code>custom_extensions=[mojo_kernels]</code></li>
 </ul>
 </li>
 <li>
 <p><strong>Graph building</strong>:</p>
 <ul>
-<li>Defines input and output tensor types with <a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
+<li>Defines input and output tensor types with
+<a href="https://docs.modular.com/max/api/python/graph/type/#max.graph.type.TensorType">TensorType</a></li>
 <li>Specifies parameters for our operation via <code>parameters={...}</code></li>
-<li>Creates a computation graph with <a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
-<li>Calls our operation using <a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
+<li>Creates a computation graph with
+<a href="https://docs.modular.com/max/api/python/graph/Graph"><code>Graph("conv_1d_graph", ...)</code></a></li>
+<li>Calls our operation using
+<a href="https://docs.modular.com/max/api/python/graph/ops#custom"><code>ops.custom(name="conv1d", ...)</code></a></li>
 </ul>
 </li>
 <li>
 <p><strong>Custom op registration</strong>:</p>
 <ul>
-<li>The <code>@compiler.register("conv1d")</code> decorator exposes our operation to MAX Graph. See <a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a></li>
-<li>The <code>execute</code> method parameters define the interface (inputs, outputs, context)</li>
+<li>The <code>@compiler.register("conv1d")</code> decorator exposes our operation to MAX
+Graph. See
+<a href="https://docs.modular.com/mojo/manual/decorators/compiler-register/">@compiler.register</a></li>
+<li>The <code>execute</code> method parameters define the interface (inputs, outputs,
+context)</li>
 <li>Input/output tensors are converted to TileTensors for use in our kernel</li>
 <li>Device context manages GPU memory allocation and kernel execution</li>
 </ul>
@@ -490,7 +519,9 @@ gpu_ctx.enqueue_function[..., ...](...) # Schedule kernel
 </ul>
 </li>
 </ol>
-<p>This solution demonstrates the complete flow from Python data through MAX Graph to GPU execution and back, leveraging Mojo’s powerful type system and parametric functions to create efficient, type-safe, accelerated operations.</p>
+<p>This solution demonstrates the complete flow from Python data through MAX Graph
+to GPU execution and back, leveraging Mojo’s powerful type system and parametric
+functions to create efficient, type-safe, accelerated operations.</p>
 </details>
 <h2 id="understanding-max-graph-custom-ops"><a class="header" href="#understanding-max-graph-custom-ops">Understanding MAX Graph custom ops</a></h2>
 <blockquote>
@@ -501,7 +532,8 @@ gpu_ctx.enqueue_function[..., ...](...) # Schedule kernel
 </ul>
 </blockquote>
 <h3 id="custom-op-registration"><a class="header" href="#custom-op-registration">Custom op registration</a></h3>
-<p>The core of creating a custom operation is the <code>@compiler.register</code> decorator and the associated structure:</p>
+<p>The core of creating a custom operation is the <code>@compiler.register</code> decorator
+and the associated structure:</p>
 <pre><code class="language-mojo">@compiler.register("conv1d")
 struct Conv1DCustomOp:
     @staticmethod
@@ -515,9 +547,11 @@ struct Conv1DCustomOp:
 </code></pre>
 <p>Key components of the registration:</p>
 <ul>
-<li>The <strong>name</strong> passed to the decorator (<code>"conv1d"</code>) is what Python code will use to call this operation</li>
+<li>The <strong>name</strong> passed to the decorator (<code>"conv1d"</code>) is what Python code will use
+to call this operation</li>
 <li>The <strong>struct</strong> must have an <code>execute</code> method with the correct signature</li>
-<li><strong>OutputTensor</strong> and <strong>InputTensor</strong> types define the interface for Python data</li>
+<li><strong>OutputTensor</strong> and <strong>InputTensor</strong> types define the interface for Python
+data</li>
 <li><strong>DeviceContextPtr</strong> provides access to the execution environment</li>
 </ul>
 <h3 id="packaging-custom-ops"><a class="header" href="#packaging-custom-ops">Packaging custom ops</a></h3>
@@ -530,7 +564,8 @@ struct Conv1DCustomOp:
 <li>Creates the necessary metadata for MAX Graph to understand the operation</li>
 <li>Produces a binary artifact (<code>op.mojopkg</code>) that can be loaded by Python</li>
 </ol>
-<p>The package must be placed in a location where MAX Graph can find it, typically in a directory accessible to the Python code.</p>
+<p>The package must be placed in a location where MAX Graph can find it, typically
+in a directory accessible to the Python code.</p>
 <h3 id="python-integration"><a class="header" href="#python-integration">Python integration</a></h3>
 <p>On the Python side, here’s how the custom operation is used:</p>
 <pre><code class="language-python"># Path to the directory containing our Mojo operations

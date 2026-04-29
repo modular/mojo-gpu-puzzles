@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: 8726393ce8f2ba4d52d2ceec6352706da1f1806a -->
 <h1 id="puzzle-8-공유-메모리"><a class="header" href="#puzzle-8-공유-메모리">Puzzle 8: 공유 메모리</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>1D TileTensor <code>a</code>의 각 위치에 10을 더해 1D TileTensor <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>1D TileTensor <code>a</code>의 각 위치에 10을 더해 1D TileTensor <code>output</code>에 저장하는 커널을
+구현해 보세요.</p>
 <p><strong>참고:</strong> <em>블록당 스레드 수가 <code>a</code>의 크기보다 작습니다.</em></p>
 <img src="/puzzle_08/media/08.png" alt="공유 메모리 시각화" class="light-mode-img">
 <img src="/puzzle_08/media/08d.png" alt="공유 메모리 시각화" class="dark-mode-img">
@@ -222,7 +223,8 @@
 <li>공유 메모리를 사용할 때의 스레드 동기화</li>
 <li>TileTensor로 블록 로컬 데이터 관리하기</li>
 </ul>
-<p>핵심은 TileTensor가 블록 로컬 저장소의 성능은 그대로 유지하면서 공유 메모리 관리를 얼마나 간소화하는지 이해하는 것입니다.</p>
+<p>핵심은 TileTensor가 블록 로컬 저장소의 성능은 그대로 유지하면서 공유 메모리
+관리를 얼마나 간소화하는지 이해하는 것입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>배열 크기: <code>SIZE = 8</code> 원소</li>
@@ -231,9 +233,15 @@
 <li>공유 메모리: 블록당 <code>TPB</code>개 원소</li>
 </ul>
 <blockquote>
-<p><strong>경고</strong>: 각 블록에는 해당 블록의 스레드들이 읽고 쓸 수 있는 공유 메모리의 양이 _상수_로 고정되어 있습니다. 이 값은 파이썬 리터럴 상수여야 하며 변수를 사용할 수 없습니다. 공유 메모리에 쓴 후에는 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>를 호출해 스레드들이 교차하지 않도록 해야 합니다.</p>
+<p><strong>경고</strong>: 각 블록에는 해당 블록의 스레드들이 읽고 쓸 수 있는 공유 메모리의
+양이 _상수_로 고정되어 있습니다. 이 값은 파이썬 리터럴 상수여야 하며 변수를
+사용할 수 없습니다. 공유 메모리에 쓴 후에는
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/">barrier</a>를 호출해
+스레드들이 교차하지 않도록 해야 합니다.</p>
 </blockquote>
-<p><strong>학습 참고</strong>: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로 <code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 더 복잡한 상황에서 필요한 올바른 동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
+<p><strong>학습 참고</strong>: 이 퍼즐에서는 각 스레드가 자신의 공유 메모리 위치에만 접근하므로
+<code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 더 복잡한 상황에서 필요한 올바른
+동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime TPB = 4
 comptime SIZE = 8
@@ -340,7 +348,8 @@ expected: HostBuffer([11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>TileTensor가 성능을 유지하면서 공유 메모리 사용을 얼마나 간소화하는지 보여주는 솔루션입니다:</p>
+<p>TileTensor가 성능을 유지하면서 공유 메모리 사용을 얼마나 간소화하는지 보여주는
+솔루션입니다:</p>
 <ol>
 <li>
 <p><strong>TileTensor를 사용한 메모리 계층 구조</strong></p>
@@ -379,8 +388,12 @@ barrier()    ↓         ↓        ↓         ↓   # 모든 로드 완료 대
 <p>결과: <code>output[global_i] = shared[local_i] + 10 = 11</code></p>
 </li>
 </ul>
-<p><strong>참고</strong>: 이 경우에는 각 스레드가 자신의 공유 메모리 위치(<code>shared[local_i]</code>)에만 쓰고 읽으므로 <code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 스레드들이 서로의 데이터에 접근하는 상황에서 필수적인 동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
 </li>
+</ol>
+<p><strong>참고</strong>: 이 경우에는 각 스레드가 자신의 공유 메모리 위치(<code>shared[local_i]</code>)에만
+쓰고 읽으므로 <code>barrier()</code>가 엄밀히 필요하지 않습니다. 하지만 스레드들이 서로의
+데이터에 접근하는 상황에서 필수적인 동기화 패턴을 익히기 위해 포함되어 있습니다.</p>
+<ol start="3">
 <li>
 <p><strong>TileTensor의 장점</strong></p>
 <ul>
@@ -411,7 +424,8 @@ Block 1 출력: [11 11 11 11]
 </ul>
 </li>
 </ol>
-<p>이 패턴은 TileTensor가 공유 메모리의 성능 이점을 유지하면서 더 편리한 API와 내장 기능을 제공하는 방법을 보여줍니다.</p>
+<p>이 패턴은 TileTensor가 공유 메모리의 성능 이점을 유지하면서 더 편리한 API와 내장
+기능을 제공하는 방법을 보여줍니다.</p>
 </div>
 </details>
 

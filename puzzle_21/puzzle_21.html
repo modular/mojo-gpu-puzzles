@@ -211,26 +211,36 @@
                         <h1 id="puzzle-21-embedding-op"><a class="header" href="#puzzle-21-embedding-op">Puzzle 21: Embedding Op</a></h1>
 <blockquote>
 <h2 id="memory-access-patterns-and-performance"><a class="header" href="#memory-access-patterns-and-performance">Memory access patterns and performance</a></h2>
-<p>We’re continuing Part IV with a focus on <strong>memory-bound operations</strong> and <strong>GPU memory access optimization</strong>.</p>
-<p>Building on <a href="../puzzle_20/puzzle_20.html">Puzzle 20</a>, you’ll now explore how different kernel implementations of the same operation can have dramatically different performance characteristics. You’ll learn:</p>
+<p>We’re continuing Part IV with a focus on <strong>memory-bound operations</strong> and
+<strong>GPU memory access optimization</strong>.</p>
+<p>Building on <a href="../puzzle_20/puzzle_20.html">Puzzle 20</a>, you’ll now explore how
+different kernel implementations of the same operation can have dramatically
+different performance characteristics. You’ll learn:</p>
 <ul>
 <li>How GPU memory coalescing affects performance</li>
 <li>Why grid configuration matters for memory-bound operations</li>
 <li>How to design kernels with optimal memory access patterns</li>
 <li>The performance implications of different threading strategies</li>
 </ul>
-<p>This puzzle demonstrates that <strong>how you access memory</strong> can be more important than <strong>what computation you perform</strong>.</p>
+<p>This puzzle demonstrates that <strong>how you access memory</strong> can be more important
+than <strong>what computation you perform</strong>.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>In this puzzle, you’ll implement two different GPU kernels for embedding operations - a fundamental component in neural networks. While both kernels produce identical results, they use different memory access patterns that lead to significant performance differences.</p>
+<p>In this puzzle, you’ll implement two different GPU kernels for embedding
+operations - a fundamental component in neural networks. While both kernels
+produce identical results, they use different memory access patterns that lead
+to significant performance differences.</p>
 <p>You’ll compare:</p>
 <ul>
-<li><strong>1D coalesced kernel</strong>: Optimized for memory bandwidth with consecutive memory accesses</li>
+<li><strong>1D coalesced kernel</strong>: Optimized for memory bandwidth with consecutive
+memory accesses</li>
 <li><strong>2D non-coalesced kernel</strong>: Suboptimal memory access pattern for comparison</li>
 </ul>
-<p>This comparison teaches the critical importance of memory coalescing in GPU kernel performance.</p>
+<p>This comparison teaches the critical importance of memory coalescing in GPU
+kernel performance.</p>
 <h2 id="background-embedding-operations"><a class="header" href="#background-embedding-operations">Background: Embedding operations</a></h2>
-<p>An embedding operation converts discrete token indices into dense vector representations:</p>
+<p>An embedding operation converts discrete token indices into dense vector
+representations:</p>
 <pre><code class="language-python"># Input: token indices
 indices = [[1, 5, 2], [7, 1, 9]]           # Shape: [batch_size, seq_len]
 
@@ -248,20 +258,25 @@ output[0,1] = embedding_table[5]  # lookup token 5's embedding
 output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 # ... and so on
 </code></pre>
-<p>This operation is <strong>memory-bound</strong> - performance depends on how efficiently you can read from the embedding table and write to the output tensor.</p>
+<p>This operation is <strong>memory-bound</strong> - performance depends on how efficiently you
+can read from the embedding table and write to the output tensor.</p>
 <h2 id="learning-path"><a class="header" href="#learning-path">Learning path</a></h2>
-<p>This puzzle is structured in two parts to build your understanding systematically:</p>
+<p>This puzzle is structured in two parts to build your understanding
+systematically:</p>
 <h3 id="simple-embedding-kernel"><a class="header" href="#simple-embedding-kernel"><strong><a href="./simple_embedding_kernel.html">Simple embedding kernel</a></strong></a></h3>
-<p>Start here to implement the actual puzzle code and understand the kernel implementations.</p>
+<p>Start here to implement the actual puzzle code and understand the kernel
+implementations.</p>
 <p><strong>What you’ll do:</strong></p>
 <ul>
-<li>Complete two different GPU embedding kernels (1D coalesced vs 2D non-coalesced)</li>
+<li>Complete two different GPU embedding kernels (1D coalesced vs 2D
+non-coalesced)</li>
 <li>Learn fundamental memory access patterns for GPU programming</li>
 <li>See the same algorithm implemented with different threading strategies</li>
 <li>Understand custom operation registration in Mojo</li>
 </ul>
 <h3 id="performance-comparison"><a class="header" href="#performance-comparison"><strong><a href="./performance.html">Performance comparison</a></strong></a></h3>
-<p>Deep dive into why the kernels perform differently and the theory behind memory coalescing.</p>
+<p>Deep dive into why the kernels perform differently and the theory behind memory
+coalescing.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
 <li>Why memory coalescing matters for GPU performance</li>
@@ -270,8 +285,13 @@ output[0,2] = embedding_table[2]  # [0.9, 1.0, 1.1, 1.2]
 <li>Optimization strategies for memory-bound operations</li>
 </ul>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Ready to explore GPU memory optimization? Start with the <strong><a href="./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the code, then move to <strong><a href="./performance.html">Performance comparison</a></strong> to understand the performance implications.</p>
-<p>💡 <strong>Success tip:</strong> Pay attention to how the different grid configurations (1D vs 2D) affect memory access patterns - this insight applies to many GPU programming scenarios beyond embeddings.</p>
+<p>Ready to explore GPU memory optimization? Start with the
+<strong><a href="./simple_embedding_kernel.html">Simple embedding kernel</a></strong> to implement the
+code, then move to <strong><a href="./performance.html">Performance comparison</a></strong> to understand
+the performance implications.</p>
+<p>💡 <strong>Success tip:</strong> Pay attention to how the different grid configurations (1D
+vs 2D) affect memory access patterns - this insight applies to many GPU
+programming scenarios beyond embeddings.</p>
 
                     </main>
 

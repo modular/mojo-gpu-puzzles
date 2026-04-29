@@ -210,15 +210,31 @@
                     <main>
                         <h1 id="-understanding-shared-memory-banks"><a class="header" href="#-understanding-shared-memory-banks">📚 Understanding Shared Memory Banks</a></h1>
 <h2 id="building-on-what-youve-learned"><a class="header" href="#building-on-what-youve-learned">Building on what you’ve learned</a></h2>
-<p>You’ve come a long way in your GPU optimization journey. In <a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, you discovered how shared memory provides fast, block-local storage that dramatically outperforms global memory. <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> showed you how matrix multiplication kernels use shared memory to cache data tiles, reducing expensive global memory accesses.</p>
-<p>But there’s a hidden performance trap lurking in shared memory that can serialize your parallel operations: <strong>bank conflicts</strong>.</p>
-<p><strong>The performance mystery:</strong> You can write two kernels that access shared memory in seemingly identical ways - both use the same amount of data, both have perfect occupancy, both avoid race conditions. Yet one runs 32× slower than the other. The culprit? How threads access shared memory banks.</p>
+<p>You’ve come a long way in your GPU optimization journey. In
+<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, you discovered how shared memory provides
+fast, block-local storage that dramatically outperforms global memory.
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a> showed you how matrix multiplication
+kernels use shared memory to cache data tiles, reducing expensive global memory
+accesses.</p>
+<p>But there’s a hidden performance trap lurking in shared memory that can
+serialize your parallel operations: <strong>bank conflicts</strong>.</p>
+<p><strong>The performance mystery:</strong> You can write two kernels that access shared memory
+in seemingly identical ways - both use the same amount of data, both have
+perfect occupancy, both avoid race conditions. Yet one runs 32× slower than the
+other. The culprit? How threads access shared memory banks.</p>
 <h2 id="what-are-shared-memory-banks"><a class="header" href="#what-are-shared-memory-banks">What are shared memory banks?</a></h2>
-<p>Think of shared memory as a collection of 32 independent memory units called <strong>banks</strong>, each capable of serving one memory request per clock cycle. This banking system exists for a fundamental reason: <strong>hardware parallelism</strong>.</p>
-<p>When a warp of 32 threads needs to access shared memory simultaneously, the GPU can serve all 32 requests in parallel, <strong>if each thread accesses a different bank</strong>. When multiple threads try to access the same bank, the hardware must <strong>serialize</strong> these accesses, turning what should be a 1-cycle operation into multiple cycles.</p>
+<p>Think of shared memory as a collection of 32 independent memory units called
+<strong>banks</strong>, each capable of serving one memory request per clock cycle. This
+banking system exists for a fundamental reason: <strong>hardware parallelism</strong>.</p>
+<p>When a warp of 32 threads needs to access shared memory simultaneously, the GPU
+can serve all 32 requests in parallel,
+<strong>if each thread accesses a different bank</strong>. When multiple threads try to
+access the same bank, the hardware must <strong>serialize</strong> these accesses, turning
+what should be a 1-cycle operation into multiple cycles.</p>
 <h3 id="bank-address-mapping"><a class="header" href="#bank-address-mapping">Bank address mapping</a></h3>
-<p>Each 4-byte word in shared memory belongs to a specific bank according to this formula:</p>
-<pre><code>bank_id = (byte_address / 4) % 32
+<p>Each 4-byte word in shared memory belongs to a specific bank according to this
+formula:</p>
+<pre><code class="language-text">bank_id = (byte_address / 4) % 32
 </code></pre>
 <p>Here’s how the first 128 bytes of shared memory map to banks:</p>
 <div class="table-wrapper"><table><thead><tr><th>Address Range</th><th>Bank ID</th><th>Example <code>float32</code> Elements</th></tr></thead><tbody>
@@ -231,16 +247,20 @@
 <tr><td>132-135 bytes</td><td>Bank 1</td><td><code>shared[33]</code></td></tr>
 </tbody></table>
 </div>
-<p><strong>Key insight:</strong> The banking pattern repeats every 32 elements for <code>float32</code> arrays, which perfectly matches the 32-thread warp size. This is not a coincidence - it’s designed for optimal parallel access.</p>
+<p><strong>Key insight:</strong> The banking pattern repeats every 32 elements for <code>float32</code>
+arrays, which perfectly matches the 32-thread warp size. This is not a
+coincidence - it’s designed for optimal parallel access.</p>
 <h2 id="types-of-bank-conflicts"><a class="header" href="#types-of-bank-conflicts">Types of bank conflicts</a></h2>
 <h3 id="no-conflict-the-ideal-case"><a class="header" href="#no-conflict-the-ideal-case">No conflict: the ideal case</a></h3>
-<p>When each thread in a warp accesses a different bank, all 32 accesses complete in 1 cycle:</p>
+<p>When each thread in a warp accesses a different bank, all 32 accesses complete
+in 1 cycle:</p>
 <pre><code class="language-mojo"># Perfect case: each thread accesses a different bank
 shared[thread_idx.x]  # Thread 0→Bank 0, Thread 1→Bank 1, ..., Thread 31→Bank 31
 </code></pre>
 <p><strong>Result:</strong> 32 parallel accesses, 1 cycle total</p>
 <h3 id="n-way-bank-conflicts"><a class="header" href="#n-way-bank-conflicts">N-way bank conflicts</a></h3>
-<p>When N threads access different addresses in the same bank, the hardware serializes these accesses:</p>
+<p>When N threads access different addresses in the same bank, the hardware
+serializes these accesses:</p>
 <pre><code class="language-mojo"># 2-way conflict: stride-2 access pattern
 shared[thread_idx.x * 2]  # Thread 0,16→Bank 0; Thread 1,17→Bank 1; etc.
 </code></pre>
@@ -250,12 +270,16 @@ shared[thread_idx.x * 32]  # All threads→Bank 0
 </code></pre>
 <p><strong>Result:</strong> 32 serialized accesses, 32 cycles total (3% efficiency)</p>
 <h3 id="the-broadcast-exception"><a class="header" href="#the-broadcast-exception">The broadcast exception</a></h3>
-<p>There’s one important exception to the conflict rule: <strong>broadcast access</strong>. When all threads read the <strong>same address</strong>, the hardware optimizes this into a single memory access:</p>
+<p>There’s one important exception to the conflict rule: <strong>broadcast access</strong>. When
+all threads read the <strong>same address</strong>, the hardware optimizes this into a single
+memory access:</p>
 <pre><code class="language-mojo"># Broadcast: all threads read the same value
 constant = shared[0]  # All threads read shared[0]
 </code></pre>
 <p><strong>Result:</strong> 1 access broadcasts to 32 threads, 1 cycle total</p>
-<p>This optimization exists because broadcasting is a common pattern (loading constants, reduction operations), and the hardware can duplicate a single value to all threads without additional memory bandwidth.</p>
+<p>This optimization exists because broadcasting is a common pattern (loading
+constants, reduction operations), and the hardware can duplicate a single value
+to all threads without additional memory bandwidth.</p>
 <h2 id="why-bank-conflicts-matter"><a class="header" href="#why-bank-conflicts-matter">Why bank conflicts matter</a></h2>
 <h3 id="performance-impact"><a class="header" href="#performance-impact">Performance impact</a></h3>
 <p>Bank conflicts directly multiply your shared memory access time:</p>
@@ -267,11 +291,24 @@ constant = shared[0]  # All threads read shared[0]
 </tbody></table>
 </div>
 <h3 id="real-world-context"><a class="header" href="#real-world-context">Real-world context</a></h3>
-<p>From <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you learned that memory access patterns can create dramatic performance differences. Bank conflicts are another example of this principle operating at the shared memory level.</p>
-<p>Just as global memory coalescing affects DRAM bandwidth utilization, bank conflicts affect shared memory throughput. The difference is scale: global memory latency is hundreds of cycles, while shared memory conflicts add only a few cycles per access. However, in compute-intensive kernels that heavily use shared memory, these “few cycles” accumulate quickly.</p>
+<p>From <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you learned that memory access
+patterns can create dramatic performance differences. Bank conflicts are another
+example of this principle operating at the shared memory level.</p>
+<p>Just as global memory coalescing affects DRAM bandwidth utilization, bank
+conflicts affect shared memory throughput. The difference is scale: global
+memory latency is hundreds of cycles, while shared memory conflicts add only a
+few cycles per access. However, in compute-intensive kernels that heavily use
+shared memory, these “few cycles” accumulate quickly.</p>
 <h3 id="connection-to-warp-execution"><a class="header" href="#connection-to-warp-execution">Connection to warp execution</a></h3>
-<p>Remember from <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a> that warps execute in SIMT (Single Instruction, Multiple Thread) fashion. When a warp encounters a bank conflict, <strong>all 32 threads must wait</strong> for the serialized memory accesses to complete. This waiting time affects the entire warp’s progress, not just the conflicting threads.</p>
-<p>This connects to the occupancy concepts from <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>: bank conflicts can prevent warps from hiding memory latency effectively, reducing the practical benefit of high occupancy.</p>
+<p>Remember from <a href="../puzzle_24/puzzle_24.html">Puzzle 24</a> that warps execute in SIMT
+(Single Instruction, Multiple Thread) fashion. When a warp encounters a bank
+conflict, <strong>all 32 threads must wait</strong> for the serialized memory accesses to
+complete. This waiting time affects the entire warp’s progress, not just the
+conflicting threads.</p>
+<p>This connects to the occupancy concepts from
+<a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>: bank conflicts can prevent warps from
+hiding memory latency effectively, reducing the practical benefit of high
+occupancy.</p>
 <h2 id="detecting-bank-conflicts"><a class="header" href="#detecting-bank-conflicts">Detecting bank conflicts</a></h2>
 <h3 id="visual-pattern-recognition"><a class="header" href="#visual-pattern-recognition">Visual pattern recognition</a></h3>
 <p>You can often predict bank conflicts by analyzing access patterns:</p>
@@ -292,7 +329,9 @@ constant = shared[0]  # All threads read shared[0]
 # Bank:       0   0   0   0  ...   0  ❌ All threads→Bank 0
 </code></pre>
 <h3 id="profiling-with-nsight-compute-ncu"><a class="header" href="#profiling-with-nsight-compute-ncu">Profiling with NSight Compute (<code>ncu</code>)</a></h3>
-<p>Building on the profiling methodology from <a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you can measure bank conflicts quantitatively:</p>
+<p>Building on the profiling methodology from
+<a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>, you can measure bank conflicts
+quantitatively:</p>
 <pre><code class="language-bash"># Key metrics for shared memory bank conflicts
 ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st your_kernel
 
@@ -300,7 +339,11 @@ ncu --metrics=l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld,l1tex__data_b
 ncu --metrics=smsp__sass_average_branch_targets_threads_uniform.pct your_kernel
 ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 </code></pre>
-<p>The <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code> and <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> metrics directly count the number of bank conflicts for load and store operations during kernel execution. Combined with the number of shared memory accesses, these give you the conflict ratio - a critical performance indicator.</p>
+<p>The <code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld</code> and
+<code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st</code> metrics directly count
+the number of bank conflicts for load and store operations during kernel
+execution. Combined with the number of shared memory accesses, these give you
+the conflict ratio - a critical performance indicator.</p>
 <h2 id="when-bank-conflicts-matter-most"><a class="header" href="#when-bank-conflicts-matter-most">When bank conflicts matter most</a></h2>
 <h3 id="compute-intensive-kernels"><a class="header" href="#compute-intensive-kernels">Compute-intensive kernels</a></h3>
 <p>Bank conflicts have the greatest impact on kernels where:</p>
@@ -311,22 +354,32 @@ ncu --metrics=smsp__warps_issue_stalled_membar_per_warp_active.pct your_kernel
 </ul>
 <p><strong>Example scenarios:</strong></p>
 <ul>
-<li>Matrix multiplication inner loops (like the tiled versions in <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>)</li>
+<li>Matrix multiplication inner loops (like the tiled versions in
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>)</li>
 <li>Stencil computations with shared memory caching</li>
 <li>Parallel reduction operations</li>
 </ul>
 <h3 id="memory-bound-vs-compute-bound-trade-offs"><a class="header" href="#memory-bound-vs-compute-bound-trade-offs">Memory-bound vs compute-bound trade-offs</a></h3>
-<p>Just as <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a> showed that occupancy matters less for memory-bound workloads, bank conflicts matter less when your kernel is bottlenecked by global memory bandwidth or arithmetic intensity is very low.</p>
-<p>However, many kernels that use shared memory do so precisely <strong>because</strong> they want to shift from memory-bound to compute-bound execution. In these cases, bank conflicts can prevent you from achieving the performance gains that motivated using shared memory in the first place.</p>
+<p>Just as <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a> showed that occupancy matters
+less for memory-bound workloads, bank conflicts matter less when your kernel is
+bottlenecked by global memory bandwidth or arithmetic intensity is very low.</p>
+<p>However, many kernels that use shared memory do so precisely <strong>because</strong> they
+want to shift from memory-bound to compute-bound execution. In these cases, bank
+conflicts can prevent you from achieving the performance gains that motivated
+using shared memory in the first place.</p>
 <h2 id="the-path-forward"><a class="header" href="#the-path-forward">The path forward</a></h2>
 <p>Understanding shared memory banking gives you the foundation to:</p>
 <ol>
 <li><strong>Predict performance</strong> before writing code by analyzing access patterns</li>
 <li><strong>Diagnose slowdowns</strong> using systematic profiling approaches</li>
-<li><strong>Design conflict-free algorithms</strong> that maintain high shared memory throughput</li>
-<li><strong>Make informed trade-offs</strong> between algorithm complexity and memory efficiency</li>
+<li><strong>Design conflict-free algorithms</strong> that maintain high shared memory
+throughput</li>
+<li><strong>Make informed trade-offs</strong> between algorithm complexity and memory
+efficiency</li>
 </ol>
-<p>In the next section, you’ll apply this knowledge through hands-on exercises that demonstrate common conflict patterns and their solutions - turning theoretical understanding into practical optimization skills.</p>
+<p>In the next section, you’ll apply this knowledge through hands-on exercises that
+demonstrate common conflict patterns and their solutions - turning theoretical
+understanding into practical optimization skills.</p>
 
                     </main>
 

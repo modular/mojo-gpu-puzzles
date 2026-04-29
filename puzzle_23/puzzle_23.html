@@ -210,12 +210,16 @@
                     <main>
                         <h1 id="puzzle-23-gpu-functional-programming-patterns"><a class="header" href="#puzzle-23-gpu-functional-programming-patterns">Puzzle 23: GPU Functional Programming Patterns</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p><strong>Part VI: Functional GPU Programming</strong> introduces Mojo’s high-level programming patterns for GPU computation. You’ll learn functional approaches that automatically handle vectorization, memory optimization, and performance tuning, replacing manual GPU kernel programming.</p>
-<p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance for performance - Mojo’s functional patterns give you both.</em></p>
+<p><strong>Part VI: Functional GPU Programming</strong> introduces Mojo’s high-level programming
+patterns for GPU computation. You’ll learn functional approaches that
+automatically handle vectorization, memory optimization, and performance tuning,
+replacing manual GPU kernel programming.</p>
+<p><strong>Key insight:</strong> <em>Modern GPU programming doesn’t require sacrificing elegance
+for performance - Mojo’s functional patterns give you both.</em></p>
 <h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What you’ll learn</a></h2>
 <h3 id="gpu-execution-hierarchy"><a class="header" href="#gpu-execution-hierarchy"><strong>GPU execution hierarchy</strong></a></h3>
 <p>Understand the fundamental relationship between GPU threads and SIMD operations:</p>
-<pre><code>GPU Device
+<pre><code class="language-text">GPU Device
 ├── Grid (your entire problem)
 │   ├── Block 1 (group of threads, shared memory)
 │   │   ├── Warp 1 (32 threads, lockstep execution) --&gt; We'll learn in Part VI
@@ -232,7 +236,9 @@
 <li>Thread scheduling optimized automatically</li>
 <li>Memory hierarchy optimization built-in</li>
 </ul>
-<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns, <strong>warp-level programming</strong> and advanced GPU memory management will be covered in detail in <strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong>.</p>
+<p>💡 <strong>Note</strong>: While this Part focuses on functional patterns,
+<strong>warp-level programming</strong> and advanced GPU memory management will be covered in
+detail in <strong><a href="../puzzle_24/puzzle_24.html">Part VII</a></strong>.</p>
 <h3 id="four-fundamental-patterns"><a class="header" href="#four-fundamental-patterns"><strong>Four fundamental patterns</strong></a></h3>
 <p>Learn the complete spectrum of GPU functional programming:</p>
 <ol>
@@ -242,7 +248,7 @@
 <li><strong>Mojo vectorize</strong>: Safe, automatic vectorization with bounds checking</li>
 </ol>
 <h3 id="performance-patterns-youll-recognize"><a class="header" href="#performance-patterns-youll-recognize"><strong>Performance patterns you’ll recognize</strong></a></h3>
-<pre><code>Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
+<pre><code class="language-text">Problem: Add two 1024-element vectors (SIZE=1024, SIMD_WIDTH=4)
 
 Elementwise:     256 threads × 1 SIMD op   = High parallelism
 Tiled:           32 threads  × 8 SIMD ops  = Cache optimization
@@ -251,7 +257,7 @@ Mojo vectorize:  32 threads  × 8 SIMD ops  = Automatic safety
 </code></pre>
 <h3 id="-real-performance-insights"><a class="header" href="#-real-performance-insights">📊 <strong>Real performance insights</strong></a></h3>
 <p>Learn to interpret empirical benchmark results:</p>
-<pre><code>Benchmark Results (SIZE=1,048,576):
+<pre><code class="language-text">Benchmark Results (SIZE=1,048,576):
 elementwise:        11.34ms  ← Maximum parallelism wins at scale
 tiled:              12.04ms  ← Good balance of locality and parallelism
 manual_vectorized:  15.75ms  ← Complex indexing hurts simple operations
@@ -261,7 +267,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <p>Before diving into functional patterns, ensure you’re comfortable with:</p>
 <ul>
 <li><strong>Basic GPU concepts</strong>: Memory hierarchy, thread execution, SIMD operations</li>
-<li><strong>Mojo fundamentals</strong>: Parameter functions, compile-time specialization, capturing semantics</li>
+<li><strong>Mojo fundamentals</strong>: Parameter functions, compile-time specialization,
+capturing semantics</li>
 <li><strong>TileTensor operations</strong>: Loading, storing, and tensor manipulation</li>
 <li><strong>GPU memory management</strong>: Buffer allocation, host-device synchronization</li>
 </ul>
@@ -289,7 +296,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Memory locality principles and cache-friendly access patterns</li>
 <li>Thread-to-tile mapping vs thread-to-element mapping</li>
 </ul>
-<p><strong>Key insight:</strong> Tiling trades parallel breadth for memory locality - fewer threads each doing more work with better cache utilization.</p>
+<p><strong>Key insight:</strong> Tiling trades parallel breadth for memory locality - fewer
+threads each doing more work with better cache utilization.</p>
 <h3 id="3-advanced-vectorization"><a class="header" href="#3-advanced-vectorization"><strong>3. Advanced vectorization</strong></a></h3>
 <p><strong>→ <a href="./vectorize.html">Vectorization - Fine-Grained SIMD Control</a></strong></p>
 <p>Explore manual control and automatic vectorization strategies.</p>
@@ -306,7 +314,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li><strong>Mojo vectorize</strong>: Automatic optimization, built-in safety, clean code</li>
 </ul>
 <h3 id="-4-threading-vs-simd-concepts"><a class="header" href="#-4-threading-vs-simd-concepts">🧠 <strong>4. Threading vs SIMD concepts</strong></a></h3>
-<p><strong>→ <a href="./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution Hierarchy</a></strong></p>
+<p><strong>→ <a href="./gpu-thread-vs-simd.html">GPU Threading vs SIMD - Understanding the Execution
+Hierarchy</a></strong></p>
 <p>Understand the fundamental relationship between parallelism levels.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
@@ -315,7 +324,8 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Pattern comparison and thread-to-work mapping</li>
 <li>Choosing the right pattern for different workloads</li>
 </ul>
-<p><strong>Key insight:</strong> GPU threads provide the parallelism structure, while SIMD operations provide the vectorization within each thread.</p>
+<p><strong>Key insight:</strong> GPU threads provide the parallelism structure, while SIMD
+operations provide the vectorization within each thread.</p>
 <h3 id="-5-performance-benchmarking-in-mojo"><a class="header" href="#-5-performance-benchmarking-in-mojo">📊 <strong>5. Performance benchmarking in Mojo</strong></a></h3>
 <p><strong>→ <a href="./benchmarking.html">Benchmarking in Mojo</a></strong></p>
 <p>Learn to measure, analyze, and optimize GPU performance scientifically.</p>
@@ -326,12 +336,20 @@ vectorized:         13.38ms  ← Automatic optimization overhead
 <li>Parameterized benchmark functions with compile-time specialization</li>
 <li>Empirical performance analysis and pattern selection</li>
 </ul>
-<p><strong>Critical technique:</strong> Using <code>keep()</code> to prevent compiler optimization of benchmarked code.</p>
+<p><strong>Critical technique:</strong> Using <code>keep()</code> to prevent compiler optimization of
+benchmarked code.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<p>Start with the elementwise pattern and work through each section systematically. Each puzzle builds on the previous concepts while introducing new levels of sophistication.</p>
-<p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not just the <strong>how</strong>. The conceptual framework you develop here will serve you throughout your GPU programming career.</p>
-<p><strong>Learning objective</strong>: By the end of Part VI, you’ll think in terms of functional patterns rather than low-level GPU mechanics, enabling you to write more maintainable, performant, and portable GPU code.</p>
-<p><strong>Begin with</strong>: <strong><a href="./elementwise.html">Elementwise Operations</a></strong> to discover functional GPU programming.</p>
+<p>Start with the elementwise pattern and work through each section systematically.
+Each puzzle builds on the previous concepts while introducing new levels of
+sophistication.</p>
+<p>💡 <strong>Success tip</strong>: Focus on understanding the <strong>why</strong> behind each pattern, not
+just the <strong>how</strong>. The conceptual framework you develop here will serve you
+throughout your GPU programming career.</p>
+<p><strong>Learning objective</strong>: By the end of Part VI, you’ll think in terms of
+functional patterns rather than low-level GPU mechanics, enabling you to write
+more maintainable, performant, and portable GPU code.</p>
+<p><strong>Begin with</strong>: <strong><a href="./elementwise.html">Elementwise Operations</a></strong> to discover
+functional GPU programming.</p>
 
                     </main>
 

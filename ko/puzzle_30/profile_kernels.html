@@ -211,11 +211,17 @@
                         <!-- i18n-source-commit: 9c7176b81f278a6e8efa26c92005c139967c0c27 -->
 <h1 id="-캐시-히트의-역설"><a class="header" href="#-캐시-히트의-역설">🕵 캐시 히트의 역설</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>첫 번째 <strong>프로파일링 탐정 사건</strong>에 오신 것을 환영합니다! 세 개의 GPU 커널이 모두 동일한 벡터 덧셈 <code>output[i] = a[i] + b[i]</code>을 수행합니다. 당연히 성능도 같겠죠?</p>
-<p><strong>아닙니다!</strong> 이 커널들의 성능 차이는 극적입니다 - 하나는 나머지보다 <strong>수십 배나 느립니다</strong>. 여러분의 임무: 방금 배운 <a href="./nvidia_profiling_basics.html">프로파일링 도구</a>를 활용하여 <strong>왜</strong> 그런지 밝혀내세요.</p>
+<p>첫 번째 <strong>프로파일링 탐정 사건</strong>에 오신 것을 환영합니다! 세 개의 GPU 커널이 모두
+동일한 벡터 덧셈 <code>output[i] = a[i] + b[i]</code>을 수행합니다. 당연히 성능도 같겠죠?</p>
+<p><strong>아닙니다!</strong> 이 커널들의 성능 차이는 극적입니다 - 하나는 나머지보다
+<strong>수십 배나 느립니다</strong>. 여러분의 임무: 방금 배운
+<a href="./nvidia_profiling_basics.html">프로파일링 도구</a>를 활용하여 <strong>왜</strong> 그런지
+밝혀내세요.</p>
 <h2 id="도전-과제"><a class="header" href="#도전-과제">도전 과제</a></h2>
-<p>GPU 최적화에 대한 기존 상식을 완전히 뒤집는 <strong>성능 미스터리</strong>에 오신 것을 환영합니다! 눈앞에는 겉보기에 동일한 벡터 덧셈 커널 세 개가 있고, 모두 정확히 같은 수학 연산을 수행합니다:</p>
-<pre><code>output[i] = a[i] + b[i]  // 단순한 산술 연산 - 뭐가 잘못될 수 있을까?
+<p>GPU 최적화에 대한 기존 상식을 완전히 뒤집는 <strong>성능 미스터리</strong>에 오신 것을
+환영합니다! 눈앞에는 겉보기에 동일한 벡터 덧셈 커널 세 개가 있고, 모두 정확히
+같은 수학 연산을 수행합니다:</p>
+<pre><code class="language-text">output[i] = a[i] + b[i]  // 단순한 산술 연산 - 뭐가 잘못될 수 있을까?
 </code></pre>
 <p><strong>충격적인 현실:</strong></p>
 <ul>
@@ -231,8 +237,12 @@
 <li><strong>메모리 접근 패턴 해독</strong> - 동일한 연산이 어떻게 이렇게 다르게 동작하는가?</li>
 <li><strong>프로파일링 방법론 학습</strong> - 추측이 아닌 NSight 도구로 근거를 확보하라</li>
 </ol>
-<p><strong>왜 중요한가:</strong> 이 퍼즐은 CPU 기반 직관에 도전하는 GPU 성능의 근본 원리를 드러냅니다. 여기서 기르는 역량은 메모리 접근 패턴이 알고리즘 복잡도보다 중요한 실무 GPU 최적화에 직접 적용됩니다.</p>
-<p><strong>반전:</strong> 이 과정은 프로덕션 성능 이슈를 디버깅하듯이, <strong>소스 코드를 먼저 보지 않고</strong> 프로파일링 도구만으로 접근합니다. 프로파일링 결과를 얻은 후에 코드를 들여다봅니다.</p>
+<p><strong>왜 중요한가:</strong> 이 퍼즐은 CPU 기반 직관에 도전하는 GPU 성능의 근본 원리를
+드러냅니다. 여기서 기르는 역량은 메모리 접근 패턴이 알고리즘 복잡도보다 중요한
+실무 GPU 최적화에 직접 적용됩니다.</p>
+<p><strong>반전:</strong> 이 과정은 프로덕션 성능 이슈를 디버깅하듯이,
+<strong>소스 코드를 먼저 보지 않고</strong> 프로파일링 도구만으로 접근합니다. 프로파일링
+결과를 얻은 후에 코드를 들여다봅니다.</p>
 <h2 id="탐정-도구-모음"><a class="header" href="#탐정-도구-모음">탐정 도구 모음</a></h2>
 <p>프로파일링 튜토리얼에서 배운 도구들:</p>
 <ul>
@@ -245,22 +255,27 @@
 <pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p30/p30.mojo --benchmark
 </code></pre>
-<p>커널 간에 극적인 실행 시간 차이를 확인할 수 있습니다! 하나의 커널이 나머지보다 <strong>훨씬 느립니다</strong>. 코드를 <strong>보지 않고</strong> 프로파일링 도구만으로 원인을 찾아내는 것이 목표입니다.</p>
+<p>커널 간에 극적인 실행 시간 차이를 확인할 수 있습니다! 하나의 커널이 나머지보다
+<strong>훨씬 느립니다</strong>. 코드를 <strong>보지 않고</strong> 프로파일링 도구만으로 원인을 찾아내는
+것이 목표입니다.</p>
 <p><strong>출력 예시:</strong></p>
-<pre><code>| name    | met (ms)  | iters |
+<pre><code class="language-text">| name    | met (ms)  | iters |
 | ------- | --------- | ----- |
 | kernel1 | 171.85    | 11    |
 | kernel2 | 1546.68   | 11    |  &lt;- 이것만 유독 느리다!
 | kernel3 | 172.18    | 11    |
 </code></pre>
 <h3 id="step-2-프로파일링을-위한-빌드-준비"><a class="header" href="#step-2-프로파일링을-위한-빌드-준비">Step 2: 프로파일링을 위한 빌드 준비</a></h3>
-<p><strong>필수</strong>: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를 포함하여 빌드합니다:</p>
+<p><strong>필수</strong>: 정확한 프로파일링을 위해 최적화를 유지하면서 전체 디버그 정보를
+포함하여 빌드합니다:</p>
 <pre><code class="language-bash">mojo build --debug-level=full problems/p30/p30.mojo -o problems/p30/p30_profiler
 </code></pre>
 <p><strong>중요한 이유</strong>:</p>
 <ul>
-<li><strong>전체 디버그 정보</strong>: 프로파일러에 완전한 심볼 테이블, 변수명, 소스 라인 매핑을 제공</li>
-<li><strong>종합 분석</strong>: NSight 도구가 성능 데이터를 특정 코드 위치와 연관 짓는 것이 가능</li>
+<li><strong>전체 디버그 정보</strong>: 프로파일러에 완전한 심볼 테이블, 변수명, 소스 라인
+매핑을 제공</li>
+<li><strong>종합 분석</strong>: NSight 도구가 성능 데이터를 특정 코드 위치와 연관 짓는 것이
+가능</li>
 <li><strong>최적화 유지</strong>: 프로덕션 빌드와 동일한 현실적인 성능 측정 보장</li>
 </ul>
 <h2 id="step-3-시스템-전체-조사-nsight-systems"><a class="header" href="#step-3-시스템-전체-조사-nsight-systems">Step 3: 시스템 전체 조사 (NSight Systems)</a></h2>
@@ -294,7 +309,7 @@ ncu --import ./problems/p30/kernel2_analysis.ncu-rep --page details
 ncu --import ./problems/p30/kernel3_analysis.ncu-rep --page details
 </code></pre>
 <p><strong>위 명령어를 실행하면 다음과 같은 출력이 나타납니다:</strong></p>
-<pre><code>Kernel1: Memory Throughput: ~308 Gbyte/s, Max Bandwidth: ~51%
+<pre><code class="language-text">Kernel1: Memory Throughput: ~308 Gbyte/s, Max Bandwidth: ~51%
 Kernel2: Memory Throughput: ~6 Gbyte/s,   Max Bandwidth: ~12%
 Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </code></pre>
@@ -305,14 +320,18 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 <li><strong>L1/TEX Hit Rate (%)</strong> - L1 캐시 효율</li>
 <li><strong>L2 Hit Rate (%)</strong> - L2 캐시 효율</li>
 </ul>
-<p><strong>🤔 반직관적인 결과</strong>: Kernel2가 <strong>가장 높은</strong> 캐시 히트율을 보이면서 <strong>가장 낮은</strong> 성능을 보입니다! 이것이 풀어야 할 핵심 미스터리입니다.</p>
+<p><strong>🤔 반직관적인 결과</strong>: Kernel2가 <strong>가장 높은</strong> 캐시 히트율을 보이면서
+<strong>가장 낮은</strong> 성능을 보입니다! 이것이 풀어야 할 핵심 미스터리입니다.</p>
 <h2 id="step-5-탐정-질문"><a class="header" href="#step-5-탐정-질문">Step 5: 탐정 질문</a></h2>
-<p>프로파일링 근거를 바탕으로 커널 코드 <a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>를 살펴보며 다음 질문에 답해 보세요:</p>
+<p>프로파일링 근거를 바탕으로 커널 코드
+<a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p30/p30.mojo" class="filename">problems/p30/p30.mojo</a>를
+살펴보며 다음 질문에 답해 보세요:</p>
 <h3 id="성능-분석"><a class="header" href="#성능-분석">성능 분석</a></h3>
 <ol>
 <li><strong>어떤 커널이 가장 높은 Memory Throughput을 달성하는가?</strong> (Gbyte/s 값 확인)</li>
 <li><strong>어떤 커널의 Max Bandwidth 활용률이 가장 낮은가?</strong> (백분율 비교)</li>
-<li><strong>메모리 처리량의 성능 격차는 얼마인가?</strong> (가장 빠른 것과 가장 느린 것의 배수 차이)</li>
+<li><strong>메모리 처리량의 성능 격차는 얼마인가?</strong> (가장 빠른 것과 가장 느린 것의 배수
+차이)</li>
 </ol>
 <h3 id="캐시의-역설"><a class="header" href="#캐시의-역설">캐시의 역설</a></h3>
 <ol>
@@ -328,21 +347,29 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </ol>
 <h3 id="아하-순간"><a class="header" href="#아하-순간">“아하!” 순간</a></h3>
 <ol>
-<li><strong>프로파일링 근거를 바탕으로, 이 사례가 보여주는 GPU 메모리의 근본 원리는 무엇인가?</strong></li>
+<li><strong>프로파일링 근거를 바탕으로, 이 사례가 보여주는 GPU 메모리의 근본 원리는
+무엇인가?</strong></li>
 </ol>
-<p><strong>발견할 핵심 통찰</strong>: 때로는 <strong>높은 캐시 히트율이 성능 승리가 아니라 위험 신호</strong>입니다!</p>
+<p><strong>발견할 핵심 통찰</strong>: 때로는
+<strong>높은 캐시 히트율이 성능 승리가 아니라 위험 신호</strong>입니다!</p>
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
-<p>이 미스터리는 GPU 성능의 근본 원리를 드러냅니다: 커널이 동일한 연산을 수행하더라도 <strong>메모리 바운드 연산에서는 메모리 접근 패턴이 성능을 지배합니다</strong>.</p>
+<p>이 미스터리는 GPU 성능의 근본 원리를 드러냅니다: 커널이 동일한 연산을
+수행하더라도 <strong>메모리 바운드 연산에서는 메모리 접근 패턴이 성능을 지배합니다</strong>.</p>
 <p><strong>프로파일링 근거가 밝히는 것:</strong></p>
 <ol>
-<li><strong>성능 위계</strong>: Kernel1과 Kernel3은 빠르고, Kernel2는 치명적으로 느림 (수십 배 차이)</li>
-<li><strong>메모리 처리량이 답을 말해준다</strong>: 빠른 커널은 높은 대역폭 활용률을 달성하고, 느린 커널은 최소한의 활용률만 달성</li>
-<li><strong>캐시의 역설</strong>: 가장 느린 커널이 <strong>가장 높은</strong> 캐시 히트율을 보임 - 높은 캐시 히트가 <strong>비효율적인</strong> 메모리 접근 패턴을 나타낼 수 있음을 시사</li>
-<li><strong>메모리 바운드 GPU 워크로드에서는 메모리 접근 패턴이 알고리즘 복잡도보다 중요</strong></li>
+<li><strong>성능 위계</strong>: Kernel1과 Kernel3은 빠르고, Kernel2는 치명적으로 느림 (수십 배
+차이)</li>
+<li><strong>메모리 처리량이 답을 말해준다</strong>: 빠른 커널은 높은 대역폭 활용률을 달성하고,
+느린 커널은 최소한의 활용률만 달성</li>
+<li><strong>캐시의 역설</strong>: 가장 느린 커널이 <strong>가장 높은</strong> 캐시 히트율을 보임 - 높은
+캐시 히트가 <strong>비효율적인</strong> 메모리 접근 패턴을 나타낼 수 있음을 시사</li>
+<li><strong>메모리 바운드 GPU 워크로드에서는 메모리 접근 패턴이 알고리즘 복잡도보다
+중요</strong></li>
 </ol>
 <details class="solution-details">
 <summary><strong>상세 솔루션과 심층 설명</strong></summary>
-<p>이 프로파일링 탐정 사건은 커널이 동일한 수학 연산을 수행하더라도 메모리 접근 패턴이 어떻게 수십 배의 성능 차이를 만들어내는지 보여줍니다.</p>
+<p>이 프로파일링 탐정 사건은 커널이 동일한 수학 연산을 수행하더라도 메모리 접근
+패턴이 어떻게 수십 배의 성능 차이를 만들어내는지 보여줍니다.</p>
 <h2 id="프로파일링으로-확인한-성능-근거"><a class="header" href="#프로파일링으로-확인한-성능-근거"><strong>프로파일링으로 확인한 성능 근거</strong></a></h2>
 <p><strong>NSight Systems 타임라인 분석:</strong></p>
 <ul>
@@ -352,8 +379,10 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 </ul>
 <p><strong>NSight Compute 메모리 분석 (하드웨어 무관한 패턴):</strong></p>
 <ul>
-<li><strong>효율적인 커널 (1 &amp; 3)</strong>: 높은 메모리 처리량, 양호한 대역폭 활용률, 보통 수준의 캐시 히트율</li>
-<li><strong>비효율적인 커널 (2)</strong>: 매우 낮은 메모리 처리량, 열악한 대역폭 활용률, <strong>극도로 높은 캐시 히트율</strong></li>
+<li><strong>효율적인 커널 (1 &amp; 3)</strong>: 높은 메모리 처리량, 양호한 대역폭 활용률, 보통
+수준의 캐시 히트율</li>
+<li><strong>비효율적인 커널 (2)</strong>: 매우 낮은 메모리 처리량, 열악한 대역폭 활용률,
+<strong>극도로 높은 캐시 히트율</strong></li>
 </ul>
 <h2 id="캐시의-역설-규명"><a class="header" href="#캐시의-역설-규명"><strong>캐시의 역설 규명</strong></a></h2>
 <p><strong>🤯 반직관적인 발견:</strong></p>
@@ -426,7 +455,8 @@ Kernel3: Memory Throughput: ~310 Gbyte/s, Max Bandwidth: ~52%
 
 
 </code></pre>
-<p><em>역순 인덱싱이지만 여전히 예측 가능 - 인접 스레드가 인접 주소에 접근 (방향만 반대)</em></p>
+<p><em>역순 인덱싱이지만 여전히 예측 가능 - 인접 스레드가 인접 주소에 접근 (방향만
+반대)</em></p>
 <p><strong>패턴 분석:</strong></p>
 <ul>
 <li><strong>Kernel 1</strong>: 전형적인 병합 접근 - 인접 스레드가 인접 메모리에 접근</li>
@@ -453,7 +483,7 @@ comptime dtype = DType.float32             # 요소당 4바이트
 <li><strong>블록당 32개 워프</strong>: 각 블록에 32개의 워프(각 32 스레드)가 포함</li>
 </ul>
 <p><strong>메모리 접근 효율 시각화:</strong></p>
-<pre><code>KERNEL 1 (병합):                KERNEL 2 (stride 512):
+<pre><code class="language-text">KERNEL 1 (병합):                KERNEL 2 (stride 512):
 워프 스레드 0-31:               워프 스레드 0-31:
   Thread 0: Memory[0]            Thread 0: Memory[0]
   Thread 1: Memory[1]            Thread 1: Memory[512]
@@ -466,7 +496,7 @@ comptime dtype = DType.float32             # 요소당 4바이트
 캐시: 효율적 활용                  캐시: 같은 라인을 반복 히트!
 </code></pre>
 <p><strong>KERNEL 3 (역순이지만 병합):</strong></p>
-<pre><code>워프 스레드 0-31 (첫 번째 반복):
+<pre><code class="language-text">워프 스레드 0-31 (첫 번째 반복):
   Thread 0: Memory[SIZE-1]     (reverse_i = SIZE-1-0)
   Thread 1: Memory[SIZE-2]     (reverse_i = SIZE-1-1)
   Thread 2: Memory[SIZE-3]     (reverse_i = SIZE-1-2)
@@ -499,7 +529,8 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 <li><strong>stride 512</strong>: 스레드가 512×4 = 2048바이트 = 16 캐시 라인 간격으로 점프!</li>
 <li><strong>워프 영향</strong>: 32개 스레드가 1개 대신 32개의 서로 다른 캐시 라인을 필요로 함</li>
 </ul>
-<p><strong>핵심 통찰</strong>: Kernel2의 높은 캐시 히트는 <strong>비효율적으로 가져온 데이터에 대한 반복 접근</strong>이지, 현명한 캐싱이 아닙니다!</p>
+<p><strong>핵심 통찰</strong>: Kernel2의 높은 캐시 히트는
+<strong>비효율적으로 가져온 데이터에 대한 반복 접근</strong>이지, 현명한 캐싱이 아닙니다!</p>
 <h2 id="프로파일링-방법론-통찰"><a class="header" href="#프로파일링-방법론-통찰"><strong>프로파일링 방법론 통찰</strong></a></h2>
 <p><strong>체계적 탐정 접근법:</strong></p>
 <p><strong>1단계: NSight Systems (전체 그림)</strong></p>
@@ -515,7 +546,7 @@ Thread 2: elements [2, 514, 1026, 1538, 2050, ...]
 <li>캐시 히트율과 패턴 조사</li>
 </ul>
 <p><strong>3단계: 근거를 이론으로 연결</strong></p>
-<pre><code>프로파일링 근거 → 코드 분석:
+<pre><code class="language-text">프로파일링 근거 → 코드 분석:
 
 NSight Compute 결과:              실제 코드 패턴:
 - Kernel1: ~308 GB/s            → i = block_idx*block_dim + thread_idx (병합)
@@ -566,10 +597,13 @@ NSight Compute 결과:              실제 코드 패턴:
 <li><strong>하드웨어 인식 프로그래밍</strong>: GPU 메모리 계층 구조 이해가 필수</li>
 </ul>
 <h2 id="핵심-교훈"><a class="header" href="#핵심-교훈"><strong>핵심 교훈</strong></a></h2>
-<p>이번에 탐구한 사례는 <strong>GPU 성능 최적화가 CPU 직관을 버리고 메모리 중심 사고로 전환할 것을</strong> 요구한다는 점을 보여줍니다:</p>
+<p>이번에 탐구한 사례는
+<strong>GPU 성능 최적화가 CPU 직관을 버리고 메모리 중심 사고로 전환할 것을</strong>
+요구한다는 점을 보여줍니다:</p>
 <p><strong>핵심 통찰:</strong></p>
 <ul>
-<li>높은 캐시 히트율은 좋은 성능이 아니라 비효율적인 메모리 접근 패턴을 나타낼 수 있음</li>
+<li>높은 캐시 히트율은 좋은 성능이 아니라 비효율적인 메모리 접근 패턴을 나타낼 수
+있음</li>
 <li>메모리 대역폭 활용률이 캐시 통계보다 중요</li>
 <li>단순한 병합 패턴이 복잡한 알고리즘보다 더 빠른 경우가 많음</li>
 <li>프로파일링 도구가 직관으로는 알 수 없는 성능의 진실을 드러냄</li>
@@ -580,7 +614,9 @@ NSight Compute 결과:              실제 코드 패턴:
 <li>인접 스레드가 인접 메모리에 접근하도록 설계 (병합)</li>
 <li>직관이 아닌 프로파일러 근거를 바탕으로 최적화 결정</li>
 </ul>
-<p>캐시의 역설은 <strong>아키텍처에 대한 이해 없이 고수준 지표에 의존하면 잘못된 결론에 이를 수 있다</strong>는 점을 보여줍니다 - GPU 프로그래밍을 넘어 두루 적용되는 교훈입니다.</p>
+<p>캐시의 역설은
+<strong>아키텍처에 대한 이해 없이 고수준 지표에 의존하면 잘못된 결론에 이를 수 있다</strong>는
+점을 보여줍니다 - GPU 프로그래밍을 넘어 두루 적용되는 교훈입니다.</p>
 </details>
 
                     </main>

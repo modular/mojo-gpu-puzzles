@@ -213,7 +213,8 @@
 <iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
 </div>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and stores it in 2D square matrix <code>output</code>.</p>
+<p>Implement a kernel that adds 10 to each position of 2D square matrix <code>a</code> and
+stores it in 2D square matrix <code>output</code>.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions</em>.</p>
 <div class="video-container breakpoint-sm">
 <iframe src="https://www.youtube.com/embed/EjmBmwgdAT0" allowfullscreen></iframe>
@@ -231,7 +232,8 @@
 \[\Large output[i,j] = a[i,j] + 10\]</p>
 <blockquote>
 <h2 id="thread-indexing-convention"><a class="header" href="#thread-indexing-convention">Thread indexing convention</a></h2>
-<p>When working with 2D matrices in GPU programming, we follow a natural mapping between thread indices and matrix coordinates:</p>
+<p>When working with 2D matrices in GPU programming, we follow a natural mapping
+between thread indices and matrix coordinates:</p>
 <ul>
 <li><code>thread_idx.y</code> corresponds to the row index</li>
 <li><code>thread_idx.x</code> corresponds to the column index
@@ -245,16 +247,26 @@
 <li>Common GPU programming patterns where thread blocks are organized in a 2D grid matching the matrix structure</li>
 </ol>
 <h3 id="historical-origins"><a class="header" href="#historical-origins">Historical origins</a></h3>
-<p>While graphics and image processing typically use \((x,y)\) coordinates, matrix operations in computing have historically used (row, column) indexing. This comes from how early computers stored and processed 2D data: line by line, top to bottom, with each line read left to right. This row-major memory layout proved efficient for both CPUs and GPUs, as it matches how they access memory sequentially. When GPU programming adopted thread blocks for parallel processing, it was natural to map <code>thread_idx.y</code> to rows and <code>thread_idx.x</code> to columns, maintaining consistency with established matrix indexing conventions.</p>
+<p>While graphics and image processing typically use \((x,y)\) coordinates,
+matrix operations in computing have historically used (row, column) indexing.
+This comes from how early computers stored and processed 2D data: line by
+line, top to bottom, with each line read left to right. This row-major memory
+layout proved efficient for both CPUs and GPUs, as it matches how they access
+memory sequentially. When GPU programming adopted thread blocks for parallel
+processing, it was natural to map <code>thread_idx.y</code> to rows and <code>thread_idx.x</code> to
+columns, maintaining consistency with established matrix indexing conventions.</p>
 </blockquote>
 <h2 id="implementation-approaches"><a class="header" href="#implementation-approaches">Implementation approaches</a></h2>
 <h3 id="-raw-memory-approach"><a class="header" href="#-raw-memory-approach"><a href="./raw.html">🔰 Raw memory approach</a></a></h3>
 <p>Learn how 2D indexing works with manual memory management.</p>
 <h3 id="-learn-about-tiletensor"><a class="header" href="#-learn-about-tiletensor"><a href="./introduction_tile_tensor.html">📚 Learn about TileTensor</a></a></h3>
-<p>Discover a powerful abstraction that simplifies multi-dimensional array operations and memory management on GPU.</p>
+<p>Discover a powerful abstraction that simplifies multi-dimensional array
+operations and memory management on GPU.</p>
 <h3 id="-modern-2d-operations"><a class="header" href="#-modern-2d-operations"><a href="./tile_tensor.html">🚀 Modern 2D operations</a></a></h3>
-<p>Put TileTensor into practice with natural 2D indexing and automatic bounds checking.</p>
-<p>💡 <strong>Note</strong>: From this puzzle onward, we’ll primarily use TileTensor for cleaner, safer GPU code.</p>
+<p>Put TileTensor into practice with natural 2D indexing and automatic bounds
+checking.</p>
+<p>💡 <strong>Note</strong>: From this puzzle onward, we’ll primarily use TileTensor for
+cleaner, safer GPU code.</p>
 
                     </main>
 

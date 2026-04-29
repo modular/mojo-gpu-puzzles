@@ -210,7 +210,10 @@
                     <main>
                         <h1 id="shared-memory-matrix-multiplication"><a class="header" href="#shared-memory-matrix-multiplication">Shared Memory Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>This puzzle implements matrix multiplication for square matrices \(A\) and \(B\), storing results in \(\text{output}\) while leveraging shared memory to optimize memory access patterns. The implementation preloads matrix blocks into shared memory before performing computations.</p>
+<p>This puzzle implements matrix multiplication for square matrices \(A\) and
+\(B\), storing results in \(\text{output}\) while leveraging shared memory
+to optimize memory access patterns. The implementation preloads matrix blocks
+into shared memory before performing computations.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -220,7 +223,8 @@
 <li>Collaborative data loading with 2D indexing</li>
 <li>Efficient use of TileTensor for matrix operations</li>
 </ul>
-<p>The central concept involves utilizing fast shared memory through TileTensor to minimize costly global memory accesses.</p>
+<p>The central concept involves utilizing fast shared memory through TileTensor to
+minimize costly global memory accesses.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -334,7 +338,8 @@ expected: HostBuffer([4.0, 6.0, 12.0, 22.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The shared memory implementation with TileTensor improves performance through efficient memory access patterns:</p>
+<p>The shared memory implementation with TileTensor improves performance through
+efficient memory access patterns:</p>
 <h3 id="memory-organization"><a class="header" href="#memory-organization">Memory organization</a></h3>
 <pre><code class="language-txt">Input Tensors (2×2):                Shared Memory (3×3):
 Matrix A:                           a_shared:
@@ -500,7 +505,8 @@ if row &lt; size and col &lt; size:
 </ul>
 </li>
 </ol>
-<p>This implementation significantly improves performance over the naive version by:</p>
+<p>This implementation significantly improves performance over the naive version
+by:</p>
 <ul>
 <li>Reducing global memory accesses</li>
 <li>Enabling data reuse through shared memory</li>

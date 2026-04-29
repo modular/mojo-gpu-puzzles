@@ -212,14 +212,25 @@
 <h1 id="충돌-없는-패턴"><a class="header" href="#충돌-없는-패턴">충돌 없는 패턴</a></h1>
 <blockquote>
 <p><strong>참고: 이 섹션은 NVIDIA GPU 전용입니다</strong></p>
-<p>여기서 다루는 뱅크 충돌 분석과 프로파일링 기법은 NVIDIA GPU에 특화되어 있습니다. 프로파일링 명령은 NVIDIA CUDA 툴킷에 포함된 NSight Compute 도구를 사용합니다.</p>
+<p>여기서 다루는 뱅크 충돌 분석과 프로파일링 기법은 NVIDIA GPU에 특화되어
+있습니다. 프로파일링 명령은 NVIDIA CUDA 툴킷에 포함된 NSight Compute 도구를
+사용합니다.</p>
 </blockquote>
 <h2 id="프로파일링-역량을-바탕으로"><a class="header" href="#프로파일링-역량을-바탕으로">프로파일링 역량을 바탕으로</a></h2>
-<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 GPU 프로파일링 기초를 배우고, <a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 리소스 최적화를 이해했습니다. 이제 배운 탐정 기술을 새로운 성능 미스터리에 적용할 차례입니다: <strong>공유 메모리 뱅크 충돌</strong>.</p>
-<p><strong>탐정 도전 과제:</strong> 동일한 수학적 연산(<code>(input + 10) * 2</code>)을 수행하는 두 GPU 커널이 있습니다. 둘 다 정확히 같은 결과를 냅니다. 같은 양의 공유 메모리를 사용합니다. 점유율도 동일합니다. 그런데 하나는 공유 메모리에 <strong>접근하는 방식</strong> 때문에 체계적인 성능 저하를 겪습니다.</p>
-<p><strong>여러분의 임무:</strong> 지금까지 배운 프로파일링 방법론으로 이 숨겨진 성능 함정을 밝혀내고, 실제 GPU 프로그래밍에서 뱅크 충돌이 언제 중요한지 이해하세요.</p>
+<p><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>에서 GPU 프로파일링 기초를 배우고,
+<a href="../puzzle_31/puzzle_31.html">Puzzle 31</a>에서 리소스 최적화를 이해했습니다. 이제
+배운 탐정 기술을 새로운 성능 미스터리에 적용할 차례입니다:
+<strong>공유 메모리 뱅크 충돌</strong>.</p>
+<p><strong>탐정 도전 과제:</strong> 동일한 수학적 연산(<code>(input + 10) * 2</code>)을 수행하는 두 GPU
+커널이 있습니다. 둘 다 정확히 같은 결과를 냅니다. 같은 양의 공유 메모리를
+사용합니다. 점유율도 동일합니다. 그런데 하나는 공유 메모리에 <strong>접근하는 방식</strong>
+때문에 체계적인 성능 저하를 겪습니다.</p>
+<p><strong>여러분의 임무:</strong> 지금까지 배운 프로파일링 방법론으로 이 숨겨진 성능 함정을
+밝혀내고, 실제 GPU 프로그래밍에서 뱅크 충돌이 언제 중요한지 이해하세요.</p>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>공유 메모리 뱅크 충돌은 워프 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른 주소에 동시에 접근할 때 발생합니다. 이 탐정 사건에서는 대조적인 접근 패턴을 가진 두 커널을 살펴봅니다:</p>
+<p>공유 메모리 뱅크 충돌은 워프 내의 여러 스레드가 동일한 메모리 뱅크의 서로 다른
+주소에 동시에 접근할 때 발생합니다. 이 탐정 사건에서는 대조적인 접근 패턴을 가진
+두 커널을 살펴봅니다:</p>
 <pre><code class="language-mojo">comptime SIZE = 8 * 1024  # 8K elements - small enough to focus on shared memory patterns
 comptime TPB = 256  # Threads per block - divisible by 32 (warp size)
 comptime THREADS_PER_BLOCK = (TPB, 1)
@@ -305,29 +316,36 @@ def no_conflict_kernel(
 
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p32/p32.mojo" class="filename">전체 파일 보기: problems/p32/p32.mojo</a></p>
-<p><strong>미스터리:</strong> 이 커널들은 동일한 결과를 계산하지만 공유 메모리 접근 효율은 극적으로 다릅니다. 체계적인 프로파일링 분석을 통해 그 이유를 밝혀내는 것이 임무입니다.</p>
+<p><strong>미스터리:</strong> 이 커널들은 동일한 결과를 계산하지만 공유 메모리 접근 효율은
+극적으로 다릅니다. 체계적인 프로파일링 분석을 통해 그 이유를 밝혀내는 것이
+임무입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <p><strong>요구 사항:</strong></p>
 <ul>
-<li><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>의 CUDA 툴킷과 NSight Compute가 설치된 NVIDIA GPU</li>
-<li><a href="./shared_memory_bank.html">이전 섹션</a>에서 다룬 공유 메모리 뱅킹 개념에 대한 이해</li>
+<li><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>의 CUDA 툴킷과 NSight Compute가 설치된
+NVIDIA GPU</li>
+<li><a href="./shared_memory_bank.html">이전 섹션</a>에서 다룬 공유 메모리 뱅킹 개념에 대한
+이해</li>
 </ul>
 <p><strong>커널 설정:</strong></p>
 <pre><code class="language-mojo">comptime SIZE = 8 * 1024      # 8K elements - focus on shared memory patterns
 comptime TPB = 256            # 256 threads per block (8 warps)
 comptime BLOCKS_PER_GRID = (SIZE // TPB, 1)  # 32 blocks
 </code></pre>
-<p><strong>핵심 통찰:</strong> 전역 메모리 대역폭 제한이 아닌 공유 메모리 효과를 부각하기 위해 문제 크기를 의도적으로 이전 퍼즐보다 작게 설정했습니다.</p>
+<p><strong>핵심 통찰:</strong> 전역 메모리 대역폭 제한이 아닌 공유 메모리 효과를 부각하기 위해
+문제 크기를 의도적으로 이전 퍼즐보다 작게 설정했습니다.</p>
 <h2 id="조사-과정"><a class="header" href="#조사-과정">조사 과정</a></h2>
 <h3 id="step-1-정확성-검증"><a class="header" href="#step-1-정확성-검증">Step 1: 정확성 검증</a></h3>
 <pre><code class="language-bash">pixi shell -e nvidia
 mojo problems/p32/p32.mojo --test
 </code></pre>
-<p>두 커널 모두 동일한 결과를 내야 합니다. 이를 통해 뱅크 충돌이 <strong>정확성</strong>이 아닌 <strong>성능</strong>에 영향을 미친다는 것을 확인합니다.</p>
+<p>두 커널 모두 동일한 결과를 내야 합니다. 이를 통해 뱅크 충돌이 <strong>정확성</strong>이 아닌
+<strong>성능</strong>에 영향을 미친다는 것을 확인합니다.</p>
 <h3 id="step-2-성능-기준선-벤치마크"><a class="header" href="#step-2-성능-기준선-벤치마크">Step 2: 성능 기준선 벤치마크</a></h3>
 <pre><code class="language-bash">mojo problems/p32/p32.mojo --benchmark
 </code></pre>
-<p>실행 시간을 기록하세요. 워크로드가 전역 메모리 접근에 의해 지배되기 때문에 비슷한 성능이 나올 수 있지만, 뱅크 충돌은 프로파일링 메트릭을 통해 드러납니다.</p>
+<p>실행 시간을 기록하세요. 워크로드가 전역 메모리 접근에 의해 지배되기 때문에
+비슷한 성능이 나올 수 있지만, 뱅크 충돌은 프로파일링 메트릭을 통해 드러납니다.</p>
 <h3 id="step-3-프로파일링용-빌드"><a class="header" href="#step-3-프로파일링용-빌드">Step 3: 프로파일링용 빌드</a></h3>
 <pre><code class="language-bash">mojo build --debug-level=full problems/p32/p32.mojo -o problems/p32/p32_profiler
 </code></pre>
@@ -386,15 +404,21 @@ shared_buf[(thread_idx.x * 2) % TPB]
 </ol>
 <h3 id="뱅크-충돌-탐정-작업"><a class="header" href="#뱅크-충돌-탐정-작업">뱅크 충돌 탐정 작업</a></h3>
 <ol>
-<li>충돌 없는 커널은 충돌이 0인데, 2-way 충돌 커널에서는 측정 가능한 충돌이 나타나는 이유는 무엇인가요?</li>
-<li>stride-2 접근 패턴 <code>(thread_idx.x * 2) % TPB</code>는 어떻게 체계적인 충돌을 만들어내나요?</li>
-<li>뱅크 충돌이 메모리 바운드 커널보다 연산 집약적 커널에서 더 중요한 이유는 무엇인가요?</li>
+<li>충돌 없는 커널은 충돌이 0인데, 2-way 충돌 커널에서는 측정 가능한 충돌이
+나타나는 이유는 무엇인가요?</li>
+<li>stride-2 접근 패턴 <code>(thread_idx.x * 2) % TPB</code>는 어떻게 체계적인 충돌을
+만들어내나요?</li>
+<li>뱅크 충돌이 메모리 바운드 커널보다 연산 집약적 커널에서 더 중요한 이유는
+무엇인가요?</li>
 </ol>
 <h3 id="실전-시사점"><a class="header" href="#실전-시사점">실전 시사점</a></h3>
 <ol>
-<li>뱅크 충돌이 애플리케이션 성능에 큰 영향을 미칠 것으로 예상되는 경우는 언제인가요?</li>
-<li>공유 메모리 알고리즘을 구현하기 전에 뱅크 충돌 패턴을 어떻게 예측할 수 있나요?</li>
-<li>행렬 연산과 스텐실 연산에서 뱅크 충돌을 피하는 데 도움이 되는 설계 원칙은 무엇인가요?</li>
+<li>뱅크 충돌이 애플리케이션 성능에 큰 영향을 미칠 것으로 예상되는 경우는
+언제인가요?</li>
+<li>공유 메모리 알고리즘을 구현하기 전에 뱅크 충돌 패턴을 어떻게 예측할 수
+있나요?</li>
+<li>행렬 연산과 스텐실 연산에서 뱅크 충돌을 피하는 데 도움이 되는 설계 원칙은
+무엇인가요?</li>
 </ol>
 <details>
 <summary><strong>팁</strong></summary>
@@ -410,7 +434,8 @@ shared_buf[(thread_idx.x * 2) % TPB]
 <ul>
 <li><strong>체계적으로 측정하기:</strong> 충돌을 추측하지 말고 프로파일링 도구를 사용</li>
 <li><strong>접근 패턴 시각화하기:</strong> 복잡한 알고리즘의 스레드-뱅크 매핑을 그려보기</li>
-<li><strong>워크로드 맥락 고려하기:</strong> 뱅크 충돌은 연산 집약적 공유 메모리 알고리즘에서 가장 중요</li>
+<li><strong>워크로드 맥락 고려하기:</strong> 뱅크 충돌은 연산 집약적 공유 메모리 알고리즘에서
+가장 중요</li>
 <li><strong>예방적으로 사고하기:</strong> 처음부터 충돌 없는 접근 패턴으로 알고리즘 설계</li>
 </ul>
 <p><strong>접근 패턴 분석 방법:</strong></p>
@@ -424,7 +449,8 @@ shared_buf[(thread_idx.x * 2) % TPB]
 <ul>
 <li><strong>순차 접근:</strong> <code>shared[thread_idx.x]</code> - 각 스레드가 다른 뱅크에 접근</li>
 <li><strong>브로드캐스트 접근:</strong> 모든 스레드가 <code>shared[0]</code> - 하드웨어 최적화</li>
-<li><strong>2의 거듭제곱 스트라이드:</strong> stride-32는 뱅킹 패턴에 깔끔하게 매핑되는 경우가 많음</li>
+<li><strong>2의 거듭제곱 스트라이드:</strong> stride-32는 뱅킹 패턴에 깔끔하게 매핑되는 경우가
+많음</li>
 <li><strong>패딩된 배열:</strong> 패딩을 추가하여 문제가 되는 접근 패턴을 이동</li>
 </ul>
 </div>
@@ -432,53 +458,58 @@ shared_buf[(thread_idx.x * 2) % TPB]
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary><strong>뱅크 충돌 분석이 포함된 완전한 풀이</strong></summary>
-<p>이 뱅크 충돌 탐정 사건은 공유 메모리 접근 패턴이 GPU 성능에 어떤 영향을 미치는지, 그리고 최적화를 위한 체계적 프로파일링의 중요성을 보여줍니다.</p>
+<p>이 뱅크 충돌 탐정 사건은 공유 메모리 접근 패턴이 GPU 성능에 어떤 영향을
+미치는지, 그리고 최적화를 위한 체계적 프로파일링의 중요성을 보여줍니다.</p>
 <h2 id="프로파일링을-통한-조사-결과"><a class="header" href="#프로파일링을-통한-조사-결과"><strong>프로파일링을 통한 조사 결과</strong></a></h2>
 <p><strong>Step 1: 정확성 검증</strong>
 두 커널 모두 동일한 수학적 결과를 냅니다:</p>
-<pre><code>✅ No-conflict kernel: PASSED
+<pre><code class="language-text">✅ No-conflict kernel: PASSED
 ✅ Two-way conflict kernel: PASSED
 ✅ Both kernels produce identical results
 </code></pre>
 <p><strong>Step 2: 성능 기준선</strong>
 벤치마크 결과는 비슷한 실행 시간을 보여줍니다:</p>
-<pre><code>| name             | met (ms)           | iters |
+<pre><code class="language-text">| name             | met (ms)           | iters |
 | ---------------- | ------------------ | ----- |
 | no_conflict      | 2.1930616745886655 | 547   |
 | two_way_conflict | 2.1978922967032966 | 546   |
 </code></pre>
-<p><strong>핵심 통찰:</strong> 성능이 거의 동일한 이유(~2.19ms vs ~2.20ms)는 이 워크로드가 공유 메모리 바운드가 아닌 <strong>전역 메모리 바운드</strong>이기 때문입니다. 뱅크 충돌은 실행 시간이 아닌 프로파일링 메트릭을 통해 드러납니다.</p>
+<p><strong>핵심 통찰:</strong> 성능이 거의 동일한 이유(~2.19ms vs ~2.20ms)는 이 워크로드가 공유
+메모리 바운드가 아닌 <strong>전역 메모리 바운드</strong>이기 때문입니다. 뱅크 충돌은 실행
+시간이 아닌 프로파일링 메트릭을 통해 드러납니다.</p>
 <h2 id="뱅크-충돌-프로파일링-근거"><a class="header" href="#뱅크-충돌-프로파일링-근거"><strong>뱅크 충돌 프로파일링 근거</strong></a></h2>
 <p><strong>충돌 없는 커널 (최적 접근 패턴):</strong></p>
-<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
+<pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    0
 l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    0
 </code></pre>
 <p><strong>결과:</strong> 로드와 스토어 모두 충돌 0건 - 완벽한 공유 메모리 효율.</p>
 <p><strong>2-Way 충돌 커널 (문제 있는 접근 패턴):</strong></p>
-<pre><code>l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    256
+<pre><code class="language-text">l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_ld.sum    256
 l1tex__data_bank_conflicts_pipe_lsu_mem_shared_op_st.sum    256
 </code></pre>
 <p><strong>결과:</strong> 로드와 스토어 각각 256건의 충돌 - 체계적인 뱅킹 문제의 명확한 근거.</p>
-<p><strong>총 충돌 차이:</strong> 512건의 충돌(256 + 256)이 측정 가능한 공유 메모리 비효율을 보여줍니다.</p>
+<p><strong>총 충돌 차이:</strong> 512건의 충돌(256 + 256)이 측정 가능한 공유 메모리 비효율을
+보여줍니다.</p>
 <h2 id="접근-패턴-수학적-분석"><a class="header" href="#접근-패턴-수학적-분석"><strong>접근 패턴 수학적 분석</strong></a></h2>
 <h3 id="충돌-없는-커널-접근-패턴"><a class="header" href="#충돌-없는-커널-접근-패턴">충돌 없는 커널 접근 패턴</a></h3>
 <p><strong>스레드-인덱스 매핑:</strong></p>
 <pre><code class="language-mojo">shared_buf[thread_idx.x]
 </code></pre>
 <p><strong>뱅크 할당 분석:</strong></p>
-<pre><code>Thread 0  → Index 0   → Bank 0 % 32 = 0
+<pre><code class="language-text">Thread 0  → Index 0   → Bank 0 % 32 = 0
 Thread 1  → Index 1   → Bank 1 % 32 = 1
 Thread 2  → Index 2   → Bank 2 % 32 = 2
 ...
 Thread 31 → Index 31  → Bank 31 % 32 = 31
 </code></pre>
-<p><strong>결과:</strong> 완벽한 뱅크 분배 - 각 워프 내에서 각 스레드가 서로 다른 뱅크에 접근하여 병렬 접근이 가능합니다.</p>
+<p><strong>결과:</strong> 완벽한 뱅크 분배 - 각 워프 내에서 각 스레드가 서로 다른 뱅크에
+접근하여 병렬 접근이 가능합니다.</p>
 <h3 id="2-way-충돌-커널-접근-패턴"><a class="header" href="#2-way-충돌-커널-접근-패턴">2-way 충돌 커널 접근 패턴</a></h3>
 <p><strong>스레드-인덱스 매핑:</strong></p>
 <pre><code class="language-mojo">shared_buf[(thread_idx.x * 2) % TPB]  # TPB = 256
 </code></pre>
 <p><strong>첫 번째 워프(스레드 0-31)의 뱅크 할당 분석:</strong></p>
-<pre><code>Thread 0  → Index (0*2)%256 = 0   → Bank 0
+<pre><code class="language-text">Thread 0  → Index (0*2)%256 = 0   → Bank 0
 Thread 1  → Index (1*2)%256 = 2   → Bank 2
 Thread 2  → Index (2*2)%256 = 4   → Bank 4
 ...
@@ -487,8 +518,10 @@ Thread 17 → Index (17*2)%256 = 34 → Bank 2  ← Thread 1과 충돌
 Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← Thread 2와 충돌
 ...
 </code></pre>
-<p><strong>충돌 패턴:</strong> 각 뱅크가 정확히 2개의 스레드를 처리하여 32개 뱅크 전체에서 체계적인 2-way 충돌이 발생합니다.</p>
-<p><strong>수학적 설명:</strong> stride-2 패턴과 모듈로 256의 조합이 반복적인 접근 패턴을 만들어냅니다:</p>
+<p><strong>충돌 패턴:</strong> 각 뱅크가 정확히 2개의 스레드를 처리하여 32개 뱅크 전체에서
+체계적인 2-way 충돌이 발생합니다.</p>
+<p><strong>수학적 설명:</strong> stride-2 패턴과 모듈로 256의 조합이 반복적인 접근 패턴을
+만들어냅니다:</p>
 <ul>
 <li>스레드 0-15는 뱅크 0,2,4,…,30에 접근</li>
 <li>스레드 16-31은 <strong>동일한 뱅크</strong> 0,2,4,…,30에 접근</li>
@@ -499,7 +532,8 @@ Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← Thread 2와 충돌
 <p><strong>이 워크로드의 특성:</strong></p>
 <ul>
 <li><strong>전역 메모리 지배적:</strong> 각 스레드가 메모리 전송 대비 최소한의 연산만 수행</li>
-<li><strong>공유 메모리는 부차적:</strong> 뱅크 충돌이 오버헤드를 추가하지만 전체 실행 시간을 지배하지는 않음</li>
+<li><strong>공유 메모리는 부차적:</strong> 뱅크 충돌이 오버헤드를 추가하지만 전체 실행 시간을
+지배하지는 않음</li>
 <li><strong>동일한 성능:</strong> 전역 메모리 대역폭 포화가 공유 메모리 비효율을 가림</li>
 </ul>
 <p><strong>뱅크 충돌이 가장 중요한 경우:</strong></p>
@@ -507,7 +541,8 @@ Thread 18 → Index (18*2)%256 = 36 → Bank 4  ← Thread 2와 충돌
 <li><strong>연산 집약적 공유 메모리 알고리즘</strong> - 행렬 곱셈, 스텐실 연산, FFT</li>
 <li><strong>타이트한 연산 루프</strong> - 내부 루프 안에서 반복적인 공유 메모리 접근</li>
 <li><strong>높은 산술 강도</strong> - 메모리 접근당 상당한 연산량</li>
-<li><strong>대규모 공유 메모리 작업 세트</strong> - 공유 메모리 캐싱을 집중적으로 활용하는 알고리즘</li>
+<li><strong>대규모 공유 메모리 작업 세트</strong> - 공유 메모리 캐싱을 집중적으로 활용하는
+알고리즘</li>
 </ol>
 <h3 id="실전-성능-시사점"><a class="header" href="#실전-성능-시사점">실전 성능 시사점</a></h3>
 <p><strong>뱅크 충돌이 성능에 큰 영향을 미치는 애플리케이션:</strong></p>
@@ -560,10 +595,13 @@ if thread_idx.x &lt; stride:
 <h2 id="핵심-정리-탐정-작업에서-최적화-전문성으로"><a class="header" href="#핵심-정리-탐정-작업에서-최적화-전문성으로"><strong>핵심 정리: 탐정 작업에서 최적화 전문성으로</strong></a></h2>
 <p><strong>뱅크 충돌 조사에서 밝혀진 것:</strong></p>
 <ol>
-<li><strong>측정이 직관보다 낫다</strong> - 프로파일링 도구가 성능 타이밍으로는 보이지 않는 충돌을 드러냄</li>
+<li><strong>측정이 직관보다 낫다</strong> - 프로파일링 도구가 성능 타이밍으로는 보이지 않는
+충돌을 드러냄</li>
 <li><strong>패턴 분석이 유효하다</strong> - 수학적 예측이 NSight Compute 결과와 정확히 일치</li>
-<li><strong>맥락이 중요하다</strong> - 뱅크 충돌은 연산 집약적 공유 메모리 워크로드에서 가장 중요</li>
-<li><strong>예방이 수정보다 낫다</strong> - 충돌 없는 패턴을 설계하는 것이 사후 최적화보다 쉬움</li>
+<li><strong>맥락이 중요하다</strong> - 뱅크 충돌은 연산 집약적 공유 메모리 워크로드에서 가장
+중요</li>
+<li><strong>예방이 수정보다 낫다</strong> - 충돌 없는 패턴을 설계하는 것이 사후 최적화보다
+쉬움</li>
 </ol>
 <p><strong>보편적인 공유 메모리 최적화 원칙:</strong></p>
 <p><strong>뱅크 충돌에 주의해야 하는 경우:</strong></p>
@@ -586,7 +624,10 @@ if thread_idx.x &lt; stride:
 <li><strong>체계적으로 설계</strong> - 뱅킹을 사후 고려가 아닌 알고리즘 설계 단계에서 고려</li>
 <li><strong>최적화 검증</strong> - 충돌 감소가 실제 성능을 개선하는지 확인</li>
 </ol>
-<p>이 탐정 사건은 <strong>체계적 프로파일링이 성능 타이밍만으로는 보이지 않는 최적화 기회를 드러낸다</strong>는 것을 보여줍니다 - 뱅크 충돌은 측정 기반 최적화가 추측보다 나은 대표적인 사례입니다.</p>
+<p>이 탐정 사건은
+<strong>체계적 프로파일링이 성능 타이밍만으로는 보이지 않는 최적화 기회를 드러낸다</strong>는
+것을 보여줍니다 - 뱅크 충돌은 측정 기반 최적화가 추측보다 나은 대표적인
+사례입니다.</p>
 </details>
 
                     </main>

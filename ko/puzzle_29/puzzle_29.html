@@ -212,7 +212,10 @@
 <h1 id="puzzle-29-gpu-동기화-기본-요소"><a class="header" href="#puzzle-29-gpu-동기화-기본-요소">Puzzle 29: GPU 동기화 기본 요소</a></h1>
 <blockquote>
 <p><strong>단순한 병렬 처리를 넘어서</strong></p>
-<p>이 장에서는 스레드 간 정밀한 조율이 필요한 복잡한 GPU 알고리즘을 가능하게 하는 <strong>동기화 패턴</strong>을 소개합니다. 단순한 병렬 연산에 초점을 맞춘 이전 퍼즐들과 달리, 이 챌린지들은 실제 GPU 소프트웨어에서 사용되는 <strong>아키텍처 접근 방식</strong>을 탐구합니다.</p>
+<p>이 장에서는 스레드 간 정밀한 조율이 필요한 복잡한 GPU 알고리즘을 가능하게 하는
+<strong>동기화 패턴</strong>을 소개합니다. 단순한 병렬 연산에 초점을 맞춘 이전 퍼즐들과
+달리, 이 챌린지들은 실제 GPU 소프트웨어에서 사용되는 <strong>아키텍처 접근 방식</strong>을
+탐구합니다.</p>
 <p><strong>학습 내용:</strong></p>
 <ul>
 <li><strong>스레드 특화</strong>: 하나의 블록 안에서 서로 다른 스레드 그룹이 각각 다른 알고리즘을 실행</li>
@@ -221,10 +224,16 @@
 <li><strong>메모리 배리어 조정</strong>: 메모리 가시성과 순서에 대한 명시적 제어</li>
 <li><strong>반복 알고리즘 패턴</strong>: 복잡한 연산을 위한 더블 버퍼링과 파이프라인 조정</li>
 </ul>
-<p><strong>왜 중요한가:</strong> 대부분의 GPU 튜토리얼은 단순한 데이터 병렬 패턴을 가르치지만, 실제 애플리케이션에서는 서로 다른 처리 단계, 메모리 접근 패턴, 알고리즘 단계 간의 <strong>정교한 조율</strong>이 필요합니다. 이 퍼즐들은 학술적 예제와 실제 GPU 컴퓨팅 사이의 간극을 메워줍니다.</p>
+<p><strong>왜 중요한가:</strong> 대부분의 GPU 튜토리얼은 단순한 데이터 병렬 패턴을 가르치지만,
+실제 애플리케이션에서는 서로 다른 처리 단계, 메모리 접근 패턴, 알고리즘 단계
+간의 <strong>정교한 조율</strong>이 필요합니다. 이 퍼즐들은 학술적 예제와 실제 GPU 컴퓨팅
+사이의 간극을 메워줍니다.</p>
 </blockquote>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 동작하게 하는 토대입니다. 이 장에서는 고성능 GPU 컴퓨팅 전반에 걸쳐 나타나는 세 가지 기본적인 동기화 패턴인 <strong>파이프라인 조정</strong>, <strong>메모리 배리어 관리</strong>, <strong>스트리밍 연산</strong>을 탐구합니다.</p>
+<p>GPU 동기화는 복잡한 병렬 알고리즘이 올바르고 효율적으로 동작하게 하는
+토대입니다. 이 장에서는 고성능 GPU 컴퓨팅 전반에 걸쳐 나타나는 세 가지 기본적인
+동기화 패턴인 <strong>파이프라인 조정</strong>, <strong>메모리 배리어 관리</strong>, <strong>스트리밍 연산</strong>을
+탐구합니다.</p>
 <p><strong>핵심 학습 목표:</strong></p>
 <ul>
 <li>서로 다른 동기화 기본 요소가 <strong>언제, 왜</strong> 필요한지 이해</li>
@@ -232,7 +241,9 @@
 <li>정밀한 메모리 조정이 필요한 <strong>반복 패턴 구현</strong></li>
 <li>정확성을 보장하면서 <strong>동기화 오버헤드 최적화</strong></li>
 </ul>
-<p><strong>아키텍처 진행 구조:</strong> 이 퍼즐들은 기본적인 파이프라인 조정부터 고급 메모리 배리어 관리까지, 그리고 최종적으로 고처리량 애플리케이션에서 사용되는 스트리밍 연산 패턴까지 단계적으로 진행되도록 설계되었습니다.</p>
+<p><strong>아키텍처 진행 구조:</strong> 이 퍼즐들은 기본적인 파이프라인 조정부터 고급 메모리
+배리어 관리까지, 그리고 최종적으로 고처리량 애플리케이션에서 사용되는 스트리밍
+연산 패턴까지 단계적으로 진행되도록 설계되었습니다.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p><strong>스레드 조율 패러다임:</strong></p>
 <ul>
@@ -243,8 +254,11 @@
 </ul>
 <p><strong>동기화 기본 요소의 계층 구조:</strong></p>
 <ul>
-<li><strong>기본 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>: 블록 내 단순 스레드 동기화</li>
-<li><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></strong>: 상태 추적을 지원하는 세밀한 메모리 배리어 제어</li>
+<li><strong>기본
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></strong>:
+블록 내 단순 스레드 동기화</li>
+<li><strong>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a></strong>:
+상태 추적을 지원하는 세밀한 메모리 배리어 제어</li>
 <li><strong>스트리밍 조정</strong>: 비동기 복사 및 대량 전송 동기화</li>
 </ul>
 <p><strong>메모리 일관성 모델:</strong></p>
@@ -277,7 +291,9 @@
 <p>이 장에는 서로를 기반으로 발전하는 세 개의 연결된 퍼즐이 포함되어 있습니다:</p>
 <h3 id="다단계-파이프라인-조정"><a class="header" href="#다단계-파이프라인-조정"><strong><a href="barrier.html">다단계 파이프라인 조정</a></strong></a></h3>
 <p><strong>초점</strong>: 스레드 특화와 파이프라인 아키텍처</p>
-<p>하나의 블록 안에서 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하는 GPU 커널을 설계하는 방법을 배웁니다. 이 퍼즐에서는 <strong>생산자-소비자 관계</strong>와 서로 다른 알고리즘 단계 간의 전략적 배리어 배치를 소개합니다.</p>
+<p>하나의 블록 안에서 서로 다른 스레드 그룹이 완전히 다른 알고리즘을 실행하는 GPU
+커널을 설계하는 방법을 배웁니다. 이 퍼즐에서는 <strong>생산자-소비자 관계</strong>와 서로
+다른 알고리즘 단계 간의 전략적 배리어 배치를 소개합니다.</p>
 <p><strong>핵심 개념</strong>:</p>
 <ul>
 <li>스레드 역할 특화 (Stage 1: 로드, Stage 2: 처리, Stage 3: 출력)</li>
@@ -287,14 +303,19 @@
 <p><strong>실제 응용 분야</strong>: 이미지 처리 파이프라인, 다단계 과학 연산, 신경망 레이어 조정</p>
 <h3 id="더블-버퍼링-스텐실-연산"><a class="header" href="#더블-버퍼링-스텐실-연산"><strong><a href="memory_barrier.html">더블 버퍼링 스텐실 연산</a></strong></a></h3>
 <p><strong>초점</strong>: 고급 메모리 배리어 API와 반복 처리</p>
-<p>정밀한 메모리 조정이 필요한 반복 알고리즘을 위해 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한 <strong>세밀한 동기화 제어</strong>를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에 필수적인 더블 버퍼링 패턴을 보여줍니다.</p>
+<p>정밀한 메모리 조정이 필요한 반복 알고리즘을 위해
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a>를 사용한
+<strong>세밀한 동기화 제어</strong>를 탐구합니다. 이 퍼즐은 반복법과 시뮬레이션 알고리즘에
+필수적인 더블 버퍼링 패턴을 보여줍니다.</p>
 <p><strong>핵심 개념</strong>:</p>
 <ul>
-<li>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a> vs 기본 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
+<li>고급 <a href="https://docs.modular.com/mojo/std/gpu/sync/sync/">mbarrier API</a> vs 기본
+<a href="https://docs.modular.com/mojo/std/gpu/sync/sync/barrier/"><code>barrier()</code></a></li>
 <li>읽기/쓰기 버퍼 역할을 교대하는 더블 버퍼링</li>
 <li>명시적 메모리 배리어를 사용한 반복 알고리즘 조정</li>
 </ul>
-<p><strong>실제 응용 분야</strong>: 반복법 (Jacobi, Gauss-Seidel), 셀룰러 오토마타, 시뮬레이션 시간 스텝</p>
+<p><strong>실제 응용 분야</strong>: 반복법 (Jacobi, Gauss-Seidel), 셀룰러 오토마타, 시뮬레이션
+시간 스텝</p>
 <h2 id="시작하기"><a class="header" href="#시작하기">시작하기</a></h2>
 <p><strong>권장 학습 순서:</strong></p>
 <ol>
@@ -308,9 +329,12 @@
 <li>메모리 계층 구조와 접근 패턴에 대한 이해</li>
 <li>이전 퍼즐에서 배운 배리어 동기화에 대한 친숙함</li>
 </ul>
-<p><strong>학습 성과:</strong>
-이 장을 완료하면, 정밀한 조율이 필요한 정교한 GPU 알고리즘을 설계하고 구현할 수 있는 토대를 갖추게 되어, 실제 GPU 컴퓨팅 애플리케이션에서 마주하는 아키텍처적 복잡성에 대비할 수 있습니다.</p>
-<p><strong>시작할 준비가 되셨나요?</strong> <strong><a href="barrier.html">다단계 파이프라인 조정</a></strong> 에서 스레드 특화의 기본을 배운 다음, <strong><a href="memory_barrier.html">더블 버퍼링 스텐실 연산</a></strong> 으로 나아가 고급 메모리 배리어 기법을 탐구해 보세요.</p>
+<p><strong>학습 성과:</strong> 이 장을 완료하면, 정밀한 조율이 필요한 정교한 GPU 알고리즘을
+설계하고 구현할 수 있는 토대를 갖추게 되어, 실제 GPU 컴퓨팅 애플리케이션에서
+마주하는 아키텍처적 복잡성에 대비할 수 있습니다.</p>
+<p><strong>시작할 준비가 되셨나요?</strong> <strong><a href="barrier.html">다단계 파이프라인 조정</a></strong> 에서 스레드
+특화의 기본을 배운 다음, <strong><a href="memory_barrier.html">더블 버퍼링 스텐실 연산</a></strong> 으로
+나아가 고급 메모리 배리어 기법을 탐구해 보세요.</p>
 
                     </main>
 

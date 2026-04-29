@@ -210,10 +210,17 @@
                     <main>
                         <h1 id="-performance-bonus-challenge"><a class="header" href="#-performance-bonus-challenge">🎯 Performance Bonus Challenge</a></h1>
 <h2 id="the-discovery"><a class="header" href="#the-discovery">The discovery</a></h2>
-<p>You’ve just completed <a href="../puzzle_33/puzzle_33.html">Puzzle 33</a> and implemented actual Tensor Core matrix multiplication using Mojo’s <code>TensorCore</code> API. The implementation works correctly, passes all accuracy tests, and uses real hardware-accelerated matrix operations. But when you profile it against the simple idiomatic tiled version from <a href="../puzzle_16/tiled.html">Puzzle 16</a> …</p>
+<p>You’ve just completed <a href="../puzzle_33/puzzle_33.html">Puzzle 33</a> and implemented
+actual Tensor Core matrix multiplication using Mojo’s <code>TensorCore</code> API. The
+implementation works correctly, passes all accuracy tests, and uses real
+hardware-accelerated matrix operations. But when you profile it against the
+simple idiomatic tiled version from <a href="../puzzle_16/tiled.html">Puzzle 16</a>…</p>
 <p><strong>The “specialized hardware” is orders of magnitude slower!</strong></p>
 <h3 id="what-went-wrong"><a class="header" href="#what-went-wrong">What went wrong?</a></h3>
-<p>Your profiling with (NVIDIA only) <code>ncu</code> revealed the brutal truth (if you need a refresher on profiling techniques, see <a href="../puzzle_10/puzzle_10.html">Puzzle 10’s memory error detection</a> and <a href="../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a>):</p>
+<p>Your profiling with (NVIDIA only) <code>ncu</code> revealed the brutal truth (if you need a
+refresher on profiling techniques, see
+<a href="../puzzle_10/puzzle_10.html">Puzzle 10’s memory error detection</a> and
+<a href="../puzzle_30/puzzle_30.html">Puzzle 30’s GPU profiling</a>):</p>
 <p><strong>Tensor Core version (the disappointment):</strong></p>
 <ul>
 <li><strong>Duration</strong>: ~13.9 ms</li>
@@ -233,7 +240,9 @@
 <li><strong>Clean memory</strong>: No significant bank conflicts</li>
 </ul>
 <h3 id="the-harsh-reality"><a class="header" href="#the-harsh-reality">The harsh reality</a></h3>
-<p>This is a common story in GPU optimization: <strong>raw hardware capability ≠ actual performance</strong>. Tensor Cores are incredibly powerful, but they’re also incredibly demanding:</p>
+<p>This is a common story in GPU optimization:
+<strong>raw hardware capability ≠ actual performance</strong>. Tensor Cores are incredibly
+powerful, but they’re also incredibly demanding:</p>
 <ul>
 <li><strong>Memory wall</strong>: They’re so fast they expose every memory bottleneck</li>
 <li><strong>Resource hungry</strong>: High register usage kills occupancy</li>
@@ -241,7 +250,8 @@
 <li><strong>Configuration critical</strong>: Launch parameters must be perfectly tuned</li>
 </ul>
 <h3 id="your-mission-fix-the-tensor-core-performance"><a class="header" href="#your-mission-fix-the-tensor-core-performance">Your mission: Fix the tensor core performance</a></h3>
-<p><strong>The challenge:</strong> Transform your memory-bound, low-occupancy Tensor Core implementation into something that actually beats the simple tiled version.</p>
+<p><strong>The challenge:</strong> Transform your memory-bound, low-occupancy Tensor Core
+implementation into something that actually beats the simple tiled version.</p>
 <p><strong>What you need to beat:</strong></p>
 <ul>
 <li><strong>Target duration</strong>: &lt; 1.62 ms</li>
@@ -257,15 +267,18 @@
 <li>Use smaller accumulator tiles</li>
 <li>Minimize intermediate storage</li>
 <li>Consider mixed-precision to reduce register footprint</li>
-<li>Review <a href="../puzzle_16/tiled.html">Puzzle 16’s tiled approach</a> for efficient accumulation patterns</li>
+<li>Review <a href="../puzzle_16/tiled.html">Puzzle 16’s tiled approach</a> for efficient
+accumulation patterns</li>
 </ul>
 </li>
 <li>
 <p><strong>Memory pattern optimization</strong></p>
 <ul>
-<li>Add shared memory padding to eliminate bank conflicts (see <a href="../puzzle_16/shared_memory.html">shared memory concepts</a>)</li>
+<li>Add shared memory padding to eliminate bank conflicts (see
+<a href="../puzzle_16/shared_memory.html">shared memory concepts</a>)</li>
 <li>Optimize <code>copy_dram_to_sram_async</code> layouts</li>
-<li>Improve coalescing patterns (memory access fundamentals from <a href="../puzzle_01/puzzle_01.html">early puzzles</a>)</li>
+<li>Improve coalescing patterns (memory access fundamentals from
+<a href="../puzzle_01/puzzle_01.html">early puzzles</a>)</li>
 </ul>
 </li>
 <li>
@@ -274,7 +287,8 @@
 <li>Tune block sizes for better warp utilization</li>
 <li>Balance shared memory vs register usage</li>
 <li>Optimize warp-to-SM mapping</li>
-<li>Apply thread coordination lessons from <a href="../puzzle_11/puzzle_11.html">Puzzle 11-20 series</a></li>
+<li>Apply thread coordination lessons from
+<a href="../puzzle_11/puzzle_11.html">Puzzle 11-20 series</a></li>
 </ul>
 </li>
 <li>
@@ -283,7 +297,8 @@
 <li>Improve data reuse patterns</li>
 <li>Optimize tile sizes for cache hierarchy</li>
 <li>Consider data layout transformations</li>
-<li>Build on memory hierarchy concepts from <a href="../puzzle_05/puzzle_05.html">puzzle progression</a></li>
+<li>Build on memory hierarchy concepts from
+<a href="../puzzle_05/puzzle_05.html">puzzle progression</a></li>
 </ul>
 </li>
 <li>
@@ -292,7 +307,8 @@
 <li>Implement double buffering to overlap memory and compute</li>
 <li>Use software pipelining</li>
 <li>Explore async execution patterns</li>
-<li>Apply advanced coordination from <a href="../puzzle_10/puzzle_10.html">sanitization puzzles</a></li>
+<li>Apply advanced coordination from
+<a href="../puzzle_10/puzzle_10.html">sanitization puzzles</a></li>
 </ul>
 </li>
 </ol>
@@ -305,9 +321,13 @@
 <li><strong>Cache</strong>: Better hit rates (&gt;29.7% L2)</li>
 </ul>
 <h3 id="the-deeper-lesson"><a class="header" href="#the-deeper-lesson">The deeper lesson</a></h3>
-<p>This bonus challenge teaches the most important lesson in GPU optimization: <strong>understanding bottlenecks matters more than using the latest APIs</strong>.</p>
-<p>The goal isn’t just to make Tensor Cores faster - it’s to understand why they can be slower, how to systematically diagnose performance problems, and how to apply principled optimization techniques.</p>
-<p>Complete this challenge, and you’ll have the skills to optimize any GPU workload, regardless of the hardware features available.</p>
+<p>This bonus challenge teaches the most important lesson in GPU optimization:
+<strong>understanding bottlenecks matters more than using the latest APIs</strong>.</p>
+<p>The goal isn’t just to make Tensor Cores faster - it’s to understand why they
+can be slower, how to systematically diagnose performance problems, and how to
+apply principled optimization techniques.</p>
+<p>Complete this challenge, and you’ll have the skills to optimize any GPU
+workload, regardless of the hardware features available.</p>
 
                     </main>
 

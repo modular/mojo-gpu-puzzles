@@ -210,8 +210,9 @@
                     <main>
                         <h1 id="naïve-matrix-multiplication"><a class="header" href="#naïve-matrix-multiplication">Naïve Matrix Multiplication</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and stores the result in \(\text{output}\).
-This is the most straightforward implementation where each thread computes one element of the output matrix.</p>
+<p>Implement a kernel that multiplies square matrices \(A\) and \(B\) and
+stores the result in \(\text{output}\). This is the most straightforward
+implementation where each thread computes one element of the output matrix.</p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -220,7 +221,8 @@ This is the most straightforward implementation where each thread computes one e
 <li>Matrix indexing in row-major layout</li>
 <li>Thread-to-output element mapping</li>
 </ul>
-<p>The key insight is understanding how to map 2D thread indices to matrix elements and compute dot products in parallel.</p>
+<p>The key insight is understanding how to map 2D thread indices to matrix elements
+and compute dot products in parallel.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Matrix size: \(\text{SIZE} \times \text{SIZE} = 2 \times 2\)</li>
@@ -366,14 +368,17 @@ for k in range(size):
 <li>
 <p><strong>Variable declaration</strong>:</p>
 <ul>
-<li>The use of <code>var</code> in <code>var acc: output.element_type = 0</code> allows for type inference with <code>output.element_type</code> ensures type compatibility with the output tensor</li>
+<li>The use of <code>var</code> in <code>var acc: output.element_type = 0</code> allows for type
+inference with <code>output.element_type</code> ensures type compatibility with the
+output tensor</li>
 <li>Initialized to zero before accumulation</li>
 </ul>
 </li>
 <li>
 <p><strong>Loop pptimization</strong>:</p>
 <ul>
-<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a> decorator unrolls the loop at compile time</li>
+<li><a href="https://docs.modular.com/mojo/manual/decorators/parameter/#parametric-for-statement"><code>@parameter</code></a>
+decorator unrolls the loop at compile time</li>
 <li>Improves performance for small, known matrix sizes</li>
 <li>Enables better instruction scheduling</li>
 </ul>
@@ -406,7 +411,9 @@ for k in range(size):
 </ul>
 </li>
 </ol>
-<p>This naive implementation serves as a baseline for understanding matrix multiplication on GPUs, highlighting the need for optimization in memory access patterns.</p>
+<p>This naive implementation serves as a baseline for understanding matrix
+multiplication on GPUs, highlighting the need for optimization in memory access
+patterns.</p>
 </div>
 </details>
 

@@ -210,12 +210,16 @@
                     <main>
                         <!-- i18n-source-commit: 23f5ec0530b1cd15f85ce27e39f855a879987d36 -->
 <h1 id="성능-병합-vs-비병합-메모리-접근"><a class="header" href="#성능-병합-vs-비병합-메모리-접근">성능: 병합 vs 비병합 메모리 접근</a></h1>
-<p>메모리 접근 패턴을 이해하는 것은 GPU 성능 최적화의 핵심입니다. 이 섹션에서는 임베딩 조회와 같은 메모리 바운드 연산에서 병합 메모리 접근 패턴이 왜 비병합 패턴보다 뛰어난 성능을 보이는지 설명합니다.</p>
+<p>메모리 접근 패턴을 이해하는 것은 GPU 성능 최적화의 핵심입니다. 이 섹션에서는
+임베딩 조회와 같은 메모리 바운드 연산에서 병합 메모리 접근 패턴이 왜 비병합
+패턴보다 뛰어난 성능을 보이는지 설명합니다.</p>
 <h2 id="메모리-병합-기초"><a class="header" href="#메모리-병합-기초">메모리 병합 기초</a></h2>
-<p><strong>메모리 병합</strong>은 워프 내 연속된 스레드가 연속된 메모리 주소에 접근할 때 발생합니다. GPU는 이러한 개별 메모리 요청을 더 적은 수의 대용량 메모리 트랜잭션으로 결합하여 대역폭 활용도를 크게 향상시킵니다.</p>
+<p><strong>메모리 병합</strong>은 워프 내 연속된 스레드가 연속된 메모리 주소에 접근할 때
+발생합니다. GPU는 이러한 개별 메모리 요청을 더 적은 수의 대용량 메모리
+트랜잭션으로 결합하여 대역폭 활용도를 크게 향상시킵니다.</p>
 <h3 id="병합-vs-비병합-접근"><a class="header" href="#병합-vs-비병합-접근">병합 vs 비병합 접근</a></h3>
 <p><strong>병합 (효율적):</strong></p>
-<pre><code>- Thread 0 → Address 0x1000
+<pre><code class="language-text">- Thread 0 → Address 0x1000
 - Thread 1 → Address 0x1004
 - Thread 2 → Address 0x1008
 - Thread 3 → Address 0x100C
@@ -223,7 +227,7 @@
 </code></pre>
 <p><strong>결과</strong>: 워프 전체(32개 스레드)에 대해 1번의 메모리 트랜잭션</p>
 <p><strong>비병합 (비효율적):</strong></p>
-<pre><code>- Thread 0 → Address 0x1000
+<pre><code class="language-text">- Thread 0 → Address 0x1000
 - Thread 1 → Address 0x2000
 - Thread 2 → Address 0x3000
 - Thread 3 → Address 0x4000
@@ -243,7 +247,8 @@
 <ul>
 <li><strong>스레드 구성</strong>: <code>[total_elements // 256]</code> 블록, 출력 요소당 하나의 스레드</li>
 <li><strong>메모리 패턴</strong>: 연속된 스레드가 연속된 임베딩 차원에 접근</li>
-<li><strong>왜 병합되는가</strong>: <code>Thread 0: output[0,0,0]</code>, <code>Thread 1: output[0,0,1]</code> → 연속된 주소</li>
+<li><strong>왜 병합되는가</strong>: <code>Thread 0: output[0,0,0]</code>, <code>Thread 1: output[0,0,1]</code> →
+연속된 주소</li>
 </ul>
 <h3 id="2d-비병합-커널"><a class="header" href="#2d-비병합-커널">2D 비병합 커널</a></h3>
 <ul>
@@ -253,7 +258,7 @@
 </ul>
 <h2 id="성능-결과"><a class="header" href="#성능-결과">성능 결과</a></h2>
 <p>일반적인 벤치마크 결과:</p>
-<pre><code>Performance Results:
+<pre><code class="language-text">Performance Results:
    1D Coalesced:     2.145 ms
    2D Non-coalesced: 3.867 ms
    1D is 1.80x faster than 2D
@@ -273,7 +278,7 @@
 <p><strong>결과</strong>: 연속된 주소 → 워프 전체에 대해 <strong>1번의 메모리 트랜잭션</strong></p>
 <h3 id="비병합-패턴-2d-커널"><a class="header" href="#비병합-패턴-2d-커널">비병합 패턴 (2D 커널)</a></h3>
 <p><strong>16×16 블록의 워프 실행:</strong></p>
-<pre><code>Block organization (16×16):
+<pre><code class="language-text">Block organization (16×16):
     X-dim: batch*seq positions (0-15)
     Y-dim: embed dimensions (0-15)
 
@@ -293,7 +298,8 @@ Warp threads might access:
 <li>병목 지점을 파악하기 위해 <strong>메모리 대역폭을 프로파일링</strong>하세요</li>
 <li>최적화 효과를 검증하기 위해 <strong>메모리 바운드 벤치마크를 활용</strong>하세요</li>
 </ol>
-<p>핵심 통찰: 특히 임베딩과 같은 메모리 바운드 연산에서는 연산 복잡도보다 <strong>메모리 접근 패턴</strong>이 GPU 성능을 결정하는 경우가 많습니다.</p>
+<p>핵심 통찰: 특히 임베딩과 같은 메모리 바운드 연산에서는 연산 복잡도보다
+<strong>메모리 접근 패턴</strong>이 GPU 성능을 결정하는 경우가 많습니다.</p>
 
                     </main>
 

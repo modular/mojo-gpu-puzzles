@@ -211,7 +211,8 @@
                         <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 <h1 id="tiletensor-버전"><a class="header" href="#tiletensor-버전">TileTensor 버전</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>2D <em>TileTensor</em> <code>a</code>의 각 위치에 10을 더해 2D <em>TileTensor</em> <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>2D <em>TileTensor</em> <code>a</code>의 각 위치에 10을 더해 2D <em>TileTensor</em> <code>output</code>에 저장하는
+커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다</em>.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -220,12 +221,14 @@
 <li><code>tensor[i, j]</code>로 직접 2D 인덱싱하기</li>
 <li><code>TileTensor</code>에서 경계 검사 처리하기</li>
 </ul>
-<p>핵심은 <code>TileTensor</code>가 자연스러운 2D 인덱싱 인터페이스를 제공하여 내부 메모리 레이아웃을 추상화한다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.</p>
+<p>핵심은 <code>TileTensor</code>가 자연스러운 2D 인덱싱 인터페이스를 제공하여 내부 메모리
+레이아웃을 추상화한다는 점입니다. 그러면서도 경계 검사는 여전히 필요합니다.</p>
 <ul>
 <li><strong>2D 접근</strong>: <code>TileTensor</code>로 자연스러운 \((i,j)\) 인덱싱</li>
 <li><strong>메모리 추상화</strong>: 수동 행 우선 계산 불필요</li>
 <li><strong>가드 조건</strong>: 두 차원 모두 경계 검사 필요</li>
-<li><strong>스레드 범위</strong>: 스레드 \((3 \times 3)\)가 텐서 원소 \((2 \times 2)\)보다 많음</li>
+<li><strong>스레드 범위</strong>: 스레드 \((3 \times 3)\)가 텐서 원소 \((2 \times 2)\)보다
+많음</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2

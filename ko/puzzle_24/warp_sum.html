@@ -210,8 +210,14 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="warpsum의-핵심---워프-레벨-내적"><a class="header" href="#warpsum의-핵심---워프-레벨-내적">warp.sum()의 핵심 - 워프 레벨 내적</a></h1>
-<p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 Mojo의 워프 연산으로 구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 각 워프 레인이 하나의 요소를 처리하고 <code>warp.sum()</code>으로 결과를 자동으로 합산하여, 워프 프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
-<p><strong>핵심 통찰:</strong> <em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a> 연산은 SIMT 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 단일 하드웨어 가속 명령으로 대체합니다.</em></p>
+<p><a href="../puzzle_12/puzzle_12.html">Puzzle 12</a>에서 살펴본 내적을 Mojo의 워프 연산으로
+구현합니다. 복잡한 공유 메모리 패턴을 간단한 함수 호출로 대체합니다. 각 워프
+레인이 하나의 요소를 처리하고 <code>warp.sum()</code>으로 결과를 자동으로 합산하여, 워프
+프로그래밍이 GPU 동기화를 어떻게 변환하는지 보여줍니다.</p>
+<p><strong>핵심 통찰:</strong>
+<em><a href="https://docs.modular.com/mojo/std/gpu/primitives/warp/sum">warp.sum()</a> 연산은
+SIMT 실행을 활용하여 공유 메모리 + 배리어 + 트리 리덕션을 단일 하드웨어 가속
+명령으로 대체합니다.</em></p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
@@ -223,7 +229,8 @@
 </ul>
 <p>수학적 연산은 내적입니다:
 \[\Large \text{output}[0] = \sum_{i=0}^{N-1} a[i] \times b[i]\]</p>
-<p>하지만 구현 과정에서 Mojo의 모든 워프 레벨 GPU 프로그래밍에 적용되는 기본 패턴을 배웁니다.</p>
+<p>하지만 구현 과정에서 Mojo의 모든 워프 레벨 GPU 프로그래밍에 적용되는 기본 패턴을
+배웁니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>벡터 크기: <code>SIZE = WARP_SIZE</code> (GPU 아키텍처에 따라 32 또는 64)</li>
@@ -233,7 +240,8 @@
 <li>레이아웃: <code>row_major[SIZE]()</code> (1D 행 우선)</li>
 </ul>
 <h2 id="기존-방식의-복잡성-puzzle-12에서"><a class="header" href="#기존-방식의-복잡성-puzzle-12에서">기존 방식의 복잡성 (Puzzle 12에서)</a></h2>
-<p><a href="../../../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a>의 복잡한 방식을 떠올려 봅시다. 공유 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
+<p><a href="../../../../../solutions/p12/p12.mojo">solutions/p12/p12.mojo</a>의 복잡한 방식을
+떠올려 봅시다. 공유 메모리, 배리어, 트리 리덕션이 필요했습니다:</p>
 <pre><code class="language-mojo">comptime SIZE = WARP_SIZE
 comptime BLOCKS_PER_GRID = (1, 1)
 comptime THREADS_PER_BLOCK = (WARP_SIZE, 1)
@@ -287,7 +295,8 @@ def traditional_dot_product_p12_style[
 <li><strong>트리 리덕션</strong>: 스트라이드 기반 인덱싱을 사용하는 복잡한 루프</li>
 <li><strong>조건부 쓰기</strong>: 스레드 0만 최종 결과를 기록</li>
 </ul>
-<p>동작은 하지만, 코드가 장황하고 오류가 발생하기 쉬우며 GPU 동기화에 대한 깊은 이해가 필요합니다.</p>
+<p>동작은 하지만, 코드가 장황하고 오류가 발생하기 쉬우며 GPU 동기화에 대한 깊은
+이해가 필요합니다.</p>
 <p><strong>기존 방식 테스트:</strong></p>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -349,8 +358,11 @@ def traditional_dot_product_p12_style[
 if global_i &lt; size:
     partial_product = (a[global_i] * b[global_i]).reduce_add()
 </code></pre>
-<p><strong><code>.reduce_add()</code>가 필요한 이유:</strong> Mojo의 값은 SIMD 기반이므로 <code>a[global_i] * b[global_i]</code>는 SIMD 벡터를 반환합니다. <code>.reduce_add()</code>로 벡터를 스칼라 값으로 합산합니다.</p>
-<p><strong>경계 검사:</strong> 모든 스레드가 유효한 데이터를 가지고 있지 않을 수 있으므로 필수적입니다.</p>
+<p><strong><code>.reduce_add()</code>가 필요한 이유:</strong> Mojo의 값은 SIMD 기반이므로
+<code>a[global_i] * b[global_i]</code>는 SIMD 벡터를 반환합니다. <code>.reduce_add()</code>로 벡터를
+스칼라 값으로 합산합니다.</p>
+<p><strong>경계 검사:</strong> 모든 스레드가 유효한 데이터를 가지고 있지 않을 수 있으므로
+필수적입니다.</p>
 <h3 id="3-워프-리덕션의-마법"><a class="header" href="#3-워프-리덕션의-마법">3. <strong>워프 리덕션의 마법</strong></a></h3>
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 </code></pre>
@@ -365,9 +377,13 @@ if global_i &lt; size:
 <pre><code class="language-mojo">if lane_id() == 0:
     output[global_i // WARP_SIZE] = total
 </code></pre>
-<p><strong>왜 레인 0만?</strong> <code>warp_sum()</code> 이후 모든 레인이 같은 <code>total</code> 값을 갖지만, 경쟁 상태를 피하기 위해 한 번만 기록합니다.</p>
-<p><strong>왜 <code>output[0]</code>에 직접 쓰지 않을까?</strong> 유연성을 위해서입니다. 이 함수는 워프가 여러 개인 경우에도 사용할 수 있으며, 각 워프의 결과가 <code>global_i // WARP_SIZE</code> 위치에 기록됩니다.</p>
-<p><strong><code>lane_id()</code>:</strong> 0-31 (NVIDIA) 또는 0-63 (AMD)을 반환 - 워프 내에서 어느 레인인지 식별합니다.</p>
+<p><strong>왜 레인 0만?</strong> <code>warp_sum()</code> 이후 모든 레인이 같은 <code>total</code> 값을 갖지만, 경쟁
+상태를 피하기 위해 한 번만 기록합니다.</p>
+<p><strong>왜 <code>output[0]</code>에 직접 쓰지 않을까?</strong> 유연성을 위해서입니다. 이 함수는 워프가
+여러 개인 경우에도 사용할 수 있으며, 각 워프의 결과가 <code>global_i // WARP_SIZE</code>
+위치에 기록됩니다.</p>
+<p><strong><code>lane_id()</code>:</strong> 0-31 (NVIDIA) 또는 0-63 (AMD)을 반환 - 워프 내에서 어느
+레인인지 식별합니다.</p>
 </div>
 </details>
 <p><strong>간단한 워프 커널 테스트:</strong></p>
@@ -427,7 +443,8 @@ expected: 10416.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>간단한 워프 커널은 복잡한 동기화에서 하드웨어 가속 기본 요소로의 근본적인 변환을 보여줍니다:</p>
+<p>간단한 워프 커널은 복잡한 동기화에서 하드웨어 가속 기본 요소로의 근본적인 변환을
+보여줍니다:</p>
 <p><strong>기존 방식에서 사라진 것들:</strong></p>
 <ul>
 <li><strong>15줄 이상 → 6줄</strong>: 획기적인 코드 축소</li>
@@ -437,7 +454,7 @@ expected: 10416.0
 <li><strong>스트라이드 기반 인덱싱</strong>: 완전히 제거</li>
 </ul>
 <p><strong>SIMT 실행 모델:</strong></p>
-<pre><code>워프 레인 (SIMT 실행):
+<pre><code class="language-text">워프 레인 (SIMT 실행):
 레인 0: partial_product = a[0] * b[0]    = 0.0
 레인 1: partial_product = a[1] * b[1]    = 4.0
 레인 2: partial_product = a[2] * b[2]    = 16.0
@@ -451,7 +468,8 @@ warp_sum() 하드웨어 연산:
 <p><strong>배리어 없이 동작하는 이유:</strong></p>
 <ol>
 <li><strong>SIMT 실행</strong>: 모든 레인이 각 명령 동시 실행</li>
-<li><strong>하드웨어 동기화</strong>: <code>warp_sum()</code>이 시작될 때 모든 레인이 이미 <code>partial_product</code> 계산 완료</li>
+<li><strong>하드웨어 동기화</strong>: <code>warp_sum()</code>이 시작될 때 모든 레인이 이미
+<code>partial_product</code> 계산 완료</li>
 <li><strong>내장 통신</strong>: GPU 하드웨어가 리덕션 연산 처리</li>
 <li><strong>브로드캐스트 결과</strong>: 모든 레인이 같은 <code>total</code> 값 수신</li>
 </ol>
@@ -510,16 +528,20 @@ if idx &lt; size:
 else:
     partial_product = 0.0
 </code></pre>
-<p><strong>로딩 패턴:</strong> <code>a.load[1](idx, 0)</code>은 위치 <code>idx</code>에서 정확히 1개 요소를 로드합니다 (SIMD 벡터화 없음).</p>
-<p><strong>경계 처리:</strong> 범위를 벗어난 스레드의 <code>partial_product</code>를 <code>0.0</code>으로 설정하여 합산에 기여하지 않도록 합니다.</p>
+<p><strong>로딩 패턴:</strong> <code>a.load[1](idx, 0)</code>은 위치 <code>idx</code>에서 정확히 1개 요소를 로드합니다
+(SIMD 벡터화 없음).</p>
+<p><strong>경계 처리:</strong> 범위를 벗어난 스레드의 <code>partial_product</code>를 <code>0.0</code>으로 설정하여
+합산에 기여하지 않도록 합니다.</p>
 <h3 id="3-워프-연산과-저장"><a class="header" href="#3-워프-연산과-저장">3. <strong>워프 연산과 저장</strong></a></h3>
 <pre><code class="language-mojo">total = warp_sum(partial_product)
 
 if lane_id() == 0:
     output.store[1](Index(idx // WARP_SIZE), total)
 </code></pre>
-<p><strong>저장 패턴:</strong> <code>output.store[1](Index(idx // WARP_SIZE), 0, total)</code>은 출력 텐서의 위치 <code>(idx // WARP_SIZE, 0)</code>에 1개 요소를 저장합니다.</p>
-<p><strong>동일한 워프 로직:</strong> <code>warp_sum()</code>과 레인 0의 기록 로직은 함수형 방식에서도 동일하게 동작합니다.</p>
+<p><strong>저장 패턴:</strong> <code>output.store[1](Index(idx // WARP_SIZE), 0, total)</code>은 출력
+텐서의 위치 <code>(idx // WARP_SIZE, 0)</code>에 1개 요소를 저장합니다.</p>
+<p><strong>동일한 워프 로직:</strong> <code>warp_sum()</code>과 레인 0의 기록 로직은 함수형 방식에서도
+동일하게 동작합니다.</p>
 <h3 id="4-import에서-사용-가능한-함수들"><a class="header" href="#4-import에서-사용-가능한-함수들">4. <strong>import에서 사용 가능한 함수들</strong></a></h3>
 <pre><code class="language-mojo">from gpu import lane_id
 from gpu.primitives.warp import sum as warp_sum, WARP_SIZE
@@ -607,7 +629,8 @@ expected: 10416.0
 
 </code></pre>
 <div class="solution-explanation">
-<p>함수형 워프 방식은 워프 연산을 활용한 현대적인 Mojo 프로그래밍 패턴을 보여줍니다:</p>
+<p>함수형 워프 방식은 워프 연산을 활용한 현대적인 Mojo 프로그래밍 패턴을
+보여줍니다:</p>
 <p><strong>함수형 방식의 특징:</strong></p>
 <pre><code class="language-mojo">elementwise[compute_dot_product, 1, target="gpu"](size, ctx)
 </code></pre>
@@ -649,7 +672,7 @@ expected: 10416.0
   </div>
 </div>
 <p>전체 벤치마크 실행 결과의 예시입니다:</p>
-<pre><code>SIZE: 32
+<pre><code class="language-text">SIZE: 32
 WARP_SIZE: 32
 SIMD_WIDTH: 8
 --------------------------------------------------------------------------------
@@ -732,16 +755,21 @@ WARP OPERATIONS PERFORMANCE ANALYSIS:
 <li><strong>대규모 (16K-65K)</strong>: 메모리 대역폭이 지배적이 되면서 모든 방식의 성능이 수렴</li>
 <li><strong>변동성</strong>: 성능은 특정 GPU 아키텍처와 메모리 서브시스템에 크게 의존</li>
 </ul>
-<p><strong>참고:</strong> 하드웨어(GPU 모델, 메모리 대역폭, <code>WARP_SIZE</code>)에 따라 결과가 크게 달라집니다. 핵심은 절대적인 수치보다 상대적인 성능 추세를 관찰하는 것입니다.</p>
+<p><strong>참고:</strong> 하드웨어(GPU 모델, 메모리 대역폭, <code>WARP_SIZE</code>)에 따라 결과가 크게
+달라집니다. 핵심은 절대적인 수치보다 상대적인 성능 추세를 관찰하는 것입니다.</p>
 <h2 id="다음-단계"><a class="header" href="#다음-단계">다음 단계</a></h2>
 <p>warp.sum 연산을 배웠으니, 다음으로 진행할 수 있습니다:</p>
 <ul>
-<li><strong><a href="./warp_extra.html">언제 워프 프로그래밍을 사용할까</a></strong>: 워프 vs 기존 방식에 대한 전략적 의사결정 프레임워크</li>
-<li><strong>고급 워프 연산</strong>: 복잡한 통신 패턴을 위한 <code>shuffle_idx()</code>, <code>shuffle_down()</code>, <code>prefix_sum()</code></li>
+<li><strong><a href="./warp_extra.html">언제 워프 프로그래밍을 사용할까</a></strong>: 워프 vs 기존 방식에
+대한 전략적 의사결정 프레임워크</li>
+<li><strong>고급 워프 연산</strong>: 복잡한 통신 패턴을 위한 <code>shuffle_idx()</code>, <code>shuffle_down()</code>,
+<code>prefix_sum()</code></li>
 <li><strong>멀티 워프 알고리즘</strong>: 워프 연산과 블록 레벨 동기화의 결합</li>
 <li><strong>메모리 병합 최적화</strong>: 최대 대역폭을 위한 메모리 접근 패턴 최적화</li>
 </ul>
-<p>💡 <strong>핵심 요점</strong>: 워프 연산은 복잡한 동기화 패턴을 하드웨어 가속 기본 요소로 대체하여 GPU 프로그래밍을 변환합니다. 실행 모델을 이해하면 성능을 희생하지 않고도 획기적인 단순화가 가능합니다.</p>
+<p>💡 <strong>핵심 요점</strong>: 워프 연산은 복잡한 동기화 패턴을 하드웨어 가속 기본 요소로
+대체하여 GPU 프로그래밍을 변환합니다. 실행 모델을 이해하면 성능을 희생하지
+않고도 획기적인 단순화가 가능합니다.</p>
 
                     </main>
 

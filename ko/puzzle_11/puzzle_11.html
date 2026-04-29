@@ -211,19 +211,23 @@
                         <!-- i18n-source-commit: 5026a500b7a7ae33256e0b344629e99c7d0f50da -->
 <h1 id="puzzle-11-풀링"><a class="header" href="#puzzle-11-풀링">Puzzle 11: 풀링</a></h1>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>1D TileTensor <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor <code>output</code>에 저장하는 커널을 구현하세요.</p>
-<p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기 1회만 필요합니다.</em></p>
+<p>1D TileTensor <code>a</code>에서 각 위치의 직전 3개 값의 합을 계산하여 1D TileTensor
+<code>output</code>에 저장하는 커널을 구현하세요.</p>
+<p><strong>참고:</strong> <em>각 위치마다 스레드 1개가 있습니다. 스레드당 전역 읽기 1회, 전역 쓰기
+1회만 필요합니다.</em></p>
 <img src="/puzzle_11/media/11-w.png" alt="Pooling 시각화" class="light-mode-img">
 <img src="/puzzle_11/media/11-b.png" alt="Pooling 시각화" class="dark-mode-img">
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
 <ul>
 <li>TileTensor로 슬라이딩 윈도우 연산 구현하기</li>
-<li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>에서 다룬 TileTensor 주소 공간(address_space)으로 공유 메모리 관리하기</li>
+<li><a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>에서 다룬 TileTensor 주소
+공간(address_space)으로 공유 메모리 관리하기</li>
 <li>효율적인 이웃 접근 패턴</li>
 <li>경계 조건 처리</li>
 </ul>
-<p>핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를 간소화하는 방법입니다.</p>
+<p>핵심은 TileTensor가 효율적인 윈도우 기반 연산은 유지하면서도 공유 메모리 관리를
+간소화하는 방법입니다.</p>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <ul>
 <li>배열 크기: <code>SIZE = 8</code></li>
@@ -233,7 +237,9 @@
 </ul>
 <p>참고:</p>
 <ul>
-<li><strong>TileTensor 할당</strong>: <code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code> 사용</li>
+<li><strong>TileTensor 할당</strong>:
+<code>stack_allocation[dtype=dtype, address_space=AddressSpace.SHARED](row_major[TPB]())</code>
+사용</li>
 <li><strong>윈도우 접근</strong>: 3개짜리 윈도우에 자연스러운 인덱싱</li>
 <li><strong>경계 처리</strong>: 처음 두 위치는 특수 케이스</li>
 <li><strong>메모리 패턴</strong>: 스레드당 공유 메모리 로드 1회</li>
@@ -344,7 +350,8 @@ expected: HostBuffer([0.0, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과 같습니다:</p>
+<p>TileTensor를 활용한 슬라이딩 윈도우 합계 구현입니다. 주요 단계는 다음과
+같습니다:</p>
 <ol>
 <li>
 <p><strong>공유 메모리 설정</strong></p>

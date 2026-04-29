@@ -212,7 +212,10 @@
 <blockquote>
 <p><strong>Beyond Correct Code</strong></p>
 <p>Note: <strong>This part is specific to compatible NVIDIA GPUs</strong></p>
-<p>This chapter introduces <strong>systematic performance analysis</strong> that transforms working GPU code into high-performance code. Unlike previous puzzles that focused on correctness and GPU features, these challenges explore <strong>profiling methodologies</strong> used in production GPU software development.</p>
+<p>This chapter introduces <strong>systematic performance analysis</strong> that transforms
+working GPU code into high-performance code. Unlike previous puzzles that
+focused on correctness and GPU features, these challenges explore
+<strong>profiling methodologies</strong> used in production GPU software development.</p>
 <p><strong>What you’ll learn:</strong></p>
 <ul>
 <li><strong>Professional profiling tools</strong>: NSight Systems and NSight Compute for comprehensive performance analysis</li>
@@ -221,29 +224,45 @@
 <li><strong>Counter-intuitive discoveries</strong>: Learning when “good” metrics actually indicate performance problems</li>
 <li><strong>Evidence-based optimization</strong>: Making optimization decisions based on profiler data, not assumptions</li>
 </ul>
-<p><strong>Why this matters:</strong> Most GPU tutorials teach basic performance concepts, but real-world GPU development requires <strong>systematic profiling methodologies</strong> to identify actual bottlenecks, understand memory system behavior, and make informed optimization decisions. These skills bridge the gap between academic examples and production GPU computing.</p>
+<p><strong>Why this matters:</strong> Most GPU tutorials teach basic performance concepts, but
+real-world GPU development requires <strong>systematic profiling methodologies</strong> to
+identify actual bottlenecks, understand memory system behavior, and make
+informed optimization decisions. These skills bridge the gap between academic
+examples and production GPU computing.</p>
 </blockquote>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>GPU performance profiling transforms correct code into high-performance code through systematic analysis. This chapter explores professional profiling tools and detective methodologies used in production GPU development.</p>
+<p>GPU performance profiling transforms correct code into high-performance code
+through systematic analysis. This chapter explores professional profiling tools
+and detective methodologies used in production GPU development.</p>
 <p><strong>Core learning objectives:</strong></p>
 <ul>
-<li><strong>Learn profiling tool selection</strong> and understand when to use NSight Systems vs NSight Compute</li>
-<li><strong>Develop performance detective skills</strong> using real profiler output to identify bottlenecks</li>
-<li><strong>Discover counter-intuitive insights</strong> about GPU memory systems and caching behavior</li>
-<li><strong>Learn evidence-based optimization</strong> based on profiler data rather than assumptions</li>
+<li><strong>Learn profiling tool selection</strong> and understand when to use NSight Systems
+vs NSight Compute</li>
+<li><strong>Develop performance detective skills</strong> using real profiler output to
+identify bottlenecks</li>
+<li><strong>Discover counter-intuitive insights</strong> about GPU memory systems and caching
+behavior</li>
+<li><strong>Learn evidence-based optimization</strong> based on profiler data rather than
+assumptions</li>
 </ul>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p><strong>Professional profiling tools:</strong></p>
 <ul>
-<li><strong><a href="https://developer.nvidia.com/nsight-systems">NSight Systems</a> (<code>nsys</code>)</strong>: System-wide timeline analysis for CPU-GPU coordination and memory transfers</li>
-<li><strong><a href="https://developer.nvidia.com/nsight-compute">NSight Compute</a> (<code>ncu</code>)</strong>: Detailed kernel analysis for memory efficiency and compute utilization</li>
-<li><strong>Systematic methodology</strong>: Evidence-based bottleneck identification and optimization validation</li>
+<li><strong><a href="https://developer.nvidia.com/nsight-systems">NSight Systems</a> (<code>nsys</code>)</strong>:
+System-wide timeline analysis for CPU-GPU coordination and memory transfers</li>
+<li><strong><a href="https://developer.nvidia.com/nsight-compute">NSight Compute</a> (<code>ncu</code>)</strong>:
+Detailed kernel analysis for memory efficiency and compute utilization</li>
+<li><strong>Systematic methodology</strong>: Evidence-based bottleneck identification and
+optimization validation</li>
 </ul>
 <p><strong>Key insights you’ll discover:</strong></p>
 <ul>
-<li><strong>Counter-intuitive behavior</strong>: When high cache hit rates actually indicate poor performance</li>
-<li><strong>Memory access patterns</strong>: How coalescing dramatically impacts bandwidth utilization</li>
-<li><strong>Tool-guided optimization</strong>: Using profiler data to make decisions rather than performance assumptions</li>
+<li><strong>Counter-intuitive behavior</strong>: When high cache hit rates actually indicate
+poor performance</li>
+<li><strong>Memory access patterns</strong>: How coalescing dramatically impacts bandwidth
+utilization</li>
+<li><strong>Tool-guided optimization</strong>: Using profiler data to make decisions rather
+than performance assumptions</li>
 </ul>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p><strong>Requirements:</strong></p>
@@ -261,22 +280,30 @@
 <h2 id="puzzle-structure"><a class="header" href="#puzzle-structure">Puzzle structure</a></h2>
 <p>This chapter contains two interconnected components that build upon each other:</p>
 <h3 id="nvidia-profiling-basics-tutorial"><a class="header" href="#nvidia-profiling-basics-tutorial"><strong><a href="nvidia_profiling_basics.html">NVIDIA Profiling Basics Tutorial</a></strong></a></h3>
-<p>Learn the essential NVIDIA profiling ecosystem through hands-on examples with actual profiler output.</p>
+<p>Learn the essential NVIDIA profiling ecosystem through hands-on examples with
+actual profiler output.</p>
 <p><strong>You’ll learn:</strong></p>
 <ul>
 <li>NSight Systems for system-wide timeline analysis and bottleneck identification</li>
 <li>NSight Compute for detailed kernel analysis and memory system insights</li>
-<li>Professional profiling workflows and best practices from production GPU development</li>
+<li>Professional profiling workflows and best practices from production GPU
+development</li>
 </ul>
 <h3 id="the-cache-hit-paradox-detective-case"><a class="header" href="#the-cache-hit-paradox-detective-case"><strong><a href="profile_kernels.html">The Cache Hit Paradox Detective Case</a></strong></a></h3>
-<p>Apply profiling skills to solve a performance mystery where three identical vector addition kernels have dramatically different performance.</p>
-<p><strong>The challenge:</strong> Discover why the kernel with the <strong>highest cache hit rates</strong> has the <strong>worst performance</strong> - a counter-intuitive insight that challenges traditional CPU-based performance thinking.</p>
-<p><strong>Detective skills:</strong> Use real NSight Systems and NSight Compute data to understand memory coalescing effects and evidence-based optimization.</p>
+<p>Apply profiling skills to solve a performance mystery where three identical
+vector addition kernels have dramatically different performance.</p>
+<p><strong>The challenge:</strong> Discover why the kernel with the <strong>highest cache hit rates</strong>
+has the <strong>worst performance</strong> - a counter-intuitive insight that challenges
+traditional CPU-based performance thinking.</p>
+<p><strong>Detective skills:</strong> Use real NSight Systems and NSight Compute data to
+understand memory coalescing effects and evidence-based optimization.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <p><strong>Learning path:</strong></p>
 <ol>
-<li><strong><a href="nvidia_profiling_basics.html">Profiling Basics Tutorial</a></strong> - Learn NSight Systems and NSight Compute</li>
-<li><strong><a href="profile_kernels.html">Cache Hit Paradox Detective Case</a></strong> - Apply skills to solve performance mysteries</li>
+<li><strong><a href="nvidia_profiling_basics.html">Profiling Basics Tutorial</a></strong> - Learn NSight
+Systems and NSight Compute</li>
+<li><strong><a href="profile_kernels.html">Cache Hit Paradox Detective Case</a></strong> - Apply skills to
+solve performance mysteries</li>
 </ol>
 <p><strong>Prerequisites:</strong></p>
 <ul>
@@ -284,8 +311,12 @@
 <li>GPU programming fundamentals (threads, blocks, warps, shared memory)</li>
 <li>Command-line profiling tools experience</li>
 </ul>
-<p><strong>Learning outcome:</strong> Professional-level profiling skills for systematic bottleneck identification and evidence-based optimization used in production GPU development.</p>
-<p>This chapter teaches that <strong>systematic profiling reveals truths that intuition misses</strong> - GPU performance optimization requires tool-guided discovery rather than assumptions.</p>
+<p><strong>Learning outcome:</strong> Professional-level profiling skills for systematic
+bottleneck identification and evidence-based optimization used in production GPU
+development.</p>
+<p>This chapter teaches that
+<strong>systematic profiling reveals truths that intuition misses</strong> - GPU performance
+optimization requires tool-guided discovery rather than assumptions.</p>
 <p><strong>Additional resources:</strong></p>
 <ul>
 <li><a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#profiling">NVIDIA CUDA Best Practices Guide - Profiling</a></li>

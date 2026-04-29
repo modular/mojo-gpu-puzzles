@@ -211,26 +211,38 @@
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="puzzle-31-점유율-최적화"><a class="header" href="#puzzle-31-점유율-최적화">Puzzle 31: 점유율 최적화</a></h1>
 <h2 id="이-퍼즐이-중요한-이유"><a class="header" href="#이-퍼즐이-중요한-이유">이 퍼즐이 중요한 이유</a></h2>
-<p><strong>Puzzle 30의 연장선:</strong> <a href="../puzzle_30/puzzle_30.html">GPU 프로파일링</a> 도구를 배우고, 메모리 접근 패턴이 어떻게 극적인 성능 차이를 만들어내는지 발견했습니다. 이제 다음 단계로 나아갈 준비가 되었습니다: <strong>리소스 최적화</strong>.</p>
+<p><strong>Puzzle 30의 연장선:</strong> <a href="../puzzle_30/puzzle_30.html">GPU 프로파일링</a> 도구를
+배우고, 메모리 접근 패턴이 어떻게 극적인 성능 차이를 만들어내는지 발견했습니다.
+이제 다음 단계로 나아갈 준비가 되었습니다: <strong>리소스 최적화</strong>.</p>
 <p><strong>학습 여정:</strong></p>
 <ul>
-<li><strong>Puzzle 30</strong>에서는 NSight 프로파일링(<code>nsys</code>와 <code>ncu</code>)을 통해 성능 문제를 <strong>진단</strong>하는 법을 배웠습니다</li>
-<li><strong>Puzzle 31</strong>에서는 리소스 관리를 통해 성능을 <strong>예측하고 제어</strong>하는 법을 배웁니다</li>
+<li><strong>Puzzle 30</strong>에서는 NSight 프로파일링(<code>nsys</code>와 <code>ncu</code>)을 통해 성능 문제를
+<strong>진단</strong>하는 법을 배웠습니다</li>
+<li><strong>Puzzle 31</strong>에서는 리소스 관리를 통해 성능을 <strong>예측하고 제어</strong>하는 법을
+배웁니다</li>
 <li><strong>둘을 합치면</strong> GPU 최적화를 위한 완전한 도구 세트를 갖추게 됩니다</li>
 </ul>
-<p><strong>발견하게 될 것:</strong>
-GPU 성능은 단순히 알고리즘 효율의 문제가 아닙니다 - <strong>코드가 한정된 하드웨어 리소스를 어떻게 활용하느냐</strong>가 핵심입니다. 모든 GPU는 유한한 레지스터, 공유 메모리, 실행 유닛을 갖고 있습니다. <strong>점유율(occupancy)</strong> - <em>SM당 활성 워프 수 대비 최대 가능 워프 수의 비율</em> - 을 이해하는 것은 다음과 같은 이유로 중요합니다:</p>
+<p><strong>발견하게 될 것:</strong> GPU 성능은 단순히 알고리즘 효율의 문제가 아닙니다 -
+<strong>코드가 한정된 하드웨어 리소스를 어떻게 활용하느냐</strong>가 핵심입니다. 모든 GPU는
+유한한 레지스터, 공유 메모리, 실행 유닛을 갖고 있습니다. <strong>점유율(occupancy)</strong> -
+<em>SM당 활성 워프 수 대비 최대 가능 워프 수의 비율</em> - 을 이해하는 것은 다음과 같은
+이유로 중요합니다:</p>
 <ul>
 <li><strong>지연 시간 은닉</strong>: 메모리 대기 시간 동안 GPU가 유휴 상태에 빠지지 않도록 유지</li>
 <li><strong>리소스 할당</strong>: 레지스터, 공유 메모리, 스레드 블록 간의 균형 조절</li>
 <li><strong>성능 예측</strong>: 병목이 발생하기 전에 미리 파악</li>
 <li><strong>최적화 전략</strong>: 점유율에 집중해야 할 때와 다른 요소에 집중해야 할 때 판단</li>
 </ul>
-<p><strong>GPU를 넘어서 적용되는 원리:</strong>
-여기서 배우는 원리는 리소스를 여러 실행 유닛이 공유하는 모든 병렬 컴퓨팅 시스템에 적용됩니다 - 하이퍼스레딩을 사용하는 CPU부터 분산 컴퓨팅 클러스터까지.</p>
+<p><strong>GPU를 넘어서 적용되는 원리:</strong> 여기서 배우는 원리는 리소스를 여러 실행 유닛이
+공유하는 모든 병렬 컴퓨팅 시스템에 적용됩니다 - 하이퍼스레딩을 사용하는 CPU부터
+분산 컴퓨팅 클러스터까지.</p>
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p><strong>GPU 점유율</strong>은 SM당 활성 워프 수 대비 최대 가능 워프 수의 비율입니다. GPU가 워프 전환을 통해 메모리 지연 시간을 얼마나 효과적으로 숨길 수 있는지를 결정합니다.</p>
-<p><strong>SAXPY</strong>는 Single-precision Alpha times X plus Y의 약자입니다. 이 퍼즐에서는 수학적으로 동일하지만 리소스 사용이 다른 세 가지 SAXPY 커널(<code>y[i] = alpha * x[i] + y[i]</code>)을 탐구합니다:</p>
+<p><strong>GPU 점유율</strong>은 SM당 활성 워프 수 대비 최대 가능 워프 수의 비율입니다. GPU가
+워프 전환을 통해 메모리 지연 시간을 얼마나 효과적으로 숨길 수 있는지를
+결정합니다.</p>
+<p><strong>SAXPY</strong>는 Single-precision Alpha times X plus Y의 약자입니다. 이 퍼즐에서는
+수학적으로 동일하지만 리소스 사용이 다른 세 가지 SAXPY
+커널(<code>y[i] = alpha * x[i] + y[i]</code>)을 탐구합니다:</p>
 <pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M elements - larger workload to show occupancy effects
 comptime THREADS_PER_BLOCK = (1024, 1)
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)
@@ -402,9 +414,17 @@ def minimal_kernel(
 </code></pre>
 <p><a href="https://github.com/modular/mojo-gpu-puzzles/blob/main/problems/p31/p31.mojo" class="filename">전체 파일 보기: problems/p31/p31.mojo</a></p>
 <h2 id="도전-과제"><a class="header" href="#도전-과제">도전 과제</a></h2>
-<p>프로파일링 도구를 사용하여 세 커널을 조사하고, 점유율 최적화에 대한 분석 질문에 답하세요. 커널들은 동일한 결과를 계산하지만 리소스 사용이 극적으로 다릅니다 - 성능과 점유율이 왜 직관에 어긋나는 방식으로 동작하는지 발견하는 것이 여러분의 임무입니다!</p>
+<p>프로파일링 도구를 사용하여 세 커널을 조사하고, 점유율 최적화에 대한 분석 질문에
+답하세요. 커널들은 동일한 결과를 계산하지만 리소스 사용이 극적으로 다릅니다 -
+성능과 점유율이 왜 직관에 어긋나는 방식으로 동작하는지 발견하는 것이 여러분의
+임무입니다!</p>
 <blockquote>
-<p>이 퍼즐에 표시된 구체적인 수치 결과는 <strong>NVIDIA A10G (Ampere 8.6)</strong> 하드웨어를 기준으로 합니다. 결과는 GPU 제조사와 아키텍처(NVIDIA: Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5)에 따라 달라지지만, <strong>기본 개념, 방법론, 통찰은 모든 최신 GPU에 보편적으로 적용됩니다</strong>. <code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
+<p>이 퍼즐에 표시된 구체적인 수치 결과는 <strong>NVIDIA A10G (Ampere 8.6)</strong> 하드웨어를
+기준으로 합니다. 결과는 GPU 제조사와 아키텍처(NVIDIA:
+Pascal/Turing/Ampere/Ada/Hopper, AMD: RDNA/GCN, Apple: M1/M2/M3/M4/M5)에 따라
+달라지지만,
+<strong>기본 개념, 방법론, 통찰은 모든 최신 GPU에 보편적으로 적용됩니다</strong>.
+<code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
 </blockquote>
 <h2 id="구성"><a class="header" href="#구성">구성</a></h2>
 <p><strong>요구 사항:</strong></p>
@@ -413,8 +433,8 @@ def minimal_kernel(
 <li><a href="../puzzle_30/puzzle_30.html">Puzzle 30</a>의 NSight Compute</li>
 </ul>
 <blockquote>
-<p><strong>⚠️ GPU 호환성 참고:</strong>
-기본 설정은 공격적인 값을 사용하므로 구형이나 저사양 GPU에서는 실패할 수 있습니다:</p>
+<p><strong>⚠️ GPU 호환성 참고:</strong> 기본 설정은 공격적인 값을 사용하므로 구형이나 저사양
+GPU에서는 실패할 수 있습니다:</p>
 <pre><code class="language-mojo">comptime SIZE = 32 * 1024 * 1024  # 32M 요소 (배열당 ~256MB 메모리)
 comptime THREADS_PER_BLOCK = (1024, 1)  # 블록당 1024 스레드
 comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 블록
@@ -427,7 +447,7 @@ comptime BLOCKS_PER_GRID = (SIZE // 1024, 1)  # 32768 블록
 </ul>
 </blockquote>
 <p><strong>점유율 공식:</strong></p>
-<pre><code>이론적 점유율 = min(
+<pre><code class="language-text">이론적 점유율 = min(
     SM당 레지스터 수 / (스레드당 레지스터 수 × 블록당 스레드 수),
     SM당 공유 메모리 / 블록당 공유 메모리,
     SM당 최대 블록 수
@@ -457,7 +477,9 @@ ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
 <p>먼저 GPU 아키텍처와 세부 스펙을 확인합니다:</p>
 <pre><code class="language-bash">pixi run gpu-specs
 </code></pre>
-<p><strong>참고</strong>: <code>gpu-specs</code>는 GPU 제조사(NVIDIA/AMD/Apple)를 자동 감지하고 하드웨어에서 파생된 <strong>모든 아키텍처 세부 정보</strong>를 표시합니다 - 별도의 참조표가 필요 없습니다!</p>
+<p><strong>참고</strong>: <code>gpu-specs</code>는 GPU 제조사(NVIDIA/AMD/Apple)를 자동 감지하고
+하드웨어에서 파생된 <strong>모든 아키텍처 세부 정보</strong>를 표시합니다 - 별도의 참조표가
+필요 없습니다!</p>
 <p><strong>주요 아키텍처 스펙 (참고용):</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>아키텍처</th><th>Compute Cap</th><th>레지스터/SM</th><th>공유 메모리/SM</th><th>최대 스레드/SM</th><th>최대 블록/SM</th></tr></thead><tbody>
 <tr><td><strong>Hopper (H100)</strong></td><td>9.0</td><td>65,536</td><td>228KB</td><td>2,048</td><td>32</td></tr>
@@ -474,7 +496,8 @@ ncu --set=@occupancy --section=LaunchStats problems/p31/p31_profiler --balanced
 <li><a href="https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/">Hopper Architecture In-Depth</a></li>
 <li><a href="https://www.nvidia.com/en-us/data-center/ampere-architecture/">Ampere Architecture Whitepaper</a></li>
 </ul>
-<p><strong>⚠️ 참고:</strong> 이 값들은 이론적 최대치입니다. 실제 점유율은 하드웨어 스케줄링 제약, 드라이버 오버헤드 등의 요인으로 더 낮을 수 있습니다.</p>
+<p><strong>⚠️ 참고:</strong> 이 값들은 이론적 최대치입니다. 실제 점유율은 하드웨어 스케줄링
+제약, 드라이버 오버헤드 등의 요인으로 더 낮을 수 있습니다.</p>
 <p>GPU 스펙과 점유율 공식을 사용하여:</p>
 <ul>
 <li><strong>블록당 스레드 수:</strong> 1024 (커널 설정값)</li>
@@ -488,22 +511,29 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 </code></pre>
 <p>이론적 계산과 실제 측정된 점유율을 비교하세요 - 미스터리가 드러나는 순간입니다!</p>
 <h2 id="핵심-통찰"><a class="header" href="#핵심-통찰">핵심 통찰</a></h2>
-<p>💡 <strong>점유율 임계값:</strong> 대기 시간을 숨기기에 충분한 점유율(~25-50%)을 확보하면, 그 이상의 점유율은 수확 체감 효과를 보입니다.</p>
-<p>💡 <strong>메모리 바운드 vs 연산 바운드:</strong> SAXPY는 메모리 바운드입니다. 메모리 바운드 커널에서는 메모리 대역폭이 점유율보다 더 중요한 경우가 많습니다.</p>
-<p>💡 <strong>리소스 효율:</strong> 최신 GPU는 적당한 수준의 레지스터 압박(스레드당 20-40개)을 점유율의 극적인 감소 없이 처리할 수 있습니다.</p>
+<p>💡 <strong>점유율 임계값:</strong> 대기 시간을 숨기기에 충분한 점유율(~25-50%)을 확보하면, 그
+이상의 점유율은 수확 체감 효과를 보입니다.</p>
+<p>💡 <strong>메모리 바운드 vs 연산 바운드:</strong> SAXPY는 메모리 바운드입니다. 메모리 바운드
+커널에서는 메모리 대역폭이 점유율보다 더 중요한 경우가 많습니다.</p>
+<p>💡 <strong>리소스 효율:</strong> 최신 GPU는 적당한 수준의 레지스터 압박(스레드당 20-40개)을
+점유율의 극적인 감소 없이 처리할 수 있습니다.</p>
 <h2 id="도전-과제-다음-질문에-답하세요"><a class="header" href="#도전-과제-다음-질문에-답하세요">도전 과제: 다음 질문에 답하세요</a></h2>
-<p><strong>위의 조사 단계를 완료한 후, 다음 분석 질문에 답하여 점유율 미스터리를 풀어보세요:</strong></p>
+<p><strong>위의 조사 단계를 완료한 후, 다음 분석 질문에 답하여 점유율 미스터리를
+풀어보세요:</strong></p>
 <p><strong>성능 분석 (Step 2):</strong></p>
 <ol>
-<li>어떤 커널이 가장 빠르고, 어떤 커널이 가장 느린가요? 실행 시간 차이를 기록하세요.</li>
+<li>어떤 커널이 가장 빠르고, 어떤 커널이 가장 느린가요? 실행 시간 차이를
+기록하세요.</li>
 </ol>
 <p><strong>리소스 프로파일링 (Step 4):</strong></p>
 <ol start="2">
-<li>각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 워프 수를 기록하세요.</li>
+<li>각 커널의 스레드당 레지스터 수, 블록당 공유 메모리, SM당 워프 수를
+기록하세요.</li>
 </ol>
 <p><strong>이론적 계산 (Step 5):</strong></p>
 <ol start="3">
-<li>GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤 커널이 가장 높고/낮아야 하나요?</li>
+<li>GPU 스펙과 점유율 공식을 사용하여 각 커널의 이론적 점유율을 계산하세요. 어떤
+커널이 가장 높고/낮아야 하나요?</li>
 </ol>
 <p><strong>측정된 점유율 (Step 6):</strong></p>
 <ol start="4">
@@ -511,8 +541,10 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 </ol>
 <p><strong>점유율 미스터리:</strong></p>
 <ol start="5">
-<li>리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU 아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?</li>
-<li>리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리) 성능이 거의 동일한(&lt;2% 차이) 이유는 무엇인가요?</li>
+<li>리소스 사용이 극적으로 다른데도 세 커널 모두 비슷한 점유율(~64-66%, GPU
+아키텍처에 따라 다를 수 있음)를 달성하는 이유는 무엇인가요?</li>
+<li>리소스 사용이 극적으로 차이나는데(19 vs 40 레지스터, 0KB vs 49KB 공유 메모리)
+성능이 거의 동일한(&lt;2% 차이) 이유는 무엇인가요?</li>
 <li>이론적 점유율 계산과 실제 GPU 동작 사이의 관계에 대해 무엇을 알 수 있나요?</li>
 <li>이 SAXPY 워크로드의 실제 성능 병목이 점유율이 아니라면 무엇인가요?</li>
 </ol>
@@ -528,12 +560,17 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 </ul>
 <p><strong>핵심 최적화 원칙:</strong></p>
 <ul>
-<li><strong>최적화 전에 계산하기:</strong> 코드를 작성하기 전에 점유율 공식으로 리소스 한계를 예측</li>
-<li><strong>측정으로 검증하기:</strong> 이론적 계산은 컴파일러 최적화와 하드웨어 세부 사항을 반영하지 못함</li>
-<li><strong>워크로드 특성 고려하기:</strong> 메모리 바운드 워크로드는 연산 바운드보다 점유율이 덜 필요</li>
+<li><strong>최적화 전에 계산하기:</strong> 코드를 작성하기 전에 점유율 공식으로 리소스 한계를
+예측</li>
+<li><strong>측정으로 검증하기:</strong> 이론적 계산은 컴파일러 최적화와 하드웨어 세부 사항을
+반영하지 못함</li>
+<li><strong>워크로드 특성 고려하기:</strong> 메모리 바운드 워크로드는 연산 바운드보다 점유율이
+덜 필요</li>
 <li><strong>최대 점유율을 목표로 하지 않기:</strong> 충분한 점유율 + 다른 성능 요소를 최적화</li>
-<li><strong>임계값 관점으로 사고하기:</strong> 25-50% 점유율이면 대부분 대기 시간을 숨기기에 충분</li>
-<li><strong>리소스 사용량 프로파일링하기:</strong> NSight Compute로 실제 레지스터와 공유 메모리 소비량 파악</li>
+<li><strong>임계값 관점으로 사고하기:</strong> 25-50% 점유율이면 대부분 대기 시간을 숨기기에
+충분</li>
+<li><strong>리소스 사용량 프로파일링하기:</strong> NSight Compute로 실제 레지스터와 공유 메모리
+소비량 파악</li>
 </ul>
 <p><strong>조사 접근법:</strong></p>
 <ol>
@@ -548,9 +585,12 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 <h2 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h2>
 <details class="solution-details">
 <summary><strong>심층 해설이 포함된 완전한 풀이</strong></summary>
-<p>이 점유율 탐정 사건은 리소스 사용이 GPU 성능에 어떤 영향을 미치는지 보여주고, 이론적 점유율과 실제 성능 사이의 복잡한 관계를 드러냅니다.</p>
+<p>이 점유율 탐정 사건은 리소스 사용이 GPU 성능에 어떤 영향을 미치는지 보여주고,
+이론적 점유율과 실제 성능 사이의 복잡한 관계를 드러냅니다.</p>
 <blockquote>
-<p>아래 구체적인 계산은 <strong>NVIDIA A10G (Ampere 8.6)</strong> - 테스트에 사용된 GPU - 기준입니다. 결과는 GPU 아키텍처에 따라 달라지지만, 방법론과 통찰은 보편적으로 적용됩니다. <code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
+<p>아래 구체적인 계산은 <strong>NVIDIA A10G (Ampere 8.6)</strong> - 테스트에 사용된 GPU -
+기준입니다. 결과는 GPU 아키텍처에 따라 달라지지만, 방법론과 통찰은 보편적으로
+적용됩니다. <code>pixi run gpu-specs</code>를 실행하여 하드웨어별 수치를 확인하세요.</p>
 </blockquote>
 <h2 id="리소스-분석을-통한-프로파일링-근거"><a class="header" href="#리소스-분석을-통한-프로파일링-근거"><strong>리소스 분석을 통한 프로파일링 근거</strong></a></h2>
 <p><strong>NSight Compute 리소스 분석:</strong></p>
@@ -558,7 +598,8 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 <ul>
 <li><strong>Minimal:</strong> 19 레지스터, ~0KB 공유 메모리 → 점유율 <strong>63.87%</strong>, <strong>327.7ms</strong></li>
 <li><strong>Balanced:</strong> 25 레지스터, 16.4KB 공유 메모리 → 점유율 <strong>65.44%</strong>, <strong>329.4ms</strong></li>
-<li><strong>Sophisticated:</strong> 40 레지스터, 49.2KB 공유 메모리 → 점유율 <strong>65.61%</strong>, <strong>330.9ms</strong></li>
+<li><strong>Sophisticated:</strong> 40 레지스터, 49.2KB 공유 메모리 → 점유율 <strong>65.61%</strong>,
+<strong>330.9ms</strong></li>
 </ul>
 <p><strong>벤치마크 성능 근거:</strong></p>
 <ul>
@@ -577,7 +618,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 <li><strong>SM당 최대 블록:</strong> 32</li>
 </ul>
 <p><strong>Minimal 커널 계산:</strong></p>
-<pre><code>레지스터 제한 = 65,536 / (19 × 1,024) = 3.36 블록/SM
+<pre><code class="language-text">레지스터 제한 = 65,536 / (19 × 1,024) = 3.36 블록/SM
 공유 메모리 제한 = 164KB / 0KB = ∞ 블록/SM
 하드웨어 블록 제한 = 32 블록/SM
 
@@ -586,7 +627,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
 </code></pre>
 <p><strong>Balanced 커널 계산:</strong></p>
-<pre><code>레지스터 제한 = 65,536 / (25 × 1,024) = 2.56 블록/SM
+<pre><code class="language-text">레지스터 제한 = 65,536 / (25 × 1,024) = 2.56 블록/SM
 공유 메모리 제한 = 164KB / 16.4KB = 10 블록/SM
 하드웨어 블록 제한 = 32 블록/SM
 
@@ -595,7 +636,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 이론적 점유율 = (1 × 1,024) / 1,536 = 66.7%
 </code></pre>
 <p><strong>Sophisticated 커널 계산:</strong></p>
-<pre><code>레지스터 제한 = 65,536 / (40 × 1,024) = 1.64 블록/SM
+<pre><code class="language-text">레지스터 제한 = 65,536 / (40 × 1,024) = 1.64 블록/SM
 공유 메모리 제한 = 164KB / 49.2KB = 3.33 블록/SM
 하드웨어 블록 제한 = 32 블록/SM
 
@@ -608,34 +649,43 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active problems/p31/p
 <li><strong>이론적</strong>: 모든 커널 ~66.7% (A10G의 스레드 용량에 의해 제한)</li>
 <li><strong>실측</strong>: 모두 ~64-66% (매우 근접한 결과!)</li>
 </ul>
-<p>이는 <strong>A10G의 스레드 제한이 지배적</strong>임을 보여줍니다 - SM당 최대 스레드가 1,536개이므로 1,024 스레드 블록은 1개만 들어갑니다. 이론(66.7%)과 실측(~65%) 사이의 작은 차이는 하드웨어 스케줄링 오버헤드와 드라이버 제약에서 비롯됩니다.</p>
+<p>이는 <strong>A10G의 스레드 제한이 지배적</strong>임을 보여줍니다 - SM당 최대 스레드가
+1,536개이므로 1,024 스레드 블록은 1개만 들어갑니다. 이론(66.7%)과 실측(~65%)
+사이의 작은 차이는 하드웨어 스케줄링 오버헤드와 드라이버 제약에서 비롯됩니다.</p>
 <h2 id="이론과-현실이-근접한-이유"><a class="header" href="#이론과-현실이-근접한-이유"><strong>이론과 현실이 근접한 이유</strong></a></h2>
 <p><strong>이론적(66.7%)과 실측(~65%) 점유율 사이 작은 차이의 원인:</strong></p>
 <ol>
-<li><strong>하드웨어 스케줄링 오버헤드</strong>: 실제 워프 스케줄러는 이론적 계산을 넘어서는 실질적 제약이 있음</li>
+<li><strong>하드웨어 스케줄링 오버헤드</strong>: 실제 워프 스케줄러는 이론적 계산을 넘어서는
+실질적 제약이 있음</li>
 <li><strong>CUDA 런타임 예약</strong>: 드라이버와 런타임 오버헤드가 가용 SM 리소스를 약간 줄임</li>
-<li><strong>메모리 컨트롤러 압박</strong>: A10G의 메모리 서브시스템이 약간의 스케줄링 제약을 만듦</li>
+<li><strong>메모리 컨트롤러 압박</strong>: A10G의 메모리 서브시스템이 약간의 스케줄링 제약을
+만듦</li>
 <li><strong>전력 및 열 관리</strong>: 동적 주파수 조절이 최대 성능에 영향</li>
-<li><strong>명령어 캐시 효과</strong>: 실제 커널은 점유율 계산에 포착되지 않는 명령어 페치 오버헤드가 있음</li>
+<li><strong>명령어 캐시 효과</strong>: 실제 커널은 점유율 계산에 포착되지 않는 명령어 페치
+오버헤드가 있음</li>
 </ol>
-<p><strong>핵심 통찰</strong>: 이론과 실측이 근접하다는 것(66.7% vs ~65%)은 레지스터와 공유 메모리 차이와 무관하게 <strong>A10G의 스레드 제한이 세 커널 모두를 지배</strong>한다는 뜻입니다. 진짜 병목을 정확히 짚어낸 좋은 사례입니다!</p>
+<p><strong>핵심 통찰</strong>: 이론과 실측이 근접하다는 것(66.7% vs ~65%)은 레지스터와 공유
+메모리 차이와 무관하게 <strong>A10G의 스레드 제한이 세 커널 모두를 지배</strong>한다는
+뜻입니다. 진짜 병목을 정확히 짚어낸 좋은 사례입니다!</p>
 <h2 id="점유율-미스터리-해설"><a class="header" href="#점유율-미스터리-해설"><strong>점유율 미스터리 해설</strong></a></h2>
 <p><strong>미스터리의 진짜 정체:</strong></p>
 <ul>
 <li>리소스 차이가 극적인데도 <strong>세 커널 모두 거의 동일한 점유율</strong>을 달성 (~64-66%)</li>
 <li><strong>성능이 본질적으로 동일</strong> (세 커널 모두 &lt;2% 변동)</li>
 <li><strong>이론이 점유율을 정확히 예측</strong> (66.7% 이론 ≈ 65% 실측)</li>
-<li><strong>미스터리는 점유율 불일치가 아닙니다</strong> - 리소스 사용이 크게 다른데도 왜 점유율과 성능이 동일한지가 진짜 미스터리입니다!</li>
+<li><strong>미스터리는 점유율 불일치가 아닙니다</strong> - 리소스 사용이 크게 다른데도 왜
+점유율과 성능이 동일한지가 진짜 미스터리입니다!</li>
 </ul>
 <p><strong>리소스 사용이 다른데 성능이 동일한 이유:</strong></p>
 <p><strong>SAXPY 워크로드의 특성:</strong></p>
 <ul>
-<li><strong>메모리 바운드 연산:</strong> 각 스레드의 연산량이 극히 적음 (<code>y[i] = alpha * x[i] + y[i]</code>)</li>
+<li><strong>메모리 바운드 연산:</strong> 각 스레드의 연산량이 극히 적음
+(<code>y[i] = alpha * x[i] + y[i]</code>)</li>
 <li><strong>높은 메모리 트래픽:</strong> 스레드당 2개 값 읽기, 1개 값 쓰기</li>
 <li><strong>낮은 산술 강도:</strong> 12바이트 메모리 트래픽당 2 FLOPS만 수행</li>
 </ul>
 <p><strong>메모리 대역폭 분석 (A10G):</strong></p>
-<pre><code>단일 커널 패스 분석:
+<pre><code class="language-text">단일 커널 패스 분석:
 - 입력 배열: 32M × 4바이트 × 2 배열 = 256MB 읽기
 - 출력 배열: 32M × 4바이트 × 1 배열 = 128MB 쓰기
 - 커널당 총량: 384MB 메모리 트래픽
@@ -690,7 +740,7 @@ ncu --metrics=smsp__warps_active.avg.pct_of_peak_sustained_active your_kernel
 ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
 </code></pre>
 <p><strong>근거 기반 의사결정 프레임워크:</strong></p>
-<pre><code>점유율 분석 → 최적화 전략:
+<pre><code class="language-text">점유율 분석 → 최적화 전략:
 
 높은 점유율 (&gt;70%) + 좋은 성능:
 → 점유율은 충분, 다른 병목에 집중
@@ -724,35 +774,48 @@ ncu --set=@roofline --section=MemoryWorkloadAnalysis your_kernel
 <li><strong>점유율과 리소스 사용의 균형</strong>: 블록이 클수록 리소스 한계에 도달할 수 있음</li>
 </ul>
 <h2 id="핵심-정리-a10g-미스터리에서-보편적-원칙으로"><a class="header" href="#핵심-정리-a10g-미스터리에서-보편적-원칙으로"><strong>핵심 정리: A10G 미스터리에서 보편적 원칙으로</strong></a></h2>
-<p>이 A10G 점유율 조사는 모든 GPU 최적화에 적용되는 명확한 통찰의 진행을 보여줍니다:</p>
+<p>이 A10G 점유율 조사는 모든 GPU 최적화에 적용되는 명확한 통찰의 진행을
+보여줍니다:</p>
 <p><strong>A10G 발견 과정:</strong></p>
 <ol>
-<li><strong>스레드 제한이 모든 것을 지배</strong> - 19 vs 40 레지스터, 0KB vs 49KB 공유 메모리 차이에도 불구하고, A10G의 1,536 스레드 용량 때문에 모든 커널이 SM당 1블록이라는 동일한 제한에 걸림</li>
-<li><strong>이론이 현실과 근접하게 일치</strong> - 66.7% 이론 vs ~65% 실측 점유율은 올바른 병목을 식별했을 때 계산이 유효함을 보여줌</li>
-<li><strong>메모리 대역폭이 성능을 지배</strong> - 동일한 66.7% 점유율에서, SAXPY의 메모리 바운드 특성(600 GB/s 포화)이 리소스 차이에도 불구하고 동일한 성능을 설명</li>
+<li><strong>스레드 제한이 모든 것을 지배</strong> - 19 vs 40 레지스터, 0KB vs 49KB 공유 메모리
+차이에도 불구하고, A10G의 1,536 스레드 용량 때문에 모든 커널이 SM당
+1블록이라는 동일한 제한에 걸림</li>
+<li><strong>이론이 현실과 근접하게 일치</strong> - 66.7% 이론 vs ~65% 실측 점유율은 올바른
+병목을 식별했을 때 계산이 유효함을 보여줌</li>
+<li><strong>메모리 대역폭이 성능을 지배</strong> - 동일한 66.7% 점유율에서, SAXPY의 메모리
+바운드 특성(600 GB/s 포화)이 리소스 차이에도 불구하고 동일한 성능을 설명</li>
 </ol>
 <p><strong>보편적인 GPU 최적화 원칙:</strong></p>
 <p><strong>진짜 병목 식별하기:</strong></p>
 <ul>
 <li><strong>모든 리소스</strong>에서 점유율 제한을 계산: 레지스터, 공유 메모리, 스레드 용량</li>
-<li>가장 제한적인 요소가 결정적 - 레지스터나 공유 메모리가 항상 병목이라고 가정하지 말 것</li>
-<li>메모리 바운드 워크로드(SAXPY 같은)는 대기 시간을 숨길 만큼 충분한 스레드만 확보되면 점유율이 아닌 대역폭이 제한 요인</li>
+<li>가장 제한적인 요소가 결정적 - 레지스터나 공유 메모리가 항상 병목이라고
+가정하지 말 것</li>
+<li>메모리 바운드 워크로드(SAXPY 같은)는 대기 시간을 숨길 만큼 충분한 스레드만
+확보되면 점유율이 아닌 대역폭이 제한 요인</li>
 </ul>
 <p><strong>점유율이 중요한 경우 vs 중요하지 않은 경우:</strong></p>
 <ul>
-<li><strong>높은 점유율이 중요</strong>: 연산 집약적 커널(GEMM, 과학 시뮬레이션)에서 ALU 파이프라인이 멈추는 시간을 다른 워프 실행으로 숨겨야 하는 경우</li>
-<li><strong>점유율이 덜 중요</strong>: 메모리 바운드 연산(BLAS Level 1, 메모리 복사)에서 점유율이 제한 요인이 되기 전에 대역폭이 포화되는 경우</li>
-<li><strong>적정 수준</strong>: 60-70% 점유율이면 대기 시간을 숨기기에 충분 - 그 이상은 진짜 병목에 집중</li>
+<li><strong>높은 점유율이 중요</strong>: 연산 집약적 커널(GEMM, 과학 시뮬레이션)에서 ALU
+파이프라인이 멈추는 시간을 다른 워프 실행으로 숨겨야 하는 경우</li>
+<li><strong>점유율이 덜 중요</strong>: 메모리 바운드 연산(BLAS Level 1, 메모리 복사)에서
+점유율이 제한 요인이 되기 전에 대역폭이 포화되는 경우</li>
+<li><strong>적정 수준</strong>: 60-70% 점유율이면 대기 시간을 숨기기에 충분 - 그 이상은 진짜
+병목에 집중</li>
 </ul>
 <p><strong>실전 최적화 워크플로우:</strong></p>
 <ol>
-<li><strong>먼저 프로파일링</strong> (<code>ncu --set=@occupancy</code>) - 실제 리소스 사용량과 점유율 측정</li>
+<li><strong>먼저 프로파일링</strong> (<code>ncu --set=@occupancy</code>) - 실제 리소스 사용량과 점유율
+측정</li>
 <li><strong>이론적 한계 계산</strong> - GPU 스펙 활용 (<code>pixi run gpu-specs</code>)</li>
 <li><strong>지배적 제약 식별</strong> - 레지스터, 공유 메모리, 스레드 용량, 또는 메모리 대역폭</li>
 <li><strong>병목 최적화</strong> - 제한 요인이 아닌 리소스에 시간 낭비하지 않기</li>
 <li><strong>종단간 성능으로 검증</strong> - 점유율은 성능을 위한 수단이지 목표가 아님</li>
 </ol>
-<p>A10G 사례는 <strong>체계적 병목 분석이 직관보다 낫다</strong>는 것을 완벽하게 보여줍니다 - 스레드 용량이 지배적이었기에 Sophisticated 커널의 높은 레지스터 압박은 무관했고, 동일한 점유율과 메모리 대역폭 포화가 성능 미스터리를 완전히 설명해줍니다.</p>
+<p>A10G 사례는 <strong>체계적 병목 분석이 직관보다 낫다</strong>는 것을 완벽하게 보여줍니다 -
+스레드 용량이 지배적이었기에 Sophisticated 커널의 높은 레지스터 압박은 무관했고,
+동일한 점유율과 메모리 대역폭 포화가 성능 미스터리를 완전히 설명해줍니다.</p>
 </details>
 
                     </main>

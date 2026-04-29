@@ -209,8 +209,14 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="elementwise---basic-gpu-functional-operations"><a class="header" href="#elementwise---basic-gpu-functional-operations">Elementwise - Basic GPU Functional Operations</a></h1>
-<p>This puzzle implements vector addition using Mojo’s functional <code>elementwise</code> pattern. Each thread automatically processes multiple SIMD elements, showing how modern GPU programming abstracts low-level details while preserving high performance.</p>
-<p><strong>Key insight:</strong> <em>The <a href="https://docs.modular.com/mojo/std/algorithm/functional/elementwise/">elementwise</a> function automatically handles thread management, SIMD vectorization, and memory coalescing for you.</em></p>
+<p>This puzzle implements vector addition using Mojo’s functional <code>elementwise</code>
+pattern. Each thread automatically processes multiple SIMD elements, showing how
+modern GPU programming abstracts low-level details while preserving high
+performance.</p>
+<p><strong>Key insight:</strong> <em>The
+<a href="https://docs.modular.com/mojo/std/algorithm/functional/elementwise/">elementwise</a>
+function automatically handles thread management, SIMD vectorization, and memory
+coalescing for you.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>This puzzle covers:</p>
 <ul>
@@ -222,7 +228,8 @@
 </ul>
 <p>The mathematical operation is simple element-wise addition:
 \[\Large \text{output}[i] = a[i] + b[i]\]</p>
-<p>The implementation covers fundamental patterns applicable to all GPU functional programming in Mojo.</p>
+<p>The implementation covers fundamental patterns applicable to all GPU functional
+programming in Mojo.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <ul>
 <li>Vector size: <code>SIZE = 1024</code></li>
@@ -273,15 +280,20 @@ def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturin
 </code></pre>
 <p><strong>Why each part matters:</strong></p>
 <ul>
-<li><code>@parameter</code>: Enables compile-time specialization for optimal GPU code generation</li>
-<li><code>@always_inline</code>: Forces inlining to eliminate function call overhead in GPU kernels</li>
-<li><code>capturing</code>: Allows access to variables from the outer scope (the input/output tensors)</li>
-<li><code>IndexList[rank]</code>: Provides multi-dimensional indexing (rank=1 for vectors, rank=2 for matrices)</li>
+<li><code>@parameter</code>: Enables compile-time specialization for optimal GPU code
+generation</li>
+<li><code>@always_inline</code>: Forces inlining to eliminate function call overhead in GPU
+kernels</li>
+<li><code>capturing</code>: Allows access to variables from the outer scope (the input/output
+tensors)</li>
+<li><code>IndexList[rank]</code>: Provides multi-dimensional indexing (rank=1 for vectors,
+rank=2 for matrices)</li>
 </ul>
 <h3 id="2-index-extraction-and-simd-processing"><a class="header" href="#2-index-extraction-and-simd-processing">2. <strong>Index extraction and SIMD processing</strong></a></h3>
 <pre><code class="language-mojo">idx = indices[0]  # Extract linear index for 1D operations
 </code></pre>
-<p>This <code>idx</code> represents the <strong>starting position</strong> for a SIMD vector, not a single element. If <code>SIMD_WIDTH=4</code> (GPU-dependent), then:</p>
+<p>This <code>idx</code> represents the <strong>starting position</strong> for a SIMD vector, not a single
+element. If <code>SIMD_WIDTH=4</code> (GPU-dependent), then:</p>
 <ul>
 <li>Thread 0 processes elements <code>[0, 1, 2, 3]</code> starting at <code>idx=0</code></li>
 <li>Thread 1 processes elements <code>[4, 5, 6, 7]</code> starting at <code>idx=4</code></li>
@@ -292,11 +304,14 @@ def your_function[simd_width: Int, rank: Int](indices: IndexList[rank]) capturin
 <pre><code class="language-mojo">a_simd = a.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GPU-dependent)
 </code></pre>
-<p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of elements loaded depends on your GPU’s SIMD capabilities.</p>
+<p>The second parameter <code>0</code> is the dimension offset (always 0 for 1D vectors). This
+loads a <strong>vectorized chunk</strong> of data in a single operation. The exact number of
+elements loaded depends on your GPU’s SIMD capabilities.</p>
 <h3 id="4-vector-arithmetic"><a class="header" href="#4-vector-arithmetic">4. <strong>Vector arithmetic</strong></a></h3>
 <pre><code class="language-mojo">result = a_simd + b_simd  # SIMD addition of 4 elements simultaneously (GPU-dependent)
 </code></pre>
-<p>This performs element-wise addition across the entire SIMD vector (if supported) in parallel - much faster than 4 separate scalar additions.</p>
+<p>This performs element-wise addition across the entire SIMD vector (if supported)
+in parallel - much faster than 4 separate scalar additions.</p>
 <h3 id="5-simd-storing"><a class="header" href="#5-simd-storing">5. <strong>SIMD storing</strong></a></h3>
 <pre><code class="language-mojo">output.store[simd_width](Index(idx), result)  # Store 4 results at once (GPU-dependent)
 </code></pre>
@@ -306,13 +321,15 @@ b_simd = b.aligned_load[simd_width](Index(idx))  # Load 4 consecutive floats (GP
 </code></pre>
 <ul>
 <li><code>total_size</code> should be <code>a.size()</code> to process all elements</li>
-<li>The GPU automatically determines how many threads to launch: <code>total_size // SIMD_WIDTH</code></li>
+<li>The GPU automatically determines how many threads to launch:
+<code>total_size // SIMD_WIDTH</code></li>
 </ul>
 <h3 id="7-key-debugging-insight"><a class="header" href="#7-key-debugging-insight">7. <strong>Key debugging insight</strong></a></h3>
 <p>Notice the <code>print("idx:", idx)</code> in the template. When you run it, you’ll see:</p>
-<pre><code>idx: 0, idx: 4, idx: 8, idx: 12, ...
+<pre><code class="language-text">idx: 0, idx: 4, idx: 8, idx: 12, ...
 </code></pre>
-<p>This shows that each thread handles a different SIMD chunk, automatically spaced by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
+<p>This shows that each thread handles a different SIMD chunk, automatically spaced
+by <code>SIMD_WIDTH</code> (which is GPU-dependent).</p>
 </div>
 </details>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
@@ -388,9 +405,11 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>The elementwise functional pattern in Mojo introduces several fundamental concepts for modern GPU programming:</p>
+<p>The elementwise functional pattern in Mojo introduces several fundamental
+concepts for modern GPU programming:</p>
 <h3 id="1-functional-abstraction-philosophy"><a class="header" href="#1-functional-abstraction-philosophy">1. <strong>Functional abstraction philosophy</strong></a></h3>
-<p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU programming:</p>
+<p>The <code>elementwise</code> function represents a paradigm shift from traditional GPU
+programming:</p>
 <p><strong>Traditional CUDA/HIP approach:</strong></p>
 <pre><code class="language-mojo"># Manual thread management
 idx = thread_idx.x + block_idx.x * block_dim.x
@@ -416,10 +435,15 @@ def add[simd_width: Int, rank: Int](indices: IndexList[rank]) capturing -&gt; No
 </code></pre>
 <p><strong>Parameter Analysis:</strong></p>
 <ul>
-<li><strong><code>@parameter</code></strong>: This decorator provides <strong>compile-time specialization</strong>. The function is generated separately for each unique <code>simd_width</code> and <code>rank</code>, allowing aggressive optimization.</li>
-<li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call overhead by embedding the code directly into the kernel.</li>
-<li><strong><code>capturing</code></strong>: Enables <strong>lexical scoping</strong> - the inner function can access variables from the outer scope without explicit parameter passing.</li>
-<li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
+<li><strong><code>@parameter</code></strong>: This decorator provides <strong>compile-time specialization</strong>. The
+function is generated separately for each unique <code>simd_width</code> and <code>rank</code>,
+allowing aggressive optimization.</li>
+<li><strong><code>@always_inline</code></strong>: Critical for GPU performance - eliminates function call
+overhead by embedding the code directly into the kernel.</li>
+<li><strong><code>capturing</code></strong>: Enables <strong>lexical scoping</strong> - the inner function can access
+variables from the outer scope without explicit parameter passing.</li>
+<li><strong><code>IndexList[rank]</code></strong>: Provides <strong>dimension-agnostic indexing</strong> - the same
+pattern works for 1D vectors, 2D matrices, 3D tensors, etc.</li>
 </ul>
 <h3 id="3-simd-execution-model-deep-dive"><a class="header" href="#3-simd-execution-model-deep-dive">3. <strong>SIMD execution model deep dive</strong></a></h3>
 <pre><code class="language-mojo">idx = indices[0]                                  # Linear index: 0, 4, 8, 12... (GPU-dependent spacing)
@@ -429,7 +453,7 @@ ret = a_simd + b_simd                             # SIMD: 4 additions in paralle
 output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously (GPU-dependent)
 </code></pre>
 <p><strong>Execution Hierarchy Visualization:</strong></p>
-<pre><code>GPU Architecture:
+<pre><code class="language-text">GPU Architecture:
 ├── Grid (entire problem)
 │   ├── Block 1 (multiple warps)
 │   │   ├── Warp 1 (32 threads) --&gt; We'll learn about Warp in the next Part VI
@@ -446,7 +470,8 @@ output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously 
 <li><strong>Each thread processes</strong>: Exactly 4 consecutive elements</li>
 <li><strong>Memory bandwidth</strong>: SIMD_WIDTH× improvement over scalar operations</li>
 </ul>
-<p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for RTX 4090, 16 for A100).</p>
+<p><strong>Note</strong>: SIMD width varies by GPU architecture (e.g., 4 for some GPUs, 8 for
+RTX 4090, 16 for A100).</p>
 <h3 id="4-memory-access-pattern-analysis"><a class="header" href="#4-memory-access-pattern-analysis">4. <strong>Memory access pattern analysis</strong></a></h3>
 <pre><code class="language-mojo">a.aligned_load[simd_width](Index(idx))  // Coalesced memory access
 </code></pre>
@@ -458,7 +483,7 @@ output.store[simd_width](Index(idx), ret)     # Store: 4 results simultaneously 
 <li><strong>Hardware efficiency</strong>: GPU memory controllers optimized for this pattern</li>
 </ul>
 <p><strong>Example for SIMD_WIDTH=4 (GPU-dependent):</strong></p>
-<pre><code>Thread 0: loads a[0:4]   → Memory bank 0-3
+<pre><code class="language-text">Thread 0: loads a[0:4]   → Memory bank 0-3
 Thread 1: loads a[4:8]   → Memory bank 4-7
 Thread 2: loads a[8:12]  → Memory bank 8-11
 ...
@@ -472,7 +497,7 @@ Result: Optimal memory controller utilization
 <li><strong>Arithmetic intensity</strong>: 1 add ÷ 3 memory ops = 0.33 (memory-bound)</li>
 </ul>
 <p><strong>Why This Is Memory-Bound:</strong></p>
-<pre><code>Memory bandwidth &gt;&gt;&gt; Compute capability for simple operations
+<pre><code class="language-text">Memory bandwidth &gt;&gt;&gt; Compute capability for simple operations
 </code></pre>
 <p><strong>Optimization Implications:</strong></p>
 <ul>
@@ -486,7 +511,8 @@ Result: Optimal memory controller utilization
 <pre><code class="language-mojo">comptime SIMD_WIDTH = simd_width_of[dtype, target = _get_gpu_target()]()
 </code></pre>
 <ul>
-<li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware (e.g., 4 for some cards, 8 for RTX 4090, 16 for A100)</li>
+<li><strong>GPU-specific optimization</strong>: SIMD width adapts to hardware (e.g., 4 for some
+cards, 8 for RTX 4090, 16 for A100)</li>
 <li><strong>Data type awareness</strong>: Different SIMD widths for float32 vs float16</li>
 <li><strong>Compile-time optimization</strong>: Zero runtime overhead for hardware detection</li>
 </ul>
@@ -525,7 +551,9 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <li><strong>Maintainability</strong>: Clean abstractions reduce debugging complexity</li>
 <li><strong>Composability</strong>: Easy to combine with other functional operations</li>
 </ul>
-<p>This pattern represents the future of GPU programming - high-level abstractions that don’t sacrifice performance, making GPU computing accessible while maintaining optimal efficiency.</p>
+<p>This pattern represents the future of GPU programming - high-level abstractions
+that don’t sacrifice performance, making GPU computing accessible while
+maintaining optimal efficiency.</p>
 </div>
 </details>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
@@ -533,10 +561,15 @@ elementwise[add, SIMD_WIDTH, target="gpu"](size, ctx)
 <ul>
 <li><strong><a href="./tile.html">Tile Operations</a></strong>: Memory-efficient tiled processing patterns</li>
 <li><strong><a href="./vectorize.html">Vectorization</a></strong>: Fine-grained SIMD control</li>
-<li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the
+execution hierarchy</li>
+<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and
+optimization</li>
 </ul>
-<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern shows how Mojo combines functional programming elegance with GPU performance, automatically handling vectorization and thread management while maintaining full control over the computation.</p>
+<p>💡 <strong>Key Takeaway</strong>: The <code>elementwise</code> pattern shows how Mojo combines
+functional programming elegance with GPU performance, automatically handling
+vectorization and thread management while maintaining full control over the
+computation.</p>
 
                     </main>
 

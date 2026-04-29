@@ -210,7 +210,11 @@
                     <main>
                         <!-- i18n-source-commit: 477e5a0d3eed091b3dde0812977773f7dc97730a -->
 <h1 id="puzzle-28-비동기-메모리-연산과-복사-중첩"><a class="header" href="#puzzle-28-비동기-메모리-연산과-복사-중첩">Puzzle 28: 비동기 메모리 연산과 복사 중첩</a></h1>
-<p><strong>GPU 메모리 병목 현상:</strong> 실제 GPU 알고리즘 대부분은 좌절스러운 벽에 부딪힙니다 - 연산 능력이 아니라 <strong>메모리 대역폭</strong>에 의해 제한된다는 것입니다. 비싼 GPU 코어가 느린 DRAM에서 데이터가 도착하기를 기다리며 놀고 있는 것이죠.</p>
+<p><strong>GPU 메모리 병목 현상:</strong> 실제 GPU 알고리즘 대부분은 좌절스러운 벽에 부딪힙니다</p>
+<ul>
+<li>연산 능력이 아니라 <strong>메모리 대역폭</strong>에 의해 제한된다는 것입니다. 비싼 GPU
+코어가 느린 DRAM에서 데이터가 도착하기를 기다리며 놀고 있는 것이죠.</li>
+</ul>
 <p>GPU 프로그래밍에서 흔히 볼 수 있는 상황을 살펴보겠습니다:</p>
 <pre><code class="language-mojo"># 성능의 적 - 순차적 메모리 연산
 load_input_tile()     # ← DRAM 대기 500 사이클
@@ -226,9 +230,12 @@ load_small_data()     # ← 대기 중 유용한 작업 100 사이클
 wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 # 총: ~550 사이클, 45% 향상!
 </code></pre>
-<p><strong>이것이 비동기 메모리 연산의 위력입니다</strong> - 느린 알고리즘과 GPU의 잠재력을 최대한 발휘하는 알고리즘의 차이를 만들어 냅니다.</p>
+<p><strong>이것이 비동기 메모리 연산의 위력입니다</strong> - 느린 알고리즘과 GPU의 잠재력을
+최대한 발휘하는 알고리즘의 차이를 만들어 냅니다.</p>
 <h2 id="왜-중요한가"><a class="header" href="#왜-중요한가">왜 중요한가</a></h2>
-<p>이 퍼즐에서는 <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>의 메모리 바운드 1D 합성곱을 <strong>연산 뒤에 메모리 지연 시간을 숨기는</strong> 고성능 구현으로 변환합니다. 단순한 학술적 연습이 아닙니다 - 이 패턴들은 다음 분야의 핵심입니다:</p>
+<p>이 퍼즐에서는 <a href="../puzzle_13/puzzle_13.html">Puzzle 13</a>의 메모리 바운드 1D 합성곱을
+<strong>연산 뒤에 메모리 지연 시간을 숨기는</strong> 고성능 구현으로 변환합니다. 단순한
+학술적 연습이 아닙니다 - 이 패턴들은 다음 분야의 핵심입니다:</p>
 <ul>
 <li><strong>딥러닝</strong>: 가중치와 활성화값의 효율적 로딩</li>
 <li><strong>과학 연산</strong>: 스텐실 연산에서 데이터 전송 중첩</li>
@@ -239,8 +246,10 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <p>시작하기 전에 다음 내용을 확실히 이해하고 있어야 합니다:</p>
 <p><strong>필수 GPU 프로그래밍 개념:</strong></p>
 <ul>
-<li><strong>공유 메모리 프로그래밍</strong> (<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>, <a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>) - matmul 패턴을 확장합니다</li>
-<li><strong>메모리 병합(coalescing)</strong> (<a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>) - 최적의 비동기 전송에 필수</li>
+<li><strong>공유 메모리 프로그래밍</strong> (<a href="../puzzle_08/puzzle_08.html">Puzzle 8</a>,
+<a href="../puzzle_16/puzzle_16.html">Puzzle 16</a>) - matmul 패턴을 확장합니다</li>
+<li><strong>메모리 병합(coalescing)</strong> (<a href="../puzzle_21/puzzle_21.html">Puzzle 21</a>) - 최적의
+비동기 전송에 필수</li>
 <li><strong>타일 기반 처리</strong> (<a href="../puzzle_23/puzzle_23.html">Puzzle 23</a>) - 이 최적화의 기반</li>
 </ul>
 <p><strong>하드웨어 이해:</strong></p>
@@ -249,9 +258,14 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li>스레드 블록 구성과 동기화</li>
 <li>메모리 지연 시간 vs. 대역폭에 대한 기본 이해</li>
 </ul>
-<p><strong>API 숙지:</strong> <a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
+<p><strong>API 숙지:</strong>
+<a href="https://docs.modular.com/mojo/std/gpu/memory/">Mojo GPU Memory Operations</a></p>
 <blockquote>
-<p><strong>⚠️ 하드웨어 호환성 참고:</strong> 이 퍼즐은 최신 GPU 아키텍처가 필요할 수 있는 비동기 복사 연산(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>)을 사용합니다. <code>.async</code> 수정자나 지원되지 않는 연산 관련 컴파일 오류가 발생하면 해당 GPU가 이 기능을 지원하지 않는 것일 수 있습니다. 그래도 메모리 최적화 패턴을 이해하는 데 개념은 여전히 유용합니다.</p>
+<p><strong>⚠️ 하드웨어 호환성 참고:</strong> 이 퍼즐은 최신 GPU 아키텍처가 필요할 수 있는
+비동기 복사 연산(<code>copy_dram_to_sram_async</code>, <code>async_copy_wait_all</code>)을
+사용합니다. <code>.async</code> 수정자나 지원되지 않는 연산 관련 컴파일 오류가 발생하면
+해당 GPU가 이 기능을 지원하지 않는 것일 수 있습니다. 그래도 메모리 최적화
+패턴을 이해하는 데 개념은 여전히 유용합니다.</p>
 <p><strong>GPU 컴퓨팅 능력 확인:</strong></p>
 <pre><code class="language-bash">nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader,nounits
 </code></pre>
@@ -271,30 +285,47 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li><strong>파이프라인 프로그래밍</strong>: 메모리 활용을 극대화하도록 알고리즘 구조화</li>
 </ul>
 <h3 id="주요-api"><a class="header" href="#주요-api"><strong>주요 API</strong></a></h3>
-<p><a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16의 관용적 matmul</a>에서 소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:</p>
+<p><a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16의 관용적 matmul</a>에서
+소개한 비동기 복사 연산을 기반으로, 이제 메모리 최적화 잠재력에 집중합니다:</p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/kernels/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>: 전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>: 공유 메모리 접근 전 전송 완료 동기화</li>
+<li><strong><a href="https://docs.modular.com/mojo/layout/layout_tensor/copy_dram_to_sram_async/"><code>copy_dram_to_sram_async()</code></a></strong>:
+전용 복사 엔진을 사용하여 백그라운드 DRAM→SRAM 전송 시작</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/memory/memory/async_copy_wait_all/"><code>async_copy_wait_all()</code></a></strong>:
+공유 메모리 접근 전 전송 완료 동기화</li>
 </ul>
-<p><strong>Puzzle 16과 다른 점은?</strong> Puzzle 16에서는 matmul의 깔끔한 타일 로딩을 위해 비동기 복사를 사용했다면, 이 퍼즐은 <strong>지연 시간 은폐</strong>에 집중합니다 - 비용이 큰 메모리 연산과 유용한 연산 작업을 중첩하도록 알고리즘을 구조화하는 것입니다.</p>
+<p><strong>Puzzle 16과 다른 점은?</strong> Puzzle 16에서는 matmul의 깔끔한 타일 로딩을 위해
+비동기 복사를 사용했다면, 이 퍼즐은 <strong>지연 시간 은폐</strong>에 집중합니다 - 비용이 큰
+메모리 연산과 유용한 연산 작업을 중첩하도록 알고리즘을 구조화하는 것입니다.</p>
 <h3 id="성능-효과"><a class="header" href="#성능-효과"><strong>성능 효과</strong></a></h3>
-<p>이 기법들은 다음과 같은 방식으로 메모리 바운드 알고리즘의 <strong>성능을 크게 향상</strong>시킵니다:</p>
+<p>이 기법들은 다음과 같은 방식으로 메모리 바운드 알고리즘의
+<strong>성능을 크게 향상</strong>시킵니다:</p>
 <ul>
 <li><strong>DRAM 지연 시간 숨기기</strong>: 유휴 대기를 생산적인 연산 시간으로 전환</li>
 <li><strong>대역폭 극대화</strong>: 최적의 메모리 접근 패턴으로 캐시 미스 방지</li>
-<li><strong>파이프라인 효율</strong>: 메모리 전송이 병렬로 일어나는 동안 연산 유닛을 바쁘게 유지</li>
+<li><strong>파이프라인 효율</strong>: 메모리 전송이 병렬로 일어나는 동안 연산 유닛을 바쁘게
+유지</li>
 </ul>
 <blockquote>
-<p><strong>비동기 복사 연산이란?</strong> <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution">비동기 복사 연산</a>은 GPU 블록이 다른 작업을 계속하는 동안 백그라운드에서 실행되는 메모리 전송을 시작할 수 있게 해줍니다. 이를 통해 연산과 메모리 이동을 중첩할 수 있으며, 이는 메모리 바운드 알고리즘의 근본적인 최적화 기법입니다.</p>
+<p><strong>비동기 복사 연산이란?</strong>
+<a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#asynchronous-concurrent-execution">비동기 복사 연산</a>은
+GPU 블록이 다른 작업을 계속하는 동안 백그라운드에서 실행되는 메모리 전송을
+시작할 수 있게 해줍니다. 이를 통해 연산과 메모리 이동을 중첩할 수 있으며, 이는
+메모리 바운드 알고리즘의 근본적인 최적화 기법입니다.</p>
 </blockquote>
-<p>💡 <strong>성공 팁</strong>: 이것을 <strong>GPU 메모리를 위한 파이프라인 프로그래밍</strong>으로 생각하세요 - 단계를 중첩하고, 지연 시간을 숨기고, 처리량을 극대화합니다. 목표는 데이터가 백그라운드에서 이동하는 동안 비싼 연산 유닛을 바쁘게 유지하는 것입니다.</p>
+<p>💡 <strong>성공 팁</strong>: 이것을 <strong>GPU 메모리를 위한 파이프라인 프로그래밍</strong>으로
+생각하세요 - 단계를 중첩하고, 지연 시간을 숨기고, 처리량을 극대화합니다. 목표는
+데이터가 백그라운드에서 이동하는 동안 비싼 연산 유닛을 바쁘게 유지하는 것입니다.</p>
 <h2 id="헤일로-영역-이해하기"><a class="header" href="#헤일로-영역-이해하기">헤일로 영역 이해하기</a></h2>
-<p>비동기 복사 연산으로 들어가기 전에, 합성곱과 같은 스텐실 연산의 타일 기반 처리에 필수적인 <strong>헤일로 영역</strong>(ghost cell 또는 guard cell이라고도 함)을 이해하는 것이 중요합니다.</p>
+<p>비동기 복사 연산으로 들어가기 전에, 합성곱과 같은 스텐실 연산의 타일 기반 처리에
+필수적인 <strong>헤일로 영역</strong>(ghost cell 또는 guard cell이라고도 함)을 이해하는 것이
+중요합니다.</p>
 <h3 id="헤일로-영역이란"><a class="header" href="#헤일로-영역이란">헤일로 영역이란?</a></h3>
-<p><strong>헤일로 영역</strong>은 스텐실 연산에 필요한 이웃 데이터를 제공하기 위해 처리 타일의 경계를 넘어 확장되는 <strong>추가 요소</strong>입니다. 타일 가장자리 근처의 요소를 처리할 때, 스텐실 연산은 인접 타일의 데이터에 접근해야 합니다.</p>
+<p><strong>헤일로 영역</strong>은 스텐실 연산에 필요한 이웃 데이터를 제공하기 위해 처리 타일의
+경계를 넘어 확장되는 <strong>추가 요소</strong>입니다. 타일 가장자리 근처의 요소를 처리할 때,
+스텐실 연산은 인접 타일의 데이터에 접근해야 합니다.</p>
 <h3 id="헤일로-영역이-필요한-이유"><a class="header" href="#헤일로-영역이-필요한-이유">헤일로 영역이 필요한 이유</a></h3>
 <p>타일에서 5점 커널을 사용하는 1D 합성곱을 생각해 봅시다:</p>
-<pre><code>원본 데이터:      [... | a b c d e f g h i j k l m n o | ...]
+<pre><code class="language-text">원본 데이터:      [... | a b c d e f g h i j k l m n o | ...]
 처리 타일:              [c d e f g h i j k l m n o]
                             ^                 ^
                       왼쪽 타일에서        오른쪽 타일에서
@@ -331,9 +362,13 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li>예측 가능한 메모리 접근으로 간결하고 효율적인 연산</li>
 <li>더 나은 캐시 활용과 메모리 병합</li>
 </ul>
-<p>이 개념은 비동기 복사 연산을 구현할 때 특히 중요합니다. 헤일로 영역을 올바르게 로딩하고 동기화해야 여러 타일에 걸친 정확한 병렬 연산을 보장할 수 있습니다.</p>
+<p>이 개념은 비동기 복사 연산을 구현할 때 특히 중요합니다. 헤일로 영역을 올바르게
+로딩하고 동기화해야 여러 타일에 걸친 정확한 병렬 연산을 보장할 수 있습니다.</p>
 <h2 id="비동기-복사-중첩을-활용한-1d-합성곱"><a class="header" href="#비동기-복사-중첩을-활용한-1d-합성곱">비동기 복사 중첩을 활용한 1D 합성곱</a></h2>
-<p><strong><a href="../puzzle_13/puzzle_13.html">Puzzle 13</a> 기반:</strong> 이 퍼즐은 Puzzle 13의 1D 합성곱을 다시 다루지만, 이번에는 비동기 복사 연산으로 메모리 지연 시간을 연산 뒤에 숨기는 최적화를 적용합니다. 단순한 동기식 메모리 접근 대신, 하드웨어 가속을 사용하여 비용이 큰 DRAM 전송과 유용한 작업을 중첩합니다.</p>
+<p><strong><a href="../puzzle_13/puzzle_13.html">Puzzle 13</a> 기반:</strong> 이 퍼즐은 Puzzle 13의 1D
+합성곱을 다시 다루지만, 이번에는 비동기 복사 연산으로 메모리 지연 시간을 연산
+뒤에 숨기는 최적화를 적용합니다. 단순한 동기식 메모리 접근 대신, 하드웨어 가속을
+사용하여 비용이 큰 DRAM 전송과 유용한 작업을 중첩합니다.</p>
 <h3 id="구성"><a class="header" href="#구성">구성</a></h3>
 <ul>
 <li>벡터 크기: <code>VECTOR_SIZE = 16384</code> (여러 블록에 걸친 16K 요소)</li>
@@ -345,8 +380,11 @@ wait_and_compute()    # ← 나머지 ~400 사이클만 대기 후 연산
 <li>레이아웃: <code>row_major[VECTOR_SIZE]()</code> (1D row-major)</li>
 </ul>
 <h3 id="비동기-복사의-기회"><a class="header" href="#비동기-복사의-기회">비동기 복사의 기회</a></h3>
-<p><strong>Puzzle 16 기반:</strong> matmul에서 깔끔한 타일 로딩을 위해 <code>copy_dram_to_sram_async</code>를 사용하는 것을 이미 보셨습니다. 이제 고성능 메모리 바운드 알고리즘의 핵심인 <strong>지연 시간 은폐 기능</strong>에 집중합니다.</p>
-<p>기존의 동기식 메모리 로딩은 전송 중 연산 유닛을 유휴 상태로 대기하게 합니다. 비동기 복사 연산은 전송과 유용한 작업의 중첩을 가능하게 합니다:</p>
+<p><strong>Puzzle 16 기반:</strong> matmul에서 깔끔한 타일 로딩을 위해
+<code>copy_dram_to_sram_async</code>를 사용하는 것을 이미 보셨습니다. 이제 고성능 메모리
+바운드 알고리즘의 핵심인 <strong>지연 시간 은폐 기능</strong>에 집중합니다.</p>
+<p>기존의 동기식 메모리 로딩은 전송 중 연산 유닛을 유휴 상태로 대기하게 합니다.
+비동기 복사 연산은 전송과 유용한 작업의 중첩을 가능하게 합니다:</p>
 <pre><code class="language-mojo"># 동기식 접근 - 비효율적:
 for i in range(CONV_TILE_SIZE):
     input_shared[i] = input[base_idx + i]  # 각 로드가 DRAM을 기다림
@@ -365,15 +403,22 @@ async_copy_wait_all()  # 두 연산이 모두 완료될 때만 대기
 </code></pre>
 <p><strong>비동기 복사가 잘 동작하는 이유:</strong></p>
 <ul>
-<li><strong>전용 복사 엔진</strong>: 최신 GPU는 레지스터를 우회하고 진정한 연산-메모리 중첩을 가능하게 하는 전용 하드웨어를 갖추고 있습니다 (<a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16</a>에서 설명)</li>
-<li><strong>지연 시간 은폐</strong>: GPU 스레드가 다른 연산을 실행하는 동안 메모리 전송이 이루어집니다</li>
+<li><strong>전용 복사 엔진</strong>: 최신 GPU는 레지스터를 우회하고 진정한 연산-메모리 중첩을
+가능하게 하는 전용 하드웨어를 갖추고 있습니다
+(<a href="../puzzle_16/tiled.html#solution-idiomatic-layouttensor-tiling">Puzzle 16</a>에서
+설명)</li>
+<li><strong>지연 시간 은폐</strong>: GPU 스레드가 다른 연산을 실행하는 동안 메모리 전송이
+이루어집니다</li>
 <li><strong>최적의 병합</strong>: 스레드 레이아웃이 효율적인 DRAM 접근 패턴을 보장합니다</li>
 <li><strong>리소스 활용</strong>: 연산 유닛이 유휴 대기 대신 계속 바쁘게 동작합니다</li>
 </ul>
 <h3 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h3>
-<p>Puzzle 16의 matmul 구현 패턴을 따라, 비동기 복사 연산으로 메모리 전송과 연산을 중첩하는 1D 합성곱을 구현하세요.</p>
-<p><strong>수학적 연산:</strong> 비동기 복사를 활용하여 대규모 벡터에 대한 1D 합성곱을 효율적으로 계산합니다:
-\[\text{output}[i] = \sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times \text{kernel}[k]\]</p>
+<p>Puzzle 16의 matmul 구현 패턴을 따라, 비동기 복사 연산으로 메모리 전송과 연산을
+중첩하는 1D 합성곱을 구현하세요.</p>
+<p><strong>수학적 연산:</strong> 비동기 복사를 활용하여 대규모 벡터에 대한 1D 합성곱을
+효율적으로 계산합니다: \[\text{output}[i] =
+\sum_{k=0}^{\text{KERNEL_SIZE}-1} \text{input}[i+k-\text{HALO_SIZE}] \times
+\text{kernel}[k]\]</p>
 <p><strong>비동기 복사 알고리즘:</strong></p>
 <ol>
 <li><strong>비동기 타일 로딩:</strong> 입력 데이터의 백그라운드 DRAM→SRAM 전송 시작</li>
@@ -426,7 +471,8 @@ def async_copy_overlap_convolution[
 <summary><strong>팁</strong></summary>
 <div class="solution-tips">
 <h3 id="1-비동기-복사-메커니즘-이해"><a class="header" href="#1-비동기-복사-메커니즘-이해">1. <strong>비동기 복사 메커니즘 이해</strong></a></h3>
-<p>비동기 복사 연산은 블록이 다른 코드를 계속 실행하는 동안 백그라운드 전송을 시작합니다.</p>
+<p>비동기 복사 연산은 블록이 다른 코드를 계속 실행하는 동안 백그라운드 전송을
+시작합니다.</p>
 <p><strong>탐구할 핵심 질문:</strong></p>
 <ul>
 <li>DRAM에서 공유 메모리로 어떤 데이터를 전송해야 하는가?</li>
@@ -496,7 +542,8 @@ def async_copy_overlap_convolution[
 <h3 id="솔루션"><a class="header" href="#솔루션">솔루션</a></h3>
 <details class="solution-details">
 <summary><strong>상세 설명이 포함된 전체 솔루션</strong></summary>
-<p>비동기 복사 중첩 솔루션는 비용이 큰 DRAM 전송과 유용한 연산을 중첩하여 메모리 지연 시간을 숨기는 방법을 보여줍니다:</p>
+<p>비동기 복사 중첩 솔루션는 비용이 큰 DRAM 전송과 유용한 연산을 중첩하여 메모리
+지연 시간을 숨기는 방법을 보여줍니다:</p>
 <pre><code class="language-mojo">def async_copy_overlap_convolution[
     dtype: DType
 ](
@@ -573,13 +620,25 @@ copy_dram_to_sram_async[thread_layout=load_layout](input_shared, input_tile)
 </code></pre>
 <ul>
 <li>
-<p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는 <code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다. Mojo의 <a href="https://docs.modular.com/mojo/kernels/layout/tile_tensor/TileTensor/#tile"><code>tile</code> 메서드</a>는 경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은 미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에 있는지 확인해야 합니다.</p>
+<p><strong>타일 생성</strong>: <code>input.tile[CONV_TILE_SIZE](block_idx.x)</code>는
+<code>block_idx.x * 256</code>에서 시작하는 256개 요소의 입력 배열 뷰를 생성합니다.
+Mojo의
+<a href="https://docs.modular.com/mojo/layout/tile_tensor/TileTensor/#tile"><code>tile</code> 메서드</a>는
+경계 검사나 제로 패딩을 <strong>수행하지 않습니다</strong>. 범위를 벗어난 인덱스 접근은
+미정의 동작을 초래합니다. 구현에서 타일 크기와 offset이 유효한 배열 범위 내에
+있는지 확인해야 합니다.</p>
 </li>
 <li>
-<p><strong>스레드 레이아웃</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC, 1]()</code>는 블록 구성과 일치하는 <code>256 x 1</code> 레이아웃을 생성합니다. 이것은 <strong>필수</strong>입니다 - 최적의 병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다. 레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이 깨지고 성능이 심각하게 저하됩니다.</p>
+<p><strong>스레드 레이아웃</strong>: <code>row_major[THREADS_PER_BLOCK_ASYNC, 1]()</code>는 블록 구성과
+일치하는 <code>256 x 1</code> 레이아웃을 생성합니다. 이것은 <strong>필수</strong>입니다 - 최적의
+병합된 메모리 접근을 위해 레이아웃이 물리적 스레드 배치와 일치해야 합니다.
+레이아웃이 일치하지 않으면 스레드가 비연속적인 메모리 주소에 접근하여 병합이
+깨지고 성능이 심각하게 저하됩니다.</p>
 </li>
 <li>
-<p><strong>비동기 복사 시작</strong>: <code>copy_dram_to_sram_async</code>는 DRAM에서 공유 메모리로의 백그라운드 전송을 시작합니다. 하드웨어가 256개의 float(1KB)를 복사하는 동안 블록은 계속 실행됩니다.</p>
+<p><strong>비동기 복사 시작</strong>: <code>copy_dram_to_sram_async</code>는 DRAM에서 공유 메모리로의
+백그라운드 전송을 시작합니다. 하드웨어가 256개의 float(1KB)를 복사하는 동안
+블록은 계속 실행됩니다.</p>
 </li>
 </ul>
 <p><strong>Phase 2: 중첩 연산</strong></p>
@@ -589,10 +648,12 @@ if local_i &lt; KERNEL_SIZE:
 </code></pre>
 <ul>
 <li>
-<p><strong>동시 실행</strong>: 1KB 입력 타일이 백그라운드에서 전송되는 동안, 스레드들은 작은 20바이트 커널을 동기식으로 로딩합니다. 이 중첩이 핵심 최적화입니다.</p>
+<p><strong>동시 실행</strong>: 1KB 입력 타일이 백그라운드에서 전송되는 동안, 스레드들은 작은
+20바이트 커널을 동기식으로 로딩합니다. 이 중첩이 핵심 최적화입니다.</p>
 </li>
 <li>
-<p><strong>크기 기반 전략</strong>: 큰 전송(입력 타일)은 비동기 복사를, 작은 전송(커널)은 동기식 로딩을 사용합니다. 이는 복잡성과 성능 이점의 균형을 맞춥니다.</p>
+<p><strong>크기 기반 전략</strong>: 큰 전송(입력 타일)은 비동기 복사를, 작은 전송(커널)은
+동기식 로딩을 사용합니다. 이는 복잡성과 성능 이점의 균형을 맞춥니다.</p>
 </li>
 </ul>
 <p><strong>Phase 3: 동기화</strong></p>
@@ -602,10 +663,12 @@ barrier()  # Sync all threads
 </code></pre>
 <ul>
 <li>
-<p><strong>전송 완료</strong>: <code>async_copy_wait_all()</code>은 모든 비동기 전송이 완료될 때까지 대기합니다. <code>input_shared</code>에 접근하기 전에 반드시 필요합니다.</p>
+<p><strong>전송 완료</strong>: <code>async_copy_wait_all()</code>은 모든 비동기 전송이 완료될 때까지
+대기합니다. <code>input_shared</code>에 접근하기 전에 반드시 필요합니다.</p>
 </li>
 <li>
-<p><strong>스레드 동기화</strong>: <code>barrier()</code>는 모든 스레드가 연산으로 넘어가기 전에 완료된 전송을 확인하도록 보장합니다.</p>
+<p><strong>스레드 동기화</strong>: <code>barrier()</code>는 모든 스레드가 연산으로 넘어가기 전에 완료된
+전송을 확인하도록 보장합니다.</p>
 </li>
 </ul>
 <p><strong>Phase 4: 연산</strong></p>
@@ -628,48 +691,69 @@ if local_i &lt; CONV_TILE_SIZE and global_i &lt; output.shape[0]():
 </code></pre>
 <ul>
 <li>
-<p><strong>빠른 공유 메모리 접근</strong>: 모든 연산이 미리 로드된 공유 메모리 데이터를 사용하여, 연산 집약적인 합성곱 루프에서 느린 DRAM 접근을 피합니다.</p>
+<p><strong>빠른 공유 메모리 접근</strong>: 모든 연산이 미리 로드된 공유 메모리 데이터를
+사용하여, 연산 집약적인 합성곱 루프에서 느린 DRAM 접근을 피합니다.</p>
 </li>
 <li>
-<p><strong>단순화된 경계 처리</strong>: 이 구현은 타일 경계 근처 요소를 처리하기 위해 실용적인 접근 방식을 사용합니다:</p>
+<p><strong>단순화된 경계 처리</strong>: 이 구현은 타일 경계 근처 요소를 처리하기 위해 실용적인
+접근 방식을 사용합니다:</p>
 <ul>
-<li><strong>중심 요소</strong> (<code>local_i &gt;= HALO_SIZE</code>이고 <code>local_i &lt; CONV_TILE_SIZE - HALO_SIZE</code>): 공유 메모리 데이터를 사용하여 전체 5점 합성곱 적용</li>
-<li><strong>경계 요소</strong> (각 타일의 처음 2개와 마지막 2개 요소): 복잡한 경계 로직을 피하기 위해 합성곱 없이 입력을 직접 복사</li>
+<li><strong>중심 요소</strong> (<code>local_i &gt;= HALO_SIZE</code>이고
+<code>local_i &lt; CONV_TILE_SIZE - HALO_SIZE</code>): 공유 메모리 데이터를 사용하여 전체
+5점 합성곱 적용</li>
+<li><strong>경계 요소</strong> (각 타일의 처음 2개와 마지막 2개 요소): 복잡한 경계 로직을
+피하기 위해 합성곱 없이 입력을 직접 복사</li>
 </ul>
-<p><strong>교육적 근거</strong>: 이 접근 방식은 복잡한 경계 처리보다 비동기 복사 패턴 시연을 우선시합니다. <code>HALO_SIZE = 2</code>인 256개 요소 타일에서, 요소 0-1과 254-255는 입력 복사를, 요소 2-253은 전체 합성곱을 사용합니다. 이를 통해 동작하는 구현을 제공하면서 메모리 최적화에 초점을 유지합니다.</p>
 </li>
 </ul>
+<p><strong>교육적 근거</strong>: 이 접근 방식은 복잡한 경계 처리보다 비동기 복사 패턴 시연을
+우선시합니다. <code>HALO_SIZE = 2</code>인 256개 요소 타일에서, 요소 0-1과 254-255는 입력
+복사를, 요소 2-253은 전체 합성곱을 사용합니다. 이를 통해 동작하는 구현을
+제공하면서 메모리 최적화에 초점을 유지합니다.</p>
 <h4 id="성능-분석"><a class="header" href="#성능-분석"><strong>성능 분석</strong></a></h4>
 <p><strong>비동기 복사 없이 (동기식):</strong></p>
-<pre><code>Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
+<pre><code class="language-text">Total Time = Input_Transfer_Time + Kernel_Transfer_Time + Compute_Time
            = Large_DRAM_transfer + Small_DRAM_transfer + convolution
            = Major_latency + Minor_latency + computation_work
 </code></pre>
 <p><strong>비동기 복사 사용 (중첩):</strong></p>
-<pre><code>Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
+<pre><code class="language-text">Total Time = MAX(Input_Transfer_Time, Kernel_Transfer_Time) + Compute_Time
            = MAX(Major_latency, Minor_latency) + computation_work
            = Major_latency + computation_work
 </code></pre>
-<p><strong>성능 향상</strong>: 더 큰 입력 전송 뒤에 더 작은 커널 전송의 지연 시간을 숨김으로써 성능이 향상됩니다. 실제 성능 향상 폭은 전송의 상대적 크기와 사용 가능한 메모리 대역폭에 따라 달라집니다. 더 큰 중첩이 가능한 메모리 바운드 시나리오에서는 성능 향상이 훨씬 클 수 있습니다.</p>
+<p><strong>성능 향상</strong>: 더 큰 입력 전송 뒤에 더 작은 커널 전송의 지연 시간을 숨김으로써
+성능이 향상됩니다. 실제 성능 향상 폭은 전송의 상대적 크기와 사용 가능한 메모리
+대역폭에 따라 달라집니다. 더 큰 중첩이 가능한 메모리 바운드 시나리오에서는 성능
+향상이 훨씬 클 수 있습니다.</p>
 <h4 id="핵심-기술적-통찰"><a class="header" href="#핵심-기술적-통찰"><strong>핵심 기술적 통찰</strong></a></h4>
 <ol>
 <li>
-<p><strong>스레드 레이아웃 매칭</strong>: <code>row_major[256, 1]()</code> 레이아웃이 블록의 <code>(256, 1)</code> 스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.</p>
+<p><strong>스레드 레이아웃 매칭</strong>: <code>row_major[256, 1]()</code> 레이아웃이 블록의 <code>(256, 1)</code>
+스레드 구성과 정확히 일치하여 최적의 메모리 병합을 가능하게 합니다.</p>
 </li>
 <li>
-<p><strong>경쟁 상태 방지</strong>: 적절한 순서 지정(비동기 복사 → 커널 로드 → 대기 → 배리어 → 연산)으로 공유 메모리를 손상시킬 수 있는 모든 경쟁 상태를 제거합니다.</p>
+<p><strong>경쟁 상태 방지</strong>: 적절한 순서 지정(비동기 복사 → 커널 로드 → 대기 → 배리어
+→ 연산)으로 공유 메모리를 손상시킬 수 있는 모든 경쟁 상태를 제거합니다.</p>
 </li>
 <li>
-<p><strong>하드웨어 최적화</strong>: 최신 GPU는 비동기 복사 연산을 위한 전용 하드웨어를 갖추고 있어, 메모리 유닛과 연산 유닛 사이의 진정한 병렬 처리가 가능합니다.</p>
+<p><strong>하드웨어 최적화</strong>: 최신 GPU는 비동기 복사 연산을 위한 전용 하드웨어를
+갖추고 있어, 메모리 유닛과 연산 유닛 사이의 진정한 병렬 처리가 가능합니다.</p>
 </li>
 <li>
-<p><strong>메모리 계층 구조 활용</strong>: 이 패턴은 데이터를 계층 구조를 통해 효율적으로 이동시킵니다: DRAM → 공유 메모리 → 레지스터 → 연산.</p>
+<p><strong>메모리 계층 구조 활용</strong>: 이 패턴은 데이터를 계층 구조를 통해 효율적으로
+이동시킵니다: DRAM → 공유 메모리 → 레지스터 → 연산.</p>
 </li>
 <li>
-<p><strong>테스트-구현 일관성</strong>: 테스트 검증 로직은 <code>local_i_in_tile = i % CONV_TILE_SIZE</code>를 검사하여 각 요소가 합성곱 결과(중심 요소)를 기대해야 하는지 입력 복사(경계 요소)를 기대해야 하는지 판별하며, 경계 처리 전략과 일치합니다. 이를 통해 단순화된 경계 접근 방식의 정확한 검증을 보장합니다.</p>
+<p><strong>테스트-구현 일관성</strong>: 테스트 검증 로직은
+<code>local_i_in_tile = i % CONV_TILE_SIZE</code>를 검사하여 각 요소가 합성곱 결과(중심
+요소)를 기대해야 하는지 입력 복사(경계 요소)를 기대해야 하는지 판별하며, 경계
+처리 전략과 일치합니다. 이를 통해 단순화된 경계 접근 방식의 정확한 검증을
+보장합니다.</p>
 </li>
 </ol>
-<p>이 솔루션는 단순한 메모리 바운드 합성곱을 유용한 작업 뒤에 메모리 지연 시간을 숨기는 최적화된 구현으로 변환하여, 고성능 GPU 프로그래밍의 기본 원리를 보여줍니다.</p>
+<p>이 솔루션는 단순한 메모리 바운드 합성곱을 유용한 작업 뒤에 메모리 지연 시간을
+숨기는 최적화된 구현으로 변환하여, 고성능 GPU 프로그래밍의 기본 원리를
+보여줍니다.</p>
 </details>
 
                     </main>

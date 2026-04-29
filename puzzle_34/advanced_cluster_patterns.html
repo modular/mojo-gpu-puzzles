@@ -210,23 +210,48 @@
                     <main>
                         <h1 id="-advanced-cluster-algorithms"><a class="header" href="#-advanced-cluster-algorithms">🧠 Advanced Cluster Algorithms</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>This final challenge combines <strong>all levels of GPU programming hierarchy</strong> from <a href="../puzzle_24/puzzle_24.html">warp-level (Puzzles 24-26)</a>, <a href="../puzzle_27/puzzle_27.html">block-level (Puzzle 27)</a>, and cluster coordination - to implement a sophisticated multi-level algorithm that maximizes GPU utilization.</p>
-<p><strong>The Challenge</strong>: Implement a hierarchical cluster algorithm using <strong>warp-level optimization</strong> (<code>elect_one_sync()</code>), <strong>block-level aggregation</strong>, and <strong>cluster-level coordination</strong> in a single unified pattern.</p>
-<p><strong>Key Learning</strong>: Learn the complete GPU programming stack with production-ready coordination patterns used in advanced computational workloads.</p>
+<p>This final challenge combines <strong>all levels of GPU programming hierarchy</strong> from
+<a href="../puzzle_24/puzzle_24.html">warp-level (Puzzles 24-26)</a>,
+<a href="../puzzle_27/puzzle_27.html">block-level (Puzzle 27)</a>, and cluster coordination -
+to implement a sophisticated multi-level algorithm that maximizes GPU
+utilization.</p>
+<p><strong>The Challenge</strong>: Implement a hierarchical cluster algorithm using
+<strong>warp-level optimization</strong> (<code>elect_one_sync()</code>), <strong>block-level aggregation</strong>,
+and <strong>cluster-level coordination</strong> in a single unified pattern.</p>
+<p><strong>Key Learning</strong>: Learn the complete GPU programming stack with production-ready
+coordination patterns used in advanced computational workloads.</p>
 <h2 id="the-problem-multi-level-data-processing-pipeline"><a class="header" href="#the-problem-multi-level-data-processing-pipeline">The problem: multi-level data processing pipeline</a></h2>
-<p>Real-world GPU algorithms often require <strong>hierarchical coordination</strong> where different levels of the GPU hierarchy (<a href="../puzzle_24/warp_simt.html">warps from Puzzle 24</a>, <a href="../puzzle_27/block_sum.html">blocks from Puzzle 27</a>, clusters) perform specialized roles in a coordinated computation pipeline, extending <a href="../puzzle_29/barrier.html">multi-stage processing from Puzzle 29</a>.</p>
+<p>Real-world GPU algorithms often require <strong>hierarchical coordination</strong> where
+different levels of the GPU hierarchy
+(<a href="../puzzle_24/warp_simt.html">warps from Puzzle 24</a>,
+<a href="../puzzle_27/block_sum.html">blocks from Puzzle 27</a>, clusters) perform
+specialized roles in a coordinated computation pipeline, extending
+<a href="../puzzle_29/barrier.html">multi-stage processing from Puzzle 29</a>.</p>
 <p><strong>Your task</strong>: Implement a multi-stage algorithm where:</p>
 <ol>
-<li><strong><a href="../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for efficient intra-warp coordination (from <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
-<li><strong><a href="../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using <a href="../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
-<li><strong>Cluster-level</strong>: Coordinate between blocks using <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> <a href="../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
+<li><strong><a href="../puzzle_24/warp_sum.html">Warp-level</a></strong>: Use
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+for efficient intra-warp coordination (from
+<a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li><strong><a href="../puzzle_27/block_sum.html">Block-level</a></strong>: Aggregate warp results using
+<a href="../puzzle_08/puzzle_08.html">shared memory coordination</a></li>
+<li><strong>Cluster-level</strong>: Coordinate between blocks using
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+/
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+<a href="../puzzle_29/barrier.html">staged synchronization from Puzzle 29</a></li>
 </ol>
 <h3 id="algorithm-specification"><a class="header" href="#algorithm-specification">Algorithm specification</a></h3>
 <p><strong>Multi-Stage Processing Pipeline:</strong></p>
 <ol>
-<li><strong>Stage 1 (<a href="../puzzle_24/puzzle_24.html">Warp-level</a>)</strong>: Each warp elects one thread to sum 32 consecutive elements</li>
-<li><strong>Stage 2 (<a href="../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp sums within each block</li>
-<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> / <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
+<li><strong>Stage 1 (<a href="../puzzle_24/puzzle_24.html">Warp-level</a>)</strong>: Each warp elects one
+thread to sum 32 consecutive elements</li>
+<li><strong>Stage 2 (<a href="../puzzle_27/puzzle_27.html">Block-level</a>)</strong>: Aggregate all warp
+sums within each block</li>
+<li><strong>Stage 3 (Cluster-level)</strong>: Coordinate between blocks with
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+/
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></li>
 </ol>
 <p><strong>Input</strong>: 1024 float values with pattern <code>(i % 50) * 0.02</code> for testing
 <strong>Output</strong>: 4 block results showing hierarchical processing effects</p>
@@ -238,7 +263,8 @@
 <li><strong>Warp Size</strong>: <code>WARP_SIZE = 32</code> threads per warp (NVIDIA standard)</li>
 <li><strong>Warps per Block</strong>: <code>TPB / WARP_SIZE = 8</code> warps</li>
 <li><strong>Data Type</strong>: <code>DType.float32</code></li>
-<li><strong>Memory Layout</strong>: Input <code>row_major[SIZE]()</code>, Output <code>row_major[CLUSTER_SIZE]()</code></li>
+<li><strong>Memory Layout</strong>: Input <code>row_major[SIZE]()</code>, Output
+<code>row_major[CLUSTER_SIZE]()</code></li>
 </ul>
 <p><strong>Processing Distribution:</strong></p>
 <ul>
@@ -270,54 +296,78 @@
 <div class="solution-tips">
 <h3 id="warp-level-optimization-patterns"><a class="header" href="#warp-level-optimization-patterns"><strong>Warp-level optimization patterns</strong></a></h3>
 <ul>
-<li>Use <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> to select one thread per warp for computation (from <a href="../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
-<li>The elected thread should process 32 consecutive elements (leveraging <a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
-<li>Compute warp start with <code>(local_i // 32) * 32</code> to find warp boundaries (lane indexing from <a href="../puzzle_24/puzzle_24.html">warp concepts</a>)</li>
-<li>Store warp results back in <a href="../puzzle_08/puzzle_08.html">shared memory at elected thread’s position</a></li>
+<li>Use
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+to select one thread per warp for computation (from
+<a href="../puzzle_24/warp_sum.html">warp programming basics</a>)</li>
+<li>The elected thread should process 32 consecutive elements (leveraging
+<a href="../puzzle_24/warp_simt.html">SIMT execution</a>)</li>
+<li>Compute warp start with <code>(local_i // 32) * 32</code> to find warp boundaries (lane
+indexing from <a href="../puzzle_24/puzzle_24.html">warp concepts</a>)</li>
+<li>Store warp results back in
+<a href="../puzzle_08/puzzle_08.html">shared memory at elected thread’s position</a></li>
 </ul>
 <h3 id="block-level-aggregation-strategy"><a class="header" href="#block-level-aggregation-strategy"><strong>Block-level aggregation strategy</strong></a></h3>
 <ul>
-<li>After warp processing, aggregate across all warp results (extending <a href="../puzzle_27/block_sum.html">block coordination from Puzzle 27</a>)</li>
+<li>After warp processing, aggregate across all warp results (extending
+<a href="../puzzle_27/block_sum.html">block coordination from Puzzle 27</a>)</li>
 <li>Read from elected positions: indices 0, 32, 64, 96, 128, 160, 192, 224</li>
-<li>Use loop <code>for i in range(0, tpb, 32)</code> to iterate through warp leaders (pattern from <a href="../puzzle_12/puzzle_12.html">reduction algorithms</a>)</li>
-<li>Only thread 0 should compute the final block total (single-writer pattern from <a href="../puzzle_29/barrier.html">barrier coordination</a>)</li>
+<li>Use loop <code>for i in range(0, tpb, 32)</code> to iterate through warp leaders (pattern
+from <a href="../puzzle_12/puzzle_12.html">reduction algorithms</a>)</li>
+<li>Only thread 0 should compute the final block total (single-writer pattern from
+<a href="../puzzle_29/barrier.html">barrier coordination</a>)</li>
 </ul>
 <h3 id="cluster-coordination-flow"><a class="header" href="#cluster-coordination-flow"><strong>Cluster coordination flow</strong></a></h3>
 <ol>
-<li><strong>Process</strong>: Each block processes its data with hierarchical warp optimization</li>
-<li><strong>Signal</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a> indicates completion of local processing</li>
+<li><strong>Process</strong>: Each block processes its data with hierarchical warp
+optimization</li>
+<li><strong>Signal</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a>
+indicates completion of local processing</li>
 <li><strong>Store</strong>: Thread 0 writes the block result to output</li>
-<li><strong>Wait</strong>: <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a> ensures all blocks complete before termination</li>
+<li><strong>Wait</strong>:
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a>
+ensures all blocks complete before termination</li>
 </ol>
 <h3 id="data-scaling-and-bounds-checking"><a class="header" href="#data-scaling-and-bounds-checking"><strong>Data scaling and bounds checking</strong></a></h3>
 <ul>
 <li>Scale input by <code>Float32(block_id + 1)</code> to create distinct block patterns</li>
-<li>Always check <code>global_i &lt; size</code> before reading input (from <a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
-<li>Use <code>barrier()</code> between processing phases within blocks (from <a href="../puzzle_29/barrier.html">synchronization patterns</a>)</li>
-<li>Handle warp boundary conditions carefully in loops (considerations from <a href="../puzzle_24/warp_simt.html">warp programming</a>)</li>
+<li>Always check <code>global_i &lt; size</code> before reading input (from
+<a href="../puzzle_03/puzzle_03.html">guards in Puzzle 3</a>)</li>
+<li>Use <code>barrier()</code> between processing phases within blocks (from
+<a href="../puzzle_29/barrier.html">synchronization patterns</a>)</li>
+<li>Handle warp boundary conditions carefully in loops (considerations from
+<a href="../puzzle_24/warp_simt.html">warp programming</a>)</li>
 </ul>
 </div>
 </details>
 <h2 id="advanced-cluster-apis"><a class="header" href="#advanced-cluster-apis">Advanced cluster APIs</a></h2>
-<p><strong>From <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a> module:</strong></p>
+<p><strong>From
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/"><code>gpu.primitives.cluster</code></a>
+module:</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>: Warp-level thread election for efficient computation</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Signal completion for staged cluster coordination</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Wait for all blocks to reach synchronization point</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>: Get unique block identifier within cluster</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a></strong>:
+Warp-level thread election for efficient computation</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+Signal completion for staged cluster coordination</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+Wait for all blocks to reach synchronization point</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/block_rank_in_cluster"><code>block_rank_in_cluster()</code></a></strong>:
+Get unique block identifier within cluster</li>
 </ul>
 <h2 id="hierarchical-coordination-pattern"><a class="header" href="#hierarchical-coordination-pattern">Hierarchical coordination pattern</a></h2>
 <p>This puzzle demonstrates <strong>three-level coordination hierarchy</strong>:</p>
 <h3 id="level-1-warp-coordination-puzzle-24"><a class="header" href="#level-1-warp-coordination-puzzle-24"><strong>Level 1: Warp Coordination</strong> (<a href="../puzzle_24/puzzle_24.html">Puzzle 24</a>)</a></h3>
-<pre><code>Warp (32 threads) → elect_one_sync() → 1 elected thread → processes 32 elements
+<pre><code class="language-text">Warp (32 threads) → elect_one_sync() → 1 elected thread → processes 32 elements
 </code></pre>
 <h3 id="level-2-block-coordination-puzzle-27"><a class="header" href="#level-2-block-coordination-puzzle-27"><strong>Level 2: Block Coordination</strong> (<a href="../puzzle_27/puzzle_27.html">Puzzle 27</a>)</a></h3>
-<pre><code>Block (8 warps) → aggregate warp results → 1 block total
+<pre><code class="language-text">Block (8 warps) → aggregate warp results → 1 block total
 </code></pre>
 <h3 id="level-3-cluster-coordination-this-puzzle"><a class="header" href="#level-3-cluster-coordination-this-puzzle"><strong>Level 3: Cluster Coordination</strong> (This puzzle)</a></h3>
-<pre><code>Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
+<pre><code class="language-text">Cluster (4 blocks) → cluster_arrive/wait → synchronized completion
 </code></pre>
-<p><strong>Combined Effect:</strong> 1024 threads → 32 warp leaders → 4 block results → coordinated cluster completion</p>
+<p><strong>Combined Effect:</strong> 1024 threads → 32 warp leaders → 4 block results →
+coordinated cluster completion</p>
 <h2 id="running-the-code"><a class="header" href="#running-the-code">Running the code</a></h2>
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
@@ -334,7 +384,7 @@
   </div>
 </div>
 <p><strong>Expected Output:</strong></p>
-<pre><code>Testing Advanced Cluster Algorithms
+<pre><code class="language-text">Testing Advanced Cluster Algorithms
 SIZE: 1024 TPB: 256 CLUSTER_SIZE: 4
 Advanced cluster algorithm results:
   Block 0 : 122.799995
@@ -348,7 +398,8 @@ Advanced cluster algorithm results:
 <li><strong>Hierarchical scaling</strong>: Results show multi-level coordination effects</li>
 <li><strong>Warp optimization</strong>: <code>elect_one_sync()</code> reduces redundant computation</li>
 <li><strong>Cluster coordination</strong>: All blocks complete processing successfully</li>
-<li><strong>Performance pattern</strong>: Higher block IDs produce proportionally larger results</li>
+<li><strong>Performance pattern</strong>: Higher block IDs produce proportionally larger
+results</li>
 </ul>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
 <details class="solution-details">
@@ -411,7 +462,9 @@ Advanced cluster algorithm results:
 
 </code></pre>
 <div class="solution-explanation">
-<p><strong>The advanced cluster patterns solution demonstrates a sophisticated three-level hierarchical optimization that combines warp, block, and cluster coordination for maximum GPU utilization:</strong></p>
+<p><strong>The advanced cluster patterns solution demonstrates a sophisticated
+three-level hierarchical optimization that combines warp, block, and cluster
+coordination for maximum GPU utilization:</strong></p>
 <h2 id="level-1-warp-level-optimization-thread-election"><a class="header" href="#level-1-warp-level-optimization-thread-election"><strong>Level 1: Warp-Level Optimization (Thread Election)</strong></a></h2>
 <p><strong>Data preparation and scaling:</strong></p>
 <pre><code class="language-mojo">var data_scale = Float32(block_id + 1)  # Block-specific scaling factor
@@ -437,7 +490,7 @@ barrier()  # Ensure all threads complete data loading
 <li><strong>Thread 199</strong> (in warp 6): <code>warp_start = (199 // 32) * 32 = 6 * 32 = 192</code></li>
 </ul>
 <p><strong>Election pattern visualization (TPB=256, 8 warps):</strong></p>
-<pre><code>Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
+<pre><code class="language-text">Warp 0 (threads 0-31):   elect_one_sync() → Thread 0   processes elements 0-31
 Warp 1 (threads 32-63):  elect_one_sync() → Thread 32  processes elements 32-63
 Warp 2 (threads 64-95):  elect_one_sync() → Thread 64  processes elements 64-95
 Warp 3 (threads 96-127): elect_one_sync() → Thread 96  processes elements 96-127
@@ -460,7 +513,9 @@ Warp 7 (threads 224-255):elect_one_sync() → Thread 224 processes elements 224-
 </code></pre>
 <p><strong>Memory access pattern:</strong></p>
 <ul>
-<li>Thread 0 reads from: <code>shared_data[0]</code>, <code>shared_data[32]</code>, <code>shared_data[64]</code>, <code>shared_data[96]</code>, <code>shared_data[128]</code>, <code>shared_data[160]</code>, <code>shared_data[192]</code>, <code>shared_data[224]</code></li>
+<li>Thread 0 reads from: <code>shared_data[0]</code>, <code>shared_data[32]</code>, <code>shared_data[64]</code>,
+<code>shared_data[96]</code>, <code>shared_data[128]</code>, <code>shared_data[160]</code>, <code>shared_data[192]</code>,
+<code>shared_data[224]</code></li>
 <li>These positions contain the warp sums computed by elected threads</li>
 <li>Result: 8 warp sums → 1 block total</li>
 </ul>
@@ -472,10 +527,14 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </code></pre>
 <p><strong>Why staged synchronization?</strong></p>
 <ul>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong> called <strong>before</strong> final computation allows overlapping work</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>
+called <strong>before</strong> final computation allows overlapping work</li>
 <li>Block can compute its result while other blocks are still processing</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong> ensures deterministic completion order</li>
-<li>More efficient than <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a> for independent block computations</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>
+ensures deterministic completion order</li>
+<li>More efficient than
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_sync"><code>cluster_sync()</code></a>
+for independent block computations</li>
 </ul>
 <h2 id="advanced-pattern-characteristics"><a class="header" href="#advanced-pattern-characteristics"><strong>Advanced pattern characteristics</strong></a></h2>
 <p><strong>Hierarchical computation reduction:</strong></p>
@@ -487,30 +546,41 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </ol>
 <p><strong>Memory access optimization:</strong></p>
 <ul>
-<li><strong>Level 1</strong>: Coalesced reads from <code>input[global_i]</code>, scaled writes to shared memory</li>
-<li><strong>Level 2</strong>: Elected threads perform warp-level aggregation (8 computations vs 256)</li>
+<li><strong>Level 1</strong>: Coalesced reads from <code>input[global_i]</code>, scaled writes to shared
+memory</li>
+<li><strong>Level 2</strong>: Elected threads perform warp-level aggregation (8 computations vs
+256)</li>
 <li><strong>Level 3</strong>: Thread 0 performs block-level aggregation (1 computation vs 8)</li>
 <li><strong>Result</strong>: Minimized memory bandwidth usage through hierarchical reduction</li>
 </ul>
 <p><strong>Synchronization hierarchy:</strong></p>
 <ol>
-<li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and warp processing)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>: Inter-block signaling (non-blocking, enables work overlap)</li>
-<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>: Inter-block synchronization (blocking, ensures completion order)</li>
+<li><strong><code>barrier()</code></strong>: Intra-block thread synchronization (after data loading and
+warp processing)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_arrive"><code>cluster_arrive()</code></a></strong>:
+Inter-block signaling (non-blocking, enables work overlap)</li>
+<li><strong><a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/cluster_wait"><code>cluster_wait()</code></a></strong>:
+Inter-block synchronization (blocking, ensures completion order)</li>
 </ol>
 <p><strong>Why this is “advanced”:</strong></p>
 <ul>
-<li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming techniques</li>
-<li><strong>Hardware efficiency</strong>: Leverages <a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a> for optimal warp utilization</li>
-<li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible synchronization</li>
+<li><strong>Multi-level optimization</strong>: Combines warp, block, and cluster programming
+techniques</li>
+<li><strong>Hardware efficiency</strong>: Leverages
+<a href="https://docs.modular.com/mojo/std/gpu/primitives/cluster/elect_one_sync"><code>elect_one_sync()</code></a>
+for optimal warp utilization</li>
+<li><strong>Staged coordination</strong>: Uses advanced cluster APIs for flexible
+synchronization</li>
 <li><strong>Production-ready</strong>: Demonstrates patterns used in real-world GPU libraries</li>
 </ul>
 <p><strong>Real-world performance benefits:</strong></p>
 <ul>
-<li><strong>Reduced memory pressure</strong>: Fewer threads accessing shared memory simultaneously</li>
+<li><strong>Reduced memory pressure</strong>: Fewer threads accessing shared memory
+simultaneously</li>
 <li><strong>Better warp utilization</strong>: Elected threads perform focused computation</li>
 <li><strong>Scalable coordination</strong>: Staged synchronization handles larger cluster sizes</li>
-<li><strong>Algorithm flexibility</strong>: Foundation for complex multi-stage processing pipelines</li>
+<li><strong>Algorithm flexibility</strong>: Foundation for complex multi-stage processing
+pipelines</li>
 </ul>
 <p><strong>Complexity analysis:</strong></p>
 <ul>
@@ -522,28 +592,33 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 </div>
 </details>
 <h2 id="the-complete-gpu-hierarchy"><a class="header" href="#the-complete-gpu-hierarchy">The complete GPU hierarchy</a></h2>
-<p>Congratulations! By completing this puzzle, you’ve learned <strong>the complete GPU programming stack</strong>:</p>
-<p>✅ <strong>Thread-level programming</strong>: Individual execution units</br>
-✅ <strong><a href="../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT coordination</br>
-✅ <strong><a href="../puzzle_27/puzzle_27.html">Block-level programming</a></strong>: Multi-warp coordination and shared memory</br>
-✅ <strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs</br>
-✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization primitives</br>
-✅ <strong>Scale algorithms beyond single-block limitations</strong> using cluster APIs</br>
-✅ <strong>Implement hierarchical algorithms</strong> combining warp + block + cluster coordination</br>
-✅ <strong>Utilize next-generation GPU hardware</strong> with SM90+ cluster programming</p>
+<p>Congratulations! By completing this puzzle, you’ve learned
+<strong>the complete GPU programming stack</strong>:</p>
+<p>✅ <strong>Thread-level programming</strong>: Individual execution units</br> ✅
+<strong><a href="../puzzle_24/puzzle_24.html">Warp-level programming</a></strong>: 32-thread SIMT
+coordination</br> ✅ <strong><a href="../puzzle_27/puzzle_27.html">Block-level programming</a></strong>:
+Multi-warp coordination and shared memory</br> ✅
+<strong>🆕 Cluster-level programming</strong>: Multi-block coordination with SM90+ APIs</br>
+✅ <strong>Coordinate multiple thread blocks</strong> with cluster synchronization
+primitives</br> ✅ <strong>Scale algorithms beyond single-block limitations</strong> using
+cluster APIs</br> ✅ <strong>Implement hierarchical algorithms</strong> combining warp +
+block + cluster coordination</br> ✅ <strong>Utilize next-generation GPU hardware</strong>
+with SM90+ cluster programming</p>
 <h2 id="real-world-applications"><a class="header" href="#real-world-applications">Real-world applications</a></h2>
 <p>The hierarchical coordination patterns from this puzzle are fundamental to:</p>
 <p><strong>High-Performance Computing:</strong></p>
 <ul>
 <li><strong>Multi-grid solvers</strong>: Different levels handle different resolution grids</li>
 <li><strong>Domain decomposition</strong>: Hierarchical coordination across problem subdomains</li>
-<li><strong>Parallel iterative methods</strong>: Warp-level local operations, cluster-level global communication</li>
+<li><strong>Parallel iterative methods</strong>: Warp-level local operations, cluster-level
+global communication</li>
 </ul>
 <p><strong>Deep Learning:</strong></p>
 <ul>
 <li><strong>Model parallelism</strong>: Different blocks process different model components</li>
 <li><strong>Pipeline parallelism</strong>: Staged processing across multiple transformer layers</li>
-<li><strong>Gradient aggregation</strong>: Hierarchical reduction across distributed training nodes</li>
+<li><strong>Gradient aggregation</strong>: Hierarchical reduction across distributed training
+nodes</li>
 </ul>
 <p><strong>Graphics and Visualization:</strong></p>
 <ul>
@@ -552,8 +627,15 @@ cluster_wait()    # Blocking: wait for all blocks to complete
 <li><strong>Parallel geometry processing</strong>: Coordinated transformation pipelines</li>
 </ul>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
-<p>You’ve now learned the <strong>cutting-edge GPU programming techniques</strong> available on modern hardware!</p>
-<p><strong>Ready for more challenges?</strong> Explore other advanced GPU programming topics, revisit <a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>, apply <a href="../puzzle_30/nvidia_profiling_basics.html">profiling methodologies from NVIDIA tools</a>, or build upon these cluster programming patterns for your own computational workloads!</p>
+<p>You’ve now learned the <strong>cutting-edge GPU programming techniques</strong> available on
+modern hardware!</p>
+<p><strong>Ready for more challenges?</strong> Explore other advanced GPU programming topics,
+revisit
+<a href="../puzzle_30/puzzle_30.html">performance optimization techniques from Puzzles 30-32</a>,
+apply
+<a href="../puzzle_30/nvidia_profiling_basics.html">profiling methodologies from NVIDIA tools</a>,
+or build upon these cluster programming patterns for your own computational
+workloads!</p>
 
                     </main>
 

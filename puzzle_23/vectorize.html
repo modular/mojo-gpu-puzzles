@@ -210,13 +210,21 @@
                     <main>
                         <h1 id="vectorization---fine-grained-simd-control"><a class="header" href="#vectorization---fine-grained-simd-control">Vectorization - Fine-Grained SIMD Control</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual vectorization and <a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a> that give you precise control over SIMD operations within GPU kernels. You’ll implement two different approaches to vectorized computation:</p>
+<p>This puzzle explores <strong>advanced vectorization techniques</strong> using manual
+vectorization and
+<a href="https://docs.modular.com/mojo/std/algorithm/functional/vectorize/">vectorize</a>
+that give you precise control over SIMD operations within GPU kernels. You’ll
+implement two different approaches to vectorized computation:</p>
 <ol>
-<li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index calculations</li>
-<li><strong>Mojo’s vectorize function</strong>: High-level vectorization with automatic bounds checking</li>
+<li><strong>Manual vectorization</strong>: Direct SIMD control with explicit index
+calculations</li>
+<li><strong>Mojo’s vectorize function</strong>: High-level vectorization with automatic bounds
+checking</li>
 </ol>
-<p>Both approaches build on tiling concepts but with different trade-offs between control, safety, and performance optimization.</p>
-<p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance requirements and complexity levels.</em></p>
+<p>Both approaches build on tiling concepts but with different trade-offs between
+control, safety, and performance optimization.</p>
+<p><strong>Key insight:</strong> <em>Different vectorization strategies suit different performance
+requirements and complexity levels.</em></p>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key concepts</a></h2>
 <p>In this puzzle, you’ll learn:</p>
 <ul>
@@ -391,7 +399,8 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
 <div class="solution-explanation">
 <h3 id="manual-vectorization-deep-dive"><a class="header" href="#manual-vectorization-deep-dive">Manual vectorization deep dive</a></h3>
-<p><strong>Manual vectorization</strong> gives you direct control over SIMD operations with explicit index calculations:</p>
+<p><strong>Manual vectorization</strong> gives you direct control over SIMD operations with
+explicit index calculations:</p>
 <ul>
 <li><strong>Chunk-based organization</strong>: <code>chunk_size = tile_size * simd_width</code></li>
 <li><strong>Global indexing</strong>: Direct calculation of memory positions</li>
@@ -401,7 +410,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 <pre><code class="language-mojo">comptime chunk_size = tile_size * simd_width  # 32 * 4 = 128
 </code></pre>
 <p><strong>Chunk organization visualization (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code>Original array: [0, 1, 2, 3, ..., 1023]
+<pre><code class="language-text">Original array: [0, 1, 2, 3, ..., 1023]
 
 Chunk 0 (thread 0): [0:128]    ← 128 elements = 32 SIMD groups of 4
 Chunk 1 (thread 1): [128:256]  ← Next 128 elements
@@ -580,7 +589,7 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 
         def vectorized_add[
             width: Int
-        ](i: Int) unified {read tile_start, read a_lt, read b_lt, mut out_lt}:
+        ](i: Int) {read tile_start, read a_lt, read b_lt, mut out_lt}:
             var global_idx = tile_start + i
             if global_idx + width &lt;= size:
                 var a_vec = a_lt.aligned_load[width](Index(global_idx))
@@ -600,7 +609,8 @@ expected: HostBuffer([1.0, 5.0, 9.0, ..., 4085.0, 4089.0, 4093.0])
 </code></pre>
 <div class="solution-explanation">
 <h3 id="mojo-vectorize-deep-dive"><a class="header" href="#mojo-vectorize-deep-dive">Mojo vectorize deep dive</a></h3>
-<p><strong>Mojo’s vectorize function</strong> provides automatic vectorization with built-in safety:</p>
+<p><strong>Mojo’s vectorize function</strong> provides automatic vectorization with built-in
+safety:</p>
 <ul>
 <li><strong>Explicit SIMD width parameter</strong>: You provide the simd_width to use</li>
 <li><strong>Built-in bounds checking</strong>: Prevents buffer overruns automatically</li>
@@ -622,13 +632,15 @@ actual_tile_size = tile_end - tile_start
 </code></pre>
 <p><strong>How vectorize works:</strong></p>
 <ul>
-<li><strong>Automatic chunking</strong>: Divides <code>actual_tile_size</code> into chunks of your provided <code>simd_width</code></li>
-<li><strong>Remainder handling</strong>: Automatically processes leftover elements with smaller widths</li>
+<li><strong>Automatic chunking</strong>: Divides <code>actual_tile_size</code> into chunks of your
+provided <code>simd_width</code></li>
+<li><strong>Remainder handling</strong>: Automatically processes leftover elements with smaller
+widths</li>
 <li><strong>Bounds safety</strong>: Automatically prevents buffer overruns</li>
 <li><strong>Loop management</strong>: Handles the vectorization loop automatically</li>
 </ul>
 <p><strong>Execution visualization (TILE_SIZE=32, SIMD_WIDTH=4):</strong></p>
-<pre><code>Tile 0 processing:
+<pre><code class="language-text">Tile 0 processing:
   vectorize call 0: processes elements [0:4]   with SIMD_WIDTH=4
   vectorize call 1: processes elements [4:8]   with SIMD_WIDTH=4
   ...
@@ -659,25 +671,28 @@ actual_tile_size = tile_end - tile_start
 <ul>
 <li><strong>Development speed</strong> and safety are priorities</li>
 <li>Working with <strong>irregular or dynamic data sizes</strong></li>
-<li>You want <strong>automatic remainder handling</strong> instead of manual edge case management</li>
+<li>You want <strong>automatic remainder handling</strong> instead of manual edge case
+management</li>
 <li><strong>Bounds checking</strong> complexity would be error-prone</li>
 <li>You prefer <strong>cleaner vectorization patterns</strong> over manual loop management</li>
 </ul>
 <h3 id="advanced-optimization-insights"><a class="header" href="#advanced-optimization-insights">Advanced optimization insights</a></h3>
 <p><strong>Memory bandwidth utilization:</strong></p>
-<pre><code>Manual:    8 threads × 32 SIMD ops = 256 total SIMD operations
+<pre><code class="language-text">Manual:    8 threads × 32 SIMD ops = 256 total SIMD operations
 Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 </code></pre>
 <p>Both achieve similar total throughput but with different parallelism strategies.</p>
 <p><strong>Cache behavior:</strong></p>
 <ul>
 <li><strong>Manual</strong>: Large chunks may exceed L1 cache, but perfect sequential access</li>
-<li><strong>Vectorize</strong>: Smaller tiles fit better in cache, with automatic remainder handling</li>
+<li><strong>Vectorize</strong>: Smaller tiles fit better in cache, with automatic remainder
+handling</li>
 </ul>
 <p><strong>Hardware mapping:</strong></p>
 <ul>
 <li><strong>Manual</strong>: Direct control over warp utilization and SIMD unit mapping</li>
-<li><strong>Vectorize</strong>: Simplified vectorization with automatic loop and remainder management</li>
+<li><strong>Vectorize</strong>: Simplified vectorization with automatic loop and remainder
+management</li>
 </ul>
 <h3 id="best-practices-summary"><a class="header" href="#best-practices-summary">Best practices summary</a></h3>
 <p><strong>Manual vectorization best practices:</strong></p>
@@ -694,14 +709,21 @@ Vectorize: 32 threads × 8 SIMD ops = 256 total SIMD operations
 <li>Use nested parameter functions for clean vectorization logic</li>
 <li>Trust automatic bounds checking and remainder handling for edge cases</li>
 </ul>
-<p>Both approaches represent valid strategies in the GPU performance optimization toolkit, with manual vectorization offering maximum control and Mojo’s vectorize providing safety and automatic remainder handling.</p>
+<p>Both approaches represent valid strategies in the GPU performance optimization
+toolkit, with manual vectorization offering maximum control and Mojo’s vectorize
+providing safety and automatic remainder handling.</p>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
 <p>Now that you understand all three fundamental patterns:</p>
 <ul>
-<li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the execution hierarchy</li>
-<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and optimization</li>
+<li><strong><a href="./gpu-thread-vs-simd.html">🧠 GPU Threading vs SIMD</a></strong>: Understanding the
+execution hierarchy</li>
+<li><strong><a href="./benchmarking.html">📊 Benchmarking</a></strong>: Performance analysis and
+optimization</li>
 </ul>
-<p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different performance requirements. Manual vectorization gives maximum control, while Mojo’s vectorize function provides safety and automatic remainder handling. Choose based on your specific performance needs and development constraints.</p>
+<p>💡 <strong>Key takeaway</strong>: Different vectorization strategies suit different
+performance requirements. Manual vectorization gives maximum control, while
+Mojo’s vectorize function provides safety and automatic remainder handling.
+Choose based on your specific performance needs and development constraints.</p>
 
                     </main>
 

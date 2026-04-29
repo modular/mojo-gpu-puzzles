@@ -210,8 +210,12 @@
                     <main>
                         <h1 id="-debugging-race-conditions"><a class="header" href="#-debugging-race-conditions">🏁 Debugging Race Conditions</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code> tool to find concurrency bugs in shared memory operations.</p>
-<p>You have a GPU kernel that should accumulate values from multiple threads using shared memory. The test fails, but the logic seems correct. Your task is to identify and fix the race condition causing the failure.</p>
+<p>Debug failing GPU programs using NVIDIA’s <code>compute-sanitizer</code> to identify race
+conditions that cause incorrect results. You’ll learn to use the <code>racecheck</code>
+tool to find concurrency bugs in shared memory operations.</p>
+<p>You have a GPU kernel that should accumulate values from multiple threads using
+shared memory. The test fails, but the logic seems correct. Your task is to
+identify and fix the race condition causing the failure.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2
 comptime BLOCKS_PER_GRID = 1
@@ -285,7 +289,8 @@ AssertionError: `left == right` comparison failed:
   right: 6.0
 ========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)
 </code></pre>
-<p><strong>Analysis</strong>: The program has <strong>1 race condition</strong> with <strong>9 individual hazards</strong>:</p>
+<p><strong>Analysis</strong>: The program has <strong>1 race condition</strong> with
+<strong>9 individual hazards</strong>:</p>
 <ul>
 <li><strong>4 read-after-write hazards</strong> (threads reading while others write)</li>
 <li><strong>5 write-after-write hazards</strong> (multiple threads writing simultaneously)</li>
@@ -305,7 +310,9 @@ AssertionError: `left == right` comparison failed:
   right: 6.0
 ========= ERROR SUMMARY: 0 errors
 </code></pre>
-<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong> - there are no synchronization issues like deadlocks. The problem is <strong>race conditions</strong>, not synchronization bugs.</p>
+<p><strong>Key insight</strong>: <code>synccheck</code> found <strong>0 errors</strong> - there are no synchronization
+issues like deadlocks. The problem is <strong>race conditions</strong>, not synchronization
+bugs.</p>
 <h2 id="deadlock-vs-race-condition-understanding-the-difference"><a class="header" href="#deadlock-vs-race-condition-understanding-the-difference">Deadlock vs Race Condition: Understanding the Difference</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Aspect</th><th>Deadlock</th><th>Race Condition</th></tr></thead><tbody>
 <tr><td><strong>Symptom</strong></td><td>Program hangs forever</td><td>Program produces wrong results</td></tr>
@@ -320,12 +327,15 @@ AssertionError: `left == right` comparison failed:
 <ul>
 <li><strong>Program completes</strong> → No deadlock (threads don’t get stuck)</li>
 <li><strong>Wrong results</strong> → Race condition (threads corrupt each other’s data)</li>
-<li><strong>Tool confirms</strong> → <code>synccheck</code> reports 0 errors, <code>racecheck</code> reports 9 hazards</li>
+<li><strong>Tool confirms</strong> → <code>synccheck</code> reports 0 errors, <code>racecheck</code> reports 9
+hazards</li>
 </ul>
 <p><strong>Why this distinction matters for debugging:</strong></p>
 <ul>
-<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
-<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional
+synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic
+operations, data dependencies</li>
 </ul>
 <h2 id="challenge"><a class="header" href="#challenge">Challenge</a></h2>
 <p>Equiped with these tools, fix the kernel failing kernel.</p>
@@ -333,17 +343,21 @@ AssertionError: `left == right` comparison failed:
 <summary><strong>Tips</strong></summary>
 <div class="solution-tips">
 <h3 id="understanding-the-hazard-breakdown"><a class="header" href="#understanding-the-hazard-breakdown">Understanding the hazard breakdown</a></h3>
-<p>The <code>shared_sum[0] += a[row, col]</code> operation creates hazards because it’s actually <strong>three separate memory operations</strong>:</p>
+<p>The <code>shared_sum[0] += a[row, col]</code> operation creates hazards because it’s
+actually <strong>three separate memory operations</strong>:</p>
 <ol>
 <li><strong>READ</strong> <code>shared_sum[0]</code></li>
 <li><strong>ADD</strong> <code>a[row, col]</code> to the read value</li>
 <li><strong>WRITE</strong> the result back to <code>shared_sum[0]</code></li>
 </ol>
-<p>With 4 active threads (positions (0,0), (0,1), (1,0), (1,1)), these operations can interleave:</p>
+<p>With 4 active threads (positions (0,0), (0,1), (1,0), (1,1)), these operations
+can interleave:</p>
 <ul>
 <li><strong>Thread timing overlap</strong> → Multiple threads read the same initial value (0.0)</li>
-<li><strong>Lost updates</strong> → Each thread writes back <code>0.0 + their_value</code>, overwriting others’ work</li>
-<li><strong>Non-atomic operation</strong> → The <code>+=</code> compound assignment isn’t atomic in GPU shared memory</li>
+<li><strong>Lost updates</strong> → Each thread writes back <code>0.0 + their_value</code>, overwriting
+others’ work</li>
+<li><strong>Non-atomic operation</strong> → The <code>+=</code> compound assignment isn’t atomic in GPU
+shared memory</li>
 </ul>
 <p><strong>Why we get exactly 9 hazards:</strong></p>
 <ul>
@@ -353,16 +367,23 @@ AssertionError: `left == right` comparison failed:
 </ul>
 <h3 id="race-condition-debugging-tips"><a class="header" href="#race-condition-debugging-tips">Race condition debugging tips</a></h3>
 <ol>
-<li><strong>Use racecheck for data races</strong>: Detects shared memory hazards and data corruption</li>
-<li><strong>Use synccheck for deadlocks</strong>: Detects synchronization bugs (barrier issues, deadlocks)</li>
-<li><strong>Focus on shared memory access</strong>: Look for unsynchronized <code>+=</code>, <code>=</code> operations to shared variables</li>
-<li><strong>Identify the pattern</strong>: Read-modify-write operations are common race condition sources</li>
-<li><strong>Check barrier placement</strong>: Barriers must be placed BEFORE conflicting operations, not after</li>
+<li><strong>Use racecheck for data races</strong>: Detects shared memory hazards and data
+corruption</li>
+<li><strong>Use synccheck for deadlocks</strong>: Detects synchronization bugs (barrier
+issues, deadlocks)</li>
+<li><strong>Focus on shared memory access</strong>: Look for unsynchronized <code>+=</code>, <code>=</code>
+operations to shared variables</li>
+<li><strong>Identify the pattern</strong>: Read-modify-write operations are common race
+condition sources</li>
+<li><strong>Check barrier placement</strong>: Barriers must be placed BEFORE conflicting
+operations, not after</li>
 </ol>
 <p><strong>Why this distinction matters for debugging:</strong></p>
 <ul>
-<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional synchronization, thread coordination</li>
-<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic operations, data dependencies</li>
+<li><strong>Deadlock debugging</strong>: Focus on barrier placement, conditional
+synchronization, thread coordination</li>
+<li><strong>Race condition debugging</strong>: Focus on shared memory access patterns, atomic
+operations, data dependencies</li>
 </ul>
 <p><strong>Common race condition patterns to avoid:</strong></p>
 <ul>
@@ -424,7 +445,8 @@ def shared_memory_race(
 <p>This single line creates multiple hazards among the 4 valid threads:</p>
 <ol>
 <li><strong>Thread (0,0) reads</strong> <code>shared_sum[0]</code> (value: 0.0)</li>
-<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0) ← <strong>Read-after-write hazard!</strong></li>
+<li><strong>Thread (0,1) reads</strong> <code>shared_sum[0]</code> (value: 0.0) ←
+<strong>Read-after-write hazard!</strong></li>
 <li><strong>Thread (0,0) writes</strong> back <code>0.0 + 0</code></li>
 <li><strong>Thread (1,0) writes</strong> back <code>0.0 + 2</code> ← <strong>Write-after-write hazard!</strong></li>
 </ol>
@@ -436,32 +458,43 @@ def shared_memory_race(
 <li>The <code>barrier()</code> comes too late - after the race condition already occurred</li>
 </ul>
 <h4 id="what-are-race-conditions"><a class="header" href="#what-are-race-conditions">What are race conditions?</a></h4>
-<p><strong>Race conditions</strong> occur when multiple threads access shared data concurrently, and the result depends on the unpredictable timing of thread execution.</p>
+<p><strong>Race conditions</strong> occur when multiple threads access shared data concurrently,
+and the result depends on the unpredictable timing of thread execution.</p>
 <p><strong>Key characteristics:</strong></p>
 <ul>
-<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on different runs</li>
+<li><strong>Non-deterministic behavior</strong>: Same code can produce different results on
+different runs</li>
 <li><strong>Timing-dependent</strong>: Results depend on which thread “wins the race”</li>
 <li><strong>Hard to reproduce</strong>: May only manifest under specific conditions or hardware</li>
 </ul>
 <h4 id="gpu-specific-dangers"><a class="header" href="#gpu-specific-dangers">GPU-specific dangers</a></h4>
 <p><strong>Massive parallelism impact:</strong></p>
 <ul>
-<li><strong>Warp-level corruption</strong>: Race conditions can affect entire warps (32 threads)</li>
-<li><strong>Memory coalescing issues</strong>: Races can disrupt efficient memory access patterns</li>
-<li><strong>Kernel-wide failures</strong>: Shared memory corruption can affect the entire GPU kernel</li>
+<li><strong>Warp-level corruption</strong>: Race conditions can affect entire warps (32
+threads)</li>
+<li><strong>Memory coalescing issues</strong>: Races can disrupt efficient memory access
+patterns</li>
+<li><strong>Kernel-wide failures</strong>: Shared memory corruption can affect the entire GPU
+kernel</li>
 </ul>
 <p><strong>Hardware variations:</strong></p>
 <ul>
-<li><strong>Different GPU architectures</strong>: Race conditions may manifest differently across GPU models</li>
-<li><strong>Memory hierarchy</strong>: L1 cache, L2 cache, and global memory can all exhibit different race behaviors</li>
-<li><strong>Warp scheduling</strong>: Different thread scheduling can expose different race condition scenarios</li>
+<li><strong>Different GPU architectures</strong>: Race conditions may manifest differently
+across GPU models</li>
+<li><strong>Memory hierarchy</strong>: L1 cache, L2 cache, and global memory can all exhibit
+different race behaviors</li>
+<li><strong>Warp scheduling</strong>: Different thread scheduling can expose different race
+condition scenarios</li>
 </ul>
 <h3 id="strategy-single-writer-pattern"><a class="header" href="#strategy-single-writer-pattern">Strategy: Single writer pattern</a></h3>
 <p>The key insight is to eliminate concurrent writes to shared memory:</p>
 <ol>
-<li><strong>Single writer</strong>: Only one thread (thread at position (0,0)) does all accumulation work</li>
-<li><strong>Local accumulation</strong>: Thread at position (0,0) uses a local variable to avoid repeated shared memory access</li>
-<li><strong>Single shared memory write</strong>: One write operation eliminates write-write races</li>
+<li><strong>Single writer</strong>: Only one thread (thread at position (0,0)) does all
+accumulation work</li>
+<li><strong>Local accumulation</strong>: Thread at position (0,0) uses a local variable to
+avoid repeated shared memory access</li>
+<li><strong>Single shared memory write</strong>: One write operation eliminates write-write
+races</li>
 <li><strong>Barrier synchronization</strong>: Ensures writer completes before others read</li>
 <li><strong>Multiple readers</strong>: All threads safely read the final result</li>
 </ol>
@@ -478,7 +511,8 @@ def shared_memory_race(
             local_sum += rebind[Scalar[dtype]](a[r, c])
     shared_sum[0] = local_sum  # Single write operation
 </code></pre>
-<p>Only thread at position (0,0) performs all accumulation work, eliminating race conditions.</p>
+<p>Only thread at position (0,0) performs all accumulation work, eliminating race
+conditions.</p>
 <p><strong>Step 3: Synchronization barrier</strong></p>
 <pre><code class="language-mojo">barrier()  # Ensure thread (0,0) completes before others read
 </code></pre>
@@ -489,8 +523,16 @@ def shared_memory_race(
 </code></pre>
 <p>All threads can safely read the result after synchronization.</p>
 <h3 id="important-note-on-efficiency"><a class="header" href="#important-note-on-efficiency">Important note on efficiency</a></h3>
-<p><strong>This solution prioritizes correctness over efficiency</strong>. While it eliminates race conditions, using only thread at position (0,0) for accumulation is <strong>not optimal</strong> for GPU performance - we’re essentially doing serial computation on a massively parallel device.</p>
-<p><strong>Coming up in <a href="../../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll learn efficient parallel reduction algorithms that leverage <strong>all threads</strong> for high-performance summation operations while maintaining race-free execution. This puzzle teaches the foundation of <strong>correctness first</strong> - once you understand how to avoid race conditions, Puzzle 11 will show you how to achieve both <strong>correctness AND performance</strong>.</p>
+<p><strong>This solution prioritizes correctness over efficiency</strong>. While it eliminates
+race conditions, using only thread at position (0,0) for accumulation is
+<strong>not optimal</strong> for GPU performance - we’re essentially doing serial computation
+on a massively parallel device.</p>
+<p><strong>Coming up in <a href="../../puzzle_11/puzzle_11.html">Puzzle 11: Pooling</a></strong>: You’ll
+learn efficient parallel reduction algorithms that leverage <strong>all threads</strong> for
+high-performance summation operations while maintaining race-free execution.
+This puzzle teaches the foundation of <strong>correctness first</strong> - once you
+understand how to avoid race conditions, Puzzle 11 will show you how to achieve
+both <strong>correctness AND performance</strong>.</p>
 <h3 id="verification"><a class="header" href="#verification">Verification</a></h3>
 <pre><code class="language-bash">pixi run compute-sanitizer --tool racecheck mojo solutions/p10/p10.mojo --race-condition
 </code></pre>

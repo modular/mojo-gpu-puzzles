@@ -210,7 +210,8 @@
                     <main>
                         <!-- i18n-source-commit: db06539cab77774402e8a4bf955018fd853803d9 -->
 <h2 id="개요"><a class="header" href="#개요">개요</a></h2>
-<p>2D 정사각 행렬 <code>a</code>의 각 위치에 10을 더해 2D 정사각 행렬 <code>output</code>에 저장하는 커널을 구현해 보세요.</p>
+<p>2D 정사각 행렬 <code>a</code>의 각 위치에 10을 더해 2D 정사각 행렬 <code>output</code>에 저장하는
+커널을 구현해 보세요.</p>
 <p><strong>참고</strong>: <em>스레드 수가 행렬의 위치 수보다 많습니다</em>.</p>
 <h2 id="핵심-개념"><a class="header" href="#핵심-개념">핵심 개념</a></h2>
 <p>이 퍼즐에서 배울 내용:</p>
@@ -219,12 +220,15 @@
 <li>2D 좌표를 1D 메모리 인덱스로 변환하기</li>
 <li>2차원에서 경계 검사 처리하기</li>
 </ul>
-<p>핵심은 2D 스레드 좌표 \((i,j)\)를 크기 \(n \times n\)인 행 우선 행렬의 원소로 매핑하는 방법을 이해하는 것입니다. 동시에 스레드 인덱스가 범위를 벗어나지 않는지도 확인해야 합니다.</p>
+<p>핵심은 2D 스레드 좌표 \((i,j)\)를 크기 \(n \times n\)인 행 우선 행렬의
+원소로 매핑하는 방법을 이해하는 것입니다. 동시에 스레드 인덱스가 범위를 벗어나지
+않는지도 확인해야 합니다.</p>
 <ul>
 <li><strong>2D 인덱싱</strong>: 각 스레드가 고유한 \((i,j)\) 위치를 가짐</li>
 <li><strong>메모리 레이아웃</strong>: 행 우선 순서로 2D를 1D 메모리에 매핑</li>
 <li><strong>가드 조건</strong>: 두 차원 모두 경계 검사 필요</li>
-<li><strong>스레드 범위</strong>: 스레드 \((3 \times 3)\)가 행렬 원소 \((2 \times 2)\)보다 많음</li>
+<li><strong>스레드 범위</strong>: 스레드 \((3 \times 3)\)가 행렬 원소 \((2 \times 2)\)보다
+많음</li>
 </ul>
 <h2 id="완성할-코드"><a class="header" href="#완성할-코드">완성할 코드</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2

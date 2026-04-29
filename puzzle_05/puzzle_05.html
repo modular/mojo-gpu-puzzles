@@ -210,8 +210,15 @@
                     <main>
                         <h1 id="puzzle-5-broadcast"><a class="header" href="#puzzle-5-broadcast">Puzzle 5: Broadcast</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
-<p>Implement a kernel that broadcast adds 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code> and stores it in 2D TileTensor <code>output</code>.</p>
-<p><strong>Broadcasting</strong> in parallel programming refers to the operation where lower-dimensional arrays are automatically expanded to match the shape of higher-dimensional arrays during element-wise operations. Instead of physically replicating data in memory, values are logically repeated across the additional dimensions. For example, adding a 1D vector to each row (or column) of a 2D matrix applies the same vector elements repeatedly without creating multiple copies.</p>
+<p>Implement a kernel that broadcast adds 1D TileTensor <code>a</code> and 1D TileTensor <code>b</code>
+and stores it in 2D TileTensor <code>output</code>.</p>
+<p><strong>Broadcasting</strong> in parallel programming refers to the operation where
+lower-dimensional arrays are automatically expanded to match the shape of
+higher-dimensional arrays during element-wise operations. Instead of physically
+replicating data in memory, values are logically repeated across the additional
+dimensions. For example, adding a 1D vector to each row (or column) of a 2D
+matrix applies the same vector elements repeatedly without creating multiple
+copies.</p>
 <p><strong>Note:</strong> <em>You have more threads than positions.</em></p>
 <img src="./media/05.png" alt="Broadcast visualization" class="light-mode-img">
 <img src="./media/05d.png" alt="Broadcast visualization" class="dark-mode-img">
@@ -223,13 +230,18 @@
 <li>Working with different tensor shapes for mixed-dimension operations</li>
 <li>Handling boundary conditions in broadcast patterns</li>
 </ul>
-<p>The key insight is that <code>TileTensor</code> allows natural broadcasting through different tensor shapes: \((1, n)\) and \((n, 1)\) to \((n,n)\), while still requiring bounds checking.</p>
+<p>The key insight is that <code>TileTensor</code> allows natural broadcasting through
+different tensor shapes: \((1, n)\) and \((n, 1)\) to \((n,n)\), while
+still requiring bounds checking.</p>
 <ul>
 <li><strong>Tensor shapes</strong>: Input vectors have shapes \((1, n)\) and \((n, 1)\)</li>
-<li><strong>Broadcasting</strong>: Each element of <code>a</code> combines with each element of <code>b</code>; output expands both dimensions to \((n,n)\)</li>
-<li><strong>Access patterns</strong>: <code>a[0, col]</code> broadcasts horizontally across rows; <code>b[row, 0]</code> broadcasts vertically across columns</li>
+<li><strong>Broadcasting</strong>: Each element of <code>a</code> combines with each element of <code>b</code>;
+output expands both dimensions to \((n,n)\)</li>
+<li><strong>Access patterns</strong>: <code>a[0, col]</code> broadcasts horizontally across rows;
+<code>b[row, 0]</code> broadcasts vertically across columns</li>
 <li><strong>Guard condition</strong>: Still need bounds checking for output size</li>
-<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2 \times 2)\)</li>
+<li><strong>Thread bounds</strong>: More threads \((3 \times 3)\) than tensor elements \((2
+\times 2)\)</li>
 </ul>
 <h2 id="code-to-complete"><a class="header" href="#code-to-complete">Code to complete</a></h2>
 <pre><code class="language-mojo">comptime SIZE = 2
@@ -263,7 +275,8 @@ def broadcast_add(
 <ol>
 <li>Get 2D indices: <code>row = thread_idx.y</code>, <code>col = thread_idx.x</code></li>
 <li>Add guard: <code>if row &lt; size and col &lt; size</code></li>
-<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code> as TileTensors</li>
+<li>Inside guard: think about how to broadcast values of <code>a</code> and <code>b</code> as
+TileTensors</li>
 </ol>
 </div>
 </details>
@@ -314,7 +327,8 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 
 </code></pre>
 <div class="solution-explanation">
-<p>This solution demonstrates key concepts of TileTensor broadcasting and GPU thread mapping:</p>
+<p>This solution demonstrates key concepts of TileTensor broadcasting and GPU
+thread mapping:</p>
 <ol>
 <li>
 <p><strong>Thread to matrix mapping</strong></p>
@@ -344,7 +358,8 @@ expected: HostBuffer([1.0, 2.0, 11.0, 12.0])
 </ul>
 </li>
 </ol>
-<p>This pattern forms the foundation for more complex tensor operations we’ll explore in later puzzles.</p>
+<p>This pattern forms the foundation for more complex tensor operations we’ll
+explore in later puzzles.</p>
 </div>
 </details>
 
