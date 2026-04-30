@@ -4,7 +4,7 @@
 #
 # ===----------------------------------------------------------------------=== #
 from std.gpu import thread_idx, block_idx, block_dim, barrier
-from std.gpu.host import DeviceContext
+from std.gpu.host import DeviceContext, Dim
 from std.gpu.primitives.cluster import (
     block_rank_in_cluster,
     cluster_sync,
@@ -230,6 +230,7 @@ def main() raises:
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()
@@ -296,6 +297,7 @@ def main() raises:
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()
@@ -342,6 +344,7 @@ def main() raises:
                 SIZE,
                 grid_dim=(CLUSTER_SIZE, 1),
                 block_dim=(TPB, 1),
+                cluster_dim=Dim(CLUSTER_SIZE, 1, 1),
             )
 
             ctx.synchronize()
