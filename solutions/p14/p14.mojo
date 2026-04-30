@@ -39,7 +39,7 @@ def prefix_sum_simple(
     barrier()
 
     var offset = 1
-    for i in range(Int(log2(Scalar[dtype](TPB)))):
+    for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
         if local_i >= offset and local_i < size:
             current_val = shared[local_i - offset]  # read
@@ -103,7 +103,7 @@ def prefix_sum_local_phase(
     #   Block 0: [0,1,3,6,10+0,14+1,18+3,22+6] = [0,1,3,6,10,15,21,28]
     #   Block 1 follows same pattern to get [8,17,27,38,50,63,77,???]
     var offset = 1
-    for i in range(Int(log2(Scalar[dtype](TPB)))):
+    for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
         if local_i >= offset and local_i < TPB:
             current_val = shared[local_i - offset]  # read
