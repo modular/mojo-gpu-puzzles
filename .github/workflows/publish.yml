@@ -3,33 +3,27 @@
 # This file is Modular Inc proprietary.
 #
 ##===----------------------------------------------------------------------===##
-name: CI
+name: Publish Puzzles
 
 on:
   push:
     branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'CODE_OF_CONDUCT.md'
+      - stable
+    paths:
+      - "pixi.lock"
   pull_request:
     branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE'
-      - 'CODE_OF_CONDUCT.md'
+      - stable
+    paths:
+      - "pixi.lock"
 
 permissions:
   id-token: write
   contents: write
 
 jobs:
-  test:
-    runs-on: github-gpu
-    env:
-      MODULAR_NVPTX_COMPILER_PATH: /home/runner/work/mojo-gpu-puzzles/mojo-gpu-puzzles/.pixi/envs/default/bin/ptxas
+  deploy:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -42,17 +36,22 @@ jobs:
 
       - uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          pixi-version: v0.53.0
+          pixi-version: v0.63.2
           cache: false
           post-cleanup: false
 
-      - name: Check formatting
+      - name: Build
         shell: bash
         run: |
-          pixi run format-check
+          cd book
+          pixi run build-book
 
-      - name: Tests
-        shell: bash
-        run: |
-          pixi run tests
-
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/stable'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./book/html
+          cname: puzzles.modular.com
+          allow_empty_commit: true
