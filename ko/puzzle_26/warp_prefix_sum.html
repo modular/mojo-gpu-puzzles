@@ -266,7 +266,7 @@
     barrier()
 
     var offset = 1
-    for i in range(Int(log2(Scalar[dtype](TPB)))):
+    for _ in range(Int(log2(Scalar[dtype](TPB)))):
         var current_val: output.ElementType = 0
         if local_i &gt;= offset and local_i &lt; size:
             current_val = shared[local_i - offset]  # read
