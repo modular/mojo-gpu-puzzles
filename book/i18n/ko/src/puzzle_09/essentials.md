@@ -806,7 +806,7 @@ $4 = {10}                 # 이제 계산된 결과 표시: 0 + 10 = 10
 출력:
 
 ```text
-$5 = (!pop.scalar<f32> * @register) 0x302000200
+$5 = (!kgen.scalar<f32> * @register) 0x302000200
 ```
 
 **Step 5: 병렬 스레드 간 이동**
@@ -1029,7 +1029,7 @@ Kernel 0
 출력:
 
 ```text
-$9 = (!pop.scalar<f32> * @register) 0x302000200
+$9 = (!kgen.scalar<f32> * @register) 0x302000200
 ```
 
 ```gdb
@@ -1039,7 +1039,7 @@ $9 = (!pop.scalar<f32> * @register) 0x302000200
 출력:
 
 ```text
-$10 = (!pop.scalar<f32> * @register) 0x302000000
+$10 = (!kgen.scalar<f32> * @register) 0x302000000
 ```
 
 ```gdb

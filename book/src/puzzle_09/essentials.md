@@ -846,7 +846,7 @@ $4 = {10}                 # Now shows the computed result: 0 + 10 = 10
 Output:
 
 ```text
-$5 = (!pop.scalar<f32> * @register) 0x302000200
+$5 = (!kgen.scalar<f32> * @register) 0x302000200
 ```
 
 **Step 5: Navigate between parallel threads**
@@ -1068,7 +1068,7 @@ synchronization and shared memory issues.
 Output:
 
 ```text
-$9 = (!pop.scalar<f32> * @register) 0x302000200
+$9 = (!kgen.scalar<f32> * @register) 0x302000200
 ```
 
 ```gdb
@@ -1078,7 +1078,7 @@ $9 = (!pop.scalar<f32> * @register) 0x302000200
 Output:
 
 ```text
-$10 = (!pop.scalar<f32> * @register) 0x302000000
+$10 = (!kgen.scalar<f32> * @register) 0x302000000
 ```
 
 ```gdb

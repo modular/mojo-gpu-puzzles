@@ -122,9 +122,9 @@ CUDA thread hit breakpoint, p09_add_10_... (output=0x302000000, a=0x0)
 (cuda-gdb) print i
 $1 = 0
 (cuda-gdb) print output
-$2 = (!pop.scalar<f32> * @register) 0x302000000
+$2 = (!kgen.scalar<f32> * @register) 0x302000000
 (cuda-gdb) print a
-$3 = (!pop.scalar<f32> * @register) 0x0
+$3 = (!kgen.scalar<f32> * @register) 0x0
 ```
 
 **Evidence Gathering**:
