@@ -195,7 +195,7 @@ def test_multi_stage_pipeline() raises:
         ](inp, layout)
 
         comptime kernel = multi_stage_image_blur_pipeline
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             inp_tensor,
             SIZE,
@@ -259,7 +259,7 @@ def test_double_buffered_stencil() raises:
         ](inp, layout)
 
         comptime kernel = double_buffered_stencil_computation
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             inp_tensor,
             SIZE,

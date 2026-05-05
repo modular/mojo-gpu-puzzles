@@ -52,7 +52,7 @@ def test_softmax() raises:
 
         # Run GPU kernel
         comptime kernel = softmax_gpu_kernel[SIZE, dtype]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             grid_dim=GRID_DIM_X,

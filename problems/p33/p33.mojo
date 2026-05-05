@@ -285,7 +285,7 @@ def main() raises:
                 MMA_N,
                 MMA_K,
             ]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 a_tensor,
                 b_tensor,
                 out_tensor_core_layout,
@@ -306,7 +306,7 @@ def main() raises:
 
             # Run idiomatic tiled version with proper 2D block configuration
             comptime kernel = matmul_idiomatic_tiled[SIZE]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 out_tiled_layout,
                 a_tensor,
                 b_tensor,
@@ -337,7 +337,7 @@ def main() raises:
                 MMA_N,
                 MMA_K,
             ]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 a_tensor,
                 b_tensor,
                 out_tensor_core_layout,
@@ -407,7 +407,7 @@ def main() raises:
             out_tiled_layout = TileTensor(out_tiled, layout)
 
             comptime kernel2 = matmul_idiomatic_tiled[SIZE]
-            ctx.enqueue_function[kernel2, kernel2](
+            ctx.enqueue_function[kernel2](
                 out_tiled_layout,
                 a_tensor,
                 b_tensor,

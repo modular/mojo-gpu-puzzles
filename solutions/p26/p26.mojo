@@ -251,7 +251,7 @@ def test_butterfly_pair_swap() raises:
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_pair_swap[SIZE]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -300,7 +300,7 @@ def test_butterfly_parallel_max() raises:
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = butterfly_parallel_max[SIZE]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -344,7 +344,7 @@ def test_butterfly_conditional_max() raises:
         var output_tensor = TileTensor(output_buf, layout_2)
 
         comptime kernel = butterfly_conditional_max[SIZE_2]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID_2,
@@ -402,7 +402,7 @@ def test_warp_inclusive_prefix_sum() raises:
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_inclusive_prefix_sum[SIZE]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             grid_dim=BLOCKS_PER_GRID,
@@ -467,7 +467,7 @@ def test_warp_partition() raises:
         var output_tensor = TileTensor(output_buf, layout)
 
         comptime kernel = warp_partition[SIZE]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             output_tensor,
             input_tensor,
             pivot_value,

@@ -216,7 +216,7 @@ Verification passed: Custom kernel results match NumPy calculation
    ```mojo
    gpu_ctx = ctx.get_device_context()
    gpu_ctx.enqueue_memset(...)  # 출력 버퍼 초기화
-   gpu_ctx.enqueue_function[..., ...](...) # 커널 예약
+   gpu_ctx.enqueue_function[...](...) # 커널 예약
    ```
 
    - 디바이스 컨텍스트가 GPU 리소스를 관리

@@ -45,7 +45,7 @@ def main() raises:
                     a_host[y * SIZE + x] = Scalar[dtype](y * SIZE + x)
                     expected[y * SIZE + x] = a_host[y * SIZE + x] + 10
 
-        ctx.enqueue_function[add_10_2d, add_10_2d](
+        ctx.enqueue_function[add_10_2d](
             out,
             a,
             SIZE,

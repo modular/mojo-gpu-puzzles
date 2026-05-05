@@ -147,7 +147,7 @@ def main() raises:
             output_tensor = TileTensor(output_buf, cluster_layout)
 
             comptime kernel = cluster_coordination_basics[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,
@@ -209,7 +209,7 @@ def main() raises:
             var temp_tensor = TileTensor(temp_buf, cluster_layout)
 
             comptime kernel = cluster_collective_operations[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 temp_tensor,
@@ -255,7 +255,7 @@ def main() raises:
             output_tensor = TileTensor(output_buf, cluster_layout)
 
             comptime kernel = advanced_cluster_patterns[TPB]
-            ctx.enqueue_function[kernel, kernel](
+            ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 SIZE,

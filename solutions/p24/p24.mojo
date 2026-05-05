@@ -247,7 +247,7 @@ def benchmark_simple_warp_parameterized[
         comptime kernel = simple_warp_dot_product[
             BenchInLayout, BenchOutLayout, test_size
         ]
-        ctx.enqueue_function[kernel, kernel](
+        ctx.enqueue_function[kernel](
             out_tensor,
             a_tensor,
             b_tensor,
@@ -357,10 +357,7 @@ def benchmark_traditional_parameterized[
         ctx.enqueue_function[
             traditional_dot_product_p12_style[
                 BenchInLayout, BenchOutLayout, test_size
-            ],
-            traditional_dot_product_p12_style[
-                BenchInLayout, BenchOutLayout, test_size
-            ],
+            ]
         ](
             out_tensor,
             a_tensor,
@@ -414,10 +411,7 @@ def main() raises:
                 ctx.enqueue_function[
                     traditional_dot_product_p12_style[
                         InLayout, MainOutLayout, SIZE
-                    ],
-                    traditional_dot_product_p12_style[
-                        InLayout, MainOutLayout, SIZE
-                    ],
+                    ]
                 ](
                     out_tensor,
                     a_tensor,
@@ -427,8 +421,7 @@ def main() raises:
                 )
             elif argv()[1] == "--kernel":
                 ctx.enqueue_function[
-                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE],
-                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE],
+                    simple_warp_dot_product[InLayout, MainOutLayout, SIZE]
                 ](
                     out_tensor,
                     a_tensor,

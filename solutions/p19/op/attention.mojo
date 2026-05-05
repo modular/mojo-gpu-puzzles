@@ -402,7 +402,7 @@ struct AttentionCustomOp:
             comptime kernel = transpose_kernel[
                 seq_len, d, KTLayout, KLayout, dtype
             ]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 k_t,
                 k_tensor,
                 grid_dim=transpose_blocks_per_grid,
@@ -422,7 +422,7 @@ struct AttentionCustomOp:
                 KTLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel2, kernel2](
+            gpu_ctx.enqueue_function[kernel2](
                 scores_2d,
                 q_2d,
                 k_t,
@@ -443,7 +443,7 @@ struct AttentionCustomOp:
             var weights_in = TileTensor[
                 mut=True, dtype, ScoresLayout, MutAnyOrigin
             ](scores_weights_buf, layout_scores)
-            gpu_ctx.enqueue_function[kernel3, kernel3](
+            gpu_ctx.enqueue_function[kernel3](
                 weights_out,
                 weights_in,
                 grid_dim=softmax_blocks_per_grid,
@@ -465,7 +465,7 @@ struct AttentionCustomOp:
                 VLayout,
                 dtype,
             ]
-            gpu_ctx.enqueue_function[kernel4, kernel4](
+            gpu_ctx.enqueue_function[kernel4](
                 result_2d,
                 weights_2d,
                 v_tensor,

@@ -98,7 +98,7 @@ struct SoftmaxCustomOp:
             )
 
             comptime kernel = softmax_gpu_kernel[input_size, dtype]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 output_tensor,
                 input_tensor,
                 grid_dim=GRID_DIM_X,

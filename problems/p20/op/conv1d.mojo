@@ -110,7 +110,7 @@ struct Conv1DCustomOp:
                 0,
             )
             comptime kernel = conv1d_kernel[input_size, conv_size]
-            gpu_ctx.enqueue_function[kernel, kernel](
+            gpu_ctx.enqueue_function[kernel](
                 out_tensor,
                 input_tensor,
                 kernel_tensor,
