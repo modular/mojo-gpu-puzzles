@@ -83,48 +83,46 @@ examples.
 
 3. Install a package manager to run the Mojo🔥 programs:
 
-### **Option 1 (Highly recommended)**
-
-   [pixi](https://pixi.sh/latest/#installation)
+### Option 1: [pixi](https://pixi.sh/latest/#installation) (Highly recommended)
 
    `pixi` is the **recommended option** for this project because:
    - Easy access to Modular's MAX/Mojo packages
    - Handles GPU dependencies
    - Full conda + PyPI ecosystem support
 
-    **Note: A few puzzles only work with `pixi`.**
+   **Note: A few puzzles only work with `pixi`.**
 
-    **Install:**
+   **Install:**
 
-     ```bash
-    curl -fsSL https://pixi.sh/install.sh | sh
-     ```
+   ```bash
+   curl -fsSL https://pixi.sh/install.sh | sh
+   ```
 
-    **Update:**
+   **Update:**
 
-     ```bash
-    pixi self-update
-     ```
+   ```bash
+   pixi self-update
+   ```
 
 ### Option 2: [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
 
-    **Install:**
+   **Install:**
 
-    ```bash
-    curl -fsSL https://astral.sh/uv/install.sh | sh
-    ```
+   ```bash
+   curl -fsSL https://astral.sh/uv/install.sh | sh
+   ```
 
-    **Update:**
+   **Update:**
 
-    ```bash
-    uv self update
-    ```
+   ```bash
+   uv self update
+   ```
 
-    **Create a virtual environment:**
+   **Create a virtual environment:**
 
-    ```bash
-    uv venv && source .venv/bin/activate
-    ```
+   ```bash
+   uv venv && source .venv/bin/activate
+   ```
 
 4. Start solving puzzles!
 
