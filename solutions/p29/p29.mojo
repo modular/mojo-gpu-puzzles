@@ -172,15 +172,21 @@ def double_buffered_stencil_computation(
         mbarrier_init(iter_barrier.ptr, TPB)
         mbarrier_init(final_barrier.ptr, TPB)
 
+    # Per NVIDIA's async-barrier docs, mbarrier objects must be visible to all
+    # threads before any thread calls mbarrier_arrive on them.
+    barrier()
+
     # Initialize buffer_A with input data
     if local_i < TPB and global_i < size:
         buffer_A[local_i] = input[global_i]
     else:
         buffer_A[local_i] = 0.0
 
-    # Wait for buffer_A initialization
+    # Wait for buffer_A initialization. mbarrier_test_wait is a non-blocking
+    # poll, so spin until it reports completion.
     _ = mbarrier_arrive(init_barrier.ptr)
-    _ = mbarrier_test_wait(init_barrier.ptr, TPB)
+    while not mbarrier_test_wait(init_barrier.ptr, TPB):
+        pass
 
     # Iterative stencil processing with double-buffering
     comptime for iteration in range(STENCIL_ITERATIONS):
@@ -228,13 +234,19 @@ def double_buffered_stencil_computation(
                 else:
                     buffer_A[local_i] = buffer_B[local_i]
 
-        # Memory barrier: wait for all writes before buffer swap
+        # Memory barrier: wait for all writes before buffer swap. test_wait is
+        # non-blocking, so poll until every thread has arrived.
         _ = mbarrier_arrive(iter_barrier.ptr)
-        _ = mbarrier_test_wait(iter_barrier.ptr, TPB)
+        while not mbarrier_test_wait(iter_barrier.ptr, TPB):
+            pass
 
         # Reinitialize barrier for next iteration
         if local_i == 0:
             mbarrier_init(iter_barrier.ptr, TPB)
+
+        # Make the reinitialized barrier visible before the next iteration's
+        # mbarrier_arrive.
+        barrier()
 
     # Write final results from active buffer
     if local_i < TPB and global_i < size:
@@ -245,9 +257,10 @@ def double_buffered_stencil_computation(
             # Odd iterations end in buffer_B
             output[global_i] = buffer_B[local_i]
 
-    # Final barrier
+    # Final barrier — poll until every thread has arrived.
     _ = mbarrier_arrive(final_barrier.ptr)
-    _ = mbarrier_test_wait(final_barrier.ptr, TPB)
+    while not mbarrier_test_wait(final_barrier.ptr, TPB):
+        pass
 
 
 # ANCHOR_END: double_buffered_stencil_solution

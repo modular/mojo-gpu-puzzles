@@ -2,6 +2,12 @@
 
 # 다단계 파이프라인 조정
 
+**중요 사항**: 퍼즐 29는 현재 NVIDIA 전용입니다.
+[동반 스텐실 퍼즐](memory_barrier.md)에서 사용되는
+[`mbarrier` API](https://docs.modular.com/mojo/std/gpu/sync/sync/) 는
+NVIDIA 하드웨어가 필요하며, `pixi` 작업이 이를 동일한 컴파일 단위로
+가져옵니다.
+
 ## 개요
 
 조율된 3단계 파이프라인을 통해 이미지를 처리하는 커널을 구현합니다. 서로 다른
@@ -184,21 +190,13 @@
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 
 ```bash
 pixi run p29 --multi-stage
-```
-
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run -e amd p29 --multi-stage
 ```
 
   </div>

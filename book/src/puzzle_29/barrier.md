@@ -1,5 +1,10 @@
 # Multi-Stage Pipeline Coordination
 
+**Important note**: Puzzle 29 is currently NVIDIA-only — the
+[`mbarrier` APIs](https://docs.modular.com/mojo/std/gpu/sync/sync/) used in
+the [companion stencil puzzle](memory_barrier.md) require NVIDIA hardware,
+and the `pixi` task pulls them into the same compilation unit.
+
 ## Overview
 
 Implement a kernel that processes an image through a coordinated 3-stage
@@ -195,21 +200,13 @@ To test your solution, run the following command in your terminal:
 
 <div class="code-tabs" data-tab-group="package-manager">
   <div class="tab-buttons">
-    <button class="tab-button">pixi NVIDIA (default)</button>
-    <button class="tab-button">pixi AMD</button>
+    <button class="tab-button">pixi NVIDIA</button>
     <button class="tab-button">uv</button>
   </div>
   <div class="tab-content">
 
 ```bash
 pixi run p29 --multi-stage
-```
-
-  </div>
-  <div class="tab-content">
-
-```bash
-pixi run -e amd p29 --multi-stage
 ```
 
   </div>
