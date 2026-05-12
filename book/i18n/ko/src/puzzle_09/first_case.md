@@ -49,7 +49,7 @@ First Case: Try to identify what's wrong without looking at the code!
 
 stack trace was not collected. Enable stack trace collection with environment variable `MOJO_ENABLE_STACK_TRACE_ON_ERROR`
 Unhandled exception caught during execution: At open-source/max/mojo/stdlib/stdlib/gpu/host/device_context.mojo:2082:17: CUDA call failed: CUDA_ERROR_INVALID_IMAGE (device kernel image is invalid)
-To get more accurate error information, set MODULAR_DEVICE_CONTEXT_SYNC_MODE=true.
+To get more accurate error information, set MODULAR_DEBUG=device-sync-mode.
 /home/ubuntu/workspace/mojo-gpu-puzzles/.pixi/envs/nvidia/bin/mojo: error: execution exited with a non-zero result: 1
 ```
 
