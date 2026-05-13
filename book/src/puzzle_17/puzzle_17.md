@@ -271,14 +271,14 @@ Key components of the registration:
 Before the custom operation can be used from Python, it needs to be packaged:
 
 ```bash
-mojo package op -o op.mojopkg
+mojo package op -o op.mojoc
 ```
 
 This command:
 
 1. Compiles the Mojo code into a deployable package
 2. Creates the necessary metadata for MAX Graph to understand the operation
-3. Produces a binary artifact (`op.mojopkg`) that can be loaded by Python
+3. Produces a binary artifact (`op.mojoc`) that can be loaded by Python
 
 The package must be placed in a location where MAX Graph can find it, typically
 in a directory accessible to the Python code.
