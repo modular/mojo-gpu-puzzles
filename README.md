@@ -48,8 +48,9 @@ the results.
 
 Start Learning Now 👉 [puzzles.modular.com](https://puzzles.modular.com/)
 
-> 📬 [Subscribe to updates](https://www.modular.com/company/talk-to-us) to get
-> notified when new puzzles are released!
+> 📬
+> [Subscribe to updates](https://docs.modular.com/max/get-started/#stay-in-touch)
+> to get notified when new puzzles are released!
 
 ## Why Mojo🔥
 
